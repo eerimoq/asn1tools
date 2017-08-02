@@ -40,7 +40,7 @@ class Item(object):
 class Module(Item):
 
     def __init__(self, name, items, **kwargs):
-        super().__init__(name, **kwargs)
+        super(Module, self).__init__(name, **kwargs)
         self._items = items
 
     @property
@@ -56,7 +56,7 @@ class Module(Item):
 class Sequence(Item):
 
     def __init__(self, name, items, **kwargs):
-        super().__init__(name, **kwargs)
+        super(Sequence, self).__init__(name, **kwargs)
         self._items = items
 
     @property

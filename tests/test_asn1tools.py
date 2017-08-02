@@ -12,13 +12,13 @@ class Asn1ToolsTest(unittest.TestCase):
                 Sequence(
                     'Foo',
                     [
-                        Integer('Foo', optional=True),
-                        Integer('Bar', default=5),
+                        Integer('foo', optional=True),
+                        Integer('bar', default=5),
                         Sequence(
                             'Fie',
                             [
-                                Integer('Foo'),
-                                Integer('Bar'),
+                                Integer('foo'),
+                                Integer('bar'),
                             ])
                     ]),
                 Sequence('Bar', [])
