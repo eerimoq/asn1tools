@@ -1,4 +1,12 @@
+"""ASN.1 schema (aka module) type definitions.
+
+"""
+
 class Item(object):
+    """Abstract base class of an item. All type definitions should
+    subclass this class.
+
+    """
 
     def __init__(self,
                  name,
@@ -14,6 +22,10 @@ class Item(object):
 
     @property
     def name(self):
+        """The name of the item.
+
+        """
+
         return self._name
 
     def dump_lines(self):
@@ -32,12 +44,15 @@ class Item(object):
             string += ' OPTIONAL'
 
         return string
-            
+
     def __str__(self):
         return '\n'.join(self.dump_lines())
 
 
 class Module(Item):
+    """The DEFINITIONS type.
+
+    """
 
     def __init__(self, name, items, **kwargs):
         super(Module, self).__init__(name, **kwargs)
@@ -45,6 +60,10 @@ class Module(Item):
 
     @property
     def items(self):
+        """A list of all items in the module.
+
+        """
+
         return self._items
 
     def dump_lines(self):
@@ -54,6 +73,9 @@ class Module(Item):
 
 
 class Sequence(Item):
+    """The SEQUENCE type.
+
+    """
 
     def __init__(self, name, items, **kwargs):
         super(Sequence, self).__init__(name, **kwargs)
@@ -61,6 +83,10 @@ class Sequence(Item):
 
     @property
     def items(self):
+        """A list of all items in the sequence.
+
+        """
+
         return self._items
 
     def dump_lines(self):
@@ -70,6 +96,9 @@ class Sequence(Item):
 
 
 class Integer(Item):
+    """The INTEGER type.
+
+    """
 
     def dump_lines(self):
         return [self.name + ' INTEGER' + self.dump_qualifiers()]
@@ -81,13 +110,13 @@ def _indent_lines(lines):
 
 def _dump_list_lines(items):
     lines = []
-        
+
     for item in items:
         item_lines = item.dump_lines()
-            
+
         if item is not items[-1]:
             item_lines[-1] += ','
-            
+
         lines += item_lines
 
     return lines

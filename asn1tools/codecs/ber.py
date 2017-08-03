@@ -2,8 +2,12 @@
 
 """
 
+import struct
+
+import bitstruct
+
 from . import DecodeError
-from ..types import Sequence
+from ..schema import *
 
 
 class Class(object):
@@ -50,138 +54,118 @@ class Number(object):
     BMP_STRING        = 0x1e
 
 
-def _decode_length_definite(data):
-    octet = data[0]
+def _encode_integer(decoded):
+    return struct.pack('BBB',
+                       Number.INTEGER,
+                       1,
+                       decoded)
+
+
+def _encode_sequence(decoded, schema):
+    return b'\x30\x03\x80\x01\x05'
+
+
+def _encode_item(decoded, schema):
+    if isinstance(schema, Integer):
+        encoded = _encode_integer(decoded)
+    elif isinstance(schema, Sequence):
+        encoded = _encode_sequence(decoded, schema)
+    else:
+        raise NotImplementedError('encoding not supported')
+
+    return encoded, None
+
+def _decode_length_definite(encoded):
+    octet = encoded[0]
 
     if octet & 0x80:
         raise NotImplementedError()
     else:
         length = octet & 0x7f
 
-    return length, data[1:]
+    return length, encoded[1:]
 
 
-def _decode_identifier(data):
+def _decode_identifier(encoded):
     """Decode identifier octets.
 
     """
 
-    octet = data[0]
-
+    octet = encoded[0]
     class_ = (octet & 0xc0)
     encoding = (octet & 0x20)
     number = (octet & 0x1f)
 
-    print(class_, encoding, number)
-
-    if number > 30:
-        raise NotImplementedError()
-
-    if class_ != Class.UNIVERSAL:
-        raise NotImplementedError()
-
-    return class_, encoding, number, data[1:]
+    return class_, encoding, number, encoded[1:]
 
 
-def _decode_sequence(data, schema):
-    class_, encoding, number, data = _decode_identifier(data)
+def _decode_integer(encoded):
+    class_, encoding, number, encoded = _decode_identifier(encoded)
+
+    if not ((class_ == Class.CONTEXT_SPECIFIC)
+            or (class_ == Class.UNIVERSAL and number == Number.INTEGER)):
+        raise DecodeError()
+
+    if encoding != Encoding.PRIMITIVE:
+        raise DecodeError()
+
+    length, encoded = _decode_length_definite(encoded)
+
+    return bitstruct.unpack('s' + str(8 * length), encoded)[0], encoded[length:]
+
+
+def _decode_sequence(encoded, schema):
+    _, encoding, number, encoded = _decode_identifier(encoded)
 
     if number != Number.SEQUENCE:
         raise DecodeError()
-    
+
     if encoding != Encoding.CONSTRUCTED:
         raise DecodeError()
-    
-    if data[1] == 0x80:
+
+    if encoded[0] == 0x80:
         # Decode until an end-of-contents number is found.
         raise NotImplementedError()
     else:
-        length, data = _decode_length_definite(data[1:])
+        length, encoded = _decode_length_definite(encoded)
 
     values = {}
 
     for item in schema.items:
-        decoded, data = _decode_item(data, item)
+        decoded, encoded = _decode_item(encoded, item)
         values[item.name] = decoded
 
-    return values
+    return values, encoded
 
 
-def _decode_integer(data):
-    if len(data) > 1:
-        raise NotImplementedError()
-
-    return data[0]
+def _decode_ia5_string(encoded):
+    return encoded.decode('ascii')
 
 
-def _decode_ia5_string(data):
-    return data.decode('ascii')
-
-
-def _decode_item(data, schema):
-    if isinstance(schema, Sequence):
-        decoded, data = _decode_sequence(data, schema)
+def _decode_item(encoded, schema):
     if isinstance(schema, Integer):
-        decoded, data = _decode_integer(data, schema)
+        decoded, encoded = _decode_integer(encoded)
+    elif isinstance(schema, Sequence):
+        decoded, encoded = _decode_sequence(encoded, schema)
     else:
         raise NotImplementedError()
 
-    return decoded
-
-#    # Decode identifier octets.
-#    octet = data[0]
-#
-#    class_ = octet >> 6
-#    encoding = (octet >> 5) & 1
-#    number = octet & 0x1f
-#
-#    #print(class_, encoding, number)
-#
-#    if number > 30:
-#        raise NotImplementedError()
-#
-#    if class_ != Class.UNIVERSAL:
-#        raise NotImplementedError()
-#
-#    # Decode length octets.
-#    if encoding == Encoding.PRIMITIVE:
-#        length, data = _decode_length_definite(data[1:])
-#    else:
-#        octet = data[1]
-#
-#        if octet == 0x80:
-#            # Decode until an end-of-contents number is found.
-#            raise NotImplementedError()
-#        else:
-#            length, data = _decode_length_definite(data[1:])
-#
-#    if len(data) < length:
-#        raise Exception()
-#
-#    # Decode contents octets.
-#    if number == Number.SEQUENCE:
-#        decoded = _decode_sequence(data[:length])
-#    elif number == Number.INTEGER:
-#        decoded = _decode_integer(data[:length])
-#    elif number == Number.IA5_STRING:
-#        decoded = _decode_ia5_string(data[:length])
-#    else:
-#        raise NotImplementedError('Unsupported tag number {}.'.format(number))
-#
-#    return (number, decoded), data[length:]
+    return decoded, encoded
 
 
 def encode(data, schema):
-    """Encode given BER data dictionary.
+    """Encode given data dictionary using given schema and return the
+    encoded data as a bytes object.
 
     """
 
-    return b''
+    return _encode_item(data, schema)[0]
 
 
 def decode(data, schema):
-    """Decode given BER encoded data.
+    """Decode given binary data using given schema and retuns the decoded
+    data as a dictionary.
 
     """
 
-    return _decode_item(data, schema)[0]
+    return _decode_item(bytearray(data), schema)[0]

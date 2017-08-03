@@ -13,3 +13,9 @@ CAN BUS tools
 
 Functions and classes
 =====================
+
+.. automodule:: asn1tools.schema
+    :members:
+
+.. automodule:: asn1tools.codecs.ber
+    :members:

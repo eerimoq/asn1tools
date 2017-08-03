@@ -18,12 +18,18 @@ Installation
 Example usage
 =============
 
-Scripting
----------
+Encode and decode a small ASN.1 sequence called `Foo` using the BER
+codec.
 
 .. code-block:: python
 
-   >>> import asn1tools
+   >>> from asn1tools.schema import Sequence, Integer
+   >>> from asn1tools.codecs import ber
+   >>> foo = Sequence('Foo', [Integer('bar'), Integer('fie', default=22)])
+   >>> ber.encode({'bar': 4}, foo)
+   >>> b'\x10\x20'
+   >>> ber.decode(b'\x10\x20', foo)
+   >>> {'bar': 4, 'fie': 22}
 
 See the test suite for additional examples: https://github.com/eerimoq/asn1tools/blob/master/tests/test_asn1tools.py
 
