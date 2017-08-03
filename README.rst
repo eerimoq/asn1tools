@@ -8,6 +8,8 @@ ASN.1 tools.
 
 Project homepage: https://github.com/eerimoq/asn1tools
 
+Documentation: http://asn1tools.readthedocs.org/en/latest
+
 Installation
 ============
 
