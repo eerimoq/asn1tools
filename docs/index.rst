@@ -6,13 +6,23 @@
 .. toctree::
    :maxdepth: 2
 
-CAN BUS tools
-=============
+ASN.1 tools
+===========
 
 .. include:: ../README.rst
 
 Functions and classes
 =====================
+
+.. autofunction:: asn1tools.compile_file
+
+.. autofunction:: asn1tools.compile_string
+
+.. autoclass:: asn1tools.Schema
+    :members:
+
+.. autoclass:: asn1tools.Type
+    :members:
 
 .. automodule:: asn1tools.schema
     :members:

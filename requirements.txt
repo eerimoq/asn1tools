@@ -1,1 +1,2 @@
 bitstruct
+pyparsing

@@ -1,13 +1,14 @@
-"""BER codec.
+"""BER (Basic Encoding Rules) codec.
 
 """
 
 import struct
+import math
 
 import bitstruct
 
-from . import DecodeError
-from ..schema import *
+from . import EncodeError, DecodeError
+from ..schema import Module, Sequence, Integer, Boolean, IA5String
 
 
 class Class(object):
@@ -55,25 +56,74 @@ class Number(object):
 
 
 def _encode_integer(decoded):
-    return struct.pack('BBB',
-                       Number.INTEGER,
-                       1,
-                       decoded)
+    if decoded == 0:
+        bits = 8
+    else:
+        bits = int(8 * math.ceil((math.log(abs(decoded), 2) + 1) / 8))
+
+    return bitstruct.pack('u8u8s' + str(bits),
+                          Number.INTEGER,
+                          bits / 8,
+                          decoded)
+
+
+def _encode_boolean(decoded):
+    return bitstruct.pack('u8u8b8',
+                          Number.BOOLEAN,
+                          1,
+                          decoded)
+
+
+def _encode_ia5_string(decoded):
+    return (bitstruct.pack('u8u8', Number.IA5_STRING, len(decoded))
+            + decoded.encode('ascii'))
 
 
 def _encode_sequence(decoded, schema):
-    return b'\x30\x03\x80\x01\x05'
+    encoded = b''
+
+    for item in schema.items:
+        if item.name in decoded:
+            encoded += _encode_item(decoded[item.name], item)
+        elif item.default is None:
+            raise EncodeError("Missing value for item '{}' in schema '{}'.".format(
+                item.name,
+                schema.name))
+
+    return struct.pack('BB',
+                       Encoding.CONSTRUCTED | Number.SEQUENCE,
+                       len(encoded)) + encoded
+
+
+def _encode_module(decoded, schema):
+    if len(decoded) != 1:
+        raise EncodeError()
+
+    for key in decoded.keys():
+        name = key
+
+    item = schema.get_item_by_name(name)
+
+    return _encode_item(decoded[name], item)
 
 
 def _encode_item(decoded, schema):
     if isinstance(schema, Integer):
         encoded = _encode_integer(decoded)
+    elif isinstance(schema, Boolean):
+        encoded = _encode_boolean(decoded)
     elif isinstance(schema, Sequence):
         encoded = _encode_sequence(decoded, schema)
+    elif isinstance(schema, IA5String):
+        encoded = _encode_ia5_string(decoded)
+    elif isinstance(schema, Module):
+        encoded = _encode_module(decoded, schema)
     else:
-        raise NotImplementedError('encoding not supported')
+        raise NotImplementedError('encoding of schema {} is not supported'.format(
+            type(schema)))
 
-    return encoded, None
+    return encoded
+
 
 def _decode_length_definite(encoded):
     octet = encoded[0]
@@ -114,6 +164,38 @@ def _decode_integer(encoded):
     return bitstruct.unpack('s' + str(8 * length), encoded)[0], encoded[length:]
 
 
+def _decode_boolean(encoded):
+    class_, encoding, number, encoded = _decode_identifier(encoded)
+
+    if not ((class_ == Class.CONTEXT_SPECIFIC)
+            or (class_ == Class.UNIVERSAL and number == Number.BOOLEAN)):
+        raise DecodeError()
+
+    if encoding != Encoding.PRIMITIVE:
+        raise DecodeError()
+
+    length, encoded = _decode_length_definite(encoded)
+
+    if length != 1:
+        raise DecodeError()
+
+    return bitstruct.unpack('b8', encoded)[0], encoded[length:]
+
+
+def _decode_ia5_string(encoded):
+    _, encoding, number, encoded = _decode_identifier(encoded)
+
+    if number != Number.IA5_STRING:
+        raise DecodeError()
+
+    if encoding != Encoding.PRIMITIVE:
+        raise DecodeError()
+
+    length, encoded = _decode_length_definite(encoded)
+
+    return encoded[:length].decode('ascii'), encoded[length:]
+
+
 def _decode_sequence(encoded, schema):
     _, encoding, number, encoded = _decode_identifier(encoded)
 
@@ -129,42 +211,64 @@ def _decode_sequence(encoded, schema):
     else:
         length, encoded = _decode_length_definite(encoded)
 
+    if length > len(encoded):
+        raise DecodeError()
+
     values = {}
 
     for item in schema.items:
-        decoded, encoded = _decode_item(encoded, item)
-        values[item.name] = decoded
+        try:
+            decoded, encoded = _decode_item(encoded, item)
+            value = decoded
+
+        except DecodeError:
+            if item.optional:
+                continue
+
+            if item.default is None:
+                raise DecodeError()
+
+            value = item.default
+
+        values[item.name] = value
 
     return values, encoded
 
 
-def _decode_ia5_string(encoded):
-    return encoded.decode('ascii')
+def _decode_module(encoded, schema):
+    raise NotImplementedError()
 
 
 def _decode_item(encoded, schema):
     if isinstance(schema, Integer):
         decoded, encoded = _decode_integer(encoded)
+    elif isinstance(schema, Boolean):
+        decoded, encoded = _decode_boolean(encoded)
+    elif isinstance(schema, IA5String):
+        decoded, encoded = _decode_ia5_string(encoded)
     elif isinstance(schema, Sequence):
         decoded, encoded = _decode_sequence(encoded, schema)
+    elif isinstance(schema, Module):
+        decoded, encoded = _decode_module(encoded, schema)
     else:
-        raise NotImplementedError()
+        raise NotImplementedError('decoding of schema {} is not supported'.format(
+            type(schema)))
 
     return decoded, encoded
 
 
 def encode(data, schema):
-    """Encode given data dictionary using given schema and return the
-    encoded data as a bytes object.
+    """Encode given dictionary `data` using given schema `schema` and
+    return the encoded data as a bytes object.
 
     """
 
-    return _encode_item(data, schema)[0]
+    return _encode_item(data, schema)
 
 
 def decode(data, schema):
-    """Decode given binary data using given schema and retuns the decoded
-    data as a dictionary.
+    """Decode given bytes object `data` using given schema `schema` and
+    return the decoded data as a dictionary.
 
     """
 
