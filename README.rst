@@ -39,8 +39,8 @@ fictitious Foo protocol (based on the FooProtocol on Wikipedia).
 
    END
 
-Compile the ASN.1 specification, and encode and decode a question
-using the default codec (BER).
+`Compile`_ the ASN.1 specification, and `encode`_ and `decode`_ a
+question using the default codec (BER).
 
 .. code-block:: python
 
@@ -59,3 +59,7 @@ See the test suite for additional examples: https://github.com/eerimoq/asn1tools
 
 .. |coverage| image:: https://coveralls.io/repos/github/eerimoq/asn1tools/badge.svg?branch=master
 .. _coverage: https://coveralls.io/github/eerimoq/asn1tools
+
+.. _Compile: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compile_file
+.. _encode: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compiler.Schema.encode
+.. _decode: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compiler.Type.decode
