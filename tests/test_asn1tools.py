@@ -104,7 +104,7 @@ END""")
         decoded = ber.decode(encoded, foo)
         self.assertEqual(decoded, {'bar': 0, 'fie': False})
 
-    def test_load_file(self):
+    def test_compile_file(self):
         foo = asn1tools.compile_file('tests/files/foo.asn')
 
         # Encode a question.
@@ -132,6 +132,11 @@ END""")
         # Decode the encoded answer.
         decoded = answer.decode(encoded)
         self.assertEqual(decoded, {'id': 1, 'answer': False})
+
+    def test_rrc_8_6_0(self):
+        with self.assertRaises(NotImplementedError):
+            rrc = asn1tools.compile_file('tests/files/rrc_8.6.0.asn')
+            print(rrc)
 
 
 if __name__ == '__main__':

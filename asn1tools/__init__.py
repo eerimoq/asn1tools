@@ -4,7 +4,7 @@ __version__ = '0.2.0'
 
 from pyparsing import \
     Literal, Keyword, Word, ZeroOrMore, Regex, printables, delimitedList, \
-    Group
+    Group, Optional, Forward, StringEnd, OneOrMore
 
 from .codecs import ber
 from .schema import \
@@ -109,7 +109,7 @@ def compile_string(string, codec=None):
 
     definitions = []
 
-    for definition in tokens[1]:
+    for definition in tokens[2]:
         if definition[2] == 'SEQUENCE':
             items = []
 
@@ -148,28 +148,115 @@ def compile_file(filename, codec=None):
 def _create_grammar():
     # Keywords.
     SEQUENCE = Keyword('SEQUENCE')
+    CHOICE = Keyword('CHOICE')
     ENUMERATED = Keyword('ENUMERATED')
     DEFINITIONS = Keyword('DEFINITIONS')
     BEGIN = Keyword('BEGIN')
     END = Keyword('END')
+    AUTOMATIC = Keyword('AUTOMATIC')
+    TAGS = Keyword('TAGS')
+    OPTIONAL = Keyword('OPTIONAL')
+    OF = Keyword('OF')
+    SIZE = Keyword('SIZE')
+    INTEGER = Keyword('INTEGER')
+    BIT = Keyword('BIT')
+    STRING = Keyword('STRING')
+    OCTET = Keyword('OCTET')
+    DEFAULT = Keyword('DEFAULT')
+    IMPORTS = Keyword('IMPORTS')
+    FROM = Keyword('FROM')
+    CONTAINING = Keyword('CONTAINING')
 
-    word = Word(printables, excludeChars=',')
+    # Various literals.
+    word = Word(printables, excludeChars=',(){}.:=;')
     assignment = Literal('::=')
+    lparen = Literal('(')
+    rparen = Literal(')')
     lbrace = Literal('{')
     rbrace = Literal('}')
+    scolon = Literal(';')
+    dotx2 = Literal('..')
+    dotx3 = Literal('...')
 
-    type_ = word
+    # Forward declarations.
+    sequence = Forward()
+    choice = Forward()
+    integer = Forward()
+    bit_string = Forward()
+    octet_string = Forward()
+    enumerated = Forward()
+    sequence_of = Forward()
+
+    range_ = (word + dotx2 + word)
+    type_ = (sequence
+             | choice
+             | integer
+             | bit_string
+             | octet_string
+             | enumerated
+             | sequence_of
+             | word)
     item = Group(word + type_)
-    sequence = (SEQUENCE + lbrace
-                + Group(delimitedList(item))
-                + rbrace)
-    enumerated = word
-    definition = Group(word + assignment + (sequence | enumerated))
-    module_body = Group(ZeroOrMore(definition))
-    module = (Group(word + DEFINITIONS + assignment + BEGIN)
+
+    # Type definitions.
+    sequence << (SEQUENCE + lbrace
+                 + Group(Optional(delimitedList((item
+                                                 + Optional(OPTIONAL)
+                                                 + Optional(DEFAULT + word))
+                                                | dotx3)))
+                 + rbrace)
+    sequence_of << (SEQUENCE
+                    + lparen + SIZE + lparen + (range_ | word) + rparen + rparen
+                    + OF
+                    + type_)
+    choice << (CHOICE + lbrace
+               + Group(Optional(delimitedList((item
+                                               + Optional(OPTIONAL))
+                                              | dotx3)))
+               + rbrace)
+    enumerated << (ENUMERATED + lbrace
+                   + Group(delimitedList(word | dotx3))
+                   + rbrace)
+    integer << (INTEGER
+                + Optional(lparen + (range_ | word) + rparen))
+    bit_string << (BIT + STRING
+                   + lparen + SIZE + lparen
+                   + word
+                   + rparen + rparen)
+    octet_string << (OCTET + STRING
+                     + Optional(lparen
+                                + ((SIZE + lparen
+                                    + (range_ | word)
+                                    + rparen)
+                                   | (CONTAINING + word))
+                                + rparen))
+
+    # Top level definitions.
+    definition = Group((word + assignment + (sequence
+                                             | choice
+                                             | enumerated
+                                             | sequence_of
+                                             | integer
+                                             | bit_string
+                                             | octet_string
+                                             | word))
+                       | (word + INTEGER + assignment + word))
+    module_body = (Group(Optional(IMPORTS
+                                  + delimitedList(word)
+                                  + FROM + word + scolon))
+                   + Group(ZeroOrMore(definition)))
+    module = (Group(word
+                    + DEFINITIONS
+                    + Optional(AUTOMATIC)
+                    + Optional(TAGS)
+                    + assignment
+                    + BEGIN)
               + module_body
               + END)
-    comment = Regex(r"--(?:\\\n|[^\n])*")
-    module.ignore(comment)
 
-    return module
+    # The whole specification.
+    specification = OneOrMore(module) + StringEnd()
+    comment = Regex(r"--(?:\\\n|[^\n])*")
+    specification.ignore(comment)
+
+    return specification
