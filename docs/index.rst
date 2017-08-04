@@ -18,10 +18,10 @@ Functions and classes
 
 .. autofunction:: asn1tools.compile_string
 
-.. autoclass:: asn1tools.Schema
+.. autoclass:: asn1tools.compiler.Schema
     :members:
 
-.. autoclass:: asn1tools.Type
+.. autoclass:: asn1tools.compiler.Type
     :members:
 
 .. automodule:: asn1tools.schema
