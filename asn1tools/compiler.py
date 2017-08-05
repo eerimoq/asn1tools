@@ -1,10 +1,21 @@
+import logging
+from collections import OrderedDict
+
 from pyparsing import \
     Literal, Keyword, Word, ZeroOrMore, Regex, printables, delimitedList, \
-    Group, Optional, Forward, StringEnd, OneOrMore
+    Group, Optional, Forward, StringEnd, OneOrMore, alphanums
 
 from .codecs import ber
 from .schema import \
-    Module, Sequence, Integer, Boolean, IA5String
+    Module, Sequence, Integer, Boolean, IA5String, Enumerated, \
+    BitString, Choice, SequenceOf, OctetString
+
+
+LOGGER = logging.getLogger(__name__)
+
+
+class CompilerError(Exception):
+    pass
 
 
 class Type(object):
@@ -41,8 +52,8 @@ class Type(object):
 
 class Schema(object):
 
-    def __init__(self, schema, codec):
-        self._schema = schema
+    def __init__(self, modules, codec):
+        self._modules = modules
         self._codec = codec
 
     def encode(self, name, data):
@@ -54,9 +65,14 @@ class Schema(object):
 
         """
 
-        item = self._schema.get_item_by_name(name)
+        for module in self._modules:
+            try:
+                return self._codec.encode(data,
+                                          module.get_type_by_name(name))
+            except LookupError:
+                pass
 
-        return self._codec.encode(data, item)
+        raise LookupError("Type '{}' not found.".format(name))
 
     def decode(self, name, data):
         """Decode given bytes object `data` as given type `name` and return
@@ -67,9 +83,14 @@ class Schema(object):
 
         """
 
-        item = self._schema.get_item_by_name(name)
+        for module in self._modules:
+            try:
+                return self._codec.decode(data,
+                                          module.get_type_by_name(name))
+            except LookupError:
+                pass
 
-        return self._codec.decode(data, item)
+        raise LookupError("Type '{}' not found.".format(name))
 
     def get_type(self, name):
         """Return a :class:`Type` object of type with given name `name`. The
@@ -78,10 +99,214 @@ class Schema(object):
 
         """
 
-        return Type(self._schema.get_item_by_name(name), self._codec)
+        for module in self._modules:
+            try:
+                return Type(module.get_type_by_name(name), self._codec)
+            except LookupError:
+                pass
+
+        raise LookupError("Type '{}' not found.".format(name))
+
+    def get_type_names(self):
+        """Returns a dictionary of lists of all type names per module.
+
+        """
+
+        types = {}
+
+        for module in self._modules:
+            types[module.name] = [type_.name for type_ in module.types]
+
+        return types
 
     def __str__(self):
-        return str(self._schema)
+        return str(self._modules)
+
+
+def _convert_type_tokens_to_sequence(name, value, module, modules):
+    """Recursively convert tokens to classes.
+
+    """
+
+    items = []
+
+    for member in value[4]:
+        # Ignore '...'.
+        if member == ['...']:
+            continue
+
+        item, _ = member
+
+        if item[1] == 'INTEGER':
+            item = Integer(item[0])
+        elif item[1] == 'BOOLEAN':
+            item = Boolean(item[0])
+        elif item[1] == 'IA5String':
+            item = IA5String(item[0])
+        elif item[1] == 'ENUMERATED':
+            item = Enumerated(item[0], {i: v for i, v in enumerate(item[3])})
+        elif item[1] == 'CHOICE':
+            item = Choice(item[0], [])
+        elif item[1:3] == ['BIT', 'STRING']:
+            item = BitString(item[0])
+        elif item[1:3] == ['OCTET', 'STRING']:
+            item = OctetString(item[0])
+        elif item[1:3] == ['SEQUENCE', '{']:
+            item = Sequence(item[0], [])
+        elif item[1] == 'SEQUENCE' and item[3] == 'OF':
+            item = SequenceOf(item[0], [])
+        else:
+            # User defined type.
+            type_name = item[1]
+
+            if type_name in module['types']:
+                _convert_type_tokens_to_class(type_name,
+                                              module['types'][type_name],
+                                              module,
+                                              modules)
+                item = module['types'][type_name]
+            else:
+                item = None
+
+                for from_module, import_types in module['import'].items():
+                    if type_name in import_types:
+                        _convert_type_tokens_to_class(
+                            type_name,
+                            modules[from_module]['types'][type_name],
+                            modules[from_module],
+                            modules)
+                        item = modules[from_module]['types'][type_name]
+                        break
+
+                if item is None:
+                    raise CompilerError('Type {} not found.'.format(
+                        type_name))
+
+        items.append(item)
+
+    module['types'][name] = Sequence(name, items)
+
+
+def _convert_type_tokens_to_choice(name, value, module, modules):
+    """Recursively convert tokens to classes.
+
+    """
+
+    module['types'][name] = Choice(name, [])
+
+
+def _convert_type_tokens_to_integer(name, value, module, modules):
+    """Recursively convert tokens to classes.
+
+    """
+
+    module['types'][name] = Integer(name)
+
+
+def _convert_type_tokens_to_boolean(name, value, module, modules):
+    """Recursively convert tokens to classes.
+
+    """
+
+    module['types'][name] = Boolean(name)
+
+
+def _convert_type_tokens_to_sequence_of(name, value, module, modules):
+    """Recursively convert tokens to classes.
+
+    """
+
+    module['types'][name] = SequenceOf(name, [])
+
+
+def _convert_type_tokens_to_bit_string(name, value, module, modules):
+    """Recursively convert tokens to classes.
+
+    """
+
+    module['types'][name] = BitString(name)
+
+
+def _convert_type_tokens_to_octet_string(name, value, module, modules):
+    """Recursively convert tokens to classes.
+
+    """
+
+    module['types'][name] = OctetString(name)
+
+
+def _convert_type_tokens_to_enumerated(name, value, module, modules):
+    """Recursively convert tokens to classes.
+
+    """
+
+    module['types'][name] = Enumerated(name,
+                                       {i: v
+                                        for i, v in enumerate(value[4])})
+
+
+def _convert_type_tokens_to_user_type(name, value, module, modules):
+    """Recursively convert tokens to classes.
+
+    """
+
+    type_name = value[2]
+
+    if type_name in module['types']:
+        _convert_type_tokens_to_class(type_name,
+                                      module['types'][type_name],
+                                      module,
+                                      modules)
+        item = module['types'][type_name]
+    else:
+        item = None
+
+        for from_module, import_types in module['import'].items():
+            if type_name in import_types:
+                _convert_type_tokens_to_class(
+                    type_name,
+                    modules[from_module]['types'][type_name],
+                    modules[from_module],
+                    modules)
+                item = modules[from_module]['types'][type_name]
+                break
+
+        if item is None:
+            raise CompilerError('Type {} not found.'.format(
+                type_name))
+
+    module['types'][name] = item
+
+
+def _convert_type_tokens_to_class(name, value, module, modules):
+    """Recursively convert type tokens to classes.
+
+    """
+
+    # Return immediately if the type is already converted to a class.
+    if not isinstance(value, list):
+        return
+
+    if value[1:4] == ['::=', 'SEQUENCE', '{']:
+        _convert_type_tokens_to_sequence(name, value, module, modules)
+    elif value[1:4] == ['::=', 'CHOICE', '{']:
+        _convert_type_tokens_to_choice(name, value, module, modules)
+    elif value[1:3] == ['::=', 'INTEGER']:
+        _convert_type_tokens_to_integer(name, value, module, modules)
+    elif value[1:3] == ['::=', 'BOOLEAN']:
+        _convert_type_tokens_to_boolean(name, value, module, modules)
+    elif value[1:3] == ['::=', 'SEQUENCE'] and value[4] == 'OF':
+        _convert_type_tokens_to_sequence_of(name, value, module, modules)
+    elif value[1:4] == ['::=', 'BIT', 'STRING']:
+        _convert_type_tokens_to_bit_string(name, value, module, modules)
+    elif value[1:4] == ['::=', 'OCTET', 'STRING']:
+        _convert_type_tokens_to_octet_string(name, value, module, modules)
+    elif value[1:4] == ['::=', 'ENUMERATED', '{']:
+        _convert_type_tokens_to_enumerated(name, value, module, modules)
+    elif len(value) == 3:
+        _convert_type_tokens_to_user_type(name, value, module, modules)
+    else:
+        raise NotImplementedError(value)
 
 
 def compile_string(string, codec=None):
@@ -99,33 +324,53 @@ def compile_string(string, codec=None):
         codec = ber
 
     grammar = _create_grammar()
-    tokens = grammar.parseString(string)
+    tokens = grammar.parseString(string).asList()
 
-    #print(tokens)
+    modules = OrderedDict()
 
-    definitions = []
+    # Put tokens into dictionaries.
+    for module in tokens:
+        module_name = module[0][0]
 
-    for definition in tokens[2]:
-        if definition[2] == 'SEQUENCE':
-            items = []
+        LOGGER.debug("Found module '%s'.", module_name)
 
-            for item in definition[4]:
-                if item[1] == 'INTEGER':
-                    items.append(Integer(item[0]))
-                elif item[1] == 'BOOLEAN':
-                    items.append(Boolean(item[0]))
-                elif item[1] == 'IA5String':
-                    items.append(IA5String(item[0]))
-                else:
-                    raise NotImplementedError(item[1])
+        import_tokens = OrderedDict()
+        types_tokens = OrderedDict()
+        values_tokens = OrderedDict()
 
-            definitions.append(Sequence(definition[0], items))
-        else:
-            raise NotImplementedError(definition[2])
+        if module[1]:
+            from_name = module[1][-2]
+            LOGGER.debug("Found imports from '%s'.", from_name)
+            import_tokens[from_name] = module[1][1]
 
-    schema = Module(tokens[0][0], definitions)
+        for definition in module[2]:
+            name = definition[0]
 
-    return Schema(schema, codec)
+            if name[0].isupper():
+                LOGGER.debug("Found type '%s'.", name)
+                types_tokens[name] = definition
+            else:
+                LOGGER.debug("Found value '%s'.", name)
+                values_tokens[name] = definition
+
+        modules[module_name] = {
+            'import': import_tokens,
+            'types': types_tokens,
+            'values': values_tokens
+        }
+
+    # Recursively convert token lists to schema classes and their
+    # instances.
+    for module in modules.values():
+        for name, value in module['types'].items():
+            _convert_type_tokens_to_class(name, value, module, modules)
+
+    return Schema([Module(name,
+                          [v for v in values['types'].values()],
+                          values['import'],
+                          values['values'])
+                   for name, values in modules.items()],
+                  codec)
 
 
 def compile_file(filename, codec=None):
@@ -165,6 +410,8 @@ def _create_grammar():
 
     # Various literals.
     word = Word(printables, excludeChars=',(){}.:=;')
+    type_name = Regex(r'[A-Z][a-zA-Z0-9-]*')
+    value_name = Word(alphanums + '-')
     assignment = Literal('::=')
     lparen = Literal('(')
     rparen = Literal(')')
@@ -192,17 +439,20 @@ def _create_grammar():
              | enumerated
              | sequence_of
              | word)
-    item = Group(word + type_)
+    item = Group(value_name + type_)
 
     # Type definitions.
     sequence << (SEQUENCE + lbrace
-                 + Group(Optional(delimitedList((item
-                                                 + Optional(OPTIONAL)
-                                                 + Optional(DEFAULT + word))
-                                                | dotx3)))
+                 + Group(Optional(delimitedList(
+                     Group((item
+                            + Group(Optional(OPTIONAL)
+                                    + Optional(DEFAULT + word)))
+                           | dotx3))))
                  + rbrace)
     sequence_of << (SEQUENCE
-                    + lparen + SIZE + lparen + (range_ | word) + rparen + rparen
+                    + Group(lparen + SIZE + lparen
+                            + (range_ | word)
+                            + rparen + rparen)
                     + OF
                     + type_)
     choice << (CHOICE + lbrace
@@ -228,27 +478,27 @@ def _create_grammar():
                                 + rparen))
 
     # Top level definitions.
-    definition = Group((word + assignment + (sequence
-                                             | choice
-                                             | enumerated
-                                             | sequence_of
-                                             | integer
-                                             | bit_string
-                                             | octet_string
-                                             | word))
+    definition = Group((type_name + assignment + (sequence
+                                                  | choice
+                                                  | enumerated
+                                                  | sequence_of
+                                                  | integer
+                                                  | bit_string
+                                                  | octet_string
+                                                  | word))
                        | (word + INTEGER + assignment + word))
     module_body = (Group(Optional(IMPORTS
-                                  + delimitedList(word)
+                                  + Group(delimitedList(word))
                                   + FROM + word + scolon))
                    + Group(ZeroOrMore(definition)))
-    module = (Group(word
-                    + DEFINITIONS
-                    + Optional(AUTOMATIC)
-                    + Optional(TAGS)
-                    + assignment
-                    + BEGIN)
-              + module_body
-              + END)
+    module = Group(Group(word
+                         + DEFINITIONS
+                         + Optional(AUTOMATIC)
+                         + Optional(TAGS)
+                         + assignment
+                         + BEGIN)
+                   + module_body
+                   + END)
 
     # The whole specification.
     specification = OneOrMore(module) + StringEnd()

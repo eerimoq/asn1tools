@@ -2,6 +2,7 @@
 
 """
 
+
 class Item(object):
     """Abstract base class of an item. All ASN.1 type definitions should
     subclass this class.
@@ -12,13 +13,11 @@ class Item(object):
                  name=None,
                  default=None,
                  tag=None,
-                 optional=False,
-                 values=None):
+                 optional=False):
         self._name = name
         self._default = default
         self._tag = tag
         self._optional = optional
-        self._values = values
 
     @property
     def name(self):
@@ -52,14 +51,6 @@ class Item(object):
 
         return self._optional
 
-    @property
-    def values(self):
-        """The values of the item, or None is unavailable.
-
-        """
-
-        return self._values
-
     def dump_lines(self, assignment=False):
         raise NotImplementedError()
 
@@ -86,22 +77,52 @@ class Module(Item):
 
     """
 
-    def __init__(self, name, items, **kwargs):
+    def __init__(self, name, types=None, imports=None, values=None, **kwargs):
         super(Module, self).__init__(name, **kwargs)
-        self.items = items
 
-    def get_item_by_name(self, name):
-        for item in self.items:
-            if item.name == name:
-                return item
+        if types is None:
+            types = []
+        self.types = types
 
-        raise LookupError("No item with name '{}'.".format(name))
+        if imports is None:
+            imports = []
+        self.imports = imports
+
+        if values is None:
+            values = []
+        self.values = values
+
+    def get_imports_by_module(self, name):
+        for import_ in self.imports:
+            if import_.name == name:
+                return import_
+
+        raise LookupError("Imports '{}' not found.".format(name))
+
+    def get_type_by_name(self, name):
+        for type_ in self.types:
+            if type_.name == name:
+                return type_
+
+        raise LookupError("Type '{}' not found.".format(name))
+
+    def get_value_by_name(self, name):
+        for value in self.values:
+            if value.name == name:
+                return value
+
+        raise LookupError("Value '{}' not found.".format(name))
 
     def dump_lines(self, assignment=False):
         return ([self.name + ' DEFINITIONS ::= BEGIN']
-                + _indent_lines(_dump_list_lines(self.items, assignment=True))
+                + _indent_lines(_dump_list_lines(self.types, assignment=True))
                 + ['END'])
 
+    def __repr__(self):
+        return '{} (imports={}, types={}, values={})'.format(self.name,
+                                                             self.imports,
+                                                             self.types,
+                                                             self.values)
 
 class Sequence(Item):
     """The ASN.1 SEQUENCE type.
@@ -163,8 +184,9 @@ class Enumerated(Item):
 
     def dump_lines(self, assignment=False):
         return ([self.name + ' ENUMERATED {']
-                + _indent_lines(['{}({})'.format(value, key)
-                                 for key, value in self.values.items()])
+                + _indent_lines(_delimited_lines(
+                    ['{}({})'.format(value, key)
+                     for key, value in self.values.items()]))
                 + ['}' + self.dump_qualifiers()])
 
 
@@ -181,6 +203,15 @@ class Integer(Item):
     """The ASN.1 INTEGER type.
 
     """
+
+    def __init__(self, name=None, values=None, **kwargs):
+        super(Integer, self).__init__(name, **kwargs)
+
+        if values is None:
+            if hasattr(self.__class__, 'values'):
+                values = getattr(self.__class__, 'values')
+
+        self.values = values
 
     def dump_lines(self, assignment=False):
         return [self.name + ' INTEGER' + self.dump_qualifiers()]
@@ -218,9 +249,7 @@ class SequenceOf(Item):
         self.item = item
 
     def dump_lines(self, assignment=False):
-        return ([self.name + ' SEQUENCE OF']
-                + _indent_lines(self.item.dump_lines())
-                + [self.dump_qualifiers()])
+        return [self.name + ' SEQUENCE OF']
 
 
 class BitString(Item):
@@ -257,3 +286,8 @@ def _dump_list_lines(items, assignment=False):
         lines += item_lines
 
     return lines
+
+
+def _delimited_lines(lines):
+    return [line + (',' if i < len(lines) else '')
+            for i, line in enumerate(lines, 1)]
