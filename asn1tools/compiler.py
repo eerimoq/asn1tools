@@ -155,42 +155,57 @@ def _convert_values(value, module, modules):
 
     values = []
 
+    if module['automatic_tags']:
+        tag = 0
+    else:
+        tag = None
+
     for member in value:
         # Ignore '...'.
         if member == ['...']:
             continue
 
-        item, _ = member
+        item, qualifiers = member
         value_name = item[0]
+        optional = 'OPTIONAL' in qualifiers
 
         if item[1] == 'INTEGER':
-            item = Integer(value_name)
+            item = Integer(value_name, optional=optional, tag=tag)
         elif item[1] == 'BOOLEAN':
-            item = Boolean(value_name)
+            item = Boolean(value_name, optional=optional, tag=tag)
         elif item[1] == 'IA5String':
-            item = IA5String(value_name)
+            item = IA5String(value_name, optional=optional, tag=tag)
         elif item[1] == 'ENUMERATED':
             item = Enumerated(value_name, {i: v
                                            for i, v in enumerate(item[3])
-                                           if v != '...'})
+                                           if v != '...'},
+                              optional=optional,
+                              tag=tag)
         elif item[1] == 'CHOICE':
             item = Choice(value_name,
                           _convert_values(item[3],
                                           module,
-                                          modules))
+                                          modules),
+                          optional=optional,
+                          tag=tag)
         elif item[1:3] == ['BIT', 'STRING']:
-            item = BitString(value_name)
+            item = BitString(value_name,
+                             int(item[6]),
+                             optional=optional,
+                             tag=tag)
         elif item[1:3] == ['OCTET', 'STRING']:
-            item = OctetString(value_name)
+            item = OctetString(value_name, optional=optional, tag=tag)
         elif item[1:3] == ['SEQUENCE', '{']:
             item = Sequence(value_name,
                             _convert_values(item[3],
                                             module,
-                                            modules))
+                                            modules),
+                            optional=optional,
+                            tag=tag)
         elif item[1] == 'SEQUENCE' and item[3] == 'OF':
-            item = SequenceOf(value_name, [])
+            item = SequenceOf(value_name, [], optional=optional, tag=tag)
         elif item[1] == 'NULL':
-            item = Null(value_name)
+            item = Null(value_name, optional=optional, tag=tag)
         else:
             # User defined type.
             type_name = item[1]
@@ -200,7 +215,9 @@ def _convert_values(value, module, modules):
                                               module['types'][type_name],
                                               module,
                                               modules)
-                item = module['classes'][type_name](value_name)
+                item = module['classes'][type_name](value_name,
+                                                    optional=optional,
+                                                    tag=tag)
             else:
                 item = None
 
@@ -212,7 +229,10 @@ def _convert_values(value, module, modules):
                                 modules[from_module]['types'][type_name],
                                 modules[from_module],
                                 modules)
-                        item = modules[from_module]['classes'][type_name](value_name)
+                        item = modules[from_module]['classes'][type_name](
+                            value_name,
+                            optional=optional,
+                            tag=tag)
                         break
 
                 if item is None:
@@ -220,6 +240,9 @@ def _convert_values(value, module, modules):
                         type_name))
 
         values.append(item)
+
+        if tag is not None:
+            tag += 1
 
     return values
 
@@ -278,8 +301,10 @@ def _convert_type_tokens_to_bit_string(name, value, module, modules):
 
     """
 
-    module['types'][name] = BitString(name)
-    module['classes'][name] = type(name, (BitString, ), {})
+    size = int(value[7])
+
+    module['types'][name] = BitString(name, size)
+    module['classes'][name] = type(name, (BitString, ), {'size': size})
 
 
 def _convert_type_tokens_to_octet_string(name, value, module, modules):
@@ -395,6 +420,11 @@ def compile_string(string, codec=None):
 
         LOGGER.debug("Found module '%s'.", module_name)
 
+        if 'TAGS' in module[0] and 'AUTOMATIC' in module[0]:
+            automatic_tags = True
+        else:
+            automatic_tags = False
+
         import_tokens = OrderedDict()
         types_tokens = OrderedDict()
         values_tokens = OrderedDict()
@@ -415,6 +445,7 @@ def compile_string(string, codec=None):
                 values_tokens[name] = definition
 
         modules[module_name] = {
+            'automatic_tags': automatic_tags,
             'import': import_tokens,
             'types': types_tokens,
             'values': values_tokens,

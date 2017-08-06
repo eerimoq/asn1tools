@@ -264,6 +264,15 @@ class BitString(Item):
 
     """
 
+    def __init__(self, name=None, size=None, **kwargs):
+        super(BitString, self).__init__(name, **kwargs)
+
+        if size is None:
+            if hasattr(self.__class__, 'size'):
+                size = getattr(self.__class__, 'size')
+
+        self.size = size
+
     def dump_lines(self, assignment=False):
         return [self.name + ' BIT STRING' + self.dump_qualifiers()]
 

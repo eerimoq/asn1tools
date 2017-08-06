@@ -8,7 +8,9 @@ import math
 import bitstruct
 
 from . import EncodeError, DecodeError
-from ..schema import Module, Sequence, Integer, Boolean, IA5String
+from ..schema import \
+    Module, Sequence, Integer, Boolean, IA5String, \
+    Choice, Enumerated, BitString
 
 
 class Class(object):
@@ -23,7 +25,7 @@ class Encoding(object):
     CONSTRUCTED = 0x20
 
 
-class Number(object):
+class Tag(object):
     END_OF_CONTENTS   = 0x00
     BOOLEAN           = 0x01
     INTEGER           = 0x02
@@ -55,27 +57,29 @@ class Number(object):
     BMP_STRING        = 0x1e
 
 
-def _encode_integer(decoded):
+def _encode_integer(decoded, schema):
     if decoded == 0:
         bits = 8
     else:
         bits = int(8 * math.ceil((math.log(abs(decoded), 2) + 1) / 8))
 
     return bitstruct.pack('u8u8s' + str(bits),
-                          Number.INTEGER,
+                          Tag.INTEGER
+                          if schema.tag is None
+                          else Class.CONTEXT_SPECIFIC | schema.tag,
                           bits / 8,
                           decoded)
 
 
 def _encode_boolean(decoded):
     return bitstruct.pack('u8u8b8',
-                          Number.BOOLEAN,
+                          Tag.BOOLEAN,
                           1,
                           decoded)
 
 
 def _encode_ia5_string(decoded):
-    return (bitstruct.pack('u8u8', Number.IA5_STRING, len(decoded))
+    return (bitstruct.pack('u8u8', Tag.IA5_STRING, len(decoded))
             + decoded.encode('ascii'))
 
 
@@ -85,14 +89,55 @@ def _encode_sequence(decoded, schema):
     for item in schema.values:
         if item.name in decoded:
             encoded += _encode_item(decoded[item.name], item)
+        elif item.optional:
+            pass
         elif item.default is None:
             raise EncodeError("Missing value for item '{}' in schema '{}'.".format(
                 item.name,
                 schema.name))
 
     return struct.pack('BB',
-                       Encoding.CONSTRUCTED | Number.SEQUENCE,
+                       Encoding.CONSTRUCTED
+                       | (Tag.SEQUENCE
+                          if schema.tag is None
+                          else Class.CONTEXT_SPECIFIC | schema.tag),
                        len(encoded)) + encoded
+
+
+def _encode_choice(decoded, schema):
+    for item in schema.values:
+        if item.name in decoded:
+            encoded = _encode_item(decoded[item.name], item)
+
+            if schema.tag is None:
+                return encoded
+            else:
+                return struct.pack('BB',
+                                   (Class.CONTEXT_SPECIFIC
+                                    | Encoding.CONSTRUCTED
+                                    | schema.tag),
+                                   len(encoded)) + encoded
+
+    raise EncodeError("No choice found.")
+
+
+def _encode_enumerated(decoded, schema):
+    for value, name in schema.values.items():
+        if decoded == name:
+            return _encode_integer(value, schema)
+
+    raise EncodeError("No enumerated found.")
+
+
+def _encode_bit_string(decoded, schema):
+    number_of_unused_bits = (8 * len(decoded) - schema.size)
+
+    return struct.pack('BBB',
+                       Tag.BIT_STRING
+                       if schema.tag is None
+                       else Class.CONTEXT_SPECIFIC | schema.tag,
+                       len(decoded) + 1,
+                       number_of_unused_bits) + decoded
 
 
 def _encode_module(decoded, schema):
@@ -109,7 +154,7 @@ def _encode_module(decoded, schema):
 
 def _encode_item(decoded, schema):
     if isinstance(schema, Integer):
-        encoded = _encode_integer(decoded)
+        encoded = _encode_integer(decoded, schema)
     elif isinstance(schema, Boolean):
         encoded = _encode_boolean(decoded)
     elif isinstance(schema, Sequence):
@@ -118,6 +163,12 @@ def _encode_item(decoded, schema):
         encoded = _encode_ia5_string(decoded)
     elif isinstance(schema, Module):
         encoded = _encode_module(decoded, schema)
+    elif isinstance(schema, Choice):
+        encoded = _encode_choice(decoded, schema)
+    elif isinstance(schema, Enumerated):
+        encoded = _encode_enumerated(decoded, schema)
+    elif isinstance(schema, BitString):
+        encoded = _encode_bit_string(decoded, schema)
     else:
         raise NotImplementedError('encoding of schema {} is not supported'.format(
             type(schema)))
@@ -144,16 +195,16 @@ def _decode_identifier(encoded):
     octet = encoded[0]
     class_ = (octet & 0xc0)
     encoding = (octet & 0x20)
-    number = (octet & 0x1f)
+    tag = (octet & 0x1f)
 
-    return class_, encoding, number, encoded[1:]
+    return class_, encoding, tag, encoded[1:]
 
 
 def _decode_integer(encoded):
-    class_, encoding, number, encoded = _decode_identifier(encoded)
+    class_, encoding, tag, encoded = _decode_identifier(encoded)
 
     if not ((class_ == Class.CONTEXT_SPECIFIC)
-            or (class_ == Class.UNIVERSAL and number == Number.INTEGER)):
+            or (class_ == Class.UNIVERSAL and tag == Tag.INTEGER)):
         raise DecodeError()
 
     if encoding != Encoding.PRIMITIVE:
@@ -165,10 +216,10 @@ def _decode_integer(encoded):
 
 
 def _decode_boolean(encoded):
-    class_, encoding, number, encoded = _decode_identifier(encoded)
+    class_, encoding, tag, encoded = _decode_identifier(encoded)
 
     if not ((class_ == Class.CONTEXT_SPECIFIC)
-            or (class_ == Class.UNIVERSAL and number == Number.BOOLEAN)):
+            or (class_ == Class.UNIVERSAL and tag == Tag.BOOLEAN)):
         raise DecodeError()
 
     if encoding != Encoding.PRIMITIVE:
@@ -183,9 +234,9 @@ def _decode_boolean(encoded):
 
 
 def _decode_ia5_string(encoded):
-    _, encoding, number, encoded = _decode_identifier(encoded)
+    _, encoding, tag, encoded = _decode_identifier(encoded)
 
-    if number != Number.IA5_STRING:
+    if tag != Tag.IA5_STRING:
         raise DecodeError()
 
     if encoding != Encoding.PRIMITIVE:
@@ -197,16 +248,16 @@ def _decode_ia5_string(encoded):
 
 
 def _decode_sequence(encoded, schema):
-    _, encoding, number, encoded = _decode_identifier(encoded)
+    _, encoding, tag, encoded = _decode_identifier(encoded)
 
-    if number != Number.SEQUENCE:
+    if tag != Tag.SEQUENCE:
         raise DecodeError()
 
     if encoding != Encoding.CONSTRUCTED:
         raise DecodeError()
 
     if encoded[0] == 0x80:
-        # Decode until an end-of-contents number is found.
+        # Decode until an end-of-contents tag is found.
         raise NotImplementedError()
     else:
         length, encoded = _decode_length_definite(encoded)

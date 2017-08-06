@@ -532,6 +532,51 @@ END""")
                 ]
             })
 
+        # Encode various messages.
+        encoded = rrc.encode('PCCH-Message',
+                             {
+                                 'message': {
+                                     'c1' : {
+                                         'paging': {
+                                             'systemInfoModification': 'true',
+                                             'nonCriticalExtension': {
+                                             }
+                                         }
+                                     }
+                                 }
+                             })
+        self.assertEqual(encoded,
+                         b'0\x0b\xa0\t\xa0\x07\xa0\x05\x81\x01\x00\xa3\x00')
+
+        encoded = rrc.encode('PCCH-Message',
+                             {
+                                 'message': {
+                                     'c1' : {
+                                         'paging': {
+                                         }
+                                     }
+                                 }
+                             })
+        self.assertEqual(encoded,
+                         b'0\x06\xa0\x04\xa0\x02\xa0\x00')
+
+        encoded = rrc.encode('BCCH-BCH-Message',
+                             {
+                                 'message': {
+                                     'dl-Bandwidth': 'n6',
+                                     'phich-Config': {
+                                         'phich-Duration': 'normal',
+                                         'phich-Resource': 'half'
+                                     },
+                                     'systemFrameNumber': b'\x12',
+                                     'spare': b'\x34\x56'
+                                 }
+                             })
+        self.assertEqual(encoded,
+                         b'0\x16\xa0\x14\x80\x01\x00\xa1' \
+                         b'\x06\x80\x01\x00\x81\x01\x01\x82' \
+                         b'\x02\x00\x12\x83\x03\x064V')
+
 
 # This file is not '__main__' when executed via 'python setup.py
 # test'.
