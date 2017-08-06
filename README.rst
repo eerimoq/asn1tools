@@ -17,7 +17,7 @@ Installation
 
     pip install asn1tools
 
-Example usage
+Example Usage
 =============
 
 This is an example ASN.1 specification defining the messages of a
