@@ -8,7 +8,7 @@ from pyparsing import \
 from .codecs import ber
 from .schema import \
     Module, Sequence, Integer, Boolean, IA5String, Enumerated, \
-    BitString, Choice, SequenceOf, OctetString
+    BitString, Choice, SequenceOf, OctetString, Null
 
 
 LOGGER = logging.getLogger(__name__)
@@ -120,41 +120,53 @@ class Schema(object):
         return types
 
     def __str__(self):
-        return str(self._modules)
+        return '\n'.join([str(module) for module in self._modules])
 
 
-def _convert_type_tokens_to_sequence(name, value, module, modules):
-    """Recursively convert tokens to classes.
+def _convert_values(value, module, modules):
+    """Convert a list of values tokens to classes. Each value has a name
+    and a data part.
 
     """
 
-    items = []
+    values = []
 
-    for member in value[4]:
+    for member in value:
         # Ignore '...'.
         if member == ['...']:
             continue
 
         item, _ = member
+        value_name = item[0]
 
         if item[1] == 'INTEGER':
-            item = Integer(item[0])
+            item = Integer(value_name)
         elif item[1] == 'BOOLEAN':
-            item = Boolean(item[0])
+            item = Boolean(value_name)
         elif item[1] == 'IA5String':
-            item = IA5String(item[0])
+            item = IA5String(value_name)
         elif item[1] == 'ENUMERATED':
-            item = Enumerated(item[0], {i: v for i, v in enumerate(item[3])})
+            item = Enumerated(value_name, {i: v
+                                           for i, v in enumerate(item[3])
+                                           if v != '...'})
         elif item[1] == 'CHOICE':
-            item = Choice(item[0], [])
+            item = Choice(value_name,
+                          _convert_values(item[3],
+                                          module,
+                                          modules))
         elif item[1:3] == ['BIT', 'STRING']:
-            item = BitString(item[0])
+            item = BitString(value_name)
         elif item[1:3] == ['OCTET', 'STRING']:
-            item = OctetString(item[0])
+            item = OctetString(value_name)
         elif item[1:3] == ['SEQUENCE', '{']:
-            item = Sequence(item[0], [])
+            item = Sequence(value_name,
+                            _convert_values(item[3],
+                                            module,
+                                            modules))
         elif item[1] == 'SEQUENCE' and item[3] == 'OF':
-            item = SequenceOf(item[0], [])
+            item = SequenceOf(value_name, [])
+        elif item[1] == 'NULL':
+            item = Null(value_name)
         else:
             # User defined type.
             type_name = item[1]
@@ -164,27 +176,39 @@ def _convert_type_tokens_to_sequence(name, value, module, modules):
                                               module['types'][type_name],
                                               module,
                                               modules)
-                item = module['types'][type_name]
+                item = module['classes'][type_name](value_name)
             else:
                 item = None
 
                 for from_module, import_types in module['import'].items():
                     if type_name in import_types:
-                        _convert_type_tokens_to_class(
-                            type_name,
-                            modules[from_module]['types'][type_name],
-                            modules[from_module],
-                            modules)
-                        item = modules[from_module]['types'][type_name]
+                        if type_name not in modules[from_module]['types']:
+                            _convert_type_tokens_to_class(
+                                type_name,
+                                modules[from_module]['types'][type_name],
+                                modules[from_module],
+                                modules)
+                        item = modules[from_module]['classes'][type_name](value_name)
                         break
 
                 if item is None:
                     raise CompilerError('Type {} not found.'.format(
                         type_name))
 
-        items.append(item)
+        values.append(item)
 
-    module['types'][name] = Sequence(name, items)
+    return values
+
+
+def _convert_type_tokens_to_sequence(name, value, module, modules):
+    """Recursively convert tokens to classes.
+
+    """
+
+    values = _convert_values(value[4], module, modules)
+
+    module['types'][name] = Sequence(name, values)
+    module['classes'][name] = type(name, (Sequence, ), {'values': values})
 
 
 def _convert_type_tokens_to_choice(name, value, module, modules):
@@ -192,7 +216,10 @@ def _convert_type_tokens_to_choice(name, value, module, modules):
 
     """
 
-    module['types'][name] = Choice(name, [])
+    values = _convert_values(value[4], module, modules)
+
+    module['types'][name] = Choice(name, values)
+    module['classes'][name] = type(name, (Choice, ), {'values': values})
 
 
 def _convert_type_tokens_to_integer(name, value, module, modules):
@@ -201,6 +228,7 @@ def _convert_type_tokens_to_integer(name, value, module, modules):
     """
 
     module['types'][name] = Integer(name)
+    module['classes'][name] = type(name, (Integer, ), {})
 
 
 def _convert_type_tokens_to_boolean(name, value, module, modules):
@@ -209,6 +237,7 @@ def _convert_type_tokens_to_boolean(name, value, module, modules):
     """
 
     module['types'][name] = Boolean(name)
+    module['classes'][name] = type(name, (Boolean, ), {})
 
 
 def _convert_type_tokens_to_sequence_of(name, value, module, modules):
@@ -217,6 +246,7 @@ def _convert_type_tokens_to_sequence_of(name, value, module, modules):
     """
 
     module['types'][name] = SequenceOf(name, [])
+    module['classes'][name] = type(name, (SequenceOf, ), {'item': []})
 
 
 def _convert_type_tokens_to_bit_string(name, value, module, modules):
@@ -225,6 +255,7 @@ def _convert_type_tokens_to_bit_string(name, value, module, modules):
     """
 
     module['types'][name] = BitString(name)
+    module['classes'][name] = type(name, (BitString, ), {})
 
 
 def _convert_type_tokens_to_octet_string(name, value, module, modules):
@@ -233,6 +264,7 @@ def _convert_type_tokens_to_octet_string(name, value, module, modules):
     """
 
     module['types'][name] = OctetString(name)
+    module['classes'][name] = type(name, (OctetString, ), {})
 
 
 def _convert_type_tokens_to_enumerated(name, value, module, modules):
@@ -240,9 +272,12 @@ def _convert_type_tokens_to_enumerated(name, value, module, modules):
 
     """
 
-    module['types'][name] = Enumerated(name,
-                                       {i: v
-                                        for i, v in enumerate(value[4])})
+    module['classes'][name] = type(name,
+                                   (Enumerated, ),
+                                   {'values': {i: v
+                                               for i, v in enumerate(value[4])
+                                               if v != '...'}})
+    module['types'][name] = module['classes'][name](name)
 
 
 def _convert_type_tokens_to_user_type(name, value, module, modules):
@@ -257,25 +292,27 @@ def _convert_type_tokens_to_user_type(name, value, module, modules):
                                       module['types'][type_name],
                                       module,
                                       modules)
-        item = module['types'][type_name]
+        class_ = module['classes'][type_name]
     else:
-        item = None
+        class_ = None
 
         for from_module, import_types in module['import'].items():
             if type_name in import_types:
-                _convert_type_tokens_to_class(
-                    type_name,
-                    modules[from_module]['types'][type_name],
-                    modules[from_module],
-                    modules)
-                item = modules[from_module]['types'][type_name]
+                if type_name not in modules[from_module]['types']:
+                    _convert_type_tokens_to_class(
+                        type_name,
+                        modules[from_module]['types'][type_name],
+                        modules[from_module],
+                        modules)
+                class_ = modules[from_module]['classes'][type_name]
                 break
 
-        if item is None:
+        if class_ is None:
             raise CompilerError('Type {} not found.'.format(
                 type_name))
 
-    module['types'][name] = item
+    module['types'][name] = class_(name)
+    module['classes'][name] = class_
 
 
 def _convert_type_tokens_to_class(name, value, module, modules):
@@ -356,7 +393,8 @@ def compile_string(string, codec=None):
         modules[module_name] = {
             'import': import_tokens,
             'types': types_tokens,
-            'values': values_tokens
+            'values': values_tokens,
+            'classes': {}
         }
 
     # Recursively convert token lists to schema classes and their
@@ -456,9 +494,10 @@ def _create_grammar():
                     + OF
                     + type_)
     choice << (CHOICE + lbrace
-               + Group(Optional(delimitedList((item
-                                               + Optional(OPTIONAL))
-                                              | dotx3)))
+               + Group(Optional(delimitedList(
+                   Group((item
+                          + Group(Optional(OPTIONAL)))
+                         | dotx3))))
                + rbrace)
     enumerated << (ENUMERATED + lbrace
                    + Group(delimitedList(word | dotx3))

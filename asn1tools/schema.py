@@ -1,4 +1,4 @@
-"""ASN.1 schema (aka module) type definitions.
+"""ASN.1 schema type definitions.
 
 """
 
@@ -129,13 +129,13 @@ class Sequence(Item):
 
     """
 
-    def __init__(self, name=None, items=None, **kwargs):
+    def __init__(self, name=None, values=None, **kwargs):
         super(Sequence, self).__init__(name, **kwargs)
 
-        if items is None:
-            items = getattr(self.__class__, 'items')
+        if values is None:
+            values = getattr(self.__class__, 'values')
 
-        self.items = items
+        self.values = values
 
     def dump_lines(self, assignment=False):
         if self.name is None:
@@ -146,7 +146,7 @@ class Sequence(Item):
             header = [self.name + ' SEQUENCE {']
 
         return (header
-                + _indent_lines(_dump_list_lines(self.items))
+                + _indent_lines(_dump_list_lines(self.values))
                 + ['}' + self.dump_qualifiers()])
 
 
@@ -155,17 +155,24 @@ class Choice(Item):
 
     """
 
-    def __init__(self, name, items=None, **kwargs):
+    def __init__(self, name, values=None, **kwargs):
         super(Choice, self).__init__(name, **kwargs)
 
-        if items is None:
-            items = getattr(self.__class__, 'items')
+        if values is None:
+            values = getattr(self.__class__, 'values')
 
-        self.items = items
+        self.values = values
 
     def dump_lines(self, assignment=False):
-        return ([self.name + ' CHOICE {']
-                + _indent_lines(_dump_list_lines(self.items))
+        if self.name is None:
+            header = ['CHOICE {']
+        elif assignment:
+            header = [self.name + ' ::= CHOICE {']
+        else:
+            header = [self.name + ' CHOICE {']
+
+        return (header
+                + _indent_lines(_dump_list_lines(self.values))
                 + ['}' + self.dump_qualifiers()])
 
 
@@ -268,6 +275,15 @@ class OctetString(Item):
 
     def dump_lines(self, assignment=False):
         return [self.name + ' OCTET STRING' + self.dump_qualifiers()]
+
+
+class Null(Item):
+    """The ASN.1 NULL type.
+
+    """
+
+    def dump_lines(self, assignment=False):
+        return [self.name + ' NULL' + self.dump_qualifiers()]
 
 
 def _indent_lines(lines):

@@ -82,7 +82,7 @@ def _encode_ia5_string(decoded):
 def _encode_sequence(decoded, schema):
     encoded = b''
 
-    for item in schema.items:
+    for item in schema.values:
         if item.name in decoded:
             encoded += _encode_item(decoded[item.name], item)
         elif item.default is None:
@@ -216,7 +216,7 @@ def _decode_sequence(encoded, schema):
 
     values = {}
 
-    for item in schema.items:
+    for item in schema.values:
         try:
             decoded, encoded = _decode_item(encoded, item)
             value = decoded
