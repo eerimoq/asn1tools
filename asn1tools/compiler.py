@@ -1,3 +1,8 @@
+"""Compile ASN.1 specifications to Python objects that can be used to
+encode and decode types.
+
+"""
+
 import logging
 from collections import OrderedDict
 
@@ -19,6 +24,17 @@ class CompilerError(Exception):
 
 
 class Type(object):
+    """This class is used to encode and decode an ASN.1 type, without the
+    type lookup overhead in :func:`Specification.encode()
+    <asn1tools.compiler.Specification.encode>` and
+    :func:`Specification.decode()
+    <asn1tools.compiler.Specification.decode>`.
+
+    Instances of this class are created by
+    :func:`Specification.get_type()
+    <asn1tools.compiler.Specification.get_type>`.
+
+    """
 
     def __init__(self, schema, codec):
         self._schema = schema
@@ -28,7 +44,7 @@ class Type(object):
         """Encode given dictionary `data` and return the encoded data as a
         bytes object.
 
-        >>> foo.encode({'bar': 1, 'fie': True})
+        >>> answer.encode({'id': 1, 'answer': True})
         b'0\\x06\\x02\\x01\\x01\\x01\\x01\\x01'
 
         """
@@ -39,8 +55,8 @@ class Type(object):
         """Decode given bytes object `data` and return the decoded data as a
         dictionary.
 
-        >>> foo.decode(b'0\\x06\\x02\\x01\\x01\\x01\\x01\\x01')
-        {'bar': 1, 'fie': True}
+        >>> answer.decode(b'0\\x06\\x02\\x01\\x01\\x01\\x01\\x01')
+        {'id': 1, 'answer': True}
 
         """
 
@@ -50,7 +66,15 @@ class Type(object):
         return str(self._schema)
 
 
-class Schema(object):
+class Specification(object):
+    """This class is used to list, encode and decode ASN.1 types found in
+    an ASN.1 specification.
+
+    Instances of this class are created by the factory functions
+    :class:`~asn1tools.compile_file()` and
+    :class:`~asn1tools.compile_string()`.
+
+    """
 
     def __init__(self, modules, codec):
         self._modules = modules
@@ -60,8 +84,8 @@ class Schema(object):
         """Encode given dictionary `data` as given type `name` and return the
         encoded data as a bytes object.
 
-        >>> my_protocol.encode('Foo', {'bar': 1, 'fie': True})
-        b'0\\x06\\x02\\x01\\x01\\x01\\x01\\x01'
+        >>> foo.encode('Question', {'id': 1, 'question': 'Is 1+1=3?'})
+        b'0\\x0e\\x02\\x01\\x01\\x16\\x09Is 1+1=3?'
 
         """
 
@@ -78,8 +102,8 @@ class Schema(object):
         """Decode given bytes object `data` as given type `name` and return
         the decoded data as a dictionary.
 
-        >>> my_protocol.decode('Foo', b'0\\x06\\x02\\x01\\x01\\x01\\x01\\x01')
-        {'bar': 1, 'fie': True}
+        >>> foo.decode('Question', b'0\\x0e\\x02\\x01\\x01\\x16\\x09Is 1+1=3?')
+        {'id': 1, 'question': 'Is 1+1=3?'}
 
         """
 
@@ -94,8 +118,8 @@ class Schema(object):
 
     def get_type(self, name):
         """Return a :class:`Type` object of type with given name `name`. The
-        type object inherits the schema codec, and can be used to
-        encode and decode data of the specific type.
+        type object inherits the specification codec, and can be used
+        to encode and decode data of the specific type.
 
         """
 
@@ -124,8 +148,8 @@ class Schema(object):
 
 
 def _convert_values(value, module, modules):
-    """Convert a list of values tokens to classes. Each value has a name
-    and a data part.
+    """Convert a list of values from tokens to classes. Each value has a
+    name and a data part.
 
     """
 
@@ -348,11 +372,11 @@ def _convert_type_tokens_to_class(name, value, module, modules):
 
 def compile_string(string, codec=None):
     """Compile given ASN.1 specification string and return a
-    :class:`~asn1tools.compiler.Schema` object that can be used to
-    encode and decode data structures.
+    :class:`~asn1tools.compiler.Specification` object that can be used
+    to encode and decode data structures.
 
-    >>> with open('my_protocol.asn') as fin:
-    ...     my_protocol = asn1tools.compile_string(fin.read())
+    >>> with open('foo.asn') as fin:
+    ...     foo = asn1tools.compile_string(fin.read())
 
     """
 
@@ -403,20 +427,20 @@ def compile_string(string, codec=None):
         for name, value in module['types'].items():
             _convert_type_tokens_to_class(name, value, module, modules)
 
-    return Schema([Module(name,
-                          [v for v in values['types'].values()],
-                          values['import'],
-                          values['values'])
-                   for name, values in modules.items()],
-                  codec)
+    return Specification([Module(name,
+                                 [v for v in values['types'].values()],
+                                 values['import'],
+                                 values['values'])
+                          for name, values in modules.items()],
+                         codec)
 
 
 def compile_file(filename, codec=None):
     """Compile given ASN.1 specification file and return a
-    :class:`~asn1tools.compiler.Schema` object that can be used to
-    encode and decode data structures.
+    :class:`~asn1tools.compiler.Specification` object that can be used
+    to encode and decode data structures.
 
-    >>> my_protocol = asn1tools.compile_file('my_protocol.asn')
+    >>> foo = asn1tools.compile_file('foo.asn')
 
     """
 

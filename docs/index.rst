@@ -11,18 +11,21 @@ ASN.1 tools
 
 .. include:: ../README.rst
 
-Functions and classes
-=====================
+Basic Usage
+===========
 
 .. autofunction:: asn1tools.compile_file
 
 .. autofunction:: asn1tools.compile_string
 
-.. autoclass:: asn1tools.compiler.Schema
+.. autoclass:: asn1tools.compiler.Specification
     :members:
 
 .. autoclass:: asn1tools.compiler.Type
     :members:
+
+Advanced Usage
+==============
 
 .. automodule:: asn1tools.schema
     :members:

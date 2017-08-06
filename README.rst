@@ -46,11 +46,11 @@ question using the default codec (BER).
 
    >>> import asn1tools
    >>> foo = asn1tools.compile_file('tests/files/foo.asn')
-   >>> encoded = foo.encode('Question', {'id': 1, 'question': 'What is 1+1?'})
+   >>> encoded = foo.encode('Question', {'id': 1, 'question': 'Is 1+1=3?'})
    >>> encoded
-   b'0\x11\x02\x01\x01\x16\x0cWhat is 1+1?'
+   b'0\x0e\x02\x01\x01\x16\x09Is 1+1=3?'
    >>> foo.decode('Question', encoded)
-   {'id': 1, 'question': 'What is 1+1?'}
+   {'id': 1, 'question': 'Is 1+1=3?'}
 
 See the test suite for additional examples: https://github.com/eerimoq/asn1tools/blob/master/tests/test_asn1tools.py
 
