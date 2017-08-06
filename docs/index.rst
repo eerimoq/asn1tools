@@ -30,5 +30,8 @@ Advanced Usage
 .. automodule:: asn1tools.schema
     :members:
 
+Codecs
+======
+
 .. automodule:: asn1tools.codecs.ber
     :members:
