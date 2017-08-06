@@ -1,5 +1,5 @@
 class EncodeError(Exception):
-    """General encode error.
+    """General ASN.1 encode error.
 
     """
 
@@ -7,7 +7,7 @@ class EncodeError(Exception):
 
 
 class DecodeError(Exception):
-    """General decode error.
+    """General ASN.1 decode error.
 
     """
 
