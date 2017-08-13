@@ -1,6 +1,7 @@
 import sys
 import logging
 import unittest
+import timeit
 
 import asn1tools
 
@@ -463,6 +464,42 @@ class Asn1ToolsTest(unittest.TestCase):
 
         decoded = snmp_v1.decode('Message', encoded_message)
         self.assertEqual(decoded, decoded_message)
+
+    def test_performance(self):
+        cmplx = asn1tools.compile_file('tests/files/complex.asn')
+
+        decoded_message = {
+            'boolean': True,
+            'integer': -7,
+            'bit-string': (b'\x80', 3),
+            'octet-string': b'\x31\x32',
+            'null': None,
+            'object-identifier': '1.3.2',
+            'enumerated': 'one',
+            'sequence': {},
+            'ia5-string': 'foo'
+        }
+
+        encoded_message = (b'\x30\x1e\x01\x01\x01\x02\x01\xf9'
+                           b'\x03\x02\x05\x80\x04\x02\x31\x32'
+                           b'\x05\x00\x06\x02\x2b\x02\x0a\x01'
+                           b'\x01\x30\x00\x16\x03\x66\x6f\x6f')
+
+        def encode():
+            cmplx.encode('AllUniversalTypes', decoded_message)
+
+        def decode():
+            cmplx.decode('AllUniversalTypes', encoded_message)
+
+        iterations = 1000
+
+        res = timeit.timeit(encode, number=iterations)
+        ms_per_call = 1000 * res / iterations
+        print('{} ms per encode call.'.format(round(ms_per_call, 3)))
+
+        res = timeit.timeit(decode, number=iterations)
+        ms_per_call = 1000 * res / iterations
+        print('{} ms per decode call.'.format(round(ms_per_call, 3)))
 
 
 # This file is not '__main__' when executed via 'python setup.py

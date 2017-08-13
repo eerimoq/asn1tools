@@ -3,9 +3,6 @@
 """
 
 import struct
-import math
-
-import bitstruct
 
 from . import EncodeError, DecodeError
 
@@ -83,6 +80,28 @@ def _decode_integer(data):
     return value
 
 
+def _encode_signed_integer(data):
+    encoded = []
+
+    if data < 0:
+        data *= -1
+
+        while data > 0:
+            encoded.append(256 - (data & 0xff))
+            data >>= 8
+    elif data > 0:
+        while data > 0:
+            encoded.append(data & 0xff)
+            data >>= 8
+
+        if encoded[-1] & 0x80:
+            encoded.append(0)
+    else:
+        encoded = [0]
+
+    return bytearray([len(encoded)] + encoded[::-1])
+
+
 def _decode_signed_integer(data):
     value = 0
     is_negative = (data[0] & 0x80)
@@ -130,15 +149,7 @@ class Integer(Type):
             self.tag = struct.pack('B', Tag.INTEGER)
 
     def encode(self, data):
-        if data == 0:
-            bits = 8
-        else:
-            bits = int(8 * math.ceil((math.log(abs(data), 2) + 1) / 8))
-
-        return (self.tag
-                + bitstruct.pack('u8s' + str(bits),
-                                 bits / 8,
-                                 data))
+        return (self.tag + _encode_signed_integer(data))
 
     def decode(self, data):
         if data[0:1] != self.tag:
@@ -162,7 +173,7 @@ class Boolean(Type):
             self.tag = struct.pack('B', Tag.BOOLEAN)
 
     def encode(self, data):
-        return self.tag + bitstruct.pack('u8b8', 1, data)
+        return self.tag + b'\x01' + struct.pack('B', bool(data))
 
     def decode(self, data):
         if data[0:1] != self.tag:
@@ -190,7 +201,7 @@ class IA5String(Type):
 
     def encode(self, data):
         return (self.tag
-                + bitstruct.pack('u8', len(data))
+                + struct.pack('B', len(data))
                 + data.encode('ascii'))
 
     def decode(self, data):
@@ -502,15 +513,7 @@ class Enumerated(Type):
     def encode(self, data):
         for value, name in self.values.items():
             if data == name:
-                if value == 0:
-                    bits = 8
-                else:
-                    bits = int(8 * math.ceil((math.log(abs(value), 2) + 1) / 8))
-
-                return (self.tag
-                        + bitstruct.pack('u8s' + str(bits),
-                                         bits / 8,
-                                         value))
+                return (self.tag + _encode_signed_integer(value))
 
         raise EncodeError("No enumerated found.")
 
