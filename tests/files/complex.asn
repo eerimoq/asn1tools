@@ -1,0 +1,39 @@
+-- A complex ASN.1 specification.
+
+Complex DEFINITIONS ::= BEGIN
+
+    AllUniversalTypes ::= SEQUENCE {
+        boolean           BOOLEAN,
+        integer           INTEGER,
+        bit-string        BIT STRING,
+        octet-string      OCTET STRING,
+        null              NULL,
+        object-identifier OBJECT IDENTIFIER,
+        -- OBJECT DESCRIPTOR,
+        -- EXTERNAL
+        -- REAL
+        enumerated        ENUMERATED {
+                              one(1),
+                              two(2)
+                          },
+        -- EMBEDDED_PDV
+        -- UTF8_STRING
+        -- RELATIVE_OID
+        sequence          SEQUENCE {},
+        -- SET
+        -- NUMERIC_STRING
+        -- PRINTABLE_STRING
+        -- T61_STRING
+        -- VIDEOTEX_STRING
+        ia5-string        IA5String
+        -- UTC_TIME
+        -- GENERALIZED_TIME
+        -- GRAPHIC_STRING
+        -- VISIBLE_STRING
+        -- GENERAL_STRING
+        -- UNIVERSAL_STRING
+        -- CHARACTER_STRING
+        -- BMP_STRING
+    }
+
+END
