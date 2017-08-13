@@ -29,9 +29,3 @@ Advanced Usage
 .. autofunction:: asn1tools.parse_file
 
 .. autofunction:: asn1tools.parse_string
-
-Codecs
-======
-
-.. automodule:: asn1tools.codecs.ber
-    :members:
