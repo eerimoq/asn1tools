@@ -48,6 +48,14 @@ class Asn1ToolsTest(unittest.TestCase):
         decoded = foo.decode('Answer', encoded)
         self.assertEqual(decoded, {'id': 1, 'answer': False})
 
+        # Encode a question with missing field 'id'.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            encoded = foo.encode('Question', {'question': 'Is 1+1=3?'})
+
+        self.assertEqual(
+            str(cm.exception),
+            "Sequence member 'id' not found in '{'question': 'Is 1+1=3?'}'.")
+
     def test_complex(self):
         cmplx = asn1tools.compile_file('tests/files/complex.asn')
 
@@ -73,6 +81,26 @@ class Asn1ToolsTest(unittest.TestCase):
 
         decoded = cmplx.decode('AllUniversalTypes', encoded_message)
         self.assertEqual(decoded, decoded_message)
+
+        # Ivalid enumeration value.
+        decoded_message = {
+            'boolean': True,
+            'integer': -7,
+            'bit-string': (b'\x80', 3),
+            'octet-string': b'\x31\x32',
+            'null': None,
+            'object-identifier': '1.3.2',
+            'enumerated': 'three',
+            'sequence': {},
+            'ia5-string': 'foo'
+        }
+
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            cmplx.encode('AllUniversalTypes', decoded_message)
+
+        self.assertEqual(
+            str(cm.exception),
+            "Enumeration value 'three' not found in ['one', 'two'].")
 
     def _test_rrc_8_6_0(self):
         rrc = asn1tools.compile_file('tests/files/rrc_8.6.0.asn')
@@ -464,6 +492,35 @@ class Asn1ToolsTest(unittest.TestCase):
 
         decoded = snmp_v1.decode('Message', encoded_message)
         self.assertEqual(decoded, decoded_message)
+
+        # Next message with missing field 'data' -> 'set-request' ->
+        # 'variable-bindings[0]' -> 'value' -> 'simple'.
+        decoded_message = {
+            'version': 1,
+            'community': b'community',
+            'data': {
+                'set-request': {
+                    'request-id': 1687059484,
+                    'error-status': 0,
+                    'error-index': 0,
+                    'variable-bindings': [
+                        {
+                            'name': '1.3.6.1.999.1.1',
+                            'value': {
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            snmp_v1.encode('Message', decoded_message)
+
+        self.assertEqual(
+            str(cm.exception),
+            "Expected choices are ['simple', 'application-wide'], "
+            "but got ''.")
 
     def test_performance(self):
         cmplx = asn1tools.compile_file('tests/files/complex.asn')

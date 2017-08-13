@@ -246,8 +246,9 @@ class Sequence(Type):
                 encoded += member.encode(member.default)
             else:
                 raise EncodeError(
-                    "Value missing for sequence member '{}'.".format(
-                        name))
+                    "Sequence member '{}' not found in '{}'.".format(
+                        name,
+                        data))
 
         return (self.tag
                 + _encode_length_definite(len(encoded))
@@ -459,7 +460,10 @@ class Choice(Type):
             if member.name in data:
                 return member.encode(data[member.name])
 
-        raise EncodeError("No choice found.")
+        raise EncodeError(
+            "Expected choices are {}, but got '{}'.".format(
+                [member.name for member in self.members],
+                ''.join([name for name in data])))
 
     def decode(self, data):
         for member in self.members:
@@ -515,7 +519,10 @@ class Enumerated(Type):
             if data == name:
                 return (self.tag + _encode_signed_integer(value))
 
-        raise EncodeError("No enumerated found.")
+        raise EncodeError(
+            "Enumeration value '{}' not found in {}.".format(
+                data,
+                [value for value in self.values.values()]))
 
     def decode(self, data):
         if data[0:1] != self.tag:

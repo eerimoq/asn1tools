@@ -9,3 +9,4 @@ __version__ = '0.3.0'
 
 from .compiler import compile_json, compile_string, compile_file
 from .parser import parse_string, parse_file
+from .codecs import EncodeError, DecodeError
