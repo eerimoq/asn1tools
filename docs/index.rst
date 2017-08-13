@@ -16,15 +16,15 @@ Basic Usage
 
 .. autofunction:: asn1tools.compile_file
 
-.. autofunction:: asn1tools.compile_string
-
-.. autofunction:: asn1tools.compile_json
-
 .. autoclass:: asn1tools.compiler.Specification
     :members:
 
 Advanced Usage
 ==============
+
+.. autofunction:: asn1tools.compile_string
+
+.. autofunction:: asn1tools.compile_json
 
 .. autofunction:: asn1tools.parse_file
 
