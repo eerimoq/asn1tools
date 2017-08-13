@@ -83,6 +83,20 @@ def _decode_integer(data):
     return value
 
 
+def _decode_signed_integer(data):
+    value = 0
+    is_negative = (data[0] & 0x80)
+
+    for byte in data:
+        value <<= 8
+        value += byte
+
+    if is_negative:
+        value -= (1 << (8 * len(data)))
+
+    return value
+
+
 def _decode_length_definite(encoded):
     length = encoded[0]
 
@@ -103,9 +117,7 @@ class Type(object):
         self.default = default
 
     def set_tag(self, tag):
-        self.tag = struct.pack('B', (Class.CONTEXT_SPECIFIC
-                                     | Encoding.CONSTRUCTED
-                                     | tag))
+        self.tag = struct.pack('B', tag)
 
 
 class Integer(Type):
@@ -123,10 +135,10 @@ class Integer(Type):
         else:
             bits = int(8 * math.ceil((math.log(abs(data), 2) + 1) / 8))
 
-        return bitstruct.pack('u8u8s' + str(bits),
-                              Tag.INTEGER,
-                              bits / 8,
-                              data)
+        return (self.tag
+                + bitstruct.pack('u8s' + str(bits),
+                                 bits / 8,
+                                 data))
 
     def decode(self, data):
         if data[0:1] != self.tag:
@@ -134,7 +146,7 @@ class Integer(Type):
 
         length, data = _decode_length_definite(data[1:])
 
-        return _decode_integer(data[:length]), data[length:]
+        return _decode_signed_integer(data[:length]), data[length:]
 
     def __repr__(self):
         return 'Integer({})'.format(self.name)
@@ -203,6 +215,11 @@ class Sequence(Type):
         if self.tag is None:
             self.tag = struct.pack('B', (Encoding.CONSTRUCTED
                                          | Tag.SEQUENCE))
+
+    def set_tag(self, tag):
+        self.tag = struct.pack('B', (Class.CONTEXT_SPECIFIC
+                                     | Encoding.CONSTRUCTED
+                                     | tag))
 
     def encode(self, data):
         encoded = b''
@@ -310,9 +327,6 @@ class OctetString(Type):
 
         if self.tag is None:
             self.tag = bytearray([Tag.OCTET_STRING])
-
-    def set_tag(self, tag):
-        self.tag = struct.pack('B', tag)
 
     def encode(self, data):
         return self.tag + struct.pack('B', len(data)) + data
@@ -433,11 +447,14 @@ class Null(Type):
         super(Null, self).__init__(**kwargs)
         self.name = name
 
+        if self.tag is None:
+            self.tag = struct.pack('B', Tag.NULL)
+
     def encode(self, _):
-        return b''
+        return self.tag + b'\x00'
 
     def decode(self, data):
-        return None, data
+        return None, data[2:]
 
     def __repr__(self):
         return 'Null({})'.format(self.name)

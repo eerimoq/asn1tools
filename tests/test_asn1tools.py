@@ -315,6 +315,124 @@ class Asn1ToolsTest(unittest.TestCase):
         decoded = snmp_v1.decode('Message', encoded_message)
         self.assertEqual(decoded, decoded_message)
 
+        # Next message.
+        decoded_message = {
+            'version': 1,
+            'community': b'community',
+            'data': {
+                'set-request': {
+                    'request-id': 1687059484,
+                    'error-status': 0,
+                    'error-index': 0,
+                    'variable-bindings': [
+                        {
+                            'name': '1.3.6.1.999.1.1',
+                            'value': {
+                                'simple': {
+                                    'number': -1
+                                }
+                            }
+                        },
+                        {
+                            'name': '1.3.6.1.999.2.1',
+                            'value': {
+                                'simple': {
+                                    'string': b'f00'
+                                }
+                            }
+                        },
+                        {
+                            'name': '1.3.6.1.999.4.1',
+                            'value': {
+                                'simple': {
+                                    'object': '1.2.3.444.555'
+                                }
+                            }
+                        },
+                        {
+                            'name': '1.3.6.1.999.4.1',
+                            'value': {
+                                'simple': {
+                                    'empty': None
+                                }
+                            }
+                        },
+                        {
+                            'name': '1.3.6.1.999.3.1',
+                            'value': {
+                                'application-wide': {
+                                    'address': {
+                                        'internet': b'\xc0\xa8\x01\x01'
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            'name': '1.3.6.1.999.3.1',
+                            'value': {
+                                'application-wide': {
+                                    'counter': 0
+                                }
+                            }
+                        },
+                        {
+                            'name': '1.3.6.1.999.3.1',
+                            'value': {
+                                'application-wide': {
+                                    'gauge': 4294967295
+                                }
+                            }
+                        },
+                        {
+                            'name': '1.3.6.1.999.3.1',
+                            'value': {
+                                'application-wide': {
+                                    'ticks': 88
+                                }
+                            }
+                        },
+                        {
+                            'name': '1.3.6.1.999.3.1',
+                            'value': {
+                                'application-wide': {
+                                    'arbitrary': b'\x31\x32\x33'
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+
+        encoded_message = (b'\x30\x81\xad\x02\x01\x01\x04\x09'
+                           b'\x63\x6f\x6d\x6d\x75\x6e\x69\x74'
+                           b'\x79\xa3\x81\x9c\x02\x04\x64\x8e'
+                           b'\x7c\x1c\x02\x01\x00\x02\x01\x00'
+                           b'\x30\x81\x8d\x30\x0c\x06\x07\x2b'
+                           b'\x06\x01\x87\x67\x01\x01\x02\x01'
+                           b'\xff\x30\x0e\x06\x07\x2b\x06\x01'
+                           b'\x87\x67\x02\x01\x04\x03\x66\x30'
+                           b'\x30\x30\x11\x06\x07\x2b\x06\x01'
+                           b'\x87\x67\x04\x01\x06\x06\x2a\x03'
+                           b'\x83\x3c\x84\x2b\x30\x0b\x06\x07'
+                           b'\x2b\x06\x01\x87\x67\x04\x01\x05'
+                           b'\x00\x30\x0f\x06\x07\x2b\x06\x01'
+                           b'\x87\x67\x03\x01\x40\x04\xc0\xa8'
+                           b'\x01\x01\x30\x0c\x06\x07\x2b\x06'
+                           b'\x01\x87\x67\x03\x01\x41\x01\x00'
+                           b'\x30\x10\x06\x07\x2b\x06\x01\x87'
+                           b'\x67\x03\x01\x42\x05\x00\xff\xff'
+                           b'\xff\xff\x30\x0c\x06\x07\x2b\x06'
+                           b'\x01\x87\x67\x03\x01\x43\x01\x58'
+                           b'\x30\x0e\x06\x07\x2b\x06\x01\x87'
+                           b'\x67\x03\x01\x44\x03\x31\x32\x33')
+
+        encoded = snmp_v1.encode('Message', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+
+        decoded = snmp_v1.decode('Message', encoded_message)
+        self.assertEqual(decoded, decoded_message)
+
 
 # This file is not '__main__' when executed via 'python setup.py
 # test'.
