@@ -7,7 +7,7 @@ import logging
 
 from pyparsing import \
     Literal, Keyword, Word, ZeroOrMore, Regex, printables, delimitedList, \
-    Group, Optional, Forward, StringEnd, OneOrMore, alphanums
+    Group, Optional, Forward, StringEnd, OneOrMore, alphanums, Suppress
 
 
 LOGGER = logging.getLogger(__name__)
@@ -32,6 +32,20 @@ def _convert_size(tokens):
                  _convert_number(tokens[3]))]
     else:
         return [int(tokens[1])]
+
+
+def _convert_enum_values(tokens):
+    number = 0
+    values = {}
+
+    for token in tokens:
+        if len(token) == 2:
+            number = int(token[1])
+
+        values[number] = token[0]
+        number += 1
+
+    return values
 
 
 def _convert_members(tokens):
@@ -64,6 +78,7 @@ def _convert_members(tokens):
             member_type = 'IA5String'
         elif member_tokens[1] == 'ENUMERATED':
             member_type = 'ENUMERATED'
+            member['values'] = _convert_enum_values(member_tokens[3])
         elif member_tokens[1] == 'CHOICE':
             member_type = 'CHOICE'
         elif member_tokens[1:3] == ['BIT', 'STRING']:
@@ -72,6 +87,7 @@ def _convert_members(tokens):
             member_type = 'OCTET STRING'
         elif member_tokens[1:3] == ['SEQUENCE', '{']:
             member_type = 'SEQUENCE'
+            member['members'] = _convert_members(member_tokens[3])
         elif member_tokens[1] == 'SEQUENCE' and member_tokens[3] == 'OF':
             member_type = 'SEQUENCE OF'
         elif member_tokens[1] == 'NULL':
@@ -271,7 +287,11 @@ def _create_grammar():
                          | dotx3))))
                + rbrace)
     enumerated << (ENUMERATED + lbrace
-                   + Group(delimitedList(word | dotx3))
+                   + Group(delimitedList(Group((word
+                                                + Optional(Suppress(lparen)
+                                                           + word
+                                                           + Suppress(rparen)))
+                                               | dotx3)))
                    + rbrace)
     integer << (INTEGER
                 + Group(Optional((lparen
@@ -284,9 +304,9 @@ def _create_grammar():
                                                           + rparen))
                                     + rbrace))))
     bit_string << (BIT + STRING
-                   + lparen + SIZE + lparen
-                   + word
-                   + rparen + rparen)
+                   + Optional(lparen + SIZE + lparen
+                              + word
+                              + rparen + rparen))
     octet_string << (OCTET + STRING
                      + Optional(lparen
                                 + ((SIZE + lparen

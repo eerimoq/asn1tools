@@ -319,6 +319,35 @@ class SequenceOf(Type):
                                            self.element_type)
 
 
+class BitString(Type):
+
+    def __init__(self, name, **kwargs):
+        super(BitString, self).__init__(**kwargs)
+        self.name = name
+
+        if self.tag is None:
+            self.tag = bytearray([Tag.BIT_STRING])
+
+    def encode(self, data):
+        number_of_unused_bits = (8 - (data[1] % 8))
+
+        return (self.tag
+                + struct.pack('BB', len(data[0]) + 1, number_of_unused_bits)
+                + data[0])
+
+    def decode(self, data):
+        raise NotImplementedError()
+        if data[0:1] != self.tag:
+            raise DecodeError()
+
+        length, data = _decode_length_definite(data[1:])
+
+        return bytes(data[:length]), data[length:]
+
+    def __repr__(self):
+        return 'BitString({})'.format(self.name)
+
+
 class OctetString(Type):
 
     def __init__(self, name, **kwargs):
@@ -460,6 +489,38 @@ class Null(Type):
         return 'Null({})'.format(self.name)
 
 
+class Enumerated(Type):
+
+    def __init__(self, name, values, **kwargs):
+        super(Enumerated, self).__init__(**kwargs)
+        self.name = name
+        self.values = values
+
+        if self.tag is None:
+            self.tag = struct.pack('B', Tag.ENUMERATED)
+
+    def encode(self, data):
+        for value, name in self.values.items():
+            if data == name:
+                if value == 0:
+                    bits = 8
+                else:
+                    bits = int(8 * math.ceil((math.log(abs(value), 2) + 1) / 8))
+
+                return (self.tag
+                        + bitstruct.pack('u8s' + str(bits),
+                                         bits / 8,
+                                         value))
+
+        raise EncodeError("No enumerated found.")
+
+    def decode(self, data):
+        raise NotImplementedError()
+
+    def __repr__(self):
+        return 'Null({})'.format(self.name)
+
+
 class CompiledType(object):
 
     def __init__(self, type_):
@@ -495,11 +556,6 @@ class Compiler(object):
         return compiled_types
 
     def compile_type(self, name, type_descriptor, module_name):
-        """Convert type with given name to an encode/decode object and return
-        it.
-
-        """
-
         if type_descriptor['type'] == 'SEQUENCE':
             compiled = Sequence(
                 name,
@@ -524,7 +580,7 @@ class Compiler(object):
                                           type_descriptor['element_type'],
                                           module_name)))
         elif type_descriptor['type'] == 'NULL':
-            compiled = type_descriptor
+            compiled = Null(name)
         else:
             compiled = self.compile_type(
                 name,
@@ -549,11 +605,6 @@ class Compiler(object):
         return compiled
 
     def compile_members(self, members, module_name):
-        """Convert a list of values from tokens to classes. Each value has a
-        name and a data part.
-
-        """
-
         compiled_members = []
 
         for member in members:
@@ -567,18 +618,27 @@ class Compiler(object):
                 compiled_member = IA5String(member['name'],
                                             optional=member['optional'])
             elif member['type'] == 'BIT STRING':
-                compiled_member = member
+                compiled_member = BitString(member['name'],
+                                            optional=member['optional'])
             elif member['type'] == 'OCTET STRING':
                 compiled_member = OctetString(member['name'],
                                               optional=member['optional'])
-            elif member['type'] == 'INTEGER':
-                compiled_member = member
             elif member['type'] == 'OBJECT IDENTIFIER':
                 compiled_member = ObjectIdentifier(
                     member['name'],
                     optional=member['optional'])
             elif member['type'] == 'NULL':
                 compiled_member = Null(member['name'])
+            elif member['type'] == 'ENUMERATED':
+                compiled_member = Enumerated(member['name'],
+                                             member['values'],
+                                             optional=member['optional'])
+            elif member['type'] == 'SEQUENCE':
+                compiled_member = Sequence(
+                    member['name'],
+                    self.compile_members(member['members'],
+                                         module_name),
+                    optional=member['optional'])
             else:
                 compiled_member = self.compile_type(
                     member['name'],

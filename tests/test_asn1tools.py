@@ -42,6 +42,29 @@ class Asn1ToolsTest(unittest.TestCase):
         decoded = foo.decode('Answer', encoded)
         self.assertEqual(decoded, {'id': 1, 'answer': False})
 
+    def test_complex(self):
+        cmplx = asn1tools.compile_file('tests/files/complex.asn')
+
+        decoded_message = {
+            'boolean': True,
+            'integer': -7,
+            'bit-string': (b'\x80', 3),
+            'octet-string': b'\x31\x32',
+            'null': None,
+            'object-identifier': '1.3.2',
+            'enumerated': 'one',
+            'sequence': {},
+            'ia5-string': 'foo'
+        }
+        
+        encoded_message = (b'\x30\x1e\x01\x01\x01\x02\x01\xf9'
+                           b'\x03\x02\x05\x80\x04\x02\x31\x32'
+                           b'\x05\x00\x06\x02\x2b\x02\x0a\x01'
+                           b'\x01\x30\x00\x16\x03\x66\x6f\x6f')
+        
+        encoded = cmplx.encode('AllUniversalTypes', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+
     def _test_rrc_8_6_0(self):
         rrc = asn1tools.compile_file('tests/files/rrc_8.6.0.asn')
 
