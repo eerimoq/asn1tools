@@ -74,7 +74,7 @@ class Specification(object):
         return self._types[name].decode(data)
 
 
-def compile_json(specification, codec=ber):
+def compile_json(specification, codec=None):
     """Compile given ASN.1 specification JSON dictionary and return a
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures.
@@ -83,10 +83,13 @@ def compile_json(specification, codec=ber):
 
     """
 
+    if codec is None:
+        codec = ber
+    
     return Specification(codec.compile_json(specification))
 
 
-def compile_string(string, codec=ber):
+def compile_string(string, codec=None):
     """Compile given ASN.1 specification string and return a
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures.
@@ -99,7 +102,7 @@ def compile_string(string, codec=ber):
     return compile_json(parse_string(string), codec)
 
 
-def compile_file(filename, codec=ber):
+def compile_file(filename, codec=None):
     """Compile given ASN.1 specification file and return a
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures.
