@@ -336,13 +336,13 @@ class BitString(Type):
                 + data[0])
 
     def decode(self, data):
-        raise NotImplementedError()
         if data[0:1] != self.tag:
             raise DecodeError()
 
         length, data = _decode_length_definite(data[1:])
+        number_of_bits = 8 * (length - 1) - data[0]
 
-        return bytes(data[:length]), data[length:]
+        return (bytes(data[1:length]), number_of_bits), data[length:]
 
     def __repr__(self):
         return 'BitString({})'.format(self.name)
@@ -515,7 +515,14 @@ class Enumerated(Type):
         raise EncodeError("No enumerated found.")
 
     def decode(self, data):
-        raise NotImplementedError()
+        if data[0:1] != self.tag:
+            raise DecodeError()
+
+        length, data = _decode_length_definite(data[1:])
+        value = _decode_signed_integer(data[:length])
+
+        return self.values[value], data[length:]
+
 
     def __repr__(self):
         return 'Null({})'.format(self.name)
