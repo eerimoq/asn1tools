@@ -12,8 +12,9 @@ class Specification(object):
     ASN.1 specification.
 
     Instances of this class are created by the factory functions
-    :class:`~asn1tools.compile_file()` and
-    :class:`~asn1tools.compile_string()`.
+    :func:`~asn1tools.compile_file()`,
+    :func:`~asn1tools.compile_string()` and
+    :func:`~asn1tools.compile_string()`.
 
     """
 
