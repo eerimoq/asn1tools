@@ -61,5 +61,5 @@ See the test suite for additional examples: https://github.com/eerimoq/asn1tools
 .. _coverage: https://coveralls.io/github/eerimoq/asn1tools
 
 .. _Compile: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compile_file
-.. _encode: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compiler.Schema.encode
-.. _decode: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compiler.Schema.decode
+.. _encode: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compiler.Specification.encode
+.. _decode: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compiler.Specification.decode
