@@ -6,6 +6,9 @@ About
 
 A Python package for ASN.1 parsing, encoding and decoding.
 
+This project is under development and does only support a subset of
+the ASN.1 specification syntax and BER codec.
+
 Project homepage: https://github.com/eerimoq/asn1tools
 
 Documentation: http://asn1tools.readthedocs.org/en/latest
