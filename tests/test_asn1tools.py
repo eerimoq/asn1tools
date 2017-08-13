@@ -24,6 +24,11 @@ class Asn1ToolsTest(unittest.TestCase):
 
     def test_compile_file(self):
         foo = asn1tools.compile_file('tests/files/foo.asn')
+        self.assertEqual(len(foo.types), 2)
+        self.assertTrue(foo.types['Question'] is not None)
+        self.assertTrue(foo.types['Answer'] is not None)
+        self.assertEqual(len(foo.modules), 1)
+        self.assertTrue(foo.modules['Foo'] is not None)
 
         # Encode a question.
         encoded = foo.encode('Question',
