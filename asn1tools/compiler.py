@@ -46,7 +46,7 @@ class Specification(object):
 
     @property
     def modules(self):
-        """A discionary of all modules in the specification.
+        """A dictionary of all modules in the specification.
 
         """
 
