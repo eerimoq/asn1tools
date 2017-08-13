@@ -183,65 +183,6 @@ def _convert_value(tokens):
     return {'type': value_type, 'value': value}
 
 
-def parse_string(string):
-    """Parse given ASN.1 specification string and return a dictionary of
-    its contents.
-
-    >>> with open('foo.asn') as fin:
-    ...     foo = asn1tools.parse_string(fin.read())
-
-    """
-
-    grammar = _create_grammar()
-    tokens = grammar.parseString(string).asList()
-
-    modules = {}
-
-    for module in tokens:
-        module_name = module[0][0]
-
-        LOGGER.debug("Found module '%s'.", module_name)
-
-        imports = {}
-        types = {}
-        values = {}
-
-        if module[1]:
-            from_name = module[1][-2]
-            LOGGER.debug("Found imports from '%s'.", from_name)
-            imports[from_name] = module[1][1]
-
-        for definition in module[2]:
-            name = definition[0]
-
-            if name[0].isupper():
-                LOGGER.debug("Found type '%s'.", name)
-                types[name] = _convert_type_tokens(definition)
-            else:
-                LOGGER.debug("Found value '%s'.", name)
-                values[name] = _convert_value(definition)
-
-        modules[module_name] = {
-            'imports': imports,
-            'types': types,
-            'values': values
-        }
-
-    return modules
-
-
-def parse_file(filename):
-    """Parse given ASN.1 specification file and return a dictionary of its
-    contents.
-
-    >>> foo = asn1tools.parse_file('foo.asn')
-
-    """
-
-    with open(filename, 'r') as fin:
-        return parse_string(fin.read())
-
-
 def _create_grammar():
     # Keywords.
     SEQUENCE = Keyword('SEQUENCE')
@@ -390,3 +331,62 @@ def _create_grammar():
     specification.ignore(comment)
 
     return specification
+
+
+def parse_string(string):
+    """Parse given ASN.1 specification string and return a JSON dictionary
+    of its contents.
+
+    >>> with open('foo.asn') as fin:
+    ...     foo = asn1tools.parse_string(fin.read())
+
+    """
+
+    grammar = _create_grammar()
+    tokens = grammar.parseString(string).asList()
+
+    modules = {}
+
+    for module in tokens:
+        module_name = module[0][0]
+
+        LOGGER.debug("Found module '%s'.", module_name)
+
+        imports = {}
+        types = {}
+        values = {}
+
+        if module[1]:
+            from_name = module[1][-2]
+            LOGGER.debug("Found imports from '%s'.", from_name)
+            imports[from_name] = module[1][1]
+
+        for definition in module[2]:
+            name = definition[0]
+
+            if name[0].isupper():
+                LOGGER.debug("Found type '%s'.", name)
+                types[name] = _convert_type_tokens(definition)
+            else:
+                LOGGER.debug("Found value '%s'.", name)
+                values[name] = _convert_value(definition)
+
+        modules[module_name] = {
+            'imports': imports,
+            'types': types,
+            'values': values
+        }
+
+    return modules
+
+
+def parse_file(filename):
+    """Parse given ASN.1 specification file and return a JSON dictionary
+    of its contents.
+
+    >>> foo = asn1tools.parse_file('foo.asn')
+
+    """
+
+    with open(filename, 'r') as fin:
+        return parse_string(fin.read())
