@@ -238,6 +238,40 @@ class Asn1ToolsTest(unittest.TestCase):
                                     'object': '1.2.3.444.555'
                                 }
                             }
+                        },
+                        {
+                            'name': '1.3.6.1.999.1.3',
+                            'value': {
+                                'simple': {
+                                    'number': 1
+                                }
+                            }
+                        },
+                        {
+                            'name': '1.3.6.1.999.2.3',
+                            'value': {
+                                'simple': {
+                                    'string': b'f00'
+                                }
+                            }
+                        },
+                        {
+                            'name': '1.3.6.1.999.3.3',
+                            'value': {
+                                'application-wide': {
+                                    'address': {
+                                        'internet': b'\xc0\xa8\x01\x01'
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            'name': '1.3.6.1.999.4.3',
+                            'value': {
+                                'simple': {
+                                    'object': '1.2.3.444.555'
+                                }
+                            }
                         }
                     ]
                 }
@@ -276,7 +310,7 @@ class Asn1ToolsTest(unittest.TestCase):
                            b'\x2b')
 
         encoded = snmp_v1.encode('Message', decoded_message)
-        #self.assertEqual(encoded, encoded_message)
+        self.assertEqual(encoded, encoded_message)
 
         decoded = snmp_v1.decode('Message', encoded_message)
         self.assertEqual(decoded, decoded_message)

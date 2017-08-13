@@ -88,7 +88,7 @@ def _decode_length_definite(encoded):
 
     if length & 0x80:
         number_of_bytes = (length & 0x7f)
-        length = _decode_integer(encoded[:number_of_bytes])
+        length = _decode_integer(encoded[1:number_of_bytes + 1])
     else:
         number_of_bytes = 0
 
