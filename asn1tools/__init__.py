@@ -6,4 +6,6 @@ functions and classes.
 __author__ = 'Erik Moqvist'
 __version__ = '0.2.0'
 
-from .compiler import compile_string, compile_file
+
+from .compiler import compile_json, compile_string, compile_file
+from .parser import parse_string, parse_file

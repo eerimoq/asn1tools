@@ -18,17 +18,17 @@ Basic Usage
 
 .. autofunction:: asn1tools.compile_string
 
-.. autoclass:: asn1tools.compiler.Specification
-    :members:
+.. autofunction:: asn1tools.compile_json
 
-.. autoclass:: asn1tools.compiler.Type
+.. autoclass:: asn1tools.compiler.Specification
     :members:
 
 Advanced Usage
 ==============
 
-.. automodule:: asn1tools.schema
-    :members:
+.. autofunction:: asn1tools.parse_file
+
+.. autofunction:: asn1tools.parse_string
 
 Codecs
 ======
