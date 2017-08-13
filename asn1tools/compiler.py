@@ -14,7 +14,7 @@ class Specification(object):
     Instances of this class are created by the factory functions
     :func:`~asn1tools.compile_file()`,
     :func:`~asn1tools.compile_string()` and
-    :func:`~asn1tools.compile_string()`.
+    :func:`~asn1tools.compile_json()`.
 
     """
 
