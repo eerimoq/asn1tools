@@ -58,25 +58,6 @@ class DecodeChoiceError(Exception):
     pass
 
 
-def _encode_enumerated(decoded, schema):
-    for value, name in schema['values'].items():
-        if decoded == name:
-            return _encode_integer(value, schema)
-
-    raise EncodeError("No enumerated found.")
-
-
-def _encode_bit_string(decoded, schema):
-    number_of_unused_bits = (8 * len(decoded) - schema[3])
-
-    return struct.pack('BBB',
-                       Tag.BIT_STRING
-                       if 'tag' not in schema
-                       else Class.CONTEXT_SPECIFIC | schema['tag'],
-                       len(decoded) + 1,
-                       number_of_unused_bits) + decoded
-
-
 def _encode_length_definite(length):
     if length <= 127:
         return bytearray([length])
@@ -112,34 +93,6 @@ def _decode_length_definite(encoded):
         number_of_bytes = 0
 
     return length, encoded[1 + number_of_bytes:]
-
-def _decode_identifier(encoded):
-    """Decode identifier octets.
-
-    """
-
-    octet = encoded[0]
-    class_ = (octet & 0xc0)
-    encoding = (octet & 0x20)
-    tag = (octet & 0x1f)
-
-    return class_, encoding, tag, encoded[1:]
-
-
-def _decode_bit_string(encoded, schema):
-    _, encoding, tag, encoded = _decode_identifier(encoded)
-
-    if tag != Tag.BIT_STRING:
-        raise DecodeError('Failed to decode {}.'.format(
-            schema['name']))
-
-    if encoding != Encoding.PRIMITIVE:
-        raise DecodeError('Failed to decode {}.'.format(
-            schema['name']))
-
-    length, encoded = _decode_length_definite(encoded)
-
-    return encoded[1:length], encoded[length:]
 
 
 class Type(object):
@@ -200,23 +153,15 @@ class Boolean(Type):
         return self.tag + bitstruct.pack('u8b8', 1, data)
 
     def decode(self, data):
-        class_, encoding, tag, data = _decode_identifier(data)
+        if data[0:1] != self.tag:
+            raise DecodeError()
 
-        if not ((class_ == Class.CONTEXT_SPECIFIC)
-                or (class_ == Class.UNIVERSAL and tag == Tag.BOOLEAN)):
-            raise DecodeError('Failed to decode {}.'.format(
-                self.name))
-
-        if encoding != Encoding.PRIMITIVE:
-            raise DecodeError('Failed to decode {}.'.format(
-                self.name))
-
-        length, data = _decode_length_definite(data)
+        length, data = _decode_length_definite(data[1:])
 
         if length != 1:
             raise DecodeError()
 
-        return bitstruct.unpack('b8', data)[0], data[length:]
+        return (data[0] != 0), data[length:]
 
     def __repr__(self):
         return 'Boolean({})'.format(self.name)
