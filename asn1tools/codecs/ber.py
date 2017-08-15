@@ -2,8 +2,6 @@
 
 """
 
-import struct
-
 from . import EncodeError, DecodeError
 
 
@@ -57,17 +55,18 @@ class DecodeChoiceError(Exception):
 
 def _encode_length_definite(length):
     if length <= 127:
-        return bytearray([length])
+        encoded = bytearray([length])
     else:
-        encoded = []
+        encoded = bytearray()
 
         while length > 0:
             encoded.append(length & 0xff)
             length >>= 8
 
         encoded.append(0x80 | len(encoded))
+        encoded.reverse()
 
-        return bytearray(encoded[::-1])
+    return encoded
 
 
 def _decode_integer(data):
@@ -81,7 +80,7 @@ def _decode_integer(data):
 
 
 def _encode_signed_integer(data):
-    encoded = []
+    encoded = bytearray()
 
     if data < 0:
         data *= -1
@@ -97,9 +96,12 @@ def _encode_signed_integer(data):
         if encoded[-1] & 0x80:
             encoded.append(0)
     else:
-        encoded = [0]
+        encoded.append(0)
 
-    return bytearray([len(encoded)] + encoded[::-1])
+    encoded.append(len(encoded))
+    encoded.reverse()
+
+    return encoded
 
 
 def _decode_signed_integer(data):
@@ -116,16 +118,18 @@ def _decode_signed_integer(data):
     return value
 
 
-def _decode_length_definite(encoded):
-    length = encoded[0]
+def _decode_length_definite(encoded, offset):
+    length = encoded[offset]
+    offset += 1
 
     if length & 0x80:
         number_of_bytes = (length & 0x7f)
-        length = _decode_integer(encoded[1:number_of_bytes + 1])
+        length = _decode_integer(
+            encoded[offset:number_of_bytes + offset])
     else:
         number_of_bytes = 0
 
-    return length, encoded[1 + number_of_bytes:]
+    return length, offset + number_of_bytes
 
 
 class Type(object):
@@ -136,7 +140,7 @@ class Type(object):
         self.default = default
 
     def set_tag(self, tag):
-        self.tag = struct.pack('B', tag)
+        self.tag = tag
 
 
 class Integer(Type):
@@ -146,18 +150,21 @@ class Integer(Type):
         self.name = name
 
         if self.tag is None:
-            self.tag = struct.pack('B', Tag.INTEGER)
+            self.tag = Tag.INTEGER
 
-    def encode(self, data):
-        return (self.tag + _encode_signed_integer(data))
+    def encode(self, data, encoded):
+        encoded.append(self.tag)
+        encoded.extend(_encode_signed_integer(data))
 
-    def decode(self, data):
-        if data[0:1] != self.tag:
+    def decode(self, data, offset):
+        if data[offset] != self.tag:
             raise DecodeError()
 
-        length, data = _decode_length_definite(data[1:])
+        offset += 1
+        length, offset = _decode_length_definite(data, offset)
+        offset_end = offset + length
 
-        return _decode_signed_integer(data[:length]), data[length:]
+        return _decode_signed_integer(data[offset:offset_end]), offset_end
 
     def __repr__(self):
         return 'Integer({})'.format(self.name)
@@ -170,21 +177,24 @@ class Boolean(Type):
         self.name = name
 
         if self.tag is None:
-            self.tag = struct.pack('B', Tag.BOOLEAN)
+            self.tag = Tag.BOOLEAN
 
-    def encode(self, data):
-        return self.tag + b'\x01' + struct.pack('B', bool(data))
+    def encode(self, data, encoded):
+        encoded.append(self.tag)
+        encoded.append(1)
+        encoded.append(bool(data))
 
-    def decode(self, data):
-        if data[0:1] != self.tag:
+    def decode(self, data, offset):
+        if data[offset] != self.tag:
             raise DecodeError()
 
-        length, data = _decode_length_definite(data[1:])
+        offset += 1
+        length, offset = _decode_length_definite(data, offset)
 
         if length != 1:
             raise DecodeError()
 
-        return (data[0] != 0), data[length:]
+        return (data[offset] != 0), offset + length
 
     def __repr__(self):
         return 'Boolean({})'.format(self.name)
@@ -197,20 +207,22 @@ class IA5String(Type):
         self.name = name
 
         if self.tag is None:
-            self.tag = struct.pack('B', Tag.IA5_STRING)
+            self.tag = Tag.IA5_STRING
 
-    def encode(self, data):
-        return (self.tag
-                + struct.pack('B', len(data))
-                + data.encode('ascii'))
+    def encode(self, data, encoded):
+        encoded.append(self.tag)
+        encoded.append(len(data))
+        encoded.extend(data.encode('ascii'))
 
-    def decode(self, data):
-        if data[0:1] != self.tag:
+    def decode(self, data, offset):
+        if data[offset] != self.tag:
             raise DecodeError()
 
-        length, data = _decode_length_definite(data[1:])
+        offset += 1
+        length, offset = _decode_length_definite(data, offset)
+        offset_end = offset + length
 
-        return data[:length].decode('ascii'), data[length:]
+        return data[offset:offset_end].decode('ascii'), offset_end
 
     def __repr__(self):
         return 'IA5String({})'.format(self.name)
@@ -224,56 +236,56 @@ class Sequence(Type):
         self.members = members
 
         if self.tag is None:
-            self.tag = struct.pack('B', (Encoding.CONSTRUCTED
-                                         | Tag.SEQUENCE))
+            self.tag = (Encoding.CONSTRUCTED
+                        | Tag.SEQUENCE)
 
     def set_tag(self, tag):
-        self.tag = struct.pack('B', (Class.CONTEXT_SPECIFIC
-                                     | Encoding.CONSTRUCTED
-                                     | tag))
+        self.tag = (Class.CONTEXT_SPECIFIC
+                    | Encoding.CONSTRUCTED
+                    | tag)
 
-    def encode(self, data):
-        encoded = b''
+    def encode(self, data, encoded):
+        encoded_members = bytearray()
 
         for member in self.members:
             name = member.name
 
             if name in data:
-                encoded += member.encode(data[name])
+                member.encode(data[name], encoded_members)
             elif member.optional:
                 pass
             elif member.default is not None:
-                encoded += member.encode(member.default)
+                member.encode(member.default, encoded_members)
             else:
                 raise EncodeError(
                     "Sequence member '{}' not found in '{}'.".format(
                         name,
                         data))
 
-        return (self.tag
-                + _encode_length_definite(len(encoded))
-                + encoded)
+        encoded.append(self.tag)
+        encoded.extend(_encode_length_definite(len(encoded_members)))
+        encoded.extend(encoded_members)
 
-    def decode(self, data):
-        if data[0:1] != self.tag:
+    def decode(self, data, offset):
+        if data[offset] != self.tag:
             raise DecodeError()
 
-        data = data[1:]
+        offset += 1
 
-        if data[0:1] == b'\x80':
+        if data[offset] == 0x80:
             # Decode until an end-of-contents tag is found.
             raise NotImplementedError()
         else:
-            length, data = _decode_length_definite(data)
+            length, offset = _decode_length_definite(data, offset)
 
-        if length > len(data):
+        if length > len(data) - offset:
             raise DecodeError()
 
         values = {}
 
         for member in self.members:
             try:
-                value, data = member.decode(data)
+                value, offset = member.decode(data, offset)
 
             except DecodeError:
                 if member.optional:
@@ -286,7 +298,7 @@ class Sequence(Type):
 
             values[member.name] = value
 
-        return values, data
+        return values, offset
 
     def __repr__(self):
         return 'Sequence({}, [{}])'.format(
@@ -302,29 +314,30 @@ class SequenceOf(Type):
         self.element_type = element_type
 
         if self.tag is None:
-            self.tag = bytearray([Encoding.CONSTRUCTED
-                                  | Tag.SEQUENCE])
+            self.tag = (Encoding.CONSTRUCTED
+                        | Tag.SEQUENCE)
 
-    def encode(self, data):
-        encoded = b''
+    def encode(self, data, encoded):
+        encoded_elements = bytearray()
 
         for entry in data:
-            encoded += self.element_type.encode(entry)
+            self.element_type.encode(entry, encoded_elements)
 
-        return (self.tag
-                + _encode_length_definite(len(encoded))
-                + encoded)
+        encoded.append(self.tag)
+        encoded.extend(_encode_length_definite(len(encoded_elements)))
+        encoded.extend(encoded_elements)
 
-    def decode(self, data):
-        length, data = _decode_length_definite(data[1:])
+    def decode(self, data, offset):
+        offset += 1
+        length, offset = _decode_length_definite(data, offset)
         decoded = []
-        start_length = len(data)
+        start_offset = offset
 
-        while (start_length - len(data)) < length:
-            decoded_element, data = self.element_type.decode(data)
+        while (offset - start_offset) < length:
+            decoded_element, offset = self.element_type.decode(data, offset)
             decoded.append(decoded_element)
 
-        return decoded, data
+        return decoded, offset
 
     def __repr__(self):
         return 'SequenceOf({}, {})'.format(self.name,
@@ -338,23 +351,27 @@ class BitString(Type):
         self.name = name
 
         if self.tag is None:
-            self.tag = bytearray([Tag.BIT_STRING])
+            self.tag = Tag.BIT_STRING
 
-    def encode(self, data):
+    def encode(self, data, encoded):
         number_of_unused_bits = (8 - (data[1] % 8))
 
-        return (self.tag
-                + struct.pack('BB', len(data[0]) + 1, number_of_unused_bits)
-                + data[0])
+        encoded.append(self.tag)
+        encoded.append(len(data[0]) + 1)
+        encoded.append(number_of_unused_bits)
+        encoded.extend(data[0])
 
-    def decode(self, data):
-        if data[0:1] != self.tag:
+    def decode(self, data, offset):
+        if data[offset] != self.tag:
             raise DecodeError()
 
-        length, data = _decode_length_definite(data[1:])
-        number_of_bits = 8 * (length - 1) - data[0]
+        offset += 1
+        length, offset = _decode_length_definite(data, offset)
+        offset_end = offset + length
+        number_of_bits = 8 * (length - 1) - data[offset]
+        offset += 1
 
-        return (bytes(data[1:length]), number_of_bits), data[length:]
+        return (bytearray(data[offset:offset_end]), number_of_bits), offset_end
 
     def __repr__(self):
         return 'BitString({})'.format(self.name)
@@ -367,18 +384,22 @@ class OctetString(Type):
         self.name = name
 
         if self.tag is None:
-            self.tag = bytearray([Tag.OCTET_STRING])
+            self.tag = Tag.OCTET_STRING
 
-    def encode(self, data):
-        return self.tag + struct.pack('B', len(data)) + data
+    def encode(self, data, encoded):
+        encoded.append(self.tag)
+        encoded.append(len(data))
+        encoded.extend(data)
 
-    def decode(self, data):
-        if data[0:1] != self.tag:
+    def decode(self, data, offset):
+        if data[offset] != self.tag:
             raise DecodeError()
 
-        length, data = _decode_length_definite(data[1:])
+        offset += 1
+        length, offset = _decode_length_definite(data, offset)
+        offset_end = offset + length
 
-        return bytes(data[:length]), data[length:]
+        return bytearray(data[offset:offset_end]), offset_end
 
     def __repr__(self):
         return 'OctetString({})'.format(self.name)
@@ -391,35 +412,38 @@ class ObjectIdentifier(Type):
         self.name = name
 
         if self.tag is None:
-            self.tag = struct.pack('B', Tag.OBJECT_IDENTIFIER)
+            self.tag = Tag.OBJECT_IDENTIFIER
 
-    def encode(self, data):
+    def encode(self, data, encoded):
         identifiers = [int(identifier) for identifier in data.split('.')]
 
         first_subidentifier = (40 * identifiers[0] + identifiers[1])
-        encoded = self._encode_subidentifier(first_subidentifier)
+        encoded_subidentifiers = self._encode_subidentifier(
+            first_subidentifier)
 
         for identifier in identifiers[2:]:
-            encoded += self._encode_subidentifier(identifier)
+            encoded_subidentifiers += self._encode_subidentifier(identifier)
 
-        return self.tag + bytearray([len(encoded)] + encoded)
+        encoded.append(self.tag)
+        encoded.append(len(encoded_subidentifiers))
+        encoded.extend(encoded_subidentifiers)
 
-    def decode(self, data):
-        if data[0:1] != self.tag:
+    def decode(self, data, offset):
+        if data[offset] != self.tag:
             raise DecodeError()
 
-        length, data = _decode_length_definite(data[1:])
-        rest = data[length:]
-        data = data[:length]
+        offset += 1
+        length, offset = _decode_length_definite(data, offset)
+        offset_end = offset + length
 
-        subidentifier, data = self._decode_subidentifier(data)
+        subidentifier, offset = self._decode_subidentifier(data, offset)
         decoded = [subidentifier // 40, subidentifier % 40]
 
-        while len(data) > 0:
-            subidentifier, data = self._decode_subidentifier(data)
+        while offset < offset_end:
+            subidentifier, offset = self._decode_subidentifier(data, offset)
             decoded.append(subidentifier)
 
-        return '.'.join([str(v) for v in decoded]), rest
+        return '.'.join([str(v) for v in decoded]), offset_end
 
     def _encode_subidentifier(self, subidentifier):
         encoded = [subidentifier & 0x7f]
@@ -431,18 +455,17 @@ class ObjectIdentifier(Type):
 
         return encoded[::-1]
 
-    def _decode_subidentifier(self, data):
-        i = 0
+    def _decode_subidentifier(self, data, offset):
         decoded = 0
 
-        while data[i] & 0x80:
-            decoded += (data[i] & 0x7f)
+        while data[offset] & 0x80:
+            decoded += (data[offset] & 0x7f)
             decoded <<= 7
-            i += 1
+            offset += 1
 
-        decoded += data[i]
+        decoded += data[offset]
 
-        return decoded, data[i + 1:]
+        return decoded, offset + 1
 
     def __repr__(self):
         return 'ObjectIdentifier({})'.format(self.name)
@@ -455,27 +478,28 @@ class Choice(Type):
         self.name = name
         self.members = members
 
-    def encode(self, data):
+    def encode(self, data, encoded):
         for member in self.members:
             if member.name in data:
-                return member.encode(data[member.name])
+                member.encode(data[member.name], encoded)
+                return
 
         raise EncodeError(
             "Expected choices are {}, but got '{}'.".format(
                 [member.name for member in self.members],
                 ''.join([name for name in data])))
 
-    def decode(self, data):
+    def decode(self, data, offset):
         for member in self.members:
             if isinstance(member, Choice):
                 try:
-                    decoded, data = member.decode(data)
-                    return {member.name: decoded}, data
+                    decoded, offset = member.decode(data, offset)
+                    return {member.name: decoded}, offset
                 except DecodeChoiceError:
                     pass
-            elif member.tag == data[0:1]:
-                decoded, data = member.decode(data)
-                return {member.name: decoded}, data
+            elif member.tag == data[offset]:
+                decoded, offset = member.decode(data, offset)
+                return {member.name: decoded}, offset
 
         raise DecodeChoiceError()
 
@@ -492,13 +516,14 @@ class Null(Type):
         self.name = name
 
         if self.tag is None:
-            self.tag = struct.pack('B', Tag.NULL)
+            self.tag = Tag.NULL
 
-    def encode(self, _):
-        return self.tag + b'\x00'
+    def encode(self, _, encoded):
+        encoded.append(self.tag)
+        encoded.append(0)
 
-    def decode(self, data):
-        return None, data[2:]
+    def decode(self, _, offset):
+        return None, offset + 2
 
     def __repr__(self):
         return 'Null({})'.format(self.name)
@@ -512,27 +537,30 @@ class Enumerated(Type):
         self.values = values
 
         if self.tag is None:
-            self.tag = struct.pack('B', Tag.ENUMERATED)
+            self.tag = Tag.ENUMERATED
 
-    def encode(self, data):
+    def encode(self, data, encoded):
         for value, name in self.values.items():
             if data == name:
-                return (self.tag + _encode_signed_integer(value))
+                encoded.append(self.tag)
+                encoded.extend(_encode_signed_integer(value))
+                return
 
         raise EncodeError(
             "Enumeration value '{}' not found in {}.".format(
                 data,
                 [value for value in self.values.values()]))
 
-    def decode(self, data):
-        if data[0:1] != self.tag:
+    def decode(self, data, offset):
+        if data[offset] != self.tag:
             raise DecodeError()
 
-        length, data = _decode_length_definite(data[1:])
-        value = _decode_signed_integer(data[:length])
+        offset += 1
+        length, offset = _decode_length_definite(data, offset)
+        offset_end = offset + length
+        value = _decode_signed_integer(data[offset:offset_end])
 
-        return self.values[value], data[length:]
-
+        return self.values[value], offset_end
 
     def __repr__(self):
         return 'Null({})'.format(self.name)
@@ -544,10 +572,12 @@ class CompiledType(object):
         self._type = type_
 
     def encode(self, data):
-        return self._type.encode(data)
+        encoded = bytearray()
+        self._type.encode(data, encoded)
+        return encoded
 
     def decode(self, data):
-        return self._type.decode(bytearray(data))[0]
+        return self._type.decode(bytearray(data), 0)[0]
 
     def __repr__(self):
         return repr(self._type)
@@ -561,9 +591,10 @@ class Compiler(object):
     def process(self):
         compiled_types = {
             module_name: {
-                type_name: CompiledType(self.compile_type(type_name,
-                                                          type_descriptor,
-                                                          module_name))
+                type_name: CompiledType(self.compile_type(
+                    type_name,
+                    type_descriptor,
+                    module_name))
                 for type_name, type_descriptor
                 in self._specification[module_name]['types'].items()
             }
