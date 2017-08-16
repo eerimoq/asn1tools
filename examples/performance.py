@@ -1,3 +1,13 @@
+#!/usr/bin/env python
+
+"""A performance example comparing the performance of four ASN.1
+Python packages.
+
+This file is based on
+https://gist.github.com/philmayers/67b9300d8fb7282481a1a6af5ed45818.
+
+"""
+
 from __future__ import print_function
 
 import sys
@@ -6,6 +16,7 @@ import timeit
 sys.path.insert(0, '..')
 
 import asn1tools
+
 
 DECODED_MESSAGE = {
     "version": 0,
@@ -218,6 +229,8 @@ def asn1crypto_encode_decode():
 
     return encode_time, decode_time
 
+print('Starting encoding and decoding of a message {} times. This may '
+      'take a few seconds.'.format(ITERATIONS))
 
 asn1tools_encode_time, asn1tools_decode_time = asn1tools_encode_decode()
 libsnmp_encode_time, libsnmp_decode_time = libsnmp_encode_decode()
@@ -235,7 +248,7 @@ measurements = [
 measurements = sorted(measurements, key=lambda m: m[1])
 
 print()
-print('Encode time of {} iterations:'.format(ITERATIONS))
+print('Encoding the message {} times took:'.format(ITERATIONS))
 print()
 print('PACKAGE      SECONDS')
 for package, seconds in measurements:
@@ -252,7 +265,7 @@ measurements = [
 measurements = sorted(measurements, key=lambda m: m[1])
 
 print()
-print('Decode time of {} iterations:'.format(ITERATIONS))
+print('Decoding the message {} times took:'.format(ITERATIONS))
 print()
 print('PACKAGE      SECONDS')
 for package, seconds in measurements:
