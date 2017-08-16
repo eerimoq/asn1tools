@@ -103,6 +103,26 @@ def libsnmp_encode_decode():
     return encode_time, decode_time
 
 
+def pyasn1_encode_decode():
+    try:
+        from pysnmp.proto import api
+        from pyasn1.codec.ber import decoder
+
+        snmp_v1 = api.protoModules[api.protoVersion1].Message()
+
+        def decode():
+            decoder.decode(ENCODED_MESSAGE, asn1Spec=snmp_v1)
+
+        encode_time = float('nan')
+        decode_time = timeit.timeit(decode, number=ITERATIONS)
+    except ImportError:
+        encode_time = float('nan')
+        decode_time = float('nan')
+        print('Unable to import pyasn1.')
+
+    return encode_time, decode_time
+
+
 def asn1crypto_encode_decode():
     try:
         from asn1crypto.core import (Sequence,
@@ -201,12 +221,14 @@ def asn1crypto_encode_decode():
 
 asn1tools_encode_time, asn1tools_decode_time = asn1tools_encode_decode()
 libsnmp_encode_time, libsnmp_decode_time = libsnmp_encode_decode()
+pyasn1_encode_time, pyasn1_decode_time = pyasn1_encode_decode()
 asn1crypto_encode_time, asn1crypto_decode_time = asn1crypto_encode_decode()
 
 # Encode comparsion output.
 measurements = [
     ('asn1tools', asn1tools_encode_time),
     ('libsnmp', libsnmp_encode_time),
+    ('pyasn1', pyasn1_encode_time),
     ('asn1crypto', asn1crypto_encode_time)
 ]
 
@@ -223,6 +245,7 @@ for package, seconds in measurements:
 measurements = [
     ('asn1tools', asn1tools_decode_time),
     ('libsnmp', libsnmp_decode_time),
+    ('pyasn1', pyasn1_decode_time),
     ('asn1crypto', asn1crypto_decode_time)
 ]
 
