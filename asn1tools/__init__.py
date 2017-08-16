@@ -4,7 +4,7 @@ functions and classes.
 """
 
 __author__ = 'Erik Moqvist'
-__version__ = '0.4.0'
+__version__ = '0.5.0'
 
 
 from .compiler import compile_json, compile_string, compile_file
