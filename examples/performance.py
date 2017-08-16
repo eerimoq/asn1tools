@@ -93,11 +93,11 @@ def libsnmp_encode_decode():
         def decode():
             libsnmp_rfc1905.Message().decode(ENCODED_MESSAGE)
 
-        encode_time = float('nan')
+        encode_time = float('inf')
         decode_time = timeit.timeit(decode, number=ITERATIONS)
     except ImportError:
-        encode_time = float('nan')
-        decode_time = float('nan')
+        encode_time = float('inf')
+        decode_time = float('inf')
         print('Unable to import libsnmp.')
 
     return encode_time, decode_time
@@ -113,11 +113,11 @@ def pyasn1_encode_decode():
         def decode():
             decoder.decode(ENCODED_MESSAGE, asn1Spec=snmp_v1)
 
-        encode_time = float('nan')
+        encode_time = float('inf')
         decode_time = timeit.timeit(decode, number=ITERATIONS)
     except ImportError:
-        encode_time = float('nan')
-        decode_time = float('nan')
+        encode_time = float('inf')
+        decode_time = float('inf')
         print('Unable to import pyasn1.')
 
     return encode_time, decode_time
@@ -209,11 +209,11 @@ def asn1crypto_encode_decode():
         def decode():
             Message.load(ENCODED_MESSAGE).native
 
-        encode_time = float('nan')
+        encode_time = float('inf')
         decode_time = timeit.timeit(decode, number=ITERATIONS)
     except ImportError:
-        encode_time = float('nan')
-        decode_time = float('nan')
+        encode_time = float('inf')
+        decode_time = float('inf')
         print('Unable to import asn1crypto.')
 
     return encode_time, decode_time
