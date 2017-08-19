@@ -2737,7 +2737,8 @@ RRC_8_6_0 = {'EUTRA-InterNodeDefinitions': {'imports': {'EUTRA-RRC-Definitions':
                                                                                          {'name': 'mobilityControlInfo',
                                                                                           'optional': True,
                                                                                           'type': 'MobilityControlInfo'},
-                                                                                         {'name': 'dedicatedInfoNASList',
+                                                                                         {'element_type': 'DedicatedInfoNAS',
+                                                                                          'name': 'dedicatedInfoNASList',
                                                                                           'optional': True,
                                                                                           'type': 'SEQUENCE '
                                                                                                   'OF'},
@@ -3574,7 +3575,8 @@ RRC_8_6_0 = {'EUTRA-InterNodeDefinitions': {'imports': {'EUTRA-RRC-Definitions':
                                                                         'optional': False,
                                                                         'type': 'CHOICE'}],
                                                            'type': 'SEQUENCE'},
-                                     'SystemInformation-r8-IEs': {'members': [{'name': 'sib-TypeAndInfo',
+                                     'SystemInformation-r8-IEs': {'members': [{'element_type': 'CHOICE',
+                                                                               'name': 'sib-TypeAndInfo',
                                                                                'optional': False,
                                                                                'type': 'SEQUENCE '
                                                                                        'OF'},

@@ -306,6 +306,10 @@ class Sequence(Type):
             ', '.join([repr(member) for member in self.members]))
 
 
+class Set(Sequence):
+    pass
+
+
 class SequenceOf(Type):
 
     def __init__(self, name, element_type, **kwargs):
@@ -629,6 +633,13 @@ class Compiler(object):
                                           module_name)))
         elif type_descriptor['type'] == 'NULL':
             compiled = Null(name)
+        elif type_descriptor['type'] == 'TeletexString':
+            compiled = Null(name)
+        elif type_descriptor['type'] == 'SET':
+            compiled = Set(
+                name,
+                self.compile_members(type_descriptor['members'],
+                                     module_name))
         else:
             compiled = self.compile_type(
                 name,
@@ -688,6 +699,13 @@ class Compiler(object):
                     self.compile_members(member['members'],
                                          module_name),
                     optional=member['optional'])
+            elif member['type'] == 'SEQUENCE OF':
+                compiled_member = SequenceOf(member['name'],
+                                             self.compile_type(
+                                                 '',
+                                                 *self.lookup_type_descriptor(
+                                                     member['element_type'],
+                                                     module_name)))
             else:
                 compiled_member = self.compile_type(
                     member['name'],
