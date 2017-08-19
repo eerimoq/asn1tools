@@ -595,10 +595,5 @@ class Asn1ToolsTest(unittest.TestCase):
         self.assertEqual(decoded, decoded_message)
 
 
-# This file is not '__main__' when executed via 'python setup.py
-# test'.
-logging.basicConfig(level=logging.DEBUG)
-
-
 if __name__ == '__main__':
     unittest.main()

@@ -172,6 +172,14 @@ def _convert_type_tokens_to_sequence_of(tokens):
     }
 
 
+def _convert_type_tokens_to_set_of(tokens):
+    return {
+        'type': 'SET OF',
+        'element_type': tokens[6],
+        'size': _convert_size(tokens[4][2:-1])
+    }
+
+
 def _convert_type_tokens_to_bit_string(_):
     return {'type': 'BIT STRING'}
 
@@ -203,6 +211,8 @@ def _convert_type_tokens(tokens):
         converted_type =  _convert_type_tokens_to_enumerated(tokens)
     elif tokens[3] == 'SEQUENCE' and tokens[5] == 'OF':
         converted_type =  _convert_type_tokens_to_sequence_of(tokens)
+    elif tokens[3] == 'SET' and tokens[5] == 'OF':
+        converted_type =  _convert_type_tokens_to_set_of(tokens)
     elif tokens[3] == 'INTEGER':
         converted_type =  _convert_type_tokens_to_integer(tokens)
     elif tokens[3:5] == ['BIT', 'STRING']:

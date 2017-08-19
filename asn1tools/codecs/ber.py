@@ -228,6 +228,34 @@ class IA5String(Type):
         return 'IA5String({})'.format(self.name)
 
 
+class NumericString(Type):
+
+    def __init__(self, name, **kwargs):
+        super(NumericString, self).__init__(**kwargs)
+        self.name = name
+
+        if self.tag is None:
+            self.tag = Tag.NUMERIC_STRING
+
+    def encode(self, data, encoded):
+        encoded.append(self.tag)
+        encoded.append(len(data))
+        encoded.extend(data.encode('ascii'))
+
+    def decode(self, data, offset):
+        if data[offset] != self.tag:
+            raise DecodeError()
+
+        offset += 1
+        length, offset = _decode_length_definite(data, offset)
+        offset_end = offset + length
+
+        return data[offset:offset_end].decode('ascii'), offset_end
+
+    def __repr__(self):
+        return 'NumericString({})'.format(self.name)
+
+
 class Sequence(Type):
 
     def __init__(self, name, members, **kwargs):
@@ -348,6 +376,44 @@ class SequenceOf(Type):
                                            self.element_type)
 
 
+class SetOf(Type):
+
+    def __init__(self, name, element_type, **kwargs):
+        super(SetOf, self).__init__(**kwargs)
+        self.name = name
+        self.element_type = element_type
+
+        if self.tag is None:
+            self.tag = (Encoding.CONSTRUCTED
+                        | Tag.SET)
+
+    def encode(self, data, encoded):
+        encoded_elements = bytearray()
+
+        for entry in data:
+            self.element_type.encode(entry, encoded_elements)
+
+        encoded.append(self.tag)
+        encoded.extend(_encode_length_definite(len(encoded_elements)))
+        encoded.extend(encoded_elements)
+
+    def decode(self, data, offset):
+        offset += 1
+        length, offset = _decode_length_definite(data, offset)
+        decoded = []
+        start_offset = offset
+
+        while (offset - start_offset) < length:
+            decoded_element, offset = self.element_type.decode(data, offset)
+            decoded.append(decoded_element)
+
+        return decoded, offset
+
+    def __repr__(self):
+        return 'SetOf({}, {})'.format(self.name,
+                                      self.element_type)
+
+
 class BitString(Type):
 
     def __init__(self, name, **kwargs):
@@ -407,6 +473,118 @@ class OctetString(Type):
 
     def __repr__(self):
         return 'OctetString({})'.format(self.name)
+
+
+class PrintableString(Type):
+
+    def __init__(self, name, **kwargs):
+        super(PrintableString, self).__init__(**kwargs)
+        self.name = name
+
+        if self.tag is None:
+            self.tag = Tag.PRINTABLE_STRING
+
+    def encode(self, data, encoded):
+        encoded.append(self.tag)
+        encoded.append(len(data))
+        encoded.extend(data)
+
+    def decode(self, data, offset):
+        if data[offset] != self.tag:
+            raise DecodeError()
+
+        offset += 1
+        length, offset = _decode_length_definite(data, offset)
+        offset_end = offset + length
+
+        return bytearray(data[offset:offset_end]), offset_end
+
+    def __repr__(self):
+        return 'PrintableString({})'.format(self.name)
+
+
+class UniversalString(Type):
+
+    def __init__(self, name, **kwargs):
+        super(UniversalString, self).__init__(**kwargs)
+        self.name = name
+
+        if self.tag is None:
+            self.tag = Tag.UNIVERSAL_STRING
+
+    def encode(self, data, encoded):
+        encoded.append(self.tag)
+        encoded.append(len(data))
+        encoded.extend(data)
+
+    def decode(self, data, offset):
+        if data[offset] != self.tag:
+            raise DecodeError()
+
+        offset += 1
+        length, offset = _decode_length_definite(data, offset)
+        offset_end = offset + length
+
+        return bytearray(data[offset:offset_end]), offset_end
+
+    def __repr__(self):
+        return 'UniversalString({})'.format(self.name)
+
+
+class VisibleString(Type):
+
+    def __init__(self, name, **kwargs):
+        super(VisibleString, self).__init__(**kwargs)
+        self.name = name
+
+        if self.tag is None:
+            self.tag = Tag.VISIBLE_STRING
+
+    def encode(self, data, encoded):
+        encoded.append(self.tag)
+        encoded.append(len(data))
+        encoded.extend(data)
+
+    def decode(self, data, offset):
+        if data[offset] != self.tag:
+            raise DecodeError()
+
+        offset += 1
+        length, offset = _decode_length_definite(data, offset)
+        offset_end = offset + length
+
+        return bytearray(data[offset:offset_end]), offset_end
+
+    def __repr__(self):
+        return 'VisibleString({})'.format(self.name)
+
+
+class T61String(Type):
+
+    def __init__(self, name, **kwargs):
+        super(T61String, self).__init__(**kwargs)
+        self.name = name
+
+        if self.tag is None:
+            self.tag = Tag.T61_STRING
+
+    def encode(self, data, encoded):
+        encoded.append(self.tag)
+        encoded.append(len(data))
+        encoded.extend(data)
+
+    def decode(self, data, offset):
+        if data[offset] != self.tag:
+            raise DecodeError()
+
+        offset += 1
+        length, offset = _decode_length_definite(data, offset)
+        offset_end = offset + length
+
+        return bytearray(data[offset:offset_end]), offset_end
+
+    def __repr__(self):
+        return 'T61String({})'.format(self.name)
 
 
 class ObjectIdentifier(Type):
@@ -533,6 +711,25 @@ class Null(Type):
         return 'Null({})'.format(self.name)
 
 
+class Any(Type):
+
+    def __init__(self, name, **kwargs):
+        super(Any, self).__init__(**kwargs)
+        self.name = name
+
+        if self.tag is None:
+            self.tag = -1
+
+    def encode(self, _, encoded):
+        pass
+
+    def decode(self, _, offset):
+        return None, offset
+
+    def __repr__(self):
+        return 'Any({})'.format(self.name)
+
+
 class Enumerated(Type):
 
     def __init__(self, name, values, **kwargs):
@@ -634,12 +831,25 @@ class Compiler(object):
         elif type_descriptor['type'] == 'NULL':
             compiled = Null(name)
         elif type_descriptor['type'] == 'TeletexString':
-            compiled = Null(name)
+            compiled = T61String(name)
         elif type_descriptor['type'] == 'SET':
             compiled = Set(
                 name,
                 self.compile_members(type_descriptor['members'],
                                      module_name))
+        elif type_descriptor['type'] == 'NumericString':
+            compiled = NumericString(name)
+        elif type_descriptor['type'] == 'ANY':
+            compiled = Any(name)
+        elif type_descriptor['type'] == 'PrintableString':
+            compiled = PrintableString(name)
+        elif type_descriptor['type'] == 'SET OF':
+            compiled = SetOf(name,
+                             self.compile_type(
+                                 '',
+                                 *self.lookup_type_descriptor(
+                                     type_descriptor['element_type'],
+                                     module_name)))
         else:
             compiled = self.compile_type(
                 name,
@@ -706,6 +916,25 @@ class Compiler(object):
                                                  *self.lookup_type_descriptor(
                                                      member['element_type'],
                                                      module_name)))
+            elif member['type'] == 'NumericString':
+                compiled_member = NumericString(member['name'])
+            elif member['type'] == 'ANY DEFINED BY':
+                compiled_member = Null(member['name'])
+            elif member['type'] == 'TeletexString':
+                compiled_member = T61String(member['name'])
+            elif member['type'] == 'PrintableString':
+                compiled_member = PrintableString(member['name'])
+            elif member['type'] == 'UniversalString':
+                compiled_member = UniversalString(member['name'])
+            elif member['type'] == 'VisibleString':
+                compiled_member = VisibleString(member['name'])
+            elif member['type'] == 'SET OF':
+                compiled_member = SetOf(member['name'],
+                                        self.compile_type(
+                                            '',
+                                            *self.lookup_type_descriptor(
+                                                member['element_type'],
+                                                module_name)))
             else:
                 compiled_member = self.compile_type(
                     member['name'],
