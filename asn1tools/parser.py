@@ -28,10 +28,10 @@ def _convert_size(tokens):
     if len(tokens) == 0:
         return None
     elif '..' in tokens:
-        return [(_convert_number(tokens[1]),
-                 _convert_number(tokens[3]))]
+        return [(_convert_number(tokens[0]),
+                 _convert_number(tokens[2]))]
     else:
-        return [int(tokens[1])]
+        return [int(tokens[0])]
 
 
 def _convert_enum_values(tokens):
@@ -51,9 +51,11 @@ def _convert_enum_values(tokens):
 def _convert_members(tokens):
     members = []
 
+    LOGGER.debug('Member tokens: %s', tokens)
+
     for member_tokens in tokens:
         if member_tokens == ['...']:
-            member_tokens = [['...', ''], []]
+            member_tokens = [['...', [], ''], []]
 
         member_tokens, qualifiers = member_tokens
         member_name = member_tokens[0]
@@ -65,37 +67,39 @@ def _convert_members(tokens):
         if 'DEFAULT' in qualifiers:
             member['default'] = _convert_number(qualifiers[1])
 
-        if member_tokens[1] == 'INTEGER':
+        if member_tokens[2] == 'INTEGER':
             member_type = 'INTEGER'
 
-            if '..' in member_tokens[2]:
-                minimum = _convert_number(member_tokens[2][1])
-                maximum = _convert_number(member_tokens[2][3])
+            if '..' in member_tokens[3]:
+                minimum = _convert_number(member_tokens[3][1])
+                maximum = _convert_number(member_tokens[3][3])
                 member['restricted_to'] = [(minimum, maximum)]
-        elif member_tokens[1] == 'BOOLEAN':
+        elif member_tokens[2] == 'BOOLEAN':
             member_type = 'BOOLEAN'
-        elif member_tokens[1] == 'IA5String':
+        elif member_tokens[2] == 'IA5String':
             member_type = 'IA5String'
-        elif member_tokens[1] == 'ENUMERATED':
+        elif member_tokens[2] == 'ENUMERATED':
             member_type = 'ENUMERATED'
-            member['values'] = _convert_enum_values(member_tokens[3])
-        elif member_tokens[1] == 'CHOICE':
+            member['values'] = _convert_enum_values(member_tokens[4])
+        elif member_tokens[2] == 'CHOICE':
             member_type = 'CHOICE'
-        elif member_tokens[1:3] == ['BIT', 'STRING']:
+        elif member_tokens[2:4] == ['BIT', 'STRING']:
             member_type = 'BIT STRING'
-        elif member_tokens[1:3] == ['OCTET', 'STRING']:
+        elif member_tokens[2:4] == ['OCTET', 'STRING']:
             member_type = 'OCTET STRING'
-        elif member_tokens[1:3] == ['SEQUENCE', '{']:
+        elif member_tokens[2:4] == ['SEQUENCE', '{']:
             member_type = 'SEQUENCE'
-            member['members'] = _convert_members(member_tokens[3])
-        elif member_tokens[1] == 'SEQUENCE' and member_tokens[3] == 'OF':
+            member['members'] = _convert_members(member_tokens[4])
+        elif member_tokens[2] == 'SEQUENCE' and member_tokens[4] == 'OF':
             member_type = 'SEQUENCE OF'
-        elif member_tokens[1] == 'NULL':
+        elif member_tokens[2] == 'NULL':
             member_type = 'NULL'
-        elif member_tokens[1:3] == ['OBJECT', 'IDENTIFIER']:
+        elif member_tokens[2:4] == ['OBJECT', 'IDENTIFIER']:
             member_type = 'OBJECT IDENTIFIER'
+        elif member_tokens[2:5] == ['ANY', 'DEFINED', 'BY']:
+            member_type = 'ANY DEFINED BY'
         else:
-            member_type = member_tokens[1]
+            member_type = member_tokens[2]
 
         member['type'] = member_type
         members.append(member)
@@ -175,15 +179,25 @@ def _convert_type_tokens(tokens):
     else:
         converted_type =  _convert_type_tokens_to_user_type(tokens)
 
-    if len(tokens[2]) > 0:
-        if tokens[2][0] == '[' and tokens[2][2] == ']':
-            converted_type['tag'] = (int(tokens[2][1]),
-                                     tokens[2][3])
-        elif tokens[2][0] == '[' and tokens[2][3] == ']':
-            converted_type['tag'] = ((tokens[2][1], int(tokens[2][2])),
-                                     tokens[2][4])
+    tag_tokens = tokens[2]
+
+    LOGGER.debug('Tag tokens: %s', tag_tokens)
+
+    if len(tag_tokens) > 0:
+        if len(tag_tokens[0]) == 1:
+            tag = {
+                'number': int(tag_tokens[0][0])
+            }
         else:
-            raise ParserError('Bad tag tokens {}.'.format(tokens[2]))
+            tag = {
+                'number': int(tag_tokens[0][1]),
+                'class': tag_tokens[0][0]
+            }
+
+        if tag_tokens[1]:
+            tag['kind'] = tag_tokens[1][0] if tag_tokens[1] else None
+
+        converted_type['tag'] = tag
 
     return converted_type
 
@@ -221,9 +235,14 @@ def _create_grammar():
     FROM = Keyword('FROM')
     CONTAINING = Keyword('CONTAINING')
     IMPLICIT = Keyword('IMPLICIT')
+    EXPLICIT = Keyword('EXPLICIT')
     OBJECT = Keyword('OBJECT')
     IDENTIFIER = Keyword('IDENTIFIER')
     APPLICATION = Keyword('APPLICATION')
+    SET = Keyword('SET')
+    ANY = Keyword('ANY')
+    DEFINED = Keyword('DEFINED')
+    BY = Keyword('BY')
 
     # Various literals.
     word = Word(printables, excludeChars=',(){}[].:=;')
@@ -248,9 +267,17 @@ def _create_grammar():
     octet_string = Forward()
     enumerated = Forward()
     sequence_of = Forward()
+    set_of = Forward()
+    set_ = Forward()
     object_identifier = Forward()
+    any_defined_by = Forward()
 
     range_ = (word + dotx2 + word)
+
+    size = (Suppress(Optional(lparen)) + SIZE + lparen
+            + (range_ | word)
+            + rparen + Suppress(Optional(rparen)))
+
     type_ = (sequence
              | choice
              | integer
@@ -258,34 +285,63 @@ def _create_grammar():
              | octet_string
              | enumerated
              | sequence_of
+             | set_of
+             | set_
              | object_identifier
-             | word)
+             | any_defined_by
+             | (word + Optional(size)))
+
     item = Group(value_name + type_)
 
-    tag = (lbracket
-           + Optional(APPLICATION) + word
-           + rbracket)
+    tag = Group(Optional(Suppress(lbracket)
+                         + Group(Optional(APPLICATION) + word)
+                         + Suppress(rbracket)
+                         + Group(Optional(IMPLICIT | EXPLICIT))))
 
     # Type definitions.
     sequence << (SEQUENCE + lbrace
                  + Group(Optional(delimitedList(
-                     Group((item
-                            + Group(Optional(OPTIONAL)
-                                    + Optional(DEFAULT + word)))
+                     Group(Group(value_name
+                                 + tag
+                                 + type_)
+                           + Group(Optional(OPTIONAL)
+                                   + Optional(DEFAULT + word))
                            | dotx3))))
                  + rbrace)
+
     sequence_of << (SEQUENCE
-                    + Group(Optional(lparen + SIZE + lparen
-                                     + (range_ | word)
-                                     + rparen + rparen))
+                    + Group(Optional(size))
                     + OF
                     + type_)
-    choice << (CHOICE + lbrace
+
+    set_of << (SET
+               + Group(Optional(SIZE + lparen
+                                + (range_ | word)
+                                + rparen))
+               + OF
+               + type_)
+
+    set_ << (SET + lbrace
+             + Group(Optional(delimitedList(
+                 Group(Group(value_name
+                             + tag
+                             + type_)
+                       + Group(Optional(OPTIONAL)
+                               + Optional(DEFAULT + word))
+                       | dotx3))))
+             + rbrace)
+
+    choice << (CHOICE
+               + lbrace
                + Group(Optional(delimitedList(
-                   Group((item
-                          + Group(Optional(OPTIONAL)))
+                   Group(Group(value_name
+                               + tag
+                               + type_)
+                         + Group(Optional(OPTIONAL)
+                                 + Optional(DEFAULT + word))
                          | dotx3))))
                + rbrace)
+
     enumerated << (ENUMERATED + lbrace
                    + Group(delimitedList(Group((word
                                                 + Optional(Suppress(lparen)
@@ -293,6 +349,7 @@ def _create_grammar():
                                                            + Suppress(rparen)))
                                                | dotx3)))
                    + rbrace)
+
     integer << (INTEGER
                 + Group(Optional((lparen
                                   + (range_ | word)
@@ -302,44 +359,79 @@ def _create_grammar():
                                                           + lparen
                                                           + word
                                                           + rparen))
-                                    + rbrace))))
+                                    + rbrace)))
+                + Optional(lparen
+                           + range_
+                           + rparen))
+
     bit_string << (BIT + STRING
-                   + Optional(lparen + SIZE + lparen
-                              + word
-                              + rparen + rparen))
+                   + Optional((lbrace
+                               + Group(delimitedList(word
+                                                     + lparen
+                                                     + word
+                                                     + rparen))
+                               + rbrace))
+                   + Optional(size))
+
     octet_string << (OCTET + STRING
-                     + Optional(lparen
+                     + Optional(Suppress(lparen)
                                 + ((SIZE + lparen
                                     + (range_ | word)
                                     + rparen)
                                    | (CONTAINING + word))
-                                + rparen))
-    object_identifier << (OBJECT + IDENTIFIER)
+                                + Suppress(rparen)))
+
+    object_identifier << (OBJECT + IDENTIFIER
+                          + Optional(lparen
+                                     + delimitedList(word, delim='|')
+                                     + rparen))
+
+    any_defined_by << (ANY + DEFINED + BY + word)
 
     # Top level definitions.
     type_definition = (type_name + assignment
-                       + Group(Optional(tag)
-                               + Optional(IMPLICIT))
+                       + tag
                        + (sequence
                           | choice
                           | enumerated
                           | sequence_of
+                          | set_of
+                          | set_
                           | integer
                           | bit_string
                           | octet_string
                           | object_identifier
-                          | word))
-    value_definition = (word + INTEGER + assignment + word)
+                          | any_defined_by
+                          | (word + Optional(size))))
+
+    oid = (lbrace
+           + ZeroOrMore((value_name + lparen + word + rparen)
+                        | word)
+           + rbrace)
+
+    value_definition = (word
+                        + (INTEGER
+                           | (OBJECT + IDENTIFIER)
+                           | type_)
+                        + assignment
+                        + (oid | word))
+
     definition = Group(type_definition
                        | value_definition)
+
     module_body = (Group(Optional(IMPORTS
                                   + Group(delimitedList(word))
-                                  + FROM + word + scolon))
+                                  + FROM
+                                  + word
+                                  + Suppress(Optional(oid))
+                                  + scolon))
                    + Group(ZeroOrMore(definition)))
+
     module = Group(Group(word
+                         + Group(Optional(oid))
                          + DEFINITIONS
-                         + Optional(AUTOMATIC)
-                         + Optional(TAGS)
+                         + Group(Optional(AUTOMATIC | EXPLICIT | IMPLICIT)
+                                 + Optional(TAGS))
                          + assignment
                          + BEGIN)
                    + module_body
@@ -347,7 +439,7 @@ def _create_grammar():
 
     # The whole specification.
     specification = OneOrMore(module) + StringEnd()
-    comment = Regex(r"--(?:\\\n|[^\n])*")
+    comment = (Regex(r"--[\s\S]*?(--|\n)") | Regex(r"--(?:\\\n|[^\n])*"))
     specification.ignore(comment)
 
     return specification

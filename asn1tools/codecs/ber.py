@@ -639,16 +639,17 @@ class Compiler(object):
         # Set any given tag.
         if 'tag' in type_descriptor:
             tag = type_descriptor['tag']
+            value = 0
 
-            if isinstance(tag[0], tuple):
-                if tag[0][0] != 'APPLICATION':
+            if 'class' in tag:
+                if tag['class'] != 'APPLICATION':
                     raise Exception()
 
-                tag = (Class.APPLICATION | tag[0][1])
-            else:
-                tag = tag[0]
+                value = Class.APPLICATION
 
-            compiled.set_tag(tag)
+            value |= tag['number']
+
+            compiled.set_tag(value)
 
         return compiled
 
