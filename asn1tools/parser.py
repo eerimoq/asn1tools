@@ -240,12 +240,23 @@ def _convert_type_tokens(tokens):
 
 
 def _convert_value(tokens):
-    value_type = tokens[1]
+    type_ = tokens[1]
 
-    if value_type == 'INTEGER':
-        value = int(tokens[3])
+    if type_ == ['INTEGER']:
+        value_type = 'INTEGER'
+        value = int(tokens[3][0])
+    elif type_ == ['OBJECT', 'IDENTIFIER']:
+        value_type = 'OBJECT IDENTIFIER'
+        value = []
+
+        for value_tokens in tokens[3]:
+            if len(value_tokens) == 2:
+                value.append((value_tokens[0], int(value_tokens[1])))
+            else:
+                value.append(_convert_number(value_tokens[0]))
     else:
-        value = tokens
+        value_type = type_[0]
+        value = tokens[3]
 
     return {'type': value_type, 'value': value}
 
@@ -441,17 +452,20 @@ def _create_grammar():
                           | any_defined_by
                           | (word + Optional(size))))
 
-    oid = (lbrace
-           + ZeroOrMore((value_name + lparen + word + rparen)
-                        | word)
-           + rbrace)
+    oid = (Suppress(lbrace)
+           + ZeroOrMore(Group((value_name
+                               + Suppress(lparen)
+                               + word
+                               + Suppress(rparen))
+                              | word))
+           + Suppress(rbrace))
 
     value_definition = (word
-                        + (INTEGER
-                           | (OBJECT + IDENTIFIER)
-                           | type_)
+                        + Group(INTEGER
+                                | (OBJECT + IDENTIFIER)
+                                | type_)
                         + assignment
-                        + (oid | word))
+                        + Group(oid | word))
 
     definition = Group(type_definition
                        | value_definition)
