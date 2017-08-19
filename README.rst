@@ -55,7 +55,7 @@ question using the default codec (BER).
    >>> foo.decode('Question', encoded)
    {'id': 1, 'question': 'Is 1+1=3?'}
 
-See the test suite for additional examples: https://github.com/eerimoq/asn1tools/blob/master/tests/test_asn1tools.py
+See the `examples`_ folder for additional examples
 
 .. |buildstatus| image:: https://travis-ci.org/eerimoq/asn1tools.svg?branch=master
 .. _buildstatus: https://travis-ci.org/eerimoq/asn1tools
@@ -66,3 +66,4 @@ See the test suite for additional examples: https://github.com/eerimoq/asn1tools
 .. _Compile: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compile_file
 .. _encode: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compiler.Specification.encode
 .. _decode: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compiler.Specification.decode
+.. _examples: https://github.com/eerimoq/asn1tools/tree/master/examples
