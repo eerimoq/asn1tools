@@ -447,7 +447,10 @@ class BitString(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError()
+            raise DecodeError("Expected BIT STRING with tag {} but "
+                              "got {}".format(self.tag,
+                                              data[offset]),
+                              offset)
 
         offset += 1
         length, offset = _decode_length_definite(data, offset)
@@ -595,7 +598,7 @@ class UTF8String(Type):
         length, offset = _decode_length_definite(data, offset)
         offset_end = offset + length
 
-        return bytearray(data[offset:offset_end]), offset_end
+        return data[offset:offset_end].decode('utf-8'), offset_end
 
     def __repr__(self):
         return 'UTF8String({})'.format(self.name)
@@ -643,13 +646,16 @@ class UTCTime(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError()
+            raise DecodeError("Expected UTCTime with tag {} but "
+                              "got {}".format(self.tag,
+                                              data[offset]),
+                              offset)
 
         offset += 1
         length, offset = _decode_length_definite(data, offset)
         offset_end = offset + length
 
-        return 0, offset_end
+        return data[offset:offset_end][:-1].decode('ascii'), offset_end
 
     def __repr__(self):
         return 'UTCTime({})'.format(self.name)
@@ -838,7 +844,8 @@ class Null(Type):
 ANY_CLASSES = {
     Tag.NULL: Null('any'),
     Tag.PRINTABLE_STRING: PrintableString('any'),
-    Tag.IA5_STRING: IA5String('any')
+    Tag.IA5_STRING: IA5String('any'),
+    Tag.UTF8_STRING: UTF8String('any')
 }
 
 

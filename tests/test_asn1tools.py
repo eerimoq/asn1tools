@@ -1,9 +1,8 @@
-import sys
-import logging
 import unittest
 import timeit
 
 import asn1tools
+from pprint import pprint
 
 
 class Asn1ToolsTest(unittest.TestCase):
@@ -545,37 +544,64 @@ class Asn1ToolsTest(unittest.TestCase):
         ms_per_call = 1000 * res / iterations
         print('{} ms per decode call.'.format(round(ms_per_call, 3)))
 
-    def _test_rfc5280(self):
+    def test_rfc5280(self):
         snmp_v1 = asn1tools.compile_file('tests/files/rfc5280.asn')
 
         decoded_message = {
+            'signature': (b'\x14\xb6L\xbb\x81y3\xe6q\xa4\xdaQo\xcb\x08\x1d'
+                          b'\x8d`\xec\xbc\x18\xc7sGY\xb1\xf2 H\xbba\xfa'
+                          b'\xfcM\xad\x89\x8d\xd1!\xeb\xd5\xd8\xe5\xba'
+                          b'\xd6\xa66\xfdtP\x83\xb6\x0f\xc7\x1d\xdf}\xe5.\x81'
+                          b'\x7fE\xe0\x9f\xe2>y\xee\xd701\xc7 r\xd9X.*\xfe\x12'
+                          b'Z4E\xa1\x19\x08|\x89G_J\x95\xbe#!JSr\xda*\x05/.\xc9'
+                          b'p\xf6[\xfa\xfd\xdf\xb41\xb2\xc1J\x9c\x06%C\xa1'
+                          b'\xe6\xb4\x1e\x7f\x86\x9b\x16@',
+                          1024),
+            'signatureAlgorithm': {
+                'algorithm': '1.2.840.113549.1.1.5',
+                'parameters': None
+            },
             'tbsCertificate': {
-                'version': 2,
-                'serialNumber': 342344,
+                'version': 'v1',
+                'serialNumber': 3578,
                 'signature': {
-                    'algorithm': '1.3.4',
-                    'parameters': b''
+                    'algorithm': '1.2.840.113549.1.1.5',
+                    'parameters': None
                 },
                 'issuer': {
-                    'rdnSequence': []
-                },
+                    'rdnSequence': [
+                        [{'type': '2.5.4.6', 'value': 'JP'}],
+                        [{'type': '2.5.4.8', 'value': 'Tokyo'}],
+                        [{'type': '2.5.4.7', 'value': 'Chuo-ku'}],
+                        [{'type': '2.5.4.10', 'value': 'Frank4DD'}],
+                        [{'type': '2.5.4.11', 'value': 'WebCert Support'}],
+                        [{'type': '2.5.4.3', 'value': 'Frank4DD Web CA'}],
+                        [{'type': '1.2.840.113549.1.9.1', 'value': 'support@frank4dd.com'}]]},
                 'validity': {
-                    'notBefore': {'utcTime': 0},
-                    'notAfter': {'utcTime': 0}
+                    'notAfter': {'utcTime': '170821052654'},
+                    'notBefore': {'utcTime': '120822052654'}
                 },
                 'subject': {
-                    'rdnSequence': []
-                },
+                    'rdnSequence': [
+                        [{'type': '2.5.4.6', 'value': 'JP'}],
+                        [{'type': '2.5.4.8', 'value': 'Tokyo'}],
+                        [{'type': '2.5.4.10', 'value': 'Frank4DD'}],
+                        [{'type': '2.5.4.3', 'value': 'www.example.com'}]]},
                 'subjectPublicKeyInfo': {
                     'algorithm': {
-                        'algorithm': '1.3.4',
-                        'parameters': (b'', 0)
-                    },
-                    'subjectPublicKey': (b'', 0)
+                        'algorithm': '1.2.840.113549.1.1.1',
+                        'parameters': None},
+                    'subjectPublicKey': (b'0H\x02A\x00\x9b\xfcf\x90y\x84B\xbb'
+                                         b'\xab\x13\xfd+{\xf8\xde\x15\x12\xe5'
+                                         b'\xf1\x93\xe3\x06\x8a{\xb8\xb1\xe1'
+                                         b'\x9e&\xbb\x95\x01\xbf\xe70\xedd\x85'
+                                         b'\x02\xdd\x15i\xa84\xb0\x06\xec?5<'
+                                         b'\x1e\x1b+\x8f\xfa\x8f\x00\x1b\xdf'
+                                         b'\x07\xc6\xacS\x07\x02\x03\x01\x00'
+                                         b'\x01',
+                                         592)
                 }
-            },
-            'signatureAlgorithm': {},
-            'signature': b''
+            }
         }
 
         encoded_message = (
@@ -618,8 +644,8 @@ class Asn1ToolsTest(unittest.TestCase):
         decoded = snmp_v1.decode('Certificate', encoded_message)
         self.assertEqual(decoded, decoded_message)
 
-        encoded = snmp_v1.encode('Certificate', decoded_message)
-        self.assertEqual(encoded, encoded_message)
+        #encoded = snmp_v1.encode('Certificate', decoded_message)
+        #self.assertEqual(encoded, encoded_message)
 
 
 if __name__ == '__main__':
