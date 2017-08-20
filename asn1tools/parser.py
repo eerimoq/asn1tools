@@ -97,32 +97,27 @@ def convert_type(tokens):
             'type': 'SEQUENCE',
             'members': convert_members(tokens[2])
         }
-    elif tokens[0:2] == ['SET', '{']:
-        converted_type = {
-            'type': 'SET',
-            'members': convert_members(tokens[2])
-        }
-    elif tokens[0:2] == ['CHOICE', '{']:
-        converted_type = {
-            'type': 'CHOICE',
-            'members': convert_members(tokens[2])
-        }
-    elif tokens[0:2] == ['ENUMERATED', '{']:
-        converted_type = {
-            'type': 'ENUMERATED',
-            'values': convert_enum_values(tokens[2])
-        }
     elif tokens[0] == 'SEQUENCE' and tokens[2] == 'OF':
         converted_type = {
             'type': 'SEQUENCE OF',
             'element': convert_type(tokens[3:]),
             'size': convert_size(tokens[1][2:-1])
         }
+    elif tokens[0:2] == ['SET', '{']:
+        converted_type = {
+            'type': 'SET',
+            'members': convert_members(tokens[2])
+        }
     elif tokens[0] == 'SET' and tokens[2] == 'OF':
         converted_type = {
             'type': 'SET OF',
             'element': convert_type(tokens[3:]),
             'size': convert_size(tokens[1][2:-1])
+        }
+    elif tokens[0:2] == ['CHOICE', '{']:
+        converted_type = {
+            'type': 'CHOICE',
+            'members': convert_members(tokens[2])
         }
     elif tokens[0] == 'INTEGER':
         converted_type = {'type': 'INTEGER'}
@@ -131,21 +126,26 @@ def convert_type(tokens):
             minimum = convert_number(tokens[1][1])
             maximum = convert_number(tokens[1][3])
             converted_type['restricted_to'] = [(minimum, maximum)]
+    elif tokens[0] == 'BOOLEAN':
+        converted_type = {'type': 'BOOLEAN'}
+    elif tokens[0:2] == ['ENUMERATED', '{']:
+        converted_type = {
+            'type': 'ENUMERATED',
+            'values': convert_enum_values(tokens[2])
+        }
+    elif tokens[0:2] == ['OBJECT', 'IDENTIFIER']:
+        converted_type = {'type': 'OBJECT IDENTIFIER'}
     elif tokens[0:2] == ['BIT', 'STRING']:
         converted_type = {'type': 'BIT STRING'}
     elif tokens[0:2] == ['OCTET', 'STRING']:
         converted_type = {'type': 'OCTET STRING'}
-    elif tokens[0:2] == ['OBJECT', 'IDENTIFIER']:
-        converted_type = {'type': 'OBJECT IDENTIFIER'}
-    elif tokens[0] == 'BOOLEAN':
-        converted_type = {'type': 'BOOLEAN'}
+    elif tokens[0] == 'IA5String':
+        converted_type = {'type': 'IA5String'}
     elif tokens[0:3] == ['ANY', 'DEFINED', 'BY']:
         converted_type = {
             'type': 'ANY DEFINED BY',
             'value': tokens[3]
         }
-    elif tokens[0] == 'IA5String':
-        converted_type = {'type': 'IA5String'}
     else:
         converted_type = {'type': tokens[0]}
 
