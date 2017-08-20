@@ -17,24 +17,24 @@ class ParserError(Exception):
     pass
 
 
-def _convert_number(token):
+def convert_number(token):
     try:
         return int(token)
     except ValueError:
         return token
 
 
-def _convert_size(tokens):
+def convert_size(tokens):
     if len(tokens) == 0:
         return None
     elif '..' in tokens:
-        return [(_convert_number(tokens[0]),
-                 _convert_number(tokens[2]))]
+        return [(convert_number(tokens[0]),
+                 convert_number(tokens[2]))]
     else:
         return [int(tokens[0])]
 
 
-def _convert_enum_values(tokens):
+def convert_enum_values(tokens):
     number = 0
     values = {}
 
@@ -48,7 +48,27 @@ def _convert_enum_values(tokens):
     return values
 
 
-def _convert_members(tokens):
+def convert_tag(tokens):
+    LOGGER.debug('Tag tokens: %s', tokens)
+
+    if len(tokens) > 0:
+        if len(tokens[0]) == 1:
+            tag = {
+                'number': int(tokens[0][0])
+            }
+        else:
+            tag = {
+                'number': int(tokens[0][1]),
+                'class': tokens[0][0]
+            }
+
+        if tokens[1]:
+            tag['kind'] = tokens[1][0] if tokens[1] else None
+
+        return tag
+
+
+def convert_members(tokens):
     members = []
 
     LOGGER.debug('Member tokens: %s', tokens)
@@ -65,14 +85,14 @@ def _convert_members(tokens):
         }
 
         if 'DEFAULT' in qualifiers:
-            member['default'] = _convert_number(qualifiers[1])
+            member['default'] = convert_number(qualifiers[1])
 
         if member_tokens[2] == 'INTEGER':
             member_type = 'INTEGER'
 
             if '..' in member_tokens[3]:
-                minimum = _convert_number(member_tokens[3][1])
-                maximum = _convert_number(member_tokens[3][3])
+                minimum = convert_number(member_tokens[3][1])
+                maximum = convert_number(member_tokens[3][3])
                 member['restricted_to'] = [(minimum, maximum)]
         elif member_tokens[2] == 'BOOLEAN':
             member_type = 'BOOLEAN'
@@ -80,7 +100,7 @@ def _convert_members(tokens):
             member_type = 'IA5String'
         elif member_tokens[2] == 'ENUMERATED':
             member_type = 'ENUMERATED'
-            member['values'] = _convert_enum_values(member_tokens[4])
+            member['values'] = convert_enum_values(member_tokens[4])
         elif member_tokens[2] == 'CHOICE':
             member_type = 'CHOICE'
         elif member_tokens[2:4] == ['BIT', 'STRING']:
@@ -89,16 +109,16 @@ def _convert_members(tokens):
             member_type = 'OCTET STRING'
         elif member_tokens[2:4] == ['SEQUENCE', '{']:
             member_type = 'SEQUENCE'
-            member['members'] = _convert_members(member_tokens[4])
+            member['members'] = convert_members(member_tokens[4])
         elif member_tokens[2:4] == ['SET', '{']:
             member_type = 'SET'
-            member['members'] = _convert_members(member_tokens[4])
+            member['members'] = convert_members(member_tokens[4])
         elif member_tokens[2] == 'SET' and member_tokens[4] == 'OF':
             member_type = 'SET OF'
-            member['element'] = _convert_type(member_tokens[5:])
+            member['element'] = convert_type(member_tokens[5:])
         elif member_tokens[2] == 'SEQUENCE' and member_tokens[4] == 'OF':
             member_type = 'SEQUENCE OF'
-            member['element'] = _convert_type(member_tokens[5:])
+            member['element'] = convert_type(member_tokens[5:])
         elif member_tokens[2] == 'NULL':
             member_type = 'NULL'
         elif member_tokens[2:4] == ['OBJECT', 'IDENTIFIER']:
@@ -109,155 +129,79 @@ def _convert_members(tokens):
         else:
             member_type = member_tokens[2]
 
-        tag_tokens = member_tokens[1]
+        tag = convert_tag(member_tokens[1])
 
-        LOGGER.debug('Tag tokens: %s', tag_tokens)
-
-        if len(tag_tokens) > 0:
-            if len(tag_tokens[0]) == 1:
-                tag = {
-                    'number': int(tag_tokens[0][0])
-                }
-            else:
-                tag = {
-                    'number': int(tag_tokens[0][1]),
-                    'class': tag_tokens[0][0]
-                }
-
-            if tag_tokens[1]:
-                tag['kind'] = tag_tokens[1][0] if tag_tokens[1] else None
-
+        if tag:
             member['tag'] = tag
 
-        member['type'] = member_type
+        if member_type is not None:
+            member['type'] = member_type
+
         members.append(member)
 
     return members
 
 
-def _convert_type_tokens_to_sequence(tokens):
-    return {
-        'type': 'SEQUENCE',
-        'members': _convert_members(tokens[2])
-    }
+def convert_type(tokens):
+    if tokens[0:2] == ['SEQUENCE', '{']:
+        converted_type = {
+            'type': 'SEQUENCE',
+            'members': convert_members(tokens[2])
+        }
+    elif tokens[0:2] == ['SET', '{']:
+        converted_type = {
+            'type': 'SET',
+            'members': convert_members(tokens[2])
+        }
+    elif tokens[0:2] == ['CHOICE', '{']:
+        converted_type = {
+            'type': 'CHOICE',
+            'members': convert_members(tokens[2])
+        }
+    elif tokens[0:2] == ['ENUMERATED', '{']:
+        converted_type = {
+            'type': 'ENUMERATED',
+            'values': convert_enum_values(tokens[2])
+        }
+    elif tokens[0] == 'SEQUENCE' and tokens[2] == 'OF':
+        converted_type = {
+            'type': 'SEQUENCE OF',
+            'element': convert_type(tokens[3:]),
+            'size': convert_size(tokens[1][2:-1])
+        }
+    elif tokens[0] == 'SET' and tokens[2] == 'OF':
+        converted_type = {
+            'type': 'SET OF',
+            'element': convert_type(tokens[3:]),
+            'size': convert_size(tokens[1][2:-1])
+        }
+    elif tokens[0] == 'INTEGER':
+        converted_type = {'type': 'INTEGER'}
+    elif tokens[0:2] == ['BIT', 'STRING']:
+        converted_type = {'type': 'BIT STRING'}
+    elif tokens[0:2] == ['OCTET', 'STRING']:
+        converted_type = {'type': 'OCTET STRING'}
+    elif tokens[0:2] == ['OBJECT', 'IDENTIFIER']:
+        converted_type = {'type': 'OBJECT IDENTIFIER'}
+    elif tokens[0] == 'BOOLEAN':
+        converted_type = {'type': 'BOOLEAN'}
+    else:
+        converted_type = {'type': tokens[0]}
+
+    return converted_type
 
 
-def _convert_type_tokens_to_set(tokens):
-    return {
-        'type': 'SET',
-        'members': _convert_members(tokens[2])
-    }
+def convert_type_tokens(tokens):
+    converted_type = convert_type(tokens[3:])
+    tag = convert_tag(tokens[2])
 
-
-def _convert_type_tokens_to_choice(tokens):
-    return {
-        'type': 'CHOICE',
-        'members': _convert_members(tokens[2])
-    }
-
-
-def _convert_type_tokens_to_integer(_):
-    return {'type': 'INTEGER'}
-
-
-def _convert_type_tokens_to_boolean(_):
-    return {'type': 'BOOLEAN'}
-
-
-def _convert_type_tokens_to_sequence_of(tokens):
-    return {
-        'type': 'SEQUENCE OF',
-        'element': _convert_type(tokens[3:]),
-        'size': _convert_size(tokens[1][2:-1])
-    }
-
-
-def _convert_type_tokens_to_set_of(tokens):
-    return {
-        'type': 'SET OF',
-        'element': _convert_type(tokens[3:]),
-        'size': _convert_size(tokens[1][2:-1])
-    }
-
-
-def _convert_type_tokens_to_bit_string(_):
-    return {'type': 'BIT STRING'}
-
-
-def _convert_type_tokens_to_octet_string(_):
-    return {'type': 'OCTET STRING'}
-
-
-def _convert_type_tokens_to_enumerated(tokens):
-    return {
-        'type': 'ENUMERATED',
-        'values': _convert_enum_values(tokens[2])
-    }
-
-
-def _convert_type_tokens_to_object_identifier(_):
-    return {'type': 'OBJECT IDENTIFIER'}
-
-
-def _convert_type_tokens_to_user_type(tokens):
-    return {'type': tokens[0]}
-
-
-def _convert_type_tokens(tokens):
-    converted_type = _convert_type(tokens[3:])
-    tag_tokens = tokens[2]
-
-    LOGGER.debug('Tag tokens: %s', tag_tokens)
-
-    if len(tag_tokens) > 0:
-        if len(tag_tokens[0]) == 1:
-            tag = {
-                'number': int(tag_tokens[0][0])
-            }
-        else:
-            tag = {
-                'number': int(tag_tokens[0][1]),
-                'class': tag_tokens[0][0]
-            }
-
-        if tag_tokens[1]:
-            tag['kind'] = tag_tokens[1][0] if tag_tokens[1] else None
-
+    if tag:
         converted_type['tag'] = tag
 
     return converted_type
 
 
-def _convert_type(tokens):
-    if tokens[0:2] == ['SEQUENCE', '{']:
-        converted_type = _convert_type_tokens_to_sequence(tokens)
-    elif tokens[0:2] == ['SET', '{']:
-        converted_type = _convert_type_tokens_to_set(tokens)
-    elif tokens[0:2] == ['CHOICE', '{']:
-        converted_type =  _convert_type_tokens_to_choice(tokens)
-    elif tokens[0:2] == ['ENUMERATED', '{']:
-        converted_type =  _convert_type_tokens_to_enumerated(tokens)
-    elif tokens[0] == 'SEQUENCE' and tokens[2] == 'OF':
-        converted_type =  _convert_type_tokens_to_sequence_of(tokens)
-    elif tokens[0] == 'SET' and tokens[2] == 'OF':
-        converted_type =  _convert_type_tokens_to_set_of(tokens)
-    elif tokens[0] == 'INTEGER':
-        converted_type =  _convert_type_tokens_to_integer(tokens)
-    elif tokens[0:2] == ['BIT', 'STRING']:
-        converted_type =  _convert_type_tokens_to_bit_string(tokens)
-    elif tokens[0:2] == ['OCTET', 'STRING']:
-        converted_type =  _convert_type_tokens_to_octet_string(tokens)
-    elif tokens[0:2] == ['OBJECT', 'IDENTIFIER']:
-        converted_type =  _convert_type_tokens_to_object_identifier(tokens)
-    elif tokens[0] == 'BOOLEAN':
-        converted_type =  _convert_type_tokens_to_boolean(tokens)
-    else:
-        converted_type =  _convert_type_tokens_to_user_type(tokens)
-
-    return converted_type
-
-
-def _convert_value(tokens):
+def convert_value_tokens(tokens):
     type_ = tokens[1]
 
     if type_ == ['INTEGER']:
@@ -271,7 +215,7 @@ def _convert_value(tokens):
             if len(value_tokens) == 2:
                 value.append((value_tokens[0], int(value_tokens[1])))
             else:
-                value.append(_convert_number(value_tokens[0]))
+                value.append(convert_number(value_tokens[0]))
     else:
         value_type = type_[0]
         value = tokens[3]
@@ -279,7 +223,11 @@ def _convert_value(tokens):
     return {'type': value_type, 'value': value}
 
 
-def _create_grammar():
+def create_grammar():
+    '''Return the ASN.1 grammar as Pyparsing objects.
+
+    '''
+
     # Keywords.
     SEQUENCE = Keyword('SEQUENCE')
     CHOICE = Keyword('CHOICE')
@@ -523,7 +471,7 @@ def parse_string(string):
 
     """
 
-    grammar = _create_grammar()
+    grammar = create_grammar()
     tokens = grammar.parseString(string).asList()
 
     modules = {}
@@ -547,10 +495,10 @@ def parse_string(string):
 
             if name[0].isupper():
                 LOGGER.debug("Found type '%s'.", name)
-                types[name] = _convert_type_tokens(definition)
+                types[name] = convert_type_tokens(definition)
             else:
                 LOGGER.debug("Found value '%s'.", name)
-                values[name] = _convert_value(definition)
+                values[name] = convert_value_tokens(definition)
 
         modules[module_name] = {
             'imports': imports,
