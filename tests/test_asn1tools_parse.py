@@ -22,13 +22,11 @@ class Asn1ToolsTest(unittest.TestCase):
 
     def test_parse_rrc_8_6_0(self):
         rrc_8_6_0 = asn1tools.parse_file('tests/files/rrc_8.6.0.asn')
-        #print('xxx')
         #pprint(rrc_8_6_0)
         self.assertEqual(rrc_8_6_0, RRC_8_6_0)
 
     def test_parse_rfc5280(self):
         rfc5280 = asn1tools.parse_file('tests/files/rfc5280.asn')
-        #print('xxx')
         #pprint(rfc5280)
         self.assertEqual(rfc5280, RFC5280)
 

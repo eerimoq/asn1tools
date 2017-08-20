@@ -49,8 +49,6 @@ def convert_enum_values(tokens):
 
 
 def convert_tag(tokens):
-    LOGGER.debug('Tag tokens: %s', tokens)
-
     if len(tokens) > 0:
         if len(tokens[0]) == 1:
             tag = {
@@ -71,71 +69,22 @@ def convert_tag(tokens):
 def convert_members(tokens):
     members = []
 
-    LOGGER.debug('Member tokens: %s', tokens)
-
     for member_tokens in tokens:
         if member_tokens == ['...']:
             member_tokens = [['...', [], ''], []]
 
         member_tokens, qualifiers = member_tokens
-        member_name = member_tokens[0]
-        member = {
-            'name': member_name,
-            'optional': 'OPTIONAL' in qualifiers
-        }
+        member = convert_type(member_tokens[2:])
+        member['name'] = member_tokens[0]
+        member['optional'] = 'OPTIONAL' in qualifiers
 
         if 'DEFAULT' in qualifiers:
             member['default'] = convert_number(qualifiers[1])
-
-        if member_tokens[2] == 'INTEGER':
-            member_type = 'INTEGER'
-
-            if '..' in member_tokens[3]:
-                minimum = convert_number(member_tokens[3][1])
-                maximum = convert_number(member_tokens[3][3])
-                member['restricted_to'] = [(minimum, maximum)]
-        elif member_tokens[2] == 'BOOLEAN':
-            member_type = 'BOOLEAN'
-        elif member_tokens[2] == 'IA5String':
-            member_type = 'IA5String'
-        elif member_tokens[2] == 'ENUMERATED':
-            member_type = 'ENUMERATED'
-            member['values'] = convert_enum_values(member_tokens[4])
-        elif member_tokens[2] == 'CHOICE':
-            member_type = 'CHOICE'
-        elif member_tokens[2:4] == ['BIT', 'STRING']:
-            member_type = 'BIT STRING'
-        elif member_tokens[2:4] == ['OCTET', 'STRING']:
-            member_type = 'OCTET STRING'
-        elif member_tokens[2:4] == ['SEQUENCE', '{']:
-            member_type = 'SEQUENCE'
-            member['members'] = convert_members(member_tokens[4])
-        elif member_tokens[2:4] == ['SET', '{']:
-            member_type = 'SET'
-            member['members'] = convert_members(member_tokens[4])
-        elif member_tokens[2] == 'SET' and member_tokens[4] == 'OF':
-            member_type = 'SET OF'
-            member['element'] = convert_type(member_tokens[5:])
-        elif member_tokens[2] == 'SEQUENCE' and member_tokens[4] == 'OF':
-            member_type = 'SEQUENCE OF'
-            member['element'] = convert_type(member_tokens[5:])
-        elif member_tokens[2] == 'NULL':
-            member_type = 'NULL'
-        elif member_tokens[2:4] == ['OBJECT', 'IDENTIFIER']:
-            member_type = 'OBJECT IDENTIFIER'
-        elif member_tokens[2:5] == ['ANY', 'DEFINED', 'BY']:
-            member_type = 'ANY DEFINED BY'
-            member['value'] = member_tokens[5]
-        else:
-            member_type = member_tokens[2]
 
         tag = convert_tag(member_tokens[1])
 
         if tag:
             member['tag'] = tag
-
-        if member_type is not None:
-            member['type'] = member_type
 
         members.append(member)
 
@@ -177,6 +126,11 @@ def convert_type(tokens):
         }
     elif tokens[0] == 'INTEGER':
         converted_type = {'type': 'INTEGER'}
+
+        if '..' in tokens[1]:
+            minimum = convert_number(tokens[1][1])
+            maximum = convert_number(tokens[1][3])
+            converted_type['restricted_to'] = [(minimum, maximum)]
     elif tokens[0:2] == ['BIT', 'STRING']:
         converted_type = {'type': 'BIT STRING'}
     elif tokens[0:2] == ['OCTET', 'STRING']:
@@ -185,6 +139,13 @@ def convert_type(tokens):
         converted_type = {'type': 'OBJECT IDENTIFIER'}
     elif tokens[0] == 'BOOLEAN':
         converted_type = {'type': 'BOOLEAN'}
+    elif tokens[0:3] == ['ANY', 'DEFINED', 'BY']:
+        converted_type = {
+            'type': 'ANY DEFINED BY',
+            'value': tokens[3]
+        }
+    elif tokens[0] == 'IA5String':
+        converted_type = {'type': 'IA5String'}
     else:
         converted_type = {'type': tokens[0]}
 
