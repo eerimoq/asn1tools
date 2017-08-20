@@ -545,7 +545,7 @@ class Asn1ToolsTest(unittest.TestCase):
         print('{} ms per decode call.'.format(round(ms_per_call, 3)))
 
     def test_rfc5280(self):
-        snmp_v1 = asn1tools.compile_file('tests/files/rfc5280.asn')
+        rfc5280 = asn1tools.compile_file('tests/files/rfc5280.asn')
 
         decoded_message = {
             'tbsCertificate': {
@@ -641,10 +641,10 @@ class Asn1ToolsTest(unittest.TestCase):
             b'\x1e\x7f\x86\x9b\x16\x40'
         )
 
-        decoded = snmp_v1.decode('Certificate', encoded_message)
+        decoded = rfc5280.decode('Certificate', encoded_message)
         self.assertEqual(decoded, decoded_message)
 
-        #encoded = snmp_v1.encode('Certificate', decoded_message)
+        #encoded = rfc5280.encode('Certificate', decoded_message)
         #self.assertEqual(encoded, encoded_message)
 
 
