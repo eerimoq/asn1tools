@@ -53,7 +53,7 @@ class DecodeChoiceError(Exception):
     pass
 
 
-def _encode_length_definite(length):
+def encode_length_definite(length):
     if length <= 127:
         encoded = bytearray([length])
     else:
@@ -69,7 +69,7 @@ def _encode_length_definite(length):
     return encoded
 
 
-def _decode_integer(data):
+def decode_integer(data):
     value = 0
 
     for byte in data:
@@ -79,7 +79,7 @@ def _decode_integer(data):
     return value
 
 
-def _encode_signed_integer(data):
+def encode_signed_integer(data):
     encoded = bytearray()
 
     if data < 0:
@@ -104,7 +104,7 @@ def _encode_signed_integer(data):
     return encoded
 
 
-def _decode_signed_integer(data):
+def decode_signed_integer(data):
     value = 0
     is_negative = (data[0] & 0x80)
 
@@ -118,13 +118,13 @@ def _decode_signed_integer(data):
     return value
 
 
-def _decode_length_definite(encoded, offset):
+def decode_length_definite(encoded, offset):
     length = encoded[offset]
     offset += 1
 
     if length & 0x80:
         number_of_bytes = (length & 0x7f)
-        length = _decode_integer(
+        length = decode_integer(
             encoded[offset:number_of_bytes + offset])
     else:
         number_of_bytes = 0
@@ -154,21 +154,21 @@ class Integer(Type):
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
-        encoded.extend(_encode_signed_integer(data))
+        encoded.extend(encode_signed_integer(data))
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError("Expected INTEGER with tag {} but "
-                              "got {} at offset {}.".format(
-                                  self.tag,
-                                  data[offset],
-                                  offset))
+            raise DecodeError(
+                'Expected INTEGER with tag {} but got {} at offset {}.'.format(
+                    self.tag,
+                    data[offset],
+                    offset))
 
         offset += 1
-        length, offset = _decode_length_definite(data, offset)
+        length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
-        return _decode_signed_integer(data[offset:offset_end]), offset_end
+        return decode_signed_integer(data[offset:offset_end]), offset_end
 
     def __repr__(self):
         return 'Integer({})'.format(self.name)
@@ -190,13 +190,20 @@ class Boolean(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError()
+            raise DecodeError(
+                'Expected BOOLEAN with tag {} but got {} at offset {}.'.format(
+                    self.tag,
+                    data[offset],
+                    offset))
 
         offset += 1
-        length, offset = _decode_length_definite(data, offset)
+        length, offset = decode_length_definite(data, offset)
 
         if length != 1:
-            raise DecodeError()
+            raise DecodeError(
+                'Expected one byte data but got {} at offset {}.'.format(
+                    length,
+                    offset))
 
         return (data[offset] != 0), offset + length
 
@@ -220,10 +227,14 @@ class IA5String(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError()
+            raise DecodeError(
+                'Expected IA5String with tag {} but got {} at offset {}.'.format(
+                    self.tag,
+                    data[offset],
+                    offset))
 
         offset += 1
-        length, offset = _decode_length_definite(data, offset)
+        length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
         return data[offset:offset_end].decode('ascii'), offset_end
@@ -248,10 +259,14 @@ class NumericString(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError()
+            raise DecodeError(
+                'Expected NumericString with tag {} but got {} at offset {}.'.format(
+                    self.tag,
+                    data[offset],
+                    offset))
 
         offset += 1
-        length, offset = _decode_length_definite(data, offset)
+        length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
         return data[offset:offset_end].decode('ascii'), offset_end
@@ -295,31 +310,31 @@ class Sequence(Type):
                         data))
 
         encoded.append(self.tag)
-        encoded.extend(_encode_length_definite(len(encoded_members)))
+        encoded.extend(encode_length_definite(len(encoded_members)))
         encoded.extend(encoded_members)
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError("Expected SEQUENCE with tag {} but "
-                              "got {} at offset {}.".format(
-                                  self.tag,
-                                  data[offset],
-                                  offset))
+            raise DecodeError(
+                'Expected SEQUENCE with tag {} but got {} at offset {}.'.format(
+                    self.tag,
+                    data[offset],
+                    offset))
 
         offset += 1
 
         if data[offset] == 0x80:
-            # Decode until an end-of-contents tag is found.
-            raise NotImplementedError()
+            raise NotImplementedError(
+                'Decode until an end-of-contents tag is found.')
         else:
-            length, offset = _decode_length_definite(data, offset)
+            length, offset = decode_length_definite(data, offset)
 
         if length > len(data) - offset:
-            raise DecodeError("Expected at least {} bytes data but "
-                              "got {} at offset {}.".format(
-                                  length,
-                                  len(data) - offset,
-                                  offset))
+            raise DecodeError(
+                'Expected at least {} bytes data but got {} at offset {}.'.format(
+                    length,
+                    len(data) - offset,
+                    offset))
 
         values = {}
 
@@ -369,12 +384,12 @@ class SequenceOf(Type):
             self.element_type.encode(entry, encoded_elements)
 
         encoded.append(self.tag)
-        encoded.extend(_encode_length_definite(len(encoded_elements)))
+        encoded.extend(encode_length_definite(len(encoded_elements)))
         encoded.extend(encoded_elements)
 
     def decode(self, data, offset):
         offset += 1
-        length, offset = _decode_length_definite(data, offset)
+        length, offset = decode_length_definite(data, offset)
         decoded = []
         start_offset = offset
 
@@ -407,12 +422,12 @@ class SetOf(Type):
             self.element_type.encode(entry, encoded_elements)
 
         encoded.append(self.tag)
-        encoded.extend(_encode_length_definite(len(encoded_elements)))
+        encoded.extend(encode_length_definite(len(encoded_elements)))
         encoded.extend(encoded_elements)
 
     def decode(self, data, offset):
         offset += 1
-        length, offset = _decode_length_definite(data, offset)
+        length, offset = decode_length_definite(data, offset)
         decoded = []
         start_offset = offset
 
@@ -446,14 +461,14 @@ class BitString(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError("Expected BIT STRING with tag {} but "
-                              "got {} at offset {}".format(
-                                  self.tag,
-                                  data[offset],
-                                  offset))
+            raise DecodeError(
+                'Expected BIT STRING with tag {} but got {} at offset {}.'.format(
+                    self.tag,
+                    data[offset],
+                    offset))
 
         offset += 1
-        length, offset = _decode_length_definite(data, offset)
+        length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
         number_of_bits = 8 * (length - 1) - data[offset]
         offset += 1
@@ -480,10 +495,14 @@ class OctetString(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError()
+            raise DecodeError(
+                'Expected OCTET STRING with tag {} but got {} at offset {}.'.format(
+                    self.tag,
+                    data[offset],
+                    offset))
 
         offset += 1
-        length, offset = _decode_length_definite(data, offset)
+        length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
         return bytearray(data[offset:offset_end]), offset_end
@@ -508,10 +527,14 @@ class PrintableString(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError()
+            raise DecodeError(
+                'Expected PrintableString with tag {} but got {} at offset {}.'.format(
+                    self.tag,
+                    data[offset],
+                    offset))
 
         offset += 1
-        length, offset = _decode_length_definite(data, offset)
+        length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
         return data[offset:offset_end].decode('ascii'), offset_end
@@ -536,10 +559,14 @@ class UniversalString(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError()
+            raise DecodeError(
+                'Expected UniversalString with tag {} but got {} at offset {}.'.format(
+                    self.tag,
+                    data[offset],
+                    offset))
 
         offset += 1
-        length, offset = _decode_length_definite(data, offset)
+        length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
         return bytearray(data[offset:offset_end]), offset_end
@@ -564,10 +591,14 @@ class VisibleString(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError()
+            raise DecodeError(
+                'Expected VisibleString with tag {} but got {} at offset {}.'.format(
+                    self.tag,
+                    data[offset],
+                    offset))
 
         offset += 1
-        length, offset = _decode_length_definite(data, offset)
+        length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
         return bytearray(data[offset:offset_end]), offset_end
@@ -592,10 +623,14 @@ class UTF8String(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError()
+            raise DecodeError(
+                'Expected UTF8String with tag {} but got {} at offset {}.'.format(
+                    self.tag,
+                    data[offset],
+                    offset))
 
         offset += 1
-        length, offset = _decode_length_definite(data, offset)
+        length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
         return data[offset:offset_end].decode('utf-8'), offset_end
@@ -620,10 +655,14 @@ class BMPString(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError()
+            raise DecodeError(
+                'Expected BMPString with tag {} but got {} at offset {}.'.format(
+                    self.tag,
+                    data[offset],
+                    offset))
 
         offset += 1
-        length, offset = _decode_length_definite(data, offset)
+        length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
         return bytearray(data[offset:offset_end]), offset_end
@@ -646,13 +685,14 @@ class UTCTime(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError("Expected UTCTime with tag {} but "
-                              "got {}".format(self.tag,
-                                              data[offset]),
-                              offset)
+            raise DecodeError(
+                'Expected UTCTime with tag {} but got {} at offset {}.'.format(
+                    self.tag,
+                    data[offset],
+                    offset))
 
         offset += 1
-        length, offset = _decode_length_definite(data, offset)
+        length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
         return data[offset:offset_end][:-1].decode('ascii'), offset_end
@@ -677,10 +717,14 @@ class GeneralizedTime(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError()
+            raise DecodeError(
+                'Expected GeneralizedTime with tag {} but got {} at offset {}.'.format(
+                    self.tag,
+                    data[offset],
+                    offset))
 
         offset += 1
-        length, offset = _decode_length_definite(data, offset)
+        length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
         return bytearray(data[offset:offset_end]), offset_end
@@ -705,10 +749,14 @@ class T61String(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError()
+            raise DecodeError(
+                'Expected T61String with tag {} but got {} at offset {}.'.format(
+                    self.tag,
+                    data[offset],
+                    offset))
 
         offset += 1
-        length, offset = _decode_length_definite(data, offset)
+        length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
         return bytearray(data[offset:offset_end]), offset_end
@@ -730,11 +778,11 @@ class ObjectIdentifier(Type):
         identifiers = [int(identifier) for identifier in data.split('.')]
 
         first_subidentifier = (40 * identifiers[0] + identifiers[1])
-        encoded_subidentifiers = self._encode_subidentifier(
+        encoded_subidentifiers = self.encode_subidentifier(
             first_subidentifier)
 
         for identifier in identifiers[2:]:
-            encoded_subidentifiers += self._encode_subidentifier(identifier)
+            encoded_subidentifiers += self.encode_subidentifier(identifier)
 
         encoded.append(self.tag)
         encoded.append(len(encoded_subidentifiers))
@@ -742,22 +790,26 @@ class ObjectIdentifier(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError()
+            raise DecodeError(
+                'Expected OBJECT IDENTIFIER with tag {} but got {} at offset {}.'.format(
+                    self.tag,
+                    data[offset],
+                    offset))
 
         offset += 1
-        length, offset = _decode_length_definite(data, offset)
+        length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
-        subidentifier, offset = self._decode_subidentifier(data, offset)
+        subidentifier, offset = self.decode_subidentifier(data, offset)
         decoded = [subidentifier // 40, subidentifier % 40]
 
         while offset < offset_end:
-            subidentifier, offset = self._decode_subidentifier(data, offset)
+            subidentifier, offset = self.decode_subidentifier(data, offset)
             decoded.append(subidentifier)
 
         return '.'.join([str(v) for v in decoded]), offset_end
 
-    def _encode_subidentifier(self, subidentifier):
+    def encode_subidentifier(self, subidentifier):
         encoded = [subidentifier & 0x7f]
         subidentifier >>= 7
 
@@ -767,7 +819,7 @@ class ObjectIdentifier(Type):
 
         return encoded[::-1]
 
-    def _decode_subidentifier(self, data, offset):
+    def decode_subidentifier(self, data, offset):
         decoded = 0
 
         while data[offset] & 0x80:
@@ -867,8 +919,7 @@ class Any(Type):
         try:
             return ANY_CLASSES[tag].decode(data, offset)
         except KeyError:
-            raise DecodeError('Any tag {} not supported'.format(tag),
-                              offset)
+            raise DecodeError('Any tag {} not supported'.format(tag))
 
     def __repr__(self):
         return 'Any({})'.format(self.name)
@@ -888,7 +939,7 @@ class Enumerated(Type):
         for value, name in self.values.items():
             if data == name:
                 encoded.append(self.tag)
-                encoded.extend(_encode_signed_integer(value))
+                encoded.extend(encode_signed_integer(value))
                 return
 
         raise EncodeError(
@@ -898,12 +949,16 @@ class Enumerated(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError()
+            raise DecodeError(
+                'Expected ENUMERATED with tag {} but got {} at offset {}.'.format(
+                    self.tag,
+                    data[offset],
+                    offset))
 
         offset += 1
-        length, offset = _decode_length_definite(data, offset)
+        length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
-        value = _decode_signed_integer(data[offset:offset_end])
+        value = decode_signed_integer(data[offset:offset_end])
 
         return self.values[value], offset_end
 
