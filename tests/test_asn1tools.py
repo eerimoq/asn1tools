@@ -549,6 +549,33 @@ class Asn1ToolsTest(unittest.TestCase):
         snmp_v1 = asn1tools.compile_file('tests/files/rfc5280.asn')
 
         decoded_message = {
+            'tbsCertificate': {
+                'version': 2,
+                'serialNumber': 342344,
+                'signature': {
+                    'algorithm': '1.3.4',
+                    'parameters': b''
+                },
+                'issuer': {
+                    'rdnSequence': []
+                },
+                'validity': {
+                    'notBefore': {'utcTime': 0},
+                    'notAfter': {'utcTime': 0}
+                },
+                'subject': {
+                    'rdnSequence': []
+                },
+                'subjectPublicKeyInfo': {
+                    'algorithm': {
+                        'algorithm': '1.3.4',
+                        'parameters': (b'', 0)
+                    },
+                    'subjectPublicKey': (b'', 0)
+                }
+            },
+            'signatureAlgorithm': {},
+            'signature': b''
         }
 
         encoded_message = (
@@ -588,11 +615,11 @@ class Asn1ToolsTest(unittest.TestCase):
             b'\x1e\x7f\x86\x9b\x16\x40'
         )
 
-        encoded = snmp_v1.encode('Certificate', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-
         decoded = snmp_v1.decode('Certificate', encoded_message)
         self.assertEqual(decoded, decoded_message)
+
+        encoded = snmp_v1.encode('Certificate', decoded_message)
+        self.assertEqual(encoded, encoded_message)
 
 
 if __name__ == '__main__':

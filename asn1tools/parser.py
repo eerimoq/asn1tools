@@ -95,10 +95,10 @@ def _convert_members(tokens):
             member['members'] = _convert_members(member_tokens[4])
         elif member_tokens[2] == 'SET' and member_tokens[4] == 'OF':
             member_type = 'SET OF'
-            member['element_type'] = member_tokens[5]
+            member['element'] = _convert_type(member_tokens[5:])
         elif member_tokens[2] == 'SEQUENCE' and member_tokens[4] == 'OF':
             member_type = 'SEQUENCE OF'
-            member['element_type'] = member_tokens[5]
+            member['element'] = _convert_type(member_tokens[5:])
         elif member_tokens[2] == 'NULL':
             member_type = 'NULL'
         elif member_tokens[2:4] == ['OBJECT', 'IDENTIFIER']:
@@ -138,21 +138,21 @@ def _convert_members(tokens):
 def _convert_type_tokens_to_sequence(tokens):
     return {
         'type': 'SEQUENCE',
-        'members': _convert_members(tokens[5])
+        'members': _convert_members(tokens[2])
     }
 
 
 def _convert_type_tokens_to_set(tokens):
     return {
         'type': 'SET',
-        'members': _convert_members(tokens[5])
+        'members': _convert_members(tokens[2])
     }
 
 
 def _convert_type_tokens_to_choice(tokens):
     return {
         'type': 'CHOICE',
-        'members': _convert_members(tokens[5])
+        'members': _convert_members(tokens[2])
     }
 
 
@@ -167,16 +167,16 @@ def _convert_type_tokens_to_boolean(_):
 def _convert_type_tokens_to_sequence_of(tokens):
     return {
         'type': 'SEQUENCE OF',
-        'element_type': tokens[6],
-        'size': _convert_size(tokens[4][2:-1])
+        'element': _convert_type(tokens[3:]),
+        'size': _convert_size(tokens[1][2:-1])
     }
 
 
 def _convert_type_tokens_to_set_of(tokens):
     return {
         'type': 'SET OF',
-        'element_type': tokens[6],
-        'size': _convert_size(tokens[4][2:-1])
+        'element': _convert_type(tokens[3:]),
+        'size': _convert_size(tokens[1][2:-1])
     }
 
 
@@ -188,8 +188,11 @@ def _convert_type_tokens_to_octet_string(_):
     return {'type': 'OCTET STRING'}
 
 
-def _convert_type_tokens_to_enumerated(_):
-    return {'type': 'ENUMERATED'}
+def _convert_type_tokens_to_enumerated(tokens):
+    return {
+        'type': 'ENUMERATED',
+        'values': _convert_enum_values(tokens[2])
+    }
 
 
 def _convert_type_tokens_to_object_identifier(_):
@@ -197,35 +200,11 @@ def _convert_type_tokens_to_object_identifier(_):
 
 
 def _convert_type_tokens_to_user_type(tokens):
-    return {'type': tokens[3]}
+    return {'type': tokens[0]}
 
 
 def _convert_type_tokens(tokens):
-    if tokens[3:5] == ['SEQUENCE', '{']:
-        converted_type = _convert_type_tokens_to_sequence(tokens)
-    elif tokens[3:5] == ['SET', '{']:
-        converted_type = _convert_type_tokens_to_set(tokens)
-    elif tokens[3:5] == ['CHOICE', '{']:
-        converted_type =  _convert_type_tokens_to_choice(tokens)
-    elif tokens[3:5] == ['ENUMERATED', '{']:
-        converted_type =  _convert_type_tokens_to_enumerated(tokens)
-    elif tokens[3] == 'SEQUENCE' and tokens[5] == 'OF':
-        converted_type =  _convert_type_tokens_to_sequence_of(tokens)
-    elif tokens[3] == 'SET' and tokens[5] == 'OF':
-        converted_type =  _convert_type_tokens_to_set_of(tokens)
-    elif tokens[3] == 'INTEGER':
-        converted_type =  _convert_type_tokens_to_integer(tokens)
-    elif tokens[3:5] == ['BIT', 'STRING']:
-        converted_type =  _convert_type_tokens_to_bit_string(tokens)
-    elif tokens[3:5] == ['OCTET', 'STRING']:
-        converted_type =  _convert_type_tokens_to_octet_string(tokens)
-    elif tokens[3:5] == ['OBJECT', 'IDENTIFIER']:
-        converted_type =  _convert_type_tokens_to_object_identifier(tokens)
-    elif tokens[3] == 'BOOLEAN':
-        converted_type =  _convert_type_tokens_to_boolean(tokens)
-    else:
-        converted_type =  _convert_type_tokens_to_user_type(tokens)
-
+    converted_type = _convert_type(tokens[3:])
     tag_tokens = tokens[2]
 
     LOGGER.debug('Tag tokens: %s', tag_tokens)
@@ -245,6 +224,35 @@ def _convert_type_tokens(tokens):
             tag['kind'] = tag_tokens[1][0] if tag_tokens[1] else None
 
         converted_type['tag'] = tag
+
+    return converted_type
+
+
+def _convert_type(tokens):
+    if tokens[0:2] == ['SEQUENCE', '{']:
+        converted_type = _convert_type_tokens_to_sequence(tokens)
+    elif tokens[0:2] == ['SET', '{']:
+        converted_type = _convert_type_tokens_to_set(tokens)
+    elif tokens[0:2] == ['CHOICE', '{']:
+        converted_type =  _convert_type_tokens_to_choice(tokens)
+    elif tokens[0:2] == ['ENUMERATED', '{']:
+        converted_type =  _convert_type_tokens_to_enumerated(tokens)
+    elif tokens[0] == 'SEQUENCE' and tokens[2] == 'OF':
+        converted_type =  _convert_type_tokens_to_sequence_of(tokens)
+    elif tokens[0] == 'SET' and tokens[2] == 'OF':
+        converted_type =  _convert_type_tokens_to_set_of(tokens)
+    elif tokens[0] == 'INTEGER':
+        converted_type =  _convert_type_tokens_to_integer(tokens)
+    elif tokens[0:2] == ['BIT', 'STRING']:
+        converted_type =  _convert_type_tokens_to_bit_string(tokens)
+    elif tokens[0:2] == ['OCTET', 'STRING']:
+        converted_type =  _convert_type_tokens_to_octet_string(tokens)
+    elif tokens[0:2] == ['OBJECT', 'IDENTIFIER']:
+        converted_type =  _convert_type_tokens_to_object_identifier(tokens)
+    elif tokens[0] == 'BOOLEAN':
+        converted_type =  _convert_type_tokens_to_boolean(tokens)
+    else:
+        converted_type =  _convert_type_tokens_to_user_type(tokens)
 
     return converted_type
 

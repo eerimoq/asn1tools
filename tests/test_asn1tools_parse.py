@@ -22,6 +22,8 @@ class Asn1ToolsTest(unittest.TestCase):
 
     def test_parse_rrc_8_6_0(self):
         rrc_8_6_0 = asn1tools.parse_file('tests/files/rrc_8.6.0.asn')
+        #print('xxx')
+        #pprint(rrc_8_6_0)
         self.assertEqual(rrc_8_6_0, RRC_8_6_0)
 
     def test_parse_rfc5280(self):
@@ -29,11 +31,6 @@ class Asn1ToolsTest(unittest.TestCase):
         #print('xxx')
         #pprint(rfc5280)
         self.assertEqual(rfc5280, RFC5280)
-
-
-# This file is not '__main__' when executed via 'python setup.py
-# test'.
-logging.basicConfig(level=logging.DEBUG)
 
 
 if __name__ == '__main__':

@@ -11,4 +11,13 @@ class DecodeError(Exception):
 
     """
 
-    pass
+    def __init__(self, message, offset, decoded=None):
+        super(DecodeError, self).__init__()
+        self.message = message
+        self.offset = offset
+        self.decoded = decoded
+
+    def __str__(self):
+        return "{} at offset {}. Decoded: {}".format(self.message,
+                                                     self.offset,
+                                                     self.decoded)

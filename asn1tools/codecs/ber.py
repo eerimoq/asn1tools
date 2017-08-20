@@ -158,7 +158,10 @@ class Integer(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError()
+            raise DecodeError("Expected INTEGER with tag {} but "
+                              "got {}".format(self.tag,
+                                              data[offset]),
+                              offset)
 
         offset += 1
         length, offset = _decode_length_definite(data, offset)
@@ -296,7 +299,10 @@ class Sequence(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError()
+            raise DecodeError("Expected SEQUENCE with tag {} but "
+                              "got {}".format(self.tag,
+                                              data[offset]),
+                              offset)
 
         offset += 1
 
@@ -315,12 +321,17 @@ class Sequence(Type):
             try:
                 value, offset = member.decode(data, offset)
 
-            except DecodeError:
+            except DecodeError as e:
                 if member.optional:
                     continue
 
                 if member.default is None:
-                    raise
+                    values[member.name] = e.decoded
+
+                    raise DecodeError("Unable to decode SEQUENCE "
+                                      "member '{}'".format(member.name),
+                                      offset,
+                                      values)
 
                 value = member.default
 
@@ -365,9 +376,12 @@ class SequenceOf(Type):
         decoded = []
         start_offset = offset
 
-        while (offset - start_offset) < length:
-            decoded_element, offset = self.element_type.decode(data, offset)
-            decoded.append(decoded_element)
+        try:
+            while (offset - start_offset) < length:
+                decoded_element, offset = self.element_type.decode(data, offset)
+                decoded.append(decoded_element)
+        except DecodeError:
+            raise DecodeError('SEQUENCE OF', offset, decoded)
 
         return decoded, offset
 
@@ -497,7 +511,7 @@ class PrintableString(Type):
         length, offset = _decode_length_definite(data, offset)
         offset_end = offset + length
 
-        return bytearray(data[offset:offset_end]), offset_end
+        return data[offset:offset_end].decode('ascii'), offset_end
 
     def __repr__(self):
         return 'PrintableString({})'.format(self.name)
@@ -557,6 +571,116 @@ class VisibleString(Type):
 
     def __repr__(self):
         return 'VisibleString({})'.format(self.name)
+
+
+class UTF8String(Type):
+
+    def __init__(self, name, **kwargs):
+        super(UTF8String, self).__init__(**kwargs)
+        self.name = name
+
+        if self.tag is None:
+            self.tag = Tag.UTF8_STRING
+
+    def encode(self, data, encoded):
+        encoded.append(self.tag)
+        encoded.append(len(data))
+        encoded.extend(data)
+
+    def decode(self, data, offset):
+        if data[offset] != self.tag:
+            raise DecodeError()
+
+        offset += 1
+        length, offset = _decode_length_definite(data, offset)
+        offset_end = offset + length
+
+        return bytearray(data[offset:offset_end]), offset_end
+
+    def __repr__(self):
+        return 'UTF8String({})'.format(self.name)
+
+
+class BMPString(Type):
+
+    def __init__(self, name, **kwargs):
+        super(BMPString, self).__init__(**kwargs)
+        self.name = name
+
+        if self.tag is None:
+            self.tag = Tag.BMP_STRING
+
+    def encode(self, data, encoded):
+        encoded.append(self.tag)
+        encoded.append(len(data))
+        encoded.extend(data)
+
+    def decode(self, data, offset):
+        if data[offset] != self.tag:
+            raise DecodeError()
+
+        offset += 1
+        length, offset = _decode_length_definite(data, offset)
+        offset_end = offset + length
+
+        return bytearray(data[offset:offset_end]), offset_end
+
+    def __repr__(self):
+        return 'BMPString({})'.format(self.name)
+
+
+class UTCTime(Type):
+
+    def __init__(self, name, **kwargs):
+        super(UTCTime, self).__init__(**kwargs)
+        self.name = name
+
+        if self.tag is None:
+            self.tag = Tag.UTC_TIME
+
+    def encode(self, data, encoded):
+        encoded.append(self.tag)
+
+    def decode(self, data, offset):
+        if data[offset] != self.tag:
+            raise DecodeError()
+
+        offset += 1
+        length, offset = _decode_length_definite(data, offset)
+        offset_end = offset + length
+
+        return 0, offset_end
+
+    def __repr__(self):
+        return 'UTCTime({})'.format(self.name)
+
+
+class GeneralizedTime(Type):
+
+    def __init__(self, name, **kwargs):
+        super(GeneralizedTime, self).__init__(**kwargs)
+        self.name = name
+
+        if self.tag is None:
+            self.tag = Tag.GENERALIZED_TIME
+
+    def encode(self, data, encoded):
+        encoded.append(self.tag)
+        encoded.append(len(data))
+        encoded.extend(data)
+
+    def decode(self, data, offset):
+        if data[offset] != self.tag:
+            raise DecodeError()
+
+        offset += 1
+        length, offset = _decode_length_definite(data, offset)
+        offset_end = offset + length
+
+        return bytearray(data[offset:offset_end]), offset_end
+
+    def __repr__(self):
+        return 'GeneralizedTime({})'.format(self.name)
 
 
 class T61String(Type):
@@ -711,6 +835,13 @@ class Null(Type):
         return 'Null({})'.format(self.name)
 
 
+ANY_CLASSES = {
+    Tag.NULL: Null('any'),
+    Tag.PRINTABLE_STRING: PrintableString('any'),
+    Tag.IA5_STRING: IA5String('any')
+}
+
+
 class Any(Type):
 
     def __init__(self, name, **kwargs):
@@ -723,8 +854,14 @@ class Any(Type):
     def encode(self, _, encoded):
         pass
 
-    def decode(self, _, offset):
-        return None, offset
+    def decode(self, data, offset):
+        tag = data[offset]
+
+        try:
+            return ANY_CLASSES[tag].decode(data, offset)
+        except KeyError:
+            raise DecodeError('Any tag {} not supported'.format(tag),
+                              offset)
 
     def __repr__(self):
         return 'Any({})'.format(self.name)
@@ -823,11 +960,9 @@ class Compiler(object):
             compiled = ObjectIdentifier(name)
         elif type_descriptor['type'] == 'SEQUENCE OF':
             compiled = SequenceOf(name,
-                                  self.compile_type(
-                                      '',
-                                      *self.lookup_type_descriptor(
-                                          type_descriptor['element_type'],
-                                          module_name)))
+                                  self.compile_type('',
+                                                    type_descriptor['element'],
+                                                    module_name))
         elif type_descriptor['type'] == 'NULL':
             compiled = Null(name)
         elif type_descriptor['type'] == 'TeletexString':
@@ -843,13 +978,19 @@ class Compiler(object):
             compiled = Any(name)
         elif type_descriptor['type'] == 'PrintableString':
             compiled = PrintableString(name)
+        elif type_descriptor['type'] == 'IA5String':
+            compiled = IA5String(name)
+        elif type_descriptor['type'] == 'GeneralizedTime':
+            compiled = GeneralizedTime(name)
         elif type_descriptor['type'] == 'SET OF':
             compiled = SetOf(name,
-                             self.compile_type(
-                                 '',
-                                 *self.lookup_type_descriptor(
-                                     type_descriptor['element_type'],
-                                     module_name)))
+                             self.compile_type('',
+                                               type_descriptor['element'],
+                                               module_name))
+        elif type_descriptor['type'] == 'BIT STRING':
+            compiled = BitString(name)
+        elif type_descriptor['type'] == 'ENUMERATED':
+            compiled = Enumerated(name, type_descriptor['values'])
         else:
             compiled = self.compile_type(
                 name,
@@ -869,7 +1010,6 @@ class Compiler(object):
                 value = Class.APPLICATION
 
             value |= tag['number']
-
             compiled.set_tag(value)
 
         return compiled
@@ -879,20 +1019,15 @@ class Compiler(object):
 
         for member in members:
             if member['type'] == 'INTEGER':
-                compiled_member = Integer(member['name'],
-                                          optional=member['optional'])
+                compiled_member = Integer(member['name'])
             elif member['type'] == 'BOOLEAN':
-                compiled_member = Boolean(member['name'],
-                                          optional=member['optional'])
+                compiled_member = Boolean(member['name'])
             elif member['type'] == 'IA5String':
-                compiled_member = IA5String(member['name'],
-                                            optional=member['optional'])
+                compiled_member = IA5String(member['name'])
             elif member['type'] == 'BIT STRING':
-                compiled_member = BitString(member['name'],
-                                            optional=member['optional'])
+                compiled_member = BitString(member['name'])
             elif member['type'] == 'OCTET STRING':
-                compiled_member = OctetString(member['name'],
-                                              optional=member['optional'])
+                compiled_member = OctetString(member['name'])
             elif member['type'] == 'OBJECT IDENTIFIER':
                 compiled_member = ObjectIdentifier(
                     member['name'],
@@ -901,25 +1036,22 @@ class Compiler(object):
                 compiled_member = Null(member['name'])
             elif member['type'] == 'ENUMERATED':
                 compiled_member = Enumerated(member['name'],
-                                             member['values'],
-                                             optional=member['optional'])
+                                             member['values'])
             elif member['type'] == 'SEQUENCE':
                 compiled_member = Sequence(
                     member['name'],
                     self.compile_members(member['members'],
-                                         module_name),
-                    optional=member['optional'])
+                                         module_name))
             elif member['type'] == 'SEQUENCE OF':
                 compiled_member = SequenceOf(member['name'],
                                              self.compile_type(
                                                  '',
-                                                 *self.lookup_type_descriptor(
-                                                     member['element_type'],
-                                                     module_name)))
+                                                 member['element'],
+                                                 module_name))
             elif member['type'] == 'NumericString':
                 compiled_member = NumericString(member['name'])
             elif member['type'] == 'ANY DEFINED BY':
-                compiled_member = Null(member['name'])
+                compiled_member = Any(member['name'])
             elif member['type'] == 'TeletexString':
                 compiled_member = T61String(member['name'])
             elif member['type'] == 'PrintableString':
@@ -928,19 +1060,44 @@ class Compiler(object):
                 compiled_member = UniversalString(member['name'])
             elif member['type'] == 'VisibleString':
                 compiled_member = VisibleString(member['name'])
+            elif member['type'] == 'UTF8String':
+                compiled_member = UTF8String(member['name'])
+            elif member['type'] == 'BMPString':
+                compiled_member = BMPString(member['name'])
+            elif member['type'] == 'UTCTime':
+                compiled_member = UTCTime(member['name'])
+            elif member['type'] == 'GeneralizedTime':
+                compiled_member = GeneralizedTime(member['name'])
             elif member['type'] == 'SET OF':
                 compiled_member = SetOf(member['name'],
-                                        self.compile_type(
-                                            '',
-                                            *self.lookup_type_descriptor(
-                                                member['element_type'],
-                                                module_name)))
+                                        self.compile_type('',
+                                                          member['element'],
+                                                          module_name))
             else:
                 compiled_member = self.compile_type(
                     member['name'],
                     *self.lookup_type_descriptor(
                         member['type'],
                         module_name))
+
+            # Set any given tag.
+            if 'tag' in member:
+                tag = member['tag']
+                value = 0
+
+                if 'class' in tag:
+                    if tag['class'] != 'APPLICATION':
+                        raise Exception()
+
+                    value = Class.APPLICATION
+
+                value |= tag['number']
+                compiled_member.set_tag(value)
+
+            compiled_member.optional = member['optional']
+
+            if 'default' in member:
+                compiled_member.default = member['default']
 
             compiled_members.append(compiled_member)
 

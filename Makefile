@@ -8,5 +8,5 @@ all:
 test:
 	python2 setup.py test
 	python3 setup.py test
-	cd examples && performance.py
-	cd examples && question.py
+	cd examples && ./performance.py
+	cd examples && ./question.py
