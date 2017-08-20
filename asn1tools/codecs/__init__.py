@@ -11,13 +11,11 @@ class DecodeError(Exception):
 
     """
 
-    def __init__(self, message, offset, decoded=None):
+    def __init__(self, message):
         super(DecodeError, self).__init__()
         self.message = message
-        self.offset = offset
-        self.decoded = decoded
+        self.location = []
 
     def __str__(self):
-        return "{} at offset {}. Decoded: {}".format(self.message,
-                                                     self.offset,
-                                                     self.decoded)
+        return "{}: {}".format(': '.join(self.location[::-1]),
+                               self.message)

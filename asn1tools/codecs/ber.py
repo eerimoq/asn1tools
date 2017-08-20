@@ -159,9 +159,10 @@ class Integer(Type):
     def decode(self, data, offset):
         if data[offset] != self.tag:
             raise DecodeError("Expected INTEGER with tag {} but "
-                              "got {}".format(self.tag,
-                                              data[offset]),
-                              offset)
+                              "got {} at offset {}.".format(
+                                  self.tag,
+                                  data[offset],
+                                  offset))
 
         offset += 1
         length, offset = _decode_length_definite(data, offset)
@@ -300,9 +301,10 @@ class Sequence(Type):
     def decode(self, data, offset):
         if data[offset] != self.tag:
             raise DecodeError("Expected SEQUENCE with tag {} but "
-                              "got {}".format(self.tag,
-                                              data[offset]),
-                              offset)
+                              "got {} at offset {}.".format(
+                                  self.tag,
+                                  data[offset],
+                                  offset))
 
         offset += 1
 
@@ -313,7 +315,11 @@ class Sequence(Type):
             length, offset = _decode_length_definite(data, offset)
 
         if length > len(data) - offset:
-            raise DecodeError()
+            raise DecodeError("Expected at least {} bytes data but "
+                              "got {} at offset {}.".format(
+                                  length,
+                                  len(data) - offset,
+                                  offset))
 
         values = {}
 
@@ -326,12 +332,8 @@ class Sequence(Type):
                     continue
 
                 if member.default is None:
-                    values[member.name] = e.decoded
-
-                    raise DecodeError("Unable to decode SEQUENCE "
-                                      "member '{}'".format(member.name),
-                                      offset,
-                                      values)
+                    e.location.append(member.name)
+                    raise
 
                 value = member.default
 
@@ -376,12 +378,9 @@ class SequenceOf(Type):
         decoded = []
         start_offset = offset
 
-        try:
-            while (offset - start_offset) < length:
-                decoded_element, offset = self.element_type.decode(data, offset)
-                decoded.append(decoded_element)
-        except DecodeError:
-            raise DecodeError('SEQUENCE OF', offset, decoded)
+        while (offset - start_offset) < length:
+            decoded_element, offset = self.element_type.decode(data, offset)
+            decoded.append(decoded_element)
 
         return decoded, offset
 
@@ -448,9 +447,10 @@ class BitString(Type):
     def decode(self, data, offset):
         if data[offset] != self.tag:
             raise DecodeError("Expected BIT STRING with tag {} but "
-                              "got {}".format(self.tag,
-                                              data[offset]),
-                              offset)
+                              "got {} at offset {}".format(
+                                  self.tag,
+                                  data[offset],
+                                  offset))
 
         offset += 1
         length, offset = _decode_length_definite(data, offset)
@@ -963,6 +963,8 @@ class Compiler(object):
             compiled = OctetString(name)
         elif type_descriptor['type'] == 'INTEGER':
             compiled = Integer(name)
+        elif type_descriptor['type'] == 'BOOLEAN':
+            compiled = Boolean(name)
         elif type_descriptor['type'] == 'OBJECT IDENTIFIER':
             compiled = ObjectIdentifier(name)
         elif type_descriptor['type'] == 'SEQUENCE OF':
@@ -1039,6 +1041,11 @@ class Compiler(object):
                 compiled_member = ObjectIdentifier(
                     member['name'],
                     optional=member['optional'])
+            elif member['type'] == 'CHOICE':
+                compiled_member = Choice(
+                    member['name'],
+                    self.compile_members(member['members'],
+                                         module_name))
             elif member['type'] == 'NULL':
                 compiled_member = Null(member['name'])
             elif member['type'] == 'ENUMERATED':
@@ -1080,6 +1087,8 @@ class Compiler(object):
                                         self.compile_type('',
                                                           member['element'],
                                                           module_name))
+            elif member['name'] == '...':
+                continue
             else:
                 compiled_member = self.compile_type(
                     member['name'],
