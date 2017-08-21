@@ -122,14 +122,13 @@ def decode_length_definite(encoded, offset):
     length = encoded[offset]
     offset += 1
 
-    if length & 0x80:
-        number_of_bytes = (length & 0x7f)
-        length = decode_integer(
-            encoded[offset:number_of_bytes + offset])
+    if length <= 127:
+        return length, offset
     else:
-        number_of_bytes = 0
+        number_of_bytes = (length & 0x7f)
+        length = decode_integer(encoded[offset:number_of_bytes + offset])
 
-    return length, offset + number_of_bytes
+        return length, offset + number_of_bytes
 
 
 class Type(object):
