@@ -1009,52 +1009,64 @@ class Compiler(object):
                 name,
                 self.compile_members(type_descriptor['members'],
                                      module_name))
-        elif type_descriptor['type'] == 'CHOICE':
-            compiled = Choice(
-                name,
-                self.compile_members(type_descriptor['members'],
-                                     module_name))
-        elif type_descriptor['type'] == 'OCTET STRING':
-            compiled = OctetString(name)
-        elif type_descriptor['type'] == 'INTEGER':
-            compiled = Integer(name)
-        elif type_descriptor['type'] == 'BOOLEAN':
-            compiled = Boolean(name)
-        elif type_descriptor['type'] == 'OBJECT IDENTIFIER':
-            compiled = ObjectIdentifier(name)
         elif type_descriptor['type'] == 'SEQUENCE OF':
             compiled = SequenceOf(name,
                                   self.compile_type('',
                                                     type_descriptor['element'],
                                                     module_name))
-        elif type_descriptor['type'] == 'NULL':
-            compiled = Null(name)
-        elif type_descriptor['type'] == 'TeletexString':
-            compiled = T61String(name)
         elif type_descriptor['type'] == 'SET':
             compiled = Set(
                 name,
                 self.compile_members(type_descriptor['members'],
                                      module_name))
-        elif type_descriptor['type'] == 'NumericString':
-            compiled = NumericString(name)
-        elif type_descriptor['type'] == 'ANY':
-            compiled = Any(name)
-        elif type_descriptor['type'] == 'PrintableString':
-            compiled = PrintableString(name)
-        elif type_descriptor['type'] == 'IA5String':
-            compiled = IA5String(name)
-        elif type_descriptor['type'] == 'GeneralizedTime':
-            compiled = GeneralizedTime(name)
         elif type_descriptor['type'] == 'SET OF':
             compiled = SetOf(name,
                              self.compile_type('',
                                                type_descriptor['element'],
                                                module_name))
-        elif type_descriptor['type'] == 'BIT STRING':
-            compiled = BitString(name)
+        elif type_descriptor['type'] == 'CHOICE':
+            compiled = Choice(
+                name,
+                self.compile_members(type_descriptor['members'],
+                                     module_name))
+        elif type_descriptor['type'] == 'INTEGER':
+            compiled = Integer(name)
         elif type_descriptor['type'] == 'ENUMERATED':
             compiled = Enumerated(name, type_descriptor['values'])
+        elif type_descriptor['type'] == 'BOOLEAN':
+            compiled = Boolean(name)
+        elif type_descriptor['type'] == 'OBJECT IDENTIFIER':
+            compiled = ObjectIdentifier(name)
+        elif type_descriptor['type'] == 'OCTET STRING':
+            compiled = OctetString(name)
+        elif type_descriptor['type'] == 'TeletexString':
+            compiled = T61String(name)
+        elif type_descriptor['type'] == 'NumericString':
+            compiled = NumericString(name)
+        elif type_descriptor['type'] == 'PrintableString':
+            compiled = PrintableString(name)
+        elif type_descriptor['type'] == 'IA5String':
+            compiled = IA5String(name)
+        elif type_descriptor['type'] == 'VisibleString':
+            compiled = VisibleString(name)
+        elif type_descriptor['type'] == 'UTF8String':
+            compiled = UTF8String(name)
+        elif type_descriptor['type'] == 'BMPString':
+            compiled = BMPString(name)
+        elif type_descriptor['type'] == 'UTCTime':
+            compiled = UTCTime(name)
+        elif type_descriptor['type'] == 'UniversalString':
+            compiled = UniversalString(name)
+        elif type_descriptor['type'] == 'GeneralizedTime':
+            compiled = GeneralizedTime(name)
+        elif type_descriptor['type'] == 'BIT STRING':
+            compiled = BitString(name)
+        elif type_descriptor['type'] == 'ANY':
+            compiled = Any(name)
+        elif type_descriptor['type'] == 'ANY DEFINED BY':
+            compiled = Any(name)
+        elif type_descriptor['type'] == 'NULL':
+            compiled = Null(name)
         else:
             compiled = self.compile_type(
                 name,
@@ -1082,89 +1094,12 @@ class Compiler(object):
         compiled_members = []
 
         for member in members:
-            if member['type'] == 'INTEGER':
-                compiled_member = Integer(member['name'])
-            elif member['type'] == 'BOOLEAN':
-                compiled_member = Boolean(member['name'])
-            elif member['type'] == 'IA5String':
-                compiled_member = IA5String(member['name'])
-            elif member['type'] == 'BIT STRING':
-                compiled_member = BitString(member['name'])
-            elif member['type'] == 'OCTET STRING':
-                compiled_member = OctetString(member['name'])
-            elif member['type'] == 'OBJECT IDENTIFIER':
-                compiled_member = ObjectIdentifier(
-                    member['name'],
-                    optional=member['optional'])
-            elif member['type'] == 'CHOICE':
-                compiled_member = Choice(
-                    member['name'],
-                    self.compile_members(member['members'],
-                                         module_name))
-            elif member['type'] == 'NULL':
-                compiled_member = Null(member['name'])
-            elif member['type'] == 'ENUMERATED':
-                compiled_member = Enumerated(member['name'],
-                                             member['values'])
-            elif member['type'] == 'SEQUENCE':
-                compiled_member = Sequence(
-                    member['name'],
-                    self.compile_members(member['members'],
-                                         module_name))
-            elif member['type'] == 'SEQUENCE OF':
-                compiled_member = SequenceOf(member['name'],
-                                             self.compile_type(
-                                                 '',
-                                                 member['element'],
-                                                 module_name))
-            elif member['type'] == 'NumericString':
-                compiled_member = NumericString(member['name'])
-            elif member['type'] == 'ANY DEFINED BY':
-                compiled_member = Any(member['name'])
-            elif member['type'] == 'TeletexString':
-                compiled_member = T61String(member['name'])
-            elif member['type'] == 'PrintableString':
-                compiled_member = PrintableString(member['name'])
-            elif member['type'] == 'UniversalString':
-                compiled_member = UniversalString(member['name'])
-            elif member['type'] == 'VisibleString':
-                compiled_member = VisibleString(member['name'])
-            elif member['type'] == 'UTF8String':
-                compiled_member = UTF8String(member['name'])
-            elif member['type'] == 'BMPString':
-                compiled_member = BMPString(member['name'])
-            elif member['type'] == 'UTCTime':
-                compiled_member = UTCTime(member['name'])
-            elif member['type'] == 'GeneralizedTime':
-                compiled_member = GeneralizedTime(member['name'])
-            elif member['type'] == 'SET OF':
-                compiled_member = SetOf(member['name'],
-                                        self.compile_type('',
-                                                          member['element'],
-                                                          module_name))
-            elif member['name'] == '...':
+            if member['name'] == '...':
                 continue
-            else:
-                compiled_member = self.compile_type(
-                    member['name'],
-                    *self.lookup_type_descriptor(
-                        member['type'],
-                        module_name))
 
-            # Set any given tag.
-            if 'tag' in member:
-                tag = member['tag']
-                value = 0
-
-                if 'class' in tag:
-                    if tag['class'] != 'APPLICATION':
-                        raise Exception()
-
-                    value = Class.APPLICATION
-
-                value |= tag['number']
-                compiled_member.set_tag(value)
-
+            compiled_member = self.compile_type(member['name'],
+                                                member,
+                                                module_name)
             compiled_member.optional = member['optional']
 
             if 'default' in member:
