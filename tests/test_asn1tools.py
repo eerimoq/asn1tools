@@ -726,6 +726,104 @@ class Asn1ToolsTest(unittest.TestCase):
                          'tbsCertificate: issuer: Expected SEQUENCE with tag '
                          '48 but got 49 at offset 150.')
 
+    def test_decode_all_types_errors(self):
+        all_types = asn1tools.compile_file('tests/files/all_types.asn')
+
+        # BOOLEAN.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            all_types.decode('Boolean', b'\xff')
+
+        self.assertEqual(str(cm.exception),
+                         ': Expected BOOLEAN with tag 1 but got 255 at offset 0.')
+
+        # INTEGER.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            all_types.decode('Integer', b'\xfe')
+
+        self.assertEqual(str(cm.exception),
+                         ': Expected INTEGER with tag 2 but got 254 at offset 0.')
+
+        # BIT STRING.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            all_types.decode('Bitstring', b'\xfd')
+
+        self.assertEqual(str(cm.exception),
+                         ': Expected BIT STRING with tag 3 but got 253 at offset 0.')
+
+        # OCTET STRING.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            all_types.decode('Octetstring', b'\xfc')
+
+        self.assertEqual(str(cm.exception),
+                         ': Expected OCTET STRING with tag 4 but got 252 at offset 0.')
+
+        # NULL.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            all_types.decode('Null', b'\xfb')
+
+        self.assertEqual(str(cm.exception),
+                         ': Expected NULL with tag 5 but got 251 at offset 0.')
+
+        # OBJECT IDENTIFIER.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            all_types.decode('Objectidentifier', b'\xfa')
+
+        self.assertEqual(str(cm.exception),
+                         ': Expected OBJECT IDENTIFIER with tag 6 but got '
+                         '250 at offset 0.')
+
+        # ENUMERATED.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            all_types.decode('Enumerated', b'\xf9')
+
+        self.assertEqual(str(cm.exception),
+                         ': Expected ENUMERATED with tag 10 but got 249 at offset 0.')
+
+        # UTF8String.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            all_types.decode('Utf8string', b'\xf8')
+
+        self.assertEqual(str(cm.exception),
+                         ': Expected UTF8String with tag 12 but got 248 at offset 0.')
+
+        # SEQUENCE.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            all_types.decode('Sequence', b'\xf7')
+
+        self.assertEqual(str(cm.exception),
+                         ': Expected SEQUENCE with tag 48 but got 247 at offset 0.')
+
+        # SET.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            all_types.decode('Set', b'\xf6')
+
+        self.assertEqual(str(cm.exception),
+                         ': Expected SEQUENCE with tag 48 but got 246 at offset 0.')
+
+        # NumericString.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            all_types.decode('Numericstring', b'\xf5')
+
+        self.assertEqual(str(cm.exception),
+                         ': Expected NumericString with tag 18 but got '
+                         '245 at offset 0.')
+
+        # PrintableString.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            all_types.decode('Printablestring', b'\xf4')
+
+        self.assertEqual(str(cm.exception),
+                         ': Expected PrintableString with tag 19 but got '
+                         '244 at offset 0.')
+
+        # IA5String.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            all_types.decode('Ia5string', b'\xf3')
+
+        self.assertEqual(str(cm.exception),
+                         ': Expected IA5String with tag 22 but got '
+                         '243 at offset 0.')
+
 
 if __name__ == '__main__':
     unittest.main()

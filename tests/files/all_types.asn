@@ -1,0 +1,29 @@
+AllTypes DEFINITIONS ::= BEGIN
+
+Boolean ::= BOOLEAN
+
+Integer ::= INTEGER
+
+Bitstring ::= BIT STRING
+
+Octetstring ::= OCTET STRING
+
+Null ::= NULL
+
+Objectidentifier ::= OBJECT IDENTIFIER
+
+Enumerated ::= ENUMERATED { one(1) }
+
+Utf8string ::= UTF8String
+
+Sequence ::= SEQUENCE {}
+
+Set ::= SET {}
+
+Numericstring ::= NumericString
+
+Printablestring ::= PrintableString
+
+Ia5string ::= IA5String
+
+END

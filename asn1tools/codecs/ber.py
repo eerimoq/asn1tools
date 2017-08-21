@@ -822,7 +822,13 @@ class Null(Type):
         encoded.append(self.tag)
         encoded.append(0)
 
-    def decode(self, _, offset):
+    def decode(self, data, offset):
+        if data[offset] != self.tag:
+            raise DecodeTagError('NULL',
+                                 self.tag,
+                                 data[offset],
+                                 offset)
+
         return None, offset + 2
 
     def __repr__(self):
