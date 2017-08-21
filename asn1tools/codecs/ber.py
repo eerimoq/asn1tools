@@ -936,7 +936,7 @@ class Compiler(object):
         self._specification = specification
 
     def process(self):
-        compiled_types = {
+        return {
             module_name: {
                 type_name: CompiledType(self.compile_type(
                     type_name,
@@ -947,8 +947,6 @@ class Compiler(object):
             }
             for module_name in self._specification
         }
-
-        return compiled_types
 
     def compile_type(self, name, type_descriptor, module_name):
         if type_descriptor['type'] == 'SEQUENCE':
