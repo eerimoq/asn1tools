@@ -148,9 +148,7 @@ class Integer(Type):
     def __init__(self, name, **kwargs):
         super(Integer, self).__init__(**kwargs)
         self.name = name
-
-        if self.tag is None:
-            self.tag = Tag.INTEGER
+        self.tag = Tag.INTEGER
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -179,9 +177,7 @@ class Boolean(Type):
     def __init__(self, name, **kwargs):
         super(Boolean, self).__init__(**kwargs)
         self.name = name
-
-        if self.tag is None:
-            self.tag = Tag.BOOLEAN
+        self.tag = Tag.BOOLEAN
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -216,9 +212,7 @@ class IA5String(Type):
     def __init__(self, name, **kwargs):
         super(IA5String, self).__init__(**kwargs)
         self.name = name
-
-        if self.tag is None:
-            self.tag = Tag.IA5_STRING
+        self.tag = Tag.IA5_STRING
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -248,9 +242,7 @@ class NumericString(Type):
     def __init__(self, name, **kwargs):
         super(NumericString, self).__init__(**kwargs)
         self.name = name
-
-        if self.tag is None:
-            self.tag = Tag.NUMERIC_STRING
+        self.tag = Tag.NUMERIC_STRING
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -281,10 +273,7 @@ class Sequence(Type):
         super(Sequence, self).__init__(**kwargs)
         self.name = name
         self.members = members
-
-        if self.tag is None:
-            self.tag = (Encoding.CONSTRUCTED
-                        | Tag.SEQUENCE)
+        self.tag = (Encoding.CONSTRUCTED | Tag.SEQUENCE)
 
     def set_tag(self, tag):
         self.tag = (Class.CONTEXT_SPECIFIC
@@ -372,10 +361,7 @@ class SequenceOf(Type):
         super(SequenceOf, self).__init__(**kwargs)
         self.name = name
         self.element_type = element_type
-
-        if self.tag is None:
-            self.tag = (Encoding.CONSTRUCTED
-                        | Tag.SEQUENCE)
+        self.tag = (Encoding.CONSTRUCTED | Tag.SEQUENCE)
 
     def encode(self, data, encoded):
         encoded_elements = bytearray()
@@ -410,10 +396,7 @@ class SetOf(Type):
         super(SetOf, self).__init__(**kwargs)
         self.name = name
         self.element_type = element_type
-
-        if self.tag is None:
-            self.tag = (Encoding.CONSTRUCTED
-                        | Tag.SET)
+        self.tag = (Encoding.CONSTRUCTED | Tag.SET)
 
     def encode(self, data, encoded):
         encoded_elements = bytearray()
@@ -447,9 +430,7 @@ class BitString(Type):
     def __init__(self, name, **kwargs):
         super(BitString, self).__init__(**kwargs)
         self.name = name
-
-        if self.tag is None:
-            self.tag = Tag.BIT_STRING
+        self.tag = Tag.BIT_STRING
 
     def encode(self, data, encoded):
         number_of_unused_bits = (8 - (data[1] % 8))
@@ -484,9 +465,7 @@ class OctetString(Type):
     def __init__(self, name, **kwargs):
         super(OctetString, self).__init__(**kwargs)
         self.name = name
-
-        if self.tag is None:
-            self.tag = Tag.OCTET_STRING
+        self.tag = Tag.OCTET_STRING
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -516,9 +495,7 @@ class PrintableString(Type):
     def __init__(self, name, **kwargs):
         super(PrintableString, self).__init__(**kwargs)
         self.name = name
-
-        if self.tag is None:
-            self.tag = Tag.PRINTABLE_STRING
+        self.tag = Tag.PRINTABLE_STRING
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -548,9 +525,7 @@ class UniversalString(Type):
     def __init__(self, name, **kwargs):
         super(UniversalString, self).__init__(**kwargs)
         self.name = name
-
-        if self.tag is None:
-            self.tag = Tag.UNIVERSAL_STRING
+        self.tag = Tag.UNIVERSAL_STRING
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -580,9 +555,7 @@ class VisibleString(Type):
     def __init__(self, name, **kwargs):
         super(VisibleString, self).__init__(**kwargs)
         self.name = name
-
-        if self.tag is None:
-            self.tag = Tag.VISIBLE_STRING
+        self.tag = Tag.VISIBLE_STRING
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -612,9 +585,7 @@ class UTF8String(Type):
     def __init__(self, name, **kwargs):
         super(UTF8String, self).__init__(**kwargs)
         self.name = name
-
-        if self.tag is None:
-            self.tag = Tag.UTF8_STRING
+        self.tag = Tag.UTF8_STRING
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -644,9 +615,7 @@ class BMPString(Type):
     def __init__(self, name, **kwargs):
         super(BMPString, self).__init__(**kwargs)
         self.name = name
-
-        if self.tag is None:
-            self.tag = Tag.BMP_STRING
+        self.tag = Tag.BMP_STRING
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -676,12 +645,10 @@ class UTCTime(Type):
     def __init__(self, name, **kwargs):
         super(UTCTime, self).__init__(**kwargs)
         self.name = name
-
-        if self.tag is None:
-            self.tag = Tag.UTC_TIME
+        self.tag = Tag.UTC_TIME
 
     def encode(self, data, encoded):
-        encoded.append(self.tag)
+        raise NotImplementedError()
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
@@ -706,14 +673,10 @@ class GeneralizedTime(Type):
     def __init__(self, name, **kwargs):
         super(GeneralizedTime, self).__init__(**kwargs)
         self.name = name
-
-        if self.tag is None:
-            self.tag = Tag.GENERALIZED_TIME
+        self.tag = Tag.GENERALIZED_TIME
 
     def encode(self, data, encoded):
-        encoded.append(self.tag)
-        encoded.append(len(data))
-        encoded.extend(data)
+        raise NotImplementedError()
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
@@ -723,11 +686,7 @@ class GeneralizedTime(Type):
                     data[offset],
                     offset))
 
-        offset += 1
-        length, offset = decode_length_definite(data, offset)
-        offset_end = offset + length
-
-        return bytearray(data[offset:offset_end]), offset_end
+        raise NotImplementedError()
 
     def __repr__(self):
         return 'GeneralizedTime({})'.format(self.name)
@@ -738,9 +697,7 @@ class T61String(Type):
     def __init__(self, name, **kwargs):
         super(T61String, self).__init__(**kwargs)
         self.name = name
-
-        if self.tag is None:
-            self.tag = Tag.T61_STRING
+        self.tag = Tag.T61_STRING
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -770,9 +727,7 @@ class ObjectIdentifier(Type):
     def __init__(self, name, **kwargs):
         super(ObjectIdentifier, self).__init__(**kwargs)
         self.name = name
-
-        if self.tag is None:
-            self.tag = Tag.OBJECT_IDENTIFIER
+        self.tag = Tag.OBJECT_IDENTIFIER
 
     def encode(self, data, encoded):
         identifiers = [int(identifier) for identifier in data.split('.')]
@@ -878,9 +833,7 @@ class Null(Type):
     def __init__(self, name, **kwargs):
         super(Null, self).__init__(**kwargs)
         self.name = name
-
-        if self.tag is None:
-            self.tag = Tag.NULL
+        self.tag = Tag.NULL
 
     def encode(self, _, encoded):
         encoded.append(self.tag)
@@ -907,9 +860,6 @@ class Any(Type):
         super(Any, self).__init__(**kwargs)
         self.name = name
 
-        if self.tag is None:
-            self.tag = -1
-
     def encode(self, _, encoded):
         pass
 
@@ -931,9 +881,7 @@ class Enumerated(Type):
         super(Enumerated, self).__init__(**kwargs)
         self.name = name
         self.values = values
-
-        if self.tag is None:
-            self.tag = Tag.ENUMERATED
+        self.tag = Tag.ENUMERATED
 
     def encode(self, data, encoded):
         for value, name in self.values.items():
