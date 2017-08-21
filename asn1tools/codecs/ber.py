@@ -294,7 +294,7 @@ class Sequence(Type):
                 member.encode(member.default, encoded_members)
             else:
                 raise EncodeError(
-                    "Sequence member '{}' not found in '{}'.".format(
+                    "Sequence member '{}' not found in {}.".format(
                         name,
                         data))
 

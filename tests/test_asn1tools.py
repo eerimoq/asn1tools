@@ -2,7 +2,6 @@ import unittest
 import timeit
 
 import asn1tools
-from pprint import pprint
 
 
 class Asn1ToolsTest(unittest.TestCase):
@@ -40,7 +39,7 @@ class Asn1ToolsTest(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "Sequence member 'id' not found in '{'question': 'Is 1+1=3?'}'.")
+            "Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
 
     def test_complex(self):
         cmplx = asn1tools.compile_file('tests/files/complex.asn')
