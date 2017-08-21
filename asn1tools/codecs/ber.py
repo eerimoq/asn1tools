@@ -2,7 +2,7 @@
 
 """
 
-from . import EncodeError, DecodeError
+from . import EncodeError, DecodeError, DecodeTagError
 
 
 class Class(object):
@@ -69,6 +69,19 @@ def encode_length_definite(length):
     return encoded
 
 
+def decode_length_definite(encoded, offset):
+    length = encoded[offset]
+    offset += 1
+
+    if length <= 127:
+        return length, offset
+    else:
+        number_of_bytes = (length & 0x7f)
+        length = decode_integer(encoded[offset:number_of_bytes + offset])
+
+        return length, offset + number_of_bytes
+
+
 def decode_integer(data):
     value = 0
 
@@ -118,19 +131,6 @@ def decode_signed_integer(data):
     return value
 
 
-def decode_length_definite(encoded, offset):
-    length = encoded[offset]
-    offset += 1
-
-    if length <= 127:
-        return length, offset
-    else:
-        number_of_bytes = (length & 0x7f)
-        length = decode_integer(encoded[offset:number_of_bytes + offset])
-
-        return length, offset + number_of_bytes
-
-
 class Type(object):
 
     def __init__(self, tag=None, optional=False, default=None):
@@ -155,11 +155,10 @@ class Integer(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError(
-                'Expected INTEGER with tag {} but got {} at offset {}.'.format(
-                    self.tag,
-                    data[offset],
-                    offset))
+            raise DecodeTagError('INTEGER',
+                                 self.tag,
+                                 data[offset],
+                                 offset)
 
         offset += 1
         length, offset = decode_length_definite(data, offset)
@@ -185,11 +184,10 @@ class Boolean(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError(
-                'Expected BOOLEAN with tag {} but got {} at offset {}.'.format(
-                    self.tag,
-                    data[offset],
-                    offset))
+            raise DecodeTagError('BOOLEAN',
+                                 self.tag,
+                                 data[offset],
+                                 offset)
 
         offset += 1
         length, offset = decode_length_definite(data, offset)
@@ -220,11 +218,10 @@ class IA5String(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError(
-                'Expected IA5String with tag {} but got {} at offset {}.'.format(
-                    self.tag,
-                    data[offset],
-                    offset))
+            raise DecodeTagError('IA5String',
+                                 self.tag,
+                                 data[offset],
+                                 offset)
 
         offset += 1
         length, offset = decode_length_definite(data, offset)
@@ -250,11 +247,10 @@ class NumericString(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError(
-                'Expected NumericString with tag {} but got {} at offset {}.'.format(
-                    self.tag,
-                    data[offset],
-                    offset))
+            raise DecodeTagError('NumericString',
+                                 self.tag,
+                                 data[offset],
+                                 offset)
 
         offset += 1
         length, offset = decode_length_definite(data, offset)
@@ -303,11 +299,10 @@ class Sequence(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError(
-                'Expected SEQUENCE with tag {} but got {} at offset {}.'.format(
-                    self.tag,
-                    data[offset],
-                    offset))
+            raise DecodeTagError('SEQUENCE',
+                                 self.tag,
+                                 data[offset],
+                                 offset)
 
         offset += 1
 
@@ -441,11 +436,10 @@ class BitString(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError(
-                'Expected BIT STRING with tag {} but got {} at offset {}.'.format(
-                    self.tag,
-                    data[offset],
-                    offset))
+            raise DecodeTagError('BIT STRING',
+                                 self.tag,
+                                 data[offset],
+                                 offset)
 
         offset += 1
         length, offset = decode_length_definite(data, offset)
@@ -473,11 +467,10 @@ class OctetString(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError(
-                'Expected OCTET STRING with tag {} but got {} at offset {}.'.format(
-                    self.tag,
-                    data[offset],
-                    offset))
+            raise DecodeTagError('OCTET STRING',
+                                 self.tag,
+                                 data[offset],
+                                 offset)
 
         offset += 1
         length, offset = decode_length_definite(data, offset)
@@ -503,11 +496,10 @@ class PrintableString(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError(
-                'Expected PrintableString with tag {} but got {} at offset {}.'.format(
-                    self.tag,
-                    data[offset],
-                    offset))
+            raise DecodeTagError('PrintableString',
+                                 self.tag,
+                                 data[offset],
+                                 offset)
 
         offset += 1
         length, offset = decode_length_definite(data, offset)
@@ -533,11 +525,10 @@ class UniversalString(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError(
-                'Expected UniversalString with tag {} but got {} at offset {}.'.format(
-                    self.tag,
-                    data[offset],
-                    offset))
+            raise DecodeTagError('UniversalString',
+                                 self.tag,
+                                 data[offset],
+                                 offset)
 
         offset += 1
         length, offset = decode_length_definite(data, offset)
@@ -563,11 +554,10 @@ class VisibleString(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError(
-                'Expected VisibleString with tag {} but got {} at offset {}.'.format(
-                    self.tag,
-                    data[offset],
-                    offset))
+            raise DecodeTagError('VisibleString',
+                                 self.tag,
+                                 data[offset],
+                                 offset)
 
         offset += 1
         length, offset = decode_length_definite(data, offset)
@@ -593,11 +583,10 @@ class UTF8String(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError(
-                'Expected UTF8String with tag {} but got {} at offset {}.'.format(
-                    self.tag,
-                    data[offset],
-                    offset))
+            raise DecodeTagError('UTF8String',
+                                 self.tag,
+                                 data[offset],
+                                 offset)
 
         offset += 1
         length, offset = decode_length_definite(data, offset)
@@ -623,11 +612,10 @@ class BMPString(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError(
-                'Expected BMPString with tag {} but got {} at offset {}.'.format(
-                    self.tag,
-                    data[offset],
-                    offset))
+            raise DecodeTagError('BMPString',
+                                 self.tag,
+                                 data[offset],
+                                 offset)
 
         offset += 1
         length, offset = decode_length_definite(data, offset)
@@ -651,11 +639,10 @@ class UTCTime(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError(
-                'Expected UTCTime with tag {} but got {} at offset {}.'.format(
-                    self.tag,
-                    data[offset],
-                    offset))
+            raise DecodeTagError('UTCTime',
+                                 self.tag,
+                                 data[offset],
+                                 offset)
 
         offset += 1
         length, offset = decode_length_definite(data, offset)
@@ -679,11 +666,10 @@ class GeneralizedTime(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError(
-                'Expected GeneralizedTime with tag {} but got {} at offset {}.'.format(
-                    self.tag,
-                    data[offset],
-                    offset))
+            raise DecodeTagError('GeneralizedTime',
+                                 self.tag,
+                                 data[offset],
+                                 offset)
 
         raise NotImplementedError()
 
@@ -705,11 +691,10 @@ class T61String(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError(
-                'Expected T61String with tag {} but got {} at offset {}.'.format(
-                    self.tag,
-                    data[offset],
-                    offset))
+            raise DecodeTagError('T61String',
+                                 self.tag,
+                                 data[offset],
+                                 offset)
 
         offset += 1
         length, offset = decode_length_definite(data, offset)
@@ -744,11 +729,10 @@ class ObjectIdentifier(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError(
-                'Expected OBJECT IDENTIFIER with tag {} but got {} at offset {}.'.format(
-                    self.tag,
-                    data[offset],
-                    offset))
+            raise DecodeTagError('OBJECT IDENTIFIER',
+                                 self.tag,
+                                 data[offset],
+                                 offset)
 
         offset += 1
         length, offset = decode_length_definite(data, offset)
@@ -896,11 +880,10 @@ class Enumerated(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeError(
-                'Expected ENUMERATED with tag {} but got {} at offset {}.'.format(
-                    self.tag,
-                    data[offset],
-                    offset))
+            raise DecodeTagError('ENUMERATED',
+                                 self.tag,
+                                 data[offset],
+                                 offset)
 
         offset += 1
         length, offset = decode_length_definite(data, offset)
