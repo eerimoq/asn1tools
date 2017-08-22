@@ -521,7 +521,7 @@ class UniversalString(Type):
     def encode(self, data, encoded):
         encoded.append(self.tag)
         encoded.append(len(data))
-        encoded.extend(data)
+        encoded.extend(data.encode('ascii'))
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
@@ -534,7 +534,7 @@ class UniversalString(Type):
         length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
-        return bytearray(data[offset:offset_end]), offset_end
+        return data[offset:offset_end].decode('ascii'), offset_end
 
     def __repr__(self):
         return 'UniversalString({})'.format(self.name)
@@ -550,7 +550,7 @@ class VisibleString(Type):
     def encode(self, data, encoded):
         encoded.append(self.tag)
         encoded.append(len(data))
-        encoded.extend(data)
+        encoded.extend(data.encode('ascii'))
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
@@ -563,7 +563,7 @@ class VisibleString(Type):
         length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
-        return bytearray(data[offset:offset_end]), offset_end
+        return data[offset:offset_end].decode('ascii'), offset_end
 
     def __repr__(self):
         return 'VisibleString({})'.format(self.name)
@@ -635,7 +635,9 @@ class UTCTime(Type):
         self.tag = Tag.UTC_TIME
 
     def encode(self, data, encoded):
-        raise NotImplementedError()
+        encoded.append(self.tag)
+        encoded.append(13)
+        encoded.extend(bytearray((data + 'Y').encode('ascii')))
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
@@ -677,10 +679,10 @@ class GeneralizedTime(Type):
         return 'GeneralizedTime({})'.format(self.name)
 
 
-class T61String(Type):
+class TeletexString(Type):
 
     def __init__(self, name, **kwargs):
-        super(T61String, self).__init__(**kwargs)
+        super(TeletexString, self).__init__(**kwargs)
         self.name = name
         self.tag = Tag.T61_STRING
 
@@ -691,7 +693,7 @@ class T61String(Type):
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
-            raise DecodeTagError('T61String',
+            raise DecodeTagError('TeletexString',
                                  self.tag,
                                  data[offset],
                                  offset)
@@ -703,7 +705,7 @@ class T61String(Type):
         return bytearray(data[offset:offset_end]), offset_end
 
     def __repr__(self):
-        return 'T61String({})'.format(self.name)
+        return 'TeletexString({})'.format(self.name)
 
 
 class ObjectIdentifier(Type):
@@ -974,7 +976,7 @@ class Compiler(object):
         elif type_descriptor['type'] == 'OCTET STRING':
             compiled = OctetString(name)
         elif type_descriptor['type'] == 'TeletexString':
-            compiled = T61String(name)
+            compiled = TeletexString(name)
         elif type_descriptor['type'] == 'NumericString':
             compiled = NumericString(name)
         elif type_descriptor['type'] == 'PrintableString':

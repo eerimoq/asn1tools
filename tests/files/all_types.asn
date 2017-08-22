@@ -26,4 +26,14 @@ Printablestring ::= PrintableString
 
 Ia5string ::= IA5String
 
+Universalstring ::= UniversalString
+
+Visiblestring ::= VisibleString
+
+Bmpstring ::= BMPString
+
+Teletexstring ::= TeletexString
+
+Utctime ::= UTCTime
+
 END

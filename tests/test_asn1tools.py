@@ -726,6 +726,38 @@ class Asn1ToolsTest(unittest.TestCase):
                          'tbsCertificate: issuer: Expected SEQUENCE with tag '
                          '48 but got 49 at offset 150.')
 
+    def test_encode_all_types(self):
+        all_types = asn1tools.compile_file('tests/files/all_types.asn')
+
+        self.assertEqual(all_types.encode('Boolean', True), b'\x01\x01\x01')
+        self.assertEqual(all_types.encode('Integer', 1), b'\x02\x01\x01')
+        self.assertEqual(all_types.encode('Bitstring', (b'\x80', 1)),
+                         b'\x03\x02\x07\x80')
+        self.assertEqual(all_types.encode('Octetstring', b'\x00'),
+                         b'\x04\x01\x00')
+        self.assertEqual(all_types.encode('Null', None), b'\x05\x00')
+        self.assertEqual(all_types.encode('Objectidentifier', '1.2'),
+                         b'\x06\x01\x2a')
+        self.assertEqual(all_types.encode('Enumerated', 'one'), b'\x0a\x01\x01')
+        self.assertEqual(all_types.encode('Utf8string', 'foo'), b'\x0c\x03foo')
+        self.assertEqual(all_types.encode('Sequence', {}), b'\x30\x00')
+        self.assertEqual(all_types.encode('Set', {}), b'\x30\x00')
+        self.assertEqual(all_types.encode('Numericstring', '123'),
+                         b'\x12\x03123')
+        self.assertEqual(all_types.encode('Printablestring', 'foo'),
+                         b'\x13\x03foo')
+        self.assertEqual(all_types.encode('Ia5string', 'bar'), b'\x16\x03bar')
+        self.assertEqual(all_types.encode('Universalstring', 'bar'),
+                         b'\x1c\x03bar')
+        self.assertEqual(all_types.encode('Visiblestring', 'bar'),
+                         b'\x1a\x03bar')
+        self.assertEqual(all_types.encode('Bmpstring', b'bar'),
+                         b'\x1e\x03bar')
+        self.assertEqual(all_types.encode('Teletexstring', b'fum'),
+                         b'\x14\x03fum')
+        self.assertEqual(all_types.encode('Utctime', '010203040506'),
+                         b'\x17\x0d010203040506Y')
+
     def test_decode_all_types(self):
         all_types = asn1tools.compile_file('tests/files/all_types.asn')
 
@@ -748,28 +780,16 @@ class Asn1ToolsTest(unittest.TestCase):
         self.assertEqual(all_types.decode('Printablestring', b'\x13\x03foo'),
                          'foo')
         self.assertEqual(all_types.decode('Ia5string', b'\x16\x03bar'), 'bar')
-
-    def test_encode_all_types(self):
-        all_types = asn1tools.compile_file('tests/files/all_types.asn')
-
-        self.assertEqual(all_types.encode('Boolean', True), b'\x01\x01\x01')
-        self.assertEqual(all_types.encode('Integer', 1), b'\x02\x01\x01')
-        self.assertEqual(all_types.encode('Bitstring', (b'\x80', 1)),
-                         b'\x03\x02\x07\x80')
-        self.assertEqual(all_types.encode('Octetstring', b'\x00'),
-                         b'\x04\x01\x00')
-        self.assertEqual(all_types.encode('Null', None), b'\x05\x00')
-        self.assertEqual(all_types.encode('Objectidentifier', '1.2'),
-                         b'\x06\x01\x2a')
-        self.assertEqual(all_types.encode('Enumerated', 'one'), b'\x0a\x01\x01')
-        self.assertEqual(all_types.encode('Utf8string', 'foo'), b'\x0c\x03foo')
-        self.assertEqual(all_types.encode('Sequence', {}), b'\x30\x00')
-        self.assertEqual(all_types.encode('Set', {}), b'\x30\x00')
-        self.assertEqual(all_types.encode('Numericstring', '123'),
-                         b'\x12\x03123')
-        self.assertEqual(all_types.encode('Printablestring', 'foo'),
-                         b'\x13\x03foo')
-        self.assertEqual(all_types.encode('Ia5string', 'bar'), b'\x16\x03bar')
+        self.assertEqual(all_types.decode('Universalstring', b'\x1c\x03bar'),
+                         'bar')
+        self.assertEqual(all_types.decode('Visiblestring', b'\x1a\x03bar'),
+                         'bar')
+        self.assertEqual(all_types.decode('Bmpstring', b'\x1e\x03bar'),
+                         b'bar')
+        self.assertEqual(all_types.decode('Teletexstring', b'\x14\x03fum'),
+                         b'fum')
+        self.assertEqual(all_types.decode('Utctime', b'\x17\x0d010203040506Y'),
+                         '010203040506')
 
     def test_decode_all_types_errors(self):
         all_types = asn1tools.compile_file('tests/files/all_types.asn')
@@ -868,6 +888,46 @@ class Asn1ToolsTest(unittest.TestCase):
         self.assertEqual(str(cm.exception),
                          ': Expected IA5String with tag 22 but got '
                          '243 at offset 0.')
+
+        # UniversalString.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            all_types.decode('Universalstring', b'\xf2')
+
+        self.assertEqual(str(cm.exception),
+                         ': Expected UniversalString with tag 28 but got '
+                         '242 at offset 0.')
+
+        # VisibleString.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            all_types.decode('Visiblestring', b'\xf1')
+
+        self.assertEqual(str(cm.exception),
+                         ': Expected VisibleString with tag 26 but got '
+                         '241 at offset 0.')
+
+        # BMPString.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            all_types.decode('Bmpstring', b'\xf0')
+
+        self.assertEqual(str(cm.exception),
+                         ': Expected BMPString with tag 30 but got '
+                         '240 at offset 0.')
+
+        # TeletexString.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            all_types.decode('Teletexstring', b'\xef')
+
+        self.assertEqual(str(cm.exception),
+                         ': Expected TeletexString with tag 20 but got '
+                         '239 at offset 0.')
+
+        # UTCTime.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            all_types.decode('Utctime', b'\xee')
+
+        self.assertEqual(str(cm.exception),
+                         ': Expected UTCTime with tag 23 but got '
+                         '238 at offset 0.')
 
 
 if __name__ == '__main__':
