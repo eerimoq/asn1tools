@@ -345,8 +345,87 @@ class Sequence(Type):
             ', '.join([repr(member) for member in self.members]))
 
 
-class Set(Sequence):
-    pass
+class Set(Type):
+
+    def __init__(self, name, members, **kwargs):
+        super(Set, self).__init__(**kwargs)
+        self.name = name
+        self.members = members
+        self.tag = (Encoding.CONSTRUCTED | Tag.SET)
+
+    def set_tag(self, tag):
+        self.tag = (Class.CONTEXT_SPECIFIC
+                    | Encoding.CONSTRUCTED
+                    | tag)
+
+    def encode(self, data, encoded):
+        encoded_members = bytearray()
+
+        for member in self.members:
+            name = member.name
+
+            if name in data:
+                member.encode(data[name], encoded_members)
+            elif member.optional:
+                pass
+            elif member.default is not None:
+                member.encode(member.default, encoded_members)
+            else:
+                raise EncodeError(
+                    "Set member '{}' not found in {}.".format(
+                        name,
+                        data))
+
+        encoded.append(self.tag)
+        encoded.extend(encode_length_definite(len(encoded_members)))
+        encoded.extend(encoded_members)
+
+    def decode(self, data, offset):
+        if data[offset] != self.tag:
+            raise DecodeTagError('SET',
+                                 self.tag,
+                                 data[offset],
+                                 offset)
+
+        offset += 1
+
+        if data[offset] == 0x80:
+            raise NotImplementedError(
+                'Decode until an end-of-contents tag is found.')
+        else:
+            length, offset = decode_length_definite(data, offset)
+
+        if length > len(data) - offset:
+            raise DecodeError(
+                'Expected at least {} bytes data but got {} at offset {}.'.format(
+                    length,
+                    len(data) - offset,
+                    offset))
+
+        values = {}
+
+        for member in self.members:
+            try:
+                value, offset = member.decode(data, offset)
+
+            except DecodeError as e:
+                if member.optional:
+                    continue
+
+                if member.default is None:
+                    e.location.append(member.name)
+                    raise
+
+                value = member.default
+
+            values[member.name] = value
+
+        return values, offset
+
+    def __repr__(self):
+        return 'Set({}, [{}])'.format(
+            self.name,
+            ', '.join([repr(member) for member in self.members]))
 
 
 class SequenceOf(Type):

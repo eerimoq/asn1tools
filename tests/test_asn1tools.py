@@ -741,7 +741,7 @@ class Asn1ToolsTest(unittest.TestCase):
         self.assertEqual(all_types.encode('Enumerated', 'one'), b'\x0a\x01\x01')
         self.assertEqual(all_types.encode('Utf8string', 'foo'), b'\x0c\x03foo')
         self.assertEqual(all_types.encode('Sequence', {}), b'\x30\x00')
-        self.assertEqual(all_types.encode('Set', {}), b'\x30\x00')
+        self.assertEqual(all_types.encode('Set', {}), b'\x31\x00')
         self.assertEqual(all_types.encode('Numericstring', '123'),
                          b'\x12\x03123')
         self.assertEqual(all_types.encode('Printablestring', 'foo'),
@@ -774,7 +774,7 @@ class Asn1ToolsTest(unittest.TestCase):
                          'one')
         self.assertEqual(all_types.decode('Utf8string', b'\x0c\x03foo'), 'foo')
         self.assertEqual(all_types.decode('Sequence', b'\x30\x00'), {})
-        self.assertEqual(all_types.decode('Set', b'\x30\x00'), {})
+        self.assertEqual(all_types.decode('Set', b'\x31\x00'), {})
         self.assertEqual(all_types.decode('Numericstring', b'\x12\x03123'),
                          '123')
         self.assertEqual(all_types.decode('Printablestring', b'\x13\x03foo'),
@@ -863,7 +863,7 @@ class Asn1ToolsTest(unittest.TestCase):
             all_types.decode('Set', b'\xf6')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected SEQUENCE with tag 48 but got 246 at offset 0.')
+                         ': Expected SET with tag 49 but got 246 at offset 0.')
 
         # NumericString.
         with self.assertRaises(asn1tools.DecodeError) as cm:
