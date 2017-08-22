@@ -749,6 +749,28 @@ class Asn1ToolsTest(unittest.TestCase):
                          'foo')
         self.assertEqual(all_types.decode('Ia5string', b'\x16\x03bar'), 'bar')
 
+    def test_encode_all_types(self):
+        all_types = asn1tools.compile_file('tests/files/all_types.asn')
+
+        self.assertEqual(all_types.encode('Boolean', True), b'\x01\x01\x01')
+        self.assertEqual(all_types.encode('Integer', 1), b'\x02\x01\x01')
+        self.assertEqual(all_types.encode('Bitstring', (b'\x80', 1)),
+                         b'\x03\x02\x07\x80')
+        self.assertEqual(all_types.encode('Octetstring', b'\x00'),
+                         b'\x04\x01\x00')
+        self.assertEqual(all_types.encode('Null', None), b'\x05\x00')
+        self.assertEqual(all_types.encode('Objectidentifier', '1.2'),
+                         b'\x06\x01\x2a')
+        self.assertEqual(all_types.encode('Enumerated', 'one'), b'\x0a\x01\x01')
+        self.assertEqual(all_types.encode('Utf8string', 'foo'), b'\x0c\x03foo')
+        self.assertEqual(all_types.encode('Sequence', {}), b'\x30\x00')
+        self.assertEqual(all_types.encode('Set', {}), b'\x30\x00')
+        self.assertEqual(all_types.encode('Numericstring', '123'),
+                         b'\x12\x03123')
+        self.assertEqual(all_types.encode('Printablestring', 'foo'),
+                         b'\x13\x03foo')
+        self.assertEqual(all_types.encode('Ia5string', 'bar'), b'\x16\x03bar')
+
     def test_decode_all_types_errors(self):
         all_types = asn1tools.compile_file('tests/files/all_types.asn')
 

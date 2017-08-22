@@ -492,7 +492,7 @@ class PrintableString(Type):
     def encode(self, data, encoded):
         encoded.append(self.tag)
         encoded.append(len(data))
-        encoded.extend(data)
+        encoded.extend(data.encode('ascii'))
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
@@ -579,7 +579,7 @@ class UTF8String(Type):
     def encode(self, data, encoded):
         encoded.append(self.tag)
         encoded.append(len(data))
-        encoded.extend(data)
+        encoded.extend(data.encode('utf-8'))
 
     def decode(self, data, offset):
         if data[offset] != self.tag:
