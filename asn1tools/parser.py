@@ -467,6 +467,9 @@ def parse_string(string):
             'values': values
         }
 
+        if module[0][3]:
+            modules[module_name]['tags'] = module[0][3][0].lower()
+
     return modules
 
 

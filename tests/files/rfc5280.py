@@ -1,4 +1,5 @@
 RFC5280 = {'PKIX1Explicit88': {'imports': {},
+                               'tags': 'explicit',
                      'types': {'AdministrationDomainName': {'members': [{'name': 'numeric',
                                                                          'optional': False,
                                                                          'type': 'NumericString'},
@@ -820,6 +821,7 @@ RFC5280 = {'PKIX1Explicit88': {'imports': {},
                                                      'CertificateSerialNumber',
                                                      'Attribute',
                                                      'DirectoryString']},
+                     'tags': 'implicit',
                      'types': {'AccessDescription': {'members': [{'name': 'accessMethod',
                                                                   'optional': False,
                                                                   'type': 'OBJECT '
