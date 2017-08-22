@@ -10,7 +10,6 @@ from foo import FOO
 from rrc_8_6_0 import RRC_8_6_0
 from rfc5280 import RFC5280
 
-from pprint import pprint
 
 class Asn1ToolsTest(unittest.TestCase):
 
@@ -21,13 +20,11 @@ class Asn1ToolsTest(unittest.TestCase):
         self.assertEqual(foo, FOO)
 
     def test_parse_rrc_8_6_0(self):
-        rrc_8_6_0 = asn1tools.parse_file('tests/files/rrc_8.6.0.asn')
-        #pprint(rrc_8_6_0)
+        rrc_8_6_0 = asn1tools.parse_file('tests/files/rrc_8_6_0.asn')
         self.assertEqual(rrc_8_6_0, RRC_8_6_0)
 
     def test_parse_rfc5280(self):
         rfc5280 = asn1tools.parse_file('tests/files/rfc5280.asn')
-        #pprint(rfc5280)
         self.assertEqual(rfc5280, RFC5280)
 
 

@@ -88,7 +88,7 @@ class Asn1ToolsTest(unittest.TestCase):
             "Enumeration value 'three' not found in ['one', 'two'].")
 
     def _test_rrc_8_6_0(self):
-        rrc = asn1tools.compile_file('tests/files/rrc_8.6.0.asn')
+        rrc = asn1tools.compile_file('tests/files/rrc_8_6_0.asn')
 
         # Encode various messages.
         encoded = rrc.encode('PCCH-Message',
