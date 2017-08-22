@@ -726,6 +726,29 @@ class Asn1ToolsTest(unittest.TestCase):
                          'tbsCertificate: issuer: Expected SEQUENCE with tag '
                          '48 but got 49 at offset 150.')
 
+    def test_decode_all_types(self):
+        all_types = asn1tools.compile_file('tests/files/all_types.asn')
+
+        self.assertEqual(all_types.decode('Boolean', b'\x01\x01\x01'), True)
+        self.assertEqual(all_types.decode('Integer', b'\x02\x01\x01'), 1)
+        self.assertEqual(all_types.decode('Bitstring', b'\x03\x02\x07\x80'),
+                         (b'\x80', 1))
+        self.assertEqual(all_types.decode('Octetstring', b'\x04\x01\x00'),
+                         b'\x00')
+        self.assertEqual(all_types.decode('Null', b'\x05\x00'), None)
+        self.assertEqual(all_types.decode('Objectidentifier', b'\x06\x01\x2a'),
+                         '1.2')
+        self.assertEqual(all_types.decode('Enumerated', b'\x0a\x01\x01'),
+                         'one')
+        self.assertEqual(all_types.decode('Utf8string', b'\x0c\x03foo'), 'foo')
+        self.assertEqual(all_types.decode('Sequence', b'\x30\x00'), {})
+        self.assertEqual(all_types.decode('Set', b'\x30\x00'), {})
+        self.assertEqual(all_types.decode('Numericstring', b'\x12\x03123'),
+                         '123')
+        self.assertEqual(all_types.decode('Printablestring', b'\x13\x03foo'),
+                         'foo')
+        self.assertEqual(all_types.decode('Ia5string', b'\x16\x03bar'), 'bar')
+
     def test_decode_all_types_errors(self):
         all_types = asn1tools.compile_file('tests/files/all_types.asn')
 
