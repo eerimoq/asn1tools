@@ -87,7 +87,7 @@ class Asn1ToolsTest(unittest.TestCase):
             str(cm.exception),
             "Enumeration value 'three' not found in ['one', 'two'].")
 
-    def _test_rrc_8_6_0(self):
+    def test_rrc_8_6_0(self):
         rrc = asn1tools.compile_file('tests/files/rrc_8_6_0.asn')
 
         # Encode various messages.
@@ -126,8 +126,8 @@ class Asn1ToolsTest(unittest.TestCase):
                                          'phich-Duration': 'normal',
                                          'phich-Resource': 'half'
                                      },
-                                     'systemFrameNumber': b'\x12',
-                                     'spare': b'\x34\x56'
+                                     'systemFrameNumber': (b'\x12', 8),
+                                     'spare': (b'\x34\x56', 10)
                                  }
                              })
         self.assertEqual(encoded,

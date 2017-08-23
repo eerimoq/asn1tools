@@ -177,6 +177,9 @@ class Boolean(Type):
         self.name = name
         self.tag = Tag.BOOLEAN
 
+    def set_tag(self, tag):
+        self.tag = (Class.CONTEXT_SPECIFIC | tag)
+
     def encode(self, data, encoded):
         encoded.append(self.tag)
         encoded.append(1)
@@ -505,8 +508,15 @@ class BitString(Type):
         self.name = name
         self.tag = Tag.BIT_STRING
 
+    def set_tag(self, tag):
+        self.tag = (Class.CONTEXT_SPECIFIC
+                    | tag)
+
     def encode(self, data, encoded):
         number_of_unused_bits = (8 - (data[1] % 8))
+
+        if number_of_unused_bits == 8:
+            number_of_unused_bits = 0
 
         encoded.append(self.tag)
         encoded.append(len(data[0]) + 1)
@@ -861,10 +871,23 @@ class Choice(Type):
         self.name = name
         self.members = members
 
+    def set_tag(self, tag):
+        self.tag = (Class.CONTEXT_SPECIFIC
+                    | Encoding.CONSTRUCTED
+                    | tag)
+
     def encode(self, data, encoded):
         for member in self.members:
             if member.name in data:
-                member.encode(data[member.name], encoded)
+                if self.tag is None:
+                    member.encode(data[member.name], encoded)
+                else:
+                    encoded_members = bytearray()
+                    member.encode(data[member.name], encoded_members)
+                    encoded.append(self.tag)
+                    encoded.extend(encode_length_definite(len(encoded_members)))
+                    encoded.extend(encoded_members)
+
                 return
 
         raise EncodeError(
@@ -952,6 +975,10 @@ class Enumerated(Type):
         self.name = name
         self.values = values
         self.tag = Tag.ENUMERATED
+
+    def set_tag(self, tag):
+        self.tag = (Class.CONTEXT_SPECIFIC
+                    | tag)
 
     def encode(self, data, encoded):
         for value, name in self.values.items():
@@ -1108,6 +1135,13 @@ class Compiler(object):
     def compile_members(self, members, module_name):
         compiled_members = []
 
+        tags = self._specification[module_name].get('tags', None)
+
+        if tags == 'automatic':
+            tag = 0
+        else:
+            tag = None
+
         for member in members:
             if member['name'] == '...':
                 continue
@@ -1119,6 +1153,10 @@ class Compiler(object):
 
             if 'default' in member:
                 compiled_member.default = member['default']
+
+            if tag is not None:
+                compiled_member.set_tag(tag)
+                tag += 1
 
             compiled_members.append(compiled_member)
 
