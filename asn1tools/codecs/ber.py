@@ -979,6 +979,33 @@ class ExplicitSetOf(ExplicitType, SetOf):
         SetOf.__init__(self, name, element_type)
 
 
+class ExplicitBitString(ExplicitType, BitString):
+
+    encode_implicit = BitString.encode
+    decode_implicit = BitString.decode
+
+    def __init__(self, name, *_args, **_kwargs):
+        super(ExplicitBitString, self).__init__(name, Tag.BIT_STRING)
+
+
+class ExplicitUTCTime(ExplicitType, UTCTime):
+
+    encode_implicit = UTCTime.encode
+    decode_implicit = UTCTime.decode
+
+    def __init__(self, name, *_args, **_kwargs):
+        super(ExplicitUTCTime, self).__init__(name, Tag.UTC_TIME)
+
+
+class ExplicitUTF8String(ExplicitType, UTF8String):
+
+    encode_implicit = UTF8String.encode
+    decode_implicit = UTF8String.decode
+
+    def __init__(self, name, *_args, **_kwargs):
+        super(ExplicitUTF8String, self).__init__(name, Tag.UTF8_STRING)
+
+
 class CompiledType(object):
 
     def __init__(self, type_):
@@ -1052,17 +1079,17 @@ class Compiler(object):
         elif type_descriptor['type'] == 'VisibleString':
             raise NotImplementedError()
         elif type_descriptor['type'] == 'UTF8String':
-            raise NotImplementedError()
+            compiled = ExplicitUTF8String(name)
         elif type_descriptor['type'] == 'BMPString':
             raise NotImplementedError()
         elif type_descriptor['type'] == 'UTCTime':
-            raise NotImplementedError()
+            compiled = ExplicitUTCTime(name)
         elif type_descriptor['type'] == 'UniversalString':
             raise NotImplementedError()
         elif type_descriptor['type'] == 'GeneralizedTime':
             compiled = GeneralizedTime(name)
         elif type_descriptor['type'] == 'BIT STRING':
-            raise NotImplementedError()
+            compiled = ExplicitBitString(name)
         elif type_descriptor['type'] == 'ANY':
             raise NotImplementedError()
         elif type_descriptor['type'] == 'ANY DEFINED BY':

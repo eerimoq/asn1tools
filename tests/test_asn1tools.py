@@ -1043,6 +1043,54 @@ class Asn1ToolsTest(unittest.TestCase):
         decoded = foo.decode('Foo', encoded)
         self.assertEqual(decoded, True)
 
+    def test_octet_string_explicit_tags(self):
+        '''Test explicit tags on octet strings.
+
+        '''
+
+        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] OCTET STRING END'
+        foo = asn1tools.compile_string(spec)
+        encoded = foo.encode('Foo', b'\x56')
+        self.assertEqual(encoded, b'\xa2\x03\x04\x01\x56')
+        decoded = foo.decode('Foo', encoded)
+        self.assertEqual(decoded, b'\x56')
+
+    def test_bit_string_explicit_tags(self):
+        '''Test explicit tags on bit strings.
+
+        '''
+
+        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] BIT STRING END'
+        foo = asn1tools.compile_string(spec)
+        encoded = foo.encode('Foo', (b'\x56', 7))
+        self.assertEqual(encoded, b'\xa2\x04\x03\x02\x01\x56')
+        decoded = foo.decode('Foo', encoded)
+        self.assertEqual(decoded, (b'\x56', 7))
+
+    def test_utc_time_explicit_tags(self):
+        '''Test explicit tags on UTC time.
+
+        '''
+
+        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] UTCTime END'
+        foo = asn1tools.compile_string(spec)
+        encoded = foo.encode('Foo', '121001230001')
+        self.assertEqual(encoded, b'\xa2\x0f\x17\x0d121001230001Y')
+        decoded = foo.decode('Foo', encoded)
+        self.assertEqual(decoded, '121001230001')
+
+    def test_utf8_string_explicit_tags(self):
+        '''Test explicit tags on UTC time.
+
+        '''
+
+        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] UTF8String END'
+        foo = asn1tools.compile_string(spec)
+        encoded = foo.encode('Foo', 'foo')
+        self.assertEqual(encoded, b'\xa2\x05\x0c\x03foo')
+        decoded = foo.decode('Foo', encoded)
+        self.assertEqual(decoded, 'foo')
+
 
 if __name__ == '__main__':
     unittest.main()
