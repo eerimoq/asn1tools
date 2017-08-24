@@ -646,6 +646,22 @@ class Asn1ToolsTest(unittest.TestCase):
         #encoded = rfc5280.encode('Certificate', decoded_message)
         #self.assertEqual(encoded, encoded_message)
 
+        # Explicit tagging.
+        decoded_message = {
+            'psap-address': {
+                'pSelector': b'\x12',
+                'nAddresses': [ b'\x34' ]
+            }
+        }
+
+        encoded_message = b'\xa0\x0c\xa0\x03\x04\x01\x12\xa3\x05\x31\x03\x04\x01\x34'
+
+        encoded = rfc5280.encode('ExtendedNetworkAddress', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+
+        decoded = rfc5280.decode('ExtendedNetworkAddress', encoded)
+        self.assertEqual(decoded, decoded_message)
+
     def test_rfc5280_errors(self):
         rfc5280 = asn1tools.compile_file('tests/files/rfc5280.asn')
 

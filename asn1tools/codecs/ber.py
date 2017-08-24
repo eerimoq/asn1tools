@@ -960,6 +960,25 @@ class ExplicitBoolean(ExplicitType, Boolean):
         super(ExplicitBoolean, self).__init__(name, Tag.BOOLEAN)
 
 
+class ExplicitOctetString(ExplicitType, OctetString):
+
+    encode_implicit = OctetString.encode
+    decode_implicit = OctetString.decode
+
+    def __init__(self, name, *_args, **_kwargs):
+        super(ExplicitOctetString, self).__init__(name, Tag.OCTET_STRING)
+
+
+class ExplicitSetOf(ExplicitType, SetOf):
+
+    encode_implicit = SetOf.encode
+    decode_implicit = SetOf.decode
+
+    def __init__(self, name, element_type, *_args, **_kwargs):
+        ExplicitType.__init__(self, name, Tag.SET)
+        SetOf.__init__(self, name, element_type)
+
+
 class CompiledType(object):
 
     def __init__(self, type_):
@@ -1003,10 +1022,10 @@ class Compiler(object):
         elif type_descriptor['type'] == 'SET':
             raise NotImplementedError()
         elif type_descriptor['type'] == 'SET OF':
-            compiled = SetOf(name,
-                             self.compile_type('',
-                                               type_descriptor['element'],
-                                               module_name))
+            compiled = ExplicitSetOf(name,
+                                     self.compile_type('',
+                                                       type_descriptor['element'],
+                                                       module_name))
         elif type_descriptor['type'] == 'CHOICE':
             compiled = Choice(
                 name,
@@ -1021,7 +1040,7 @@ class Compiler(object):
         elif type_descriptor['type'] == 'OBJECT IDENTIFIER':
             compiled = ObjectIdentifier(name)
         elif type_descriptor['type'] == 'OCTET STRING':
-            compiled = OctetString(name)
+            compiled = ExplicitOctetString(name)
         elif type_descriptor['type'] == 'TeletexString':
             raise NotImplementedError()
         elif type_descriptor['type'] == 'NumericString':
