@@ -929,6 +929,104 @@ class Asn1ToolsTest(unittest.TestCase):
                          ': Expected UTCTime with tag 23 but got '
                          '238 at offset 0.')
 
+    def test_integer_explicit_tags(self):
+        '''Test explicit tags on integers.
+
+        '''
+
+        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] INTEGER END'
+        foo = asn1tools.compile_string(spec)
+        encoded = foo.encode('Foo', 1)
+        self.assertEqual(encoded, b'\xa2\x03\x02\x01\x01')
+        decoded = foo.decode('Foo', encoded)
+        self.assertEqual(decoded, 1)
+
+        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] EXPLICIT INTEGER END'
+        foo = asn1tools.compile_string(spec)
+        encoded = foo.encode('Foo', 1)
+        self.assertEqual(encoded, b'\xa2\x03\x02\x01\x01')
+        decoded = foo.decode('Foo', encoded)
+        self.assertEqual(decoded, 1)
+
+        spec = 'Foo DEFINITIONS EXPLICIT TAGS ::= BEGIN Foo ::= INTEGER END'
+        foo = asn1tools.compile_string(spec)
+        encoded = foo.encode('Foo', 1)
+        self.assertEqual(encoded, b'\x02\x01\x01')
+        decoded = foo.decode('Foo', encoded)
+        self.assertEqual(decoded, 1)
+
+        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] BOOLEAN END'
+        foo = asn1tools.compile_string(spec)
+        encoded = foo.encode('Foo', True)
+        self.assertEqual(encoded, b'\xa2\x03\x01\x01\x01')
+        decoded = foo.decode('Foo', encoded)
+        self.assertEqual(decoded, True)
+
+    def test_integer_implicit_tags(self):
+        '''Test implicit tags on integers.
+
+        '''
+
+        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] IMPLICIT INTEGER END'
+        foo = asn1tools.compile_string(spec)
+        encoded = foo.encode('Foo', 1)
+        self.assertEqual(encoded, b'\x82\x01\x01')
+        decoded = foo.decode('Foo', encoded)
+        self.assertEqual(decoded, 1)
+
+        spec = 'Foo DEFINITIONS IMPLICIT TAGS ::= BEGIN Foo ::= INTEGER END'
+        foo = asn1tools.compile_string(spec)
+        encoded = foo.encode('Foo', 1)
+        self.assertEqual(encoded, b'\x02\x01\x01')
+        decoded = foo.decode('Foo', encoded)
+        self.assertEqual(decoded, 1)
+
+        spec = ('Foo DEFINITIONS EXPLICIT TAGS ::= BEGIN '
+                'Foo ::= [2] IMPLICIT INTEGER END')
+        foo = asn1tools.compile_string(spec)
+        encoded = foo.encode('Foo', 1)
+        self.assertEqual(encoded, b'\x82\x01\x01')
+        decoded = foo.decode('Foo', encoded)
+        self.assertEqual(decoded, 1)
+
+    def test_boolean_explicit_tags(self):
+        '''Test explicit tags on booleans.
+
+        '''
+
+        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] BOOLEAN END'
+        foo = asn1tools.compile_string(spec)
+        encoded = foo.encode('Foo', True)
+        self.assertEqual(encoded, b'\xa2\x03\x01\x01\x01')
+        decoded = foo.decode('Foo', encoded)
+        self.assertEqual(decoded, True)
+
+        # Bad explicit tag.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('Foo', b'\xa3\x03\x01\x01\x01')
+
+        self.assertEqual(str(cm.exception),
+                         ': Expected BOOLEAN with tag 162 but got 163 at offset 0.')
+
+        # Bad tag.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('Foo', b'\xa2\x03\x02\x01\x01')
+
+        self.assertEqual(str(cm.exception),
+                         ': Expected BOOLEAN with tag 1 but got 2 at offset 2.')
+
+    def test_boolean_implicit_tags(self):
+        '''Test implicit tags on booleans.
+
+        '''
+
+        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] IMPLICIT BOOLEAN END'
+        foo = asn1tools.compile_string(spec)
+        encoded = foo.encode('Foo', True)
+        self.assertEqual(encoded, b'\x82\x01\x01')
+        decoded = foo.decode('Foo', encoded)
+        self.assertEqual(decoded, True)
+
 
 if __name__ == '__main__':
     unittest.main()

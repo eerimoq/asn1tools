@@ -133,34 +133,82 @@ def decode_signed_integer(data):
 
 class Type(object):
 
-    def __init__(self, tag=None, optional=False, default=None):
+    def __init__(self, name, type_name, tag, *_args, **_kwargs):
+        self.name = name
+        self.type_name = type_name
         self.tag = tag
-        self.optional = optional
-        self.default = default
+        self.optional = None
+        self.default = None
 
     def set_tag(self, tag):
         self.tag = tag
 
+    def decode_tag(self, data, offset):
+        if data[offset] != self.tag:
+            raise DecodeTagError(self.type_name,
+                                 self.tag,
+                                 data[offset],
+                                 offset)
+
+        return offset + 1
+
+
+class ExplicitType(Type):
+
+    def __init__(self, name, tag, *_args, **_kwargs):
+        super(ExplicitType, self).__init__(name, tag)
+        self.explicit_tag = tag
+
+    def set_tag(self, tag):
+        if Class.APPLICATION & tag:
+            self.explicit_tag = Encoding.CONSTRUCTED | tag
+        else:
+            self.explicit_tag = (Class.CONTEXT_SPECIFIC
+                                 | Encoding.CONSTRUCTED
+                                 | tag)
+
+    def encode(self, data, encoded):
+        encoded_implicit = bytearray()
+        self.encode_implicit(data, encoded_implicit)
+        encoded.append(self.explicit_tag)
+        encoded.append(len(encoded_implicit))
+        encoded.extend(encoded_implicit)
+
+    def decode(self, data, offset):
+        if data[offset] != self.explicit_tag:
+            raise DecodeTagError(self.type_name,
+                                 self.explicit_tag,
+                                 data[offset],
+                                 offset)
+
+        _, offset = decode_length_definite(data, offset + 1)
+
+        return self.decode_implicit(data, offset)
+
+    def encode_implicit(self, data, encoded):
+        raise NotImplementedError()
+
+    def decode_implicit(self, data, offset):
+        raise NotImplementedError()
+
 
 class Integer(Type):
 
-    def __init__(self, name, **kwargs):
-        super(Integer, self).__init__(**kwargs)
-        self.name = name
-        self.tag = Tag.INTEGER
+    def __init__(self, name, *_args, **_kwargs):
+        super(Integer, self).__init__(name, 'INTEGER', Tag.INTEGER)
+
+    def set_tag(self, tag):
+        if Class.APPLICATION & tag:
+            self.tag = tag
+        else:
+            self.tag = (Class.CONTEXT_SPECIFIC | tag)
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
         encoded.extend(encode_signed_integer(data))
 
     def decode(self, data, offset):
-        if data[offset] != self.tag:
-            raise DecodeTagError('INTEGER',
-                                 self.tag,
-                                 data[offset],
-                                 offset)
-
-        offset += 1
+        offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
@@ -172,10 +220,8 @@ class Integer(Type):
 
 class Boolean(Type):
 
-    def __init__(self, name, **kwargs):
-        super(Boolean, self).__init__(**kwargs)
-        self.name = name
-        self.tag = Tag.BOOLEAN
+    def __init__(self, name, *_args, **_kwargs):
+        super(Boolean, self).__init__(name, 'BOOLEAN', Tag.BOOLEAN)
 
     def set_tag(self, tag):
         self.tag = (Class.CONTEXT_SPECIFIC | tag)
@@ -186,13 +232,7 @@ class Boolean(Type):
         encoded.append(bool(data))
 
     def decode(self, data, offset):
-        if data[offset] != self.tag:
-            raise DecodeTagError('BOOLEAN',
-                                 self.tag,
-                                 data[offset],
-                                 offset)
-
-        offset += 1
+        offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
 
         if length != 1:
@@ -209,10 +249,10 @@ class Boolean(Type):
 
 class IA5String(Type):
 
-    def __init__(self, name, **kwargs):
-        super(IA5String, self).__init__(**kwargs)
-        self.name = name
-        self.tag = Tag.IA5_STRING
+    def __init__(self, name, *_args, **_kwargs):
+        super(IA5String, self).__init__(name,
+                                        'IA5String',
+                                        Tag.IA5_STRING)
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -220,13 +260,7 @@ class IA5String(Type):
         encoded.extend(data.encode('ascii'))
 
     def decode(self, data, offset):
-        if data[offset] != self.tag:
-            raise DecodeTagError('IA5String',
-                                 self.tag,
-                                 data[offset],
-                                 offset)
-
-        offset += 1
+        offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
@@ -238,10 +272,10 @@ class IA5String(Type):
 
 class NumericString(Type):
 
-    def __init__(self, name, **kwargs):
-        super(NumericString, self).__init__(**kwargs)
-        self.name = name
-        self.tag = Tag.NUMERIC_STRING
+    def __init__(self, name, *_args, **_kwargs):
+        super(NumericString, self).__init__(name,
+                                            'NumericString',
+                                            Tag.NUMERIC_STRING)
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -249,13 +283,7 @@ class NumericString(Type):
         encoded.extend(data.encode('ascii'))
 
     def decode(self, data, offset):
-        if data[offset] != self.tag:
-            raise DecodeTagError('NumericString',
-                                 self.tag,
-                                 data[offset],
-                                 offset)
-
-        offset += 1
+        offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
@@ -267,11 +295,11 @@ class NumericString(Type):
 
 class Sequence(Type):
 
-    def __init__(self, name, members, **kwargs):
-        super(Sequence, self).__init__(**kwargs)
-        self.name = name
+    def __init__(self, name, members, *_args, **_kwargs):
+        super(Sequence, self).__init__(name,
+                                       'SEQUENCE',
+                                       Encoding.CONSTRUCTED | Tag.SEQUENCE)
         self.members = members
-        self.tag = (Encoding.CONSTRUCTED | Tag.SEQUENCE)
 
     def set_tag(self, tag):
         self.tag = (Class.CONTEXT_SPECIFIC
@@ -301,13 +329,7 @@ class Sequence(Type):
         encoded.extend(encoded_members)
 
     def decode(self, data, offset):
-        if data[offset] != self.tag:
-            raise DecodeTagError('SEQUENCE',
-                                 self.tag,
-                                 data[offset],
-                                 offset)
-
-        offset += 1
+        offset = self.decode_tag(data, offset)
 
         if data[offset] == 0x80:
             raise NotImplementedError(
@@ -350,11 +372,9 @@ class Sequence(Type):
 
 class Set(Type):
 
-    def __init__(self, name, members, **kwargs):
-        super(Set, self).__init__(**kwargs)
-        self.name = name
+    def __init__(self, name, members, *_args, **_kwargs):
+        super(Set, self).__init__(name, 'SET', Encoding.CONSTRUCTED | Tag.SET)
         self.members = members
-        self.tag = (Encoding.CONSTRUCTED | Tag.SET)
 
     def set_tag(self, tag):
         self.tag = (Class.CONTEXT_SPECIFIC
@@ -384,13 +404,7 @@ class Set(Type):
         encoded.extend(encoded_members)
 
     def decode(self, data, offset):
-        if data[offset] != self.tag:
-            raise DecodeTagError('SET',
-                                 self.tag,
-                                 data[offset],
-                                 offset)
-
-        offset += 1
+        offset = self.decode_tag(data, offset)
 
         if data[offset] == 0x80:
             raise NotImplementedError(
@@ -433,11 +447,11 @@ class Set(Type):
 
 class SequenceOf(Type):
 
-    def __init__(self, name, element_type, **kwargs):
-        super(SequenceOf, self).__init__(**kwargs)
-        self.name = name
+    def __init__(self, name, element_type, *_args, **_kwargs):
+        super(SequenceOf, self).__init__(name,
+                                         'SEQUENCE OF',
+                                         Encoding.CONSTRUCTED | Tag.SEQUENCE)
         self.element_type = element_type
-        self.tag = (Encoding.CONSTRUCTED | Tag.SEQUENCE)
 
     def encode(self, data, encoded):
         encoded_elements = bytearray()
@@ -468,11 +482,11 @@ class SequenceOf(Type):
 
 class SetOf(Type):
 
-    def __init__(self, name, element_type, **kwargs):
-        super(SetOf, self).__init__(**kwargs)
-        self.name = name
+    def __init__(self, name, element_type, *_args, **_kwargs):
+        super(SetOf, self).__init__(name,
+                                    'SET OF',
+                                    Encoding.CONSTRUCTED | Tag.SET)
         self.element_type = element_type
-        self.tag = (Encoding.CONSTRUCTED | Tag.SET)
 
     def encode(self, data, encoded):
         encoded_elements = bytearray()
@@ -503,14 +517,11 @@ class SetOf(Type):
 
 class BitString(Type):
 
-    def __init__(self, name, **kwargs):
-        super(BitString, self).__init__(**kwargs)
-        self.name = name
-        self.tag = Tag.BIT_STRING
+    def __init__(self, name, *_args, **_kwargs):
+        super(BitString, self).__init__(name, 'BIT STRING', Tag.BIT_STRING)
 
     def set_tag(self, tag):
-        self.tag = (Class.CONTEXT_SPECIFIC
-                    | tag)
+        self.tag = (Class.CONTEXT_SPECIFIC | tag)
 
     def encode(self, data, encoded):
         number_of_unused_bits = (8 - (data[1] % 8))
@@ -524,13 +535,7 @@ class BitString(Type):
         encoded.extend(data[0])
 
     def decode(self, data, offset):
-        if data[offset] != self.tag:
-            raise DecodeTagError('BIT STRING',
-                                 self.tag,
-                                 data[offset],
-                                 offset)
-
-        offset += 1
+        offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
         number_of_bits = 8 * (length - 1) - data[offset]
@@ -544,10 +549,10 @@ class BitString(Type):
 
 class OctetString(Type):
 
-    def __init__(self, name, **kwargs):
-        super(OctetString, self).__init__(**kwargs)
-        self.name = name
-        self.tag = Tag.OCTET_STRING
+    def __init__(self, name, *_args, **_kwargs):
+        super(OctetString, self).__init__(name,
+                                          'OCTET STRING',
+                                          Tag.OCTET_STRING)
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -555,13 +560,7 @@ class OctetString(Type):
         encoded.extend(data)
 
     def decode(self, data, offset):
-        if data[offset] != self.tag:
-            raise DecodeTagError('OCTET STRING',
-                                 self.tag,
-                                 data[offset],
-                                 offset)
-
-        offset += 1
+        offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
@@ -573,10 +572,10 @@ class OctetString(Type):
 
 class PrintableString(Type):
 
-    def __init__(self, name, **kwargs):
-        super(PrintableString, self).__init__(**kwargs)
-        self.name = name
-        self.tag = Tag.PRINTABLE_STRING
+    def __init__(self, name, *_args, **_kwargs):
+        super(PrintableString, self).__init__(name,
+                                              'PrintableString',
+                                              Tag.PRINTABLE_STRING)
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -584,13 +583,7 @@ class PrintableString(Type):
         encoded.extend(data.encode('ascii'))
 
     def decode(self, data, offset):
-        if data[offset] != self.tag:
-            raise DecodeTagError('PrintableString',
-                                 self.tag,
-                                 data[offset],
-                                 offset)
-
-        offset += 1
+        offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
@@ -602,10 +595,10 @@ class PrintableString(Type):
 
 class UniversalString(Type):
 
-    def __init__(self, name, **kwargs):
-        super(UniversalString, self).__init__(**kwargs)
-        self.name = name
-        self.tag = Tag.UNIVERSAL_STRING
+    def __init__(self, name, *_args, **_kwargs):
+        super(UniversalString, self).__init__(name,
+                                              'UniversalString',
+                                              Tag.UNIVERSAL_STRING)
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -613,13 +606,7 @@ class UniversalString(Type):
         encoded.extend(data.encode('ascii'))
 
     def decode(self, data, offset):
-        if data[offset] != self.tag:
-            raise DecodeTagError('UniversalString',
-                                 self.tag,
-                                 data[offset],
-                                 offset)
-
-        offset += 1
+        offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
@@ -631,10 +618,10 @@ class UniversalString(Type):
 
 class VisibleString(Type):
 
-    def __init__(self, name, **kwargs):
-        super(VisibleString, self).__init__(**kwargs)
-        self.name = name
-        self.tag = Tag.VISIBLE_STRING
+    def __init__(self, name, *_args, **_kwargs):
+        super(VisibleString, self).__init__(name,
+                                            'VisibleString',
+                                            Tag.VISIBLE_STRING)
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -642,13 +629,7 @@ class VisibleString(Type):
         encoded.extend(data.encode('ascii'))
 
     def decode(self, data, offset):
-        if data[offset] != self.tag:
-            raise DecodeTagError('VisibleString',
-                                 self.tag,
-                                 data[offset],
-                                 offset)
-
-        offset += 1
+        offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
@@ -660,10 +641,10 @@ class VisibleString(Type):
 
 class UTF8String(Type):
 
-    def __init__(self, name, **kwargs):
-        super(UTF8String, self).__init__(**kwargs)
-        self.name = name
-        self.tag = Tag.UTF8_STRING
+    def __init__(self, name, *_args, **_kwargs):
+        super(UTF8String, self).__init__(name,
+                                         'UTF8String',
+                                         Tag.UTF8_STRING)
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -671,13 +652,7 @@ class UTF8String(Type):
         encoded.extend(data.encode('utf-8'))
 
     def decode(self, data, offset):
-        if data[offset] != self.tag:
-            raise DecodeTagError('UTF8String',
-                                 self.tag,
-                                 data[offset],
-                                 offset)
-
-        offset += 1
+        offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
@@ -689,10 +664,10 @@ class UTF8String(Type):
 
 class BMPString(Type):
 
-    def __init__(self, name, **kwargs):
-        super(BMPString, self).__init__(**kwargs)
-        self.name = name
-        self.tag = Tag.BMP_STRING
+    def __init__(self, name, *_args, **_kwargs):
+        super(BMPString, self).__init__(name,
+                                        'BMPString',
+                                        Tag.BMP_STRING)
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -700,13 +675,7 @@ class BMPString(Type):
         encoded.extend(data)
 
     def decode(self, data, offset):
-        if data[offset] != self.tag:
-            raise DecodeTagError('BMPString',
-                                 self.tag,
-                                 data[offset],
-                                 offset)
-
-        offset += 1
+        offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
@@ -718,10 +687,10 @@ class BMPString(Type):
 
 class UTCTime(Type):
 
-    def __init__(self, name, **kwargs):
-        super(UTCTime, self).__init__(**kwargs)
-        self.name = name
-        self.tag = Tag.UTC_TIME
+    def __init__(self, name, *_args, **_kwargs):
+        super(UTCTime, self).__init__(name,
+                                      'UTCTime',
+                                      Tag.UTC_TIME)
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -729,13 +698,7 @@ class UTCTime(Type):
         encoded.extend(bytearray((data + 'Y').encode('ascii')))
 
     def decode(self, data, offset):
-        if data[offset] != self.tag:
-            raise DecodeTagError('UTCTime',
-                                 self.tag,
-                                 data[offset],
-                                 offset)
-
-        offset += 1
+        offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
@@ -747,20 +710,16 @@ class UTCTime(Type):
 
 class GeneralizedTime(Type):
 
-    def __init__(self, name, **kwargs):
-        super(GeneralizedTime, self).__init__(**kwargs)
-        self.name = name
-        self.tag = Tag.GENERALIZED_TIME
+    def __init__(self, name, *_args, **_kwargs):
+        super(GeneralizedTime, self).__init__(name,
+                                              'GeneralizedTime',
+                                              Tag.GENERALIZED_TIME)
 
     def encode(self, data, encoded):
         raise NotImplementedError()
 
     def decode(self, data, offset):
-        if data[offset] != self.tag:
-            raise DecodeTagError('GeneralizedTime',
-                                 self.tag,
-                                 data[offset],
-                                 offset)
+        offset = self.decode_tag(data, offset)
 
         raise NotImplementedError()
 
@@ -770,10 +729,10 @@ class GeneralizedTime(Type):
 
 class TeletexString(Type):
 
-    def __init__(self, name, **kwargs):
-        super(TeletexString, self).__init__(**kwargs)
-        self.name = name
-        self.tag = Tag.T61_STRING
+    def __init__(self, name, *_args, **_kwargs):
+        super(TeletexString, self).__init__(name,
+                                            'TeletexString',
+                                            Tag.T61_STRING)
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -781,13 +740,7 @@ class TeletexString(Type):
         encoded.extend(data)
 
     def decode(self, data, offset):
-        if data[offset] != self.tag:
-            raise DecodeTagError('TeletexString',
-                                 self.tag,
-                                 data[offset],
-                                 offset)
-
-        offset += 1
+        offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
@@ -799,10 +752,10 @@ class TeletexString(Type):
 
 class ObjectIdentifier(Type):
 
-    def __init__(self, name, **kwargs):
-        super(ObjectIdentifier, self).__init__(**kwargs)
-        self.name = name
-        self.tag = Tag.OBJECT_IDENTIFIER
+    def __init__(self, name, *_args, **_kwargs):
+        super(ObjectIdentifier, self).__init__(name,
+                                               'OBJECT IDENTIFIER',
+                                               Tag.OBJECT_IDENTIFIER)
 
     def encode(self, data, encoded):
         identifiers = [int(identifier) for identifier in data.split('.')]
@@ -819,13 +772,7 @@ class ObjectIdentifier(Type):
         encoded.extend(encoded_subidentifiers)
 
     def decode(self, data, offset):
-        if data[offset] != self.tag:
-            raise DecodeTagError('OBJECT IDENTIFIER',
-                                 self.tag,
-                                 data[offset],
-                                 offset)
-
-        offset += 1
+        offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
 
@@ -866,9 +813,8 @@ class ObjectIdentifier(Type):
 
 class Choice(Type):
 
-    def __init__(self, name, members, **kwargs):
-        super(Choice, self).__init__(**kwargs)
-        self.name = name
+    def __init__(self, name, members, *_args, **_kwargs):
+        super(Choice, self).__init__(name, 'CHOICE', None)
         self.members = members
 
     def set_tag(self, tag):
@@ -917,23 +863,17 @@ class Choice(Type):
 
 class Null(Type):
 
-    def __init__(self, name, **kwargs):
-        super(Null, self).__init__(**kwargs)
-        self.name = name
-        self.tag = Tag.NULL
+    def __init__(self, name, *_args, **_kwargs):
+        super(Null, self).__init__(name, 'NULL', Tag.NULL)
 
     def encode(self, _, encoded):
         encoded.append(self.tag)
         encoded.append(0)
 
     def decode(self, data, offset):
-        if data[offset] != self.tag:
-            raise DecodeTagError('NULL',
-                                 self.tag,
-                                 data[offset],
-                                 offset)
+        offset = self.decode_tag(data, offset)
 
-        return None, offset + 2
+        return None, offset + 1
 
     def __repr__(self):
         return 'Null({})'.format(self.name)
@@ -949,9 +889,8 @@ ANY_CLASSES = {
 
 class Any(Type):
 
-    def __init__(self, name, **kwargs):
-        super(Any, self).__init__(**kwargs)
-        self.name = name
+    def __init__(self, name, *_args, **_kwargs):
+        super(Any, self).__init__(name, 'ANY', None)
 
     def encode(self, _, encoded):
         pass
@@ -970,15 +909,14 @@ class Any(Type):
 
 class Enumerated(Type):
 
-    def __init__(self, name, values, **kwargs):
-        super(Enumerated, self).__init__(**kwargs)
-        self.name = name
+    def __init__(self, name, values, *_args, **_kwargs):
+        super(Enumerated, self).__init__(name,
+                                         'ENUMERATED',
+                                         Tag.ENUMERATED)
         self.values = values
-        self.tag = Tag.ENUMERATED
 
     def set_tag(self, tag):
-        self.tag = (Class.CONTEXT_SPECIFIC
-                    | tag)
+        self.tag = (Class.CONTEXT_SPECIFIC | tag)
 
     def encode(self, data, encoded):
         for value, name in self.values.items():
@@ -993,13 +931,7 @@ class Enumerated(Type):
                 [value for value in self.values.values()]))
 
     def decode(self, data, offset):
-        if data[offset] != self.tag:
-            raise DecodeTagError('ENUMERATED',
-                                 self.tag,
-                                 data[offset],
-                                 offset)
-
-        offset += 1
+        offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         offset_end = offset + length
         value = decode_signed_integer(data[offset:offset_end])
@@ -1008,6 +940,24 @@ class Enumerated(Type):
 
     def __repr__(self):
         return 'Null({})'.format(self.name)
+
+
+class ExplicitInteger(ExplicitType, Integer):
+
+    encode_implicit = Integer.encode
+    decode_implicit = Integer.decode
+
+    def __init__(self, name):
+        super(ExplicitInteger, self).__init__(name, Tag.INTEGER)
+
+
+class ExplicitBoolean(ExplicitType, Boolean):
+
+    encode_implicit = Boolean.encode
+    decode_implicit = Boolean.decode
+
+    def __init__(self, name, *_args, **_kwargs):
+        super(ExplicitBoolean, self).__init__(name, Tag.BOOLEAN)
 
 
 class CompiledType(object):
@@ -1045,7 +995,71 @@ class Compiler(object):
             for module_name in self._specification
         }
 
-    def compile_type(self, name, type_descriptor, module_name):
+    def compile_explicit_type(self, name, type_descriptor, module_name):
+        if type_descriptor['type'] == 'SEQUENCE':
+            raise NotImplementedError()
+        elif type_descriptor['type'] == 'SEQUENCE OF':
+            raise NotImplementedError()
+        elif type_descriptor['type'] == 'SET':
+            raise NotImplementedError()
+        elif type_descriptor['type'] == 'SET OF':
+            compiled = SetOf(name,
+                             self.compile_type('',
+                                               type_descriptor['element'],
+                                               module_name))
+        elif type_descriptor['type'] == 'CHOICE':
+            compiled = Choice(
+                name,
+                self.compile_members(type_descriptor['members'],
+                                     module_name))
+        elif type_descriptor['type'] == 'INTEGER':
+            compiled = ExplicitInteger(name)
+        elif type_descriptor['type'] == 'ENUMERATED':
+            raise NotImplementedError()
+        elif type_descriptor['type'] == 'BOOLEAN':
+            compiled = ExplicitBoolean(name)
+        elif type_descriptor['type'] == 'OBJECT IDENTIFIER':
+            compiled = ObjectIdentifier(name)
+        elif type_descriptor['type'] == 'OCTET STRING':
+            compiled = OctetString(name)
+        elif type_descriptor['type'] == 'TeletexString':
+            raise NotImplementedError()
+        elif type_descriptor['type'] == 'NumericString':
+            raise NotImplementedError()
+        elif type_descriptor['type'] == 'PrintableString':
+            raise NotImplementedError()
+        elif type_descriptor['type'] == 'IA5String':
+            compiled = IA5String(name)
+        elif type_descriptor['type'] == 'VisibleString':
+            raise NotImplementedError()
+        elif type_descriptor['type'] == 'UTF8String':
+            raise NotImplementedError()
+        elif type_descriptor['type'] == 'BMPString':
+            raise NotImplementedError()
+        elif type_descriptor['type'] == 'UTCTime':
+            raise NotImplementedError()
+        elif type_descriptor['type'] == 'UniversalString':
+            raise NotImplementedError()
+        elif type_descriptor['type'] == 'GeneralizedTime':
+            compiled = GeneralizedTime(name)
+        elif type_descriptor['type'] == 'BIT STRING':
+            raise NotImplementedError()
+        elif type_descriptor['type'] == 'ANY':
+            raise NotImplementedError()
+        elif type_descriptor['type'] == 'ANY DEFINED BY':
+            compiled = Any(name)
+        elif type_descriptor['type'] == 'NULL':
+            raise NotImplementedError()
+        else:
+            compiled = self.compile_type(
+                name,
+                *self.lookup_type_descriptor(
+                    type_descriptor['type'],
+                    module_name))
+
+        return compiled
+
+    def compile_implicit_type(self, name, type_descriptor, module_name):
         if type_descriptor['type'] == 'SEQUENCE':
             compiled = Sequence(
                 name,
@@ -1115,6 +1129,31 @@ class Compiler(object):
                 *self.lookup_type_descriptor(
                     type_descriptor['type'],
                     module_name))
+
+        return compiled
+
+    def is_explicit_tag(self, type_descriptor, module_name):
+        try:
+            return type_descriptor['tag']['kind'] == 'EXPLICIT'
+        except KeyError:
+            pass
+
+        try:
+            return bool(type_descriptor['tag'])
+        except KeyError:
+            pass
+
+        return False
+
+    def compile_type(self, name, type_descriptor, module_name):
+        if self.is_explicit_tag(type_descriptor, module_name):
+            compiled = self.compile_explicit_type(name,
+                                                  type_descriptor,
+                                                  module_name)
+        else:
+            compiled = self.compile_implicit_type(name,
+                                                  type_descriptor,
+                                                  module_name)
 
         # Set any given tag.
         if 'tag' in type_descriptor:
