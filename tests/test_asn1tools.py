@@ -1134,6 +1134,19 @@ class Asn1ToolsTest(unittest.TestCase):
         decoded = testcase.decode('OUTER', encoded)
         self.assertEqual(decoded, decoded_message)
 
+    def test_duplicated_type(self):
+        '''Duplicated types makes the types dictionary None.
+
+        '''
+
+        spec = '''
+        Foo DEFINITIONS ::= BEGIN Fum ::= INTEGER END
+        Bar DEFINITIONS ::= BEGIN Fum ::= BOOLEAN END
+        '''
+
+        foo_bar = asn1tools.compile_string(spec)
+        self.assertEqual(foo_bar.types, None)
+
 
 if __name__ == '__main__':
     unittest.main()
