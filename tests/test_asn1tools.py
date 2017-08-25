@@ -1022,7 +1022,7 @@ class Asn1ToolsTest(unittest.TestCase):
             foo.decode('Foo', b'\xa3\x03\x01\x01\x01')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected BOOLEAN with tag 162 but got 163 at offset 0.')
+                         ': Expected Tag with tag 162 but got 163 at offset 0.')
 
         # Bad tag.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -1090,6 +1090,49 @@ class Asn1ToolsTest(unittest.TestCase):
         self.assertEqual(encoded, b'\xa2\x05\x0c\x03foo')
         decoded = foo.decode('Foo', encoded)
         self.assertEqual(decoded, 'foo')
+
+    def test_nested_explicit_tags(self):
+        '''Test nested explicit tags.
+
+        Based on https://github.com/wbond/asn1crypto/issues/63 by tiran.
+
+        '''
+
+        spec = '''
+        TESTCASE DEFINITIONS EXPLICIT TAGS ::=
+        BEGIN
+        INNERSEQ ::= SEQUENCE {
+        innernumber       [21] INTEGER
+        }
+
+        INNER ::= [APPLICATION 20] INNERSEQ
+
+        OUTERSEQ ::= SEQUENCE {
+        outernumber  [11] INTEGER,
+        inner        [12] INNER
+        }
+
+        OUTER ::= [APPLICATION 10] OUTERSEQ
+        END
+        '''
+
+        decoded_message = {
+            'outernumber': 23,
+            'inner': {
+                'innernumber': 42
+            }
+        }
+
+        encoded_message = (
+            b'\x6a\x12\x30\x10\xab\x03\x02\x01\x17\xac\x09\x74\x07\x30'
+            b'\x05\xb5\x03\x02\x01\x2a'
+        )
+
+        testcase = asn1tools.compile_string(spec)
+        encoded = testcase.encode('OUTER', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = testcase.decode('OUTER', encoded)
+        self.assertEqual(decoded, decoded_message)
 
 
 if __name__ == '__main__':

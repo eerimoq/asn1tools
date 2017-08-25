@@ -153,45 +153,6 @@ class Type(object):
         return offset + 1
 
 
-class ExplicitType(Type):
-
-    def __init__(self, name, tag, *_args, **_kwargs):
-        super(ExplicitType, self).__init__(name, tag)
-        self.explicit_tag = tag
-
-    def set_tag(self, tag):
-        if Class.APPLICATION & tag:
-            self.explicit_tag = Encoding.CONSTRUCTED | tag
-        else:
-            self.explicit_tag = (Class.CONTEXT_SPECIFIC
-                                 | Encoding.CONSTRUCTED
-                                 | tag)
-
-    def encode(self, data, encoded):
-        encoded_implicit = bytearray()
-        self.encode_implicit(data, encoded_implicit)
-        encoded.append(self.explicit_tag)
-        encoded.append(len(encoded_implicit))
-        encoded.extend(encoded_implicit)
-
-    def decode(self, data, offset):
-        if data[offset] != self.explicit_tag:
-            raise DecodeTagError(self.type_name,
-                                 self.explicit_tag,
-                                 data[offset],
-                                 offset)
-
-        _, offset = decode_length_definite(data, offset + 1)
-
-        return self.decode_implicit(data, offset)
-
-    def encode_implicit(self, data, encoded):
-        raise NotImplementedError()
-
-    def decode_implicit(self, data, offset):
-        raise NotImplementedError()
-
-
 class Integer(Type):
 
     def __init__(self, name, *_args, **_kwargs):
@@ -942,68 +903,34 @@ class Enumerated(Type):
         return 'Null({})'.format(self.name)
 
 
-class ExplicitInteger(ExplicitType, Integer):
+class ExplicitTag(Type):
 
-    encode_implicit = Integer.encode
-    decode_implicit = Integer.decode
+    def __init__(self, name, inner, *_args, **_kwargs):
+        super(ExplicitTag, self).__init__(name, 'Tag', None)
+        self.inner = inner
 
-    def __init__(self, name):
-        super(ExplicitInteger, self).__init__(name, Tag.INTEGER)
+    def set_tag(self, tag):
+        if Class.APPLICATION & tag:
+            self.tag = (Encoding.CONSTRUCTED | tag)
+        else:
+            self.tag = (Class.CONTEXT_SPECIFIC
+                        | Encoding.CONSTRUCTED
+                        | tag)
 
+    def encode(self, data, encoded):
+        encoded_inner = bytearray()
+        self.inner.encode(data, encoded_inner)
+        encoded.append(self.tag)
+        encoded.extend(encode_length_definite(len(encoded_inner)))
+        encoded.extend(encoded_inner)
 
-class ExplicitBoolean(ExplicitType, Boolean):
+    def decode(self, data, offset):
+        offset = self.decode_tag(data, offset)
+        _, offset = decode_length_definite(data, offset)
+        return self.inner.decode(data, offset)
 
-    encode_implicit = Boolean.encode
-    decode_implicit = Boolean.decode
-
-    def __init__(self, name, *_args, **_kwargs):
-        super(ExplicitBoolean, self).__init__(name, Tag.BOOLEAN)
-
-
-class ExplicitOctetString(ExplicitType, OctetString):
-
-    encode_implicit = OctetString.encode
-    decode_implicit = OctetString.decode
-
-    def __init__(self, name, *_args, **_kwargs):
-        super(ExplicitOctetString, self).__init__(name, Tag.OCTET_STRING)
-
-
-class ExplicitSetOf(ExplicitType, SetOf):
-
-    encode_implicit = SetOf.encode
-    decode_implicit = SetOf.decode
-
-    def __init__(self, name, element_type, *_args, **_kwargs):
-        ExplicitType.__init__(self, name, Tag.SET)
-        SetOf.__init__(self, name, element_type)
-
-
-class ExplicitBitString(ExplicitType, BitString):
-
-    encode_implicit = BitString.encode
-    decode_implicit = BitString.decode
-
-    def __init__(self, name, *_args, **_kwargs):
-        super(ExplicitBitString, self).__init__(name, Tag.BIT_STRING)
-
-
-class ExplicitUTCTime(ExplicitType, UTCTime):
-
-    encode_implicit = UTCTime.encode
-    decode_implicit = UTCTime.decode
-
-    def __init__(self, name, *_args, **_kwargs):
-        super(ExplicitUTCTime, self).__init__(name, Tag.UTC_TIME)
-
-
-class ExplicitUTF8String(ExplicitType, UTF8String):
-
-    encode_implicit = UTF8String.encode
-    decode_implicit = UTF8String.decode
-
-    def __init__(self, name, *_args, **_kwargs):
-        super(ExplicitUTF8String, self).__init__(name, Tag.UTF8_STRING)
+    def __repr__(self):
+        return 'Tag()'
 
 
 class CompiledType(object):
@@ -1040,70 +967,6 @@ class Compiler(object):
             }
             for module_name in self._specification
         }
-
-    def compile_explicit_type(self, name, type_descriptor, module_name):
-        if type_descriptor['type'] == 'SEQUENCE':
-            raise NotImplementedError()
-        elif type_descriptor['type'] == 'SEQUENCE OF':
-            raise NotImplementedError()
-        elif type_descriptor['type'] == 'SET':
-            raise NotImplementedError()
-        elif type_descriptor['type'] == 'SET OF':
-            compiled = ExplicitSetOf(name,
-                                     self.compile_type('',
-                                                       type_descriptor['element'],
-                                                       module_name))
-        elif type_descriptor['type'] == 'CHOICE':
-            compiled = Choice(
-                name,
-                self.compile_members(type_descriptor['members'],
-                                     module_name))
-        elif type_descriptor['type'] == 'INTEGER':
-            compiled = ExplicitInteger(name)
-        elif type_descriptor['type'] == 'ENUMERATED':
-            raise NotImplementedError()
-        elif type_descriptor['type'] == 'BOOLEAN':
-            compiled = ExplicitBoolean(name)
-        elif type_descriptor['type'] == 'OBJECT IDENTIFIER':
-            compiled = ObjectIdentifier(name)
-        elif type_descriptor['type'] == 'OCTET STRING':
-            compiled = ExplicitOctetString(name)
-        elif type_descriptor['type'] == 'TeletexString':
-            raise NotImplementedError()
-        elif type_descriptor['type'] == 'NumericString':
-            raise NotImplementedError()
-        elif type_descriptor['type'] == 'PrintableString':
-            raise NotImplementedError()
-        elif type_descriptor['type'] == 'IA5String':
-            compiled = IA5String(name)
-        elif type_descriptor['type'] == 'VisibleString':
-            raise NotImplementedError()
-        elif type_descriptor['type'] == 'UTF8String':
-            compiled = ExplicitUTF8String(name)
-        elif type_descriptor['type'] == 'BMPString':
-            raise NotImplementedError()
-        elif type_descriptor['type'] == 'UTCTime':
-            compiled = ExplicitUTCTime(name)
-        elif type_descriptor['type'] == 'UniversalString':
-            raise NotImplementedError()
-        elif type_descriptor['type'] == 'GeneralizedTime':
-            compiled = GeneralizedTime(name)
-        elif type_descriptor['type'] == 'BIT STRING':
-            compiled = ExplicitBitString(name)
-        elif type_descriptor['type'] == 'ANY':
-            raise NotImplementedError()
-        elif type_descriptor['type'] == 'ANY DEFINED BY':
-            compiled = Any(name)
-        elif type_descriptor['type'] == 'NULL':
-            raise NotImplementedError()
-        else:
-            compiled = self.compile_type(
-                name,
-                *self.lookup_type_descriptor(
-                    type_descriptor['type'],
-                    module_name))
-
-        return compiled
 
     def compile_implicit_type(self, name, type_descriptor, module_name):
         if type_descriptor['type'] == 'SEQUENCE':
@@ -1192,14 +1055,12 @@ class Compiler(object):
         return False
 
     def compile_type(self, name, type_descriptor, module_name):
+        compiled = self.compile_implicit_type(name,
+                                              type_descriptor,
+                                              module_name)
+
         if self.is_explicit_tag(type_descriptor, module_name):
-            compiled = self.compile_explicit_type(name,
-                                                  type_descriptor,
-                                                  module_name)
-        else:
-            compiled = self.compile_implicit_type(name,
-                                                  type_descriptor,
-                                                  module_name)
+            compiled = ExplicitTag(name, compiled)
 
         # Set any given tag.
         if 'tag' in type_descriptor:
