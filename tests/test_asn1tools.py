@@ -679,9 +679,7 @@ class Asn1ToolsTest(unittest.TestCase):
         with self.assertRaises(asn1tools.DecodeError) as cm:
             rfc5280.decode('Certificate', encoded_message)
 
-        self.assertEqual(str(cm.exception),
-                         ': Expected at least 159 bytes data but got 0 at '
-                         'offset 3.')
+        self.assertEqual(str(cm.exception), 'tbsCertificate: out of data at offset 3')
 
         # Unexpected tag 0xff.
         encoded_message = b'\xff\x01\x00'
@@ -1146,6 +1144,41 @@ class Asn1ToolsTest(unittest.TestCase):
 
         foo_bar = asn1tools.compile_string(spec)
         self.assertEqual(foo_bar.types, None)
+
+    def test_zforce(self):
+        '''
+
+        '''
+
+        zforce = asn1tools.compile_file('tests/files/zforce.asn')
+
+        # PDU 1.
+        decoded_message = {
+            'request': {
+                "deviceAddress": b'\x00\x01'
+            }
+        }
+        encoded_message = b'\xee\x04\x40\x02\x00\x01'
+
+        encoded = zforce.encode('ProtocolMessage', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = zforce.decode('ProtocolMessage', encoded)
+        self.assertEqual(decoded, decoded_message)
+
+        # PDU 2.
+        decoded_message = {
+            'request': {
+                'enable': {
+                    'enable': 1
+                }
+            }
+        }
+        encoded_message = b'\xee\x05\x65\x03\x81\x01\x01'
+
+        encoded = zforce.encode('ProtocolMessage', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = zforce.decode('ProtocolMessage', encoded)
+        self.assertEqual(decoded, decoded_message)
 
 
 if __name__ == '__main__':

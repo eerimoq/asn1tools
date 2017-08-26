@@ -1,0 +1,871 @@
+-- Neonode zForce Communication Protocol ASN.1 PDU definition
+-- Protocol ASN.1 PDU Definition for Platform Version 7
+-- Status: Draft
+-- Definition version: 1.5-WIP
+-- Last update: 2016-06-13
+-- See end of document for changelog
+
+ProtocolMessage DEFINITIONS IMPLICIT TAGS EXTENSIBILITY IMPLIED ::=
+BEGIN
+
+        -- General notes;
+        -- items typed as INTEGER are unsigned, unless
+        -- explicitly using the SignedInteger datatype
+
+        -- -------------------------------------------- --
+        -- Top level PDU								--
+        -- -------------------------------------------- --
+
+        -- Top level container of choice type, to be able to
+        -- give implicit tag identifier. To replicate old protocol
+        -- PRIVATE 14 generates id EE using DER encoding
+        ProtocolMessage ::= CHOICE {
+                request [PRIVATE 14] Message,
+                response [PRIVATE 15] Message,
+                notification [PRIVATE 16] Notification
+        }
+
+        -- General top level info:
+        -- Request is sent from host to device, and is
+        -- responded to with a response. The structure
+        -- of both request and response are the same,
+        -- the Message sequence.
+
+        -- Notifications are reports from the platform
+        -- to the host that are not explicitly requested.
+        -- This contains startup information and touch
+        -- notifications.
+
+        -- -------------------------------------------- --
+        -- Message - Input & Output						--
+        -- -------------------------------------------- --
+
+        -- Used for input and output to the system.
+        -- In the request case the host device will send a
+        -- top level Message with the request identifier and
+        -- fill it out with operations to perform.
+
+        -- The system will respond with response messages
+        -- contained in a Message with the response identifier
+        -- including requested data or operation results.
+
+        -- General way of working:
+
+        -- To perform a get request, make sure to send the
+        -- message with an empty sequence for the data being
+        -- requested
+
+        -- To perform a set request, send the message with
+        -- the sequence for the command filled with the
+        -- appropriate parameters as payload
+
+        -- All requests will get a response message with
+        -- the sequences existing in the request message
+        -- filled with their current values. If a set
+        -- request was performed the returned value should
+        -- be checked to verify the operation was successful
+
+        -- The current communications layer handles a single
+        -- command/sequence at a time. As such each setting
+        -- should be sent in their own message.
+
+        Message ::= SEQUENCE {
+                deviceAddress DeviceAddress OPTIONAL,
+                -- Used to address a specific device when multiple devices are in the same system.
+                -- For request, the last value is kept so multiple requests to the same
+                -- device only needs to include the deviceAddress in the first of the requests.
+
+                -- Command/Message to start.
+                -- Do all configuration before issuing.
+                enable [APPLICATION 5] SEQUENCE {
+                        disable [0] NULL OPTIONAL,
+
+                        -- Send enable with value 0 to enable continuous mode.
+                        -- If any other value is given, scanning will stop
+                        -- after that number of frames of data has been sent.
+                        -- This is useful for diagnostics scans and robot measurements.
+                        enable [1] INTEGER (0..127) OPTIONAL,
+
+                        reset [2] NULL OPTIONAL
+                } OPTIONAL,
+                -- If enable is in a set request, e.g. populated with any member,
+                -- no more commands should be included in the same message.
+
+
+                -- Request for touch format descriptor. See TouchDescriptor
+                --	in primitive data types section below for more info.
+                touchFormat [APPLICATION 6] SEQUENCE { -- Read only, touchDescriptor will be ignored in request message
+                        touchDescriptor TouchDescriptor OPTIONAL
+                } OPTIONAL,
+
+                -- The various types of data that can be reported
+                -- are controlled indepentenly by sending boolean
+                -- values for them.
+                operationMode [APPLICATION 7] SEQUENCE {	-- Initial state after power up
+                        detection [0] BOOLEAN OPTIONAL,			-- Enabled
+                        signals [1] BOOLEAN OPTIONAL,			-- Disabled
+                        ledLevels [2] BOOLEAN OPTIONAL,			-- Disabled
+                        detectionHid [3] BOOLEAN OPTIONAL,		-- Only for USB Equipped devices - Disabled
+                        gestures [4] BOOLEAN OPTIONAL			-- Only for gesture supporting devices - Enabled
+                } OPTIONAL,
+
+                -- Target frequency for different modes of operation
+                frequency [APPLICATION 8] SEQUENCE {
+                        finger [0] INTEGER OPTIONAL,
+                        stylus [1] INTEGER OPTIONAL,
+                        idle [2] INTEGER OPTIONAL
+                } OPTIONAL,
+
+                -- Scaling factor for coordinates reported.
+                -- Does not affect internal working resolution.
+                resolution [APPLICATION 9] SEQUENCE {
+                        x [0] INTEGER OPTIONAL,
+                        y [1] INTEGER OPTIONAL,
+                        z [2] INTEGER OPTIONAL
+                } OPTIONAL,
+
+                -- Diagnostic method for reporting open or short LEDs/PDs.
+                -- Always run on platform level, as such all ASICs independent of device will be reported.
+                -- OpenShortInformation in constructed data types provides more info
+                openShort [APPLICATION 10] SEQUENCE { -- Read only, openShortInfo will be ignored in request message
+                        openShortInfo [0] SEQUENCE OF OpenShortInformation OPTIONAL,	-- One result set for each ASIC
+                        errorCount [1] INTEGER (0..127) OPTIONAL	-- Total number of open and short errors encountered across
+                        -- all ASICs. Should always be 0 on a correctly assembled system.
+                        -- If larger than 127 the number is restricted to 127.
+                } OPTIONAL,
+
+                -- Static information about the platform or a device can be fetched by requesting deviceInformation
+                deviceInformation [APPLICATION 12] SEQUENCE {-- Read only, all parameters will be ignored in request message
+
+                        -- Information returned when deviceInformation is addressed to the platform device
+                        platformInformation [0] SEQUENCE {
+                                platformVersionMajor	[0] INTEGER (0..32767) OPTIONAL,
+                                platformVersionMinor	[1] INTEGER (0..32767) OPTIONAL,
+                                protocolVersionMajor    [2] INTEGER (0..32767) OPTIONAL,
+                                protocolVersionMinor    [3] INTEGER (0..32767) OPTIONAL,
+                                firmwareVersionMajor	[4] INTEGER (0..32767) OPTIONAL,
+                                firmwareVersionMinor	[5] INTEGER (0..32767) OPTIONAL,
+                                hardwareIdentifier		[6] IA5String OPTIONAL,
+                                hardwareVersion			[7] IA5String OPTIONAL,
+                                asicType				[8] AsicType OPTIONAL,
+                                numberOfAsics			[9] INTEGER (0..127) OPTIONAL,
+                                mcuUniqueIdentifier		[10] OCTET STRING (SIZE(0..32)) OPTIONAL,
+                                -- MCU Serial or die and chip identifier when such is available
+                                projectReference  [11] IA5String OPTIONAL,
+                                platformReference [12] IA5String OPTIONAL,
+                                buildTime         [13] IA5String OPTIONAL,
+                                buildDate         [14] IA5String OPTIONAL
+                        } OPTIONAL,
+
+                        -- Information returned from other device instances. Please note that
+                        -- each instance, if more than one available according to deviceCount,
+                        -- may return different data, as they are configured independently.
+                        deviceInstanceInformation [1] SEQUENCE {					-- Device type restrictions
+                                productVersionMajor	[0] INTEGER (0..32767) OPTIONAL,
+                                productVersionMinor	[1] INTEGER (0..32767) OPTIONAL,
+                                physicalWidth		[2] INTEGER (0..32767) OPTIONAL,
+                                physicalHeight		[3] INTEGER (0..32767) OPTIONAL,	-- N/A for Air Devices
+                                numberOfSignalAxes	[4] INTEGER (0..32767) OPTIONAL,
+                                signalsPerSignalAxis [5] SEQUENCE OF [0] INTEGER OPTIONAL,
+                                -- Added in protocol 1.1
+                                ledsPerPhysicalAxis [6] SEQUENCE OF [0] INTEGER OPTIONAL,
+                                pdsPerPhysicalAxis [7] SEQUENCE OF [0] INTEGER OPTIONAL,
+                                ledPdPlacementPerPhysicalAxis [8] SEQUENCE OF [0] LedPdPlacement OPTIONAL
+                        } OPTIONAL,
+
+                        -- If device contains any readable or writable storage areas
+                        -- each such area will be presented with a StorageArea sequence
+                        storageInformation [2] SEQUENCE {
+                                storageAreas [0] SEQUENCE OF [0] StorageArea,
+
+                                -- Buffer size indicators, to indicate maximum payloads
+                                maxReadSize [1] INTEGER,
+                                maxWriteSize [2] INTEGER
+                        } OPTIONAL,
+
+                        -- Response type expected from devices of type lightingDevices
+                        -- Provides metadata about the type and amount of available lights
+                        lightingInformation [3] SEQUENCE {
+                                numberOfLeds [0] INTEGER OPTIONAL,
+                                bitsPerLedChannel [1] SEQUENCE OF [0] INTEGER OPTIONAL
+                                -- Regular LEDs will only give a single channel while
+                                -- RGB LEDs will give three integers, one for each color channel
+                                -- Simple on/off channels will only be a single bit while
+                                -- channels with controllable intensity will have multiple bits
+                        } OPTIONAL
+
+                } OPTIONAL,
+
+                -- To be able to enumerate the virtual devices a request for deviceCount gives
+                -- the count of each type of device.
+                deviceCount [APPLICATION 15] SEQUENCE {-- Read only, all parameters will be ignored in request message
+                        totalNumberOfDevices	[0] INTEGER (0..127) OPTIONAL,
+                        -- Total number of devices does not include the platform and
+                        -- will always equal the sum of the other members of the sequence.
+
+                        -- Devices of which there are none is not reported.
+                        coreDevices				[1] INTEGER (0..127) OPTIONAL,
+                        airDevices				[2] INTEGER (0..127) OPTIONAL,
+                        plusDevices				[3] INTEGER (0..127) OPTIONAL,
+                        lightingDevices			[4] INTEGER (0..127) OPTIONAL
+                } OPTIONAL,
+
+                status [APPLICATION 13] SEQUENCE { -- Read only, all parameters will be ignored in request message
+                        -- If you want to restrict the get request to a subset, include a empty sequence corresponding
+                        -- to the subset you want. If left entirely empty the full get response will be provided
+                        counters [0] SEQUENCE {
+                                currentContacts			[0] INTEGER (0..127) OPTIONAL,
+                                scanningCounter			[1] INTEGER (0..65535) OPTIONAL,
+                                preparedTouchCounter	[2] INTEGER (0..65535) OPTIONAL,
+                                sentTouchCounter		[3] INTEGER (0..65535) OPTIONAL,
+                                invalidTouchCounter		[4] INTEGER (0..65535) OPTIONAL
+                        } OPTIONAL
+                } OPTIONAL,
+
+                resultCode [APPLICATION 20] INTEGER {
+                        ok (0),
+                        fail (1)
+                } OPTIONAL,
+
+                -- Instance specific settings for a device
+                deviceConfiguration [APPLICATION 19] SEQUENCE {
+                        -- Set / get the number of touches to be tracked:
+                        numberOfTrackedTouches	[0] INTEGER (0..255) OPTIONAL,
+                        -- Set / get the minimal distance for updating a tracked touch in move state
+                        trackingMinDistanceMove	[1] INTEGER (0..16383) OPTIONAL,
+                        -- Set / get the sub touch active area low bound in X coordinate
+                        subTouchActiveArea		[2] SEQUENCE {
+                                -- Write Request and Read Response only:
+                                -- Set / get the sub touch active area low bound in X coordinate
+                                lowBoundX		[0] INTEGER (0..16383) OPTIONAL,
+                                -- Set / get the sub touch active area low bound in Y coordinate
+                                lowBoundY		[1] INTEGER (0..16383) OPTIONAL,
+                                -- Set / get the sub touch active area high bound in X coordinate
+                                highBoundX	[2] INTEGER (0..16383) OPTIONAL,
+                                -- Set / get the sub touch active area high bound in Y coordinate
+                                highBoundY	[3] INTEGER (0..16383) OPTIONAL,
+                                -- subTaa Reverse X coordinates, set / get true or false
+                                reverseX		[4] BOOLEAN OPTIONAL,
+                                -- SubTaa Reverse Y coordinates, set / get true or false
+                                reverseY		[5] BOOLEAN OPTIONAL
+                        } OPTIONAL,
+
+                        -- configure the reference signal setting
+                        referenceSignalConfig	[3] INTEGER (0..255) OPTIONAL,
+
+                        -- Restriction of detected objects based on their size
+                        sizeRestriction [4] SEQUENCE {
+                                maxSizeEnabled			[0] BOOLEAN OPTIONAL,
+                                maxSize					[1] INTEGER (0..255) OPTIONAL,
+                                minSizeEnabled			[2] BOOLEAN OPTIONAL,
+                                minSize					[3] INTEGER (0..255) OPTIONAL
+                        } OPTIONAL,
+
+                        -- configure the detection mode
+                        -- Standard modes increasing from 0, custom modes decreasing from 64
+                        -- Giving an unlisted value will have no effect.
+                        detectionMode [5] INTEGER {
+                                -- Reserved modes from (0) to (63) are listed below:
+                                default (0),		-- finger and stylus are both enabled
+                                finger (1),
+                                -- stylus (2),
+
+                                -- Special modes for customized applications are listed below:
+                                mergeTouches (32), -- merges all touch objects into one
+                                insensitiveFTIR (64)
+                        } OPTIONAL,
+
+                        -- Set / get the number of touches to be reported:
+                        numberOfReportedTouches	[6] INTEGER (0..255) OPTIONAL
+
+                } OPTIONAL,
+
+                -- Configurable options useful for retrieving diagnostic information
+                diagnosticsSettings [APPLICATION 21] SEQUENCE {
+
+                        -- If fixedStrength is set, the next scan uses the
+                        -- set strength for all LEDs. The value is cleared upon receiving
+                        -- a disable command, or the fixed number of scans are done.
+                        fixedStrength [0] INTEGER (0..255) OPTIONAL,
+
+                        -- If forceCalibration is set to anything other than 0
+                        -- the device will recalibrate itself next time it is
+                        -- enabled. As a recalibration of led levels is needed
+                        -- when the ASIC gain is calibrated, this is included
+                        -- in the same settings level.
+                        -- Not cleared on disable/end of fixed number scan,
+                        -- so make sure to set to noCalibration when done.
+                        -- Ignored if fixedStrength is set at the same time.
+                        forceCalibration [1] INTEGER {
+                                noCalibration (0),
+                                calibrateLedLevels (1),
+                                calibrateLedLevelsWithHighestASICGain (2)
+                        } OPTIONAL,
+
+                        -- To enable filtering or normalization of raw signals
+                        -- reported, enable it here.
+                        rawSignalFiltering [2] INTEGER {
+                                disabled (0),
+                                enabled (1)
+                        } OPTIONAL,
+
+                        -- For systems with calibration data the storage area currently
+                        -- being used is indicated and set by altering the following parameter.
+                        calibrationStorageAreaInUse [3] StorageIdentifier OPTIONAL,
+
+                        -- Sends Air maximum filter result.
+                        signalMaximum [4] BOOLEAN OPTIONAL
+
+                } OPTIONAL,
+
+                -- Storage operations, available for storage devices
+                -- Only one type of operation can be performed per request
+                storageOperation [APPLICATION 25] SEQUENCE {
+                        storageIdentifier [0] StorageIdentifier,
+
+                        operationType [1] INTEGER {
+                                read (0),
+                                write (1),
+                                delete (2)
+                        },
+
+                        -- Offset into the storage area.
+                        -- Offset + size should never exceed the size of the storage area
+                        offset [2] INTEGER,
+                        size [3] INTEGER,
+
+                        -- Payload should only be populated in the request
+                        -- when doing a write operation. It will only be
+                        -- populated in a response after a read operation
+                        payload [4] OCTET STRING OPTIONAL,
+
+                        -- Operation status code should never be
+                        -- included in requests, only returned in responses.
+                        -- This indicates the status
+                        operationStatusCode [5] INTEGER {
+                                success (0),
+                                genericError (1), -- For errors without specific status code
+                                outOfBounds (2), -- Read or write outside of storage area
+                                mediaNotPresent (3), -- For removable media
+                                identifierError (4), -- Storage with identifier does not exist.
+                                bufferOverflow (5), -- Storage read or write buffer not big enough for request.
+                                writeProtected (6), -- Storage is write protected, maybe ROM type.
+                                deleteNotApplicable (7) -- Delete attempted on media where operation not available
+                        } OPTIONAL
+
+                } OPTIONAL,
+                signalsLayout [APPLICATION 18] Vector OPTIONAL,
+
+                -- For altering state of RGB LEDs on a device
+                -- It is write only, and will only generate an empty sequence
+                -- as a response to keep bandwidth usage low.
+        lighting [APPLICATION 26] SEQUENCE {
+            presenceBitMask [0] BIT STRING OPTIONAL,
+            -- To avoid having to send state for all LEDs every
+            -- time, this bitmask signifies the LEDs for which
+            -- the state is to be changed. To set a LED to a
+            -- specific color make sure to include it in the bitMask
+            -- and send the color values in the right position of the
+            -- state OCTET STRING
+
+            state [1] OCTET STRING OPTIONAL,
+            -- State data for the LEDs to be set.
+            -- presenceBitMask indicates in rising order
+            -- what LEDs' states are included in the payload.
+
+            -- Expected format of each state is according to the
+            -- number of bits per channel in the deviceInformation,
+            -- where each channel is 0-padded to be evenly aligned
+            -- on byte boundaries.
+
+            -- The size of the entire state payload should be a
+            -- multiple of the total state size per LED.
+            -- The maximum size will be the number of bits enabled in
+            -- precenceBitMask * total size per LED.
+            -- If state contains a smaller payload than maximum the
+            -- last state information is repeated for all successive LEDs
+            -- As such, to set all LEDs to the same state only a single state
+            -- payload is required while setting all bits enabled in the
+            -- presenceBitMask
+
+            -- Some examples:
+            -- Type    - Bits per channel   - Size per LED state
+            -- On/Off  - 1                  - 1 byte
+            -- Single  - 8                  - 1 byte
+            -- RGB LED - 8, 8, 8            - 3 byte
+
+            globalIntensity [2] INTEGER (0..65535) OPTIONAL
+            -- Allows you to control the intensity level for all
+            -- LEDs at the same time.
+
+        } OPTIONAL,
+
+                -- Low signal information.
+                -- Get the comparing results between all signals to a minimal
+                -- signal alert level.
+                lowSignal [APPLICATION 28] SEQUENCE {
+                        -- Bit mask stating which signals having low signal error.
+                        lowSignalInfo [0] BIT STRING OPTIONAL
+                } OPTIONAL,
+
+                -- For systems where error counters are available,
+                -- they can be cleared by sending a NULL value
+                errorCounterClear [APPLICATION 31] NULL OPTIONAL,
+
+                -- Error Information.
+                -- Only Platform responds to this.
+                errorInformation [APPLICATION 32] ErrorInformation OPTIONAL,
+
+                -- Ask device to stream the Error Log for either a specific session,
+                -- the current session (specify -1 as value) or all sessions (-2).
+                -- The Error Log is streamed using ErrorLog entries.
+                -- See the "errorLog" entry in StatusNotification for the Notification sent.
+                -- Only Platform responds to this.
+                errorLog [APPLICATION 33] INTEGER {
+                        currentSession (-1),
+                        allSessions (-2)
+                } OPTIONAL,
+
+                -- Get or Set Error Thresholds.
+                errorThresholds [APPLICATION 34] ErrorThresholds OPTIONAL
+        }
+
+        -- -------------------------------------------- --
+        -- Notifications - Touch data					--
+        -- -------------------------------------------- --
+
+        Notification ::= SEQUENCE {
+                deviceAddress DeviceAddress OPTIONAL,
+                -- Present when more than one device is available in system.
+                -- Indicates the source of the notification message.
+
+                notificationMessage CHOICE {
+                        singleTouch TouchNotification,
+                        -- This will be used in cases where only single touch is available.
+
+                        touchNotifications [0] SEQUENCE (SIZE(0..127)) OF TouchNotification,
+                        -- In cases where multi touch of 2 or more touches will be available
+                        -- this sequence will be used.
+
+                        -- The payload, sizes and offsets for each TouchNotification
+                        -- is described by the TouchDescriptor bit string
+
+                        bootCompleteNotification BootCompleteNotification,
+                        -- BootCompleteNotification is sent upon system start,
+                        -- see definition of BootCompleteNotification further down
+                        -- to see what flags and states are reported
+
+                        ledLevels [APPLICATION 11] RawData,
+                        coreSignals  [APPLICATION 14] RawData,
+                        airSignals  [APPLICATION 17] Vector,
+                        airMaximum  [1] Vector,
+                        statusNotification StatusNotification,
+                        gestureNotifications [2] SEQUENCE (SIZE(0..127)) OF GestureNotification
+                },
+
+                notificationTimestamp Timestamp OPTIONAL,
+                -- For notifications which have use of temporal data
+                -- the notification contains a timestamp
+
+                notificationLatency Latency OPTIONAL
+                -- For notifications which have use of temporal data
+                -- the notification contains a processing latency value.
+                -- Currently this is only used for TouchNotification.
+                -- For touchNotification, the latency time starts from the
+                -- beginning of the first frame after a touch object
+                -- presented in active area, and ends at the current touch
+                -- notification encoded.
+        }
+
+        -- -------------------------------------------- --
+        -- Primitive Data Types							--
+        -- -------------------------------------------- --
+
+        DeviceAddress ::= [APPLICATION 0] OCTET STRING (SIZE (2))
+        -- Addressing information used when multiple touch devices are present
+        -- in the system.
+        -- Byte0 - deviceType, Byte1 - deviceIndex
+        -- DeviceTypes:	0x00	-	Platform
+        --				0x01	-	zForce Core
+        --				0x02	-	zForce Air
+        --				0x03	-	zForce Plus
+        --				0x04	-	Lighting devices
+
+        TouchDescriptor ::= [APPLICATION 1] BIT STRING
+        {
+        -- Bitmask descriptor outlining the payload each
+        -- TouchNotification contains.
+        -- Name (bit)			-  Description		- size		- comment
+                id (0),				-- Touch Identifier	- 1 byte
+                event (1),			-- Up/Down/Move		- 1 byte	- 0=Down; 1=Move; 2=Up; 3=Invalid; 4=Ghost
+                loc-x-byte1 (2),	-- X coordinate		- 1 byte
+                loc-x-byte2 (3),	-- X expanded		- 1 byte	- for higher precision
+                loc-x-byte3 (4),	-- X expanded		- 1 byte	- for higher precision
+                loc-y-byte1 (5),	-- Y coordinate		- 1 byte
+                loc-y-byte2 (6),	-- Y expanded		- 1 byte	- for higher precision
+                loc-y-byte3 (7),	-- Y expanded		- 1 byte	- for higher precision
+                loc-z-byte1 (8),	-- Z coordinate		- 1 byte
+                loc-z-byte2 (9),	-- Z expanded		- 1 byte	- for higher precision
+                loc-z-byte3 (10),	-- Z expanded		- 1 byte	- for higher precision
+                size-x-byte1 (11),	-- X size			- 1 byte
+                size-x-byte2 (12),	-- X size			- 1 byte	- for higher precision
+                size-x-byte3 (13),	-- X size			- 1 byte	- for higher precision
+                size-y-byte1 (14),	-- Y size			- 1 byte
+                size-y-byte2 (15),	-- Y size			- 1 byte	- for higher precision
+                size-y-byte3 (16),	-- Y size			- 1 byte	- for higher precision
+                size-z-byte1 (17),	-- Z size			- 1 byte
+                size-z-byte2 (18),	-- Z size			- 1 byte	- for higher precision
+                size-z-byte3 (19),	-- Z size			- 1 byte	- for higher precision
+                orientation (20),	-- Orientation		- 1 byte	- Hand orientation
+                confidence (21),	-- Confidence		- 1 byte
+                pressure (22)		-- Pressure			- 1 byte
+        }
+        -- Total maximum size:    23 bytes per touch
+
+        TouchNotification ::= [APPLICATION 2] OCTET STRING
+        -- Binary payload with content as outlined by TouchDescriptor
+
+        Timestamp ::= [APPLICATION 24] INTEGER
+        -- Timestamps for general use
+
+        Latency ::= [APPLICATION 35] INTEGER
+        -- Latency value for measurement use. Payload value is in millisecond unit.
+
+        -- List of known ASIC types
+        AsicType ::= INTEGER {
+                nn1001 (1),
+                nn1002 (2),
+                nn1003 (3)
+        }
+
+        -- Addressing method for storage areas
+        StorageIdentifier ::= INTEGER (0..127)
+
+        -- Explicit notification for integers that
+        -- contains signed values
+        SignedInteger ::= INTEGER
+
+        -- LED and PD placement types
+        LedPdPlacement ::= INTEGER {
+                pdFirstPdLast (0),
+                pdFirstLedLast (1),
+                ledFirstPdLast (2),
+                ledFirstLedLast (3)
+        }
+
+        -- -------------------------------------------- --
+        -- Constructed Data Types						--
+        -- -------------------------------------------- --
+
+        GestureNotification ::= [APPLICATION 4] SEQUENCE {
+                gestureStatus [0] INTEGER {
+                        detection (0),	-- New gesture detected
+                        update (1),		-- Update of previously detected gesture
+                        stop (2)		-- Final update for previously detected gesture
+                },
+
+                -- Unique identifier for the gesture notification.
+                -- If status is detection the first unoccupied ID is used,
+                -- otherwise the ID is related to a previously detected gesture.
+                gestureIdentifier [1] INTEGER OPTIONAL,
+
+                gestureType [2] INTEGER {
+--			Type				Continuous/Single Shot	Generic/Specific case	iOS Equivalent			Android equivalent
+                        tap (0),		--	Single Shot				Generic					UITapGesture			onDown / onSingleTapUp / onDoubleTap (GestureDetector)
+                        longPress (1),	--	Continuous				Generic					UILongPressGesture		onLongPress (GestureDetector)
+                        swipe (2),		--	Continuous				Generic					UISwipeGesture			onFling (GestureDetector)
+                        pan (3),		--	Continuous				Generic					UIPanGesture			onScroll (GestureDetector)
+                        pinch (4),		--	Continuous				Generic					UIPinchGesture			onScale (ScaleGestureDetector)
+                        rotation (5),	--	Continuous				Generic					UIRotationGesture		Not available
+                        grab (6),		--	Continuous				Steering Wheel specific	N/A						N/A
+                        rimTap (7)		--	Single Shot				Steering Wheel specific	N/A						N/A
+                },
+
+                originX [3] INTEGER OPTIONAL,
+                originY [4] INTEGER OPTIONAL,
+
+                sizeX [5] INTEGER OPTIONAL,
+                sizeY [6] INTEGER OPTIONAL,
+
+                deltaX [7] SignedInteger OPTIONAL,
+                deltaY [8] SignedInteger OPTIONAL
+        }
+
+        -- Startup notification, indicating reset causes, proper ASIC
+        -- function and global state before reset, in case of watchdog reset
+        BootCompleteNotification ::= [APPLICATION 3] SEQUENCE {
+                asicStatus [0] INTEGER
+                {
+                        asicExists (0),
+                        asicNotFound (1)
+                },
+                resetSource [1] BIT STRING
+                {
+                        powerUp (0),
+                        rstLow (1),
+                        watchdogExpired (2),
+                        flashViolation (3),
+                        nonMaskableInterrupt (4)
+                },
+                globalState [2] BIT STRING
+                {
+                        watchDogExpiredWaitingForASICIRQ (0),
+                        watchDogExpiredWaitingForSPITXComm (1),
+                        watchDogExpiredWaitingForSPIRXComm (2),
+                        watchDogExpiredUnhandledIRQ (3),
+                        asicFlaggedUnexpectedPOR (4),
+                        asicFlaggedTSDFault (5),
+                        asicFlaggedVBGFault (6),
+                        asicFlaggedMemOverFlow (7)
+                }
+        }
+
+        RawData ::= SEQUENCE OF VariableSizeIntegerString
+
+        VariableSizeIntegerString ::= CHOICE
+        {
+                uint8 [0] OCTET STRING,
+                uint12 [1] OCTET STRING,
+                uint16 [2] OCTET STRING
+        }
+
+        -- A sequence containing the results for all LEDs and PDs
+        -- of an Open Short test on an ASIC
+        OpenShortInformation ::= [APPLICATION 23] SEQUENCE {
+                asicIndex [0] INTEGER OPTIONAL,	-- Which ASIC the results belong to.
+                ledOpen [1] BIT STRING,		-- Bit mask stating which LEDs indicate a open fault
+                ledShort [2] BIT STRING,	-- Bit mask stating which LEDs indicate a short fault
+                pdOpen [3] BIT STRING OPTIONAL,		-- Bit mask stating which PDs indicate a open fault
+                -- NN1001 does not support PD open checks, so this may be omitted
+                pdShort [4] BIT STRING		-- Bit mask stating which PDs indicate a short fault
+        }
+
+        -- For devices providing reading and writing of data to volatile or non-volatile
+        -- memory, each available area that can be addressed will be described using a
+        -- StorageArea sequence for each area.
+        StorageArea ::= SEQUENCE {
+                storageIdentifier [0] StorageIdentifier,
+                -- Integer index required to pinpoint the specific storage area, to allow
+                -- for multiple storage areas associated with the same device.
+                storageDescription [1] IA5String (SIZE(0..32)) OPTIONAL,
+                -- Description about the intended usage for this storage,
+                -- e.g. Calibration, Configuration etc.
+                storageType [2] INTEGER {
+                        rom (0),
+                        flash (1),
+                        eeprom (2),
+                        ram (3),
+                        asicRegister (4),
+                        asicSram (5)
+                } OPTIONAL,
+                storageLocation [3] INTEGER {
+                        internal (0), -- e.g. MCU flash memory
+                        external (1), -- e.g. external flash chip
+                        removable (2) -- e.g. SD card
+                } OPTIONAL,
+                storageSize [4] INTEGER
+                -- Total size of the storage area.
+                -- Adressable space will always be 0 <= address < storageSize
+
+--		deleteLevel [5] INTEGER {
+--			byteLevel (0),
+--			blockLevel (1)
+--		} OPTIONAL,
+                -- If deletions for this storage area is done on
+                -- block level, with lesser granularity than a byte
+                -- it is indicated by deleteLevel
+
+--		blockSize [6] INTEGER OPTIONAL,
+                -- If deleteLevel is indeed an block level operation
+                -- the block size is necessary to know starting addresses
+                -- and block sizes of affected data.
+
+        }
+
+        Vector ::= SEQUENCE {
+                dataType [0] ENUMERATED {
+                        uint8 (0),
+                        int8 (1),
+                        uint12 (2),
+                        int12 (3),
+                        uint16 (4),
+                        int16 (5),
+                        uint24 (6),
+                        int24 (7),
+                        uint32 (8),
+                        int32 (9),
+                        uint64 (10),
+                        int64 (11),
+                        float (12),
+                        double (13)
+                } OPTIONAL,
+                shape [1] SEQUENCE OF [0] INTEGER OPTIONAL,
+                -- data format:
+                -- Row major order (C)
+                -- Big endian. When LSB is a partial octet, it is in the most significant bits
+                -- no padding
+                data [2] OCTET STRING OPTIONAL
+        }
+
+        StatusNotification ::= [APPLICATION 27] SEQUENCE {
+                -- Hardware Error detected. This only signals that it has occured, not what it is.
+                -- That is read seperately.
+                hardwareError [0] NULL OPTIONAL,
+
+                -- True if the device is receiving touches on a single axis. This can be due to
+                -- for example a user touching the outside of the light guide, thereby changing
+                -- the reflectiveness of the mirror.
+                -- False if it is no longer detected.
+                singleAxisTouchError [1] BOOLEAN OPTIONAL,
+
+                -- True if touches are no longer detected and sent.
+                -- False if touches are now sent normally.
+                touchesIgnored [2] BOOLEAN OPTIONAL,
+
+                -- True if any signal is lower than predefined minimum level.
+                -- False if all the signals are back to normal level.
+                lowSignalError [3] BOOLEAN OPTIONAL,
+
+                -- Hardware Error Detected. This also contains specifics about the error.
+                -- Replaces hardwareError above.
+                error [4] ErrorNotification OPTIONAL,
+
+                -- Error Log Transfer.
+                errorLog [5] ErrorLog OPTIONAL
+        }
+
+        ErrorInformation ::= SEQUENCE {
+                systemTests [0] SystemErrorInformation OPTIONAL,
+                asics [1] SEQUENCE OF [0] AsicInformation OPTIONAL,
+                visibleLedDrivers [2] SEQUENCE OF [0] VisibleLedDriverInformation OPTIONAL
+        }
+
+        SystemErrorInformation ::= SEQUENCE {
+                cpu [0] ErrorFlags OPTIONAL,					-- CPU Error Detected.
+                internalWatchdog [1] ErrorFlags OPTIONAL,		-- Internal Watchdog
+                flashProgramChecksum [2] ErrorFlags OPTIONAL,	-- Flash Program Checksum
+                ram [3] ErrorFlags OPTIONAL,					-- RAM
+                pll [4] ErrorFlags OPTIONAL,					-- Phase Locked Loop
+                startupTestChecksum2 [5] ErrorFlags OPTIONAL,	-- Startup Test Checksum 2
+                lsi [6] ErrorFlags OPTIONAL,					-- Low Speed Internal Clock
+                hse [7] ErrorFlags OPTIONAL,					-- High Speed External Clock
+                hseSwitch [8] ErrorFlags OPTIONAL,				-- High Speed External Clock Switch
+                externalClockSource [9] ErrorFlags OPTIONAL,	-- External Clock Source
+                abnormalTermination [10] ErrorFlags OPTIONAL,	-- Abnormal Termination of Clock Test
+                testFlowCheckpoint1 [11] ErrorFlags OPTIONAL,	-- Test Flow Checkpoint 1
+                testFlowCheckpoint2 [12] ErrorFlags OPTIONAL,	-- Test Flow Checkpoint 2
+                nvmLogFull [13] ErrorFlags OPTIONAL,			-- NVM Log Full
+                nvmFlashCorrupt [14] ErrorFlags OPTIONAL,		-- NVM Log Flash Corrupt
+                stackOverflow [15] ErrorFlags OPTIONAL,			-- Stack Overflow
+                hardFault [16] ErrorFlags OPTIONAL,				-- Hard Fault
+                logicError [17] ErrorFlags OPTIONAL,			-- Software triggered logic errors. assert() in the firmware.
+                asicSyncSwitch [18] ErrorFlags OPTIONAL			-- ASIC sync switch test failed
+        }
+
+        ErrorFlags ::= BIT STRING {
+                applicable (0),		-- Test has been run.
+                qualified (1)           -- Error is qualified.
+        }
+
+        AsicInformation ::= SEQUENCE {
+                index [0] INTEGER OPTIONAL,
+                irLeds [1] DiodeComponentInformation OPTIONAL,
+                irPds [2] DiodeComponentInformation OPTIONAL,
+                offline [3] ErrorFlags OPTIONAL,					-- ASIC Offline.
+                timeout [4] ErrorFlags OPTIONAL,					-- ASIC Timeout.
+                overTemperatureExternalSensor [5] ErrorFlags OPTIONAL,	-- External Temperature Sensor Overtemperature.
+                porFault [6] ErrorFlags OPTIONAL,					-- POR Fault.
+                analogOrVbgFault [7] ErrorFlags OPTIONAL,			-- Analogue circuits reporting Vref drop or VBG Fault.
+                memoryOverflow [8] ErrorFlags OPTIONAL,				-- Memory Overflow, Storage memory full.
+                internalThermalShutdown [9] ErrorFlags OPTIONAL,	-- Internal sensor tripped Thermal Shutdown.
+                proxResultOverflow [10] ErrorFlags OPTIONAL			-- PROX instruction result out of range.
+        }
+
+        VisibleLedDriverInformation ::= SEQUENCE {
+                index [0] INTEGER OPTIONAL,
+                visibleLeds [1] DiodeComponentInformation OPTIONAL,
+                offline [2] ErrorFlags OPTIONAL
+        }
+
+        DiodeComponentInformation ::= SEQUENCE {
+                componentOpen [0] BIT STRING OPTIONAL,
+                componentOpenApplicable [1] BIT STRING OPTIONAL,
+                componentShort [2] BIT STRING OPTIONAL,
+                componentShortApplicable [3] BIT STRING OPTIONAL
+        }
+
+        ErrorLog ::= SEQUENCE {
+                sessionIdentifier [0] INTEGER OPTIONAL,
+                timestamp [1] Timestamp OPTIONAL,
+                isLastEntry [2] NULL OPTIONAL,
+                errorEntry [3] ErrorEntry OPTIONAL,
+                resetCause [4] INTEGER {
+                        hard (0),					-- Reset pin
+                        soft (1),					-- Software reset
+                        internalWatchdog (2),		-- Internal Watchdog
+                        brownOut (3)				-- Power loss
+                } OPTIONAL
+        }
+
+        ErrorNotification ::= SEQUENCE {
+                errorEntry [0] ErrorEntry OPTIONAL
+        }
+
+        -- Can either be none or one.
+        ErrorEntry ::= CHOICE {
+                systemTest [0] SystemErrorInformation,
+                asic [1] AsicErrorEntry,
+                visibleLedDriver [2] VisibleLedDriverErrorEntry
+        }
+
+        -- For a desciption of error types, check AsicInformation above.
+        AsicErrorEntry ::= SEQUENCE {
+                index [0] INTEGER OPTIONAL,
+                irLedIndex [1] INTEGER OPTIONAL,
+                irPdIndex [2] INTEGER OPTIONAL,
+                open [3] BOOLEAN OPTIONAL,
+                short [4] BOOLEAN OPTIONAL,
+                offline [5] BOOLEAN OPTIONAL,
+                timeout [6] BOOLEAN OPTIONAL,
+                overTemperatureExternalSensor [7] BOOLEAN OPTIONAL,
+                porFault [8] BOOLEAN OPTIONAL,
+                analogOrVbgFault [9] BOOLEAN OPTIONAL,
+                memoryOverflow [10] BOOLEAN OPTIONAL,
+                internalThermalShutdown [11] BOOLEAN OPTIONAL,
+                proxResultOverflow [12] BOOLEAN OPTIONAL
+        }
+
+        VisibleLedDriverErrorEntry ::= SEQUENCE {
+                index [0] INTEGER OPTIONAL,
+                ledChannelIndex [1] INTEGER OPTIONAL,
+                open [2] BOOLEAN OPTIONAL,
+                short [3] BOOLEAN OPTIONAL,
+                offline [4] BOOLEAN OPTIONAL
+        }
+
+        -- Exposes system Error Thresholds. Structures based on (and used together with)
+        -- ErrorInformation.
+        ErrorThresholds ::= SEQUENCE {
+                asicsThresholds [0] SEQUENCE OF [0] AsicThresholds OPTIONAL,
+                visibleLedDriversThresholds [1] SEQUENCE OF [0] VisibleLedDriverThresholds OPTIONAL
+        }
+
+        AsicThresholds ::= SEQUENCE {
+                asicIdentifier [0] INTEGER OPTIONAL,
+                irLedOpenThresholds [1] Thresholds OPTIONAL,
+                irLedShortThresholds [2] Thresholds OPTIONAL,
+                irPdOpenThresholds [3] Thresholds OPTIONAL,
+                irPdShortThresholds [4] Thresholds OPTIONAL
+        }
+
+        VisibleLedDriverThresholds ::= SEQUENCE {
+                visibleLedDriverIdentifier [0] INTEGER OPTIONAL,
+                visibleLedOpenThresholds [1] Thresholds OPTIONAL,
+                visibleLedShortThresholds [2] Thresholds OPTIONAL
+        }
+
+        Thresholds ::= SEQUENCE {
+                low [0] INTEGER OPTIONAL,
+                high [1] INTEGER OPTIONAL
+        }
+END

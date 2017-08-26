@@ -133,7 +133,7 @@ def decode_signed_integer(data):
 
 class Type(object):
 
-    def __init__(self, name, type_name, tag, *_args, **_kwargs):
+    def __init__(self, name, type_name, tag):
         self.name = name
         self.type_name = type_name
         self.tag = tag
@@ -141,7 +141,10 @@ class Type(object):
         self.default = None
 
     def set_tag(self, tag):
-        self.tag = tag
+        if Class.APPLICATION & tag:
+            self.tag = tag
+        else:
+            self.tag = (Class.CONTEXT_SPECIFIC | tag)
 
     def decode_tag(self, data, offset):
         if data[offset] != self.tag:
@@ -155,14 +158,8 @@ class Type(object):
 
 class Integer(Type):
 
-    def __init__(self, name, *_args, **_kwargs):
+    def __init__(self, name):
         super(Integer, self).__init__(name, 'INTEGER', Tag.INTEGER)
-
-    def set_tag(self, tag):
-        if Class.APPLICATION & tag:
-            self.tag = tag
-        else:
-            self.tag = (Class.CONTEXT_SPECIFIC | tag)
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -181,11 +178,8 @@ class Integer(Type):
 
 class Boolean(Type):
 
-    def __init__(self, name, *_args, **_kwargs):
+    def __init__(self, name):
         super(Boolean, self).__init__(name, 'BOOLEAN', Tag.BOOLEAN)
-
-    def set_tag(self, tag):
-        self.tag = (Class.CONTEXT_SPECIFIC | tag)
 
     def encode(self, data, encoded):
         encoded.append(self.tag)
@@ -210,7 +204,7 @@ class Boolean(Type):
 
 class IA5String(Type):
 
-    def __init__(self, name, *_args, **_kwargs):
+    def __init__(self, name):
         super(IA5String, self).__init__(name,
                                         'IA5String',
                                         Tag.IA5_STRING)
@@ -233,7 +227,7 @@ class IA5String(Type):
 
 class NumericString(Type):
 
-    def __init__(self, name, *_args, **_kwargs):
+    def __init__(self, name):
         super(NumericString, self).__init__(name,
                                             'NumericString',
                                             Tag.NUMERIC_STRING)
@@ -256,16 +250,14 @@ class NumericString(Type):
 
 class Sequence(Type):
 
-    def __init__(self, name, members, *_args, **_kwargs):
+    def __init__(self, name, members):
         super(Sequence, self).__init__(name,
                                        'SEQUENCE',
                                        Encoding.CONSTRUCTED | Tag.SEQUENCE)
         self.members = members
 
     def set_tag(self, tag):
-        self.tag = (Class.CONTEXT_SPECIFIC
-                    | Encoding.CONSTRUCTED
-                    | tag)
+        super(Sequence, self).set_tag(Encoding.CONSTRUCTED | tag)
 
     def encode(self, data, encoded):
         encoded_members = bytearray()
@@ -296,14 +288,7 @@ class Sequence(Type):
             raise NotImplementedError(
                 'Decode until an end-of-contents tag is found.')
         else:
-            length, offset = decode_length_definite(data, offset)
-
-        if length > len(data) - offset:
-            raise DecodeError(
-                'Expected at least {} bytes data but got {} at offset {}.'.format(
-                    length,
-                    len(data) - offset,
-                    offset))
+            _, offset = decode_length_definite(data, offset)
 
         values = {}
 
@@ -311,13 +296,16 @@ class Sequence(Type):
             try:
                 value, offset = member.decode(data, offset)
 
-            except DecodeError as e:
+            except (DecodeError, IndexError) as e:
                 if member.optional:
                     continue
 
                 if member.default is None:
+                    if isinstance(e, IndexError):
+                        e = DecodeError('out of data at offset {}'.format(offset))
+
                     e.location.append(member.name)
-                    raise
+                    raise e
 
                 value = member.default
 
@@ -333,14 +321,12 @@ class Sequence(Type):
 
 class Set(Type):
 
-    def __init__(self, name, members, *_args, **_kwargs):
+    def __init__(self, name, members):
         super(Set, self).__init__(name, 'SET', Encoding.CONSTRUCTED | Tag.SET)
         self.members = members
 
     def set_tag(self, tag):
-        self.tag = (Class.CONTEXT_SPECIFIC
-                    | Encoding.CONSTRUCTED
-                    | tag)
+        super(Set, self).set_tag(Encoding.CONSTRUCTED | tag)
 
     def encode(self, data, encoded):
         encoded_members = bytearray()
@@ -371,14 +357,7 @@ class Set(Type):
             raise NotImplementedError(
                 'Decode until an end-of-contents tag is found.')
         else:
-            length, offset = decode_length_definite(data, offset)
-
-        if length > len(data) - offset:
-            raise DecodeError(
-                'Expected at least {} bytes data but got {} at offset {}.'.format(
-                    length,
-                    len(data) - offset,
-                    offset))
+            _, offset = decode_length_definite(data, offset)
 
         values = {}
 
@@ -386,13 +365,16 @@ class Set(Type):
             try:
                 value, offset = member.decode(data, offset)
 
-            except DecodeError as e:
+            except (DecodeError, IndexError) as e:
                 if member.optional:
                     continue
 
                 if member.default is None:
+                    if isinstance(e, IndexError):
+                        e = DecodeError('out of data at offset {}'.format(offset))
+
                     e.location.append(member.name)
-                    raise
+                    raise e
 
                 value = member.default
 
@@ -408,7 +390,7 @@ class Set(Type):
 
 class SequenceOf(Type):
 
-    def __init__(self, name, element_type, *_args, **_kwargs):
+    def __init__(self, name, element_type):
         super(SequenceOf, self).__init__(name,
                                          'SEQUENCE OF',
                                          Encoding.CONSTRUCTED | Tag.SEQUENCE)
@@ -443,7 +425,7 @@ class SequenceOf(Type):
 
 class SetOf(Type):
 
-    def __init__(self, name, element_type, *_args, **_kwargs):
+    def __init__(self, name, element_type):
         super(SetOf, self).__init__(name,
                                     'SET OF',
                                     Encoding.CONSTRUCTED | Tag.SET)
@@ -478,11 +460,8 @@ class SetOf(Type):
 
 class BitString(Type):
 
-    def __init__(self, name, *_args, **_kwargs):
+    def __init__(self, name):
         super(BitString, self).__init__(name, 'BIT STRING', Tag.BIT_STRING)
-
-    def set_tag(self, tag):
-        self.tag = (Class.CONTEXT_SPECIFIC | tag)
 
     def encode(self, data, encoded):
         number_of_unused_bits = (8 - (data[1] % 8))
@@ -510,7 +489,7 @@ class BitString(Type):
 
 class OctetString(Type):
 
-    def __init__(self, name, *_args, **_kwargs):
+    def __init__(self, name):
         super(OctetString, self).__init__(name,
                                           'OCTET STRING',
                                           Tag.OCTET_STRING)
@@ -533,7 +512,7 @@ class OctetString(Type):
 
 class PrintableString(Type):
 
-    def __init__(self, name, *_args, **_kwargs):
+    def __init__(self, name):
         super(PrintableString, self).__init__(name,
                                               'PrintableString',
                                               Tag.PRINTABLE_STRING)
@@ -556,7 +535,7 @@ class PrintableString(Type):
 
 class UniversalString(Type):
 
-    def __init__(self, name, *_args, **_kwargs):
+    def __init__(self, name):
         super(UniversalString, self).__init__(name,
                                               'UniversalString',
                                               Tag.UNIVERSAL_STRING)
@@ -579,7 +558,7 @@ class UniversalString(Type):
 
 class VisibleString(Type):
 
-    def __init__(self, name, *_args, **_kwargs):
+    def __init__(self, name):
         super(VisibleString, self).__init__(name,
                                             'VisibleString',
                                             Tag.VISIBLE_STRING)
@@ -602,7 +581,7 @@ class VisibleString(Type):
 
 class UTF8String(Type):
 
-    def __init__(self, name, *_args, **_kwargs):
+    def __init__(self, name):
         super(UTF8String, self).__init__(name,
                                          'UTF8String',
                                          Tag.UTF8_STRING)
@@ -625,7 +604,7 @@ class UTF8String(Type):
 
 class BMPString(Type):
 
-    def __init__(self, name, *_args, **_kwargs):
+    def __init__(self, name):
         super(BMPString, self).__init__(name,
                                         'BMPString',
                                         Tag.BMP_STRING)
@@ -648,7 +627,7 @@ class BMPString(Type):
 
 class UTCTime(Type):
 
-    def __init__(self, name, *_args, **_kwargs):
+    def __init__(self, name):
         super(UTCTime, self).__init__(name,
                                       'UTCTime',
                                       Tag.UTC_TIME)
@@ -671,7 +650,7 @@ class UTCTime(Type):
 
 class GeneralizedTime(Type):
 
-    def __init__(self, name, *_args, **_kwargs):
+    def __init__(self, name):
         super(GeneralizedTime, self).__init__(name,
                                               'GeneralizedTime',
                                               Tag.GENERALIZED_TIME)
@@ -690,7 +669,7 @@ class GeneralizedTime(Type):
 
 class TeletexString(Type):
 
-    def __init__(self, name, *_args, **_kwargs):
+    def __init__(self, name):
         super(TeletexString, self).__init__(name,
                                             'TeletexString',
                                             Tag.T61_STRING)
@@ -713,7 +692,7 @@ class TeletexString(Type):
 
 class ObjectIdentifier(Type):
 
-    def __init__(self, name, *_args, **_kwargs):
+    def __init__(self, name):
         super(ObjectIdentifier, self).__init__(name,
                                                'OBJECT IDENTIFIER',
                                                Tag.OBJECT_IDENTIFIER)
@@ -774,14 +753,12 @@ class ObjectIdentifier(Type):
 
 class Choice(Type):
 
-    def __init__(self, name, members, *_args, **_kwargs):
+    def __init__(self, name, members):
         super(Choice, self).__init__(name, 'CHOICE', None)
         self.members = members
 
     def set_tag(self, tag):
-        self.tag = (Class.CONTEXT_SPECIFIC
-                    | Encoding.CONSTRUCTED
-                    | tag)
+        super(Choice, self).set_tag(Encoding.CONSTRUCTED | tag)
 
     def encode(self, data, encoded):
         for member in self.members:
@@ -824,7 +801,7 @@ class Choice(Type):
 
 class Null(Type):
 
-    def __init__(self, name, *_args, **_kwargs):
+    def __init__(self, name):
         super(Null, self).__init__(name, 'NULL', Tag.NULL)
 
     def encode(self, _, encoded):
@@ -850,7 +827,7 @@ ANY_CLASSES = {
 
 class Any(Type):
 
-    def __init__(self, name, *_args, **_kwargs):
+    def __init__(self, name):
         super(Any, self).__init__(name, 'ANY', None)
 
     def encode(self, _, encoded):
@@ -870,14 +847,11 @@ class Any(Type):
 
 class Enumerated(Type):
 
-    def __init__(self, name, values, *_args, **_kwargs):
+    def __init__(self, name, values):
         super(Enumerated, self).__init__(name,
                                          'ENUMERATED',
                                          Tag.ENUMERATED)
         self.values = values
-
-    def set_tag(self, tag):
-        self.tag = (Class.CONTEXT_SPECIFIC | tag)
 
     def encode(self, data, encoded):
         for value, name in self.values.items():
@@ -905,17 +879,12 @@ class Enumerated(Type):
 
 class ExplicitTag(Type):
 
-    def __init__(self, name, inner, *_args, **_kwargs):
+    def __init__(self, name, inner):
         super(ExplicitTag, self).__init__(name, 'Tag', None)
         self.inner = inner
 
     def set_tag(self, tag):
-        if Class.APPLICATION & tag:
-            self.tag = (Encoding.CONSTRUCTED | tag)
-        else:
-            self.tag = (Class.CONTEXT_SPECIFIC
-                        | Encoding.CONSTRUCTED
-                        | tag)
+        super(ExplicitTag, self).set_tag(Encoding.CONSTRUCTED | tag)
 
     def encode(self, data, encoded):
         encoded_inner = bytearray()
@@ -1048,7 +1017,8 @@ class Compiler(object):
             pass
 
         try:
-            return bool(type_descriptor['tag'])
+            tags = self._specification[module_name].get('tags', None)
+            return bool(type_descriptor['tag']) and (tags != 'IMPLICIT')
         except KeyError:
             pass
 
@@ -1067,11 +1037,12 @@ class Compiler(object):
             tag = type_descriptor['tag']
             value = 0
 
-            if 'class' in tag:
-                if tag['class'] != 'APPLICATION':
-                    raise Exception()
+            class_ = tag.get('class', None)
 
+            if class_ == 'APPLICATION':
                 value = Class.APPLICATION
+            elif class_ == 'PRIVATE':
+                value = Class.PRIVATE
 
             value |= tag['number']
             compiled.set_tag(value)
@@ -1083,7 +1054,7 @@ class Compiler(object):
 
         tags = self._specification[module_name].get('tags', None)
 
-        if tags == 'automatic':
+        if tags == 'AUTOMATIC':
             tag = 0
         else:
             tag = None

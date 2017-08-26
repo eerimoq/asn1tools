@@ -1,5 +1,6 @@
 FOO = {
     'Foo': {
+        'extensibility-implied': False,
         'imports': {},
         'types': {
             'Answer': {

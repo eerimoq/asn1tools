@@ -100,9 +100,14 @@ def convert_type(tokens):
     elif tokens[0] == 'SEQUENCE' and tokens[2] == 'OF':
         converted_type = {
             'type': 'SEQUENCE OF',
-            'element': convert_type(tokens[3:]),
+            'element': convert_type(tokens[4:]),
             'size': convert_size(tokens[1][2:-1])
         }
+
+        tag = convert_tag(tokens[3])
+
+        if tag:
+            converted_type['element']['tag'] = tag
     elif tokens[0:2] == ['SET', '{']:
         converted_type = {
             'type': 'SET',
@@ -111,9 +116,14 @@ def convert_type(tokens):
     elif tokens[0] == 'SET' and tokens[2] == 'OF':
         converted_type = {
             'type': 'SET OF',
-            'element': convert_type(tokens[3:]),
+            'element': convert_type(tokens[4:]),
             'size': convert_size(tokens[1][2:-1])
         }
+
+        tag = convert_tag(tokens[3])
+
+        if tag:
+            converted_type['element']['tag'] = tag
     elif tokens[0:2] == ['CHOICE', '{']:
         converted_type = {
             'type': 'CHOICE',
@@ -125,7 +135,7 @@ def convert_type(tokens):
         if '..' in tokens[1]:
             minimum = convert_number(tokens[1][1])
             maximum = convert_number(tokens[1][3])
-            converted_type['restricted_to'] = [(minimum, maximum)]
+            converted_type['restricted-to'] = [(minimum, maximum)]
     elif tokens[0] == 'BOOLEAN':
         converted_type = {'type': 'BOOLEAN'}
     elif tokens[0:2] == ['ENUMERATED', '{']:
@@ -214,10 +224,13 @@ def create_grammar():
     OBJECT = Keyword('OBJECT')
     IDENTIFIER = Keyword('IDENTIFIER')
     APPLICATION = Keyword('APPLICATION')
+    PRIVATE = Keyword('PRIVATE')
     SET = Keyword('SET')
     ANY = Keyword('ANY')
     DEFINED = Keyword('DEFINED')
     BY = Keyword('BY')
+    EXTENSIBILITY = Keyword('EXTENSIBILITY')
+    IMPLIED = Keyword('IMPLIED')
 
     # Various literals.
     word = Word(printables, excludeChars=',(){}[].:=;')
@@ -269,7 +282,7 @@ def create_grammar():
     item = Group(value_name + type_)
 
     tag = Group(Optional(Suppress(lbracket)
-                         + Group(Optional(APPLICATION) + word)
+                         + Group(Optional(APPLICATION | PRIVATE) + word)
                          + Suppress(rbracket)
                          + Group(Optional(IMPLICIT | EXPLICIT))))
 
@@ -287,6 +300,7 @@ def create_grammar():
     sequence_of << (SEQUENCE
                     + Group(Optional(size))
                     + OF
+                    + tag
                     + type_)
 
     set_of << (SET
@@ -294,6 +308,7 @@ def create_grammar():
                                 + (range_ | word)
                                 + rparen))
                + OF
+               + tag
                + type_)
 
     set_ << (SET + lbrace
@@ -410,6 +425,7 @@ def create_grammar():
                          + DEFINITIONS
                          + Group(Optional(AUTOMATIC | EXPLICIT | IMPLICIT)
                                  + Optional(TAGS))
+                         + Group(Optional(EXTENSIBILITY + IMPLIED))
                          + assignment
                          + BEGIN)
                    + module_body
@@ -468,7 +484,10 @@ def parse_string(string):
         }
 
         if module[0][3]:
-            modules[module_name]['tags'] = module[0][3][0].lower()
+            modules[module_name]['tags'] = module[0][3][0]
+
+        modules[module_name]['extensibility-implied'] = (module[0][4] != [])
+
 
     return modules
 
