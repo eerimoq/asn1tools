@@ -1184,7 +1184,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         '''A simple example.
 
         '''
-        
+
         bar = asn1tools.compile_file('tests/files/bar.asn')
 
         decoded_message = {
