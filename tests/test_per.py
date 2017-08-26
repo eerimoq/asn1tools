@@ -70,7 +70,8 @@ class Asn1ToolsPerTest(unittest.TestCase):
         self.assertEqual(all_types.decode('Integer', b'\x01\x02'), 2)
         self.assertEqual(all_types.decode('Bitstring', b'\x04\x40'),
                          (b'\x40', 4))
-        self.assertEqual(all_types.decode('Octetstring', b'\x01\x00'), b'\x00')
+        self.assertEqual(all_types.decode('Octetstring', b'\x01\x00'),
+                         b'\x00')
 
         with self.assertRaises(NotImplementedError):
             all_types.decode('Null', b'\x05\x00')
@@ -84,8 +85,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             all_types.decode('Utf8string', b'\x0c\x03foo')
 
-        with self.assertRaises(NotImplementedError):
-            all_types.decode('Sequence', b'\x30\x00')
+        self.assertEqual(all_types.decode('Sequence', b''), {})
 
         with self.assertRaises(NotImplementedError):
             all_types.decode('Set', b'\x31\x00')
@@ -138,8 +138,8 @@ class Asn1ToolsPerTest(unittest.TestCase):
         encoded = bar.encode('GetRequest', decoded_message)
         self.assertEqual(encoded, encoded_message)
 
-        #decoded = bar.decode('GetRequest', encoded)
-        #self.assertEqual(decoded, decoded_message)
+        decoded = bar.decode('GetRequest', encoded)
+        self.assertEqual(decoded, decoded_message)
 
 
 if __name__ == '__main__':

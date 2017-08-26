@@ -9,7 +9,7 @@ class DecodeChoiceError(Exception):
     pass
 
 
-class Encoded(object):
+class Encoder(object):
 
     def __init__(self):
         self.byte = 0
@@ -53,6 +53,40 @@ class Encoded(object):
 
     def __repr__(self):
         return str(self.as_bytearray())
+
+
+class Decoder(object):
+
+    def __init__(self, encoded):
+        self.byte = None
+        self.index = 0
+        self.offset = 0
+        self.buf = encoded
+
+    def read_bit(self):
+        '''Read a bit.
+
+        '''
+
+        if self.index == 0:
+            self.byte = self.buf[0]
+            self.index = 7
+            self.offset += 1
+
+        bit = ((self.byte >> self.index) & 0x1)
+        self.index -= 1
+
+        return bit
+
+    def read_bytes(self, number_of_bytes):
+        '''Read given number of bytes.
+
+        '''
+
+        self.index = 0
+        data = self.buf[self.offset:self.offset + number_of_bytes]
+        self.offset += number_of_bytes
+        return data
 
 
 def encode_length_definite(length):
@@ -147,15 +181,13 @@ class Integer(Type):
     def __init__(self, name):
         super(Integer, self).__init__(name, 'INTEGER')
 
-    def encode(self, data, encoded):
-        encoded.append_bytes(encode_signed_integer(data))
+    def encode(self, data, encoder):
+        encoder.append_bytes(encode_signed_integer(data))
 
-    def decode(self, data, offset):
-        length = data[0]
-        offset += 1
-        offset_end = offset + length
+    def decode(self, decoder):
+        length = decoder.read_bytes(1)[0]
 
-        return decode_signed_integer(data[offset:offset_end]), offset_end
+        return decode_signed_integer(decoder.read_bytes(length))
 
     def __repr__(self):
         return 'Integer({})'.format(self.name)
@@ -166,11 +198,11 @@ class Boolean(Type):
     def __init__(self, name):
         super(Boolean, self).__init__(name, 'BOOLEAN')
 
-    def encode(self, data, encoded):
-        encoded.append_bit(bool(data))
+    def encode(self, data, encoder):
+        encoder.append_bit(bool(data))
 
-    def decode(self, data, offset):
-        return (bool(data[offset])), offset + 1
+    def decode(self, decoder):
+        return bool(decoder.read_bit())
 
     def __repr__(self):
         return 'Boolean({})'.format(self.name)
@@ -181,10 +213,10 @@ class IA5String(Type):
     def __init__(self, name):
         super(IA5String, self).__init__(name, 'IA5String')
 
-    def encode(self, data, encoded):
+    def encode(self, data, encoder):
         raise NotImplementedError()
 
-    def decode(self, data, offset):
+    def decode(self, decoder):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -196,10 +228,10 @@ class NumericString(Type):
     def __init__(self, name):
         super(NumericString, self).__init__(name, 'NumericString')
 
-    def encode(self, data, encoded):
+    def encode(self, data, encoder):
         raise NotImplementedError()
 
-    def decode(self, data, offset):
+    def decode(self, decoder):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -215,27 +247,54 @@ class Sequence(Type):
                           for member in members
                           if member.optional]
 
-    def encode(self, data, encoded):
+    def encode(self, data, encoder):
         for optional in self.optionals:
-            encoded.append_bit(optional in data)
+            encoder.append_bit(optional in data)
 
         for member in self.members:
             name = member.name
 
             if name in data:
-                member.encode(data[name], encoded)
+                member.encode(data[name], encoder)
             elif member.optional:
                 pass
             elif member.default is not None:
-                member.encode(member.default, encoded)
+                member.encode(member.default, encoder)
             else:
                 raise EncodeError(
                     "Sequence member '{}' not found in {}.".format(
                         name,
                         data))
 
-    def decode(self, data, offset):
-        raise NotImplementedError()
+    def decode(self, decoder):
+        values = {}
+
+        optionals = {optional: decoder.read_bit()
+                     for optional in self.optionals}
+
+        for member in self.members:
+            if not optionals.get(member.name, True):
+                continue
+
+            try:
+                value = member.decode(decoder)
+
+            except (DecodeError, IndexError) as e:
+                if member.optional:
+                    continue
+
+                if member.default is None:
+                    if isinstance(e, IndexError):
+                        e = DecodeError('out of data at offset {}'.format(-1))
+
+                    e.location.append(member.name)
+                    raise e
+
+                value = member.default
+
+            values[member.name] = value
+
+        return values
 
     def __repr__(self):
         return 'Sequence({}, [{}])'.format(
@@ -249,10 +308,10 @@ class Set(Type):
         super(Set, self).__init__(name, 'SET')
         self.members = members
 
-    def encode(self, data, encoded):
+    def encode(self, data, encoder):
         raise NotImplementedError()
 
-    def decode(self, data, offset):
+    def decode(self, decoder):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -267,14 +326,21 @@ class SequenceOf(Type):
         super(SequenceOf, self).__init__(name, 'SEQUENCE OF')
         self.element_type = element_type
 
-    def encode(self, data, encoded):
-        encoded.append_bytes(bytearray([len(data)]))
+    def encode(self, data, encoder):
+        encoder.append_bytes(bytearray([len(data)]))
 
         for entry in data:
-            self.element_type.encode(entry, encoded)
+            self.element_type.encode(entry, encoder)
 
-    def decode(self, data, offset):
-        raise NotImplementedError()
+    def decode(self, decoder):
+        number_of_elements = decoder.read_bytes(1)[0]
+        decoded = []
+
+        for _ in range(number_of_elements):
+            decoded_element = self.element_type.decode(decoder)
+            decoded.append(decoded_element)
+
+        return decoded
 
     def __repr__(self):
         return 'SequenceOf({}, {})'.format(self.name,
@@ -287,10 +353,10 @@ class SetOf(Type):
         super(SetOf, self).__init__(name, 'SET OF')
         self.element_type = element_type
 
-    def encode(self, data, encoded):
+    def encode(self, data, encoder):
         raise NotImplementedError()
 
-    def decode(self, data, offset):
+    def decode(self, decoder):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -303,15 +369,13 @@ class BitString(Type):
     def __init__(self, name):
         super(BitString, self).__init__(name, 'BIT STRING')
 
-    def encode(self, data, encoded):
-        encoded.append_bytes(bytearray([data[1]]) + data[0])
+    def encode(self, data, encoder):
+        encoder.append_bytes(bytearray([data[1]]) + data[0])
 
-    def decode(self, data, offset):
-        number_of_bits = data[0]
-        offset += 1
-        offset_end = offset + ((number_of_bits + 7) // 8)
+    def decode(self, decoder):
+        number_of_bits = decoder.read_bytes(1)[0]
 
-        return (data[offset:offset_end], number_of_bits), offset_end
+        return (decoder.read_bytes((number_of_bits + 7) // 8), number_of_bits)
 
     def __repr__(self):
         return 'BitString({})'.format(self.name)
@@ -322,15 +386,13 @@ class OctetString(Type):
     def __init__(self, name):
         super(OctetString, self).__init__(name, 'OCTET STRING')
 
-    def encode(self, data, encoded):
-        encoded.append_bytes(bytearray([len(data)]) + data)
+    def encode(self, data, encoder):
+        encoder.append_bytes(bytearray([len(data)]) + data)
 
-    def decode(self, data, offset):
-        length = data[0]
-        offset += 1
-        offset_end = offset + length
+    def decode(self, decoder):
+        length = decoder.read_bytes(1)[0]
 
-        return data[offset:offset_end], offset_end
+        return decoder.read_bytes(length)
 
     def __repr__(self):
         return 'OctetString({})'.format(self.name)
@@ -341,10 +403,10 @@ class PrintableString(Type):
     def __init__(self, name):
         super(PrintableString, self).__init__(name, 'PrintableString')
 
-    def encode(self, data, encoded):
+    def encode(self, data, encoder):
         raise NotImplementedError()
 
-    def decode(self, data, offset):
+    def decode(self, decoder):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -356,10 +418,10 @@ class UniversalString(Type):
     def __init__(self, name):
         super(UniversalString, self).__init__(name, 'UniversalString')
 
-    def encode(self, data, encoded):
+    def encode(self, data, encoder):
         raise NotImplementedError()
 
-    def decode(self, data, offset):
+    def decode(self, decoder):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -371,10 +433,10 @@ class VisibleString(Type):
     def __init__(self, name):
         super(VisibleString, self).__init__(name, 'VisibleString')
 
-    def encode(self, data, encoded):
+    def encode(self, data, encoder):
         raise NotImplementedError()
 
-    def decode(self, data, offset):
+    def decode(self, decoder):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -386,10 +448,10 @@ class UTF8String(Type):
     def __init__(self, name):
         super(UTF8String, self).__init__(name, 'UTF8String')
 
-    def encode(self, data, encoded):
+    def encode(self, data, encoder):
         raise NotImplementedError()
 
-    def decode(self, data, offset):
+    def decode(self, decoder):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -401,10 +463,10 @@ class BMPString(Type):
     def __init__(self, name):
         super(BMPString, self).__init__(name, 'BMPString')
 
-    def encode(self, data, encoded):
+    def encode(self, data, encoder):
         raise NotImplementedError()
 
-    def decode(self, data, offset):
+    def decode(self, decoder):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -416,10 +478,10 @@ class UTCTime(Type):
     def __init__(self, name):
         super(UTCTime, self).__init__(name, 'UTCTime')
 
-    def encode(self, data, encoded):
+    def encode(self, data, encoder):
         raise NotImplementedError()
 
-    def decode(self, data, offset):
+    def decode(self, decoder):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -431,10 +493,10 @@ class GeneralizedTime(Type):
     def __init__(self, name):
         super(GeneralizedTime, self).__init__(name, 'GeneralizedTime')
 
-    def encode(self, data, encoded):
+    def encode(self, data, encoder):
         raise NotImplementedError()
 
-    def decode(self, data, offset):
+    def decode(self, decoder):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -446,10 +508,10 @@ class TeletexString(Type):
     def __init__(self, name):
         super(TeletexString, self).__init__(name, 'TeletexString')
 
-    def encode(self, data, encoded):
+    def encode(self, data, encoder):
         raise NotImplementedError()
 
-    def decode(self, data, offset):
+    def decode(self, decoder):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -461,21 +523,21 @@ class ObjectIdentifier(Type):
     def __init__(self, name):
         super(ObjectIdentifier, self).__init__(name, 'OBJECT IDENTIFIER')
 
-    def encode(self, data, encoded):
+    def encode(self, data, encoder):
         raise NotImplementedError()
 
-    def decode(self, data, offset):
+    def decode(self, decoder):
         raise NotImplementedError()
 
     def encode_subidentifier(self, subidentifier):
-        encoded = [subidentifier & 0x7f]
+        encoder = [subidentifier & 0x7f]
         subidentifier >>= 7
 
         while subidentifier > 0:
-            encoded.append(0x80 | (subidentifier & 0x7f))
+            encoder.append(0x80 | (subidentifier & 0x7f))
             subidentifier >>= 7
 
-        return encoded[::-1]
+        return encoder[::-1]
 
     def decode_subidentifier(self, data, offset):
         decoded = 0
@@ -499,10 +561,10 @@ class Choice(Type):
         super(Choice, self).__init__(name, 'CHOICE')
         self.members = members
 
-    def encode(self, data, encoded):
+    def encode(self, data, encoder):
         raise NotImplementedError()
 
-    def decode(self, data, offset):
+    def decode(self, decoder):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -516,10 +578,10 @@ class Null(Type):
     def __init__(self, name):
         super(Null, self).__init__(name, 'NULL')
 
-    def encode(self, _, encoded):
+    def encode(self, _, encoder):
         raise NotImplementedError()
 
-    def decode(self, data, offset):
+    def decode(self, decoder):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -531,10 +593,10 @@ class Any(Type):
     def __init__(self, name):
         super(Any, self).__init__(name, 'ANY')
 
-    def encode(self, _, encoded):
+    def encode(self, _, encoder):
         raise NotImplementedError()
 
-    def decode(self, data, offset):
+    def decode(self, decoder):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -547,10 +609,10 @@ class Enumerated(Type):
         super(Enumerated, self).__init__(name, 'ENUMERATED')
         self.values = values
 
-    def encode(self, data, encoded):
+    def encode(self, data, encoder):
         raise NotImplementedError()
 
-    def decode(self, data, offset):
+    def decode(self, decoder):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -563,10 +625,10 @@ class ExplicitTag(Type):
         super(ExplicitTag, self).__init__(name, 'Tag')
         self.inner = inner
 
-    def encode(self, data, encoded):
+    def encode(self, data, encoder):
         raise NotImplementedError()
 
-    def decode(self, data, offset):
+    def decode(self, decoder):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -579,12 +641,13 @@ class CompiledType(object):
         self._type = type_
 
     def encode(self, data):
-        encoded = Encoded()
-        self._type.encode(data, encoded)
-        return encoded.as_bytearray()
+        encoder = Encoder()
+        self._type.encode(data, encoder)
+        return encoder.as_bytearray()
 
     def decode(self, data):
-        return self._type.decode(bytearray(data), 0)[0]
+        decoder = Decoder(bytearray(data))
+        return self._type.decode(decoder)
 
     def __repr__(self):
         return repr(self._type)
