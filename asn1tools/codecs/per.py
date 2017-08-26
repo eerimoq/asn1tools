@@ -1,8 +1,8 @@
-"""BER (Basic Encoding Rules) codec.
+"""PER (Packed Encoding Rules) codec.
 
 """
 
-from . import EncodeError, DecodeError, DecodeTagError
+from . import EncodeError, DecodeError
 
 
 class DecodeChoiceError(Exception):
@@ -705,13 +705,6 @@ class Compiler(object):
     def compile_members(self, members, module_name):
         compiled_members = []
 
-        tags = self._specification[module_name].get('tags', None)
-
-        if tags == 'AUTOMATIC':
-            tag = 0
-        else:
-            tag = None
-
         for member in members:
             if member['name'] == '...':
                 continue
@@ -723,10 +716,6 @@ class Compiler(object):
 
             if 'default' in member:
                 compiled_member.default = member['default']
-
-            if tag is not None:
-                compiled_member.set_tag(tag)
-                tag += 1
 
             compiled_members.append(compiled_member)
 
