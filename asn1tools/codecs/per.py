@@ -182,21 +182,10 @@ class Boolean(Type):
         super(Boolean, self).__init__(name, 'BOOLEAN', Tag.BOOLEAN)
 
     def encode(self, data, encoded):
-        encoded.append(self.tag)
-        encoded.append(1)
-        encoded.append(bool(data))
+        encoded.append(bool(data) << 7)
 
     def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-
-        if length != 1:
-            raise DecodeError(
-                'Expected one byte data but got {} at offset {}.'.format(
-                    length,
-                    offset))
-
-        return (data[offset] != 0), offset + length
+        return (data[offset] == 0x80), offset + 1
 
     def __repr__(self):
         return 'Boolean({})'.format(self.name)

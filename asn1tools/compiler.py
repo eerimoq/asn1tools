@@ -4,7 +4,7 @@ encode and decode types.
 """
 
 from .parser import parse_string
-from .codecs import ber
+from .codecs import ber, per
 
 
 class Specification(object):
@@ -86,7 +86,11 @@ def compile_json(specification, codec='ber'):
 
     if codec == 'ber':
         codec = ber
-    
+    elif codec == 'per':
+        codec = per
+    else:
+        raise ValueError('unsupported codec {}'.format(codec))
+        
     return Specification(codec.compile_json(specification))
 
 

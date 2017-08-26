@@ -1,0 +1,24 @@
+Bar DEFINITIONS EXPLICIT TAGS ::=
+
+BEGIN
+
+GetRequest ::= [APPLICATION 0] IMPLICIT SEQUENCE {
+  headerOnly BOOLEAN,
+  lock BOOLEAN,
+  acceptTypes AcceptTypes OPTIONAL,
+  url OCTET STRING
+}
+
+AcceptTypes ::= [APPLICATION 1] IMPLICIT SEQUENCE {
+  standardTypes [0] IMPLICIT SEQUENCE OF BIT STRING 
+    {
+       html(0),
+       plain-text(1),
+       gif(2), 
+       jpeg(3)
+    } OPTIONAL,
+
+  otherTypes [1] IMPLICIT SEQUENCE OF OCTET STRING OPTIONAL
+}
+
+END

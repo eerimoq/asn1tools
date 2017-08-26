@@ -4,7 +4,7 @@ import timeit
 import asn1tools
 
 
-class Asn1ToolsTest(unittest.TestCase):
+class Asn1ToolsBerTest(unittest.TestCase):
 
     maxDiff = None
 
@@ -1178,6 +1178,34 @@ class Asn1ToolsTest(unittest.TestCase):
         encoded = zforce.encode('ProtocolMessage', decoded_message)
         self.assertEqual(encoded, encoded_message)
         decoded = zforce.decode('ProtocolMessage', encoded)
+        self.assertEqual(decoded, decoded_message)
+
+    def test_bar(self):
+        '''A simple example.
+
+        '''
+        
+        bar = asn1tools.compile_file('tests/files/bar.asn')
+
+        decoded_message = {
+            'headerOnly': True,
+            'lock': False,
+            'acceptTypes': {
+                'standardTypes': [(b'\x40', 4), (b'\x80', 4)]
+            },
+            'url': b'/ses/magic/moxen.html'
+        }
+
+        encoded_message = (
+            b'\x60\x29\x01\x01\x01\x01\x01\x00\x61\x0a\xa0\x08\x03\x02\x04'
+            b'\x40\x03\x02\x04\x80\x04\x15\x2f\x73\x65\x73\x2f\x6d\x61\x67'
+            b'\x69\x63\x2f\x6d\x6f\x78\x65\x6e\x2e\x68\x74\x6d\x6c'
+        )
+
+        encoded = bar.encode('GetRequest', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+
+        decoded = bar.decode('GetRequest', encoded)
         self.assertEqual(decoded, decoded_message)
 
 
