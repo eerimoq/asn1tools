@@ -154,6 +154,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
 
         bar = asn1tools.compile_file('tests/files/bar.asn', 'per')
 
+        # Message 1.
         decoded_message = {
             'headerOnly': True,
             'lock': False,
@@ -167,6 +168,21 @@ class Asn1ToolsPerTest(unittest.TestCase):
             b'\xd0\x02\x02\x40\x01\x80\x15\x2f\x73\x65\x73\x2f\x6d\x61\x67\x69'
             b'\x63\x2f\x6d\x6f\x78\x65\x6e\x2e\x68\x74\x6d\x6c'
         )
+
+        encoded = bar.encode('GetRequest', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+
+        decoded = bar.decode('GetRequest', encoded)
+        self.assertEqual(decoded, decoded_message)
+
+        # Message 2.
+        decoded_message = {
+            'headerOnly': False,
+            'lock': False,
+            'url': b'0'
+        }
+
+        encoded_message = b'\x00\x01\x30'
 
         encoded = bar.encode('GetRequest', decoded_message)
         self.assertEqual(encoded, encoded_message)
