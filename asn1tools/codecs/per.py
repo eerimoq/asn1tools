@@ -175,10 +175,12 @@ class IA5String(Type):
         super(IA5String, self).__init__(name, 'IA5String')
 
     def encode(self, data, encoder):
-        raise NotImplementedError()
+        encoder.append_bytes(bytearray([len(data)]) + data.encode('ascii'))
 
     def decode(self, decoder):
-        raise NotImplementedError()
+        length = decoder.read_bytes(1)[0]
+
+        return decoder.read_bytes(length).decode('ascii')
 
     def __repr__(self):
         return 'IA5String({})'.format(self.name)

@@ -6,6 +6,41 @@ class Asn1ToolsPerTest(unittest.TestCase):
 
     maxDiff = None
 
+    def test_foo(self):
+        foo = asn1tools.compile_file('tests/files/foo.asn', 'per')
+
+        self.assertEqual(len(foo.types), 2)
+        self.assertTrue(foo.types['Question'] is not None)
+        self.assertTrue(foo.types['Answer'] is not None)
+        self.assertEqual(len(foo.modules), 1)
+        self.assertTrue(foo.modules['Foo'] is not None)
+
+        # Encode a question.
+        encoded = foo.encode('Question',
+                             {'id': 1, 'question': 'Is 1+1=3?'})
+        self.assertEqual(encoded,
+                         b'\x01\x01\x09\x49\x73\x20\x31\x2b\x31\x3d\x33\x3f')
+
+        # Decode the encoded question.
+        decoded = foo.decode('Question', encoded)
+        self.assertEqual(decoded, {'id': 1, 'question': 'Is 1+1=3?'})
+
+        # Encode an answer.
+        encoded = foo.encode('Answer', {'id': 1, 'answer': False})
+        self.assertEqual(encoded, b'\x01\x01\x00')
+
+        # Decode the encoded answer.
+        decoded = foo.decode('Answer', encoded)
+        self.assertEqual(decoded, {'id': 1, 'answer': False})
+
+        # Encode a question with missing field 'id'.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            encoded = foo.encode('Question', {'question': 'Is 1+1=3?'})
+
+        self.assertEqual(
+            str(cm.exception),
+            "Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
+
     def test_encode_all_types(self):
         all_types = asn1tools.compile_file('tests/files/all_types.asn',
                                            'per')
@@ -42,8 +77,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             all_types.encode('Printablestring', 'foo')
 
-        with self.assertRaises(NotImplementedError):
-            all_types.encode('Ia5string', 'bar')
+        self.assertEqual(all_types.encode('Ia5string', 'bar'), b'\x03bar')
 
         with self.assertRaises(NotImplementedError):
             all_types.encode('Universalstring', 'bar')
@@ -96,8 +130,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             all_types.decode('Printablestring', b'\x13\x03foo')
 
-        with self.assertRaises(NotImplementedError):
-            all_types.decode('Ia5string', b'\x16\x03bar')
+        self.assertEqual(all_types.decode('Ia5string', b'\x03bar'), 'bar')
 
         with self.assertRaises(NotImplementedError):
             all_types.decode('Universalstring', b'\x1c\x03bar')
