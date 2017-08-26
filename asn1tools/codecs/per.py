@@ -89,45 +89,6 @@ class Decoder(object):
         return data
 
 
-def encode_length_definite(length):
-    if length <= 127:
-        encoded = bytearray([length])
-    else:
-        encoded = bytearray()
-
-        while length > 0:
-            encoded.append(length & 0xff)
-            length >>= 8
-
-        encoded.append(0x80 | len(encoded))
-        encoded.reverse()
-
-    return encoded
-
-
-def decode_length_definite(encoded, offset):
-    length = encoded[offset]
-    offset += 1
-
-    if length <= 127:
-        return length, offset
-    else:
-        number_of_bytes = (length & 0x7f)
-        length = decode_integer(encoded[offset:number_of_bytes + offset])
-
-        return length, offset + number_of_bytes
-
-
-def decode_integer(data):
-    value = 0
-
-    for byte in data:
-        value <<= 8
-        value += byte
-
-    return value
-
-
 def encode_signed_integer(data):
     encoded = bytearray()
 
