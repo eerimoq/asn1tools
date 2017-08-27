@@ -786,16 +786,18 @@ class Choice(Type):
                 ''.join([name for name in data])))
 
     def decode(self, data, offset):
+        if self.tag is not None:
+            offset = self.decode_tag(data, offset)
+            _, offset = decode_length_definite(data, offset)
+
         for member in self.members:
-            if isinstance(member, Choice):
+            if member.tag == data[offset] or isinstance(member, Choice):
                 try:
                     decoded, offset = member.decode(data, offset)
-                    return {member.name: decoded}, offset
                 except DecodeChoiceError:
                     pass
-            elif member.tag == data[offset]:
-                decoded, offset = member.decode(data, offset)
-                return {member.name: decoded}, offset
+                else:
+                    return {member.name: decoded}, offset
 
         raise DecodeChoiceError()
 

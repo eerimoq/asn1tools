@@ -92,51 +92,64 @@ class Asn1ToolsBerTest(unittest.TestCase):
         rrc = asn1tools.compile_file('tests/files/rrc_8_6_0.asn')
 
         # Message 1.
-        encoded = rrc.encode('PCCH-Message',
-                             {
-                                 'message': {
-                                     'c1' : {
-                                         'paging': {
-                                             'systemInfoModification': 'true',
-                                             'nonCriticalExtension': {
-                                             }
-                                         }
-                                     }
-                                 }
-                             })
-        self.assertEqual(encoded,
-                         b'0\x0b\xa0\t\xa0\x07\xa0\x05\x81\x01\x00\xa3\x00')
+        decoded_message = {
+            'message': {
+                'c1' : {
+                    'paging': {
+                        'systemInfoModification': 'true',
+                        'nonCriticalExtension': {
+                        }
+                    }
+                }
+            }
+        }
+
+        encoded_message = b'0\x0b\xa0\t\xa0\x07\xa0\x05\x81\x01\x00\xa3\x00'
+
+        encoded = rrc.encode('PCCH-Message', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = rrc.decode('PCCH-Message', encoded)
+        self.assertEqual(decoded, decoded_message)
 
         # Message 2.
-        encoded = rrc.encode('PCCH-Message',
-                             {
-                                 'message': {
-                                     'c1' : {
-                                         'paging': {
-                                         }
-                                     }
-                                 }
-                             })
-        self.assertEqual(encoded,
-                         b'0\x06\xa0\x04\xa0\x02\xa0\x00')
+        decoded_message = {
+            'message': {
+                'c1' : {
+                    'paging': {
+                    }
+                }
+            }
+        }
+
+        encoded_message = b'0\x06\xa0\x04\xa0\x02\xa0\x00'
+
+        encoded = rrc.encode('PCCH-Message', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = rrc.decode('PCCH-Message', encoded)
+        self.assertEqual(decoded, decoded_message)
 
         # Message 3.
-        encoded = rrc.encode('BCCH-BCH-Message',
-                             {
-                                 'message': {
-                                     'dl-Bandwidth': 'n6',
-                                     'phich-Config': {
-                                         'phich-Duration': 'normal',
-                                         'phich-Resource': 'half'
-                                     },
-                                     'systemFrameNumber': (b'\x12', 8),
-                                     'spare': (b'\x34\x56', 10)
-                                 }
-                             })
-        self.assertEqual(encoded,
-                         (b'0\x16\xa0\x14\x80\x01\x00\xa1'
-                          b'\x06\x80\x01\x00\x81\x01\x01\x82'
-                          b'\x02\x00\x12\x83\x03\x064V'))
+        decoded_message = {
+            'message': {
+                'dl-Bandwidth': 'n6',
+                'phich-Config': {
+                    'phich-Duration': 'normal',
+                    'phich-Resource': 'half'
+                },
+                'systemFrameNumber': (b'\x12', 8),
+                'spare': (b'\x34\x56', 10)
+            }
+        }
+
+        encoded_message = (
+            b'0\x16\xa0\x14\x80\x01\x00\xa1\x06\x80\x01\x00\x81\x01\x01\x82'
+            b'\x02\x00\x12\x83\x03\x064V'
+        )
+
+        encoded = rrc.encode('BCCH-BCH-Message', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = rrc.decode('BCCH-BCH-Message', encoded)
+        self.assertEqual(decoded, decoded_message)
 
     def test_snmp_v1(self):
         snmp_v1 = asn1tools.compile_file('tests/files/snmp_v1.asn')
@@ -1158,7 +1171,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         # PDU 1.
         decoded_message = {
             'request': {
-                "deviceAddress": b'\x00\x01'
+                'deviceAddress': b'\x00\x01'
             }
         }
         encoded_message = b'\xee\x04\x40\x02\x00\x01'
