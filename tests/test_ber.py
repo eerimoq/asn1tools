@@ -684,10 +684,11 @@ class Asn1ToolsBerTest(unittest.TestCase):
         # Empty data.
         encoded_message = b''
 
-        with self.assertRaises(IndexError) as cm:
+        with self.assertRaises(asn1tools.DecodeError) as cm:
             rfc5280.decode('Certificate', encoded_message)
 
-        self.assertEqual(str(cm.exception), 'bytearray index out of range')
+        self.assertEqual(str(cm.exception),
+                         ': Expected SEQUENCE with tag 0x30 but got 0x at offset 0.')
 
         # Only tag and length, no contents.
         encoded_message = b'\x30\x81\x9f'
@@ -695,7 +696,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
         with self.assertRaises(asn1tools.DecodeError) as cm:
             rfc5280.decode('Certificate', encoded_message)
 
-        self.assertEqual(str(cm.exception), 'tbsCertificate: out of data at offset 3')
+        self.assertEqual(str(cm.exception),
+                         'tbsCertificate: Expected SEQUENCE with tag 0x30 but got '
+                         '0x at offset 3.')
 
         # Unexpected tag 0xff.
         encoded_message = b'\xff\x01\x00'
@@ -704,7 +707,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
             rfc5280.decode('Certificate', encoded_message)
 
         self.assertEqual(str(cm.exception),
-                         ': Expected SEQUENCE with tag 48 but got 255 at '
+                         ': Expected SEQUENCE with tag 0x30 but got 0xff at '
                          'offset 0.')
 
         # Unexpected type 0x31 embedded in the data.
@@ -754,7 +757,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         self.assertEqual(str(cm.exception),
                          'tbsCertificate: issuer: Expected SEQUENCE with tag '
-                         '48 but got 49 at offset 150.')
+                         '0x30 but got 0x31 at offset 150.')
 
     def test_encode_all_types(self):
         all_types = asn1tools.compile_file('tests/files/all_types.asn')
@@ -829,135 +832,135 @@ class Asn1ToolsBerTest(unittest.TestCase):
             all_types.decode('Boolean', b'\xff')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected BOOLEAN with tag 1 but got 255 at offset 0.')
+                         ': Expected BOOLEAN with tag 0x01 but got 0xff at offset 0.')
 
         # INTEGER.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Integer', b'\xfe')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected INTEGER with tag 2 but got 254 at offset 0.')
+                         ': Expected INTEGER with tag 0x02 but got 0xfe at offset 0.')
 
         # BIT STRING.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Bitstring', b'\xfd')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected BIT STRING with tag 3 but got 253 at offset 0.')
+                         ': Expected BIT STRING with tag 0x03 but got 0xfd at offset 0.')
 
         # OCTET STRING.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Octetstring', b'\xfc')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected OCTET STRING with tag 4 but got 252 at offset 0.')
+                         ': Expected OCTET STRING with tag 0x04 but got 0xfc at offset 0.')
 
         # NULL.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Null', b'\xfb')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected NULL with tag 5 but got 251 at offset 0.')
+                         ': Expected NULL with tag 0x05 but got 0xfb at offset 0.')
 
         # OBJECT IDENTIFIER.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Objectidentifier', b'\xfa')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected OBJECT IDENTIFIER with tag 6 but got '
-                         '250 at offset 0.')
+                         ': Expected OBJECT IDENTIFIER with tag 0x06 but got '
+                         '0xfa at offset 0.')
 
         # ENUMERATED.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Enumerated', b'\xf9')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected ENUMERATED with tag 10 but got 249 at offset 0.')
+                         ': Expected ENUMERATED with tag 0x0a but got 0xf9 at offset 0.')
 
         # UTF8String.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Utf8string', b'\xf8')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected UTF8String with tag 12 but got 248 at offset 0.')
+                         ': Expected UTF8String with tag 0x0c but got 0xf8 at offset 0.')
 
         # SEQUENCE.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Sequence', b'\xf7')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected SEQUENCE with tag 48 but got 247 at offset 0.')
+                         ': Expected SEQUENCE with tag 0x30 but got 0xf7 at offset 0.')
 
         # SET.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Set', b'\xf6')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected SET with tag 49 but got 246 at offset 0.')
+                         ': Expected SET with tag 0x31 but got 0xf6 at offset 0.')
 
         # NumericString.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Numericstring', b'\xf5')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected NumericString with tag 18 but got '
-                         '245 at offset 0.')
+                         ': Expected NumericString with tag 0x12 but got '
+                         '0xf5 at offset 0.')
 
         # PrintableString.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Printablestring', b'\xf4')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected PrintableString with tag 19 but got '
-                         '244 at offset 0.')
+                         ': Expected PrintableString with tag 0x13 but got '
+                         '0xf4 at offset 0.')
 
         # IA5String.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Ia5string', b'\xf3')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected IA5String with tag 22 but got '
-                         '243 at offset 0.')
+                         ': Expected IA5String with tag 0x16 but got '
+                         '0xf3 at offset 0.')
 
         # UniversalString.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Universalstring', b'\xf2')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected UniversalString with tag 28 but got '
-                         '242 at offset 0.')
+                         ': Expected UniversalString with tag 0x1c but got '
+                         '0xf2 at offset 0.')
 
         # VisibleString.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Visiblestring', b'\xf1')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected VisibleString with tag 26 but got '
-                         '241 at offset 0.')
+                         ': Expected VisibleString with tag 0x1a but got '
+                         '0xf1 at offset 0.')
 
         # BMPString.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Bmpstring', b'\xf0')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected BMPString with tag 30 but got '
-                         '240 at offset 0.')
+                         ': Expected BMPString with tag 0x1e but got '
+                         '0xf0 at offset 0.')
 
         # TeletexString.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Teletexstring', b'\xef')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected TeletexString with tag 20 but got '
-                         '239 at offset 0.')
+                         ': Expected TeletexString with tag 0x14 but got '
+                         '0xef at offset 0.')
 
         # UTCTime.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Utctime', b'\xee')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected UTCTime with tag 23 but got '
-                         '238 at offset 0.')
+                         ': Expected UTCTime with tag 0x17 but got '
+                         '0xee at offset 0.')
 
     def test_integer_explicit_tags(self):
         '''Test explicit tags on integers.
@@ -1036,14 +1039,14 @@ class Asn1ToolsBerTest(unittest.TestCase):
             foo.decode('Foo', b'\xa3\x03\x01\x01\x01')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected Tag with tag 162 but got 163 at offset 0.')
+                         ': Expected Tag with tag 0xa2 but got 0xa3 at offset 0.')
 
         # Bad tag.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('Foo', b'\xa2\x03\x02\x01\x01')
 
         self.assertEqual(str(cm.exception),
-                         ': Expected BOOLEAN with tag 1 but got 2 at offset 2.')
+                         ': Expected BOOLEAN with tag 0x01 but got 0x02 at offset 2.')
 
     def test_boolean_implicit_tags(self):
         '''Test implicit tags on booleans.
@@ -1190,6 +1193,47 @@ class Asn1ToolsBerTest(unittest.TestCase):
             }
         }
         encoded_message = b'\xee\x05\x65\x03\x81\x01\x01'
+
+        encoded = zforce.encode('ProtocolMessage', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = zforce.decode('ProtocolMessage', encoded)
+        self.assertEqual(decoded, decoded_message)
+
+        # PDU 3.
+        decoded_message = {
+            'response': {
+                'enable': {
+                    'reset': None
+                },
+                'openShort': {
+                    'openShortInfo': [],
+                    'errorCount': 34
+                }
+            }
+        }
+        encoded_message = (
+            b'\xef\x0b\x65\x02\x82\x00\x6a\x05\xa0\x00\x81'
+            b'\x01\x22'
+        )
+
+        encoded = zforce.encode('ProtocolMessage', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = zforce.decode('ProtocolMessage', encoded)
+        self.assertEqual(decoded, decoded_message)
+
+        # PDU 4.
+        decoded_message = {
+            'notification': {
+                'notificationMessage': {
+                    'ledLevels': [{'uint8': b"\x55\x44\x33\x22"}]
+                },
+                'notificationLatency': 21
+            }
+        }
+        encoded_message = (
+            b'\xf0\x0c\x6b\x06\x80\x04\x55\x44\x33\x22\x5f\x23'
+            b'\x01\x15'
+        )
 
         encoded = zforce.encode('ProtocolMessage', decoded_message)
         self.assertEqual(encoded, encoded_message)

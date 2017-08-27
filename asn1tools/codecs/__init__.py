@@ -1,3 +1,6 @@
+import binascii
+
+
 class EncodeError(Exception):
     """General ASN.1 encode error.
 
@@ -27,9 +30,9 @@ class DecodeTagError(DecodeError):
     """
 
     def __init__(self, type_name, expected_tag, actual_tag, offset):
-        message = 'Expected {} with tag {} but got {} at offset {}.'.format(
+        message = 'Expected {} with tag 0x{} but got 0x{} at offset {}.'.format(
             type_name,
-            expected_tag,
-            actual_tag,
+            binascii.hexlify(expected_tag).decode('ascii'),
+            binascii.hexlify(actual_tag).decode('ascii'),
             offset)
         super(DecodeTagError, self).__init__(message)
