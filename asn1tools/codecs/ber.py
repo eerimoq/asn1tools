@@ -372,9 +372,7 @@ class Set(Type):
                 member.encode(data[name], encoded_members)
             elif member.optional:
                 pass
-            elif member.default is not None:
-                member.encode(member.default, encoded_members)
-            else:
+            elif member.default is None:
                 raise EncodeError(
                     "set member '{}' not found in {}".format(
                         name,
