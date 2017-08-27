@@ -216,7 +216,7 @@ class Boolean(Type):
 
         if length != 1:
             raise DecodeError(
-                'Expected one byte data but got {} at offset {}.'.format(
+                'expected one byte data but got {} at offset {}'.format(
                     length,
                     offset))
 
@@ -301,7 +301,7 @@ class Sequence(Type):
                 member.encode(member.default, encoded_members)
             else:
                 raise EncodeError(
-                    "Sequence member '{}' not found in {}.".format(
+                    "sequence member '{}' not found in {}".format(
                         name,
                         data))
 
@@ -314,7 +314,7 @@ class Sequence(Type):
 
         if data[offset] == 0x80:
             raise NotImplementedError(
-                'Decode until an end-of-contents tag is found.')
+                'decode until an end-of-contents tag is found')
         else:
             _, offset = decode_length_definite(data, offset)
 
@@ -374,7 +374,7 @@ class Set(Type):
                 member.encode(member.default, encoded_members)
             else:
                 raise EncodeError(
-                    "Set member '{}' not found in {}.".format(
+                    "set member '{}' not found in {}".format(
                         name,
                         data))
 
@@ -387,7 +387,7 @@ class Set(Type):
 
         if data[offset] == 0x80:
             raise NotImplementedError(
-                'Decode until an end-of-contents tag is found.')
+                'decode until an end-of-contents tag is found')
         else:
             _, offset = decode_length_definite(data, offset)
 
@@ -831,7 +831,7 @@ class Choice(Type):
                 return
 
         raise EncodeError(
-            "Expected choices are {}, but got '{}'.".format(
+            "expected choices are {}, but got '{}'".format(
                 [member.name for member in self.members],
                 ''.join([name for name in data])))
 
@@ -898,7 +898,7 @@ class Any(Type):
         try:
             return ANY_CLASSES[tag].decode(data, offset)
         except KeyError:
-            raise DecodeError('Any tag {} not supported'.format(tag))
+            raise DecodeError('any tag {} not supported'.format(tag))
 
     def __repr__(self):
         return 'Any({})'.format(self.name)
@@ -921,7 +921,7 @@ class Enumerated(Type):
                 return
 
         raise EncodeError(
-            "Enumeration value '{}' not found in {}.".format(
+            "enumeration value '{}' not found in {}".format(
                 data,
                 [value for value in self.values.values()]))
 
