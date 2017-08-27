@@ -70,6 +70,24 @@ The same ASN.1 specification, but using the PER codec.
 
 See the `examples`_ folder for additional examples
 
+Contributing
+============
+
+#. Fork the repository.
+
+#. Implement the new feature or bug fix.
+
+#. Implement test case(s) to ensure that future changes do not break
+   legacy.
+
+#. Run the tests.
+
+   .. code-block:: text
+
+      make test
+
+#. Create a pull request.
+
 .. |buildstatus| image:: https://travis-ci.org/eerimoq/asn1tools.svg?branch=master
 .. _buildstatus: https://travis-ci.org/eerimoq/asn1tools
 
