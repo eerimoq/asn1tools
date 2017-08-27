@@ -137,6 +137,10 @@ def decode_signed_integer(data):
     return value
 
 
+def decode_tag(_data, offset):
+    return 0, 0, offset + 1
+
+
 class Type(object):
 
     def __init__(self, name, type_name, flags, number):
@@ -297,9 +301,7 @@ class Sequence(Type):
                 member.encode(data[name], encoded_members)
             elif member.optional:
                 pass
-            elif member.default is not None:
-                member.encode(member.default, encoded_members)
-            else:
+            elif member.default is None:
                 raise EncodeError(
                     "sequence member '{}' not found in {}".format(
                         name,
@@ -515,7 +517,7 @@ class BitString(Type):
             number_of_unused_bits = 0
 
         encoded.extend(self.tag)
-        encoded.append(len(data[0]) + 1)
+        encoded.extend(encode_length_definite(len(data[0]) + 1))
         encoded.append(number_of_unused_bits)
         encoded.extend(data[0])
 
@@ -687,7 +689,7 @@ class UTCTime(Type):
     def encode(self, data, encoded):
         encoded.extend(self.tag)
         encoded.append(13)
-        encoded.extend(bytearray((data + 'Y').encode('ascii')))
+        encoded.extend(bytearray((data + 'Z').encode('ascii')))
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
@@ -876,29 +878,21 @@ class Null(Type):
         return 'Null({})'.format(self.name)
 
 
-ANY_CLASSES = {
-    Tag.NULL: Null('any'),
-    Tag.PRINTABLE_STRING: PrintableString('any'),
-    Tag.IA5_STRING: IA5String('any'),
-    Tag.UTF8_STRING: UTF8String('any')
-}
-
-
 class Any(Type):
 
     def __init__(self, name):
         super(Any, self).__init__(name, 'ANY', None, None)
 
-    def encode(self, _, encoded):
-        pass
+    def encode(self, data, encoded):
+        encoded.extend(data)
 
     def decode(self, data, offset):
-        tag = data[offset]
+        start = offset
+        _, _, offset = decode_tag(data, offset)
+        length, offset = decode_length_definite(data, offset)
+        end = offset + length
 
-        try:
-            return ANY_CLASSES[tag].decode(data, offset)
-        except KeyError:
-            raise DecodeError('any tag {} not supported'.format(tag))
+        return data[start:end], end
 
     def __repr__(self):
         return 'Any({})'.format(self.name)

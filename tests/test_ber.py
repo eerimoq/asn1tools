@@ -568,31 +568,32 @@ class Asn1ToolsBerTest(unittest.TestCase):
                 'serialNumber': 3578,
                 'signature': {
                     'algorithm': '1.2.840.113549.1.1.5',
-                    'parameters': None
+                    'parameters': b'\x05\x00'
                 },
                 'issuer': {
                     'rdnSequence': [
-                        [{'type': '2.5.4.6', 'value': 'JP'}],
-                        [{'type': '2.5.4.8', 'value': 'Tokyo'}],
-                        [{'type': '2.5.4.7', 'value': 'Chuo-ku'}],
-                        [{'type': '2.5.4.10', 'value': 'Frank4DD'}],
-                        [{'type': '2.5.4.11', 'value': 'WebCert Support'}],
-                        [{'type': '2.5.4.3', 'value': 'Frank4DD Web CA'}],
-                        [{'type': '1.2.840.113549.1.9.1', 'value': 'support@frank4dd.com'}]]},
+                        [{'type': '2.5.4.6', 'value': b'\x13\x02JP'}],
+                        [{'type': '2.5.4.8', 'value': b'\x13\x05Tokyo'}],
+                        [{'type': '2.5.4.7', 'value': b'\x13\x07Chuo-ku'}],
+                        [{'type': '2.5.4.10', 'value': b'\x13\x08Frank4DD'}],
+                        [{'type': '2.5.4.11', 'value': b'\x13\x0fWebCert Support'}],
+                        [{'type': '2.5.4.3', 'value': b'\x13\x0fFrank4DD Web CA'}],
+                        [{'type': '1.2.840.113549.1.9.1',
+                          'value': b'\x16\x14support@frank4dd.com'}]]},
                 'validity': {
                     'notAfter': {'utcTime': '170821052654'},
                     'notBefore': {'utcTime': '120822052654'}
                 },
                 'subject': {
                     'rdnSequence': [
-                        [{'type': '2.5.4.6', 'value': 'JP'}],
-                        [{'type': '2.5.4.8', 'value': 'Tokyo'}],
-                        [{'type': '2.5.4.10', 'value': 'Frank4DD'}],
-                        [{'type': '2.5.4.3', 'value': 'www.example.com'}]]},
+                        [{'type': '2.5.4.6', 'value': b'\x13\x02JP'}],
+                        [{'type': '2.5.4.8', 'value': b'\x0c\x05Tokyo'}],
+                        [{'type': '2.5.4.10', 'value': b'\x0c\x08Frank4DD'}],
+                        [{'type': '2.5.4.3', 'value': b'\x0c\x0fwww.example.com'}]]},
                 'subjectPublicKeyInfo': {
                     'algorithm': {
                         'algorithm': '1.2.840.113549.1.1.1',
-                        'parameters': None},
+                        'parameters': b'\x05\x00'},
                     'subjectPublicKey': (b'0H\x02A\x00\x9b\xfcf\x90y\x84B\xbb'
                                          b'\xab\x13\xfd+{\xf8\xde\x15\x12\xe5'
                                          b'\xf1\x93\xe3\x06\x8a{\xb8\xb1\xe1'
@@ -606,7 +607,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
             },
             'signatureAlgorithm': {
                 'algorithm': '1.2.840.113549.1.1.5',
-                'parameters': None
+                'parameters': b'\x05\x00'
             },
             'signature': (b'\x14\xb6L\xbb\x81y3\xe6q\xa4\xdaQo\xcb\x08\x1d'
                           b'\x8d`\xec\xbc\x18\xc7sGY\xb1\xf2 H\xbba\xfa'
@@ -658,9 +659,11 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         decoded = rfc5280.decode('Certificate', encoded_message)
         self.assertEqual(decoded, decoded_message)
-
-        #encoded = rfc5280.encode('Certificate', decoded_message)
-        #self.assertEqual(encoded, encoded_message)
+        # Do not include the optional version member, which have a
+        # default value.
+        del decoded_message['tbsCertificate']['version']
+        encoded = rfc5280.encode('Certificate', decoded_message)
+        self.assertEqual(encoded, encoded_message)
 
         # Explicit tagging.
         decoded_message = {
@@ -674,7 +677,6 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         encoded = rfc5280.encode('ExtendedNetworkAddress', decoded_message)
         self.assertEqual(encoded, encoded_message)
-
         decoded = rfc5280.decode('ExtendedNetworkAddress', encoded)
         self.assertEqual(decoded, decoded_message)
 
@@ -793,7 +795,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(all_types.encode('Bmpstring', b'bar'), b'\x1e\x03bar')
         self.assertEqual(all_types.encode('Teletexstring', b'fum'), b'\x14\x03fum')
         self.assertEqual(all_types.encode('Utctime', '010203040506'),
-                         b'\x17\x0d010203040506Y')
+                         b'\x17\x0d010203040506Z')
 
     def test_decode_all_types(self):
         all_types = asn1tools.compile_file('tests/files/all_types.asn')
@@ -815,7 +817,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(all_types.decode('Visiblestring', b'\x1a\x03bar'), 'bar')
         self.assertEqual(all_types.decode('Bmpstring', b'\x1e\x03bar'), b'bar')
         self.assertEqual(all_types.decode('Teletexstring', b'\x14\x03fum'), b'fum')
-        self.assertEqual(all_types.decode('Utctime', b'\x17\x0d010203040506Y'),
+        self.assertEqual(all_types.decode('Utctime', b'\x17\x0d010203040506Z'),
                          '010203040506')
 
     def test_decode_all_types_errors(self):
@@ -1086,7 +1088,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] UTCTime END'
         foo = asn1tools.compile_string(spec)
         encoded = foo.encode('Foo', '121001230001')
-        self.assertEqual(encoded, b'\xa2\x0f\x17\x0d121001230001Y')
+        self.assertEqual(encoded, b'\xa2\x0f\x17\x0d121001230001Z')
         decoded = foo.decode('Foo', encoded)
         self.assertEqual(decoded, '121001230001')
 
