@@ -97,10 +97,16 @@ def encode_signed_integer(data):
 
     if data < 0:
         data *= -1
+        data -= 1
+        carry = not data
 
         while data > 0:
-            encoded.append(256 - (data & 0xff))
+            encoded.append((data & 0xff) ^ 0xff)
+            carry = (data & 0x80)
             data >>= 8
+
+        if carry:
+            encoded.append(0xff)
     elif data > 0:
         while data > 0:
             encoded.append(data & 0xff)
@@ -139,7 +145,7 @@ class Type(object):
 
         if flags is None or number is None:
             self.tag = None
-        elif number < 32:
+        elif number < 31:
             self.tag = bytearray([flags | number])
         else:
             self.tag = bytearray([flags | 0x1f]) + encode_length_definite(number)
@@ -151,7 +157,7 @@ class Type(object):
         if not Class.APPLICATION & flags:
             flags |= Class.CONTEXT_SPECIFIC
 
-        if number < 32:
+        if number < 31:
             self.tag = bytearray([flags | number])
         else:
             self.tag = bytearray([flags | 0x1f]) + encode_length_definite(number)
