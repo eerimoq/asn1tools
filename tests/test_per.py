@@ -41,6 +41,51 @@ class Asn1ToolsPerTest(unittest.TestCase):
             str(cm.exception),
             "Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
 
+    def test_rrc_8_6_0(self):
+        rrc = asn1tools.compile_file('tests/files/rrc_8_6_0.asn', 'per')
+
+        # Message 1.
+        encoded = rrc.encode('PCCH-Message',
+                             {
+                                 'message': {
+                                     'c1' : {
+                                         'paging': {
+                                             'systemInfoModification': 'true',
+                                             'nonCriticalExtension': {
+                                             }
+                                         }
+                                     }
+                                 }
+                             })
+        self.assertEqual(encoded, b'\x28')
+
+        # Message 2.
+        encoded = rrc.encode('PCCH-Message',
+                             {
+                                 'message': {
+                                     'c1' : {
+                                         'paging': {
+                                         }
+                                     }
+                                 }
+                             })
+        self.assertEqual(encoded, b'\x00')
+
+        # Message 3.
+        encoded = rrc.encode('BCCH-BCH-Message',
+                             {
+                                 'message': {
+                                     'dl-Bandwidth': 'n6',
+                                     'phich-Config': {
+                                         'phich-Duration': 'normal',
+                                         'phich-Resource': 'half'
+                                     },
+                                     'systemFrameNumber': (b'\x12', 8),
+                                     'spare': (b'\x34\x56', 10)
+                                 }
+                             })
+        self.assertEqual(encoded, b'\x04\x48\xd1')
+
     def test_encode_all_types(self):
         all_types = asn1tools.compile_file('tests/files/all_types.asn',
                                            'per')
@@ -60,8 +105,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             all_types.encode('Objectidentifier', '1.2')
 
-        with self.assertRaises(NotImplementedError):
-            all_types.encode('Enumerated', 'one')
+        self.assertEqual(all_types.encode('Enumerated', 'one'), b'\x80')
 
         with self.assertRaises(NotImplementedError):
             all_types.encode('Utf8string', 'foo')

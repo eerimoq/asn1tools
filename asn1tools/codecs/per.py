@@ -29,6 +29,22 @@ class Encoder(object):
             self.byte = 0
             self.index = 7
 
+    def append_bits(self, data, number_of_bits):
+        '''Append given bits.
+
+        '''
+
+        for i in range(number_of_bits):
+            self.append_bit((data[i // 8] >> (7 - (i % 8))) & 0x1)
+
+    def append_integer(self, value, number_of_bits):
+        '''Append given integer value.
+
+        '''
+
+        for i in range(number_of_bits):
+            self.append_bit((value >> (number_of_bits - i - 1)) & 0x1)
+
     def append_bytes(self, data):
         '''Append given data aligned to a byte boundary.
 
@@ -329,11 +345,15 @@ class SetOf(Type):
 
 class BitString(Type):
 
-    def __init__(self, name):
+    def __init__(self, name, size):
         super(BitString, self).__init__(name, 'BIT STRING')
+        self.size = size
 
     def encode(self, data, encoder):
-        encoder.append_bytes(bytearray([data[1]]) + data[0])
+        if self.size is None:
+            encoder.append_bytes(bytearray([data[1]]) + data[0])
+        else:
+            encoder.append_bits(*data)
 
     def decode(self, decoder):
         number_of_bits = decoder.read_bytes(1)[0]
@@ -523,12 +543,35 @@ class Choice(Type):
     def __init__(self, name, members):
         super(Choice, self).__init__(name, 'CHOICE')
         self.members = members
+        self.number_of_bits = len('{:b}'.format(len(members) - 1))
 
     def encode(self, data, encoder):
-        raise NotImplementedError()
+        for i, member in enumerate(self.members):
+            if member.name in data:
+                if len(self.members) > 1:
+                    encoder.append_integer(i, self.number_of_bits)
 
-    def decode(self, decoder):
-        raise NotImplementedError()
+                member.encode(data[member.name], encoder)
+                return
+
+        raise EncodeError(
+            "Expected choices are {}, but got '{}'.".format(
+                [member.name for member in self.members],
+                ''.join([name for name in data])))
+
+    def decode(self, data, offset):
+        for member in self.members:
+            if isinstance(member, Choice):
+                try:
+                    decoded, offset = member.decode(data, offset)
+                    return {member.name: decoded}, offset
+                except DecodeChoiceError:
+                    pass
+            elif member.tag == data[offset]:
+                decoded, offset = member.decode(data, offset)
+                return {member.name: decoded}, offset
+
+        raise DecodeChoiceError()
 
     def __repr__(self):
         return 'Choice({}, [{}])'.format(
@@ -571,9 +614,18 @@ class Enumerated(Type):
     def __init__(self, name, values):
         super(Enumerated, self).__init__(name, 'ENUMERATED')
         self.values = values
+        self.number_of_bits = len('{:b}'.format(max(values.keys())))
 
     def encode(self, data, encoder):
-        raise NotImplementedError()
+        for value, name in self.values.items():
+            if data == name:
+                encoder.append_integer(value, self.number_of_bits)
+                return
+
+        raise EncodeError(
+            "Enumeration value '{}' not found in {}.".format(
+                data,
+                [value for value in self.values.values()]))
 
     def decode(self, decoder):
         raise NotImplementedError()
@@ -691,7 +743,8 @@ class Compiler(object):
         elif type_descriptor['type'] == 'GeneralizedTime':
             compiled = GeneralizedTime(name)
         elif type_descriptor['type'] == 'BIT STRING':
-            compiled = BitString(name)
+            size = type_descriptor.get('size', None)
+            compiled = BitString(name, size)
         elif type_descriptor['type'] == 'ANY':
             compiled = Any(name)
         elif type_descriptor['type'] == 'ANY DEFINED BY':

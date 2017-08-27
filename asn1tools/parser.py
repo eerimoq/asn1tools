@@ -147,6 +147,9 @@ def convert_type(tokens):
         converted_type = {'type': 'OBJECT IDENTIFIER'}
     elif tokens[0:2] == ['BIT', 'STRING']:
         converted_type = {'type': 'BIT STRING'}
+
+        if len(tokens) > 2 and tokens[2] == 'SIZE':
+            converted_type['size'] = int(tokens[4])
     elif tokens[0:2] == ['OCTET', 'STRING']:
         converted_type = {'type': 'OCTET STRING'}
     elif tokens[0] == 'IA5String':

@@ -91,7 +91,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
     def test_rrc_8_6_0(self):
         rrc = asn1tools.compile_file('tests/files/rrc_8_6_0.asn')
 
-        # Encode various messages.
+        # Message 1.
         encoded = rrc.encode('PCCH-Message',
                              {
                                  'message': {
@@ -107,6 +107,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(encoded,
                          b'0\x0b\xa0\t\xa0\x07\xa0\x05\x81\x01\x00\xa3\x00')
 
+        # Message 2.
         encoded = rrc.encode('PCCH-Message',
                              {
                                  'message': {
@@ -119,6 +120,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(encoded,
                          b'0\x06\xa0\x04\xa0\x02\xa0\x00')
 
+        # Message 3.
         encoded = rrc.encode('BCCH-BCH-Message',
                              {
                                  'message': {
