@@ -20,6 +20,14 @@ Sequence ::= SEQUENCE {}
 
 Set ::= SET {}
 
+Sequence2 ::= SEQUENCE {
+  a INTEGER DEFAULT 0
+}
+
+Set2 ::= SET {
+  a INTEGER DEFAULT 1
+}
+
 Numericstring ::= NumericString
 
 Printablestring ::= PrintableString
