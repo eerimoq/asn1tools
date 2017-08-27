@@ -443,8 +443,8 @@ def create_grammar():
 
 
 def parse_string(string):
-    """Parse given ASN.1 specification string and return a JSON dictionary
-    of its contents.
+    """Parse given ASN.1 specification string and return a dictionary of
+    its contents.
 
     >>> with open('foo.asn') as fin:
     ...     foo = asn1tools.parse_string(fin.read())
@@ -496,8 +496,8 @@ def parse_string(string):
 
 
 def parse_file(filename):
-    """Parse given ASN.1 specification file and return a JSON dictionary
-    of its contents.
+    """Parse given ASN.1 specification file and return a dictionary of its
+    contents.
 
     >>> foo = asn1tools.parse_file('foo.asn')
 

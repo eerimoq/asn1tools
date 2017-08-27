@@ -14,7 +14,7 @@ class Specification(object):
     Instances of this class are created by the factory functions
     :func:`~asn1tools.compile_file()`,
     :func:`~asn1tools.compile_string()` and
-    :func:`~asn1tools.compile_json()`.
+    :func:`~asn1tools.compile_dict()`.
 
     """
 
@@ -75,12 +75,12 @@ class Specification(object):
         return self._types[name].decode(data)
 
 
-def compile_json(specification, codec='ber'):
-    """Compile given ASN.1 specification JSON dictionary and return a
+def compile_dict(specification, codec='ber'):
+    """Compile given ASN.1 specification dictionary and return a
     :class:`~asn1tools.compiler.Specification` object that can be used
-    to encode and decode data structures.
+    to encode and decode data structures with given codec `codec`.
 
-    >>> foo = asn1tools.compile_json(asn1tools.parse_file('foo.asn'))
+    >>> foo = asn1tools.compile_dict(asn1tools.parse_file('foo.asn'))
 
     """
 
@@ -90,27 +90,27 @@ def compile_json(specification, codec='ber'):
         codec = per
     else:
         raise ValueError('unsupported codec {}'.format(codec))
-        
-    return Specification(codec.compile_json(specification))
+
+    return Specification(codec.compile_dict(specification))
 
 
 def compile_string(string, codec='ber'):
     """Compile given ASN.1 specification string and return a
     :class:`~asn1tools.compiler.Specification` object that can be used
-    to encode and decode data structures.
+    to encode and decode data structures with given codec `codec`.
 
     >>> with open('foo.asn') as fin:
     ...     foo = asn1tools.compile_string(fin.read())
 
     """
 
-    return compile_json(parse_string(string), codec)
+    return compile_dict(parse_string(string), codec)
 
 
 def compile_file(filename, codec='ber'):
     """Compile given ASN.1 specification file and return a
     :class:`~asn1tools.compiler.Specification` object that can be used
-    to encode and decode data structures.
+    to encode and decode data structures with given codec `codec`.
 
     >>> foo = asn1tools.compile_file('foo.asn')
 

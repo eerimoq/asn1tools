@@ -35,7 +35,7 @@ class Encoder(object):
         '''
 
         for i in range(number_of_bits):
-            self.append_bit((data[i // 8] >> (7 - (i % 8))) & 0x1)
+            self.append_bit((bytearray(data)[i // 8] >> (7 - (i % 8))) & 0x1)
 
     def append_integer(self, value, number_of_bits):
         '''Append given integer value.
@@ -820,5 +820,5 @@ class Compiler(object):
         return type_descriptor, module_name
 
 
-def compile_json(specification):
+def compile_dict(specification):
     return Compiler(specification).process()

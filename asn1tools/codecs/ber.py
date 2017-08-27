@@ -1105,5 +1105,5 @@ class Compiler(object):
         return type_descriptor, module_name
 
 
-def compile_json(specification):
+def compile_dict(specification):
     return Compiler(specification).process()

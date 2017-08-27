@@ -24,7 +24,7 @@ Advanced Usage
 
 .. autofunction:: asn1tools.compile_string
 
-.. autofunction:: asn1tools.compile_json
+.. autofunction:: asn1tools.compile_dict
 
 .. autofunction:: asn1tools.parse_file
 
