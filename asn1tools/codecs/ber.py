@@ -910,7 +910,7 @@ class Enumerated(Type):
         return self.values[value], end
 
     def __repr__(self):
-        return 'Null({})'.format(self.name)
+        return 'Enumerated({})'.format(self.name)
 
 
 class ExplicitTag(Type):
