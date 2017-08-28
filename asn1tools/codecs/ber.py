@@ -143,11 +143,11 @@ def decode_tag(_data, offset):
 
 class Type(object):
 
-    def __init__(self, name, type_name, flags, number):
+    def __init__(self, name, type_name, number, flags=0):
         self.name = name
         self.type_name = type_name
 
-        if flags is None or number is None:
+        if number is None:
             self.tag = None
         elif number < 31:
             self.tag = bytearray([flags | number])
@@ -157,7 +157,7 @@ class Type(object):
         self.optional = None
         self.default = None
 
-    def set_tag(self, flags, number):
+    def set_tag(self, number, flags):
         if not Class.APPLICATION & flags:
             flags |= Class.CONTEXT_SPECIFIC
 
@@ -183,7 +183,6 @@ class Integer(Type):
     def __init__(self, name):
         super(Integer, self).__init__(name,
                                       'INTEGER',
-                                      0,
                                       Tag.INTEGER)
 
     def encode(self, data, encoded):
@@ -206,7 +205,6 @@ class Boolean(Type):
     def __init__(self, name):
         super(Boolean, self).__init__(name,
                                       'BOOLEAN',
-                                      0,
                                       Tag.BOOLEAN)
 
     def encode(self, data, encoded):
@@ -235,7 +233,6 @@ class IA5String(Type):
     def __init__(self, name):
         super(IA5String, self).__init__(name,
                                         'IA5String',
-                                        0,
                                         Tag.IA5_STRING)
 
     def encode(self, data, encoded):
@@ -259,7 +256,6 @@ class NumericString(Type):
     def __init__(self, name):
         super(NumericString, self).__init__(name,
                                             'NumericString',
-                                            0,
                                             Tag.NUMERIC_STRING)
 
     def encode(self, data, encoded):
@@ -283,13 +279,13 @@ class Sequence(Type):
     def __init__(self, name, members):
         super(Sequence, self).__init__(name,
                                        'SEQUENCE',
-                                       Encoding.CONSTRUCTED,
-                                       Tag.SEQUENCE)
+                                       Tag.SEQUENCE,
+                                       Encoding.CONSTRUCTED)
         self.members = members
 
-    def set_tag(self, flags, number):
-        super(Sequence, self).set_tag(flags | Encoding.CONSTRUCTED,
-                                      number)
+    def set_tag(self, number, flags):
+        super(Sequence, self).set_tag(number,
+                                      flags | Encoding.CONSTRUCTED)
 
     def encode(self, data, encoded):
         encoded_members = bytearray()
@@ -354,13 +350,13 @@ class Set(Type):
     def __init__(self, name, members):
         super(Set, self).__init__(name,
                                   'SET',
-                                  Encoding.CONSTRUCTED,
-                                  Tag.SET)
+                                  Tag.SET,
+                                  Encoding.CONSTRUCTED)
         self.members = members
 
-    def set_tag(self, flags, number):
-        super(Set, self).set_tag(flags | Encoding.CONSTRUCTED,
-                                 number)
+    def set_tag(self, number, flags):
+        super(Set, self).set_tag(number,
+                                 flags | Encoding.CONSTRUCTED)
 
     def encode(self, data, encoded):
         encoded_members = bytearray()
@@ -425,13 +421,13 @@ class SequenceOf(Type):
     def __init__(self, name, element_type):
         super(SequenceOf, self).__init__(name,
                                          'SEQUENCE OF',
-                                         Encoding.CONSTRUCTED,
-                                         Tag.SEQUENCE)
+                                         Tag.SEQUENCE,
+                                         Encoding.CONSTRUCTED)
         self.element_type = element_type
 
-    def set_tag(self, flags, number):
-        super(SequenceOf, self).set_tag(flags | Encoding.CONSTRUCTED,
-                                        number)
+    def set_tag(self, number, flags):
+        super(SequenceOf, self).set_tag(number,
+                                        flags | Encoding.CONSTRUCTED)
 
     def encode(self, data, encoded):
         encoded_elements = bytearray()
@@ -465,13 +461,13 @@ class SetOf(Type):
     def __init__(self, name, element_type):
         super(SetOf, self).__init__(name,
                                     'SET OF',
-                                    Encoding.CONSTRUCTED,
-                                    Tag.SET)
+                                    Tag.SET,
+                                    Encoding.CONSTRUCTED)
         self.element_type = element_type
 
-    def set_tag(self, flags, number):
-        super(SetOf, self).set_tag(flags | Encoding.CONSTRUCTED,
-                                   number)
+    def set_tag(self, number, flags):
+        super(SetOf, self).set_tag(number,
+                                   flags | Encoding.CONSTRUCTED)
 
     def encode(self, data, encoded):
         encoded_elements = bytearray()
@@ -505,7 +501,6 @@ class BitString(Type):
     def __init__(self, name):
         super(BitString, self).__init__(name,
                                         'BIT STRING',
-                                        0,
                                         Tag.BIT_STRING)
 
     def encode(self, data, encoded):
@@ -537,8 +532,7 @@ class OctetString(Type):
     def __init__(self, name):
         super(OctetString, self).__init__(name,
                                           'OCTET STRING',
-                                          0,
-                                          Tag.OCTET_STRING)
+                                              Tag.OCTET_STRING)
 
     def encode(self, data, encoded):
         encoded.extend(self.tag)
@@ -561,7 +555,6 @@ class PrintableString(Type):
     def __init__(self, name):
         super(PrintableString, self).__init__(name,
                                               'PrintableString',
-                                              0,
                                               Tag.PRINTABLE_STRING)
 
     def encode(self, data, encoded):
@@ -585,7 +578,6 @@ class UniversalString(Type):
     def __init__(self, name):
         super(UniversalString, self).__init__(name,
                                               'UniversalString',
-                                              0,
                                               Tag.UNIVERSAL_STRING)
 
     def encode(self, data, encoded):
@@ -609,7 +601,6 @@ class VisibleString(Type):
     def __init__(self, name):
         super(VisibleString, self).__init__(name,
                                             'VisibleString',
-                                            0,
                                             Tag.VISIBLE_STRING)
 
     def encode(self, data, encoded):
@@ -633,7 +624,6 @@ class UTF8String(Type):
     def __init__(self, name):
         super(UTF8String, self).__init__(name,
                                          'UTF8String',
-                                         0,
                                          Tag.UTF8_STRING)
 
     def encode(self, data, encoded):
@@ -657,7 +647,6 @@ class BMPString(Type):
     def __init__(self, name):
         super(BMPString, self).__init__(name,
                                         'BMPString',
-                                        0,
                                         Tag.BMP_STRING)
 
     def encode(self, data, encoded):
@@ -681,7 +670,6 @@ class UTCTime(Type):
     def __init__(self, name):
         super(UTCTime, self).__init__(name,
                                       'UTCTime',
-                                      0,
                                       Tag.UTC_TIME)
 
     def encode(self, data, encoded):
@@ -705,7 +693,6 @@ class GeneralizedTime(Type):
     def __init__(self, name):
         super(GeneralizedTime, self).__init__(name,
                                               'GeneralizedTime',
-                                              0,
                                               Tag.GENERALIZED_TIME)
 
     def encode(self, data, encoded):
@@ -725,7 +712,6 @@ class TeletexString(Type):
     def __init__(self, name):
         super(TeletexString, self).__init__(name,
                                             'TeletexString',
-                                            0,
                                             Tag.T61_STRING)
 
     def encode(self, data, encoded):
@@ -749,7 +735,6 @@ class ObjectIdentifier(Type):
     def __init__(self, name):
         super(ObjectIdentifier, self).__init__(name,
                                                'OBJECT IDENTIFIER',
-                                               0,
                                                Tag.OBJECT_IDENTIFIER)
 
     def encode(self, data, encoded):
@@ -809,12 +794,12 @@ class ObjectIdentifier(Type):
 class Choice(Type):
 
     def __init__(self, name, members):
-        super(Choice, self).__init__(name, 'CHOICE', None, None)
+        super(Choice, self).__init__(name, 'CHOICE', None)
         self.members = members
 
-    def set_tag(self, flags, number):
-        super(Choice, self).set_tag(flags | Encoding.CONSTRUCTED,
-                                    number)
+    def set_tag(self, number, flags):
+        super(Choice, self).set_tag(number,
+                                    flags | Encoding.CONSTRUCTED)
 
     def encode(self, data, encoded):
         for member in self.members:
@@ -861,7 +846,7 @@ class Choice(Type):
 class Null(Type):
 
     def __init__(self, name):
-        super(Null, self).__init__(name, 'NULL', 0, Tag.NULL)
+        super(Null, self).__init__(name, 'NULL', Tag.NULL)
 
     def encode(self, _, encoded):
         encoded.extend(self.tag)
@@ -879,7 +864,7 @@ class Null(Type):
 class Any(Type):
 
     def __init__(self, name):
-        super(Any, self).__init__(name, 'ANY', None, None)
+        super(Any, self).__init__(name, 'ANY', None)
 
     def encode(self, data, encoded):
         encoded.extend(data)
@@ -901,7 +886,6 @@ class Enumerated(Type):
     def __init__(self, name, values):
         super(Enumerated, self).__init__(name,
                                          'ENUMERATED',
-                                         0,
                                          Tag.ENUMERATED)
         self.values = values
 
@@ -932,12 +916,12 @@ class Enumerated(Type):
 class ExplicitTag(Type):
 
     def __init__(self, name, inner):
-        super(ExplicitTag, self).__init__(name, 'Tag', None, None)
+        super(ExplicitTag, self).__init__(name, 'Tag', None)
         self.inner = inner
 
-    def set_tag(self, flags, number):
-        super(ExplicitTag, self).set_tag(flags | Encoding.CONSTRUCTED,
-                                         number)
+    def set_tag(self, number, flags):
+        super(ExplicitTag, self).set_tag(number,
+                                         flags | Encoding.CONSTRUCTED)
 
     def encode(self, data, encoded):
         encoded_inner = bytearray()
@@ -1097,7 +1081,7 @@ class Compiler(object):
             else:
                 flags = 0
 
-            compiled.set_tag(flags, tag['number'])
+            compiled.set_tag(tag['number'], flags)
 
         return compiled
 
@@ -1124,7 +1108,7 @@ class Compiler(object):
                 compiled_member.default = member['default']
 
             if tag is not None:
-                compiled_member.set_tag(0, tag)
+                compiled_member.set_tag(tag, 0)
                 tag += 1
 
             compiled_members.append(compiled_member)
