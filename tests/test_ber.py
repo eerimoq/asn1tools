@@ -57,14 +57,13 @@ class Asn1ToolsBerTest(unittest.TestCase):
             'ia5-string': 'foo'
         }
 
-        encoded_message = (b'\x30\x1e\x01\x01\x01\x02\x01\xf9'
-                           b'\x03\x02\x05\x80\x04\x02\x31\x32'
-                           b'\x05\x00\x06\x02\x2b\x02\x0a\x01'
-                           b'\x01\x30\x00\x16\x03\x66\x6f\x6f')
+        encoded_message = (
+            b'\x30\x1e\x01\x01\x01\x02\x01\xf9\x03\x02\x05\x80\x04\x02\x31\x32'
+            b'\x05\x00\x06\x02\x2b\x02\x0a\x01\x01\x30\x00\x16\x03\x66\x6f\x6f'
+        )
 
         encoded = cmplx.encode('AllUniversalTypes', decoded_message)
         self.assertEqual(encoded, encoded_message)
-
         decoded = cmplx.decode('AllUniversalTypes', encoded_message)
         self.assertEqual(decoded, decoded_message)
 
@@ -151,6 +150,252 @@ class Asn1ToolsBerTest(unittest.TestCase):
         decoded = rrc.decode('BCCH-BCH-Message', encoded)
         self.assertEqual(decoded, decoded_message)
 
+        # Message 4.
+        decoded_message = {
+            'message':{
+                'c1':{
+                    'systemInformation':{
+                        'criticalExtensions': {
+                            'systemInformation-r8': {
+                                'sib-TypeAndInfo': [
+                                    {
+                                        'sib2': {
+                                            'ac-BarringInfo': {
+                                                'ac-BarringForEmergency': True,
+                                                'ac-BarringForMO-Data': {
+                                                    'ac-BarringFactor': 'p95',
+                                                    'ac-BarringTime': 's128',
+                                                    'ac-BarringForSpecialAC': (b'\xf0', 5)
+                                                }
+                                            },
+                                            'radioResourceConfigCommon': {
+                                                'rach-ConfigCommon': {
+                                                    'preambleInfo': {
+                                                        'numberOfRA-Preambles': 'n24',
+                                                        'preamblesGroupAConfig': {
+                                                            'sizeOfRA-PreamblesGroupA': 'n28',
+                                                            'messageSizeGroupA': 'b144',
+                                                            'messagePowerOffsetGroupB': 'minusinfinity'
+                                                        }
+                                                    },
+                                                    'powerRampingParameters': {
+                                                        'powerRampingStep': 'dB0',
+                                                        'preambleInitialReceivedTargetPower': 'dBm-102'
+                                                    },
+                                                    'ra-SupervisionInfo': {
+                                                        'preambleTransMax': 'n8',
+                                                        'ra-ResponseWindowSize': 'sf6',
+                                                        'mac-ContentionResolutionTimer': 'sf48'
+                                                    },
+                                                    'maxHARQ-Msg3Tx': 8
+                                                },
+                                                'bcch-Config': {
+                                                    'modificationPeriodCoeff': 'n2'
+                                                },
+                                                'pcch-Config': {
+                                                    'defaultPagingCycle': 'rf256',
+                                                    'nB': 'twoT'
+                                                },
+                                                'prach-Config': {
+                                                    'rootSequenceIndex': 836,
+                                                    'prach-ConfigInfo': {
+                                                        'prach-ConfigIndex': 33,
+                                                        'highSpeedFlag': False,
+                                                        'zeroCorrelationZoneConfig': 10,
+                                                        'prach-FreqOffset': 64
+                                                    }
+                                                },
+                                                'pdsch-ConfigCommon': {
+                                                    'referenceSignalPower': -60,
+                                                    'p-b': 2
+                                                },
+                                                'pusch-ConfigCommon': {
+                                                    'pusch-ConfigBasic': {
+                                                        'n-SB': 1,
+                                                        'hoppingMode': 'interSubFrame',
+                                                        'pusch-HoppingOffset': 10,
+                                                        'enable64QAM': False
+                                                    },
+                                                    'ul-ReferenceSignalsPUSCH': {
+                                                        'groupHoppingEnabled': True,
+                                                        'groupAssignmentPUSCH': 22,
+                                                        'sequenceHoppingEnabled': False,
+                                                        'cyclicShift': 5
+                                                    }
+                                                },
+                                                'pucch-ConfigCommon': {
+                                                    'deltaPUCCH-Shift': 'ds1',
+                                                    'nRB-CQI': 98,
+                                                    'nCS-AN': 4,
+                                                    'n1PUCCH-AN': 2047
+                                                },
+                                                'soundingRS-UL-ConfigCommon': {
+                                                    'setup': {
+                                                        'srs-BandwidthConfig': 'bw0',
+                                                        'srs-SubframeConfig': 'sc4',
+                                                        'ackNackSRS-SimultaneousTransmission': True
+                                                    }
+                                                },
+                                                'uplinkPowerControlCommon': {
+                                                    'p0-NominalPUSCH': -126,
+                                                    'alpha': 'al0',
+                                                    'p0-NominalPUCCH': -127,
+                                                    'deltaFList-PUCCH': {
+                                                        'deltaF-PUCCH-Format1': 'deltaF-2',
+                                                        'deltaF-PUCCH-Format1b': 'deltaF1',
+                                                        'deltaF-PUCCH-Format2': 'deltaF0',
+                                                        'deltaF-PUCCH-Format2a': 'deltaF-2',
+                                                        'deltaF-PUCCH-Format2b': 'deltaF0'
+                                                    },
+                                                    'deltaPreambleMsg3': -1
+                                                },
+                                                'ul-CyclicPrefixLength': 'len1'
+                                            },
+                                            'ue-TimersAndConstants': {
+                                                't300': 'ms100',
+                                                't301': 'ms200',
+                                                't310': 'ms50',
+                                                'n310': 'n2',
+                                                't311': 'ms30000',
+                                                'n311': 'n2'
+                                            },
+                                            'freqInfo': {
+                                                'additionalSpectrumEmission': 3
+                                            },
+                                            'timeAlignmentTimerCommon': 'sf500'
+                                        }
+                                    },
+                                    {
+                                        'sib3': {
+                                            'cellReselectionInfoCommon': {
+                                                'q-Hyst': 'dB0',
+                                                'speedStateReselectionPars': {
+                                                    'mobilityStateParameters': {
+                                                        't-Evaluation': 's180',
+                                                        't-HystNormal': 's180',
+                                                        'n-CellChangeMedium': 1,
+                                                        'n-CellChangeHigh': 16
+                                                    },
+                                                    'q-HystSF': {
+                                                        'sf-Medium': 'dB-6',
+                                                        'sf-High': 'dB-4'
+                                                    }
+                                                }
+                                            },
+                                            'cellReselectionServingFreqInfo': {
+                                                'threshServingLow': 7,
+                                                'cellReselectionPriority': 3
+                                            },
+                                            'intraFreqCellReselectionInfo': {
+                                                'q-RxLevMin': -33,
+                                                's-IntraSearch': 0,
+                                                'presenceAntennaPort1': False,
+                                                'neighCellConfig': (b'\x80', 2),
+                                                't-ReselectionEUTRA': 4
+                                            }
+                                        }
+                                    },
+                                    {
+                                        'sib4': {
+                                        }
+                                    },
+                                    {
+                                        'sib5': {
+                                            'interFreqCarrierFreqList': [
+                                                {
+                                                    'dl-CarrierFreq': 1,
+                                                    'q-RxLevMin': -45,
+                                                    't-ReselectionEUTRA': 0,
+                                                    'threshX-High': 31,
+                                                    'threshX-Low': 29 ,
+                                                    'allowedMeasBandwidth': 'mbw6',
+                                                    'presenceAntennaPort1': True,
+                                                    'q-OffsetFreq': 'dB0',
+                                                    'neighCellConfig': (b'\x00', 2)
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        'sib6': {
+                                            't-ReselectionUTRA': 3
+                                        }
+                                    },
+                                    {
+                                        'sib7': {
+                                            't-ReselectionGERAN': 3
+                                        }
+                                    },
+                                    {
+                                        'sib8': {
+                                            'parameters1XRTT': {
+                                                'longCodeState1XRTT': (b'\x01\x23\x45\x67\x89\x00', 42)
+                                            }
+                                        }
+                                    },
+                                    {
+                                        'sib9': {
+                                            'hnb-Name': b'\x34'
+                                        }
+                                    },
+                                    {
+                                        'sib10': {
+                                            'messageIdentifier': (b'\x23\x34', 16),
+                                            'serialNumber': (b'\x12\x34', 16),
+                                            'warningType': b'\x32\x12'
+                                        }
+                                    },
+                                    {
+                                        'sib11': {
+                                            'messageIdentifier': (b'\x67\x88', 16),
+                                            'serialNumber': (b'\x54\x35', 16),
+                                            'warningMessageSegmentType': 'notLastSegment',
+                                            'warningMessageSegmentNumber': 19,
+                                            'warningMessageSegment': b'\x12'
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        encoded_message = (
+            b'\x30\x82\x01\x96\xa0\x82\x01\x92\xa0\x82\x01\x8e\xa0\x82\x01\x8a'
+            b'\xa0\x82\x01\x86\xa0\x82\x01\x82\xa0\x82\x01\x7e\xa0\x81\xdd\xa0'
+            b'\x0f\x80\x01\x01\xa2\x0a\x80\x01\x0f\x81\x01\x05\x82\x02\x03\xf0'
+            b'\xa1\x81\xad\xa0\x26\xa0\x0e\x80\x01\x05\xa1\x09\x80\x01\x06\x81'
+            b'\x01\x01\x82\x01\x00\xa1\x06\x80\x01\x00\x81\x01\x09\xa2\x09\x80'
+            b'\x01\x05\x81\x01\x04\x82\x01\x05\x83\x01\x08\xa1\x03\x80\x01\x00'
+            b'\xa2\x06\x80\x01\x03\x81\x01\x01\xa3\x12\x80\x02\x03\x44\xa1\x0c'
+            b'\x80\x01\x21\x81\x01\x00\x82\x01\x0a\x83\x01\x40\xa4\x06\x80\x01'
+            b'\xc4\x81\x01\x02\xa5\x1c\xa0\x0c\x80\x01\x01\x81\x01\x00\x82\x01'
+            b'\x0a\x83\x01\x00\xa1\x0c\x80\x01\x01\x81\x01\x16\x82\x01\x00\x83'
+            b'\x01\x05\xa6\x0d\x80\x01\x00\x81\x01\x62\x82\x01\x04\x83\x02\x07'
+            b'\xff\xa7\x0b\xa1\x09\x80\x01\x00\x81\x01\x04\x82\x01\x01\xa8\x1d'
+            b'\x80\x01\x82\x81\x01\x00\x82\x01\x81\xa3\x0f\x80\x01\x00\x81\x01'
+            b'\x00\x82\x01\x01\x83\x01\x00\x84\x01\x01\x84\x01\xff\x89\x01\x00'
+            b'\xa2\x12\x80\x01\x00\x81\x01\x01\x82\x01\x01\x83\x01\x01\x84\x01'
+            b'\x06\x85\x01\x01\xa3\x03\x82\x01\x03\x85\x01\x00\xa1\x37\xa0\x1b'
+            b'\x80\x01\x00\xa1\x16\xa0\x0c\x80\x01\x03\x81\x01\x03\x82\x01\x01'
+            b'\x83\x01\x10\xa1\x06\x80\x01\x00\x81\x01\x01\xa1\x06\x81\x01\x07'
+            b'\x82\x01\x03\xa2\x10\x80\x01\xdf\x82\x01\x00\x84\x01\x00\x85\x02'
+            b'\x06\x80\x86\x01\x04\xa2\x00\xa3\x20\xa0\x1e\x30\x1c\x80\x01\x01'
+            b'\x81\x01\xd3\x83\x01\x00\x85\x01\x1f\x86\x01\x1d\x87\x01\x00\x88'
+            b'\x01\x01\x8a\x02\x06\x00\x8b\x01\x0f\xa4\x03\x82\x01\x03\xa5\x03'
+            b'\x80\x01\x03\xa6\x0b\xa3\x09\x81\x07\x06\x01\x23\x45\x67\x89\x00'
+            b'\xa7\x03\x80\x01\x34\xa8\x0e\x80\x03\x00\x23\x34\x81\x03\x00\x12'
+            b'\x34\x82\x02\x32\x12\xa9\x13\x80\x03\x00\x67\x88\x81\x03\x00\x54'
+            b'\x35\x82\x01\x00\x83\x01\x13\x84\x01\x12'
+        )
+
+        encoded = rrc.encode('BCCH-DL-SCH-Message', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = rrc.decode('BCCH-DL-SCH-Message', encoded)
+        self.assertEqual(decoded, decoded_message)
+
     def test_snmp_v1(self):
         snmp_v1 = asn1tools.compile_file('tests/files/snmp_v1.asn')
 
@@ -218,7 +463,6 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         encoded = snmp_v1.encode('Message', decoded_message)
         self.assertEqual(encoded, encoded_message)
-
         decoded = snmp_v1.decode('Message', encoded_message)
         self.assertEqual(decoded, decoded_message)
 
@@ -339,40 +583,26 @@ class Asn1ToolsBerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = (b'\x30\x81\xe6\x02\x01\x01\x04\x09'
-                           b'\x63\x6f\x6d\x6d\x75\x6e\x69\x74'
-                           b'\x79\xa3\x81\xd5\x02\x04\x64\x8e'
-                           b'\x7c\x1c\x02\x01\x00\x02\x01\x00'
-                           b'\x30\x81\xc6\x30\x0c\x06\x07\x2b'
-                           b'\x06\x01\x87\x67\x01\x01\x02\x01'
-                           b'\x01\x30\x0e\x06\x07\x2b\x06\x01'
-                           b'\x87\x67\x02\x01\x04\x03\x66\x30'
-                           b'\x30\x30\x0f\x06\x07\x2b\x06\x01'
-                           b'\x87\x67\x03\x01\x40\x04\xc0\xa8'
-                           b'\x01\x01\x30\x11\x06\x07\x2b\x06'
-                           b'\x01\x87\x67\x04\x01\x06\x06\x2a'
-                           b'\x03\x83\x3c\x84\x2b\x30\x0c\x06'
-                           b'\x07\x2b\x06\x01\x87\x67\x01\x02'
-                           b'\x02\x01\x01\x30\x0e\x06\x07\x2b'
-                           b'\x06\x01\x87\x67\x02\x02\x04\x03'
-                           b'\x66\x30\x30\x30\x0f\x06\x07\x2b'
-                           b'\x06\x01\x87\x67\x03\x02\x40\x04'
-                           b'\xc0\xa8\x01\x01\x30\x11\x06\x07'
-                           b'\x2b\x06\x01\x87\x67\x04\x02\x06'
-                           b'\x06\x2a\x03\x83\x3c\x84\x2b\x30'
-                           b'\x0c\x06\x07\x2b\x06\x01\x87\x67'
-                           b'\x01\x03\x02\x01\x01\x30\x0e\x06'
-                           b'\x07\x2b\x06\x01\x87\x67\x02\x03'
-                           b'\x04\x03\x66\x30\x30\x30\x0f\x06'
-                           b'\x07\x2b\x06\x01\x87\x67\x03\x03'
-                           b'\x40\x04\xc0\xa8\x01\x01\x30\x11'
-                           b'\x06\x07\x2b\x06\x01\x87\x67\x04'
-                           b'\x03\x06\x06\x2a\x03\x83\x3c\x84'
-                           b'\x2b')
+        encoded_message = (
+            b'\x30\x81\xe6\x02\x01\x01\x04\x09\x63\x6f\x6d\x6d\x75\x6e\x69\x74'
+            b'\x79\xa3\x81\xd5\x02\x04\x64\x8e\x7c\x1c\x02\x01\x00\x02\x01\x00'
+            b'\x30\x81\xc6\x30\x0c\x06\x07\x2b\x06\x01\x87\x67\x01\x01\x02\x01'
+            b'\x01\x30\x0e\x06\x07\x2b\x06\x01\x87\x67\x02\x01\x04\x03\x66\x30'
+            b'\x30\x30\x0f\x06\x07\x2b\x06\x01\x87\x67\x03\x01\x40\x04\xc0\xa8'
+            b'\x01\x01\x30\x11\x06\x07\x2b\x06\x01\x87\x67\x04\x01\x06\x06\x2a'
+            b'\x03\x83\x3c\x84\x2b\x30\x0c\x06\x07\x2b\x06\x01\x87\x67\x01\x02'
+            b'\x02\x01\x01\x30\x0e\x06\x07\x2b\x06\x01\x87\x67\x02\x02\x04\x03'
+            b'\x66\x30\x30\x30\x0f\x06\x07\x2b\x06\x01\x87\x67\x03\x02\x40\x04'
+            b'\xc0\xa8\x01\x01\x30\x11\x06\x07\x2b\x06\x01\x87\x67\x04\x02\x06'
+            b'\x06\x2a\x03\x83\x3c\x84\x2b\x30\x0c\x06\x07\x2b\x06\x01\x87\x67'
+            b'\x01\x03\x02\x01\x01\x30\x0e\x06\x07\x2b\x06\x01\x87\x67\x02\x03'
+            b'\x04\x03\x66\x30\x30\x30\x0f\x06\x07\x2b\x06\x01\x87\x67\x03\x03'
+            b'\x40\x04\xc0\xa8\x01\x01\x30\x11\x06\x07\x2b\x06\x01\x87\x67\x04'
+            b'\x03\x06\x06\x2a\x03\x83\x3c\x84\x2b'
+        )
 
         encoded = snmp_v1.encode('Message', decoded_message)
         self.assertEqual(encoded, encoded_message)
-
         decoded = snmp_v1.decode('Message', encoded_message)
         self.assertEqual(decoded, decoded_message)
 
@@ -465,32 +695,22 @@ class Asn1ToolsBerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = (b'\x30\x81\xad\x02\x01\x01\x04\x09'
-                           b'\x63\x6f\x6d\x6d\x75\x6e\x69\x74'
-                           b'\x79\xa3\x81\x9c\x02\x04\x64\x8e'
-                           b'\x7c\x1c\x02\x01\x00\x02\x01\x00'
-                           b'\x30\x81\x8d\x30\x0c\x06\x07\x2b'
-                           b'\x06\x01\x87\x67\x01\x01\x02\x01'
-                           b'\xff\x30\x0e\x06\x07\x2b\x06\x01'
-                           b'\x87\x67\x02\x01\x04\x03\x66\x30'
-                           b'\x30\x30\x11\x06\x07\x2b\x06\x01'
-                           b'\x87\x67\x04\x01\x06\x06\x2a\x03'
-                           b'\x83\x3c\x84\x2b\x30\x0b\x06\x07'
-                           b'\x2b\x06\x01\x87\x67\x04\x01\x05'
-                           b'\x00\x30\x0f\x06\x07\x2b\x06\x01'
-                           b'\x87\x67\x03\x01\x40\x04\xc0\xa8'
-                           b'\x01\x01\x30\x0c\x06\x07\x2b\x06'
-                           b'\x01\x87\x67\x03\x01\x41\x01\x00'
-                           b'\x30\x10\x06\x07\x2b\x06\x01\x87'
-                           b'\x67\x03\x01\x42\x05\x00\xff\xff'
-                           b'\xff\xff\x30\x0c\x06\x07\x2b\x06'
-                           b'\x01\x87\x67\x03\x01\x43\x01\x58'
-                           b'\x30\x0e\x06\x07\x2b\x06\x01\x87'
-                           b'\x67\x03\x01\x44\x03\x31\x32\x33')
+        encoded_message = (
+            b'\x30\x81\xad\x02\x01\x01\x04\x09\x63\x6f\x6d\x6d\x75\x6e\x69\x74'
+            b'\x79\xa3\x81\x9c\x02\x04\x64\x8e\x7c\x1c\x02\x01\x00\x02\x01\x00'
+            b'\x30\x81\x8d\x30\x0c\x06\x07\x2b\x06\x01\x87\x67\x01\x01\x02\x01'
+            b'\xff\x30\x0e\x06\x07\x2b\x06\x01\x87\x67\x02\x01\x04\x03\x66\x30'
+            b'\x30\x30\x11\x06\x07\x2b\x06\x01\x87\x67\x04\x01\x06\x06\x2a\x03'
+            b'\x83\x3c\x84\x2b\x30\x0b\x06\x07\x2b\x06\x01\x87\x67\x04\x01\x05'
+            b'\x00\x30\x0f\x06\x07\x2b\x06\x01\x87\x67\x03\x01\x40\x04\xc0\xa8'
+            b'\x01\x01\x30\x0c\x06\x07\x2b\x06\x01\x87\x67\x03\x01\x41\x01\x00'
+            b'\x30\x10\x06\x07\x2b\x06\x01\x87\x67\x03\x01\x42\x05\x00\xff\xff'
+            b'\xff\xff\x30\x0c\x06\x07\x2b\x06\x01\x87\x67\x03\x01\x43\x01\x58'
+            b'\x30\x0e\x06\x07\x2b\x06\x01\x87\x67\x03\x01\x44\x03\x31\x32\x33'
+        )
 
         encoded = snmp_v1.encode('Message', decoded_message)
         self.assertEqual(encoded, encoded_message)
-
         decoded = snmp_v1.decode('Message', encoded_message)
         self.assertEqual(decoded, decoded_message)
 
@@ -538,10 +758,10 @@ class Asn1ToolsBerTest(unittest.TestCase):
             'ia5-string': 'foo'
         }
 
-        encoded_message = (b'\x30\x1e\x01\x01\x01\x02\x01\xf9'
-                           b'\x03\x02\x05\x80\x04\x02\x31\x32'
-                           b'\x05\x00\x06\x02\x2b\x02\x0a\x01'
-                           b'\x01\x30\x00\x16\x03\x66\x6f\x6f')
+        encoded_message = (
+            b'\x30\x1e\x01\x01\x01\x02\x01\xf9\x03\x02\x05\x80\x04\x02\x31\x32'
+            b'\x05\x00\x06\x02\x2b\x02\x0a\x01\x01\x30\x00\x16\x03\x66\x6f\x6f'
+        )
 
         def encode():
             cmplx.encode('AllUniversalTypes', decoded_message)
@@ -659,8 +879,8 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         decoded = rfc5280.decode('Certificate', encoded_message)
         self.assertEqual(decoded, decoded_message)
-        # Do not include the optional version member, which have a
-        # default value.
+        # Do not include the version member, which have a default
+        # value (is this correct?).
         del decoded_message['tbsCertificate']['version']
         encoded = rfc5280.encode('Certificate', decoded_message)
         self.assertEqual(encoded, encoded_message)
@@ -1246,8 +1466,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
             }
         }
         encoded_message = (
-            b'\xef\x0b\x65\x02\x82\x00\x6a\x05\xa0\x00\x81'
-            b'\x01\x22'
+            b'\xef\x0b\x65\x02\x82\x00\x6a\x05\xa0\x00\x81\x01\x22'
         )
 
         encoded = zforce.encode('ProtocolMessage', decoded_message)
@@ -1330,7 +1549,6 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         encoded = bar.encode('GetRequest', decoded_message)
         self.assertEqual(encoded, encoded_message)
-
         decoded = bar.decode('GetRequest', encoded)
         self.assertEqual(decoded, decoded_message)
 
@@ -1345,7 +1563,6 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         encoded = bar.encode('GetRequest', decoded_message)
         self.assertEqual(encoded, encoded_message)
-
         decoded = bar.decode('GetRequest', encoded)
         self.assertEqual(decoded, decoded_message)
 
