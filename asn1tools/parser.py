@@ -157,7 +157,8 @@ def convert_type(tokens):
     elif tokens[0:3] == ['ANY', 'DEFINED', 'BY']:
         converted_type = {
             'type': 'ANY DEFINED BY',
-            'value': tokens[3]
+            'value': tokens[3],
+            'choices': {}
         }
     else:
         converted_type = {'type': tokens[0]}

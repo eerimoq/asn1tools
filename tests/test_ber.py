@@ -799,7 +799,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
                         [{'type': '2.5.4.11', 'value': b'\x13\x0fWebCert Support'}],
                         [{'type': '2.5.4.3', 'value': b'\x13\x0fFrank4DD Web CA'}],
                         [{'type': '1.2.840.113549.1.9.1',
-                          'value': b'\x16\x14support@frank4dd.com'}]]},
+                          'value': b'\x16\x14support@frank4dd.com'}]
+                    ]
+                },
                 'validity': {
                     'notAfter': {'utcTime': '170821052654'},
                     'notBefore': {'utcTime': '120822052654'}
@@ -809,11 +811,14 @@ class Asn1ToolsBerTest(unittest.TestCase):
                         [{'type': '2.5.4.6', 'value': b'\x13\x02JP'}],
                         [{'type': '2.5.4.8', 'value': b'\x0c\x05Tokyo'}],
                         [{'type': '2.5.4.10', 'value': b'\x0c\x08Frank4DD'}],
-                        [{'type': '2.5.4.3', 'value': b'\x0c\x0fwww.example.com'}]]},
+                        [{'type': '2.5.4.3', 'value': b'\x0c\x0fwww.example.com'}]
+                    ]
+                },
                 'subjectPublicKeyInfo': {
                     'algorithm': {
                         'algorithm': '1.2.840.113549.1.1.1',
-                        'parameters': b'\x05\x00'},
+                        'parameters': b'\x05\x00'
+                    },
                     'subjectPublicKey': (b'0H\x02A\x00\x9b\xfcf\x90y\x84B\xbb'
                                          b'\xab\x13\xfd+{\xf8\xde\x15\x12\xe5'
                                          b'\xf1\x93\xe3\x06\x8a{\xb8\xb1\xe1'
@@ -1564,6 +1569,55 @@ class Asn1ToolsBerTest(unittest.TestCase):
         encoded = bar.encode('GetRequest', decoded_message)
         self.assertEqual(encoded, encoded_message)
         decoded = bar.decode('GetRequest', encoded)
+        self.assertEqual(decoded, decoded_message)
+
+    def test_any_defined_by(self):
+        choices = {
+            0: {'optional': False, 'type': 'NULL'},
+            1: {'optional': False, 'type': 'INTEGER'}
+        }
+
+        spec = '''
+        Foo DEFINITIONS ::=
+
+        BEGIN
+
+        Fie ::= SEQUENCE {
+            bar INTEGER,
+            fum ANY DEFINED BY bar
+        }
+
+        END
+        '''
+
+        foo_dict = asn1tools.parse_string(spec)
+        foo_dict['Foo']['types']['Fie']['members'][1]['choices'] = choices
+        foo = asn1tools.compile_dict(foo_dict)
+
+        # Message 1.
+        decoded_message = {
+            'bar': 0,
+            'fum': None
+        }
+
+        encoded_message = b'\x30\x05\x02\x01\x00\x05\x00'
+
+        encoded = foo.encode('Fie', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = foo.decode('Fie', encoded)
+        self.assertEqual(decoded, decoded_message)
+
+        # Message 2.
+        decoded_message = {
+            'bar': 1,
+            'fum': 5
+        }
+
+        encoded_message = b'\x30\x06\x02\x01\x01\x02\x01\x05'
+
+        encoded = foo.encode('Fie', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = foo.decode('Fie', encoded)
         self.assertEqual(decoded, decoded_message)
 
 

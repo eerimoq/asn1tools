@@ -294,7 +294,10 @@ class Sequence(Type):
             name = member.name
 
             if name in data:
-                member.encode(data[name], encoded_members)
+                if isinstance(member, AnyDefinedBy):
+                    member.encode(data[name], encoded_members, data)
+                else:
+                    member.encode(data[name], encoded_members)
             elif member.optional:
                 pass
             elif member.default is None:
@@ -320,8 +323,10 @@ class Sequence(Type):
 
         for member in self.members:
             try:
-                value, offset = member.decode(data, offset)
-
+                if isinstance(member, AnyDefinedBy):
+                    value, offset = member.decode(data, offset, values)
+                else:
+                    value, offset = member.decode(data, offset)
             except (DecodeError, IndexError) as e:
                 if member.optional:
                     continue
@@ -365,7 +370,10 @@ class Set(Type):
             name = member.name
 
             if name in data:
-                member.encode(data[name], encoded_members)
+                if isinstance(member, AnyDefinedBy):
+                    member.encode(data[name], encoded_members, data)
+                else:
+                    member.encode(data[name], encoded_members)
             elif member.optional:
                 pass
             elif member.default is None:
@@ -391,8 +399,10 @@ class Set(Type):
 
         for member in self.members:
             try:
-                value, offset = member.decode(data, offset)
-
+                if isinstance(member, AnyDefinedBy):
+                    value, offset = member.decode(data, offset, values)
+                else:
+                    value, offset = member.decode(data, offset)
             except (DecodeError, IndexError) as e:
                 if member.optional:
                     continue
@@ -881,6 +891,38 @@ class Any(Type):
         return 'Any({})'.format(self.name)
 
 
+class AnyDefinedBy(Type):
+
+    def __init__(self, name, type_member, choices):
+        super(AnyDefinedBy, self).__init__(name,
+                                           'ANY DEFINED BY',
+                                           None,
+                                           None)
+        self.type_member = type_member
+        self.choices = choices
+
+    def encode(self, data, encoded, values):
+        try:
+            self.choices[values[self.type_member]].encode(data, encoded)
+        except KeyError:
+            encoded.extend(data)
+
+    def decode(self, data, offset, values):
+        try:
+            return self.choices[values[self.type_member]].decode(data,
+                                                                 offset)
+        except KeyError:
+            start = offset
+            _, _, offset = decode_tag(data, offset)
+            length, offset = decode_length_definite(data, offset)
+            end = offset + length
+
+            return data[start:end], end
+
+    def __repr__(self):
+        return 'AnyDefinedBy({})'.format(self.name)
+
+
 class Enumerated(Type):
 
     def __init__(self, name, values):
@@ -1035,7 +1077,16 @@ class Compiler(object):
         elif type_descriptor['type'] == 'ANY':
             compiled = Any(name)
         elif type_descriptor['type'] == 'ANY DEFINED BY':
-            compiled = Any(name)
+            choices = {}
+
+            for key, value in type_descriptor['choices'].items():
+                choices[key] = self.compile_type(key,
+                                                 value,
+                                                 module_name)
+
+            compiled = AnyDefinedBy(name,
+                                    type_descriptor['value'],
+                                    choices)
         elif type_descriptor['type'] == 'NULL':
             compiled = Null(name)
         else:
