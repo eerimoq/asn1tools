@@ -44,4 +44,8 @@ Teletexstring ::= TeletexString
 
 Utctime ::= UTCTime
 
+SequenceOf ::= SEQUENCE OF INTEGER
+
+SetOf ::= SET OF INTEGER
+
 END

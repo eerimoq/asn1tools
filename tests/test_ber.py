@@ -1023,6 +1023,8 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(all_types.encode('Teletexstring', b'fum'), b'\x14\x03fum')
         self.assertEqual(all_types.encode('Utctime', '010203040506'),
                          b'\x17\x0d010203040506Z')
+        self.assertEqual(all_types.encode('SequenceOf', []), b'0\x00')
+        self.assertEqual(all_types.encode('SetOf', []), b'1\x00')
 
     def test_decode_all_types(self):
         all_types = asn1tools.compile_file('tests/files/all_types.asn')
@@ -1050,6 +1052,8 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(all_types.decode('Teletexstring', b'\x14\x03fum'), b'fum')
         self.assertEqual(all_types.decode('Utctime', b'\x17\x0d010203040506Z'),
                          '010203040506')
+        self.assertEqual(all_types.decode('SequenceOf', b'0\x00'), [])
+        self.assertEqual(all_types.decode('SetOf', b'1\x00'), [])
 
     def test_decode_all_types_errors(self):
         all_types = asn1tools.compile_file('tests/files/all_types.asn')
@@ -1189,6 +1193,22 @@ class Asn1ToolsBerTest(unittest.TestCase):
                          ': expected UTCTime with tag 0x17 but got '
                          '0xee at offset 0')
 
+        # SequenceOf.
+        # ToDo: Should raise a decode error.
+        with self.assertRaises(IndexError) as cm:
+            all_types.decode('SequenceOf', b'\xed')
+
+        self.assertEqual(str(cm.exception),
+                         'bytearray index out of range')
+
+        # SetOf.
+        # ToDo: Should raise a decode error.
+        with self.assertRaises(IndexError) as cm:
+            all_types.decode('SetOf', b'\xec')
+
+        self.assertEqual(str(cm.exception),
+                         'bytearray index out of range')
+
     def test_repr_all_types(self):
         all_types = asn1tools.compile_file('tests/files/all_types.asn')
 
@@ -1220,6 +1240,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(repr(all_types.types['Teletexstring']),
                          'TeletexString(Teletexstring)')
         self.assertEqual(repr(all_types.types['Utctime']), 'UTCTime(Utctime)')
+        self.assertEqual(repr(all_types.types['SequenceOf']),
+                         'SequenceOf(SequenceOf, Integer())')
+        self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
 
     def test_integer_explicit_tags(self):
         '''Test explicit tags on integers.

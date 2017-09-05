@@ -458,7 +458,7 @@ class OctetString(Type):
     def __init__(self, name):
         super(OctetString, self).__init__(name,
                                           'OCTET STRING',
-                                              Tag.OCTET_STRING)
+                                          Tag.OCTET_STRING)
 
     def encode(self, data, encoded):
         encoded.extend(self.tag)
