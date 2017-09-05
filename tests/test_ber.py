@@ -40,7 +40,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "sequence member 'id' not found in {'question': 'Is 1+1=3?'}")
+            "member 'id' not found in {'question': 'Is 1+1=3?'}")
 
     def test_complex(self):
         cmplx = asn1tools.compile_file('tests/files/complex.asn')
@@ -1571,7 +1571,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         decoded = bar.decode('GetRequest', encoded)
         self.assertEqual(decoded, decoded_message)
 
-    def test_any_defined_by(self):
+    def test_any_defined_by_integer(self):
         choices = {
             0: {'optional': False, 'type': 'NULL'},
             1: {'optional': False, 'type': 'INTEGER'}
@@ -1619,6 +1619,91 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(encoded, encoded_message)
         decoded = foo.decode('Fie', encoded)
         self.assertEqual(decoded, decoded_message)
+
+        # Message 3, key not found.
+        decoded_message = {
+            'bar': 2,
+            'fum': 5
+        }
+
+        encoded_message = b'\x30\x06\x02\x01\x02\x02\x01\x05'
+
+        with self.assertRaises(KeyError) as cm:
+            foo.encode('Fie', decoded_message)
+
+        self.assertEqual(str(cm.exception), "2")
+
+        with self.assertRaises(KeyError) as cm:
+            decoded = foo.decode('Fie', encoded_message)
+
+        self.assertEqual(str(cm.exception), "2")
+
+    def test_any_defined_by_object_identifier(self):
+        choices = {
+            '1.3.6.2':    {'optional': False, 'type': 'IA5String'},
+            '1.3.1000.7': {'optional': False, 'type': 'BOOLEAN'}
+        }
+
+        spec = '''
+        Foo DEFINITIONS ::=
+
+        BEGIN
+
+        Fie ::= SEQUENCE {
+            bar OBJECT IDENTIFIER,
+            fum ANY DEFINED BY bar
+        }
+
+        END
+        '''
+
+        foo_dict = asn1tools.parse_string(spec)
+        foo_dict['Foo']['types']['Fie']['members'][1]['choices'] = choices
+        foo = asn1tools.compile_dict(foo_dict)
+
+        # Message 1.
+        decoded_message = {
+            'bar': '1.3.6.2',
+            'fum': 'Hello!'
+        }
+
+        encoded_message = b'0\r\x06\x03+\x06\x02\x16\x06Hello!'
+
+        encoded = foo.encode('Fie', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = foo.decode('Fie', encoded)
+        self.assertEqual(decoded, decoded_message)
+
+        # Message 2.
+        decoded_message = {
+            'bar': '1.3.1000.7',
+            'fum': True
+        }
+
+        encoded_message = b'0\t\x06\x04+\x87h\x07\x01\x01\x01'
+
+        encoded = foo.encode('Fie', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = foo.decode('Fie', encoded)
+        self.assertEqual(decoded, decoded_message)
+
+        # Message 3, key not found.
+        decoded_message = {
+            'bar': '1.3.1000.8',
+            'fum': True
+        }
+
+        encoded_message = b'0\t\x06\x04+\x87h\x08\x01\x01\x01'
+
+        with self.assertRaises(KeyError) as cm:
+            foo.encode('Fie', decoded_message)
+
+        self.assertEqual(str(cm.exception), "'1.3.1000.8'")
+
+        with self.assertRaises(KeyError) as cm:
+            decoded = foo.decode('Fie', encoded_message)
+
+        self.assertEqual(str(cm.exception), "'1.3.1000.8'")
 
 
 if __name__ == '__main__':

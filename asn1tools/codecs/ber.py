@@ -274,18 +274,18 @@ class NumericString(Type):
         return 'NumericString({})'.format(self.name)
 
 
-class Sequence(Type):
+class MembersType(Type):
 
-    def __init__(self, name, members):
-        super(Sequence, self).__init__(name,
-                                       'SEQUENCE',
-                                       Tag.SEQUENCE,
-                                       Encoding.CONSTRUCTED)
+    def __init__(self, name, tag_name, tag, members):
+        super(MembersType, self).__init__(name,
+                                          tag_name,
+                                          tag,
+                                          Encoding.CONSTRUCTED)
         self.members = members
 
     def set_tag(self, number, flags):
-        super(Sequence, self).set_tag(number,
-                                      flags | Encoding.CONSTRUCTED)
+        super(MembersType, self).set_tag(number,
+                                         flags | Encoding.CONSTRUCTED)
 
     def encode(self, data, encoded):
         encoded_members = bytearray()
@@ -302,7 +302,7 @@ class Sequence(Type):
                 pass
             elif member.default is None:
                 raise EncodeError(
-                    "sequence member '{}' not found in {}".format(
+                    "member '{}' not found in {}".format(
                         name,
                         data))
 
@@ -345,165 +345,81 @@ class Sequence(Type):
         return values, offset
 
     def __repr__(self):
-        return 'Sequence({}, [{}])'.format(
+        return '{}({}, [{}])'.format(
+            self.__class__.__name__,
             self.name,
             ', '.join([repr(member) for member in self.members]))
 
 
-class Set(Type):
+class Sequence(MembersType):
 
     def __init__(self, name, members):
-        super(Set, self).__init__(name,
-                                  'SET',
-                                  Tag.SET,
-                                  Encoding.CONSTRUCTED)
-        self.members = members
+        super(Sequence, self).__init__(name, 'SEQUENCE', Tag.SEQUENCE, members)
+
+
+class Set(MembersType):
+
+    def __init__(self, name, members):
+        super(Set, self).__init__(name, 'SET', Tag.SET, members)
+
+
+class ArrayType(Type):
+
+    def __init__(self, name, tag_name, tag, element_type):
+        super(ArrayType, self).__init__(name,
+                                        tag_name,
+                                        tag,
+                                        Encoding.CONSTRUCTED)
+        self.element_type = element_type
 
     def set_tag(self, number, flags):
-        super(Set, self).set_tag(number,
-                                 flags | Encoding.CONSTRUCTED)
+        super(ArrayType, self).set_tag(number,
+                                       flags | Encoding.CONSTRUCTED)
 
     def encode(self, data, encoded):
-        encoded_members = bytearray()
+        encoded_elements = bytearray()
 
-        for member in self.members:
-            name = member.name
-
-            if name in data:
-                if isinstance(member, AnyDefinedBy):
-                    member.encode(data[name], encoded_members, data)
-                else:
-                    member.encode(data[name], encoded_members)
-            elif member.optional:
-                pass
-            elif member.default is None:
-                raise EncodeError(
-                    "set member '{}' not found in {}".format(
-                        name,
-                        data))
+        for entry in data:
+            self.element_type.encode(entry, encoded_elements)
 
         encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(encoded_members)))
-        encoded.extend(encoded_members)
+        encoded.extend(encode_length_definite(len(encoded_elements)))
+        encoded.extend(encoded_elements)
 
     def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
+        offset += 1
+        length, offset = decode_length_definite(data, offset)
+        decoded = []
+        start_offset = offset
 
-        if data[offset] == 0x80:
-            raise NotImplementedError(
-                'decode until an end-of-contents tag is found')
-        else:
-            _, offset = decode_length_definite(data, offset)
+        while (offset - start_offset) < length:
+            decoded_element, offset = self.element_type.decode(data, offset)
+            decoded.append(decoded_element)
 
-        values = {}
-
-        for member in self.members:
-            try:
-                if isinstance(member, AnyDefinedBy):
-                    value, offset = member.decode(data, offset, values)
-                else:
-                    value, offset = member.decode(data, offset)
-            except (DecodeError, IndexError) as e:
-                if member.optional:
-                    continue
-
-                if member.default is None:
-                    if isinstance(e, IndexError):
-                        e = DecodeError('out of data at offset {}'.format(offset))
-
-                    e.location.append(member.name)
-                    raise e
-
-                value = member.default
-
-            values[member.name] = value
-
-        return values, offset
+        return decoded, offset
 
     def __repr__(self):
-        return 'Set({}, [{}])'.format(
-            self.name,
-            ', '.join([repr(member) for member in self.members]))
+        return '{}({}, {})'.format(self.__class__.__name__,
+                                   self.name,
+                                   self.element_type)
 
 
-class SequenceOf(Type):
+class SequenceOf(ArrayType):
 
     def __init__(self, name, element_type):
         super(SequenceOf, self).__init__(name,
                                          'SEQUENCE OF',
                                          Tag.SEQUENCE,
-                                         Encoding.CONSTRUCTED)
-        self.element_type = element_type
-
-    def set_tag(self, number, flags):
-        super(SequenceOf, self).set_tag(number,
-                                        flags | Encoding.CONSTRUCTED)
-
-    def encode(self, data, encoded):
-        encoded_elements = bytearray()
-
-        for entry in data:
-            self.element_type.encode(entry, encoded_elements)
-
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(encoded_elements)))
-        encoded.extend(encoded_elements)
-
-    def decode(self, data, offset):
-        offset += 1
-        length, offset = decode_length_definite(data, offset)
-        decoded = []
-        start_offset = offset
-
-        while (offset - start_offset) < length:
-            decoded_element, offset = self.element_type.decode(data, offset)
-            decoded.append(decoded_element)
-
-        return decoded, offset
-
-    def __repr__(self):
-        return 'SequenceOf({}, {})'.format(self.name,
-                                           self.element_type)
+                                         element_type)
 
 
-class SetOf(Type):
+class SetOf(ArrayType):
 
     def __init__(self, name, element_type):
         super(SetOf, self).__init__(name,
                                     'SET OF',
                                     Tag.SET,
-                                    Encoding.CONSTRUCTED)
-        self.element_type = element_type
-
-    def set_tag(self, number, flags):
-        super(SetOf, self).set_tag(number,
-                                   flags | Encoding.CONSTRUCTED)
-
-    def encode(self, data, encoded):
-        encoded_elements = bytearray()
-
-        for entry in data:
-            self.element_type.encode(entry, encoded_elements)
-
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(encoded_elements)))
-        encoded.extend(encoded_elements)
-
-    def decode(self, data, offset):
-        offset += 1
-        length, offset = decode_length_definite(data, offset)
-        decoded = []
-        start_offset = offset
-
-        while (offset - start_offset) < length:
-            decoded_element, offset = self.element_type.decode(data, offset)
-            decoded.append(decoded_element)
-
-        return decoded, offset
-
-    def __repr__(self):
-        return 'SetOf({}, {})'.format(self.name,
-                                      self.element_type)
+                                    element_type)
 
 
 class BitString(Type):
@@ -902,16 +818,16 @@ class AnyDefinedBy(Type):
         self.choices = choices
 
     def encode(self, data, encoded, values):
-        try:
+        if self.choices:
             self.choices[values[self.type_member]].encode(data, encoded)
-        except KeyError:
+        else:
             encoded.extend(data)
 
     def decode(self, data, offset, values):
-        try:
+        if self.choices:
             return self.choices[values[self.type_member]].decode(data,
                                                                  offset)
-        except KeyError:
+        else:
             start = offset
             _, _, offset = decode_tag(data, offset)
             length, offset = decode_length_definite(data, offset)
