@@ -780,7 +780,24 @@ class Asn1ToolsBerTest(unittest.TestCase):
         print('{} ms per decode call.'.format(round(ms_per_call, 3)))
 
     def test_rfc5280(self):
-        rfc5280 = asn1tools.compile_file('tests/files/rfc5280.asn')
+        any_defined_by_choices = {
+            ('PKIX1Explicit88', 'AlgorithmIdentifier', 'parameters'): {
+                '1.2.840.113549.1.1.1': 'NULL',
+                '1.2.840.113549.1.1.5': 'NULL'
+            },
+            ('PKIX1Explicit88', 'AttributeValue'): {
+                '2.5.4.3': 'DirectoryString',
+                '2.5.4.6': 'PrintableString',
+                '2.5.4.7': 'PrintableString',
+                '2.5.4.8': 'DirectoryString',
+                '2.5.4.10': 'DirectoryString',
+                '2.5.4.11': 'PrintableString',
+                '1.2.840.113549.1.9.1': 'IA5String'
+            }
+        }
+
+        rfc5280 = asn1tools.compile_file('tests/files/rfc5280.asn',
+                                         any_defined_by_choices=any_defined_by_choices)
 
         decoded_message = {
             'tbsCertificate': {
@@ -788,18 +805,21 @@ class Asn1ToolsBerTest(unittest.TestCase):
                 'serialNumber': 3578,
                 'signature': {
                     'algorithm': '1.2.840.113549.1.1.5',
-                    'parameters': b'\x05\x00'
+                    'parameters': None
                 },
                 'issuer': {
                     'rdnSequence': [
-                        [{'type': '2.5.4.6', 'value': b'\x13\x02JP'}],
-                        [{'type': '2.5.4.8', 'value': b'\x13\x05Tokyo'}],
-                        [{'type': '2.5.4.7', 'value': b'\x13\x07Chuo-ku'}],
-                        [{'type': '2.5.4.10', 'value': b'\x13\x08Frank4DD'}],
-                        [{'type': '2.5.4.11', 'value': b'\x13\x0fWebCert Support'}],
-                        [{'type': '2.5.4.3', 'value': b'\x13\x0fFrank4DD Web CA'}],
+                        [{'type': '2.5.4.6', 'value': 'JP'}],
+                        [{'type': '2.5.4.8',
+                          'value': {'printableString': 'Tokyo'}}],
+                        [{'type': '2.5.4.7', 'value': 'Chuo-ku'}],
+                        [{'type': '2.5.4.10',
+                          'value': {'printableString': 'Frank4DD'}}],
+                        [{'type': '2.5.4.11', 'value': 'WebCert Support'}],
+                        [{'type': '2.5.4.3',
+                          'value': {'printableString': 'Frank4DD Web CA'}}],
                         [{'type': '1.2.840.113549.1.9.1',
-                          'value': b'\x16\x14support@frank4dd.com'}]
+                          'value': 'support@frank4dd.com'}]
                     ]
                 },
                 'validity': {
@@ -808,16 +828,18 @@ class Asn1ToolsBerTest(unittest.TestCase):
                 },
                 'subject': {
                     'rdnSequence': [
-                        [{'type': '2.5.4.6', 'value': b'\x13\x02JP'}],
-                        [{'type': '2.5.4.8', 'value': b'\x0c\x05Tokyo'}],
-                        [{'type': '2.5.4.10', 'value': b'\x0c\x08Frank4DD'}],
-                        [{'type': '2.5.4.3', 'value': b'\x0c\x0fwww.example.com'}]
+                        [{'type': '2.5.4.6', 'value': 'JP'}],
+                        [{'type': '2.5.4.8', 'value': {'utf8String': 'Tokyo'}}],
+                        [{'type': '2.5.4.10',
+                          'value': {'utf8String': 'Frank4DD'}}],
+                        [{'type': '2.5.4.3',
+                          'value': {'utf8String': 'www.example.com'}}]
                     ]
                 },
                 'subjectPublicKeyInfo': {
                     'algorithm': {
                         'algorithm': '1.2.840.113549.1.1.1',
-                        'parameters': b'\x05\x00'
+                        'parameters': None
                     },
                     'subjectPublicKey': (b'0H\x02A\x00\x9b\xfcf\x90y\x84B\xbb'
                                          b'\xab\x13\xfd+{\xf8\xde\x15\x12\xe5'
@@ -832,7 +854,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
             },
             'signatureAlgorithm': {
                 'algorithm': '1.2.840.113549.1.1.5',
-                'parameters': b'\x05\x00'
+                'parameters': None
             },
             'signature': (b'\x14\xb6L\xbb\x81y3\xe6q\xa4\xdaQo\xcb\x08\x1d'
                           b'\x8d`\xec\xbc\x18\xc7sGY\xb1\xf2 H\xbba\xfa'
@@ -1595,15 +1617,8 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(decoded, decoded_message)
 
     def test_any_defined_by_integer(self):
-        choices = {
-            0: {'optional': False, 'type': 'NULL'},
-            1: {'optional': False, 'type': 'INTEGER'}
-        }
-
         spec = '''
-        Foo DEFINITIONS ::=
-
-        BEGIN
+        Foo DEFINITIONS ::= BEGIN
 
         Fie ::= SEQUENCE {
             bar INTEGER,
@@ -1613,9 +1628,16 @@ class Asn1ToolsBerTest(unittest.TestCase):
         END
         '''
 
-        foo_dict = asn1tools.parse_string(spec)
-        foo_dict['Foo']['types']['Fie']['members'][1]['choices'] = choices
-        foo = asn1tools.compile_dict(foo_dict)
+        any_defined_by_choices = {
+            ('Foo', 'Fie', 'fum'): {
+                0: 'NULL',
+                1: 'INTEGER'
+            }
+        }
+
+        foo = asn1tools.compile_string(
+            spec,
+            any_defined_by_choices=any_defined_by_choices)
 
         # Message 1.
         decoded_message = {
@@ -1662,15 +1684,8 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(str(cm.exception), "2")
 
     def test_any_defined_by_object_identifier(self):
-        choices = {
-            '1.3.6.2':    {'optional': False, 'type': 'IA5String'},
-            '1.3.1000.7': {'optional': False, 'type': 'BOOLEAN'}
-        }
-
         spec = '''
-        Foo DEFINITIONS ::=
-
-        BEGIN
+        Foo DEFINITIONS ::= BEGIN
 
         Fie ::= SEQUENCE {
             bar OBJECT IDENTIFIER,
@@ -1680,9 +1695,16 @@ class Asn1ToolsBerTest(unittest.TestCase):
         END
         '''
 
-        foo_dict = asn1tools.parse_string(spec)
-        foo_dict['Foo']['types']['Fie']['members'][1]['choices'] = choices
-        foo = asn1tools.compile_dict(foo_dict)
+        any_defined_by_choices = {
+            ('Foo', 'Fie', 'fum'): {
+                '1.3.6.2':    'IA5String',
+                '1.3.1000.7': 'BOOLEAN'
+            }
+        }
+
+        foo = asn1tools.compile_string(
+            spec,
+            any_defined_by_choices=any_defined_by_choices)
 
         # Message 1.
         decoded_message = {

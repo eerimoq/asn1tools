@@ -62,7 +62,7 @@ Attribute               ::= SEQUENCE {
 
 AttributeType           ::= OBJECT IDENTIFIER
 
-AttributeValue          ::= ANY -- DEFINED BY AttributeType
+AttributeValue          ::= ANY DEFINED BY type
 
 AttributeTypeAndValue   ::= SEQUENCE {
         type    AttributeType,

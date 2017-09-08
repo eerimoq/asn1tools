@@ -3,7 +3,7 @@ encode and decode types.
 
 """
 
-from .parser import parse_string
+from .parser import parse_string, convert_type_tokens
 from .codecs import ber, per
 
 
@@ -75,7 +75,37 @@ class Specification(object):
         return self._types[name].decode(data)
 
 
-def compile_dict(specification, codec='ber'):
+def _compile_any_defined_by_type(type_, choices):
+    type_['choices'] = {}
+
+    for key, value in choices.items():
+        tokens = ['Dummy', '::=', [], value, []]
+        type_['choices'][key] = convert_type_tokens(tokens)
+
+
+def _compile_any_defined_by_choices(specification,
+                                    any_defined_by_choices):
+    for location, choices in any_defined_by_choices.items():
+        module_name = location[0]
+        type_names = location[1:-1]
+        member_name = location[-1]
+        types = specification[module_name]['types']
+
+        if len(type_names) == 0:
+            _compile_any_defined_by_type(types[member_name], choices)
+        else:
+            for type_name in type_names:
+                types = types[type_name]
+
+            for member in types['members']:
+                if member['name'] != member_name:
+                    continue
+
+                _compile_any_defined_by_type(member, choices)
+                break
+
+
+def compile_dict(specification, codec='ber', any_defined_by_choices=None):
     """Compile given ASN.1 specification dictionary and return a
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec `codec`.
@@ -91,10 +121,14 @@ def compile_dict(specification, codec='ber'):
     else:
         raise ValueError('unsupported codec {}'.format(codec))
 
+    if any_defined_by_choices:
+        _compile_any_defined_by_choices(specification,
+                                        any_defined_by_choices)
+
     return Specification(codec.compile_dict(specification))
 
 
-def compile_string(string, codec='ber'):
+def compile_string(string, codec='ber', any_defined_by_choices=None):
     """Compile given ASN.1 specification string and return a
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec `codec`.
@@ -104,10 +138,12 @@ def compile_string(string, codec='ber'):
 
     """
 
-    return compile_dict(parse_string(string), codec)
+    return compile_dict(parse_string(string),
+                        codec,
+                        any_defined_by_choices)
 
 
-def compile_file(filename, codec='ber'):
+def compile_file(filename, codec='ber', any_defined_by_choices=None):
     """Compile given ASN.1 specification file and return a
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec `codec`.
@@ -117,4 +153,6 @@ def compile_file(filename, codec='ber'):
     """
 
     with open(filename, 'r') as fin:
-        return compile_string(fin.read(), codec)
+        return compile_string(fin.read(),
+                              codec,
+                              any_defined_by_choices)
