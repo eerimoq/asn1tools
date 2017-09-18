@@ -110,6 +110,10 @@ def libsnmp_encode_decode():
         encode_time = float('inf')
         decode_time = float('inf')
         print('Unable to import libsnmp.')
+    except SyntaxError:
+        encode_time = float('inf')
+        decode_time = float('inf')
+        print('Syntax error in libsnmp.')
 
     return encode_time, decode_time
 
