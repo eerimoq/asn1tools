@@ -76,10 +76,10 @@ def decode_length_definite(encoded, offset):
     if length <= 127:
         return length, offset
     else:
-        numder_of_bytes = (length & 0x7f)
-        length = decode_integer(encoded[offset:numder_of_bytes + offset])
+        number_of_bytes = (length & 0x7f)
+        length = decode_integer(encoded[offset:number_of_bytes + offset])
 
-        return length, offset + numder_of_bytes
+        return length, offset + number_of_bytes
 
 
 def decode_integer(data):
@@ -143,28 +143,28 @@ def decode_tag(_data, offset):
 
 class Type(object):
 
-    def __init__(self, name, type_name, numder, flags=0):
+    def __init__(self, name, type_name, number, flags=0):
         self.name = name
         self.type_name = type_name
 
-        if numder is None:
+        if number is None:
             self.tag = None
-        elif numder < 31:
-            self.tag = bytearray([flags | numder])
+        elif number < 31:
+            self.tag = bytearray([flags | number])
         else:
-            self.tag = bytearray([flags | 0x1f]) + encode_length_definite(numder)
+            self.tag = bytearray([flags | 0x1f]) + encode_length_definite(number)
 
         self.optional = None
         self.default = None
 
-    def set_tag(self, numder, flags):
+    def set_tag(self, number, flags):
         if not Class.APPLICATION & flags:
             flags |= Class.CONTEXT_SPECIFIC
 
-        if numder < 31:
-            self.tag = bytearray([flags | numder])
+        if number < 31:
+            self.tag = bytearray([flags | number])
         else:
-            self.tag = bytearray([flags | 0x1f]) + encode_length_definite(numder)
+            self.tag = bytearray([flags | 0x1f]) + encode_length_definite(number)
 
     def decode_tag(self, data, offset):
         end = offset + len(self.tag)
@@ -283,8 +283,8 @@ class MembersType(Type):
                                           Encoding.CONSTRUCTED)
         self.members = members
 
-    def set_tag(self, numder, flags):
-        super(MembersType, self).set_tag(numder,
+    def set_tag(self, number, flags):
+        super(MembersType, self).set_tag(number,
                                          flags | Encoding.CONSTRUCTED)
 
     def encode(self, data, encoded):
@@ -372,8 +372,8 @@ class ArrayType(Type):
                                         Encoding.CONSTRUCTED)
         self.element_type = element_type
 
-    def set_tag(self, numder, flags):
-        super(ArrayType, self).set_tag(numder,
+    def set_tag(self, number, flags):
+        super(ArrayType, self).set_tag(number,
                                        flags | Encoding.CONSTRUCTED)
 
     def encode(self, data, encoded):
@@ -430,24 +430,24 @@ class BitString(Type):
                                         Tag.BIT_STRING)
 
     def encode(self, data, encoded):
-        numder_of_unused_bits = (8 - (data[1] % 8))
+        number_of_unused_bits = (8 - (data[1] % 8))
 
-        if numder_of_unused_bits == 8:
-            numder_of_unused_bits = 0
+        if number_of_unused_bits == 8:
+            number_of_unused_bits = 0
 
         encoded.extend(self.tag)
         encoded.extend(encode_length_definite(len(data[0]) + 1))
-        encoded.append(numder_of_unused_bits)
+        encoded.append(number_of_unused_bits)
         encoded.extend(data[0])
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         end = offset + length
-        numder_of_bits = 8 * (length - 1) - data[offset]
+        number_of_bits = 8 * (length - 1) - data[offset]
         offset += 1
 
-        return (bytearray(data[offset:end]), numder_of_bits), end
+        return (bytearray(data[offset:end]), number_of_bits), end
 
     def __repr__(self):
         return 'BitString({})'.format(self.name)
@@ -723,8 +723,8 @@ class Choice(Type):
         super(Choice, self).__init__(name, 'CHOICE', None)
         self.members = members
 
-    def set_tag(self, numder, flags):
-        super(Choice, self).set_tag(numder,
+    def set_tag(self, number, flags):
+        super(Choice, self).set_tag(number,
                                     flags | Encoding.CONSTRUCTED)
 
     def encode(self, data, encoded):
@@ -877,8 +877,8 @@ class ExplicitTag(Type):
         super(ExplicitTag, self).__init__(name, 'Tag', None)
         self.inner = inner
 
-    def set_tag(self, numder, flags):
-        super(ExplicitTag, self).set_tag(numder,
+    def set_tag(self, number, flags):
+        super(ExplicitTag, self).set_tag(number,
                                          flags | Encoding.CONSTRUCTED)
 
     def encode(self, data, encoded):
@@ -1048,7 +1048,7 @@ class Compiler(object):
             else:
                 flags = 0
 
-            compiled.set_tag(tag['numder'], flags)
+            compiled.set_tag(tag['number'], flags)
 
         return compiled
 
