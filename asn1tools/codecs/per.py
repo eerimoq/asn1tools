@@ -584,11 +584,11 @@ class Null(Type):
     def __init__(self, name):
         super(Null, self).__init__(name, 'NULL')
 
-    def encode(self, _, encoder):
-        raise NotImplementedError()
+    def encode(self, _, _encoder):
+        pass
 
-    def decode(self, decoder):
-        raise NotImplementedError()
+    def decode(self, _):
+        return None
 
     def __repr__(self):
         return 'Null({})'.format(self.name)

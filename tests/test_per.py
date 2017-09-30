@@ -98,9 +98,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
                          b'\x04\x40')
         self.assertEqual(all_types.encode('Octetstring', b'\x00'),
                          b'\x01\x00')
-
-        with self.assertRaises(NotImplementedError):
-            all_types.encode('Null', None)
+        self.assertEqual(all_types.encode('Null', None), b'')
 
         with self.assertRaises(NotImplementedError):
             all_types.encode('Objectidentifier', '1.2')
@@ -150,9 +148,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
                          (b'\x40', 4))
         self.assertEqual(all_types.decode('Octetstring', b'\x01\x00'),
                          b'\x00')
-
-        with self.assertRaises(NotImplementedError):
-            all_types.decode('Null', b'\x05\x00')
+        self.assertEqual(all_types.decode('Null', b'\x05\x00'), None)
 
         with self.assertRaises(NotImplementedError):
             all_types.decode('Objectidentifier', b'\x06\x01\x2a')
