@@ -94,6 +94,19 @@ class Decoder(object):
 
         return bit
 
+    def read_integer(self, number_of_bits):
+        '''Read an integer value of given number of bits.
+
+        '''
+
+        value = 0
+
+        for _ in range(number_of_bits):
+            value <<= 1
+            value |= self.read_bit()
+
+        return value
+
     def read_bytes(self, number_of_bytes):
         '''Read given number of bytes.
 
@@ -628,7 +641,9 @@ class Enumerated(Type):
                 [value for value in self.values.values()]))
 
     def decode(self, decoder):
-        raise NotImplementedError()
+        value = decoder.read_integer(self.number_of_bits)
+
+        return self.values[value]
 
     def __repr__(self):
         return 'Null({})'.format(self.name)

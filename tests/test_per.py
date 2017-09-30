@@ -153,8 +153,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             all_types.decode('Objectidentifier', b'\x06\x01\x2a')
 
-        with self.assertRaises(NotImplementedError):
-            all_types.decode('Enumerated', b'\x0a\x01\x01')
+        self.assertEqual(all_types.decode('Enumerated', b'\x80'), 'one')
 
         with self.assertRaises(NotImplementedError):
             all_types.decode('Utf8string', b'\x0c\x03foo')
