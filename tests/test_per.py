@@ -99,10 +99,10 @@ class Asn1ToolsPerTest(unittest.TestCase):
         self.assertEqual(all_types.encode('Octetstring', b'\x00'),
                          b'\x01\x00')
         self.assertEqual(all_types.encode('Null', None), b'')
-
-        with self.assertRaises(NotImplementedError):
-            all_types.encode('Objectidentifier', '1.2')
-
+        self.assertEqual(all_types.encode('Objectidentifier', '1.2'),
+                         b'\x01\x2a')
+        self.assertEqual(all_types.encode('Objectidentifier', '1.2.333'),
+                         b'\x03\x2a\x82\x4d')
         self.assertEqual(all_types.encode('Enumerated', 'one'), b'\x80')
 
         with self.assertRaises(NotImplementedError):
@@ -149,10 +149,10 @@ class Asn1ToolsPerTest(unittest.TestCase):
         self.assertEqual(all_types.decode('Octetstring', b'\x01\x00'),
                          b'\x00')
         self.assertEqual(all_types.decode('Null', b'\x05\x00'), None)
-
-        with self.assertRaises(NotImplementedError):
-            all_types.decode('Objectidentifier', b'\x06\x01\x2a')
-
+        self.assertEqual(all_types.decode('Objectidentifier', b'\x01\x2a'),
+                         '1.2')
+        self.assertEqual(all_types.decode('Objectidentifier', b'\x03\x2a\x82\x4d'),
+                         '1.2.333')
         self.assertEqual(all_types.decode('Enumerated', b'\x80'), 'one')
 
         with self.assertRaises(NotImplementedError):
