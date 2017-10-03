@@ -4,7 +4,7 @@ encode and decode types.
 """
 
 from .parser import parse_string, convert_type_tokens
-from .codecs import ber, der, per
+from .codecs import ber, der, per, uper
 
 
 class Specification(object):
@@ -120,6 +120,8 @@ def compile_dict(specification, codec='ber', any_defined_by_choices=None):
         codec = der
     elif codec == 'per':
         codec = per
+    elif codec == 'uper':
+        codec = uper
     else:
         raise ValueError('unsupported codec {}'.format(codec))
 
