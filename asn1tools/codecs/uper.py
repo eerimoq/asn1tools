@@ -376,14 +376,12 @@ class BitString(Type):
         self.size = size
 
     def encode(self, data, encoder):
-        raise NotImplementedError()
         if self.size is None:
             encoder.append_bytes(bytearray([data[1]]) + data[0])
         else:
             encoder.append_bits(*data)
 
     def decode(self, decoder):
-        raise NotImplementedError()
         number_of_bits = decoder.read_bytes(1)[0]
 
         return (decoder.read_bytes((number_of_bits + 7) // 8), number_of_bits)
@@ -398,11 +396,9 @@ class OctetString(Type):
         super(OctetString, self).__init__(name, 'OCTET STRING')
 
     def encode(self, data, encoder):
-        raise NotImplementedError()
         encoder.append_bytes(bytearray([len(data)]) + data)
 
     def decode(self, decoder):
-        raise NotImplementedError()
         length = decoder.read_bytes(1)[0]
 
         return decoder.read_bytes(length)
@@ -598,7 +594,6 @@ class Choice(Type):
         self.number_of_bits = len('{:b}'.format(len(members) - 1))
 
     def encode(self, data, encoder):
-        raise NotImplementedError()
         for i, member in enumerate(self.members):
             if member.name in data:
                 if len(self.members) > 1:
@@ -613,7 +608,6 @@ class Choice(Type):
                 ''.join([name for name in data])))
 
     def decode(self, data, offset):
-        raise NotImplementedError()
         for member in self.members:
             if isinstance(member, Choice):
                 try:
