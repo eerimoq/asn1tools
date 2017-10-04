@@ -92,8 +92,20 @@ class Asn1ToolsPerTest(unittest.TestCase):
 
         self.assertEqual(all_types.encode('Boolean', True), b'\x80')
         self.assertEqual(all_types.encode('Boolean', False), b'\x00')
-        self.assertEqual(all_types.encode('Integer', 2), b'\x01\x02')
+        self.assertEqual(all_types.encode('Integer', 32768), b'\x03\x00\x80\x00')
+        self.assertEqual(all_types.encode('Integer', 32767), b'\x02\x7f\xff')
+        self.assertEqual(all_types.encode('Integer', 256), b'\x02\x01\x00')
         self.assertEqual(all_types.encode('Integer', 255), b'\x02\x00\xff')
+        self.assertEqual(all_types.encode('Integer', 128), b'\x02\x00\x80')
+        self.assertEqual(all_types.encode('Integer', 127), b'\x01\x7f')
+        self.assertEqual(all_types.encode('Integer', 1), b'\x01\x01')
+        self.assertEqual(all_types.encode('Integer', 0), b'\x01\x00')
+        self.assertEqual(all_types.encode('Integer', -1), b'\x01\xff')
+        self.assertEqual(all_types.encode('Integer', -128), b'\x01\x80')
+        self.assertEqual(all_types.encode('Integer', -129), b'\x02\xff\x7f')
+        self.assertEqual(all_types.encode('Integer', -256), b'\x02\xff\x00')
+        self.assertEqual(all_types.encode('Integer', -32768), b'\x02\x80\x00')
+        self.assertEqual(all_types.encode('Integer', -32769), b'\x03\xff\x7f\xff')
         self.assertEqual(all_types.encode('Bitstring', (b'\x40', 4)),
                          b'\x04\x40')
         self.assertEqual(all_types.encode('Octetstring', b'\x00'),
@@ -103,7 +115,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
                          b'\x01\x2a')
         self.assertEqual(all_types.encode('Objectidentifier', '1.2.333'),
                          b'\x03\x2a\x82\x4d')
-        self.assertEqual(all_types.encode('Enumerated', 'one'), b'\x80')
+        self.assertEqual(all_types.encode('Enumerated', 'one'), b'\x00')
 
         with self.assertRaises(NotImplementedError):
             all_types.encode('Utf8string', 'foo')
@@ -153,7 +165,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
                          '1.2')
         self.assertEqual(all_types.decode('Objectidentifier', b'\x03\x2a\x82\x4d'),
                          '1.2.333')
-        self.assertEqual(all_types.decode('Enumerated', b'\x80'), 'one')
+        self.assertEqual(all_types.decode('Enumerated', b'\x00'), 'one')
 
         with self.assertRaises(NotImplementedError):
             all_types.decode('Utf8string', b'\x0c\x03foo')

@@ -123,10 +123,16 @@ def encode_signed_integer(data):
 
     if data < 0:
         data *= -1
+        data -= 1
+        carry = not data
 
         while data > 0:
-            encoded.append(256 - (data & 0xff))
+            encoded.append((data & 0xff) ^ 0xff)
+            carry = (data & 0x80)
             data >>= 8
+
+        if carry:
+            encoded.append(0xff)
     elif data > 0:
         while data > 0:
             encoded.append(data & 0xff)
@@ -647,12 +653,15 @@ class Enumerated(Type):
     def __init__(self, name, values):
         super(Enumerated, self).__init__(name, 'ENUMERATED')
         self.values = values
-        self.number_of_bits = len('{:b}'.format(max(values.keys())))
+        self.lowest_value = min(values)
+        highest_value = max(values.keys()) - self.lowest_value
+        self.number_of_bits = len('{:b}'.format(highest_value))
 
     def encode(self, data, encoder):
         for value, name in self.values.items():
             if data == name:
-                encoder.append_integer(value, self.number_of_bits)
+                encoder.append_integer(value - self.lowest_value,
+                                       self.number_of_bits)
                 return
 
         raise EncodeError(
@@ -663,10 +672,10 @@ class Enumerated(Type):
     def decode(self, decoder):
         value = decoder.read_integer(self.number_of_bits)
 
-        return self.values[value]
+        return self.values[value + self.lowest_value]
 
     def __repr__(self):
-        return 'Null({})'.format(self.name)
+        return 'Enumerated({})'.format(self.name)
 
 
 class ExplicitTag(Type):
