@@ -114,16 +114,17 @@ def compile_dict(specification, codec='ber', any_defined_by_choices=None):
 
     """
 
-    if codec == 'ber':
-        codec = ber
-    elif codec == 'der':
-        codec = der
-    elif codec == 'per':
-        codec = per
-    elif codec == 'uper':
-        codec = uper
-    else:
-        raise ValueError('unsupported codec {}'.format(codec))
+    codecs = {
+        'ber': ber,
+        'der': der,
+        'per': per,
+        'uper': uper
+    }
+
+    try:
+        codec = codecs[codec]
+    except KeyError:
+        raise ValueError("unsupported codec '{}'".format(codec))
 
     if any_defined_by_choices:
         _compile_any_defined_by_choices(specification,

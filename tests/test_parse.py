@@ -1,5 +1,4 @@
 import sys
-import logging
 import unittest
 
 import asn1tools
