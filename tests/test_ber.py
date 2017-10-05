@@ -152,9 +152,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         # Message 4.
         decoded_message = {
-            'message':{
-                'c1':{
-                    'systemInformation':{
+            'message': {
+                'c1': {
+                    'systemInformation': {
                         'criticalExtensions': {
                             'systemInformation-r8': {
                                 'sib-TypeAndInfo': [
