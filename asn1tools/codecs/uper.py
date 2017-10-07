@@ -45,17 +45,21 @@ class Encoder(object):
         for i in range(number_of_bits):
             self.append_bit((value >> (number_of_bits - i - 1)) & 0x1)
 
-    def append_bytes(self, data):
+    def append_bytes(self, data, align=False):
         '''Append given data aligned to a byte boundary.
 
         '''
 
-        if self.index != 7:
-            self.buf.append(self.byte)
-            self.byte = 0
-            self.index = 7
 
-        self.buf.extend(data)
+        if align:
+            if self.index != 7:
+                self.buf.append(self.byte)
+                self.byte = 0
+                self.index = 7
+
+            self.buf.extend(data)
+        else:
+            self.append_bits(data, 8 * len(data))
 
     def as_bytearray(self):
         '''Return the bits as a bytearray.
@@ -174,11 +178,22 @@ class Type(object):
 
 class Integer(Type):
 
-    def __init__(self, name):
+    def __init__(self, name, minimum, maximum):
         super(Integer, self).__init__(name, 'INTEGER')
+        self.minimum = minimum
+        self.maximum = maximum
+
+        if minimum is None and maximum is None:
+            self.number_of_bits = None
+        else:
+            size = self.maximum - self.minimum
+            self.number_of_bits = len('{:b}'.format(size))
 
     def encode(self, data, encoder):
-        encoder.append_bytes(encode_signed_integer(data))
+        if self.number_of_bits is None:
+            encoder.append_bytes(encode_signed_integer(data))
+        else:
+            encoder.append_integer(data - self.minimum, self.number_of_bits)
 
     def decode(self, decoder):
         length = decoder.read_bytes(1)[0]
@@ -245,26 +260,41 @@ class NumericString(Type):
 
 class Sequence(Type):
 
-    def __init__(self, name, members):
+    def __init__(self, name, members, extension):
         super(Sequence, self).__init__(name, 'SEQUENCE')
         self.members = members
-        self.optionals = [member.name
-                          for member in members
-                          if member.optional]
+        self.extension = extension
+        self.optionals = [
+            member
+            for member in members
+            if member.optional or member.default is not None
+        ]
 
     def encode(self, data, encoder):
+        if self.extension is not None:
+            if len(self.extension) == 0:
+                encoder.append_bit(0)
+            else:
+                raise NotImplementedError()
+
         for optional in self.optionals:
-            encoder.append_bit(optional in data)
+            if optional.optional:
+                encoder.append_bit(optional.name in data)
+            elif optional.name in data:
+                encoder.append_bit(data[optional.name] != optional.default)
+            else:
+                encoder.append_bit(0)
 
         for member in self.members:
             name = member.name
 
             if name in data:
-                member.encode(data[name], encoder)
+                if member.default is None:
+                    member.encode(data[name], encoder)
+                elif data[name] != member.default:
+                    member.encode(data[name], encoder)
             elif member.optional:
                 pass
-            elif member.default is not None:
-                member.encode(member.default, encoder)
             else:
                 raise EncodeError(
                     "Sequence member '{}' not found in {}.".format(
@@ -273,9 +303,10 @@ class Sequence(Type):
 
     def decode(self, decoder):
         values = {}
-
-        optionals = {optional: decoder.read_bit()
-                     for optional in self.optionals}
+        optionals = {
+            optional: decoder.read_bit()
+            for optional in self.optionals
+        }
 
         for member in self.members:
             if not optionals.get(member.name, True):
@@ -309,9 +340,10 @@ class Sequence(Type):
 
 class Set(Type):
 
-    def __init__(self, name, members):
+    def __init__(self, name, members, extension):
         super(Set, self).__init__(name, 'SET')
         self.members = members
+        self.extension = extension
 
     def encode(self, data, encoder):
         raise NotImplementedError()
@@ -327,12 +359,24 @@ class Set(Type):
 
 class SequenceOf(Type):
 
-    def __init__(self, name, element_type):
+    def __init__(self, name, element_type, minimum, maximum):
         super(SequenceOf, self).__init__(name, 'SEQUENCE OF')
         self.element_type = element_type
+        self.minimum = minimum
+        self.maximum = maximum
+
+        if minimum is None and maximum is None:
+            self.number_of_bits = None
+        else:
+            size = self.maximum - self.minimum
+            self.number_of_bits = len('{:b}'.format(size))
 
     def encode(self, data, encoder):
-        encoder.append_bytes(bytearray([len(data)]))
+        if self.number_of_bits is None:
+            raise NotImplementedError()
+        else:
+            encoder.append_integer(len(data) - self.minimum,
+                                   self.number_of_bits)
 
         for entry in data:
             self.element_type.encode(entry, encoder)
@@ -371,12 +415,15 @@ class SetOf(Type):
 
 class BitString(Type):
 
-    def __init__(self, name, size):
+    def __init__(self, name, minimum, maximum):
         super(BitString, self).__init__(name, 'BIT STRING')
-        self.size = size
+        self.minimum = minimum
+
+        if minimum != maximum:
+            raise NotImplementedError()
 
     def encode(self, data, encoder):
-        if self.size is None:
+        if self.minimum is None:
             encoder.append_bytes(bytearray([data[1]]) + data[0])
         else:
             encoder.append_bits(*data)
@@ -392,11 +439,25 @@ class BitString(Type):
 
 class OctetString(Type):
 
-    def __init__(self, name):
+    def __init__(self, name, minimum, maximum):
         super(OctetString, self).__init__(name, 'OCTET STRING')
+        self.minimum = minimum
+        self.maximum = maximum
+
+        if minimum is None and maximum is None:
+            self.number_of_bits = None
+        else:
+            size = self.maximum - self.minimum
+            self.number_of_bits = len('{:b}'.format(size))
 
     def encode(self, data, encoder):
-        encoder.append_bytes(bytearray([len(data)]) + data)
+        if self.number_of_bits is None:
+            encoder.append_bytes(bytearray([len(data)]) + data)
+        else:
+            if self.minimum != self.maximum:
+                encoder.append_integer(len(data) - 1, self.number_of_bits)
+
+            encoder.append_bytes(data, align=False)
 
     def decode(self, decoder):
         length = decoder.read_bytes(1)[0]
@@ -588,12 +649,19 @@ class ObjectIdentifier(Type):
 
 class Choice(Type):
 
-    def __init__(self, name, members):
+    def __init__(self, name, members, extension):
         super(Choice, self).__init__(name, 'CHOICE')
         self.members = members
+        self.extension = extension
         self.number_of_bits = len('{:b}'.format(len(members) - 1))
 
     def encode(self, data, encoder):
+        if self.extension is not None:
+            if len(self.extension) == 0:
+                encoder.append_bit(0)
+            else:
+                raise NotImplementedError()
+
         for i, member in enumerate(self.members):
             if member.name in data:
                 if len(self.members) > 1:
@@ -739,34 +807,101 @@ class Compiler(object):
             for module_name in self._specification
         }
 
+    def get_size_range(self, type_descriptor, module_name):
+        size = type_descriptor.get('size', None)
+
+        if size is None:
+            minimum = None
+            maximum = None
+        elif isinstance(size, int):
+            minimum = size
+            maximum = size
+        elif isinstance(size, list):
+            if isinstance(size[0], tuple):
+                minimum, maximum = size[0]
+            else:
+                minimum = size[0]
+                maximum = size[0]
+        else:
+            raise NotImplementedError()
+
+        try:
+            minimum = self.lookup_value(minimum, module_name)[0]['value']
+        except KeyError:
+            pass
+
+        try:
+            maximum = self.lookup_value(maximum, module_name)[0]['value']
+        except KeyError:
+            pass
+
+        return minimum, maximum
+
+    def get_restricted_to_range(self, type_descriptor, module_name):
+        restricted_to = type_descriptor.get('restricted-to', None)
+
+        if restricted_to is None:
+            minimum = None
+            maximum = None
+        else:
+            try:
+                minimum, maximum = restricted_to[0]
+            except TypeError:
+                minimum = restricted_to[0]
+                maximum = restricted_to[0]
+
+        try:
+            minimum = self.lookup_value(minimum, module_name)[0]['value']
+        except KeyError:
+            pass
+
+        try:
+            maximum = self.lookup_value(maximum, module_name)[0]['value']
+        except KeyError:
+            pass
+
+        return minimum, maximum
+
     def compile_implicit_type(self, name, type_descriptor, module_name):
         if type_descriptor['type'] == 'SEQUENCE':
-            compiled = Sequence(
-                name,
-                self.compile_members(type_descriptor['members'],
-                                     module_name))
+            members, extension = self.compile_members(
+                type_descriptor['members'],
+                module_name)
+            compiled = Sequence(name,
+                                members,
+                                extension)
         elif type_descriptor['type'] == 'SEQUENCE OF':
+            minimum, maximum = self.get_size_range(type_descriptor,
+                                                   module_name)
             compiled = SequenceOf(name,
                                   self.compile_type('',
                                                     type_descriptor['element'],
-                                                    module_name))
+                                                    module_name),
+                                  minimum,
+                                  maximum)
         elif type_descriptor['type'] == 'SET':
-            compiled = Set(
-                name,
-                self.compile_members(type_descriptor['members'],
-                                     module_name))
+            members, extension = self.compile_members(
+                type_descriptor['members'],
+                module_name)
+            compiled = Set(name,
+                           members,
+                           extension)
         elif type_descriptor['type'] == 'SET OF':
             compiled = SetOf(name,
                              self.compile_type('',
                                                type_descriptor['element'],
                                                module_name))
         elif type_descriptor['type'] == 'CHOICE':
-            compiled = Choice(
-                name,
-                self.compile_members(type_descriptor['members'],
-                                     module_name))
+            members, extension = self.compile_members(
+                type_descriptor['members'],
+                module_name)
+            compiled = Choice(name,
+                              members,
+                              extension)
         elif type_descriptor['type'] == 'INTEGER':
-            compiled = Integer(name)
+            minimum, maximum = self.get_restricted_to_range(type_descriptor,
+                                                            module_name)
+            compiled = Integer(name, minimum, maximum)
         elif type_descriptor['type'] == 'ENUMERATED':
             compiled = Enumerated(name, type_descriptor['values'])
         elif type_descriptor['type'] == 'BOOLEAN':
@@ -774,7 +909,9 @@ class Compiler(object):
         elif type_descriptor['type'] == 'OBJECT IDENTIFIER':
             compiled = ObjectIdentifier(name)
         elif type_descriptor['type'] == 'OCTET STRING':
-            compiled = OctetString(name)
+            minimum, maximum =self.get_size_range(type_descriptor,
+                                                  module_name)
+            compiled = OctetString(name, minimum, maximum)
         elif type_descriptor['type'] == 'TeletexString':
             compiled = TeletexString(name)
         elif type_descriptor['type'] == 'NumericString':
@@ -796,8 +933,9 @@ class Compiler(object):
         elif type_descriptor['type'] == 'GeneralizedTime':
             compiled = GeneralizedTime(name)
         elif type_descriptor['type'] == 'BIT STRING':
-            size = type_descriptor.get('size', None)
-            compiled = BitString(name, size)
+            minimum, maximum =self.get_size_range(type_descriptor,
+                                                  module_name)
+            compiled = BitString(name, minimum, maximum)
         elif type_descriptor['type'] == 'ANY':
             compiled = Any(name)
         elif type_descriptor['type'] == 'ANY DEFINED BY':
@@ -836,9 +974,11 @@ class Compiler(object):
 
     def compile_members(self, members, module_name):
         compiled_members = []
+        extension = None
 
         for member in members:
             if member['name'] == '...':
+                extension = []
                 continue
 
             compiled_member = self.compile_type(member['name'],
@@ -851,7 +991,7 @@ class Compiler(object):
 
             compiled_members.append(compiled_member)
 
-        return compiled_members
+        return compiled_members, extension
 
     def lookup_type_descriptor(self, type_name, module_name):
         module = self._specification[module_name]
@@ -868,9 +1008,28 @@ class Compiler(object):
                     break
 
         if type_descriptor is None:
-            raise Exception("Type '{}' not found.".format(type_name))
+            raise KeyError("Type '{}' not found.".format(type_name))
 
         return type_descriptor, module_name
+
+    def lookup_value(self, value_name, module_name):
+        module = self._specification[module_name]
+        value = None
+
+        if value_name in module['values']:
+            value = module['values'][value_name]
+        else:
+            for from_module_name, imports in module['imports'].items():
+                if value_name in imports:
+                    from_module = self._specification[from_module_name]
+                    value = from_module['values'][value_name]
+                    module_name = from_module_name
+                    break
+
+        if value is None:
+            raise KeyError("Value '{}' not found.".format(value_name))
+
+        return value, module_name
 
 
 def compile_dict(specification):
