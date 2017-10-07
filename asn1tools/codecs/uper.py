@@ -455,7 +455,8 @@ class OctetString(Type):
             encoder.append_bytes(bytearray([len(data)]) + data)
         else:
             if self.minimum != self.maximum:
-                encoder.append_integer(len(data) - 1, self.number_of_bits)
+                encoder.append_integer(len(data) - self.minimum,
+                                       self.number_of_bits)
 
             encoder.append_bytes(data, align=False)
 

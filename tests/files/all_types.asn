@@ -8,6 +8,12 @@ Bitstring ::= BIT STRING
 
 Octetstring ::= OCTET STRING
 
+Octetstring2 ::= OCTET STRING (SIZE(2))
+
+Octetstring3 ::= OCTET STRING (SIZE(3))
+
+Octetstring4 ::= OCTET STRING (SIZE(3..7))
+
 Null ::= NULL
 
 Objectidentifier ::= OBJECT IDENTIFIER

@@ -333,6 +333,12 @@ class Asn1ToolsUPerTest(unittest.TestCase):
                          b'\x04\x40')
         self.assertEqual(all_types.encode('Octetstring', b'\x00'),
                          b'\x01\x00')
+        self.assertEqual(all_types.encode('Octetstring2', b'\xab\xcd'),
+                         b'\xab\xcd')
+        self.assertEqual(all_types.encode('Octetstring3', b'\xab\xcd\xef'),
+                         b'\xab\xcd\xef')
+        self.assertEqual(all_types.encode('Octetstring4', b'\x89\xab\xcd\xef'),
+                         b'\x31\x35\x79\xbd\xe0')
         self.assertEqual(all_types.encode('Enumerated', 'one'), b'\x00')
         self.assertEqual(all_types.encode('Sequence', {}), b'')
         self.assertEqual(all_types.encode('Ia5string', 'bar'), b'\x03\xc5\x87\x90')
