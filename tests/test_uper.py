@@ -45,46 +45,61 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         rrc = asn1tools.compile_file('tests/files/rrc_8_6_0.asn', 'uper')
 
         # Message 1.
-        encoded = rrc.encode('PCCH-Message',
-                             {
-                                 'message': {
-                                     'c1' : {
-                                         'paging': {
-                                             'systemInfoModification': 'true',
-                                             'nonCriticalExtension': {
-                                             }
-                                         }
-                                     }
-                                 }
-                             })
-        self.assertEqual(encoded, b'\x28')
+        decoded_message = {
+            'message': {
+                'c1' : {
+                    'paging': {
+                        'systemInfoModification': 'true',
+                        'nonCriticalExtension': {
+                        }
+                    }
+                }
+            }
+        }
+
+        encoded_message = b'\x28'
+
+        encoded = rrc.encode('PCCH-Message', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = rrc.decode('PCCH-Message', encoded)
+        self.assertEqual(decoded, decoded_message)
 
         # Message 2.
-        encoded = rrc.encode('PCCH-Message',
-                             {
-                                 'message': {
-                                     'c1' : {
-                                         'paging': {
-                                         }
-                                     }
-                                 }
-                             })
-        self.assertEqual(encoded, b'\x00')
+        decoded_message = {
+            'message': {
+                'c1' : {
+                    'paging': {
+                    }
+                }
+            }
+        }
+
+        encoded_message = b'\x00'
+
+        encoded = rrc.encode('PCCH-Message', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = rrc.decode('PCCH-Message', encoded)
+        self.assertEqual(decoded, decoded_message)
 
         # Message 3.
-        encoded = rrc.encode('BCCH-BCH-Message',
-                             {
-                                 'message': {
-                                     'dl-Bandwidth': 'n6',
-                                     'phich-Config': {
-                                         'phich-Duration': 'normal',
-                                         'phich-Resource': 'half'
-                                     },
-                                     'systemFrameNumber': (b'\x12', 8),
-                                     'spare': (b'\x34\x56', 10)
-                                 }
-                             })
-        self.assertEqual(encoded, b'\x04\x48\xd1')
+        decoded_message = {
+            'message': {
+                'dl-Bandwidth': 'n6',
+                'phich-Config': {
+                    'phich-Duration': 'normal',
+                    'phich-Resource': 'half'
+                },
+                'systemFrameNumber': (b'\x12', 8),
+                'spare': (b'\x34\x40', 10)
+            }
+        }
+
+        encoded_message = b'\x04\x48\xd1'
+
+        encoded = rrc.encode('BCCH-BCH-Message', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = rrc.decode('BCCH-BCH-Message', encoded)
+        self.assertEqual(decoded, decoded_message)
 
         # Message 4.
         decoded_message = {
@@ -308,6 +323,8 @@ class Asn1ToolsUPerTest(unittest.TestCase):
 
         encoded = rrc.encode('BCCH-DL-SCH-Message', decoded_message)
         self.assertEqual(encoded, encoded_message)
+        decoded = rrc.decode('BCCH-DL-SCH-Message', encoded)
+        self.assertEqual(decoded, decoded_message)
 
     def test_encode_all_types(self):
         all_types = asn1tools.compile_file('tests/files/all_types.asn',

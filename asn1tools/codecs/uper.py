@@ -17,9 +17,9 @@ class Encoder(object):
         self.buf = bytearray()
 
     def append_bit(self, bit):
-        '''Append given bit.
+        """Append given bit.
 
-        '''
+        """
 
         self.byte |= (bit << self.index)
         self.index -= 1
@@ -30,26 +30,25 @@ class Encoder(object):
             self.index = 7
 
     def append_bits(self, data, number_of_bits):
-        '''Append given bits.
+        """Append given bits.
 
-        '''
+        """
 
         for i in range(number_of_bits):
             self.append_bit((bytearray(data)[i // 8] >> (7 - (i % 8))) & 0x1)
 
     def append_integer(self, value, number_of_bits):
-        '''Append given integer value.
+        """Append given integer value.
 
-        '''
+        """
 
         for i in range(number_of_bits):
             self.append_bit((value >> (number_of_bits - i - 1)) & 0x1)
 
     def append_bytes(self, data, align=False):
-        '''Append given data aligned to a byte boundary.
+        """Append given data aligned to a byte boundary.
 
-        '''
-
+        """
 
         if align:
             if self.index != 7:
@@ -62,9 +61,9 @@ class Encoder(object):
             self.append_bits(data, 8 * len(data))
 
     def as_bytearray(self):
-        '''Return the bits as a bytearray.
+        """Return the bits as a bytearray.
 
-        '''
+        """
 
         if self.index < 7:
             return self.buf + bytearray([self.byte])
@@ -84,9 +83,9 @@ class Decoder(object):
         self.buf = encoded
 
     def read_bit(self):
-        '''Read a bit.
+        """Read a bit.
 
-        '''
+        """
 
         if self.index == -1:
             self.byte = self.buf[self.offset]
@@ -98,10 +97,31 @@ class Decoder(object):
 
         return bit
 
-    def read_integer(self, number_of_bits):
-        '''Read an integer value of given number of bits.
+    def read_bits(self, number_of_bits):
+        """Read given number of bits.
 
-        '''
+        """
+
+        value = bytearray()
+        byte = 0
+
+        for i in range(number_of_bits):
+            index = i % 8
+            byte |= (self.read_bit() << (7 - index))
+
+            if index == 7:
+                value.append(byte)
+                byte = 0
+
+        if number_of_bits % 8 != 0:
+            value.append(byte)
+
+        return bytes(value)
+
+    def read_integer(self, number_of_bits):
+        """Read an integer value of given number of bits.
+
+        """
 
         value = 0
 
@@ -112,9 +132,9 @@ class Decoder(object):
         return value
 
     def read_bytes(self, number_of_bytes):
-        '''Read given number of bytes.
+        """Read given number of bytes.
 
-        '''
+        """
 
         self.index = -1
         data = self.buf[self.offset:self.offset + number_of_bytes]
@@ -123,6 +143,11 @@ class Decoder(object):
 
 
 def size_as_number_of_bits(size):
+    """Returns the minimum number of bits needed to fit given positive
+    integer.
+
+    """
+
     return len('{:b}'.format(size))
 
 
@@ -200,9 +225,14 @@ class Integer(Type):
             encoder.append_integer(data - self.minimum, self.number_of_bits)
 
     def decode(self, decoder):
-        length = decoder.read_bytes(1)[0]
+        if self.number_of_bits is None:
+            length = decoder.read_bytes(1)[0]
+            value = decode_signed_integer(decoder.read_bytes(length))
+        else:
+            value = decoder.read_integer(self.number_of_bits)
+            value += self.minimum
 
-        return decode_signed_integer(decoder.read_bytes(length))
+        return value
 
     def __repr__(self):
         return 'Integer({})'.format(self.name)
@@ -306,6 +336,12 @@ class Sequence(Type):
                         data))
 
     def decode(self, decoder):
+        if self.extension is not None:
+            if len(self.extension) == 0:
+                decoder.read_bit()
+            else:
+                raise NotImplementedError()
+
         values = {}
         optionals = {
             optional: decoder.read_bit()
@@ -313,26 +349,11 @@ class Sequence(Type):
         }
 
         for member in self.members:
-            if not optionals.get(member.name, True):
-                continue
-
-            try:
+            if optionals.get(member, True):
                 value = member.decode(decoder)
-
-            except (DecodeError, IndexError) as e:
-                if member.optional:
-                    continue
-
-                if member.default is None:
-                    if isinstance(e, IndexError):
-                        e = DecodeError('out of data at offset {}'.format(-1))
-
-                    e.location.append(member.name)
-                    raise e
-
-                value = member.default
-
-            values[member.name] = value
+                values[member.name] = value
+            elif member.default is not None:
+                values[member.name] = member.default
 
         return values
 
@@ -386,7 +407,12 @@ class SequenceOf(Type):
             self.element_type.encode(entry, encoder)
 
     def decode(self, decoder):
-        number_of_elements = decoder.read_bytes(1)[0]
+        if self.number_of_bits is None:
+            raise NotImplementedError()
+        else:
+            number_of_elements = decoder.read_integer(self.number_of_bits)
+            number_of_elements += self.minimum
+
         decoded = []
 
         for _ in range(number_of_elements):
@@ -442,9 +468,18 @@ class BitString(Type):
 
 
     def decode(self, decoder):
-        number_of_bits = decoder.read_bytes(1)[0]
+        if self.number_of_bits is None:
+            number_of_bits = decoder.read_bytes(1)[0]
+            value = decoder.read_bytes((number_of_bits + 7) // 8)
+        else:
+            number_of_bits = self.minimum
 
-        return (decoder.read_bytes((number_of_bits + 7) // 8), number_of_bits)
+            if self.minimum != self.maximum:
+                number_of_bits += decoder.read_integer(self.number_of_bits)
+
+            value = decoder.read_bits(number_of_bits)
+
+        return (value, number_of_bits)
 
     def __repr__(self):
         return 'BitString({})'.format(self.name)
@@ -474,9 +509,16 @@ class OctetString(Type):
             encoder.append_bytes(data, align=False)
 
     def decode(self, decoder):
-        length = decoder.read_bytes(1)[0]
+        if self.number_of_bits is None:
+            length = decoder.read_integer(8)
+        else:
+            if self.minimum != self.maximum:
+                length = decoder.read_integer(self.number_of_bits)
+                length += self.minimum
+            else:
+                length = self.minimum
 
-        return decoder.read_bytes(length)
+        return decoder.read_bits(8 * length)
 
     def __repr__(self):
         return 'OctetString({})'.format(self.name)
@@ -689,19 +731,21 @@ class Choice(Type):
                 [member.name for member in self.members],
                 ''.join([name for name in data])))
 
-    def decode(self, data, offset):
-        for member in self.members:
-            if isinstance(member, Choice):
-                try:
-                    decoded, offset = member.decode(data, offset)
-                    return {member.name: decoded}, offset
-                except DecodeChoiceError:
-                    pass
-            elif member.tag == data[offset]:
-                decoded, offset = member.decode(data, offset)
-                return {member.name: decoded}, offset
+    def decode(self, decoder):
+        if self.extension is not None:
+            if len(self.extension) == 0:
+                decoder.read_bit()
+            else:
+                raise NotImplementedError()
 
-        raise DecodeChoiceError()
+        if len(self.members) > 1:
+            index = decoder.read_integer(self.number_of_bits)
+        else:
+            index = 0
+
+        member = self.members[index]
+
+        return {member.name: member.decode(decoder)}
 
     def __repr__(self):
         return 'Choice({}, [{}])'.format(
