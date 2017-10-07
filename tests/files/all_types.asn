@@ -6,6 +6,10 @@ Integer ::= INTEGER
 
 Bitstring ::= BIT STRING
 
+Bitstring2 ::= BIT STRING (SIZE(9))
+
+Bitstring3 ::= BIT STRING (SIZE(5..7))
+
 Octetstring ::= OCTET STRING
 
 Octetstring2 ::= OCTET STRING (SIZE(2))

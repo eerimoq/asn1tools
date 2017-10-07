@@ -146,10 +146,8 @@ def convert_type(tokens):
     elif tokens[0:2] == ['OBJECT', 'IDENTIFIER']:
         converted_type = {'type': 'OBJECT IDENTIFIER'}
     elif tokens[0:2] == ['BIT', 'STRING']:
-        converted_type = {'type': 'BIT STRING'}
-
-        if len(tokens) > 2 and tokens[2] == 'SIZE':
-            converted_type['size'] = int(tokens[4])
+        converted_type = {'type': 'BIT STRING',
+                          'size': convert_size(tokens[3][2:-1])}
     elif tokens[0:2] == ['OCTET', 'STRING']:
         converted_type = {'type': 'OCTET STRING',
                           'size': convert_size(tokens[2][2:-1])}
@@ -362,13 +360,13 @@ def create_grammar():
                            + rparen))
 
     bit_string << (BIT + STRING
-                   + Optional((lbrace
-                               + Group(delimitedList(word
-                                                     + lparen
-                                                     + word
-                                                     + rparen))
-                               + rbrace))
-                   + Optional(size_paren))
+                   + Group(Optional((lbrace
+                                     + Group(delimitedList(word
+                                                           + lparen
+                                                           + word
+                                                           + rparen))
+                                     + rbrace)))
+                   + Group(Optional(size_paren)))
 
     octet_string << (OCTET + STRING
                      + Group(Optional(Suppress(lparen)

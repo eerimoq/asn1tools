@@ -331,6 +331,10 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         self.assertEqual(all_types.encode('Integer', -32769), b'\x03\xff\x7f\xff')
         self.assertEqual(all_types.encode('Bitstring', (b'\x40', 4)),
                          b'\x04\x40')
+        self.assertEqual(all_types.encode('Bitstring2', (b'\x12\x34', 9)),
+                         b'\x12\x00')
+        self.assertEqual(all_types.encode('Bitstring3', (b'\x34', 6)),
+                         b'\x4d')
         self.assertEqual(all_types.encode('Octetstring', b'\x00'),
                          b'\x01\x00')
         self.assertEqual(all_types.encode('Octetstring2', b'\xab\xcd'),

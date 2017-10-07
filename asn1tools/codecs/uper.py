@@ -418,15 +418,24 @@ class BitString(Type):
     def __init__(self, name, minimum, maximum):
         super(BitString, self).__init__(name, 'BIT STRING')
         self.minimum = minimum
+        self.maximum = maximum
 
-        if minimum != maximum:
-            raise NotImplementedError()
+        if minimum is None and maximum is None:
+            self.number_of_bits = None
+        else:
+            size = self.maximum - self.minimum
+            self.number_of_bits = len('{:b}'.format(size))
 
     def encode(self, data, encoder):
-        if self.minimum is None:
+        if self.number_of_bits is None:
             encoder.append_bytes(bytearray([data[1]]) + data[0])
         else:
-            encoder.append_bits(*data)
+            if self.minimum != self.maximum:
+                encoder.append_integer(data[1] - self.minimum,
+                                       self.number_of_bits)
+
+            encoder.append_bits(data[0], data[1])
+
 
     def decode(self, decoder):
         number_of_bits = decoder.read_bytes(1)[0]
