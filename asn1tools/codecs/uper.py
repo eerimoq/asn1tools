@@ -1046,6 +1046,9 @@ class Compiler(object):
                 extension = []
                 continue
 
+            if extension is not None:
+                raise NotImplementedError()
+
             compiled_member = self.compile_type(member['name'],
                                                 member,
                                                 module_name)
