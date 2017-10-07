@@ -122,6 +122,10 @@ class Decoder(object):
         return data
 
 
+def size_as_number_of_bits(size):
+    return len('{:b}'.format(size))
+
+
 def encode_signed_integer(data):
     encoded = bytearray()
 
@@ -183,11 +187,11 @@ class Integer(Type):
         self.minimum = minimum
         self.maximum = maximum
 
-        if minimum is None and maximum is None:
+        if minimum is None or maximum is None:
             self.number_of_bits = None
         else:
             size = self.maximum - self.minimum
-            self.number_of_bits = len('{:b}'.format(size))
+            self.number_of_bits = size_as_number_of_bits(size)
 
     def encode(self, data, encoder):
         if self.number_of_bits is None:
@@ -365,11 +369,11 @@ class SequenceOf(Type):
         self.minimum = minimum
         self.maximum = maximum
 
-        if minimum is None and maximum is None:
+        if minimum is None or maximum is None:
             self.number_of_bits = None
         else:
             size = self.maximum - self.minimum
-            self.number_of_bits = len('{:b}'.format(size))
+            self.number_of_bits = size_as_number_of_bits(size)
 
     def encode(self, data, encoder):
         if self.number_of_bits is None:
@@ -420,11 +424,11 @@ class BitString(Type):
         self.minimum = minimum
         self.maximum = maximum
 
-        if minimum is None and maximum is None:
+        if minimum is None or maximum is None:
             self.number_of_bits = None
         else:
             size = self.maximum - self.minimum
-            self.number_of_bits = len('{:b}'.format(size))
+            self.number_of_bits = size_as_number_of_bits(size)
 
     def encode(self, data, encoder):
         if self.number_of_bits is None:
@@ -453,11 +457,11 @@ class OctetString(Type):
         self.minimum = minimum
         self.maximum = maximum
 
-        if minimum is None and maximum is None:
+        if minimum is None or maximum is None:
             self.number_of_bits = None
         else:
             size = self.maximum - self.minimum
-            self.number_of_bits = len('{:b}'.format(size))
+            self.number_of_bits = size_as_number_of_bits(size)
 
     def encode(self, data, encoder):
         if self.number_of_bits is None:
@@ -663,7 +667,7 @@ class Choice(Type):
         super(Choice, self).__init__(name, 'CHOICE')
         self.members = members
         self.extension = extension
-        self.number_of_bits = len('{:b}'.format(len(members) - 1))
+        self.number_of_bits = size_as_number_of_bits(len(members) - 1)
 
     def encode(self, data, encoder):
         if self.extension is not None:
@@ -742,7 +746,7 @@ class Enumerated(Type):
         self.values = values
         self.lowest_value = min(values)
         highest_value = max(values.keys()) - self.lowest_value
-        self.number_of_bits = len('{:b}'.format(highest_value))
+        self.number_of_bits = size_as_number_of_bits(highest_value)
 
     def encode(self, data, encoder):
         for value, name in self.values.items():
@@ -818,6 +822,12 @@ class Compiler(object):
         }
 
     def get_size_range(self, type_descriptor, module_name):
+        """Returns a tuple of the minimum and maximum values allowed according
+        the the ASN.1 specification SIZE parameter. Returns (None,
+        None) if the type does not have a SIZE parameter.
+
+        """
+
         size = type_descriptor.get('size', None)
 
         if size is None:
@@ -853,12 +863,14 @@ class Compiler(object):
         if restricted_to is None:
             minimum = None
             maximum = None
-        else:
-            try:
+        elif isinstance(restricted_to, list):
+            if isinstance(restricted_to[0], tuple):
                 minimum, maximum = restricted_to[0]
-            except TypeError:
+            else:
                 minimum = restricted_to[0]
                 maximum = restricted_to[0]
+        else:
+            raise NotImplementedError()
 
         try:
             minimum = self.lookup_value(minimum, module_name)[0]['value']
