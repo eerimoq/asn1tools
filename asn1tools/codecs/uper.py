@@ -45,20 +45,12 @@ class Encoder(object):
         for i in range(number_of_bits):
             self.append_bit((value >> (number_of_bits - i - 1)) & 0x1)
 
-    def append_bytes(self, data, align=False):
+    def append_bytes(self, data):
         """Append given data aligned to a byte boundary.
 
         """
 
-        if align:
-            if self.index != 7:
-                self.buf.append(self.byte)
-                self.byte = 0
-                self.index = 7
-
-            self.buf.extend(data)
-        else:
-            self.append_bits(data, 8 * len(data))
+        self.append_bits(data, 8 * len(data))
 
     def as_bytearray(self):
         """Return the bits as a bytearray.
@@ -151,25 +143,29 @@ def size_as_number_of_bits(size):
     return len('{:b}'.format(size))
 
 
-def encode_signed_integer(data):
+def encode_signed_integer(value):
+    """Encode given integer value into a bytearray and return it.
+
+    """
+
     encoded = bytearray()
 
-    if data < 0:
-        data *= -1
-        data -= 1
-        carry = not data
+    if value < 0:
+        value *= -1
+        value -= 1
+        carry = not value
 
-        while data > 0:
-            encoded.append((data & 0xff) ^ 0xff)
-            carry = (data & 0x80)
-            data >>= 8
+        while value > 0:
+            encoded.append((value & 0xff) ^ 0xff)
+            carry = (value & 0x80)
+            value >>= 8
 
         if carry:
             encoded.append(0xff)
-    elif data > 0:
-        while data > 0:
-            encoded.append(data & 0xff)
-            data >>= 8
+    elif value > 0:
+        while value > 0:
+            encoded.append(value & 0xff)
+            value >>= 8
 
         if encoded[-1] & 0x80:
             encoded.append(0)
@@ -183,6 +179,10 @@ def encode_signed_integer(data):
 
 
 def decode_signed_integer(data):
+    """Decode given data bytes as a signed integer and return it.
+
+    """
+
     value = 0
     is_negative = (data[0] & 0x80)
 
@@ -506,17 +506,16 @@ class OctetString(Type):
                 encoder.append_integer(len(data) - self.minimum,
                                        self.number_of_bits)
 
-            encoder.append_bytes(data, align=False)
+            encoder.append_bytes(data)
 
     def decode(self, decoder):
         if self.number_of_bits is None:
             length = decoder.read_integer(8)
         else:
+            length = self.minimum
+
             if self.minimum != self.maximum:
-                length = decoder.read_integer(self.number_of_bits)
-                length += self.minimum
-            else:
-                length = self.minimum
+                length += decoder.read_integer(self.number_of_bits)
 
         return decoder.read_bits(8 * length)
 
