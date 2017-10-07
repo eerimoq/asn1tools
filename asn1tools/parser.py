@@ -151,7 +151,8 @@ def convert_type(tokens):
         if len(tokens) > 2 and tokens[2] == 'SIZE':
             converted_type['size'] = int(tokens[4])
     elif tokens[0:2] == ['OCTET', 'STRING']:
-        converted_type = {'type': 'OCTET STRING'}
+        converted_type = {'type': 'OCTET STRING',
+                          'size': convert_size(tokens[2][2:-1])}
     elif tokens[0] == 'IA5String':
         converted_type = {'type': 'IA5String'}
     elif tokens[0:3] == ['ANY', 'DEFINED', 'BY']:
@@ -266,9 +267,13 @@ def create_grammar():
 
     range_ = (word + dotx2 + word)
 
-    size = (Suppress(Optional(lparen)) + SIZE + lparen
+    size = (SIZE + lparen
             + (range_ | word)
-            + rparen + Suppress(Optional(rparen)))
+            + rparen)
+
+    size_paren = (Suppress(Optional(lparen))
+                  + size
+                  + Suppress(Optional(rparen)))
 
     type_ = (sequence
              | choice
@@ -281,7 +286,7 @@ def create_grammar():
              | set_
              | object_identifier
              | any_defined_by
-             | (word + Optional(size)))
+             | (word + Optional(size_paren)))
 
     item = Group(value_name + type_)
 
@@ -302,15 +307,13 @@ def create_grammar():
                  + rbrace)
 
     sequence_of << (SEQUENCE
-                    + Group(Optional(size))
+                    + Group(Optional(size_paren))
                     + OF
                     + tag
                     + type_)
 
     set_of << (SET
-               + Group(Optional(SIZE + lparen
-                                + (range_ | word)
-                                + rparen))
+               + Group(Optional(size))
                + OF
                + tag
                + type_)
@@ -365,15 +368,12 @@ def create_grammar():
                                                      + word
                                                      + rparen))
                                + rbrace))
-                   + Optional(size))
+                   + Optional(size_paren))
 
     octet_string << (OCTET + STRING
-                     + Optional(Suppress(lparen)
-                                + ((SIZE + lparen
-                                    + (range_ | word)
-                                    + rparen)
-                                   | (CONTAINING + word))
-                                + Suppress(rparen)))
+                     + Group(Optional(Suppress(lparen)
+                                      + (size | (CONTAINING + word))
+                                      + Suppress(rparen))))
 
     object_identifier << (OBJECT + IDENTIFIER
                           + Optional(lparen
@@ -396,7 +396,7 @@ def create_grammar():
                           | octet_string
                           | object_identifier
                           | any_defined_by
-                          | (word + Optional(size))))
+                          | (word + Optional(size_paren))))
 
     oid = (Suppress(lbrace)
            + ZeroOrMore(Group((value_name
