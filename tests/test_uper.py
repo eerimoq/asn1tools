@@ -362,6 +362,9 @@ class Asn1ToolsUPerTest(unittest.TestCase):
                          b'\x31\x35\x79\xbd\xe0')
         self.assertEqual(all_types.encode('Enumerated', 'one'), b'\x00')
         self.assertEqual(all_types.encode('Sequence', {}), b'')
+        self.assertEqual(all_types.encode('Sequence2', {}), b'\x00')
+        self.assertEqual(all_types.encode('Sequence2', {'a': 0}), b'\x00')
+        self.assertEqual(all_types.encode('Sequence2', {'a': 1}), b'\x80\x80\x80')
         self.assertEqual(all_types.encode('Ia5string', 'bar'), b'\x03\xc5\x87\x90')
 
     def test_decode_all_types(self):
@@ -400,6 +403,8 @@ class Asn1ToolsUPerTest(unittest.TestCase):
                          b'\x89\xab\xcd\xef')
         self.assertEqual(all_types.decode('Enumerated', b'\x00'), 'one')
         self.assertEqual(all_types.decode('Sequence', b''), {})
+        self.assertEqual(all_types.decode('Sequence2', b'\x00'), {'a': 0})
+        self.assertEqual(all_types.decode('Sequence2', b'\x80\x80\x80'), {'a': 1})
         self.assertEqual(all_types.decode('Ia5string', b'\x03\xc5\x87\x90'), 'bar')
 
     def test_repr_all_types(self):

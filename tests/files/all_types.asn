@@ -28,11 +28,11 @@ Utf8string ::= UTF8String
 
 Sequence ::= SEQUENCE {}
 
-Set ::= SET {}
-
 Sequence2 ::= SEQUENCE {
   a INTEGER DEFAULT 0
 }
+
+Set ::= SET {}
 
 Set2 ::= SET {
   a INTEGER DEFAULT 1

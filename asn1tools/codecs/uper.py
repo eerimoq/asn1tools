@@ -327,7 +327,7 @@ class Sequence(Type):
                     member.encode(data[name], encoder)
                 elif data[name] != member.default:
                     member.encode(data[name], encoder)
-            elif member.optional:
+            elif member.optional or member.default is not None:
                 pass
             else:
                 raise EncodeError(
