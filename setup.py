@@ -5,7 +5,7 @@ import asn1tools
 
 setup(name='asn1tools',
       version=asn1tools.__version__,
-      description='ASN.1 tools.',
+      description='ASN.1 parsing, encoding and decoding.',
       long_description=open('README.rst', 'r').read(),
       author='Erik Moqvist',
       author_email='erik.moqvist@gmail.com',
