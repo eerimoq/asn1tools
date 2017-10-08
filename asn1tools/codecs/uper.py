@@ -1,8 +1,8 @@
-"""UPER (Unaligned Packed Encoding Rules) codec.
+"""Unaligned Packed Encoding Rules (UPER) codec.
 
 """
 
-from . import EncodeError, DecodeError
+from . import EncodeError
 
 
 class DecodeChoiceError(Exception):

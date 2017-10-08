@@ -1,4 +1,4 @@
-"""DER (Basic Encoding Rules) codec.
+"""Basic Encoding Rules (DER) codec.
 
 """
 

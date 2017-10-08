@@ -1,4 +1,4 @@
-"""PER (Packed Encoding Rules) codec.
+"""Packed Encoding Rules (PER) codec.
 
 """
 

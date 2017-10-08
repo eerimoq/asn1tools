@@ -1,4 +1,4 @@
-"""BER (Basic Encoding Rules) codec.
+"""Basic Encoding Rules (BER) codec.
 
 """
 
