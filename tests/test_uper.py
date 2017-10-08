@@ -403,7 +403,8 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         self.assertEqual(all_types.decode('Ia5string', b'\x03\xc5\x87\x90'), 'bar')
 
     def test_repr_all_types(self):
-        all_types = asn1tools.compile_file('tests/files/all_types.asn')
+        all_types = asn1tools.compile_file('tests/files/all_types.asn',
+                                           'uper')
 
         self.assertEqual(repr(all_types.types['Boolean']), 'Boolean(Boolean)')
         self.assertEqual(repr(all_types.types['Integer']), 'Integer(Integer)')
