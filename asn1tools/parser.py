@@ -234,12 +234,14 @@ def create_grammar():
     BY = Keyword('BY')
     EXTENSIBILITY = Keyword('EXTENSIBILITY')
     IMPLIED = Keyword('IMPLIED')
+    BOOLEAN = Keyword('BOOLEAN')
 
     # Various literals.
     word = Word(printables, excludeChars=',(){}[].:=;')
-    type_name = Regex(r'[A-Z][a-zA-Z0-9-]*')
+    type_reference = Regex(r'[A-Z][a-zA-Z0-9-]*')
+    value_reference = word
     value_name = Word(alphanums + '-')
-    assignment = Literal('::=')
+    assign = Literal('::=')
     lparen = Literal('(')
     rparen = Literal(')')
     lbrace = Literal('{')
@@ -261,6 +263,7 @@ def create_grammar():
     set_of = Forward()
     set_ = Forward()
     object_identifier = Forward()
+    boolean = Forward()
     any_defined_by = Forward()
 
     range_ = (word + dotx2 + word)
@@ -273,128 +276,125 @@ def create_grammar():
                   + size
                   + Suppress(Optional(rparen)))
 
-    type_ = (sequence
-             | choice
-             | integer
-             | bit_string
-             | octet_string
-             | enumerated
-             | sequence_of
-             | set_of
-             | set_
-             | object_identifier
-             | any_defined_by
-             | (word + Optional(size_paren)))
+    constraint_spec = size
 
-    item = Group(value_name + type_)
+    constraint = (Suppress(lparen)
+                  + constraint_spec
+                  + Suppress(rparen))
+
+    builtin_type = (sequence
+                    | choice
+                    | integer
+                    | bit_string
+                    | octet_string
+                    | enumerated
+                    | sequence_of
+                    | set_of
+                    | set_
+                    | object_identifier
+                    | boolean)
+
+    type_ = (builtin_type
+             | any_defined_by
+             | (word + Optional(constraint)))
 
     tag = Group(Optional(Suppress(lbracket)
                          + Group(Optional(APPLICATION | PRIVATE) + word)
                          + Suppress(rbracket)
                          + Group(Optional(IMPLICIT | EXPLICIT))))
 
-    # Type definitions.
-    sequence << (SEQUENCE + lbrace
-                 + Group(Optional(delimitedList(
-                     Group(Group(value_name
-                                 + tag
-                                 + type_)
-                           + Group(Optional(OPTIONAL)
-                                   + Optional(DEFAULT + word))
-                           | dotx3))))
-                 + rbrace)
+    sequence <<= (SEQUENCE + lbrace
+                  + Group(Optional(delimitedList(
+                      Group(Group(value_name
+                                  + tag
+                                  + type_)
+                            + Group(Optional(OPTIONAL)
+                                    + Optional(DEFAULT + word))
+                            | dotx3))))
+                  + rbrace)
 
-    sequence_of << (SEQUENCE
-                    + Group(Optional(size_paren))
-                    + OF
-                    + tag
-                    + type_)
+    sequence_of <<= (SEQUENCE
+                     + Group(Optional(size_paren))
+                     + OF
+                     + tag
+                     + type_)
 
-    set_of << (SET
-               + Group(Optional(size))
-               + OF
-               + tag
-               + type_)
+    set_of <<= (SET
+                + Group(Optional(size))
+                + OF
+                + tag
+                + type_)
 
-    set_ << (SET + lbrace
-             + Group(Optional(delimitedList(
-                 Group(Group(value_name
-                             + tag
-                             + type_)
-                       + Group(Optional(OPTIONAL)
-                               + Optional(DEFAULT + word))
-                       | dotx3))))
-             + rbrace)
+    set_ <<= (SET + lbrace
+              + Group(Optional(delimitedList(
+                  Group(Group(value_name
+                              + tag
+                              + type_)
+                        + Group(Optional(OPTIONAL)
+                                + Optional(DEFAULT + word))
+                        | dotx3))))
+              + rbrace)
 
-    choice << (CHOICE
-               + lbrace
-               + Group(Optional(delimitedList(
-                   Group(Group(value_name
-                               + tag
-                               + type_)
-                         + Group(Optional(OPTIONAL)
-                                 + Optional(DEFAULT + word))
-                         | dotx3))))
-               + rbrace)
+    choice <<= (CHOICE
+                + lbrace
+                + Group(Optional(delimitedList(
+                    Group(Group(value_name
+                                + tag
+                                + type_)
+                          + Group(Optional(OPTIONAL)
+                                  + Optional(DEFAULT + word))
+                          | dotx3))))
+                + rbrace)
 
-    enumerated << (ENUMERATED + lbrace
-                   + Group(delimitedList(Group((word
-                                                + Optional(Suppress(lparen)
-                                                           + word
-                                                           + Suppress(rparen)))
-                                               | dotx3)))
-                   + rbrace)
+    enumerated <<= (ENUMERATED + lbrace
+                    + Group(delimitedList(Group((word
+                                                 + Optional(Suppress(lparen)
+                                                            + word
+                                                            + Suppress(rparen)))
+                                                | dotx3)))
+                    + rbrace)
 
-    integer << (INTEGER
-                + Group(Optional((lparen
-                                  + (range_ | word)
-                                  + rparen)
-                                 | (lbrace
-                                    + Group(delimitedList(word
-                                                          + lparen
-                                                          + word
-                                                          + rparen))
-                                    + rbrace)))
-                + Optional(lparen
-                           + range_
-                           + rparen))
-
-    bit_string << (BIT + STRING
-                   + Group(Optional((lbrace
+    integer <<= (INTEGER
+                 + Group(Optional((lparen
+                                   + (range_ | word)
+                                   + rparen)
+                                  | (lbrace
                                      + Group(delimitedList(word
                                                            + lparen
                                                            + word
                                                            + rparen))
                                      + rbrace)))
-                   + Group(Optional(size_paren)))
+                 + Optional(lparen
+                            + range_
+                            + rparen))
 
-    octet_string << (OCTET + STRING
-                     + Group(Optional(Suppress(lparen)
-                                      + (size | (CONTAINING + word))
-                                      + Suppress(rparen))))
+    bit_string <<= (BIT + STRING
+                    + Group(Optional((lbrace
+                                      + Group(delimitedList(word
+                                                            + lparen
+                                                            + word
+                                                            + rparen))
+                                      + rbrace)))
+                    + Group(Optional(constraint)))
 
-    object_identifier << (OBJECT + IDENTIFIER
-                          + Optional(lparen
-                                     + delimitedList(word, delim='|')
-                                     + rparen))
+    octet_string <<= (OCTET + STRING
+                      + Group(Optional(Suppress(lparen)
+                                       + (size | (CONTAINING + word))
+                                       + Suppress(rparen))))
 
-    any_defined_by << (ANY + DEFINED + BY + word)
+    object_identifier <<= (OBJECT + IDENTIFIER
+                           + Optional(lparen
+                                      + delimitedList(word, delim='|')
+                                      + rparen))
 
-    # Top level definitions.
-    type_definition = (type_name + assignment
+    boolean <<= BOOLEAN
+
+    any_defined_by <<= (ANY + DEFINED + BY + word)
+
+    type_assignment = (type_reference
+                       + assign
                        + tag
-                       + (sequence
-                          | choice
-                          | enumerated
-                          | sequence_of
-                          | set_of
-                          | set_
-                          | integer
-                          | bit_string
-                          | octet_string
-                          | object_identifier
-                          | any_defined_by
-                          | (word + Optional(size_paren))))
+                       + type_)
 
     oid = (Suppress(lbrace)
            + ZeroOrMore(Group((value_name
@@ -404,37 +404,51 @@ def create_grammar():
                               | word))
            + Suppress(rbrace))
 
-    value_definition = (word
+    value = Group(oid | word)
+
+    value_assignment = (value_reference
                         + Group(INTEGER
-                                | (OBJECT + IDENTIFIER)
                                 | type_)
-                        + assignment
-                        + Group(oid | word))
+                        + assign
+                        + value)
 
-    definition = Group(type_definition
-                       | value_definition)
+    assignment = Group(type_assignment
+                       | value_assignment)
 
-    module_body = (Group(Optional(IMPORTS
-                                  + Group(delimitedList(word))
-                                  + FROM
-                                  + word
-                                  + Suppress(Optional(oid))
-                                  + scolon))
-                   + Group(ZeroOrMore(definition)))
+    symbols_imported = (Group(delimitedList(word))
+                        + FROM
+                        + word
+                        + Suppress(Optional(oid)))
 
-    module = Group(Group(word
-                         + Group(Optional(oid))
-                         + DEFINITIONS
-                         + Group(Optional(AUTOMATIC | EXPLICIT | IMPLICIT)
-                                 + Optional(TAGS))
-                         + Group(Optional(EXTENSIBILITY + IMPLIED))
-                         + assignment
-                         + BEGIN)
-                   + module_body
-                   + END)
+    imports = Group(Optional(IMPORTS
+                             + symbols_imported
+                             + scolon))
+
+    assignment_list = Group(ZeroOrMore(assignment))
+
+    module_body = (imports + assignment_list)
+
+    module_reference = word
+
+    definitive_identification = Group(Optional(oid))
+
+    module_identifier = (module_reference + definitive_identification)
+
+    tag_default = Group(Optional((AUTOMATIC | EXPLICIT | IMPLICIT) + TAGS))
+
+    extension_default = Group(Optional(EXTENSIBILITY + IMPLIED))
+
+    module_definition = Group(Group(module_identifier
+                                    + DEFINITIONS
+                                    + tag_default
+                                    + extension_default
+                                    + assign
+                                    + BEGIN)
+                              + module_body
+                              + END)
 
     # The whole specification.
-    specification = OneOrMore(module) + StringEnd()
+    specification = OneOrMore(module_definition) + StringEnd()
     comment = (Regex(r"--[\s\S]*?(--|\n)") | Regex(r"--(?:\\\n|[^\n])*"))
     specification.ignore(comment)
 
