@@ -44,6 +44,8 @@ Printablestring ::= PrintableString
 
 Ia5string ::= IA5String
 
+Ia5string2 ::= IA5String (FROM "a".."f" | "0".."9")
+
 Universalstring ::= UniversalString
 
 Visiblestring ::= VisibleString

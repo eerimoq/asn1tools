@@ -10,6 +10,7 @@ from rrc_8_6_0 import RRC_8_6_0
 from rfc5280 import RFC5280
 from zforce import ZFORCE
 from bar import BAR
+from all_types import ALL_TYPES
 
 
 class Asn1ToolsParseTest(unittest.TestCase):
@@ -35,6 +36,10 @@ class Asn1ToolsParseTest(unittest.TestCase):
     def test_parse_bar(self):
         bar = asn1tools.parse_file('tests/files/bar.asn')
         self.assertEqual(bar, BAR)
+
+    def test_parse_all_types(self):
+        all_types = asn1tools.parse_file('tests/files/all_types.asn')
+        self.assertEqual(all_types, ALL_TYPES)
 
 
 if __name__ == '__main__':

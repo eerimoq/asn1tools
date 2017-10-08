@@ -237,7 +237,7 @@ def create_grammar():
     BOOLEAN = Keyword('BOOLEAN')
 
     # Various literals.
-    word = Word(printables, excludeChars=',(){}[].:=;')
+    word = Word(printables, excludeChars=',(){}[].:=;"')
     type_reference = Regex(r'[A-Z][a-zA-Z0-9-]*')
     value_reference = word
     value_name = Word(alphanums + '-')
@@ -251,20 +251,21 @@ def create_grammar():
     scolon = Literal(';')
     dotx2 = Literal('..')
     dotx3 = Literal('...')
+    qmark = Literal('"')
 
     # Forward declarations.
-    sequence = Forward()
-    choice = Forward()
-    integer = Forward()
-    bit_string = Forward()
-    octet_string = Forward()
-    enumerated = Forward()
-    sequence_of = Forward()
-    set_of = Forward()
-    set_ = Forward()
-    object_identifier = Forward()
-    boolean = Forward()
-    any_defined_by = Forward()
+    sequence_type = Forward()
+    choice_type = Forward()
+    integer_type = Forward()
+    bit_string_type = Forward()
+    octet_string_type = Forward()
+    enumerated_type = Forward()
+    sequence_of_type = Forward()
+    set_of_type = Forward()
+    set_type = Forward()
+    object_identifier_type = Forward()
+    boolean_type = Forward()
+    any_defined_by_type = Forward()
 
     range_ = (word + dotx2 + word)
 
@@ -276,26 +277,41 @@ def create_grammar():
                   + size
                   + Suppress(Optional(rparen)))
 
-    constraint_spec = size
+    unions = Suppress(FROM
+                      + delimitedList(qmark + word + qmark
+                                      + dotx2
+                                      + qmark + word + qmark, delim='|'))
+
+    element_set_spec = unions
+
+    root_element_set_spec = element_set_spec
+
+    root_element_set_specs = root_element_set_spec
+
+    element_set_specs = root_element_set_specs
+
+    subtype_constraint = element_set_specs
+
+    constraint_spec = (size | subtype_constraint)
 
     constraint = (Suppress(lparen)
                   + constraint_spec
                   + Suppress(rparen))
 
-    builtin_type = (sequence
-                    | choice
-                    | integer
-                    | bit_string
-                    | octet_string
-                    | enumerated
-                    | sequence_of
-                    | set_of
-                    | set_
-                    | object_identifier
-                    | boolean)
+    builtin_type = (sequence_type
+                    | choice_type
+                    | integer_type
+                    | bit_string_type
+                    | octet_string_type
+                    | enumerated_type
+                    | sequence_of_type
+                    | set_of_type
+                    | set_type
+                    | object_identifier_type
+                    | boolean_type)
 
     type_ = (builtin_type
-             | any_defined_by
+             | any_defined_by_type
              | (word + Optional(constraint)))
 
     tag = Group(Optional(Suppress(lbracket)
@@ -303,7 +319,29 @@ def create_grammar():
                          + Suppress(rbracket)
                          + Group(Optional(IMPLICIT | EXPLICIT))))
 
-    sequence <<= (SEQUENCE + lbrace
+    sequence_type <<= (SEQUENCE + lbrace
+                       + Group(Optional(delimitedList(
+                           Group(Group(value_name
+                                       + tag
+                                       + type_)
+                                 + Group(Optional(OPTIONAL)
+                                         + Optional(DEFAULT + word))
+                                 | dotx3))))
+                       + rbrace)
+
+    sequence_of_type <<= (SEQUENCE
+                          + Group(Optional(size_paren))
+                          + OF
+                          + tag
+                          + type_)
+
+    set_of_type <<= (SET
+                     + Group(Optional(size))
+                     + OF
+                     + tag
+                     + type_)
+
+    set_type <<= (SET + lbrace
                   + Group(Optional(delimitedList(
                       Group(Group(value_name
                                   + tag
@@ -313,83 +351,61 @@ def create_grammar():
                             | dotx3))))
                   + rbrace)
 
-    sequence_of <<= (SEQUENCE
-                     + Group(Optional(size_paren))
-                     + OF
-                     + tag
-                     + type_)
+    choice_type <<= (CHOICE
+                     + lbrace
+                     + Group(Optional(delimitedList(
+                         Group(Group(value_name
+                                     + tag
+                                     + type_)
+                               + Group(Optional(OPTIONAL)
+                                       + Optional(DEFAULT + word))
+                               | dotx3))))
+                     + rbrace)
 
-    set_of <<= (SET
-                + Group(Optional(size))
-                + OF
-                + tag
-                + type_)
+    enumerated_type <<= (ENUMERATED + lbrace
+                         + Group(delimitedList(Group((word
+                                                      + Optional(Suppress(lparen)
+                                                                 + word
+                                                                 + Suppress(rparen)))
+                                                     | dotx3)))
+                         + rbrace)
 
-    set_ <<= (SET + lbrace
-              + Group(Optional(delimitedList(
-                  Group(Group(value_name
-                              + tag
-                              + type_)
-                        + Group(Optional(OPTIONAL)
-                                + Optional(DEFAULT + word))
-                        | dotx3))))
-              + rbrace)
+    integer_type <<= (INTEGER
+                      + Group(Optional((lparen
+                                        + (range_ | word)
+                                        + rparen)
+                                       | (lbrace
+                                          + Group(delimitedList(word
+                                                                + lparen
+                                                                + word
+                                                                + rparen))
+                                          + rbrace)))
+                      + Optional(lparen
+                                 + range_
+                                 + rparen))
 
-    choice <<= (CHOICE
-                + lbrace
-                + Group(Optional(delimitedList(
-                    Group(Group(value_name
-                                + tag
-                                + type_)
-                          + Group(Optional(OPTIONAL)
-                                  + Optional(DEFAULT + word))
-                          | dotx3))))
-                + rbrace)
+    bit_string_type <<= (BIT + STRING
+                         + Group(Optional((lbrace
+                                           + Group(delimitedList(word
+                                                                 + lparen
+                                                                 + word
+                                                                 + rparen))
+                                           + rbrace)))
+                         + Group(Optional(constraint)))
 
-    enumerated <<= (ENUMERATED + lbrace
-                    + Group(delimitedList(Group((word
-                                                 + Optional(Suppress(lparen)
-                                                            + word
-                                                            + Suppress(rparen)))
-                                                | dotx3)))
-                    + rbrace)
+    octet_string_type <<= (OCTET + STRING
+                           + Group(Optional(Suppress(lparen)
+                                            + (size | (CONTAINING + word))
+                                            + Suppress(rparen))))
 
-    integer <<= (INTEGER
-                 + Group(Optional((lparen
-                                   + (range_ | word)
-                                   + rparen)
-                                  | (lbrace
-                                     + Group(delimitedList(word
-                                                           + lparen
-                                                           + word
-                                                           + rparen))
-                                     + rbrace)))
-                 + Optional(lparen
-                            + range_
-                            + rparen))
+    object_identifier_type <<= (OBJECT + IDENTIFIER
+                                + Optional(lparen
+                                           + delimitedList(word, delim='|')
+                                           + rparen))
 
-    bit_string <<= (BIT + STRING
-                    + Group(Optional((lbrace
-                                      + Group(delimitedList(word
-                                                            + lparen
-                                                            + word
-                                                            + rparen))
-                                      + rbrace)))
-                    + Group(Optional(constraint)))
+    boolean_type <<= BOOLEAN
 
-    octet_string <<= (OCTET + STRING
-                      + Group(Optional(Suppress(lparen)
-                                       + (size | (CONTAINING + word))
-                                       + Suppress(rparen))))
-
-    object_identifier <<= (OBJECT + IDENTIFIER
-                           + Optional(lparen
-                                      + delimitedList(word, delim='|')
-                                      + rparen))
-
-    boolean <<= BOOLEAN
-
-    any_defined_by <<= (ANY + DEFINED + BY + word)
+    any_defined_by_type <<= (ANY + DEFINED + BY + word)
 
     type_assignment = (type_reference
                        + assign
