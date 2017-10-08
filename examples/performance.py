@@ -10,13 +10,12 @@ https://gist.github.com/philmayers/67b9300d8fb7282481a1a6af5ed45818.
 
 from __future__ import print_function
 
-import sys
+import os
 import timeit
-
-sys.path.insert(0, '..')
-
 import asn1tools
 
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+SNMP_V1_ASN_PATH = os.path.join(SCRIPT_DIR, '..', 'tests', 'files', 'snmp_v1.asn')
 
 DECODED_MESSAGE = {
     "version": 0,
@@ -83,7 +82,7 @@ ITERATIONS = 3000
 
 
 def asn1tools_encode_decode():
-    snmp_v1 = asn1tools.compile_file('../tests/files/snmp_v1.asn')
+    snmp_v1 = asn1tools.compile_file(SNMP_V1_ASN_PATH)
 
     def encode():
         snmp_v1.encode('Message', DECODED_MESSAGE)

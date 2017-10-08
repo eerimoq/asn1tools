@@ -5,16 +5,18 @@
 """
 
 from __future__ import print_function
-import sys
-sys.path.insert(0, '..')
-import asn1tools
+import os
 from binascii import hexlify
+import asn1tools
+
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+FOO_ASN_PATH = os.path.join(SCRIPT_DIR, '..', 'tests', 'files', 'foo.asn')
 
 # Print the specification.
 print('ASN.1 specification:')
 print()
 
-with open('../tests/files/foo.asn') as fin:
+with open(FOO_ASN_PATH) as fin:
     print(fin.read())
 
 # The question to encode.
@@ -24,7 +26,7 @@ print("Question to encode: {}".format(question))
 
 # Encode and decode the question once for each codec.
 for codec in ['ber', 'der', 'per', 'uper']:
-    foo = asn1tools.compile_file('../tests/files/foo.asn', codec)
+    foo = asn1tools.compile_file(FOO_ASN_PATH, codec)
     encoded = foo.encode('Question', question)
     decoded = foo.decode('Question', encoded)
 

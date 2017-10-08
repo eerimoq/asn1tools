@@ -1,8 +1,8 @@
 test:
 	python2 setup.py test
 	python3 setup.py test
-	cd examples && ./performance.py
-	cd examples && ./question.py
+	env PYTHONPATH=. python3 examples/performance.py
+	env PYTHONPATH=. python3 examples/question.py
 
 release-to-pypi:
 	python setup.py sdist
