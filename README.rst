@@ -68,7 +68,7 @@ The same ASN.1 specification, but using the PER codec.
    >>> foo.decode('Question', encoded)
    {'id': 1, 'question': 'Is 1+1=3?'}
 
-See the `examples`_ folder for additional examples
+See the `examples`_ folder for additional examples.
 
 Contributing
 ============
