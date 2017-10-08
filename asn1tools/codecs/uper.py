@@ -226,8 +226,8 @@ class Integer(Type):
 
     def decode(self, decoder):
         if self.number_of_bits is None:
-            length = decoder.read_bytes(1)[0]
-            value = decode_signed_integer(decoder.read_bytes(length))
+            length = decoder.read_integer(8)
+            value = decode_signed_integer(bytearray(decoder.read_bits(8 * length)))
         else:
             value = decoder.read_integer(self.number_of_bits)
             value += self.minimum
