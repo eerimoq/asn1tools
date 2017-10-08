@@ -31,5 +31,5 @@ for codec in ['ber', 'der', 'per', 'uper']:
     print()
     print('{}:'.format(codec.upper()))
     print('Encoded: {} ({} bytes)'.format(hexlify(encoded).decode('ascii'),
-                                                   len(encoded)))
+                                          len(encoded)))
     print('Decoded: {}'.format(decoded))
