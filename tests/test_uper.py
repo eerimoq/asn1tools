@@ -348,8 +348,8 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         self.assertEqual(all_types.encode('Integer', -32769), b'\x03\xff\x7f\xff')
         self.assertEqual(all_types.encode('Bitstring', (b'\x40', 4)),
                          b'\x04\x40')
-        self.assertEqual(all_types.encode('Bitstring2', (b'\x12\x34', 9)),
-                         b'\x12\x00')
+        self.assertEqual(all_types.encode('Bitstring2', (b'\x12\x80', 9)),
+                         b'\x12\x80')
         self.assertEqual(all_types.encode('Bitstring3', (b'\x34', 6)),
                          b'\x4d')
         self.assertEqual(all_types.encode('Octetstring', b'\x00'),
@@ -386,8 +386,18 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         self.assertEqual(all_types.decode('Integer', b'\x03\xff\x7f\xff'), -32769)
         self.assertEqual(all_types.decode('Bitstring', b'\x04\x40'),
                          (b'\x40', 4))
+        self.assertEqual(all_types.decode('Bitstring2', b'\x12\x80'),
+                         (b'\x12\x80', 9))
+        self.assertEqual(all_types.decode('Bitstring3', b'\x4d'),
+                         (b'\x34', 6))
         self.assertEqual(all_types.decode('Octetstring', b'\x01\x00'),
                          b'\x00')
+        self.assertEqual(all_types.decode('Octetstring2', b'\xab\xcd'),
+                         b'\xab\xcd')
+        self.assertEqual(all_types.decode('Octetstring3', b'\xab\xcd\xef'),
+                         b'\xab\xcd\xef')
+        self.assertEqual(all_types.decode('Octetstring4', b'\x31\x35\x79\xbd\xe0'),
+                         b'\x89\xab\xcd\xef')
         self.assertEqual(all_types.decode('Enumerated', b'\x00'), 'one')
         self.assertEqual(all_types.decode('Sequence', b''), {})
         self.assertEqual(all_types.decode('Ia5string', b'\x03\xc5\x87\x90'), 'bar')
