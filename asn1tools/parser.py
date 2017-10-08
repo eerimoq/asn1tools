@@ -5,15 +5,27 @@ encode and decode types.
 
 import logging
 
-from pyparsing import \
-    Literal, Keyword, Word, ZeroOrMore, Regex, printables, delimitedList, \
-    Group, Optional, Forward, StringEnd, OneOrMore, alphanums, Suppress
+from pyparsing import Literal
+from pyparsing import Keyword
+from pyparsing import Word
+from pyparsing import ZeroOrMore
+from pyparsing import Regex
+from pyparsing import printables
+from pyparsing import delimitedList
+from pyparsing import Group
+from pyparsing import Optional
+from pyparsing import Forward
+from pyparsing import StringEnd
+from pyparsing import OneOrMore
+from pyparsing import alphanums
+from pyparsing import Suppress
+from pyparsing import ParseException
 
 
 LOGGER = logging.getLogger(__name__)
 
 
-class ParserError(Exception):
+class ParseError(Exception):
     pass
 
 
@@ -481,7 +493,14 @@ def parse_string(string):
     """
 
     grammar = create_grammar()
-    tokens = grammar.parseString(string).asList()
+
+    try:
+        tokens = grammar.parseString(string).asList()
+    except ParseException as e:
+        raise ParseError("Invalid ASN.1 at line {}, column {}: '{}'.".format(
+            e.lineno,
+            e.column,
+            e.markInputline()))
 
     modules = {}
 
@@ -519,7 +538,6 @@ def parse_string(string):
             modules[module_name]['tags'] = module[0][3][0]
 
         modules[module_name]['extensibility-implied'] = (module[0][4] != [])
-
 
     return modules
 
