@@ -43,6 +43,9 @@ fictitious Foo protocol (based on the FooProtocol on Wikipedia).
 
    END
 
+Scripting
+---------
+
 `Compile`_ the ASN.1 specification, and `encode`_ and `decode`_ a
 question using the default codec (BER).
 
@@ -69,6 +72,27 @@ The same ASN.1 specification, but using the PER codec.
    {'id': 1, 'question': 'Is 1+1=3?'}
 
 See the `examples`_ folder for additional examples.
+
+Command line tool
+-----------------
+
+Decode given encoded Question using the default codec (BER).
+
+.. code-block:: text
+
+   $ asn1tools decode tests/files/foo.asn Question 300e0201011609497320312b313d333f
+   id: 1
+   question: Is 1+1=3?
+   $
+
+Decode given encoded Question using the UPER codec.
+
+.. code-block:: text
+
+   $ asn1tools decode --codec uper tests/files/foo.asn Question 01010993cd03156c5eb37e
+   id: 1
+   question: Is 1+1=3?
+   $
 
 Contributing
 ============
