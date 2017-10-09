@@ -4,19 +4,35 @@ Boolean ::= BOOLEAN
 
 Integer ::= INTEGER
 
+Integer2 ::= INTEGER (1..99)
+
+Integer3 ::= INTEGER (1..2 | 9..10)
+
+Real ::= REAL (1.0..2.0)
+
+Real2 ::= REAL (1..2)
+
+Real3 ::= REAL (1...2)
+
+Real4 ::= REAL (1. ..2)
+
+Real5 ::= REAL (-20.0 .. -10.0)
+
 Bitstring ::= BIT STRING
 
-Bitstring2 ::= BIT STRING (SIZE(9))
+Bitstring2 ::= BIT STRING (SIZE (9))
 
-Bitstring3 ::= BIT STRING (SIZE(5..7))
+Bitstring3 ::= BIT STRING (SIZE (5..7))
 
 Octetstring ::= OCTET STRING
 
-Octetstring2 ::= OCTET STRING (SIZE(2))
+Octetstring2 ::= OCTET STRING (SIZE (2))
 
-Octetstring3 ::= OCTET STRING (SIZE(3))
+Octetstring3 ::= OCTET STRING (SIZE (3))
 
-Octetstring4 ::= OCTET STRING (SIZE(3..7))
+Octetstring4 ::= OCTET STRING (SIZE (3..7))
+
+Octetstring5 ::= OCTET STRING (SIZE (4 | 9))
 
 Null ::= NULL
 
@@ -45,6 +61,10 @@ Printablestring ::= PrintableString
 Ia5string ::= IA5String
 
 Ia5string2 ::= IA5String (FROM "a".."f" | "0".."9")
+
+Ia5string3 ::= IA5String -- ("foo" | "bar" | "fie")
+
+Ia5string4 ::= IA5String -- (SIZE (1) ^ FROM ("0".."2"))
 
 Universalstring ::= UniversalString
 

@@ -238,6 +238,21 @@ class Integer(Type):
         return 'Integer({})'.format(self.name)
 
 
+class Real(Type):
+
+    def __init__(self, name):
+        super(Real, self).__init__(name, 'REAL')
+
+    def encode(self, data, encoder):
+        raise NotImplementedError()
+
+    def decode(self, decoder):
+        raise NotImplementedError()
+
+    def __repr__(self):
+        return 'Real({})'.format(self.name)
+
+
 class Boolean(Type):
 
     def __init__(self, name):
@@ -967,6 +982,8 @@ class Compiler(object):
             minimum, maximum = self.get_restricted_to_range(type_descriptor,
                                                             module_name)
             compiled = Integer(name, minimum, maximum)
+        elif type_descriptor['type'] == 'REAL':
+            compiled = Real(name)
         elif type_descriptor['type'] == 'ENUMERATED':
             compiled = Enumerated(name, type_descriptor['values'])
         elif type_descriptor['type'] == 'BOOLEAN':

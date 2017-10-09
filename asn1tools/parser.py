@@ -18,6 +18,7 @@ from pyparsing import Forward
 from pyparsing import StringEnd
 from pyparsing import OneOrMore
 from pyparsing import alphanums
+from pyparsing import nums
 from pyparsing import Suppress
 from pyparsing import ParseException
 
@@ -227,6 +228,7 @@ def create_grammar():
     OF = Keyword('OF')
     SIZE = Keyword('SIZE')
     INTEGER = Keyword('INTEGER')
+    REAL = Keyword('REAL')
     BIT = Keyword('BIT')
     STRING = Keyword('STRING')
     OCTET = Keyword('OCTET')
@@ -249,7 +251,7 @@ def create_grammar():
     BOOLEAN = Keyword('BOOLEAN')
 
     # Various literals.
-    word = Word(printables, excludeChars=',(){}[].:=;"')
+    word = Word(printables, excludeChars=',(){}[].:=;"|')
     type_reference = Regex(r'[A-Z][a-zA-Z0-9-]*')
     value_reference = word
     value_name = Word(alphanums + '-')
@@ -261,14 +263,19 @@ def create_grammar():
     lbracket = Literal('[')
     rbracket = Literal(']')
     scolon = Literal(';')
+    dot = Literal('.')
     dotx2 = Literal('..')
     dotx3 = Literal('...')
     qmark = Literal('"')
+    pipe = Literal('|')
+    integer = Word(nums)
+    real_number = Regex(r'[+-]?\d+\.?\d*([eE][+-]?\d+)?')
 
     # Forward declarations.
     sequence_type = Forward()
     choice_type = Forward()
     integer_type = Forward()
+    real_type = Forward()
     bit_string_type = Forward()
     octet_string_type = Forward()
     enumerated_type = Forward()
@@ -281,8 +288,9 @@ def create_grammar():
 
     range_ = (word + dotx2 + word)
 
-    size = (SIZE + lparen
-            + (range_ | word)
+    size = (SIZE
+            + lparen
+            + delimitedList(range_ | word, delim=pipe)
             + rparen)
 
     size_paren = (Suppress(Optional(lparen))
@@ -292,7 +300,7 @@ def create_grammar():
     unions = Suppress(FROM
                       + delimitedList(qmark + word + qmark
                                       + dotx2
-                                      + qmark + word + qmark, delim='|'))
+                                      + qmark + word + qmark, delim=pipe))
 
     element_set_spec = unions
 
@@ -313,6 +321,7 @@ def create_grammar():
     builtin_type = (sequence_type
                     | choice_type
                     | integer_type
+                    | real_type
                     | bit_string_type
                     | octet_string_type
                     | enumerated_type
@@ -384,7 +393,7 @@ def create_grammar():
 
     integer_type <<= (INTEGER
                       + Group(Optional((lparen
-                                        + (range_ | word)
+                                        + delimitedList(range_ | word, delim=pipe)
                                         + rparen)
                                        | (lbrace
                                           + Group(delimitedList(word
@@ -395,6 +404,13 @@ def create_grammar():
                       + Optional(lparen
                                  + range_
                                  + rparen))
+
+    real_type <<= (REAL + Optional(lparen
+                                   + ((integer + dot + dotx2)
+                                      | (integer + dotx2)
+                                      | (real_number + dotx2))
+                                   + real_number
+                                   + rparen))
 
     bit_string_type <<= (BIT + STRING
                          + Group(Optional((lbrace
