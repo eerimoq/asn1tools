@@ -1,0 +1,32 @@
+module_name_1 DEFINITIONS AUTOMATIC TAGS ::= 
+BEGIN
+
+Identifier ::= INTEGER (0..5)
+
+Num ::= INTEGER (0..15)
+Priority ::= ENUMERATE('High','Low')
+
+aSequence ::=
+ SEQUENCE {
+  priority Priority,
+  scr Identifier,
+  dst Identifier,
+  num Num,
+  length INTEGER (0..1024)
+}
+
+aChoice ::=
+ CHOICE {
+  priority Priority,
+  list List
+}
+
+END
+
+module_name_2 DEFINITIONS AUTOMATIC TAGS ::= 
+BEGIN
+
+IMPORTS Identifier FROM module_name_1;
+
+id ::= Identifier
+bol ::= BOOLEAN
