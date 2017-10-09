@@ -108,7 +108,7 @@ class Decoder(object):
         if number_of_bits % 8 != 0:
             value.append(byte)
 
-        return bytes(value)
+        return value
 
     def read_integer(self, number_of_bits):
         """Read an integer value of given number of bits.

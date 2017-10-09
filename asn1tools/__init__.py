@@ -17,7 +17,8 @@ __version__ = '0.11.0'
 
 
 def print_list(list_, indent):
-    for element in list_:
+    for i, element in enumerate(list_):
+        print('{}[{}]:'.format(indent * ' ', i))
         if isinstance(element, list):
             print_list(element, indent + 2)
         elif isinstance(element, dict):
@@ -25,9 +26,9 @@ def print_list(list_, indent):
         elif isinstance(element, tuple):
             decoded = binascii.hexlify(element[0]).decode('ascii')
             print('{}"{}"'.format(indent * ' ', decoded))
-        elif isinstance(element, bytes):
+        elif isinstance(element, bytearray):
             decoded = binascii.hexlify(element).decode('ascii')
-            print('{}"{}"'.format(indent * ' ', decoded))
+            print("{}'{}'".format(indent * ' ', decoded))
         else:
             print('{}{}'.format(indent * ' ', element))
 
@@ -43,9 +44,9 @@ def print_dict(dict_, indent=0):
         elif isinstance(value, tuple):
             decoded = binascii.hexlify(value[0]).decode('ascii')
             print('{}{}: "{}"'.format(indent * ' ', key, decoded))
-        elif isinstance(value, bytes):
+        elif isinstance(value, bytearray):
             decoded = binascii.hexlify(value).decode('ascii')
-            print('{}{}: "{}"'.format(indent * ' ', key, decoded))
+            print("{}{}: '{}'".format(indent * ' ', key, decoded))
         else:
             print('{}{}: {}'.format(indent * ' ', key, value))
 
