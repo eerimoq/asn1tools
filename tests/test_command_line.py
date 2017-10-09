@@ -13,7 +13,7 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
 
     maxDiff = None
 
-    def test_command_line_decode_foo_question(self):
+    def test_command_line_decode_ber_foo_question(self):
         argv = ['asn1tools',
                 'decode',
                 'tests/files/foo.asn',
@@ -26,7 +26,6 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
 
         try:
             asn1tools._main()
-
         finally:
             actual_output = sys.stdout.getvalue()
             sys.stdout = stdout
@@ -34,7 +33,28 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
         self.assertTrue('id: 1' in actual_output)
         self.assertTrue('question: Is 1+1=3?' in actual_output)
 
-    def test_command_line_decode_rrc_bcch_dl_sch_message(self):
+    def test_command_line_decode_uper_foo_question(self):
+        argv = ['asn1tools',
+                'decode',
+                '--codec', 'uper',
+                'tests/files/foo.asn',
+                'Question',
+                '01010993cd03156c5eb37e']
+
+        stdout = sys.stdout
+        sys.argv = argv
+        sys.stdout = StringIO()
+
+        try:
+            asn1tools._main()
+        finally:
+            actual_output = sys.stdout.getvalue()
+            sys.stdout = stdout
+
+        self.assertTrue('id: 1' in actual_output)
+        self.assertTrue('question: Is 1+1=3?' in actual_output)
+
+    def test_command_line_decode_ber_rrc_bcch_dl_sch_message(self):
         argv = ['asn1tools',
                 'decode',
                 'tests/files/snmp_v1.asn',
@@ -52,7 +72,6 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
 
         try:
             asn1tools._main()
-
         finally:
             actual_output = sys.stdout.getvalue()
             sys.stdout = stdout
