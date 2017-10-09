@@ -513,7 +513,7 @@ def parse_string(string):
     try:
         tokens = grammar.parseString(string).asList()
     except ParseException as e:
-        raise ParseError("Invalid ASN.1 at line {}, column {}: '{}'.".format(
+        raise ParseError("Invalid ASN.1 syntax at line {}, column {}: '{}'.".format(
             e.lineno,
             e.column,
             e.markInputline()))

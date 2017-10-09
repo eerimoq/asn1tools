@@ -3,6 +3,7 @@
 """
 
 from . import EncodeError, DecodeError, DecodeTagError
+from . import compiler
 
 
 class Class(object):
@@ -929,10 +930,7 @@ class CompiledType(object):
         return repr(self._type)
 
 
-class Compiler(object):
-
-    def __init__(self, specification):
-        self._specification = specification
+class Compiler(compiler.Compiler):
 
     def process(self):
         return {
@@ -1031,20 +1029,6 @@ class Compiler(object):
 
         return compiled
 
-    def is_explicit_tag(self, type_descriptor, module_name):
-        try:
-            return type_descriptor['tag']['kind'] == 'EXPLICIT'
-        except KeyError:
-            pass
-
-        try:
-            tags = self._specification[module_name].get('tags', None)
-            return bool(type_descriptor['tag']) and (tags != 'IMPLICIT')
-        except KeyError:
-            pass
-
-        return False
-
     def compile_type(self, name, type_descriptor, module_name):
         compiled = self.compile_implicit_type(name,
                                               type_descriptor,
@@ -1098,25 +1082,6 @@ class Compiler(object):
             compiled_members.append(compiled_member)
 
         return compiled_members
-
-    def lookup_type_descriptor(self, type_name, module_name):
-        module = self._specification[module_name]
-        type_descriptor = None
-
-        if type_name in module['types']:
-            type_descriptor = module['types'][type_name]
-        else:
-            for from_module_name, imports in module['imports'].items():
-                if type_name in imports:
-                    from_module = self._specification[from_module_name]
-                    type_descriptor = from_module['types'][type_name]
-                    module_name = from_module_name
-                    break
-
-        if type_descriptor is None:
-            raise Exception("Type '{}' not found.".format(type_name))
-
-        return type_descriptor, module_name
 
 
 def compile_dict(specification):
