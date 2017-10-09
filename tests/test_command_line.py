@@ -57,8 +57,6 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
             actual_output = sys.stdout.getvalue()
             sys.stdout = stdout
 
-        print(actual_output)
-
         expected_output = [
             "community: '7075626c6963'",
             "data:",
