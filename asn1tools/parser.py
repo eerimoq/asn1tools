@@ -1,5 +1,4 @@
-"""Compile ASN.1 specifications to Python objects that can be used to
-encode and decode types.
+"""Convert ASN.1 specifications to Python data structures.
 
 """
 

@@ -1,5 +1,5 @@
 """The top level of the ASN.1 tools package contains commonly used
-functions and classes.
+functions and classes, and the command line interface.
 
 """
 
