@@ -2,6 +2,9 @@
 
 """
 
+from ..errors import CompileError
+
+
 class Compiler(object):
 
     def __init__(self, specification):
@@ -31,15 +34,11 @@ class Compiler(object):
         else:
             raise NotImplementedError()
 
-        try:
+        if isinstance(minimum, str):
             minimum = self.lookup_value(minimum, module_name)[0]['value']
-        except KeyError:
-            pass
 
-        try:
+        if isinstance(maximum, str):
             maximum = self.lookup_value(maximum, module_name)[0]['value']
-        except KeyError:
-            pass
 
         return minimum, maximum
 
@@ -58,15 +57,11 @@ class Compiler(object):
         else:
             raise NotImplementedError()
 
-        try:
+        if isinstance(minimum, str):
             minimum = self.lookup_value(minimum, module_name)[0]['value']
-        except KeyError:
-            pass
 
-        try:
+        if isinstance(maximum, str):
             maximum = self.lookup_value(maximum, module_name)[0]['value']
-        except KeyError:
-            pass
 
         return minimum, maximum
 
@@ -94,12 +89,23 @@ class Compiler(object):
             for from_module_name, imports in module['imports'].items():
                 if type_name in imports:
                     from_module = self._specification[from_module_name]
-                    type_descriptor = from_module['types'][type_name]
+
+                    try:
+                        type_descriptor = from_module['types'][type_name]
+                    except KeyError:
+                        raise CompileError(
+                            "Type '{}' imported by module '{}' not found "
+                            "in module '{}'.".format(type_name,
+                                                     module_name,
+                                                     from_module_name))
+
                     module_name = from_module_name
                     break
 
         if type_descriptor is None:
-            raise KeyError("Type '{}' not found.".format(type_name))
+            raise CompileError("Type '{}' not found in module '{}'.".format(
+                type_name,
+                module_name))
 
         return type_descriptor, module_name
 
@@ -113,11 +119,22 @@ class Compiler(object):
             for from_module_name, imports in module['imports'].items():
                 if value_name in imports:
                     from_module = self._specification[from_module_name]
-                    value = from_module['values'][value_name]
+
+                    try:
+                        value = from_module['values'][value_name]
+                    except KeyError:
+                        raise CompileError(
+                            "Value '{}' imported by module '{}' not found "
+                            "in module '{}'.".format(value_name,
+                                                     module_name,
+                                                     from_module_name))
+
                     module_name = from_module_name
                     break
 
         if value is None:
-            raise KeyError("Value '{}' not found.".format(value_name))
+            raise CompileError("Value '{}' not found in module '{}'.".format(
+                value_name,
+                module_name))
 
         return value, module_name

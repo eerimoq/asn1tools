@@ -10,6 +10,7 @@ import binascii
 from .compiler import compile_dict, compile_string, compile_file
 from .parser import parse_string, parse_file, ParseError
 from .codecs import EncodeError, DecodeError
+from .errors import CompileError
 
 
 __author__ = 'Erik Moqvist'

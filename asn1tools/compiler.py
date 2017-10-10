@@ -5,6 +5,7 @@ encode and decode types.
 
 from .parser import parse_string, convert_type_tokens
 from .codecs import ber, der, per, uper
+from .errors import CompileError
 
 
 class Specification(object):
@@ -28,11 +29,11 @@ class Specification(object):
 
                 for type_name in types:
                     if type_name in self._types:
-                        raise RuntimeError()
+                        raise CompileError()
 
                     self._types[type_name] = types[type_name]
 
-        except RuntimeError:
+        except CompileError:
             self._types = None
 
     @property
@@ -126,7 +127,7 @@ def compile_dict(specification, codec='ber', any_defined_by_choices=None):
     try:
         codec = codecs[codec]
     except KeyError:
-        raise ValueError("unsupported codec '{}'".format(codec))
+        raise CompileError("unsupported codec '{}'".format(codec))
 
     if any_defined_by_choices:
         _compile_any_defined_by_choices(specification,
