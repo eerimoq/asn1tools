@@ -95,6 +95,17 @@ class Asn1ToolsParseTest(unittest.TestCase):
             "BIT STRING | OCTET STRING | ENUMERATED | SEQUENCE OF | SEQUENCE | "
             "SET OF | SET | OBJECT IDENTIFIER | BOOLEAN | ANY DEFINED BY | ...}.")
 
+    def test_parse_error_sequence_missing_member_name(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('A DEFINITIONS ::= BEGIN'
+                                   '  A ::= SEQUENCE { A } '
+                                   'END')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Invalid ASN.1 syntax at line 1, column 43: 'A DEFINITIONS ::= "
+            "BEGIN  A ::= SEQUENCE { >!<A } END': Expected \"}\".")
+
 
 if __name__ == '__main__':
     unittest.main()

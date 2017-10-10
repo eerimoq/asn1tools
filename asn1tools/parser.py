@@ -254,7 +254,8 @@ def create_grammar():
     # Various literals.
     word = Word(printables, excludeChars=',(){}[].:=;"|')
     type_reference = (NotAny(END) + Regex(r'[A-Z][a-zA-Z0-9-]*'))
-    value_reference = Regex(r'[a-z][a-zA-Z0-9-]*')
+    identifier = Regex(r'[a-z][a-zA-Z0-9-]*')
+    value_reference = identifier
     value_name = Word(alphanums + '-')
     assign = Literal('::=')
     lparen = Literal('(')
@@ -344,7 +345,7 @@ def create_grammar():
     sequence_type <<= (SEQUENCE
                        - lbrace
                        + Group(Optional(delimitedList(
-                           Group(Group(value_name
+                           Group(Group(identifier
                                        - tag
                                        - type_)
                                  + Group(Optional(OPTIONAL)
@@ -367,7 +368,7 @@ def create_grammar():
     set_type <<= (SET
                   - lbrace
                   + Group(Optional(delimitedList(
-                      Group(Group(value_name
+                      Group(Group(identifier
                                   - tag
                                   - type_)
                             + Group(Optional(OPTIONAL)
@@ -378,7 +379,7 @@ def create_grammar():
     choice_type <<= (CHOICE
                      - lbrace
                      + Group(Optional(delimitedList(
-                         Group(Group(value_name
+                         Group(Group(identifier
                                      - tag
                                      - type_)
                                + Group(Optional(OPTIONAL)
