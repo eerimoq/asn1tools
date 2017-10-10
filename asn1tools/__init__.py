@@ -8,7 +8,7 @@ import argparse
 import binascii
 
 from .compiler import compile_dict, compile_string, compile_file
-from .parser import parse_string, parse_file
+from .parser import parse_string, parse_file, ParseError
 from .codecs import EncodeError, DecodeError
 
 

@@ -21,6 +21,8 @@ from pyparsing import alphanums
 from pyparsing import nums
 from pyparsing import Suppress
 from pyparsing import ParseException
+from pyparsing import ParseSyntaxException
+from pyparsing import NotAny
 
 
 LOGGER = logging.getLogger(__name__)
@@ -252,8 +254,8 @@ def create_grammar():
 
     # Various literals.
     word = Word(printables, excludeChars=',(){}[].:=;"|')
-    type_reference = Regex(r'[A-Z][a-zA-Z0-9-]*')
-    value_reference = word
+    type_reference = (NotAny(END) + Regex(r'[A-Z][a-zA-Z0-9-]*'))
+    value_reference = Regex(r'[a-z][a-zA-Z0-9-]*')
     value_name = Word(alphanums + '-')
     assign = Literal('::=')
     lparen = Literal('(')
@@ -272,19 +274,19 @@ def create_grammar():
     real_number = Regex(r'[+-]?\d+\.?\d*([eE][+-]?\d+)?')
 
     # Forward declarations.
-    sequence_type = Forward()
-    choice_type = Forward()
-    integer_type = Forward()
-    real_type = Forward()
-    bit_string_type = Forward()
-    octet_string_type = Forward()
-    enumerated_type = Forward()
-    sequence_of_type = Forward()
-    set_of_type = Forward()
-    set_type = Forward()
-    object_identifier_type = Forward()
-    boolean_type = Forward()
-    any_defined_by_type = Forward()
+    sequence_type = Forward().setName('SEQUENCE')
+    choice_type = Forward().setName('CHOICE')
+    integer_type = Forward().setName('INTEGER')
+    real_type = Forward().setName('REAL')
+    bit_string_type = Forward().setName('BIT STRING')
+    octet_string_type = Forward().setName('OCTET STRING')
+    enumerated_type = Forward().setName('ENUMERATED')
+    sequence_of_type = Forward().setName('SEQUENCE OF')
+    set_of_type = Forward().setName('SET OF')
+    set_type = Forward().setName('SET')
+    object_identifier_type = Forward().setName('OBJECT IDENTIFIER')
+    boolean_type = Forward().setName('BOOLEAN')
+    any_defined_by_type = Forward().setName('ANY DEFINED BY')
 
     range_ = (word + dotx2 + word)
 
@@ -318,14 +320,14 @@ def create_grammar():
                   + constraint_spec
                   + Suppress(rparen))
 
-    builtin_type = (sequence_type
-                    | choice_type
+    builtin_type = (choice_type
                     | integer_type
                     | real_type
                     | bit_string_type
                     | octet_string_type
                     | enumerated_type
                     | sequence_of_type
+                    | sequence_type
                     | set_of_type
                     | set_type
                     | object_identifier_type
@@ -333,63 +335,66 @@ def create_grammar():
 
     type_ = (builtin_type
              | any_defined_by_type
-             | (word + Optional(constraint)))
+             | (word + Optional(constraint)).setName('...'))
 
     tag = Group(Optional(Suppress(lbracket)
                          + Group(Optional(APPLICATION | PRIVATE) + word)
                          + Suppress(rbracket)
                          + Group(Optional(IMPLICIT | EXPLICIT))))
 
-    sequence_type <<= (SEQUENCE + lbrace
+    sequence_type <<= (SEQUENCE
+                       - lbrace
                        + Group(Optional(delimitedList(
                            Group(Group(value_name
-                                       + tag
-                                       + type_)
+                                       - tag
+                                       - type_)
                                  + Group(Optional(OPTIONAL)
                                          + Optional(DEFAULT + word))
                                  | dotx3))))
-                       + rbrace)
+                       - rbrace)
 
     sequence_of_type <<= (SEQUENCE
                           + Group(Optional(size_paren))
                           + OF
-                          + tag
-                          + type_)
+                          - tag
+                          - type_)
 
     set_of_type <<= (SET
                      + Group(Optional(size))
                      + OF
-                     + tag
-                     + type_)
+                     - tag
+                     - type_)
 
-    set_type <<= (SET + lbrace
+    set_type <<= (SET
+                  - lbrace
                   + Group(Optional(delimitedList(
                       Group(Group(value_name
-                                  + tag
-                                  + type_)
+                                  - tag
+                                  - type_)
                             + Group(Optional(OPTIONAL)
                                     + Optional(DEFAULT + word))
                             | dotx3))))
-                  + rbrace)
+                  - rbrace)
 
     choice_type <<= (CHOICE
-                     + lbrace
+                     - lbrace
                      + Group(Optional(delimitedList(
                          Group(Group(value_name
-                                     + tag
-                                     + type_)
+                                     - tag
+                                     - type_)
                                + Group(Optional(OPTIONAL)
                                        + Optional(DEFAULT + word))
                                | dotx3))))
-                     + rbrace)
+                     - rbrace)
 
-    enumerated_type <<= (ENUMERATED + lbrace
+    enumerated_type <<= (ENUMERATED
+                         - lbrace
                          + Group(delimitedList(Group((word
                                                       + Optional(Suppress(lparen)
                                                                  + word
                                                                  + Suppress(rparen)))
                                                      | dotx3)))
-                         + rbrace)
+                         - rbrace)
 
     integer_type <<= (INTEGER
                       + Group(Optional((lparen
@@ -405,14 +410,15 @@ def create_grammar():
                                  + range_
                                  + rparen))
 
-    real_type <<= (REAL + Optional(lparen
-                                   + ((integer + dot + dotx2)
-                                      | (integer + dotx2)
-                                      | (real_number + dotx2))
-                                   + real_number
-                                   + rparen))
+    real_type <<= (REAL
+                   + Optional(lparen
+                              + ((integer + dot + dotx2)
+                                 | (integer + dotx2)
+                                 | (real_number + dotx2))
+                              + real_number
+                              + rparen))
 
-    bit_string_type <<= (BIT + STRING
+    bit_string_type <<= (BIT - STRING
                          + Group(Optional((lbrace
                                            + Group(delimitedList(word
                                                                  + lparen
@@ -421,12 +427,12 @@ def create_grammar():
                                            + rbrace)))
                          + Group(Optional(constraint)))
 
-    octet_string_type <<= (OCTET + STRING
+    octet_string_type <<= (OCTET - STRING
                            + Group(Optional(Suppress(lparen)
                                             + (size | (CONTAINING + word))
                                             + Suppress(rparen))))
 
-    object_identifier_type <<= (OBJECT + IDENTIFIER
+    object_identifier_type <<= (OBJECT - IDENTIFIER
                                 + Optional(lparen
                                            + delimitedList(word, delim='|')
                                            + rparen))
@@ -436,9 +442,9 @@ def create_grammar():
     any_defined_by_type <<= (ANY + DEFINED + BY + word)
 
     type_assignment = (type_reference
-                       + assign
-                       + tag
-                       + type_)
+                       - assign
+                       - tag
+                       - type_)
 
     oid = (Suppress(lbrace)
            + ZeroOrMore(Group((value_name
@@ -451,10 +457,10 @@ def create_grammar():
     value = Group(oid | word)
 
     value_assignment = (value_reference
-                        + Group(INTEGER
+                        - Group(INTEGER
                                 | type_)
-                        + assign
-                        + value)
+                        - assign
+                        - value)
 
     assignment = Group(type_assignment
                        | value_assignment)
@@ -483,13 +489,13 @@ def create_grammar():
     extension_default = Group(Optional(EXTENSIBILITY + IMPLIED))
 
     module_definition = Group(Group(module_identifier
-                                    + DEFINITIONS
+                                    - DEFINITIONS
                                     + tag_default
                                     + extension_default
-                                    + assign
-                                    + BEGIN)
+                                    - assign
+                                    - BEGIN)
                               + module_body
-                              + END)
+                              - END)
 
     # The whole specification.
     specification = OneOrMore(module_definition) + StringEnd()
@@ -517,6 +523,12 @@ def parse_string(string):
             e.lineno,
             e.column,
             e.markInputline()))
+    except ParseSyntaxException as e:
+        raise ParseError("Invalid ASN.1 syntax at line {}, column {}: '{}': {}.".format(
+            e.lineno,
+            e.column,
+            e.markInputline(),
+            e.msg))
 
     modules = {}
 

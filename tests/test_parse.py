@@ -41,6 +41,60 @@ class Asn1ToolsParseTest(unittest.TestCase):
         all_types = asn1tools.parse_file('tests/files/all_types.asn')
         self.assertEqual(all_types, ALL_TYPES)
 
+    def test_parse_error_empty_string(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('')
+
+        self.assertEqual(str(cm.exception),
+                         "Invalid ASN.1 syntax at line 1, column 1: '>!<'.")
+
+    def test_parse_error_begin_missing(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('A DEFINITIONS ::= END')
+
+        self.assertEqual(str(cm.exception),
+                         "Invalid ASN.1 syntax at line 1, column 19: "
+                         "'A DEFINITIONS ::= >!<END': Expected \"BEGIN\".")
+
+    def test_parse_error_end_missing(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('A DEFINITIONS ::= BEGIN')
+
+        self.assertEqual(str(cm.exception),
+                         "Invalid ASN.1 syntax at line 1, column 24: "
+                         "'A DEFINITIONS ::= BEGIN>!<': Expected \"END\".")
+
+    def test_parse_error_type_assignment_missing_assignment(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('A DEFINITIONS ::= BEGIN A END')
+
+        self.assertEqual(str(cm.exception),
+                         "Invalid ASN.1 syntax at line 1, column 27: "
+                         "'A DEFINITIONS ::= BEGIN A >!<END': "
+                         "Expected \"::=\".")
+
+    def test_parse_error_value_assignment_missing_assignment(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('A DEFINITIONS ::= BEGIN a INTEGER END')
+
+        self.assertEqual(str(cm.exception),
+                         "Invalid ASN.1 syntax at line 1, column 35: "
+                         "'A DEFINITIONS ::= BEGIN a INTEGER >!<END': "
+                         "Expected \"::=\".")
+
+    def test_parse_error_sequence_missing_type(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('A DEFINITIONS ::= BEGIN'
+                                   '  A ::= SEQUENCE { a } '
+                                   'END')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Invalid ASN.1 syntax at line 1, column 45: 'A DEFINITIONS ::= BEGIN  "
+            "A ::= SEQUENCE { a >!<} END': Expected {CHOICE | INTEGER | REAL | "
+            "BIT STRING | OCTET STRING | ENUMERATED | SEQUENCE OF | SEQUENCE | "
+            "SET OF | SET | OBJECT IDENTIFIER | BOOLEAN | ANY DEFINED BY | ...}.")
+
 
 if __name__ == '__main__':
     unittest.main()
