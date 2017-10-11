@@ -9,7 +9,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
     maxDiff = None
 
     def test_foo(self):
-        foo = asn1tools.compile_file('tests/files/foo.asn')
+        foo = asn1tools.compile_file(['tests/files/foo.asn'])
 
         self.assertEqual(len(foo.types), 2)
         self.assertTrue(foo.types['Question'] is not None)

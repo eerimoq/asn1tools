@@ -153,10 +153,10 @@ def compile_string(string, codec='ber', any_defined_by_choices=None):
                         any_defined_by_choices)
 
 
-def compile_file(filename, codec='ber', any_defined_by_choices=None):
-    """Compile given ASN.1 specification file and return a
-    :class:`~asn1tools.compiler.Specification` object that can be used
-    to encode and decode data structures with given codec
+def compile_file(filenames, codec='ber', any_defined_by_choices=None):
+    """Compile given ASN.1 specification file or list of files and return
+    a :class:`~asn1tools.compiler.Specification` object that can be
+    used to encode and decode data structures with given codec
     `codec`. `codec` may be one of ``'ber'``, ``'der'``, ``'per'`` and
     ``'uper'``.
 
@@ -164,7 +164,16 @@ def compile_file(filename, codec='ber', any_defined_by_choices=None):
 
     """
 
-    with open(filename, 'r') as fin:
-        return compile_string(fin.read(),
-                              codec,
-                              any_defined_by_choices)
+    if isinstance(filenames, str):
+        filenames = [filenames]
+
+    string = ''
+
+    for filename in filenames:
+        with open(filename, 'r') as fin:
+            string += fin.read()
+            string += '\n'
+
+    return compile_string(string,
+                          codec,
+                          any_defined_by_choices)
