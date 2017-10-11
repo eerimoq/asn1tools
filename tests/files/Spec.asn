@@ -3,8 +3,8 @@ BEGIN
 
 Identifier ::= INTEGER (0..5)
 
-Num ::= INTEGER (0..15)
-Priority ::= ENUMERATE('High','Low')
+Num ::= INTEGER(0..15)
+Priority ::= ENUMERATED('High','Low')
 
 aSequence ::=
  SEQUENCE {
