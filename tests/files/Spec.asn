@@ -4,9 +4,9 @@ BEGIN
 Identifier ::= INTEGER (0..5)
 
 Num ::= INTEGER (0..15)
-Priority ::= ENUMERATED {High, Low}
+Priority ::= ENUMERATED {high, low}
 
-aSequence ::=
+ASequence ::=
  SEQUENCE {
   priority Priority,
   scr Identifier,
@@ -15,9 +15,9 @@ aSequence ::=
   length INTEGER (0..1024)
 }
 
-aChoice ::=
+AChoice ::=
  CHOICE {
-  ID Identifier,
+  identity Identifier,
   num Num
 }
 
@@ -29,13 +29,13 @@ BEGIN
 
 IMPORTS Identifier FROM Module-name-1;
 
-id ::= Identifier
+Id ::= Identifier
 
 SeqMod2 ::=
  SEQUENCE {
  isvalide BOOLEAN,
- name BIT STRING
- ID id
+ name BIT STRING,
+ identity Id
  }
  
 END
