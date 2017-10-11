@@ -57,6 +57,9 @@ class Specification(object):
         """Encode given dictionary `data` as given type `name` and return the
         encoded data as a bytes object.
 
+        See `Types`_ for a mapping table from ASN.1 types to Python
+        types.
+
         >>> foo.encode('Question', {'id': 1, 'question': 'Is 1+1=3?'})
         b'0\\x0e\\x02\\x01\\x01\\x16\\x09Is 1+1=3?'
 
