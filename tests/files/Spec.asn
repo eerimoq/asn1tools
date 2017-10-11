@@ -37,3 +37,4 @@ Seq_Mod_2 ::=
  name BIT STRING
  ID id
  }
+END
