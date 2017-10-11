@@ -31,7 +31,7 @@ IMPORTS Identifier FROM Module-name-1;
 
 id ::= Identifier
 
-Seq_Mod_2 ::=
+SeqMod2 ::=
  SEQUENCE {
  isvalide BOOLEAN,
  name BIT STRING
