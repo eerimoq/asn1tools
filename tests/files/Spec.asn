@@ -3,8 +3,8 @@ BEGIN
 
 Identifier ::= INTEGER (0..5)
 
-Num ::= INTEGER(0..15)
-Priority ::= ENUMERATED('High','Low')
+Num ::= INTEGER (0..15)
+Priority ::= ENUMERATED {High, Low}
 
 aSequence ::=
  SEQUENCE {
@@ -17,8 +17,8 @@ aSequence ::=
 
 aChoice ::=
  CHOICE {
-  priority Priority,
-  list List
+  ID Identifier,
+  num Num
 }
 
 END
