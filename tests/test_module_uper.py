@@ -20,6 +20,9 @@ def main():
   print(dec_1)
   print(dec_2)
 
+ 
+if __name__ == '__main__':
+  main()
 
 
 
