@@ -29,4 +29,11 @@ BEGIN
 IMPORTS Identifier FROM module_name_1;
 
 id ::= Identifier
-bol ::= BOOLEAN
+isValide ::= BOOLEAN
+
+aSequence ::=
+ SEQUENCE {
+ isvalide isValide,
+ name BIT STRING
+ ID id
+ }
