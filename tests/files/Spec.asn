@@ -1,4 +1,4 @@
-Module_name_1 DEFINITIONS AUTOMATIC TAGS ::= 
+Module-name-1 DEFINITIONS AUTOMATIC TAGS ::= 
 BEGIN
 
 Identifier ::= INTEGER (0..5)
@@ -24,17 +24,16 @@ aChoice ::=
 END
 
 
-Module_name_2 DEFINITIONS AUTOMATIC TAGS ::= 
+Module-name-2 DEFINITIONS AUTOMATIC TAGS ::= 
 BEGIN
 
-IMPORTS Identifier FROM Module_name_1;
+IMPORTS Identifier FROM Module-name-1;
 
 id ::= Identifier
-isValide ::= BOOLEAN
 
 Seq_Mod_2 ::=
  SEQUENCE {
- isvalide isValide,
+ isvalide BOOLEAN,
  name BIT STRING
  ID id
  }
