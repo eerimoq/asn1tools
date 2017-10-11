@@ -15,7 +15,7 @@ def main():
 
   #decode
   dec_1 = spec.decode('aSequence',enc_1)
-  dec_2 = spec.decode('Seq_Mod_2',enc_2)
+  dec_2 = spec.decode('SeqMod2',enc_2)
 
   print(dec_1)
   print(dec_2)
