@@ -7,8 +7,10 @@ About
 A Python package for ASN.1 parsing, encoding and decoding.
 
 This project is under development and does only support a subset of
-the ASN.1 specification syntax. BER, DER, PER and UPER codecs are also
-under development.
+the ASN.1 specification syntax. Basic Encoding Rules (BER),
+Distinguished Encoding Rules (DER), Aligned Packed Encoding Rules
+(PER) and Unaligned Packed Encoding Rules (UPER) codecs are also under
+development.
 
 Project homepage: https://github.com/eerimoq/asn1tools
 
