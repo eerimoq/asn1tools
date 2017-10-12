@@ -1,0 +1,24 @@
+Module-1 DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+Identifier ::= INTEGER (0..5)
+
+Num ::= INTEGER (0..15)
+
+Priority ::= ENUMERATED {high, low}
+
+ASequence ::= SEQUENCE {
+    priority Priority,
+    src Identifier,
+    dst Identifier,
+    num Num,
+    length INTEGER (0..1024)
+}
+
+AChoice ::= CHOICE {
+    identity Identifier,
+    num Num
+}
+
+END

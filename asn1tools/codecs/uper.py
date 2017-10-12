@@ -281,7 +281,7 @@ class IA5String(Type):
             encoder.append_bits(bytearray([(byte << 1) & 0xff]), 7)
 
     def decode(self, decoder):
-        length = decoder.read_bytes(1)[0]
+        length = decoder.read_integer(8)
         data = []
 
         for _ in range(length):

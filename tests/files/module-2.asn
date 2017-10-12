@@ -1,0 +1,15 @@
+Module-2 DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+IMPORTS Identifier FROM Module-1;
+
+Id ::= Identifier
+
+SeqMod2 ::= SEQUENCE {
+    isvalide BOOLEAN,
+    name IA5String,
+    identity Id
+}
+
+END
