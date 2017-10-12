@@ -14,7 +14,7 @@ ASN.1 tools
 Basic Usage
 ===========
 
-.. autofunction:: asn1tools.compile_file
+.. autofunction:: asn1tools.compile_files
 
 .. autoclass:: asn1tools.compiler.Specification
     :members:
@@ -73,6 +73,6 @@ Advanced Usage
 
 .. autofunction:: asn1tools.compile_dict
 
-.. autofunction:: asn1tools.parse_file
+.. autofunction:: asn1tools.parse_files
 
 .. autofunction:: asn1tools.parse_string
