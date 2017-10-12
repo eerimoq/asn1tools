@@ -22,6 +22,7 @@ from pyparsing import Suppress
 from pyparsing import ParseException
 from pyparsing import ParseSyntaxException
 from pyparsing import NotAny
+from pyparsing import NoMatch
 
 
 LOGGER = logging.getLogger(__name__)
@@ -250,6 +251,8 @@ def create_grammar():
     EXTENSIBILITY = Keyword('EXTENSIBILITY')
     IMPLIED = Keyword('IMPLIED')
     BOOLEAN = Keyword('BOOLEAN')
+    TRUE = Keyword('TRUE')
+    FALSE = Keyword('FALSE')
 
     # Various literals.
     word = Word(printables, excludeChars=',(){}[].:=;"|')
@@ -264,14 +267,20 @@ def create_grammar():
     rbrace = Literal('}')
     lbracket = Literal('[')
     rbracket = Literal(']')
+    colon = Literal(':')
     scolon = Literal(';')
     dot = Literal('.')
     dotx2 = Literal('..')
     dotx3 = Literal('...')
     qmark = Literal('"')
     pipe = Literal('|')
+    comma = Literal(',')
     integer = Word(nums)
     real_number = Regex(r'[+-]?\d+\.?\d*([eE][+-]?\d+)?')
+    bstring = Regex(r"'[01\s]*'B")
+    hstring = Regex(r"'[0-9A-F\s]*'H")
+    cstring = NoMatch()
+    number = word
 
     # Forward declarations.
     sequence_type = Forward().setName('SEQUENCE')
@@ -287,6 +296,11 @@ def create_grammar():
     object_identifier_type = Forward().setName('OBJECT IDENTIFIER')
     boolean_type = Forward().setName('BOOLEAN')
     any_defined_by_type = Forward().setName('ANY DEFINED BY')
+
+    bit_string_value = Forward()
+    boolean_value = Forward()
+    character_string_value = Forward()
+    choice_value = Forward()
 
     range_ = (word + dotx2 + word)
 
@@ -454,7 +468,53 @@ def create_grammar():
                               | word))
            + Suppress(rbrace))
 
-    value = Group(oid | word)
+    identifier_list = delimitedList(identifier)
+
+    builtin_value = (bit_string_value
+                     | boolean_value
+                     | character_string_value
+                     | choice_value
+                     | word)
+
+    value = Group(oid | builtin_value)
+
+    bit_string_value <<= (bstring
+                          | hstring
+                          | (lbrace + Optional(identifier_list) + rbrace)
+                          | (CONTAINING - value))
+
+    boolean_value <<= (TRUE | FALSE)
+
+    charsyms = NoMatch()
+
+    character_string_list = (lbrace + charsyms + rbrace)
+
+    group = number
+    plane = number
+    row = number
+    cell = number
+    quadruple = (lbrace
+                 + group + comma
+                 + plane + comma
+                 + row + comma +
+                 cell
+                 + rbrace)
+
+    table_column = number
+    table_row = number
+    tuple_ = (lbrace + table_column + comma + table_row + rbrace)
+
+    restricted_character_string_value = (cstring
+                                         | character_string_list
+                                         | quadruple
+                                         | tuple_)
+
+    unrestricted_character_string_value = NoMatch()
+
+    character_string_value <<= (restricted_character_string_value
+                                | unrestricted_character_string_value)
+
+    choice_value <<= (identifier + colon + value)
 
     value_assignment = (value_reference
                         - Group(INTEGER

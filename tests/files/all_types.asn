@@ -2,6 +2,10 @@ AllTypes DEFINITIONS ::= BEGIN
 
 Boolean ::= BOOLEAN
 
+boolean BOOLEAN ::= TRUE
+
+boolean2 BOOLEAN ::= FALSE
+
 Integer ::= INTEGER
 
 Integer2 ::= INTEGER (1..99)
@@ -23,6 +27,10 @@ Bitstring ::= BIT STRING
 Bitstring2 ::= BIT STRING (SIZE (9))
 
 Bitstring3 ::= BIT STRING (SIZE (5..7))
+
+bitstring BIT STRING ::= '10001000 1001'B
+
+bitstring2 BIT STRING ::= '01234567 89ABCD EF'H
 
 Octetstring ::= OCTET STRING
 
@@ -54,6 +62,8 @@ Set2 ::= SET {
   a INTEGER DEFAULT 1
 }
 
+choice CHOICE { foo A } ::= foo : bar
+
 Numericstring ::= NumericString
 
 Printablestring ::= PrintableString
@@ -65,6 +75,10 @@ Ia5string2 ::= IA5String (FROM "a".."f" | "0".."9")
 Ia5string3 ::= IA5String -- ("foo" | "bar" | "fie")
 
 Ia5string4 ::= IA5String -- (SIZE (1) ^ FROM ("0".."2"))
+
+ia5string IA5String ::= { 1, 2 }
+
+ia5string2 IA5String ::= { 1, 2, 3, 4 }
 
 Universalstring ::= UniversalString
 
