@@ -7,8 +7,8 @@ import sys
 import argparse
 import binascii
 
-from .compiler import compile_dict, compile_string, compile_file
-from .parser import parse_string, parse_file, ParseError
+from .compiler import compile_dict, compile_string, compile_files
+from .parser import parse_string, parse_files, ParseError
 from .codecs import EncodeError, DecodeError
 from .errors import CompileError
 
@@ -53,7 +53,7 @@ def print_dict(dict_, indent=0):
 
 
 def _do_decode(args):
-    specification = compile_file(args.specification, args.codec)
+    specification = compile_files(args.specification, args.codec)
     encoded = binascii.unhexlify(args.hexstring)
     print_dict(specification.decode(args.type, encoded))
 

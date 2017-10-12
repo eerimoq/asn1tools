@@ -18,27 +18,27 @@ class Asn1ToolsParseTest(unittest.TestCase):
     maxDiff = None
 
     def test_parse_foo(self):
-        foo = asn1tools.parse_file('tests/files/foo.asn')
+        foo = asn1tools.parse_files('tests/files/foo.asn')
         self.assertEqual(foo, FOO)
 
     def test_parse_rrc_8_6_0(self):
-        rrc_8_6_0 = asn1tools.parse_file('tests/files/rrc_8_6_0.asn')
+        rrc_8_6_0 = asn1tools.parse_files('tests/files/rrc_8_6_0.asn')
         self.assertEqual(rrc_8_6_0, RRC_8_6_0)
 
     def test_parse_rfc5280(self):
-        rfc5280 = asn1tools.parse_file('tests/files/rfc5280.asn')
+        rfc5280 = asn1tools.parse_files('tests/files/rfc5280.asn')
         self.assertEqual(rfc5280, RFC5280)
 
     def test_parse_zforce(self):
-        zforce = asn1tools.parse_file('tests/files/zforce.asn')
+        zforce = asn1tools.parse_files('tests/files/zforce.asn')
         self.assertEqual(zforce, ZFORCE)
 
     def test_parse_bar(self):
-        bar = asn1tools.parse_file('tests/files/bar.asn')
+        bar = asn1tools.parse_files('tests/files/bar.asn')
         self.assertEqual(bar, BAR)
 
     def test_parse_all_types(self):
-        all_types = asn1tools.parse_file('tests/files/all_types.asn')
+        all_types = asn1tools.parse_files('tests/files/all_types.asn')
         self.assertEqual(all_types, ALL_TYPES)
 
     def test_parse_error_empty_string(self):

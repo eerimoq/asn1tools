@@ -82,7 +82,7 @@ ITERATIONS = 3000
 
 
 def asn1tools_encode_decode():
-    snmp_v1 = asn1tools.compile_file(SNMP_V1_ASN_PATH)
+    snmp_v1 = asn1tools.compile_files(SNMP_V1_ASN_PATH)
 
     def encode():
         snmp_v1.encode('Message', DECODED_MESSAGE)

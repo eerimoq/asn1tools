@@ -9,7 +9,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
     maxDiff = None
 
     def test_foo(self):
-        foo = asn1tools.compile_file(['tests/files/foo.asn'])
+        foo = asn1tools.compile_files(['tests/files/foo.asn'])
 
         self.assertEqual(len(foo.types), 2)
         self.assertTrue(foo.types['Question'] is not None)
@@ -43,7 +43,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
             "member 'id' not found in {'question': 'Is 1+1=3?'}")
 
     def test_complex(self):
-        cmplx = asn1tools.compile_file('tests/files/complex.asn')
+        cmplx = asn1tools.compile_files('tests/files/complex.asn')
 
         decoded_message = {
             'boolean': True,
@@ -88,7 +88,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
             "enumeration value 'three' not found in ['one', 'two']")
 
     def test_rrc_8_6_0(self):
-        rrc = asn1tools.compile_file('tests/files/rrc_8_6_0.asn')
+        rrc = asn1tools.compile_files('tests/files/rrc_8_6_0.asn')
 
         # Message 1.
         decoded_message = {
@@ -397,7 +397,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(decoded, decoded_message)
 
     def test_snmp_v1(self):
-        snmp_v1 = asn1tools.compile_file('tests/files/snmp_v1.asn')
+        snmp_v1 = asn1tools.compile_files('tests/files/snmp_v1.asn')
 
         # First message.
         decoded_message = {
@@ -744,7 +744,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
             "but got ''")
 
     def test_performance(self):
-        cmplx = asn1tools.compile_file('tests/files/complex.asn')
+        cmplx = asn1tools.compile_files('tests/files/complex.asn')
 
         decoded_message = {
             'boolean': True,
@@ -796,8 +796,8 @@ class Asn1ToolsBerTest(unittest.TestCase):
             }
         }
 
-        rfc5280 = asn1tools.compile_file('tests/files/rfc5280.asn',
-                                         any_defined_by_choices=any_defined_by_choices)
+        rfc5280 = asn1tools.compile_files('tests/files/rfc5280.asn',
+                                          any_defined_by_choices=any_defined_by_choices)
 
         decoded_message = {
             'tbsCertificate': {
@@ -928,7 +928,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(decoded, decoded_message)
 
     def test_rfc5280_errors(self):
-        rfc5280 = asn1tools.compile_file('tests/files/rfc5280.asn')
+        rfc5280 = asn1tools.compile_files('tests/files/rfc5280.asn')
 
         # Empty data.
         encoded_message = b''
@@ -1009,7 +1009,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
                          '0x30 but got 0x31 at offset 150')
 
     def test_encode_all_types(self):
-        all_types = asn1tools.compile_file('tests/files/all_types.asn')
+        all_types = asn1tools.compile_files('tests/files/all_types.asn')
 
         self.assertEqual(all_types.encode('Boolean', True), b'\x01\x01\x01')
         self.assertEqual(all_types.encode('Integer', 32768), b'\x02\x03\x00\x80\x00')
@@ -1049,7 +1049,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(all_types.encode('SetOf', []), b'1\x00')
 
     def test_decode_all_types(self):
-        all_types = asn1tools.compile_file('tests/files/all_types.asn')
+        all_types = asn1tools.compile_files('tests/files/all_types.asn')
 
         self.assertEqual(all_types.decode('Boolean', b'\x01\x01\x01'), True)
         self.assertEqual(all_types.decode('Integer', b'\x02\x01\x01'), 1)
@@ -1078,7 +1078,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(all_types.decode('SetOf', b'1\x00'), [])
 
     def test_decode_all_types_errors(self):
-        all_types = asn1tools.compile_file('tests/files/all_types.asn')
+        all_types = asn1tools.compile_files('tests/files/all_types.asn')
 
         # BOOLEAN.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -1232,7 +1232,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
                          'bytearray index out of range')
 
     def test_repr_all_types(self):
-        all_types = asn1tools.compile_file('tests/files/all_types.asn')
+        all_types = asn1tools.compile_files('tests/files/all_types.asn')
 
         self.assertEqual(repr(all_types.types['Boolean']), 'Boolean(Boolean)')
         self.assertEqual(repr(all_types.types['Integer']), 'Integer(Integer)')
@@ -1473,7 +1473,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         '''
 
-        zforce = asn1tools.compile_file('tests/files/zforce.asn')
+        zforce = asn1tools.compile_files('tests/files/zforce.asn')
 
         # PDU 1.
         decoded_message = {
@@ -1579,7 +1579,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         '''
 
-        bar = asn1tools.compile_file('tests/files/bar.asn')
+        bar = asn1tools.compile_files('tests/files/bar.asn')
 
         # Message 1.
         decoded_message = {

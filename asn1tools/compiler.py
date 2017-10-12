@@ -3,7 +3,7 @@ encode and decode types.
 
 """
 
-from .parser import parse_string, convert_type_tokens
+from .parser import parse_files, parse_string, convert_type_tokens
 from .codecs import ber, der, per, uper
 from .errors import CompileError
 
@@ -13,7 +13,7 @@ class Specification(object):
     ASN.1 specification.
 
     Instances of this class are created by the factory functions
-    :func:`~asn1tools.compile_file()`,
+    :func:`~asn1tools.compile_files()`,
     :func:`~asn1tools.compile_string()` and
     :func:`~asn1tools.compile_dict()`.
 
@@ -116,7 +116,7 @@ def compile_dict(specification, codec='ber', any_defined_by_choices=None):
     `codec`. `codec` may be one of ``'ber'``, ``'der'``, ``'per'`` and
     ``'uper'``.
 
-    >>> foo = asn1tools.compile_dict(asn1tools.parse_file('foo.asn'))
+    >>> foo = asn1tools.compile_dict(asn1tools.parse_files('foo.asn'))
 
     """
 
@@ -156,27 +156,17 @@ def compile_string(string, codec='ber', any_defined_by_choices=None):
                         any_defined_by_choices)
 
 
-def compile_file(filenames, codec='ber', any_defined_by_choices=None):
-    """Compile given ASN.1 specification file or list of files and return
-    a :class:`~asn1tools.compiler.Specification` object that can be
-    used to encode and decode data structures with given codec
+def compile_files(filenames, codec='ber', any_defined_by_choices=None):
+    """Compile given ASN.1 specification file(s) and return a
+    :class:`~asn1tools.compiler.Specification` object that can be used
+    to encode and decode data structures with given codec
     `codec`. `codec` may be one of ``'ber'``, ``'der'``, ``'per'`` and
     ``'uper'``.
 
-    >>> foo = asn1tools.compile_file('foo.asn')
+    >>> foo = asn1tools.compile_files('foo.asn')
 
     """
 
-    if isinstance(filenames, str):
-        filenames = [filenames]
-
-    string = ''
-
-    for filename in filenames:
-        with open(filename, 'r') as fin:
-            string += fin.read()
-            string += '\n'
-
-    return compile_string(string,
-                          codec,
-                          any_defined_by_choices)
+    return compile_dict(parse_files(filenames),
+                        codec,
+                        any_defined_by_choices)

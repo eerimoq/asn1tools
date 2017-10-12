@@ -54,7 +54,7 @@ question using the default codec (BER).
 .. code-block:: python
 
    >>> import asn1tools
-   >>> foo = asn1tools.compile_file('tests/files/foo.asn')
+   >>> foo = asn1tools.compile_files('tests/files/foo.asn')
    >>> encoded = foo.encode('Question', {'id': 1, 'question': 'Is 1+1=3?'})
    >>> encoded
    bytearray(b'0\x0e\x02\x01\x01\x16\x09Is 1+1=3?')
@@ -66,7 +66,7 @@ The same ASN.1 specification, but using the PER codec.
 .. code-block:: python
 
    >>> import asn1tools
-   >>> foo = asn1tools.compile_file('tests/files/foo.asn', 'per')
+   >>> foo = asn1tools.compile_files('tests/files/foo.asn', 'per')
    >>> encoded = foo.encode('Question', {'id': 1, 'question': 'Is 1+1=3?'})
    >>> encoded
    bytearray(b'\x01\x01\tIs 1+1=3?')

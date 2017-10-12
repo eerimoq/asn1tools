@@ -630,13 +630,22 @@ def parse_string(string):
     return modules
 
 
-def parse_file(filename):
-    """Parse given ASN.1 specification file and return a dictionary of its
-    contents.
+def parse_files(filenames):
+    """Parse given ASN.1 specification file(s) and return a dictionary of
+    its/their contents.
 
-    >>> foo = asn1tools.parse_file('foo.asn')
+    >>> foo = asn1tools.parse_files('foo.asn')
 
     """
 
-    with open(filename, 'r') as fin:
-        return parse_string(fin.read())
+    if isinstance(filenames, str):
+        filenames = [filenames]
+
+    string = ''
+
+    for filename in filenames:
+        with open(filename, 'r') as fin:
+            string += fin.read()
+            string += '\n'
+
+    return parse_string(string)

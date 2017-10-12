@@ -7,7 +7,7 @@ class Asn1ToolsDerTest(unittest.TestCase):
     maxDiff = None
 
     def test_encode_all_types(self):
-        all_types = asn1tools.compile_file('tests/files/all_types.asn', 'der')
+        all_types = asn1tools.compile_files('tests/files/all_types.asn', 'der')
 
         self.assertEqual(all_types.encode('Boolean', True), b'\x01\x01\x01')
         self.assertEqual(all_types.encode('Integer', 32768), b'\x02\x03\x00\x80\x00')
@@ -47,7 +47,7 @@ class Asn1ToolsDerTest(unittest.TestCase):
         self.assertEqual(all_types.encode('SetOf', []), b'1\x00')
 
     def test_decode_all_types(self):
-        all_types = asn1tools.compile_file('tests/files/all_types.asn')
+        all_types = asn1tools.compile_files('tests/files/all_types.asn')
 
         self.assertEqual(all_types.decode('Boolean', b'\x01\x01\x01'), True)
         self.assertEqual(all_types.decode('Integer', b'\x02\x01\x01'), 1)

@@ -8,7 +8,7 @@ class Asn1ToolsCompileTest(unittest.TestCase):
 
     def test_unsupported_codec(self):
         with self.assertRaises(asn1tools.CompileError) as cm:
-            asn1tools.compile_file('tests/files/foo.asn', 'bad_codec')
+            asn1tools.compile_files('tests/files/foo.asn', 'bad_codec')
 
         self.assertEqual(str(cm.exception), "unsupported codec 'bad_codec'")
 

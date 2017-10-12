@@ -7,7 +7,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
     maxDiff = None
 
     def test_foo(self):
-        foo = asn1tools.compile_file('tests/files/foo.asn', 'uper')
+        foo = asn1tools.compile_files('tests/files/foo.asn', 'uper')
 
         self.assertEqual(len(foo.types), 2)
         self.assertTrue(foo.types['Question'] is not None)
@@ -42,7 +42,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             "Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
 
     def test_rrc_8_6_0(self):
-        rrc = asn1tools.compile_file('tests/files/rrc_8_6_0.asn', 'uper')
+        rrc = asn1tools.compile_files('tests/files/rrc_8_6_0.asn', 'uper')
 
         # Message 1.
         decoded_message = {
@@ -327,8 +327,8 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         self.assertEqual(decoded, decoded_message)
 
     def test_encode_all_types(self):
-        all_types = asn1tools.compile_file('tests/files/all_types.asn',
-                                           'uper')
+        all_types = asn1tools.compile_files('tests/files/all_types.asn',
+                                            'uper')
 
         self.assertEqual(all_types.encode('Boolean', True), b'\x80')
         self.assertEqual(all_types.encode('Boolean', False), b'\x00')
@@ -368,8 +368,8 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         self.assertEqual(all_types.encode('Ia5string', 'bar'), b'\x03\xc5\x87\x90')
 
     def test_decode_all_types(self):
-        all_types = asn1tools.compile_file('tests/files/all_types.asn',
-                                           'uper')
+        all_types = asn1tools.compile_files('tests/files/all_types.asn',
+                                            'uper')
 
         self.assertEqual(all_types.decode('Boolean', b'\x80'), True)
         self.assertEqual(all_types.decode('Boolean', b'\x00'), False)
@@ -408,8 +408,8 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         self.assertEqual(all_types.decode('Ia5string', b'\x03\xc5\x87\x90'), 'bar')
 
     def test_repr_all_types(self):
-        all_types = asn1tools.compile_file('tests/files/all_types.asn',
-                                           'uper')
+        all_types = asn1tools.compile_files('tests/files/all_types.asn',
+                                            'uper')
 
         self.assertEqual(repr(all_types.types['Boolean']), 'Boolean(Boolean)')
         self.assertEqual(repr(all_types.types['Integer']), 'Integer(Integer)')

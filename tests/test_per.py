@@ -7,7 +7,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
     maxDiff = None
 
     def test_foo(self):
-        foo = asn1tools.compile_file('tests/files/foo.asn', 'per')
+        foo = asn1tools.compile_files('tests/files/foo.asn', 'per')
 
         self.assertEqual(len(foo.types), 2)
         self.assertTrue(foo.types['Question'] is not None)
@@ -42,7 +42,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
             "Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
 
     def test_rrc_8_6_0(self):
-        rrc = asn1tools.compile_file('tests/files/rrc_8_6_0.asn', 'per')
+        rrc = asn1tools.compile_files('tests/files/rrc_8_6_0.asn', 'per')
 
         # Message 1.
         encoded = rrc.encode('PCCH-Message',
@@ -87,8 +87,8 @@ class Asn1ToolsPerTest(unittest.TestCase):
         self.assertEqual(encoded, b'\x04\x48\xd1')
 
     def test_encode_all_types(self):
-        all_types = asn1tools.compile_file('tests/files/all_types.asn',
-                                           'per')
+        all_types = asn1tools.compile_files('tests/files/all_types.asn',
+                                            'per')
 
         self.assertEqual(all_types.encode('Boolean', True), b'\x80')
         self.assertEqual(all_types.encode('Boolean', False), b'\x00')
@@ -150,8 +150,8 @@ class Asn1ToolsPerTest(unittest.TestCase):
 
 
     def test_decode_all_types(self):
-        all_types = asn1tools.compile_file('tests/files/all_types.asn',
-                                           'per')
+        all_types = asn1tools.compile_files('tests/files/all_types.asn',
+                                            'per')
 
         self.assertEqual(all_types.decode('Boolean', b'\x80'), True)
         self.assertEqual(all_types.decode('Boolean', b'\x00'), False)
@@ -203,7 +203,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
 
         '''
 
-        bar = asn1tools.compile_file('tests/files/bar.asn', 'per')
+        bar = asn1tools.compile_files('tests/files/bar.asn', 'per')
 
         # Message 1.
         decoded_message = {

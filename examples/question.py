@@ -26,7 +26,7 @@ print("Question to encode: {}".format(question))
 
 # Encode and decode the question once for each codec.
 for codec in ['ber', 'der', 'per', 'uper']:
-    foo = asn1tools.compile_file(FOO_ASN_PATH, codec)
+    foo = asn1tools.compile_files(FOO_ASN_PATH, codec)
     encoded = foo.encode('Question', question)
     decoded = foo.decode('Question', encoded)
 

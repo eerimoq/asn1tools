@@ -265,7 +265,7 @@ ITERATIONS = 3000
 
 
 def encode_decode_ber():
-    rrc_8_6_0 = asn1tools.compile_file(RRC_8_6_0_ASN_PATH)
+    rrc_8_6_0 = asn1tools.compile_files(RRC_8_6_0_ASN_PATH)
 
     def encode():
         rrc_8_6_0.encode('BCCH-DL-SCH-Message', DECODED_MESSAGE)
@@ -280,7 +280,7 @@ def encode_decode_ber():
 
 
 def encode_decode_uper():
-    rrc_8_6_0 = asn1tools.compile_file(RRC_8_6_0_ASN_PATH, 'uper')
+    rrc_8_6_0 = asn1tools.compile_files(RRC_8_6_0_ASN_PATH, 'uper')
 
     def encode():
         rrc_8_6_0.encode('BCCH-DL-SCH-Message', DECODED_MESSAGE)
