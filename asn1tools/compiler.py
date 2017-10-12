@@ -153,17 +153,28 @@ def compile_string(string, codec='ber', any_defined_by_choices=None):
 
 
 def compile_file(filename, codec='ber', any_defined_by_choices=None):
-    """Compile given ASN.1 specification file and return a
+    """Compile given ASN.1 specification file or a list of files and return a
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec
     `codec`. `codec` may be one of ``'ber'``, ``'der'``, ``'per'`` and
     ``'uper'``.
 
     >>> foo = asn1tools.compile_file('foo.asn')
+    or
+    >>> foo = asn1tools.compile_file(['file1','file2,...])
 
     """
+     
+    try: 
+        with open(filename, 'r') as fin:
+            return compile_string(fin.read(),codec,any_defined_by_choices)
+    except:
+        f_str = _cat_file(filename)
+        return compile_string(f_str,codec,any_defined_by_choices)
 
-    with open(filename, 'r') as fin:
-        return compile_string(fin.read(),
-                              codec,
-                              any_defined_by_choices)
+def _cat_file(file_list):
+    f_str = ""
+    for file in file_list:
+        with open(file,'r') as fin
+            f = += fin.read()
+    return f_str
