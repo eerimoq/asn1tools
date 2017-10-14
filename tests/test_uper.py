@@ -326,6 +326,84 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         decoded = rrc.decode('BCCH-DL-SCH-Message', encoded)
         self.assertEqual(decoded, decoded_message)
 
+        # Message 5.
+        decoded_message = {
+            'message': {
+                'c1': {
+                    'counterCheck': {
+                        'rrc-TransactionIdentifier': 0,
+                        'criticalExtensions': {
+                            'criticalExtensionsFuture': {}
+                        }
+                    }
+                }
+            }
+        }
+
+        encoded_message = b'\x41'
+
+        encoded = rrc.encode('DL-DCCH-Message', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = rrc.decode('DL-DCCH-Message', encoded)
+        self.assertEqual(decoded, decoded_message)
+
+        # Message 6.
+        decoded_message = {
+            'message': {
+                'c1': {
+                    'counterCheck': {
+                        'rrc-TransactionIdentifier': 0,
+                        'criticalExtensions': {
+                            'c1': {
+                                'counterCheck-r8': {
+                                    'drb-CountMSB-InfoList': [
+                                        {
+                                            'drb-Identity': 32,
+                                            'countMSB-Uplink': 33554431,
+                                            'countMSB-Downlink': 33554431
+                                        }
+                                    ],
+                                    'nonCriticalExtension': {}
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        encoded_message = b'\x40\x21\xff\xff\xff\xff\xff\xff\xfc'
+
+        encoded = rrc.encode('DL-DCCH-Message', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = rrc.decode('DL-DCCH-Message', encoded)
+        self.assertEqual(decoded, decoded_message)
+
+        # Message 7.
+        decoded_message = {
+            'message': {
+                'c1': {
+                    'counterCheckResponse': {
+                        'rrc-TransactionIdentifier': 0,
+                        'criticalExtensions': {
+                            'counterCheckResponse-r8': {
+                                'drb-CountInfoList': [
+                                ],
+                                'nonCriticalExtension': {}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        encoded_message = b'\x50\x80'
+
+        encoded = rrc.encode('UL-DCCH-Message', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = rrc.decode('UL-DCCH-Message', encoded)
+        self.assertEqual(decoded, decoded_message)
+
     def test_encode_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
                                             'uper')
