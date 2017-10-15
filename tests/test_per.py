@@ -1,5 +1,10 @@
 import unittest
 import asn1tools
+import sys
+
+sys.path.append('tests/files')
+
+from rrc_8_6_0 import RRC_8_6_0
 
 
 class Asn1ToolsPerTest(unittest.TestCase):
@@ -42,7 +47,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
             "Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
 
     def test_rrc_8_6_0(self):
-        rrc = asn1tools.compile_files('tests/files/rrc_8_6_0.asn', 'per')
+        rrc = asn1tools.compile_dict(RRC_8_6_0, 'per')
 
         # Message 1.
         encoded = rrc.encode('PCCH-Message',

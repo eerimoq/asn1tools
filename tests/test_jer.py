@@ -1,6 +1,11 @@
 import json
 import unittest
 import asn1tools
+import sys
+
+sys.path.append('tests/files')
+
+from rrc_8_6_0 import RRC_8_6_0
 
 
 def loads(encoded):
@@ -47,7 +52,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
             "Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
 
     def test_rrc_8_6_0(self):
-        rrc = asn1tools.compile_files('tests/files/rrc_8_6_0.asn', 'jer')
+        rrc = asn1tools.compile_dict(RRC_8_6_0, 'jer')
 
         # Message 1.
         decoded_message = {
