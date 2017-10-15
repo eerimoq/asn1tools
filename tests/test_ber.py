@@ -1,6 +1,7 @@
 import unittest
 import timeit
 import sys
+from copy import deepcopy
 
 import asn1tools
 
@@ -95,7 +96,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
             "enumeration value 'three' not found in ['one', 'two']")
 
     def test_rrc_8_6_0(self):
-        rrc = asn1tools.compile_dict(RRC_8_6_0)
+        rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0))
 
         # Message 1.
         decoded_message = {
@@ -803,7 +804,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
             }
         }
 
-        rfc5280 = asn1tools.compile_dict(RFC5280,
+        rfc5280 = asn1tools.compile_dict(deepcopy(RFC5280),
                                          any_defined_by_choices=any_defined_by_choices)
 
         decoded_message = {
@@ -935,7 +936,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(decoded, decoded_message)
 
     def test_rfc5280_errors(self):
-        rfc5280 = asn1tools.compile_dict(RFC5280)
+        rfc5280 = asn1tools.compile_dict(deepcopy(RFC5280))
 
         # Empty data.
         encoded_message = b''
@@ -1480,7 +1481,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         '''
 
-        zforce = asn1tools.compile_dict(ZFORCE)
+        zforce = asn1tools.compile_dict(deepcopy(ZFORCE))
 
         # PDU 1.
         decoded_message = {

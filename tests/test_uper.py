@@ -1,6 +1,7 @@
 import unittest
 import asn1tools
 import sys
+from copy import deepcopy
 
 sys.path.append('tests/files')
 
@@ -47,7 +48,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             "Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
 
     def test_rrc_8_6_0(self):
-        rrc = asn1tools.compile_dict(RRC_8_6_0, 'uper')
+        rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0), 'uper')
 
         # Message 1.
         decoded_message = {

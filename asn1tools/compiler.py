@@ -137,7 +137,7 @@ def compile_dict(specification, codec='ber', any_defined_by_choices=None):
     except KeyError:
         raise CompileError("unsupported codec '{}'".format(codec))
 
-    if any_defined_by_choices is not None:
+    if any_defined_by_choices:
         _compile_any_defined_by_choices(specification,
                                         any_defined_by_choices)
 
