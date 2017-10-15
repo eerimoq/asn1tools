@@ -666,53 +666,9 @@ class ObjectIdentifier(Type):
 
     def encode(self, data, encoder):
         raise NotImplementedError()
-        identifiers = [int(identifier) for identifier in data.split('.')]
-
-        first_subidentifier = (40 * identifiers[0] + identifiers[1])
-        encoded_subidentifiers = self.encode_subidentifier(
-            first_subidentifier)
-
-        for identifier in identifiers[2:]:
-            encoded_subidentifiers += self.encode_subidentifier(identifier)
-
-        encoder.append_bytes([len(encoded_subidentifiers)])
-        encoder.append_bytes(encoded_subidentifiers)
 
     def decode(self, decoder):
         raise NotImplementedError()
-        length = decoder.read_bytes(1)[0]
-        data = decoder.read_bytes(length)
-        offset = 0
-        subidentifier, offset = self.decode_subidentifier(data, offset)
-        decoded = [subidentifier // 40, subidentifier % 40]
-
-        while offset < length:
-            subidentifier, offset = self.decode_subidentifier(data, offset)
-            decoded.append(subidentifier)
-
-        return '.'.join([str(v) for v in decoded])
-
-    def encode_subidentifier(self, subidentifier):
-        encoder = [subidentifier & 0x7f]
-        subidentifier >>= 7
-
-        while subidentifier > 0:
-            encoder.append(0x80 | (subidentifier & 0x7f))
-            subidentifier >>= 7
-
-        return encoder[::-1]
-
-    def decode_subidentifier(self, data, offset):
-        decoded = 0
-
-        while data[offset] & 0x80:
-            decoded += (data[offset] & 0x7f)
-            decoded <<= 7
-            offset += 1
-
-        decoded += data[offset]
-
-        return decoded, offset + 1
 
     def __repr__(self):
         return 'ObjectIdentifier({})'.format(self.name)
