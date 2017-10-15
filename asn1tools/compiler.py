@@ -9,6 +9,7 @@ from .codecs import der
 from .codecs import jer
 from .codecs import per
 from .codecs import uper
+from .codecs import xer
 from .errors import CompileError
 
 
@@ -118,7 +119,7 @@ def compile_dict(specification, codec='ber', any_defined_by_choices=None):
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec
     `codec`. `codec` may be one of ``'ber'``, ``'der'``, ``jer``,
-    ``'per'`` and ``'uper'``.
+    ``'per'``, ``'uper'`` and ``'xer'``.
 
     >>> foo = asn1tools.compile_dict(asn1tools.parse_files('foo.asn'))
 
@@ -129,7 +130,8 @@ def compile_dict(specification, codec='ber', any_defined_by_choices=None):
         'der': der,
         'jer': jer,
         'per': per,
-        'uper': uper
+        'uper': uper,
+        'xer': xer
     }
 
     try:
@@ -149,7 +151,7 @@ def compile_string(string, codec='ber', any_defined_by_choices=None):
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec
     `codec`. `codec` may be one of ``'ber'``, ``'der'``, ``jer``,
-    ``'per'`` and ``'uper'``.
+    ``'per'``, ``'uper'`` and ``'xer'``.
 
     >>> with open('foo.asn') as fin:
     ...     foo = asn1tools.compile_string(fin.read())
@@ -166,7 +168,7 @@ def compile_files(filenames, codec='ber', any_defined_by_choices=None):
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec
     `codec`. `codec` may be one of ``'ber'``, ``'der'``, ``jer``,
-    ``'per'`` and ``'uper'``.
+    ``'per'``, ``'uper'`` and ``'xer'``.
 
     >>> foo = asn1tools.compile_files('foo.asn')
 

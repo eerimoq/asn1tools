@@ -1,10 +1,8 @@
-"""JSON Encoding Rules (JER) codec.
+"""XML Encoding Rules (XER) codec.
 
 """
 
-import json
-import binascii
-import math
+from xml.etree import ElementTree
 
 from . import EncodeError, DecodeError
 from . import compiler
@@ -25,10 +23,13 @@ class Integer(Type):
         super(Integer, self).__init__(name, 'INTEGER')
 
     def encode(self, data):
-        return data
+        element = ElementTree.Element(self.name)
+        element.text = str(data)
 
-    def decode(self, data):
-        return data
+        return element
+
+    def decode(self, element):
+        return int(element.text)
 
     def __repr__(self):
         return 'Integer({})'.format(self.name)
@@ -40,26 +41,10 @@ class Real(Type):
         super(Real, self).__init__(name, 'REAL')
 
     def encode(self, data):
-        if data == float('inf'):
-            return 'INF'
-        elif data == float('-inf'):
-            return '-INF'
-        elif math.isnan(data):
-            return 'NaN'
-        else:
-            return data
+        raise NotImplementedError()
 
     def decode(self, data):
-        if isinstance(data, float):
-            return data
-        else:
-            return {
-                'INF': float('inf'),
-                '-INF': float('-inf'),
-                'NaN': float('nan'),
-                '0': 0.0,
-                '-0': 0.0
-            }[data]
+        raise NotImplementedError()
 
     def __repr__(self):
         return 'Real({})'.format(self.name)
@@ -71,10 +56,13 @@ class Boolean(Type):
         super(Boolean, self).__init__(name, 'BOOLEAN')
 
     def encode(self, data):
-        return data
+        element = ElementTree.Element(self.name)
+        ElementTree.SubElement(element, 'true' if data else 'false')
 
-    def decode(self, data):
-        return data
+        return element
+
+    def decode(self, element):
+        return element.find('true') is not None
 
     def __repr__(self):
         return 'Boolean({})'.format(self.name)
@@ -86,10 +74,13 @@ class IA5String(Type):
         super(IA5String, self).__init__(name, 'IA5String')
 
     def encode(self, data):
-        return data
+        element = ElementTree.Element(self.name)
+        element.text = data
 
-    def decode(self, data):
-        return data
+        return element
+
+    def decode(self, element):
+        return element.text
 
     def __repr__(self):
         return 'IA5String({})'.format(self.name)
@@ -101,10 +92,10 @@ class NumericString(Type):
         super(NumericString, self).__init__(name, 'NumericString')
 
     def encode(self, data):
-        return data
+        raise NotImplementedError()
 
     def decode(self, data):
-        return data
+        raise NotImplementedError()
 
     def __repr__(self):
         return 'NumericString({})'.format(self.name)
@@ -117,13 +108,13 @@ class Sequence(Type):
         self.members = members
 
     def encode(self, data):
-        values = {}
+        element = ElementTree.Element(self.name)
 
         for member in self.members:
             name = member.name
 
             if name in data:
-                value = member.encode(data[name])
+                member_element = member.encode(data[name])
             elif member.optional or member.default is not None:
                 continue
             else:
@@ -132,18 +123,19 @@ class Sequence(Type):
                         name,
                         data))
 
-            values[name] = value
+            element.append(member_element)
 
-        return values
+        return element
 
-    def decode(self, data):
+    def decode(self, element):
         values = {}
 
         for member in self.members:
             name = member.name
+            member_element = element.find(name)
 
-            if name in data:
-                value = member.decode(data[name])
+            if member_element is not None:
+                value = member.decode(member_element)
                 values[name] = value
             elif member.optional:
                 pass
@@ -165,16 +157,13 @@ class Set(Type):
         self.members = members
 
     def encode(self, data):
-        values = {}
+        element = ElementTree.Element(self.name)
 
         for member in self.members:
             name = member.name
 
             if name in data:
-                if member.default is None:
-                    value = member.encode(data[name])
-                elif data[name] != member.default:
-                    value = member.encode(data[name])
+                member_element = member.encode(data[name])
             elif member.optional or member.default is not None:
                 continue
             else:
@@ -183,18 +172,19 @@ class Set(Type):
                         name,
                         data))
 
-            values[name] = value
+            element.append(member_element)
 
-        return values
+        return element
 
-    def decode(self, data):
+    def decode(self, element):
         values = {}
 
         for member in self.members:
             name = member.name
+            member_element = element.find(name)
 
-            if name in data:
-                value = member.decode(data[name])
+            if member_element is not None:
+                value = member.decode(member_element)
                 values[name] = value
             elif member.optional:
                 pass
@@ -216,19 +206,18 @@ class SequenceOf(Type):
         self.element_type = element_type
 
     def encode(self, data):
-        values = []
+        element = ElementTree.Element(self.name)
 
         for entry in data:
-            value = self.element_type.encode(entry)
-            values.append(value)
+            element.append(self.element_type.encode(entry))
 
-        return values
+        return element
 
-    def decode(self, data):
+    def decode(self, element):
         values = []
 
-        for element_data in data:
-            value = self.element_type.decode(element_data)
+        for member_element in list(element):
+            value = self.element_type.decode(member_element)
             values.append(value)
 
         return values
@@ -245,19 +234,18 @@ class SetOf(Type):
         self.element_type = element_type
 
     def encode(self, data):
-        values = []
+        element = ElementTree.Element(self.name)
 
         for entry in data:
-            value = self.element_type.encode(entry)
-            values.append(value)
+            element.append(self.element_type.encode(entry))
 
-        return values
+        return element
 
-    def decode(self, data):
+    def decode(self, element):
         values = []
 
-        for element_data in data:
-            value = self.element_type.decode(element_data)
+        for member_element in list(element):
+            value = self.element_type.decode(member_element)
             values.append(value)
 
         return values
@@ -272,29 +260,11 @@ class BitString(Type):
     def __init__(self, name, minimum, maximum):
         super(BitString, self).__init__(name, 'BIT STRING')
 
-        if minimum is None and maximum is None:
-            self.size = None
-        elif minimum == maximum:
-            self.size = minimum
-        else:
-            self.size = None
-
     def encode(self, data):
-        value = binascii.hexlify(data[0]).decode('ascii')
-
-        if self.size is None:
-            value = {
-                "value": value,
-                "length": data[1]
-            }
-
-        return value
+        raise NotImplementedError()
 
     def decode(self, data):
-        if self.size is None:
-            return (binascii.unhexlify(data['value']), data['length'])
-        else:
-            return (binascii.unhexlify(data), self.size)
+        raise NotImplementedError()
 
     def __repr__(self):
         return 'BitString({})'.format(self.name)
@@ -306,10 +276,10 @@ class OctetString(Type):
         super(OctetString, self).__init__(name, 'OCTET STRING')
 
     def encode(self, data):
-        return binascii.hexlify(data).decode('ascii')
+        raise NotImplementedError()
 
     def decode(self, data):
-        return binascii.unhexlify(data)
+        raise NotImplementedError()
 
     def __repr__(self):
         return 'OctetString({})'.format(self.name)
@@ -321,10 +291,10 @@ class PrintableString(Type):
         super(PrintableString, self).__init__(name, 'PrintableString')
 
     def encode(self, data):
-        return data
+        raise NotImplementedError()
 
     def decode(self, data):
-        return data
+        raise NotImplementedError()
 
     def __repr__(self):
         return 'PrintableString({})'.format(self.name)
@@ -336,10 +306,10 @@ class UniversalString(Type):
         super(UniversalString, self).__init__(name, 'UniversalString')
 
     def encode(self, data):
-        return data
+        raise NotImplementedError()
 
     def decode(self, data):
-        return data
+        raise NotImplementedError()
 
     def __repr__(self):
         return 'UniversalString({})'.format(self.name)
@@ -351,10 +321,10 @@ class VisibleString(Type):
         super(VisibleString, self).__init__(name, 'VisibleString')
 
     def encode(self, data):
-        return data
+        raise NotImplementedError()
 
     def decode(self, data):
-        return data
+        raise NotImplementedError()
 
     def __repr__(self):
         return 'VisibleString({})'.format(self.name)
@@ -366,10 +336,10 @@ class UTF8String(Type):
         super(UTF8String, self).__init__(name, 'UTF8String')
 
     def encode(self, data):
-        return data
+        raise NotImplementedError()
 
     def decode(self, data):
-        return data
+        raise NotImplementedError()
 
     def __repr__(self):
         return 'UTF8String({})'.format(self.name)
@@ -381,10 +351,10 @@ class BMPString(Type):
         super(BMPString, self).__init__(name, 'BMPString')
 
     def encode(self, data):
-        return data.decode('ascii')
+        raise NotImplementedError()
 
     def decode(self, data):
-        return data.encode('ascii')
+        raise NotImplementedError()
 
     def __repr__(self):
         return 'BMPString({})'.format(self.name)
@@ -426,10 +396,10 @@ class TeletexString(Type):
         super(TeletexString, self).__init__(name, 'TeletexString')
 
     def encode(self, data):
-        return data.decode('ascii')
+        raise NotImplementedError()
 
     def decode(self, data):
-        return data.encode('ascii')
+        raise NotImplementedError()
 
     def __repr__(self):
         return 'TeletexString({})'.format(self.name)
@@ -544,12 +514,12 @@ class CompiledType(object):
         self._type = type_
 
     def encode(self, data):
-        string = json.dumps(self._type.encode(data), separators=(',', ':'))
-
-        return string.encode('utf-8')
+        return ElementTree.tostring(self._type.encode(data))
 
     def decode(self, data):
-        return self._type.decode(json.loads(data.decode('utf-8')))
+        element = ElementTree.fromstring(data.decode('utf-8'))
+
+        return self._type.decode(element)
 
     def __repr__(self):
         return repr(self._type)
