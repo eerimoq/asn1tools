@@ -3,6 +3,7 @@
 """
 
 import json
+import binascii
 
 from . import EncodeError, DecodeError
 from . import compiler
@@ -83,10 +84,10 @@ class NumericString(Type):
         super(NumericString, self).__init__(name, 'NumericString')
 
     def encode(self, data):
-        raise NotImplementedError()
+        return data
 
     def decode(self, data):
-        raise NotImplementedError()
+        return data
 
     def __repr__(self):
         return 'NumericString({})'.format(self.name)
@@ -105,10 +106,7 @@ class Sequence(Type):
             name = member.name
 
             if name in data:
-                if member.default is None:
-                    value = member.encode(data[name])
-                elif data[name] != member.default:
-                    value = member.encode(data[name])
+                value = member.encode(data[name])
             elif member.optional or member.default is not None:
                 continue
             else:
@@ -145,16 +143,48 @@ class Sequence(Type):
 
 class Set(Type):
 
-    def __init__(self, name, members, extension):
+    def __init__(self, name, members):
         super(Set, self).__init__(name, 'SET')
         self.members = members
-        self.extension = extension
 
     def encode(self, data):
-        raise NotImplementedError()
+        values = {}
+
+        for member in self.members:
+            name = member.name
+
+            if name in data:
+                if member.default is None:
+                    value = member.encode(data[name])
+                elif data[name] != member.default:
+                    value = member.encode(data[name])
+            elif member.optional or member.default is not None:
+                continue
+            else:
+                raise EncodeError(
+                    "Set member '{}' not found in {}.".format(
+                        name,
+                        data))
+
+            values[name] = value
+
+        return values
 
     def decode(self, data):
-        raise NotImplementedError()
+        values = {}
+
+        for member in self.members:
+            name = member.name
+
+            if name in data:
+                value = member.decode(data[name])
+                values[name] = value
+            elif member.optional:
+                pass
+            elif member.default is not None:
+                values[name] = member.default
+
+        return values
 
     def __repr__(self):
         return 'Set({}, [{}])'.format(
@@ -198,10 +228,22 @@ class SetOf(Type):
         self.element_type = element_type
 
     def encode(self, data):
-        raise NotImplementedError()
+        values = []
+
+        for entry in data:
+            value = self.element_type.encode(entry)
+            values.append(value)
+
+        return values
 
     def decode(self, data):
-        raise NotImplementedError()
+        values = []
+
+        for element_data in data:
+            value = self.element_type.decode(element_data)
+            values.append(value)
+
+        return values
 
     def __repr__(self):
         return 'SetOf({}, {})'.format(self.name,
@@ -213,31 +255,29 @@ class BitString(Type):
     def __init__(self, name, minimum, maximum):
         super(BitString, self).__init__(name, 'BIT STRING')
 
-    def encode(self, data):
-        print(data)
-        if self.number_of_bits is None:
-            encoder.append_bytes(bytearray([data[1]]) + data[0])
+        if minimum is None and maximum is None:
+            self.size = None
+        elif minimum == maximum:
+            self.size = minimum
         else:
-            if self.minimum != self.maximum:
-                encoder.append_integer(data[1] - self.minimum,
-                                       self.number_of_bits)
+            self.size = None
 
-            encoder.append_bits(data[0], data[1])
+    def encode(self, data):
+        value = binascii.hexlify(data[0]).decode('ascii')
 
+        if self.size is None:
+            value = {
+                "value": value,
+                "length": data[1]
+            }
+
+        return value
 
     def decode(self, data):
-        if self.number_of_bits is None:
-            number_of_bits = data.read_bytes(1)[0]
-            value = data.read_bytes((number_of_bits + 7) // 8)
+        if self.size is None:
+            return (binascii.unhexlify(data['value']), data['length'])
         else:
-            number_of_bits = self.minimum
-
-            if self.minimum != self.maximum:
-                number_of_bits += data.read_integer(self.number_of_bits)
-
-            value = data.read_bits(number_of_bits)
-
-        return (value, number_of_bits)
+            return (binascii.unhexlify(data), self.size)
 
     def __repr__(self):
         return 'BitString({})'.format(self.name)
@@ -249,25 +289,10 @@ class OctetString(Type):
         super(OctetString, self).__init__(name, 'OCTET STRING')
 
     def encode(self, data):
-        if self.number_of_bits is None:
-            encoder.append_bytes(bytearray([len(data)]) + data)
-        else:
-            if self.minimum != self.maximum:
-                encoder.append_integer(len(data) - self.minimum,
-                                       self.number_of_bits)
-
-            encoder.append_bytes(data)
+        return binascii.hexlify(data).decode('ascii')
 
     def decode(self, data):
-        if self.number_of_bits is None:
-            length = data.read_integer(8)
-        else:
-            length = self.minimum
-
-            if self.minimum != self.maximum:
-                length += data.read_integer(self.number_of_bits)
-
-        return data.read_bits(8 * length)
+        return binascii.unhexlify(data)
 
     def __repr__(self):
         return 'OctetString({})'.format(self.name)
@@ -279,10 +304,10 @@ class PrintableString(Type):
         super(PrintableString, self).__init__(name, 'PrintableString')
 
     def encode(self, data):
-        raise NotImplementedError()
+        return data
 
     def decode(self, data):
-        raise NotImplementedError()
+        return data
 
     def __repr__(self):
         return 'PrintableString({})'.format(self.name)
@@ -294,10 +319,10 @@ class UniversalString(Type):
         super(UniversalString, self).__init__(name, 'UniversalString')
 
     def encode(self, data):
-        raise NotImplementedError()
+        return data
 
     def decode(self, data):
-        raise NotImplementedError()
+        return data
 
     def __repr__(self):
         return 'UniversalString({})'.format(self.name)
@@ -309,10 +334,10 @@ class VisibleString(Type):
         super(VisibleString, self).__init__(name, 'VisibleString')
 
     def encode(self, data):
-        raise NotImplementedError()
+        return data
 
     def decode(self, data):
-        raise NotImplementedError()
+        return data
 
     def __repr__(self):
         return 'VisibleString({})'.format(self.name)
@@ -324,10 +349,10 @@ class UTF8String(Type):
         super(UTF8String, self).__init__(name, 'UTF8String')
 
     def encode(self, data):
-        raise NotImplementedError()
+        return data
 
     def decode(self, data):
-        raise NotImplementedError()
+        return data
 
     def __repr__(self):
         return 'UTF8String({})'.format(self.name)
@@ -339,10 +364,10 @@ class BMPString(Type):
         super(BMPString, self).__init__(name, 'BMPString')
 
     def encode(self, data):
-        raise NotImplementedError()
+        return data.decode('ascii')
 
     def decode(self, data):
-        raise NotImplementedError()
+        return data.encode('ascii')
 
     def __repr__(self):
         return 'BMPString({})'.format(self.name)
@@ -384,10 +409,10 @@ class TeletexString(Type):
         super(TeletexString, self).__init__(name, 'TeletexString')
 
     def encode(self, data):
-        raise NotImplementedError()
+        return data.decode('ascii')
 
     def decode(self, data):
-        raise NotImplementedError()
+        return data.encode('ascii')
 
     def __repr__(self):
         return 'TeletexString({})'.format(self.name)
@@ -520,7 +545,7 @@ class Enumerated(Type):
     def encode(self, data):
         for value, name in self.values.items():
             if data == name:
-                return value
+                return data
 
         raise EncodeError(
             "Enumeration value '{}' not found in {}.".format(
@@ -528,7 +553,13 @@ class Enumerated(Type):
                 [value for value in self.values.values()]))
 
     def decode(self, data):
-        return self.values[data]
+        if data in self.values.values():
+            return data
+
+        raise DecodeError(
+            "Enumeration value '{}' not found in {}.".format(
+                data,
+                [value for value in self.values.values()]))
 
     def __repr__(self):
         return 'Enumerated({})'.format(self.name)
@@ -582,12 +613,10 @@ class Compiler(compiler.Compiler):
                                   minimum,
                                   maximum)
         elif type_descriptor['type'] == 'SET':
-            members, extension = self.compile_members(
+            members, _ = self.compile_members(
                 type_descriptor['members'],
                 module_name)
-            compiled = Set(name,
-                           members,
-                           extension)
+            compiled = Set(name, members)
         elif type_descriptor['type'] == 'SET OF':
             compiled = SetOf(name,
                              self.compile_type('',

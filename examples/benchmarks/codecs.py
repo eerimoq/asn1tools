@@ -261,7 +261,61 @@ ENCODED_MESSAGE_UPER = (
     b'\xcf\x10\xa8\x6a\x4c\x04\x48'
 )
 
-ITERATIONS = 3000
+ENCODED_MESSAGE_JER = (
+    b'{"message":{"c1":{"systemInformation":{"criticalExtensions":{"sy'
+    b'stemInformation-r8":{"sib-TypeAndInfo":[{"sib2":{"ac-BarringInfo'
+    b'":{"ac-BarringForEmergency":true,"ac-BarringForMO-Data":{"ac-Bar'
+    b'ringFactor":"p95","ac-BarringForSpecialAC":"f0","ac-BarringTime"'
+    b':"s128"}},"freqInfo":{"additionalSpectrumEmission":3},"radioReso'
+    b'urceConfigCommon":{"bcch-Config":{"modificationPeriodCoeff":"n2"'
+    b'},"pcch-Config":{"defaultPagingCycle":"rf256","nB":"twoT"},"pdsc'
+    b'h-ConfigCommon":{"p-b":2,"referenceSignalPower":-60},"prach-Conf'
+    b'ig":{"prach-ConfigInfo":{"highSpeedFlag":false,"prach-ConfigInde'
+    b'x":33,"prach-FreqOffset":64,"zeroCorrelationZoneConfig":10},"roo'
+    b'tSequenceIndex":836},"pucch-ConfigCommon":{"deltaPUCCH-Shift":"d'
+    b's1","n1PUCCH-AN":2047,"nCS-AN":4,"nRB-CQI":98},"pusch-ConfigComm'
+    b'on":{"pusch-ConfigBasic":{"enable64QAM":false,"hoppingMode":"int'
+    b'erSubFrame","n-SB":1,"pusch-HoppingOffset":10},"ul-ReferenceSign'
+    b'alsPUSCH":{"cyclicShift":5,"groupAssignmentPUSCH":22,"groupHoppi'
+    b'ngEnabled":true,"sequenceHoppingEnabled":false}},"rach-ConfigCom'
+    b'mon":{"maxHARQ-Msg3Tx":8,"powerRampingParameters":{"powerRamping'
+    b'Step":"dB0","preambleInitialReceivedTargetPower":"dBm-102"},"pre'
+    b'ambleInfo":{"numberOfRA-Preambles":"n24","preamblesGroupAConfig"'
+    b':{"messagePowerOffsetGroupB":"minusinfinity","messageSizeGroupA"'
+    b':"b144","sizeOfRA-PreamblesGroupA":"n28"}},"ra-SupervisionInfo":'
+    b'{"mac-ContentionResolutionTimer":"sf48","preambleTransMax":"n8",'
+    b'"ra-ResponseWindowSize":"sf6"}},"soundingRS-UL-ConfigCommon":{"s'
+    b'etup":{"ackNackSRS-SimultaneousTransmission":true,"srs-Bandwidth'
+    b'Config":"bw0","srs-SubframeConfig":"sc4"}},"ul-CyclicPrefixLengt'
+    b'h":"len1","uplinkPowerControlCommon":{"alpha":"al0","deltaFList-'
+    b'PUCCH":{"deltaF-PUCCH-Format1":"deltaF-2","deltaF-PUCCH-Format1b'
+    b'":"deltaF1","deltaF-PUCCH-Format2":"deltaF0","deltaF-PUCCH-Forma'
+    b't2a":"deltaF-2","deltaF-PUCCH-Format2b":"deltaF0"},"deltaPreambl'
+    b'eMsg3":-1,"p0-NominalPUCCH":-127,"p0-NominalPUSCH":-126}},"timeA'
+    b'lignmentTimerCommon":"sf500","ue-TimersAndConstants":{"n310":"n2'
+    b'","n311":"n2","t300":"ms100","t301":"ms200","t310":"ms50","t311"'
+    b':"ms30000"}}},{"sib3":{"cellReselectionInfoCommon":{"q-Hyst":"dB'
+    b'0","speedStateReselectionPars":{"mobilityStateParameters":{"n-Ce'
+    b'llChangeHigh":16,"n-CellChangeMedium":1,"t-Evaluation":"s180","t'
+    b'-HystNormal":"s180"},"q-HystSF":{"sf-High":"dB-4","sf-Medium":"d'
+    b'B-6"}}},"cellReselectionServingFreqInfo":{"cellReselectionPriori'
+    b'ty":3,"threshServingLow":7},"intraFreqCellReselectionInfo":{"nei'
+    b'ghCellConfig":"80","presenceAntennaPort1":false,"q-RxLevMin":-33'
+    b',"s-IntraSearch":0,"t-ReselectionEUTRA":4}}},{"sib4":{}},{"sib5"'
+    b':{"interFreqCarrierFreqList":[{"allowedMeasBandwidth":"mbw6","dl'
+    b'-CarrierFreq":1,"neighCellConfig":"00","presenceAntennaPort1":tr'
+    b'ue,"q-OffsetFreq":"dB0","q-RxLevMin":-45,"t-ReselectionEUTRA":0,'
+    b'"threshX-High":31,"threshX-Low":29}]}},{"sib6":{"t-ReselectionUT'
+    b'RA":3}},{"sib7":{"t-ReselectionGERAN":3}},{"sib8":{"parameters1X'
+    b'RTT":{"longCodeState1XRTT":"012345678900"}}},{"sib9":{"hnb-Name"'
+    b':"34"}},{"sib10":{"messageIdentifier":"2334","serialNumber":"123'
+    b'4","warningType":"3212"}},{"sib11":{"messageIdentifier":"6788","'
+    b'serialNumber":"5435","warningMessageSegment":"12","warningMessag'
+    b'eSegmentNumber":19,"warningMessageSegmentType":"notLastSegment"}'
+    b'}]}}}}}}'
+)
+
+ITERATIONS = 1000
 
 
 def encode_decode_ber():
@@ -294,16 +348,33 @@ def encode_decode_uper():
     return encode_time, decode_time
 
 
+def encode_decode_jer():
+    rrc_8_6_0 = asn1tools.compile_files(RRC_8_6_0_ASN_PATH, 'jer')
+
+    def encode():
+        rrc_8_6_0.encode('BCCH-DL-SCH-Message', DECODED_MESSAGE)
+
+    def decode():
+        rrc_8_6_0.decode('BCCH-DL-SCH-Message', ENCODED_MESSAGE_JER)
+
+    encode_time = timeit.timeit(encode, number=ITERATIONS)
+    decode_time = timeit.timeit(decode, number=ITERATIONS)
+
+    return encode_time, decode_time
+
+
 print('Starting encoding and decoding of a message {} times. This may '
       'take a few seconds.'.format(ITERATIONS))
 
 ber_encode_time, ber_decode_time = encode_decode_ber()
 uper_encode_time, uper_decode_time = encode_decode_uper()
+jer_encode_time, jer_decode_time = encode_decode_jer()
 
 # Encode comparsion output.
 measurements = [
     ('ber', ber_encode_time),
-    ('uper', uper_encode_time)
+    ('uper', uper_encode_time),
+    ('jer', jer_encode_time)
 ]
 
 measurements = sorted(measurements, key=lambda m: m[1])
@@ -318,7 +389,8 @@ for package, seconds in measurements:
 # Decode comparsion output.
 measurements = [
     ('ber', ber_decode_time),
-    ('uper', uper_decode_time)
+    ('uper', uper_decode_time),
+    ('jer', jer_decode_time)
 ]
 
 measurements = sorted(measurements, key=lambda m: m[1])
