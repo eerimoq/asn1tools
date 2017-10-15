@@ -4,7 +4,11 @@ encode and decode types.
 """
 
 from .parser import parse_files, parse_string, convert_type_tokens
-from .codecs import ber, der, per, uper
+from .codecs import ber
+from .codecs import der
+from .codecs import per
+from .codecs import uper
+from .codecs import jer
 from .errors import CompileError
 
 
@@ -124,7 +128,8 @@ def compile_dict(specification, codec='ber', any_defined_by_choices=None):
         'ber': ber,
         'der': der,
         'per': per,
-        'uper': uper
+        'uper': uper,
+        'jer': jer
     }
 
     try:
