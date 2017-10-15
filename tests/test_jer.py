@@ -2,6 +2,7 @@ import json
 import unittest
 import asn1tools
 import sys
+import math
 from copy import deepcopy
 
 sys.path.append('tests/files')
@@ -381,10 +382,30 @@ class Asn1ToolsJerTest(unittest.TestCase):
 
         self.assertEqual(all_types.encode('Integer', 127), b'127')
         self.assertEqual(all_types.decode('Integer', b'127'), 127)
+
         self.assertEqual(all_types.encode('Integer', 0), b'0')
         self.assertEqual(all_types.decode('Integer', b'0'), 0)
+
         self.assertEqual(all_types.encode('Integer', -128), b'-128')
         self.assertEqual(all_types.decode('Integer', b'-128'), -128)
+
+        self.assertEqual(all_types.encode('Real', 1.0), b'1.0')
+        self.assertEqual(all_types.decode('Real', b'1.0'), 1.0)
+
+        self.assertEqual(all_types.encode('Real', -2.0), b'-2.0')
+        self.assertEqual(all_types.decode('Real', b'-2.0'), -2.0)
+
+        self.assertEqual(all_types.encode('Real', float('inf')), b'"INF"')
+        self.assertEqual(all_types.decode('Real', b'"INF"'), float('inf'))
+
+        self.assertEqual(all_types.encode('Real', float('-inf')), b'"-INF"')
+        self.assertEqual(all_types.decode('Real', b'"-INF"'), float('-inf'))
+
+        self.assertEqual(all_types.encode('Real', float('nan')), b'"NaN"')
+        self.assertTrue(math.isnan(all_types.decode('Real', b'"NaN"')))
+
+        self.assertEqual(all_types.decode('Real', b'"0"'), 0.0)
+        self.assertEqual(all_types.decode('Real', b'"-0"'), 0.0)
 
         decoded_message = (b'\x80', 1)
         encoded_message = b'{"value":"80","length":1}'
@@ -451,6 +472,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
 
         self.assertEqual(repr(all_types.types['Boolean']), 'Boolean(Boolean)')
         self.assertEqual(repr(all_types.types['Integer']), 'Integer(Integer)')
+        self.assertEqual(repr(all_types.types['Real']), 'Real(Real)')
         self.assertEqual(repr(all_types.types['Bitstring']), 'BitString(Bitstring)')
         self.assertEqual(repr(all_types.types['Octetstring']), 'OctetString(Octetstring)')
         self.assertEqual(repr(all_types.types['Null']), 'Null(Null)')

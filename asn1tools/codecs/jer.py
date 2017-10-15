@@ -4,6 +4,7 @@
 
 import json
 import binascii
+import math
 
 from . import EncodeError, DecodeError
 from . import compiler
@@ -39,10 +40,26 @@ class Real(Type):
         super(Real, self).__init__(name, 'REAL')
 
     def encode(self, data):
-        return data
+        if data == float('inf'):
+            return 'INF'
+        elif data == float('-inf'):
+            return '-INF'
+        elif math.isnan(data):
+            return 'NaN'
+        else:
+            return data
 
     def decode(self, data):
-        return data
+        if isinstance(data, float):
+            return data
+        else:
+            return {
+                'INF': float('inf'),
+                '-INF': float('-inf'),
+                'NaN': float('nan'),
+                '0': 0.0,
+                '-0': 0.0
+            }[data]
 
     def __repr__(self):
         return 'Real({})'.format(self.name)

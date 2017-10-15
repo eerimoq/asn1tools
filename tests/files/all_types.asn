@@ -12,15 +12,17 @@ Integer2 ::= INTEGER (1..99)
 
 Integer3 ::= INTEGER (1..2 | 9..10)
 
-Real ::= REAL (1.0..2.0)
+Real ::= REAL
 
-Real2 ::= REAL (1..2)
+Real2 ::= REAL (1.0..2.0)
 
-Real3 ::= REAL (1...2)
+Real3 ::= REAL (1..2)
 
-Real4 ::= REAL (1. ..2)
+Real4 ::= REAL (1...2)
 
-Real5 ::= REAL (-20.0 .. -10.0)
+Real5 ::= REAL (1. ..2)
+
+Real6 ::= REAL (-20.0 .. -10.0)
 
 Bitstring ::= BIT STRING
 
