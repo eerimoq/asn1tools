@@ -78,7 +78,7 @@ def _main():
         'decode',
         description='Decode given hextring and print it to standard output.')
     decode_parser.add_argument('-c', '--codec',
-                               choices=('ber', 'der', 'per', 'uper'),
+                               choices=('ber', 'der', 'jer', 'per', 'uper', 'xer'),
                                default='ber',
                                help='Codec (default: ber).')
     decode_parser.add_argument('specification', help='ASN.1 specification file (.asn).')
