@@ -14,7 +14,7 @@ from .errors import CompileError
 
 
 __author__ = 'Erik Moqvist'
-__version__ = '0.15.0'
+__version__ = '0.16.0'
 
 
 def print_list(list_, indent):
