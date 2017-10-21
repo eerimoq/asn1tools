@@ -6,6 +6,7 @@ from copy import deepcopy
 sys.path.append('tests/files')
 
 from rrc_8_6_0 import RRC_8_6_0
+from s1ap_14_4_0 import S1AP_14_4_0
 
 
 class Asn1ToolsPerTest(unittest.TestCase):
@@ -282,6 +283,100 @@ class Asn1ToolsPerTest(unittest.TestCase):
         self.assertEqual(repr(all_types.types['SequenceOf']),
                          'SequenceOf(SequenceOf, Integer())')
         self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
+
+    def test_s1ap_14_4_0(self):
+        with self.assertRaises(KeyError):
+            s1ap = asn1tools.compile_dict(deepcopy(S1AP_14_4_0), 'per')
+
+            # Message 1.
+            decoded_message = {
+                'successfulOutcome': {
+                    'procedureCode': 17,
+                    'criticality': 'reject',
+                    'value': {
+                        'protocolIEs': [
+                            {
+                                'id': 105,
+                                'criticality': 'reject',
+                                'value': [
+                                    {
+                                        'servedPLMNs': [
+                                            b'\xab\xcd\xef',
+                                            b'\x12\x34\x56'
+                                        ],
+                                        'servedGroupIDs': [
+                                            b'\x22\x22'
+                                        ],
+                                        'servedMMECs': [
+                                            b'\x11'
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+
+            {
+                "successfulOutcome": {
+                    "procedureCode": 17,
+                    "criticality": "reject",
+                    "value": {
+                        "protocolIEs": [
+                            {
+                                "id": 105,
+                                "criticality": "reject",
+                                "value": [
+                                    {
+                                        "servedPLMNs": [
+                                            "abcdef",
+                                            "123456"
+                                        ],
+                                        "servedGroupIDs": [
+                                            "2222"
+                                        ],
+                                        "servedMMECs": [
+                                            "11"
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+
+            encoded_message = (
+                b'\x20\x11\x00\x15\x00\x00\x01\x00\x69\x00\x0e\x00\x40\xab\xcd\xef\x12'
+                b'\x34\x56\x00\x00\x22\x22\x00\x11'
+            )
+
+            encoded = s1ap.encode('S1AP-PDU', decoded_message)
+            self.assertEqual(encoded, encoded_message)
+
+    def test_simple_class(self):
+        with self.assertRaises(asn1tools.ParseError):
+            simple_class = asn1tools.compile_files('tests/files/simple_class.asn',
+                                                   'per')
+
+            # Message 1.
+            decoded_message = {
+                'id': 0,
+                'comment': 'item 0',
+                'value': 22.3
+            }
+
+            encoded_message = (
+                b'\x01\x00\x06\x69\x74\x65\x6d\x20\x30\x09\x80\xd0\x16\x4c\xcc\xcc'
+                b'\xcc\xcc\xcd'
+            )
+
+            encoded = simple_class.encode('ItemWithConstraints', decoded_message)
+            self.assertEqual(encoded, encoded_message)
+
+            encoded = simple_class.encode('ItemWithoutConstraints', decoded_message)
+            self.assertEqual(encoded, encoded_message)
 
 
 if __name__ == '__main__':

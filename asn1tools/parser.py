@@ -253,6 +253,9 @@ def create_grammar():
     BOOLEAN = Keyword('BOOLEAN')
     TRUE = Keyword('TRUE')
     FALSE = Keyword('FALSE')
+    CLASS = Keyword('CLASS')
+    WITH = Keyword('WITH')
+    SYNTAX = Keyword('SYNTAX')
 
     # Various literals.
     word = Word(printables, excludeChars=',(){}[].:=;"|')
@@ -281,8 +284,10 @@ def create_grammar():
     hstring = Regex(r"'[0-9A-F\s]*'H")
     cstring = NoMatch()
     number = word
+    ampersand = Literal('&')
 
     # Forward declarations.
+    object_class_field_type = Forward().setName('CLASS')
     sequence_type = Forward().setName('SEQUENCE')
     choice_type = Forward().setName('CHOICE')
     integer_type = Forward().setName('INTEGER')
@@ -342,6 +347,7 @@ def create_grammar():
                     | enumerated_type
                     | sequence_of_type
                     | sequence_type
+                    | object_class_field_type
                     | set_of_type
                     | set_type
                     | object_identifier_type
@@ -355,6 +361,73 @@ def create_grammar():
                          + Group(Optional(APPLICATION | PRIVATE) + word)
                          + Suppress(rbracket)
                          + Group(Optional(IMPLICIT | EXPLICIT))))
+
+    type_field_reference = (ampersand + type_reference)
+ 
+    type_field_spec = (type_field_reference
+                       + Optional(OPTIONAL
+                                  | (DEFAULT - type_)))
+    
+    fixed_type_value_field_spec = NoMatch()
+    variable_type_value_field_spec = NoMatch()
+    fixed_type_value_set_field_spec = NoMatch()
+    variable_type_value_set_field_spec = NoMatch()
+    object_field_spec = NoMatch()
+    object_set_field_spec = NoMatch()
+    
+    field_spec = (type_field_spec
+                  | fixed_type_value_field_spec
+                  | variable_type_value_field_spec
+                  | fixed_type_value_set_field_spec
+                  | variable_type_value_set_field_spec
+                  | object_field_spec
+                  | object_set_field_spec)
+    
+    value_field_reference = NoMatch()
+    value_set_field_reference = NoMatch()
+    object_field_reference = NoMatch()
+    object_set_field_reference = NoMatch()
+
+    primitive_field_name = (type_field_reference
+                            | value_field_reference
+                            | value_set_field_reference
+                            | object_field_reference
+                            | object_set_field_reference)
+
+    literal = NoMatch()
+    
+    required_token = (literal | primitive_field_name)
+
+    token_or_group_spec = Forward()
+
+    optional_group = (lbracket
+                      + token_or_group_spec
+                      + rbracket)
+
+    token_or_group_spec <<= (required_token | optional_group)
+
+    syntax_list = (lbrace
+                   + OneOrMore(token_or_group_spec)
+                   + rbrace)
+ 
+    
+    with_syntax_spec = (WITH + SYNTAX + syntax_list)
+
+    defined_object_class = NoMatch()
+    
+    object_class_defn = (CLASS
+                         + lbrace
+                         + field_spec
+                         + rbrace
+                         + Optional(with_syntax_spec))
+
+    parameterized_object_class = NoMatch()
+    
+    object_class = (defined_object_class
+                    | object_class_defn
+                    | parameterized_object_class)
+ 
+    object_class_field_type <<= object_class
 
     sequence_type <<= (SEQUENCE
                        - lbrace
@@ -525,14 +598,14 @@ def create_grammar():
     assignment = Group(type_assignment
                        | value_assignment)
 
-    symbols_imported = (Group(delimitedList(word))
-                        + FROM
-                        + word
-                        + Suppress(Optional(oid)))
+    symbols_imported = Group((Group(delimitedList(word))
+                              + FROM
+                              + word
+                              + Suppress(Optional(oid))))
 
     imports = Group(Optional(IMPORTS
-                             + symbols_imported
-                             + scolon))
+                             - OneOrMore(symbols_imported)
+                             - scolon))
 
     assignment_list = Group(ZeroOrMore(assignment))
 
@@ -601,20 +674,25 @@ def parse_string(string):
         types = {}
         values = {}
 
-        if module[1]:
-            from_name = module[1][-2]
-            LOGGER.debug("Found imports from '%s'.", from_name)
-            imports[from_name] = module[1][1]
+        imports_tokens = module[1]
 
-        for definition in module[2]:
-            name = definition[0]
+        if imports_tokens:
+            for from_tokens in imports_tokens[1:-1]:
+                from_name = from_tokens[2]
+                LOGGER.debug("Found imports from '%s'.", from_name)
+                imports[from_name] = from_tokens[0]
+
+        assignment_tokens = module[2]
+
+        for assignment in assignment_tokens:
+            name = assignment[0]
 
             if name[0].isupper():
                 LOGGER.debug("Found type '%s'.", name)
-                types[name] = convert_type_tokens(definition)
+                types[name] = convert_type_tokens(assignment)
             else:
                 LOGGER.debug("Found value '%s'.", name)
-                values[name] = convert_value_tokens(definition)
+                values[name] = convert_value_tokens(assignment)
 
         modules[module_name] = {
             'imports': imports,

@@ -1,0 +1,31 @@
+SimpleClass DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+-- The ITEM class.
+ITEM ::= CLASS {
+    &id          INTEGER UNIQUE,
+    &comment     IA5String
+}
+
+-- A union of allowed items.
+Items ITEM ::= {
+    { &id 0, &comment "item 0" } |
+    { &id 1, &comment "item 1" }
+}
+
+-- Type with constraints (only items in the union above allowed).
+ItemWithConstraints ::= SEQUENCE {
+    id        ITEM.&id ({Items}),
+    comment   ITEM.&comment ({Items}{@id}),
+    value     REAL
+}
+
+-- Type without constraints.
+ItemWithoutConstraints ::= SEQUENCE {
+    id        ITEM.&id,
+    comment   ITEM.&comment,
+    value     REAL
+}
+
+END
