@@ -744,6 +744,10 @@ class Compiler(compiler.Compiler):
         }
 
     def compile_implicit_type(self, name, type_descriptor, module_name):
+        if '.' in type_descriptor['type']:
+            type_descriptor = self.convert_class_member_type(type_descriptor,
+                                                             module_name)
+
         if type_descriptor['type'] == 'SEQUENCE':
             compiled = Sequence(
                 name,

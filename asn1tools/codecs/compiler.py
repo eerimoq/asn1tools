@@ -2,6 +2,7 @@
 
 """
 
+from copy import deepcopy
 from ..errors import CompileError
 
 
@@ -138,3 +139,34 @@ class Compiler(object):
                 module_name))
 
         return value, module_name
+
+    def lookup_object_class_descriptor(self, object_class_name, module_name):
+        module = self._specification[module_name]
+        object_class_descriptor = None
+
+        if object_class_name in module['object-classes']:
+            object_class_descriptor = module['object-classes'][object_class_name]
+        else:
+            raise NotImplementedError()
+
+        if object_class_descriptor is None:
+            raise CompileError("Object class '{}' not found in module '{}'.".format(
+                object_class_name,
+                module_name))
+
+        return object_class_descriptor, module_name
+
+    def convert_class_member_type(self, type_descriptor, module_name):
+        type_name = type_descriptor['type']
+        class_name, member_name = type_name.split('.')
+        result = self.lookup_object_class_descriptor(class_name,
+                                                     module_name)
+        object_class_descriptor, module_name = result
+        type_descriptor = deepcopy(type_descriptor)
+
+        for member in object_class_descriptor['members']:
+            if member['name'] == member_name:
+                type_descriptor['type'] = member['type']
+                break
+
+        return type_descriptor

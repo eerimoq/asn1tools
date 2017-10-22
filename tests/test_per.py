@@ -356,27 +356,25 @@ class Asn1ToolsPerTest(unittest.TestCase):
             self.assertEqual(encoded, encoded_message)
 
     def test_simple_class(self):
-        with self.assertRaises(asn1tools.errors.CompileError):
-            simple_class = asn1tools.compile_files('tests/files/simple_class.asn',
-                                                   'per')
+        simple_class = asn1tools.compile_files('tests/files/simple_class.asn',
+                                               'per')
 
-            # Message 1.
-            decoded_message = {
-                'id': 0,
-                'comment': 'item 0',
-                'value': 22.3
-            }
+        # Message 1.
+        decoded_message = {
+            'id': 0,
+            'comment': 'item 0',
+            'value': 5
+        }
 
-            encoded_message = (
-                b'\x01\x00\x06\x69\x74\x65\x6d\x20\x30\x09\x80\xd0\x16\x4c\xcc\xcc'
-                b'\xcc\xcc\xcd'
-            )
+        encoded_message = (
+            b'\x01\x00\x06\x69\x74\x65\x6d\x20\x30\x01\x05'
+        )
 
-            encoded = simple_class.encode('ItemWithConstraints', decoded_message)
-            self.assertEqual(encoded, encoded_message)
+        encoded = simple_class.encode('ItemWithConstraints', decoded_message)
+        self.assertEqual(encoded, encoded_message)
 
-            encoded = simple_class.encode('ItemWithoutConstraints', decoded_message)
-            self.assertEqual(encoded, encoded_message)
+        encoded = simple_class.encode('ItemWithoutConstraints', decoded_message)
+        self.assertEqual(encoded, encoded_message)
 
 
 if __name__ == '__main__':

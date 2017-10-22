@@ -18,14 +18,14 @@ Items ITEM ::= {
 ItemWithConstraints ::= SEQUENCE {
     id        ITEM.&id, -- ({Items}),
     comment   ITEM.&comment, -- ({Items}{@id}),
-    value     REAL
+    value     INTEGER
 }
 
 -- Type without constraints.
 ItemWithoutConstraints ::= SEQUENCE {
     id        ITEM.&id,
     comment   ITEM.&comment,
-    value     REAL
+    value     INTEGER
 }
 
 END
