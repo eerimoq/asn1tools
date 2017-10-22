@@ -1,5 +1,7 @@
 BAR = {'Bar': {'extensibility-implied': False,
          'imports': {},
+         'object-classes': {},
+         'object-sets': {},
          'tags': 'EXPLICIT',
          'types': {'AcceptTypes': {'members': [{'element': {'size': None,
                                                             'type': 'BIT '

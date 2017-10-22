@@ -356,7 +356,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
             self.assertEqual(encoded, encoded_message)
 
     def test_simple_class(self):
-        with self.assertRaises(asn1tools.ParseError):
+        with self.assertRaises(asn1tools.errors.CompileError):
             simple_class = asn1tools.compile_files('tests/files/simple_class.asn',
                                                    'per')
 

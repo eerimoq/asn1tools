@@ -1,5 +1,7 @@
 ALL_TYPES = {'AllTypes': {'extensibility-implied': False,
               'imports': {},
+              'object-classes': {},
+              'object-sets': {},
               'types': {'Bitstring': {'size': None, 'type': 'BIT STRING'},
                         'Bitstring2': {'size': [9], 'type': 'BIT STRING'},
                         'Bitstring3': {'size': [(5, 7)], 'type': 'BIT STRING'},

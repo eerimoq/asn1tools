@@ -2,6 +2,8 @@ FOO = {
     'Foo': {
         'extensibility-implied': False,
         'imports': {},
+        'object-classes': {},
+        'object-sets': {},
         'types': {
             'Answer': {
                 'type': 'SEQUENCE',

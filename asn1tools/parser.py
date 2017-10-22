@@ -23,6 +23,8 @@ from pyparsing import ParseException
 from pyparsing import ParseSyntaxException
 from pyparsing import NotAny
 from pyparsing import NoMatch
+from pyparsing import QuotedString
+from pyparsing import Combine
 
 
 LOGGER = logging.getLogger(__name__)
@@ -212,6 +214,33 @@ def convert_value_tokens(tokens):
     return {'type': value_type, 'value': value}
 
 
+def convert_object_class_tokens(tokens):
+    members = []
+
+    for member in tokens[3]:
+        members.append({
+            'name': member[0],
+            'type': member[1],
+            'optional': False
+        })
+
+    return {'members': members}
+
+
+def convert_object_set_tokens(tokens):
+    members = []
+
+    for member_tokens in tokens[4]:
+        member = {}
+
+        for name, value in member_tokens:
+            member[name] = convert_number(value)
+
+        members.append(member)
+
+    return {'class': tokens[1], 'members': members}
+
+
 def create_grammar():
     '''Return the ASN.1 grammar as Pyparsing objects.
 
@@ -256,6 +285,7 @@ def create_grammar():
     CLASS = Keyword('CLASS')
     WITH = Keyword('WITH')
     SYNTAX = Keyword('SYNTAX')
+    UNIQUE = Keyword('UNIQUE')
 
     # Various literals.
     word = Word(printables, excludeChars=',(){}[].:=;"|')
@@ -285,9 +315,11 @@ def create_grammar():
     cstring = NoMatch()
     number = word
     ampersand = Literal('&')
+    value_field_reference = Combine(ampersand + value_reference)
+    type_field_reference = Combine(ampersand + type_reference)
 
     # Forward declarations.
-    object_class_field_type = Forward().setName('CLASS')
+    object_class_field_type = Forward().setName('ObjectClassField')
     sequence_type = Forward().setName('SEQUENCE')
     choice_type = Forward().setName('CHOICE')
     integer_type = Forward().setName('INTEGER')
@@ -318,12 +350,60 @@ def create_grammar():
                   + size
                   + Suppress(Optional(rparen)))
 
-    unions = Suppress(FROM
-                      + delimitedList(qmark + word + qmark
-                                      + dotx2
-                                      + qmark + word + qmark, delim=pipe))
+    elements = Forward()
 
-    element_set_spec = unions
+    intersections = elements
+
+    unions = delimitedList(intersections, delim=pipe)
+
+    object_ = NoMatch()
+    defined_object_set = NoMatch()
+    object_set_from_objects = NoMatch()
+    parameterized_object_set = Group(Suppress(lbrace)
+                                     + delimitedList(
+                                         Group(value_field_reference
+                                               + (word
+                                                  | QuotedString('"'))))
+                                     + Suppress(rbrace))
+
+    object_set_elements = (object_
+                           | defined_object_set
+                           | object_set_from_objects
+                           | parameterized_object_set)
+
+    value = Forward()
+
+    single_value = value
+    contained_subtype = NoMatch()
+    value_range = NoMatch()
+
+    permitted_alphabet = Suppress(FROM
+                                  + delimitedList(qmark + word + qmark
+                                                  + dotx2
+                                                  + qmark + word + qmark,
+                                                  delim=pipe))
+
+    size_constraint = NoMatch()
+    type_constraint = NoMatch()
+    inner_type_constraints = NoMatch()
+    pattern_constraint = NoMatch()
+
+    subtype_elements = (contained_subtype
+                        | size_constraint
+                        | permitted_alphabet
+                        | value_range
+                        | type_constraint
+                        | inner_type_constraints
+                        | single_value
+                        | pattern_constraint)
+
+    element_set_spec = Forward()
+
+    elements <<= (subtype_elements
+                  | object_set_elements
+                  | (lparen + element_set_spec + rparen))
+
+    element_set_spec <<= unions
 
     root_element_set_spec = element_set_spec
 
@@ -362,31 +442,37 @@ def create_grammar():
                          + Suppress(rbracket)
                          + Group(Optional(IMPLICIT | EXPLICIT))))
 
-    type_field_reference = (ampersand + type_reference)
- 
     type_field_spec = (type_field_reference
                        + Optional(OPTIONAL
                                   | (DEFAULT - type_)))
-    
-    fixed_type_value_field_spec = NoMatch()
+
+    fixed_type_value_field_spec = (value_field_reference
+                                   + type_
+                                   + Optional(UNIQUE)
+                                   + Optional(OPTIONAL
+                                              | (DEFAULT - type_)))
+
     variable_type_value_field_spec = NoMatch()
     fixed_type_value_set_field_spec = NoMatch()
     variable_type_value_set_field_spec = NoMatch()
     object_field_spec = NoMatch()
     object_set_field_spec = NoMatch()
-    
-    field_spec = (type_field_spec
-                  | fixed_type_value_field_spec
-                  | variable_type_value_field_spec
-                  | fixed_type_value_set_field_spec
-                  | variable_type_value_set_field_spec
-                  | object_field_spec
-                  | object_set_field_spec)
-    
-    value_field_reference = NoMatch()
+
+    field_spec = Group(type_field_spec
+                       | fixed_type_value_field_spec
+                       | variable_type_value_field_spec
+                       | fixed_type_value_set_field_spec
+                       | variable_type_value_set_field_spec
+                       | object_field_spec
+                       | object_set_field_spec)
+
     value_set_field_reference = NoMatch()
     object_field_reference = NoMatch()
     object_set_field_reference = NoMatch()
+    object_set_reference = type_reference
+
+    object_set_spec = delimitedList(root_element_set_spec)
+    object_set = (lbrace + Group(object_set_spec) + rbrace)
 
     primitive_field_name = (type_field_reference
                             | value_field_reference
@@ -395,7 +481,7 @@ def create_grammar():
                             | object_set_field_reference)
 
     literal = NoMatch()
-    
+
     required_token = (literal | primitive_field_name)
 
     token_or_group_spec = Forward()
@@ -409,25 +495,31 @@ def create_grammar():
     syntax_list = (lbrace
                    + OneOrMore(token_or_group_spec)
                    + rbrace)
- 
-    
+
+
     with_syntax_spec = (WITH + SYNTAX + syntax_list)
 
-    defined_object_class = NoMatch()
-    
+    object_class_reference = type_reference
+
+    defined_object_class = object_class_reference
+
     object_class_defn = (CLASS
-                         + lbrace
-                         + field_spec
-                         + rbrace
-                         + Optional(with_syntax_spec))
+                         - Suppress(lbrace)
+                         - Group(delimitedList(field_spec))
+                         - Suppress(rbrace)
+                         - Optional(with_syntax_spec))
 
     parameterized_object_class = NoMatch()
-    
-    object_class = (defined_object_class
-                    | object_class_defn
+
+    object_class = (object_class_defn
+#                    | defined_object_class
                     | parameterized_object_class)
- 
-    object_class_field_type <<= object_class
+
+    field_name = primitive_field_name
+
+    object_class_field_type <<= Combine(defined_object_class
+                                        + dot
+                                        + field_name)
 
     sequence_type <<= (SEQUENCE
                        - lbrace
@@ -549,7 +641,7 @@ def create_grammar():
                      | choice_value
                      | word)
 
-    value = Group(oid | builtin_value)
+    value <<= Group(oid | builtin_value)
 
     bit_string_value <<= (bstring
                           | hstring
@@ -595,7 +687,18 @@ def create_grammar():
                         - assign
                         - value)
 
-    assignment = Group(type_assignment
+    object_set_assignment = (object_set_reference
+                             + defined_object_class
+                             - assign
+                             - object_set)
+
+    object_class_assignment = (object_class_reference
+                               + assign
+                               + object_class)
+
+    assignment = Group(object_set_assignment
+                       | object_class_assignment
+                       | type_assignment
                        | value_assignment)
 
     symbols_imported = Group((Group(delimitedList(word))
@@ -673,6 +776,8 @@ def parse_string(string):
         imports = {}
         types = {}
         values = {}
+        object_classes = {}
+        object_sets = {}
 
         imports_tokens = module[1]
 
@@ -688,8 +793,15 @@ def parse_string(string):
             name = assignment[0]
 
             if name[0].isupper():
-                LOGGER.debug("Found type '%s'.", name)
-                types[name] = convert_type_tokens(assignment)
+                if assignment[1:3] == ['::=', 'CLASS']:
+                    LOGGER.debug("Found object class '%s'.", name)
+                    object_classes[name] = convert_object_class_tokens(assignment)
+                elif assignment[2:4] == ['::=', '{']:
+                    LOGGER.debug("Found object set '%s'.", name)
+                    object_sets[name] = convert_object_set_tokens(assignment)
+                else:
+                    LOGGER.debug("Found type '%s'.", name)
+                    types[name] = convert_type_tokens(assignment)
             else:
                 LOGGER.debug("Found value '%s'.", name)
                 values[name] = convert_value_tokens(assignment)
@@ -697,7 +809,9 @@ def parse_string(string):
         modules[module_name] = {
             'imports': imports,
             'types': types,
-            'values': values
+            'values': values,
+            'object-classes': object_classes,
+            'object-sets': object_sets
         }
 
         if module[0][3]:

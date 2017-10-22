@@ -28,9 +28,8 @@ class Asn1ToolsParseTest(unittest.TestCase):
         self.assertEqual(rrc_8_6_0, RRC_8_6_0)
 
     def test_parse_simple_class(self):
-        with self.assertRaises(asn1tools.ParseError):
-            simple_class = asn1tools.parse_files('tests/files/simple_class.asn')
-            self.assertEqual(simple_class, SIMPLE_CLASS)
+        simple_class = asn1tools.parse_files('tests/files/simple_class.asn')
+        self.assertEqual(simple_class, SIMPLE_CLASS)
 
     def test_parse_s1ap_14_4_0(self):
         with self.assertRaises(asn1tools.ParseError):
@@ -105,8 +104,8 @@ class Asn1ToolsParseTest(unittest.TestCase):
             "Invalid ASN.1 syntax at line 1, column 45: 'A DEFINITIONS ::= BEGIN  "
             "A ::= SEQUENCE { a >!<} END': Expected {CHOICE | INTEGER | REAL | "
             "BIT STRING | OCTET STRING | ENUMERATED | SEQUENCE OF | SEQUENCE | "
-            "CLASS | SET OF | SET | OBJECT IDENTIFIER | BOOLEAN | ANY DEFINED BY "
-            "| ...}.")
+            "ObjectClassField | SET OF | SET | OBJECT IDENTIFIER | BOOLEAN | "
+            "ANY DEFINED BY | ...}.")
 
     def test_parse_error_sequence_missing_member_name(self):
         with self.assertRaises(asn1tools.ParseError) as cm:

@@ -1,6 +1,8 @@
 ZFORCE = {'ProtocolMessage': {'extensibility-implied': True,
                      'imports': {},
                      'tags': 'IMPLICIT',
+                     'object-classes': {},
+                     'object-sets': {},
                      'types': {'AsicErrorEntry': {'members': [{'name': 'index',
                                                                'optional': True,
                                                                'tag': {'number': 0},
