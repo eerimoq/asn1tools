@@ -5,8 +5,9 @@
 -- **************************************************************
 
 S1AP-PDU-Descriptions  {
-itu-t (0) identified-organization (4) etsi (0) mobileDomain (0)
-eps-Access (21) modules (3) s1ap (1) version1 (1) s1ap-PDU-Descriptions (0)}
+  itu-t (0) identified-organization (4) etsi (0) mobileDomain (0)
+  eps-Access (21) modules (3) s1ap (1) version1 (1) s1ap-PDU-Descriptions (0)
+}
 
 DEFINITIONS AUTOMATIC TAGS ::=
 
