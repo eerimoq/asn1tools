@@ -13,10 +13,19 @@ Items ITEM ::= {
     object-0 | object-1
 }
 
--- Type using the object set defined above.
+-- Type using the object set defined above. Encodes and decodes the
+-- open type 'comment' as defined by 'id'
 Item ::= SEQUENCE {
     id        ITEM.&id ({Items}),
     comment   ITEM.&MyOpenType ({Items}{@id}),
+    value     INTEGER
+}
+
+-- Type using the object set defined above. Encodes and decodes
+-- the open type 'comment' as an open type.
+ItemOpenType ::= SEQUENCE {
+    id        ITEM.&id,
+    comment   ITEM.&MyOpenType,
     value     INTEGER
 }
 
