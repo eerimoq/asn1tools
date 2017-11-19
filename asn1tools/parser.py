@@ -364,14 +364,14 @@ def create_grammar():
     object_ = NoMatch()
     defined_object_set = NoMatch()
     object_set_from_objects = NoMatch()
-    # ToDo: This is not correct...
-    parameterized_object_set = Group(Suppress(lbrace)
-                                     + delimitedList(
-                                         Group((value_field_reference
-                                                | type_field_reference)
-                                               + (word
-                                                  | QuotedString('"'))))
-                                     + Suppress(rbrace))
+    actual_parameter_list = Group(Suppress(lbrace)
+                                  + delimitedList(
+                                      Group((value_field_reference
+                                             | type_field_reference)
+                                            + (word
+                                               | QuotedString('"'))))
+                                  + Suppress(rbrace))
+    parameterized_object_set = actual_parameter_list
 
     object_set_elements = (object_
                            | defined_object_set
@@ -528,15 +528,19 @@ def create_grammar():
                                         + dot
                                         + field_name)
 
+    named_type = Group(identifier
+                       - tag
+                       - type_)
+    component_type = Group(named_type
+                           + Group(Optional(OPTIONAL
+                                            | (DEFAULT + word)))
+                           | dotx3)
+    component_type_list = delimitedList(component_type)
+    root_component_type_list = component_type_list
+    component_type_lists = root_component_type_list
     sequence_type <<= (SEQUENCE
                        - lbrace
-                       + Group(Optional(delimitedList(
-                           Group(Group(identifier
-                                       - tag
-                                       - type_)
-                                 + Group(Optional(OPTIONAL)
-                                         + Optional(DEFAULT + word))
-                                 | dotx3))))
+                       + Group(Optional(component_type_lists))
                        - rbrace)
 
     sequence_of_type <<= (SEQUENCE
