@@ -291,6 +291,7 @@ def create_grammar():
     WITH = Keyword('WITH')
     SYNTAX = Keyword('SYNTAX')
     UNIQUE = Keyword('UNIQUE')
+    NULL = Keyword('NULL')
 
     # Various literals.
     word = Word(printables, excludeChars=',(){}[].:=;"|')
@@ -328,6 +329,7 @@ def create_grammar():
     sequence_type = Forward().setName('SEQUENCE')
     choice_type = Forward().setName('CHOICE')
     integer_type = Forward().setName('INTEGER')
+    null_type = Forward().setName('NULL')
     real_type = Forward().setName('REAL')
     bit_string_type = Forward().setName('BIT STRING')
     octet_string_type = Forward().setName('OCTET STRING')
@@ -428,6 +430,7 @@ def create_grammar():
 
     builtin_type = (choice_type
                     | integer_type
+                    | null_type
                     | real_type
                     | bit_string_type
                     | octet_string_type
@@ -440,9 +443,13 @@ def create_grammar():
                     | object_identifier_type
                     | boolean_type)
 
-    type_ = (builtin_type
-             | any_defined_by_type
-             | (word + Optional(constraint)).setName('...'))
+    referenced_type = type_reference
+    referenced_type.setName('ReferencedType')
+    
+    type_ = ((builtin_type
+              | any_defined_by_type
+              | referenced_type)
+             + Optional(constraint))
 
     tag = Group(Optional(Suppress(lbracket)
                          + Group(Optional(APPLICATION | PRIVATE) + word)
@@ -599,6 +606,8 @@ def create_grammar():
                       + Optional(lparen
                                  + range_
                                  + rparen))
+
+    null_type <<= NULL
 
     real_type <<= (REAL
                    + Optional(lparen
