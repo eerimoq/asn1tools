@@ -218,9 +218,14 @@ def convert_object_class_tokens(tokens):
     members = []
 
     for member in tokens[3]:
+        if member[0][1].islower():
+            type_ = member[1]
+        else:
+            type_ = 'OpenType'
+
         members.append({
             'name': member[0],
-            'type': member[1],
+            'type': type_,
             'optional': False
         })
 
@@ -359,9 +364,11 @@ def create_grammar():
     object_ = NoMatch()
     defined_object_set = NoMatch()
     object_set_from_objects = NoMatch()
+    # ToDo: This is not correct...
     parameterized_object_set = Group(Suppress(lbrace)
                                      + delimitedList(
-                                         Group(value_field_reference
+                                         Group((value_field_reference
+                                                | type_field_reference)
                                                + (word
                                                   | QuotedString('"'))))
                                      + Suppress(rbrace))

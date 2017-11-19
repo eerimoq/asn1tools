@@ -318,35 +318,6 @@ class Asn1ToolsPerTest(unittest.TestCase):
                 }
             }
 
-            {
-                "successfulOutcome": {
-                    "procedureCode": 17,
-                    "criticality": "reject",
-                    "value": {
-                        "protocolIEs": [
-                            {
-                                "id": 105,
-                                "criticality": "reject",
-                                "value": [
-                                    {
-                                        "servedPLMNs": [
-                                            "abcdef",
-                                            "123456"
-                                        ],
-                                        "servedGroupIDs": [
-                                            "2222"
-                                        ],
-                                        "servedMMECs": [
-                                            "11"
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                }
-            }
-
             encoded_message = (
                 b'\x20\x11\x00\x15\x00\x00\x01\x00\x69\x00\x0e\x00\x40\xab\xcd\xef\x12'
                 b'\x34\x56\x00\x00\x22\x22\x00\x11'
@@ -362,12 +333,13 @@ class Asn1ToolsPerTest(unittest.TestCase):
         # Message 1.
         decoded_message = {
             'id': 0,
+            'value': b'\x31',
             'comment': 'item 0',
-            'value': 5
+            'extra': 2
         }
 
         encoded_message = (
-            b'\x01\x00\x06\x69\x74\x65\x6d\x20\x30\x01\x05'
+            b'\x01\x00\x01\x31\x06\x69\x74\x65\x6D\x20\x30\x01\x02'
         )
 
         encoded = simple_class.encode('ItemWithConstraints', decoded_message)

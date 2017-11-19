@@ -664,6 +664,21 @@ class Any(Type):
         return 'Any({})'.format(self.name)
 
 
+class OpenType(Type):
+
+    def __init__(self, name):
+        super(OpenType, self).__init__(name, 'ANY')
+
+    def encode(self, data, encoder):
+        encoder.append_bytes(bytearray([len(data)]) + data)
+
+    def decode(self, decoder):
+        raise NotImplementedError()
+
+    def __repr__(self):
+        return 'OpenType({})'.format(self.name)
+
+
 class Enumerated(Type):
 
     def __init__(self, name, values):
@@ -814,6 +829,8 @@ class Compiler(compiler.Compiler):
             compiled = Any(name)
         elif type_descriptor['type'] == 'NULL':
             compiled = Null(name)
+        elif type_descriptor['type'] == 'OpenType':
+            compiled = OpenType(name)
         else:
             compiled = self.compile_type(
                 name,
