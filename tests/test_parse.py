@@ -57,7 +57,8 @@ class Asn1ToolsParseTest(unittest.TestCase):
             asn1tools.parse_string('')
 
         self.assertEqual(str(cm.exception),
-                         "Invalid ASN.1 syntax at line 1, column 1: '>!<'.")
+                         "Invalid ASN.1 syntax at line 1, column 1: '>!<': "
+                         "Expected \"word\".")
 
     def test_parse_error_begin_missing(self):
         with self.assertRaises(asn1tools.ParseError) as cm:

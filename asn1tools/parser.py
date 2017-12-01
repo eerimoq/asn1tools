@@ -294,9 +294,9 @@ def create_grammar():
     NULL = Keyword('NULL')
 
     # Various literals.
-    word = Word(printables, excludeChars=',(){}[].:=;"|')
+    word = Word(printables, excludeChars=',(){}[].:=;"|').setName('"word"')
     type_reference = (NotAny(END) + Regex(r'[A-Z][a-zA-Z0-9-]*'))
-    identifier = Regex(r'[a-z][a-zA-Z0-9-]*')
+    identifier = Regex(r'[a-z][a-zA-Z0-9-]*').setName('"identifier"')
     value_reference = identifier
     value_name = Word(alphanums + '-')
     assign = Literal('::=')
@@ -445,7 +445,7 @@ def create_grammar():
 
     referenced_type = type_reference
     referenced_type.setName('ReferencedType')
-    
+
     type_ = ((builtin_type
               | any_defined_by_type
               | referenced_type)
@@ -774,12 +774,7 @@ def parse_string(string):
 
     try:
         tokens = grammar.parseString(string).asList()
-    except ParseException as e:
-        raise ParseError("Invalid ASN.1 syntax at line {}, column {}: '{}'.".format(
-            e.lineno,
-            e.column,
-            e.markInputline()))
-    except ParseSyntaxException as e:
+    except (ParseException, ParseSyntaxException) as e:
         raise ParseError("Invalid ASN.1 syntax at line {}, column {}: '{}': {}.".format(
             e.lineno,
             e.column,
