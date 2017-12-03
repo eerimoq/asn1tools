@@ -9,6 +9,7 @@ sys.path.append('tests/files')
 
 from rrc_8_6_0 import RRC_8_6_0
 from rfc5280 import RFC5280
+from rfc5280_modified import RFC5280_MODIFIED
 from zforce import ZFORCE
 
 
@@ -788,6 +789,131 @@ class Asn1ToolsBerTest(unittest.TestCase):
         print('{} ms per decode call.'.format(round(ms_per_call, 3)))
 
     def test_rfc5280(self):
+        rfc5280 = asn1tools.compile_dict(deepcopy(RFC5280))
+
+        decoded_message = {
+            'tbsCertificate': {
+                'version': 'v1',
+                'serialNumber': 3578,
+                'signature': {
+                    'algorithm': '1.2.840.113549.1.1.5',
+                    'parameters': b'\x05\x00'
+                },
+                'issuer': {
+                    'rdnSequence': [
+                        [{'type': '2.5.4.6',
+                          'value': b'\x13\x02\x4a\x50'}],
+                        [{'type': '2.5.4.8',
+                          'value': b'\x13\x05\x54\x6f\x6b\x79\x6f'}],
+                        [{'type': '2.5.4.7',
+                          'value': b'\x13\x07\x43\x68\x75\x6f\x2d\x6b\x75'}],
+                        [{'type': '2.5.4.10',
+                          'value': b'\x13\x08\x46\x72\x61\x6e\x6b\x34\x44\x44'}],
+                        [{'type': '2.5.4.11',
+                          'value': (b'\x13\x0f\x57\x65\x62\x43\x65\x72\x74\x20\x53'
+                                    b'\x75\x70\x70\x6f\x72\x74')}],
+                        [{'type': '2.5.4.3',
+                          'value': (b'\x13\x0f\x46\x72\x61\x6e\x6b\x34\x44\x44\x20'
+                                    b'\x57\x65\x62\x20\x43\x41')}],
+                        [{'type': '1.2.840.113549.1.9.1',
+                          'value': (b'\x16\x14\x73\x75\x70\x70\x6f\x72\x74\x40\x66'
+                                    b'\x72\x61\x6e\x6b\x34\x64\x64\x2e\x63\x6f\x6d')}]
+                    ]
+                },
+                'validity': {
+                    'notAfter': {'utcTime': '170821052654'},
+                    'notBefore': {'utcTime': '120822052654'}
+                },
+                'subject': {
+                    'rdnSequence': [
+                        [{'type': '2.5.4.6',
+                          'value': b'\x13\x02\x4a\x50'}],
+                        [{'type': '2.5.4.8',
+                          'value': b'\x0c\x05\x54\x6f\x6b\x79\x6f'}],
+                        [{'type': '2.5.4.10',
+                          'value': b'\x0c\x08\x46\x72\x61\x6e\x6b\x34\x44\x44'}],
+                        [{'type': '2.5.4.3',
+                          'value': (b'\x0c\x0f\x77\x77\x77\x2e\x65\x78\x61\x6d\x70'
+                                    b'\x6c\x65\x2e\x63\x6f\x6d')}]
+                    ]
+                },
+                'subjectPublicKeyInfo': {
+                    'algorithm': {
+                        'algorithm': '1.2.840.113549.1.1.1',
+                        'parameters': b'\x05\x00'
+                    },
+                    'subjectPublicKey': (b'0H\x02A\x00\x9b\xfcf\x90y\x84B\xbb'
+                                         b'\xab\x13\xfd+{\xf8\xde\x15\x12\xe5'
+                                         b'\xf1\x93\xe3\x06\x8a{\xb8\xb1\xe1'
+                                         b'\x9e&\xbb\x95\x01\xbf\xe70\xedd\x85'
+                                         b'\x02\xdd\x15i\xa84\xb0\x06\xec?5<'
+                                         b'\x1e\x1b+\x8f\xfa\x8f\x00\x1b\xdf'
+                                         b'\x07\xc6\xacS\x07\x02\x03\x01\x00'
+                                         b'\x01',
+                                         592)
+                }
+            },
+            'signatureAlgorithm': {
+                'algorithm': '1.2.840.113549.1.1.5',
+                'parameters': b'\x05\x00'
+            },
+            'signature': (b'\x14\xb6L\xbb\x81y3\xe6q\xa4\xdaQo\xcb\x08\x1d'
+                          b'\x8d`\xec\xbc\x18\xc7sGY\xb1\xf2 H\xbba\xfa'
+                          b'\xfcM\xad\x89\x8d\xd1!\xeb\xd5\xd8\xe5\xba'
+                          b'\xd6\xa66\xfdtP\x83\xb6\x0f\xc7\x1d\xdf}\xe5.\x81'
+                          b'\x7fE\xe0\x9f\xe2>y\xee\xd701\xc7 r\xd9X.*\xfe\x12'
+                          b'Z4E\xa1\x19\x08|\x89G_J\x95\xbe#!JSr\xda*\x05/.\xc9'
+                          b'p\xf6[\xfa\xfd\xdf\xb41\xb2\xc1J\x9c\x06%C\xa1'
+                          b'\xe6\xb4\x1e\x7f\x86\x9b\x16@',
+                          1024)
+        }
+
+        encoded_message = (
+            b'\x30\x82\x02\x12\x30\x82\x01\x7b\x02\x02\x0d\xfa\x30\x0d\x06\x09'
+            b'\x2a\x86\x48\x86\xf7\x0d\x01\x01\x05\x05\x00\x30\x81\x9b\x31\x0b'
+            b'\x30\x09\x06\x03\x55\x04\x06\x13\x02\x4a\x50\x31\x0e\x30\x0c\x06'
+            b'\x03\x55\x04\x08\x13\x05\x54\x6f\x6b\x79\x6f\x31\x10\x30\x0e\x06'
+            b'\x03\x55\x04\x07\x13\x07\x43\x68\x75\x6f\x2d\x6b\x75\x31\x11\x30'
+            b'\x0f\x06\x03\x55\x04\x0a\x13\x08\x46\x72\x61\x6e\x6b\x34\x44\x44'
+            b'\x31\x18\x30\x16\x06\x03\x55\x04\x0b\x13\x0f\x57\x65\x62\x43\x65'
+            b'\x72\x74\x20\x53\x75\x70\x70\x6f\x72\x74\x31\x18\x30\x16\x06\x03'
+            b'\x55\x04\x03\x13\x0f\x46\x72\x61\x6e\x6b\x34\x44\x44\x20\x57\x65'
+            b'\x62\x20\x43\x41\x31\x23\x30\x21\x06\x09\x2a\x86\x48\x86\xf7\x0d'
+            b'\x01\x09\x01\x16\x14\x73\x75\x70\x70\x6f\x72\x74\x40\x66\x72\x61'
+            b'\x6e\x6b\x34\x64\x64\x2e\x63\x6f\x6d\x30\x1e\x17\x0d\x31\x32\x30'
+            b'\x38\x32\x32\x30\x35\x32\x36\x35\x34\x5a\x17\x0d\x31\x37\x30\x38'
+            b'\x32\x31\x30\x35\x32\x36\x35\x34\x5a\x30\x4a\x31\x0b\x30\x09\x06'
+            b'\x03\x55\x04\x06\x13\x02\x4a\x50\x31\x0e\x30\x0c\x06\x03\x55\x04'
+            b'\x08\x0c\x05\x54\x6f\x6b\x79\x6f\x31\x11\x30\x0f\x06\x03\x55\x04'
+            b'\x0a\x0c\x08\x46\x72\x61\x6e\x6b\x34\x44\x44\x31\x18\x30\x16\x06'
+            b'\x03\x55\x04\x03\x0c\x0f\x77\x77\x77\x2e\x65\x78\x61\x6d\x70\x6c'
+            b'\x65\x2e\x63\x6f\x6d\x30\x5c\x30\x0d\x06\x09\x2a\x86\x48\x86\xf7'
+            b'\x0d\x01\x01\x01\x05\x00\x03\x4b\x00\x30\x48\x02\x41\x00\x9b\xfc'
+            b'\x66\x90\x79\x84\x42\xbb\xab\x13\xfd\x2b\x7b\xf8\xde\x15\x12\xe5'
+            b'\xf1\x93\xe3\x06\x8a\x7b\xb8\xb1\xe1\x9e\x26\xbb\x95\x01\xbf\xe7'
+            b'\x30\xed\x64\x85\x02\xdd\x15\x69\xa8\x34\xb0\x06\xec\x3f\x35\x3c'
+            b'\x1e\x1b\x2b\x8f\xfa\x8f\x00\x1b\xdf\x07\xc6\xac\x53\x07\x02\x03'
+            b'\x01\x00\x01\x30\x0d\x06\x09\x2a\x86\x48\x86\xf7\x0d\x01\x01\x05'
+            b'\x05\x00\x03\x81\x81\x00\x14\xb6\x4c\xbb\x81\x79\x33\xe6\x71\xa4'
+            b'\xda\x51\x6f\xcb\x08\x1d\x8d\x60\xec\xbc\x18\xc7\x73\x47\x59\xb1'
+            b'\xf2\x20\x48\xbb\x61\xfa\xfc\x4d\xad\x89\x8d\xd1\x21\xeb\xd5\xd8'
+            b'\xe5\xba\xd6\xa6\x36\xfd\x74\x50\x83\xb6\x0f\xc7\x1d\xdf\x7d\xe5'
+            b'\x2e\x81\x7f\x45\xe0\x9f\xe2\x3e\x79\xee\xd7\x30\x31\xc7\x20\x72'
+            b'\xd9\x58\x2e\x2a\xfe\x12\x5a\x34\x45\xa1\x19\x08\x7c\x89\x47\x5f'
+            b'\x4a\x95\xbe\x23\x21\x4a\x53\x72\xda\x2a\x05\x2f\x2e\xc9\x70\xf6'
+            b'\x5b\xfa\xfd\xdf\xb4\x31\xb2\xc1\x4a\x9c\x06\x25\x43\xa1\xe6\xb4'
+            b'\x1e\x7f\x86\x9b\x16\x40'
+        )
+
+        decoded = rfc5280.decode('Certificate', encoded_message)
+        self.assertEqual(decoded, decoded_message)
+        # Do not include the version member, which have a default
+        # value (is this correct?).
+        del decoded_message['tbsCertificate']['version']
+        encoded = rfc5280.encode('Certificate', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+
+    def test_rfc5280_modified(self):
         any_defined_by_choices = {
             ('PKIX1Explicit88', 'AlgorithmIdentifier', 'parameters'): {
                 '1.2.840.113549.1.1.1': 'NULL',
@@ -804,8 +930,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
             }
         }
 
-        rfc5280 = asn1tools.compile_dict(deepcopy(RFC5280),
-                                         any_defined_by_choices=any_defined_by_choices)
+        rfc5280 = asn1tools.compile_dict(
+            deepcopy(RFC5280_MODIFIED),
+            any_defined_by_choices=any_defined_by_choices)
 
         decoded_message = {
             'tbsCertificate': {
