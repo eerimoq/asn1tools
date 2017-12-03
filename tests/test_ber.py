@@ -1053,6 +1053,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(all_types.encode('Teletexstring', b'fum'), b'\x14\x03fum')
         self.assertEqual(all_types.encode('Utctime', '010203040506'),
                          b'\x17\x0d010203040506Z')
+        self.assertEqual(all_types.encode('GeneralizedTime1', '20001231235959.999'),
+                         b'\x18\x12\x32\x30\x30\x30\x31\x32\x33\x31\x32\x33\x35\x39'
+                         b'\x35\x39\x2e\x39\x39\x39')
         self.assertEqual(all_types.encode('SequenceOf', []), b'0\x00')
         self.assertEqual(all_types.encode('SetOf', []), b'1\x00')
 
@@ -1082,6 +1085,11 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(all_types.decode('Teletexstring', b'\x14\x03fum'), b'fum')
         self.assertEqual(all_types.decode('Utctime', b'\x17\x0d010203040506Z'),
                          '010203040506')
+        self.assertEqual(
+            all_types.decode('GeneralizedTime1',
+                             b'\x18\x12\x32\x30\x30\x30\x31\x32\x33\x31\x32\x33'
+                             b'\x35\x39\x35\x39\x2e\x39\x39\x39'),
+            '20001231235959.999')
         self.assertEqual(all_types.decode('SequenceOf', b'0\x00'), [])
         self.assertEqual(all_types.decode('SetOf', b'1\x00'), [])
 

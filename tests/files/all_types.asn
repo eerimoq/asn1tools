@@ -92,6 +92,8 @@ Teletexstring ::= TeletexString
 
 Utctime ::= UTCTime
 
+GeneralizedTime1 ::= GeneralizedTime
+
 SequenceOf ::= SEQUENCE OF INTEGER
 
 SetOf ::= SET OF INTEGER
