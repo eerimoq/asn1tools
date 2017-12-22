@@ -8,6 +8,7 @@ import asn1tools
 sys.path.append('tests/files')
 
 from rrc_8_6_0 import RRC_8_6_0
+from rfc4511 import RFC4511
 from rfc5280 import RFC5280
 from rfc5280_modified import RFC5280_MODIFIED
 from zforce import ZFORCE
@@ -787,6 +788,83 @@ class Asn1ToolsBerTest(unittest.TestCase):
         res = timeit.timeit(decode, number=iterations)
         ms_per_call = 1000 * res / iterations
         print('{} ms per decode call.'.format(round(ms_per_call, 3)))
+
+    def test_rfc4511(self):
+        return
+
+        rfc4511 = asn1tools.compile_dict(deepcopy(RFC4511))
+
+        # A search request message.
+        decoded_message = {
+            'LDAPMessage': {
+                'messageID': 2,
+                'protocolOp': {
+                    'searchRequest': {
+                        'baseObject': b'',
+                        'scope': 'wholeSubtree',
+                        'derefAliases': 'neverDerefAliases',
+                        'sizeLimit': 0,
+                        'timeLimit': 0,
+                        'typesOnly': False,
+                        'filter': {
+                            'and': [
+                                {
+                                    'substrings': {
+                                        'type': b'\x63\x6e',
+                                        'substrings': {
+                                            'any': b'\x66\x72\x65\x64'
+                                        }
+                                    }
+                                },
+                                {
+                                    'equalityMatch': {
+                                        'attributeDesc': b'\x64\x6e',
+                                        'assertionValue': b'\x6a\x6f\x65'
+                                    }
+                                }
+                            ]
+                        },
+                        'attributes': {
+                        }
+                    }
+                }
+            }
+        }
+
+        encoded_message = (
+            b'\x30\x33\x02\x01\x02\x63\x2e\x04\x00\x0a\x01\x02\x0a\x01\x00\x02'
+            b'\x01\x00\x02\x01\x00\x01\x01\x00\xa0\x19\xa4\x0c\x04\x02\x63\x6e'
+            b'\x30\x06\x81\x04\x66\x72\x65\x64\xa3\x09\x04\x02\x64\x6e\x04\x03'
+            b'\x6a\x6f\x65\x30\x00'
+        )
+
+        decoded = rfc4511.decode('LDAPMessage', encoded_message)
+        self.assertEqual(decoded, decoded_message)
+        encoded = rfc4511.encode('LDAPMessage', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+
+        # A search result done message.
+        decoded_message = {
+            'LDAPMessage': {
+                'messageID': 2,
+                'protocolOp': {
+                    'searchResDone': {
+                        'resultCode': 'noSuchObject',
+                        'matchedDN': b'',
+                        'diagnosticMessage': b''
+                    }
+                }
+            }
+        }
+
+        encoded_message = (
+            b'\x30\x0c\x02\x01\x02\x65\x07\x0a\x01\x20\x04\x00\x04\x00'
+        )
+
+        decoded = rfc4511.decode('LDAPMessage', encoded_message)
+        self.assertEqual(decoded, decoded_message)
+        encoded = rfc4511.encode('LDAPMessage', decoded_message)
+        self.assertEqual(encoded, encoded_message)
 
     def test_rfc5280(self):
         rfc5280 = asn1tools.compile_dict(deepcopy(RFC5280))

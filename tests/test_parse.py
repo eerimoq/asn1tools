@@ -9,6 +9,7 @@ from foo import FOO
 from rrc_8_6_0 import RRC_8_6_0
 from s1ap_14_4_0 import S1AP_14_4_0
 from simple_class import SIMPLE_CLASS
+from rfc4511 import RFC4511
 from rfc5280 import RFC5280
 from zforce import ZFORCE
 from bar import BAR
@@ -35,6 +36,10 @@ class Asn1ToolsParseTest(unittest.TestCase):
         with self.assertRaises(asn1tools.ParseError):
             s1ap_14_4_0 = asn1tools.parse_files('tests/files/s1ap_14_4_0.asn')
             self.assertEqual(s1ap_14_4_0, S1AP_14_4_0)
+
+    def test_parse_rfc4511(self):
+        rfc4511 = asn1tools.parse_files('tests/files/rfc4511.asn')
+        self.assertEqual(rfc4511, RFC4511)
 
     def test_parse_rfc5280(self):
         rfc5280 = asn1tools.parse_files('tests/files/rfc5280.asn')

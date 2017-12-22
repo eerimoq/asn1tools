@@ -90,6 +90,9 @@ def convert_members(tokens):
         if member_tokens == ['...']:
             member_tokens = [['...', [], ''], []]
 
+        if member_tokens[:2] == ['COMPONENTS', 'OF']:
+            continue
+
         member_tokens, qualifiers = member_tokens
         member = convert_type(member_tokens[2:])
         member['name'] = member_tokens[0]
@@ -292,6 +295,10 @@ def create_grammar():
     SYNTAX = Keyword('SYNTAX')
     UNIQUE = Keyword('UNIQUE')
     NULL = Keyword('NULL')
+    COMPONENT = Keyword('COMPONENT')
+    COMPONENTS = Keyword('COMPONENTS')
+    PRESENT = Keyword('PRESENT')
+    ABSENT = Keyword('ABSENT')
 
     # Various literals.
     word = Word(printables, excludeChars=',(){}[].:=;"|').setName('"word"')
@@ -392,9 +399,23 @@ def create_grammar():
                                                   + qmark + word + qmark,
                                                   delim=pipe))
 
+    constraint = Forward()
+
+    value_constraint = constraint
+    presence_constraint = (PRESENT | ABSENT | OPTIONAL)
+    component_constraint = Optional(value_constraint | presence_constraint)
+    named_constraint = (identifier + component_constraint)
+    type_constraints = delimitedList(named_constraint)
+    full_specification = (lbrace + type_constraints + rbrace)
+    partial_specification = (lbrace + dotx3 + comma + type_constraints + rbrace)
+
+    single_type_constraint = constraint
+    multiple_type_constraints = (full_specification | partial_specification)
+
     size_constraint = NoMatch()
     type_constraint = NoMatch()
-    inner_type_constraints = NoMatch()
+    inner_type_constraints = ((WITH + COMPONENT + single_type_constraint)
+                              | (WITH + COMPONENTS + multiple_type_constraints))
     pattern_constraint = NoMatch()
 
     subtype_elements = (contained_subtype
@@ -424,9 +445,9 @@ def create_grammar():
 
     constraint_spec = (size | subtype_constraint)
 
-    constraint = (Suppress(lparen)
-                  + constraint_spec
-                  + Suppress(rparen))
+    constraint <<= (Suppress(lparen)
+                    + constraint_spec
+                    + Suppress(rparen))
 
     builtin_type = (choice_type
                     | integer_type
@@ -541,7 +562,8 @@ def create_grammar():
     component_type = Group(named_type
                            + Group(Optional(OPTIONAL
                                             | (DEFAULT + word)))
-                           | dotx3)
+                           | dotx3
+                           | (COMPONENTS + OF + type_))
     component_type_list = delimitedList(component_type)
     root_component_type_list = component_type_list
     component_type_lists = root_component_type_list
@@ -553,12 +575,14 @@ def create_grammar():
     sequence_of_type <<= (SEQUENCE
                           + Group(Optional(size_paren))
                           + OF
+                          + Optional(Suppress(identifier))
                           - tag
                           - type_)
 
     set_of_type <<= (SET
                      + Group(Optional(size))
                      + OF
+                     + Optional(Suppress(identifier))
                      - tag
                      - type_)
 
