@@ -407,7 +407,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(decoded, decoded_message)
 
     def test_snmp_v1(self):
-        snmp_v1 = asn1tools.compile_files('tests/files/snmp_v1.asn')
+        snmp_v1 = asn1tools.compile_files('tests/files/rfc/snmp_v1.asn')
 
         # First message.
         decoded_message = {

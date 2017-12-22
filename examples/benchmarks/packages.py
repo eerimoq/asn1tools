@@ -15,7 +15,13 @@ import timeit
 import asn1tools
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-SNMP_V1_ASN_PATH = os.path.join(SCRIPT_DIR, '..', '..', 'tests', 'files', 'snmp_v1.asn')
+SNMP_V1_ASN_PATH = os.path.join(SCRIPT_DIR,
+                                '..',
+                                '..',
+                                'tests',
+                                'files',
+                                'rfc',
+                                'snmp_v1.asn')
 
 DECODED_MESSAGE = {
     "version": 0,

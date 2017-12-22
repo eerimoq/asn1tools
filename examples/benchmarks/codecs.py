@@ -11,7 +11,13 @@ import timeit
 import asn1tools
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-RRC_8_6_0_ASN_PATH = os.path.join(SCRIPT_DIR, '..', '..', 'tests', 'files', 'rrc_8_6_0.asn')
+RRC_8_6_0_ASN_PATH = os.path.join(SCRIPT_DIR,
+                                  '..',
+                                  '..',
+                                  'tests',
+                                  'files',
+                                  '3gpp',
+                                  'rrc_8_6_0.asn')
 
 DECODED_MESSAGE = {
     'message': {

@@ -4,6 +4,8 @@ import unittest
 import asn1tools
 
 sys.path.append('tests/files')
+sys.path.append('tests/files/rfc')
+sys.path.append('tests/files/3gpp')
 
 from foo import FOO
 from rrc_8_6_0 import RRC_8_6_0
@@ -25,7 +27,7 @@ class Asn1ToolsParseTest(unittest.TestCase):
         self.assertEqual(foo, FOO)
 
     def test_parse_rrc_8_6_0(self):
-        rrc_8_6_0 = asn1tools.parse_files('tests/files/rrc_8_6_0.asn')
+        rrc_8_6_0 = asn1tools.parse_files('tests/files/3gpp/rrc_8_6_0.asn')
         self.assertEqual(rrc_8_6_0, RRC_8_6_0)
 
     def test_parse_simple_class(self):
@@ -34,15 +36,15 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
     def test_parse_s1ap_14_4_0(self):
         with self.assertRaises(asn1tools.ParseError):
-            s1ap_14_4_0 = asn1tools.parse_files('tests/files/s1ap_14_4_0.asn')
+            s1ap_14_4_0 = asn1tools.parse_files('tests/files/3gpp/s1ap_14_4_0.asn')
             self.assertEqual(s1ap_14_4_0, S1AP_14_4_0)
 
     def test_parse_rfc4511(self):
-        rfc4511 = asn1tools.parse_files('tests/files/rfc4511.asn')
+        rfc4511 = asn1tools.parse_files('tests/files/rfc/rfc4511.asn')
         self.assertEqual(rfc4511, RFC4511)
 
     def test_parse_rfc5280(self):
-        rfc5280 = asn1tools.parse_files('tests/files/rfc5280.asn')
+        rfc5280 = asn1tools.parse_files('tests/files/rfc/rfc5280.asn')
         self.assertEqual(rfc5280, RFC5280)
 
     def test_parse_zforce(self):
