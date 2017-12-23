@@ -6,6 +6,8 @@ from copy import deepcopy
 import asn1tools
 
 sys.path.append('tests/files')
+sys.path.append('tests/files/3gpp')
+sys.path.append('tests/files/rfc')
 
 from rrc_8_6_0 import RRC_8_6_0
 from rfc4511 import RFC4511
