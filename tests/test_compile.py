@@ -45,6 +45,24 @@ class Asn1ToolsCompileTest(unittest.TestCase):
         self.assertEqual(str(cm.exception),
                          "Value 'b' imported by module 'A' not found in module 'C'.")
 
+    def test_missing_import_type_module(self):
+        with self.assertRaises(asn1tools.CompileError) as cm:
+            asn1tools.compile_string(
+                'A DEFINITIONS ::= BEGIN IMPORTS B FROM C; D ::= SEQUENCE { a B } END ',
+                'uper')
+
+        self.assertEqual(str(cm.exception),
+                         "Module 'A' cannot import type 'B' from missing module 'C'.")
+
+    def test_missing_import_value_module(self):
+        with self.assertRaises(asn1tools.CompileError) as cm:
+            asn1tools.compile_string(
+                'A DEFINITIONS ::= BEGIN IMPORTS b FROM C; D ::= INTEGER (b..1) END ',
+                'uper')
+
+        self.assertEqual(str(cm.exception),
+                         "Module 'A' cannot import value 'b' from missing module 'C'.")
+
 
 if __name__ == '__main__':
     unittest.main()

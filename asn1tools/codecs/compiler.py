@@ -89,7 +89,14 @@ class Compiler(object):
         else:
             for from_module_name, imports in module['imports'].items():
                 if type_name in imports:
-                    from_module = self._specification[from_module_name]
+                    try:
+                        from_module = self._specification[from_module_name]
+                    except KeyError:
+                        raise CompileError(
+                            "Module '{}' cannot import type '{}' from missing "
+                            "module '{}'.".format(module_name,
+                                                  type_name,
+                                                  from_module_name))
 
                     try:
                         type_descriptor = from_module['types'][type_name]
@@ -119,7 +126,14 @@ class Compiler(object):
         else:
             for from_module_name, imports in module['imports'].items():
                 if value_name in imports:
-                    from_module = self._specification[from_module_name]
+                    try:
+                        from_module = self._specification[from_module_name]
+                    except KeyError:
+                        raise CompileError(
+                            "Module '{}' cannot import value '{}' from missing "
+                            "module '{}'.".format(module_name,
+                                                  value_name,
+                                                  from_module_name))
 
                     try:
                         value = from_module['values'][value_name]
