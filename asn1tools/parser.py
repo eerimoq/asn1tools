@@ -273,6 +273,7 @@ def create_grammar():
     OCTET = Keyword('OCTET')
     DEFAULT = Keyword('DEFAULT')
     IMPORTS = Keyword('IMPORTS')
+    EXPORTS = Keyword('EXPORTS')
     FROM = Keyword('FROM')
     CONTAINING = Keyword('CONTAINING')
     IMPLICIT = Keyword('IMPLICIT')
@@ -299,6 +300,7 @@ def create_grammar():
     COMPONENTS = Keyword('COMPONENTS')
     PRESENT = Keyword('PRESENT')
     ABSENT = Keyword('ABSENT')
+    ALL = Keyword('ALL')
 
     # Various literals.
     word = Word(printables, excludeChars=',(){}[].:=;"|').setName('"word"')
@@ -770,13 +772,19 @@ def create_grammar():
 
     symbols_imported = OneOrMore(Group(symbols_from_module))
 
+    symbols_exported = OneOrMore(symbol_list)
+
+    exports = Suppress(Group(Optional(EXPORTS
+                                      - (ALL
+                                         | (symbols_exported + scolon)))))
+
     imports = Group(Optional(IMPORTS
                              - symbols_imported
                              - scolon))
 
     assignment_list = Group(ZeroOrMore(assignment))
 
-    module_body = (imports + assignment_list)
+    module_body = (exports + imports + assignment_list)
 
     definitive_identification = Group(Optional(oid))
 

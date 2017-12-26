@@ -81,13 +81,15 @@ def _main():
                                choices=('ber', 'der', 'jer', 'per', 'uper', 'xer'),
                                default='ber',
                                help='Codec (default: ber).')
-    decode_parser.add_argument('specification', help='ASN.1 specification file (.asn).')
+    decode_parser.add_argument('specification',
+                               nargs='+',
+                               help='ASN.1 specification as one or more .asn files.')
     decode_parser.add_argument('type', help='Type to decode.')
     decode_parser.add_argument('hexstring', help='Hexstring to decode.')
     decode_parser.set_defaults(func=_do_decode)
-
+    
     args = parser.parse_args()
-
+    
     if args.debug:
         args.func(args)
     else:

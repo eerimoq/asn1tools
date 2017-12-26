@@ -15,13 +15,15 @@ import timeit
 import asn1tools
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-SNMP_V1_ASN_PATH = os.path.join(SCRIPT_DIR,
-                                '..',
-                                '..',
-                                'tests',
-                                'files',
-                                'rfc',
-                                'snmp_v1.asn')
+SNMP_V1_ASN_PATHS = [
+    os.path.join(SCRIPT_DIR,
+                 '..',
+                 '..',
+                 'tests',
+                 'files',
+                 'rfc',
+                 filename)
+    for filename in ['rfc1155.asn', 'rfc1157.asn']]
 
 DECODED_MESSAGE = {
     "version": 0,
@@ -88,7 +90,7 @@ ITERATIONS = 3000
 
 
 def asn1tools_encode_decode():
-    snmp_v1 = asn1tools.compile_files(SNMP_V1_ASN_PATH)
+    snmp_v1 = asn1tools.compile_files(SNMP_V1_ASN_PATHS)
 
     def encode():
         snmp_v1.encode('Message', DECODED_MESSAGE)

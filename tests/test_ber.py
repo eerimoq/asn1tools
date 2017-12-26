@@ -408,8 +408,11 @@ class Asn1ToolsBerTest(unittest.TestCase):
         decoded = rrc.decode('BCCH-DL-SCH-Message', encoded)
         self.assertEqual(decoded, decoded_message)
 
-    def test_snmp_v1(self):
-        snmp_v1 = asn1tools.compile_files('tests/files/rfc/snmp_v1.asn')
+    def test_rfc1157(self):
+        rfc1157 = asn1tools.compile_files([
+            'tests/files/rfc/rfc1155.asn',
+            'tests/files/rfc/rfc1157.asn'
+        ])
 
         # First message.
         decoded_message = {
@@ -473,9 +476,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
             b'}\x083\n\x02\x01\x07\n\x86\xde\xb78\x04\x0b172.31.19.2'
         )
 
-        encoded = snmp_v1.encode('Message', decoded_message)
+        encoded = rfc1157.encode('Message', decoded_message)
         self.assertEqual(encoded, encoded_message)
-        decoded = snmp_v1.decode('Message', encoded_message)
+        decoded = rfc1157.decode('Message', encoded_message)
         self.assertEqual(decoded, decoded_message)
 
         # Next message.
@@ -613,9 +616,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
             b'\x03\x06\x06\x2a\x03\x83\x3c\x84\x2b'
         )
 
-        encoded = snmp_v1.encode('Message', decoded_message)
+        encoded = rfc1157.encode('Message', decoded_message)
         self.assertEqual(encoded, encoded_message)
-        decoded = snmp_v1.decode('Message', encoded_message)
+        decoded = rfc1157.decode('Message', encoded_message)
         self.assertEqual(decoded, decoded_message)
 
         # Next message.
@@ -721,9 +724,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
             b'\x30\x0e\x06\x07\x2b\x06\x01\x87\x67\x03\x01\x44\x03\x31\x32\x33'
         )
 
-        encoded = snmp_v1.encode('Message', decoded_message)
+        encoded = rfc1157.encode('Message', decoded_message)
         self.assertEqual(encoded, encoded_message)
-        decoded = snmp_v1.decode('Message', encoded_message)
+        decoded = rfc1157.decode('Message', encoded_message)
         self.assertEqual(decoded, decoded_message)
 
         # Next message with missing field 'data' -> 'set-request' ->
@@ -748,7 +751,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         }
 
         with self.assertRaises(asn1tools.EncodeError) as cm:
-            snmp_v1.encode('Message', decoded_message)
+            rfc1157.encode('Message', decoded_message)
 
         self.assertEqual(
             str(cm.exception),
