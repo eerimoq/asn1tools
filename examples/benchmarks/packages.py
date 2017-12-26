@@ -21,7 +21,7 @@ SNMP_V1_ASN_PATHS = [
                  '..',
                  'tests',
                  'files',
-                 'rfc',
+                 'ietf',
                  filename)
     for filename in ['rfc1155.asn', 'rfc1157.asn']]
 

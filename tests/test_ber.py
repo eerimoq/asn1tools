@@ -7,7 +7,7 @@ import asn1tools
 
 sys.path.append('tests/files')
 sys.path.append('tests/files/3gpp')
-sys.path.append('tests/files/rfc')
+sys.path.append('tests/files/ietf')
 
 from rrc_8_6_0 import RRC_8_6_0
 from rfc4511 import RFC4511
@@ -410,8 +410,8 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
     def test_rfc1157(self):
         rfc1157 = asn1tools.compile_files([
-            'tests/files/rfc/rfc1155.asn',
-            'tests/files/rfc/rfc1157.asn'
+            'tests/files/ietf/rfc1155.asn',
+            'tests/files/ietf/rfc1157.asn'
         ])
 
         # First message.

@@ -4,7 +4,7 @@ import unittest
 import asn1tools
 
 sys.path.append('tests/files')
-sys.path.append('tests/files/rfc')
+sys.path.append('tests/files/ietf')
 sys.path.append('tests/files/3gpp')
 
 from foo import FOO
@@ -48,16 +48,16 @@ class Asn1ToolsParseTest(unittest.TestCase):
             self.assertEqual(s1ap_14_4_0, S1AP_14_4_0)
 
     def test_parse_rfc1155(self):
-        rfc1155 = asn1tools.parse_files('tests/files/rfc/rfc1155.asn')
+        rfc1155 = asn1tools.parse_files('tests/files/ietf/rfc1155.asn')
         self.assertEqual(rfc1155, RFC1155)
 
     def test_parse_rfc1157(self):
-        rfc1157 = asn1tools.parse_files('tests/files/rfc/rfc1157.asn')
+        rfc1157 = asn1tools.parse_files('tests/files/ietf/rfc1157.asn')
         self.assertEqual(rfc1157, RFC1157)
 
     def test_parse_rfc2986(self):
         with self.assertRaises(asn1tools.ParseError) as cm:
-            asn1tools.parse_files('tests/files/rfc/rfc2986.asn')
+            asn1tools.parse_files('tests/files/ietf/rfc2986.asn')
 
         self.assertEqual(str(cm.exception),
                          "Invalid ASN.1 syntax at line 27, column 38: "
@@ -65,35 +65,35 @@ class Asn1ToolsParseTest(unittest.TestCase):
                          "Expected \"}\".")
 
     def test_parse_rfc3161(self):
-        rfc3161 = asn1tools.parse_files('tests/files/rfc/rfc3161.asn')
+        rfc3161 = asn1tools.parse_files('tests/files/ietf/rfc3161.asn')
         self.assertEqual(rfc3161, RFC3161)
 
     def test_parse_rfc3279(self):
-        rfc3279 = asn1tools.parse_files('tests/files/rfc/rfc3279.asn')
+        rfc3279 = asn1tools.parse_files('tests/files/ietf/rfc3279.asn')
         self.assertEqual(rfc3279, RFC3279)
 
     def test_parse_rfc3281(self):
-        rfc3281 = asn1tools.parse_files('tests/files/rfc/rfc3281.asn')
+        rfc3281 = asn1tools.parse_files('tests/files/ietf/rfc3281.asn')
         self.assertEqual(rfc3281, RFC3281)
 
     def test_parse_rfc3852(self):
-        rfc3852 = asn1tools.parse_files('tests/files/rfc/rfc3852.asn')
+        rfc3852 = asn1tools.parse_files('tests/files/ietf/rfc3852.asn')
         self.assertEqual(rfc3852, RFC3852)
 
     def test_parse_rfc4210(self):
-        rfc4210 = asn1tools.parse_files('tests/files/rfc/rfc4210.asn')
+        rfc4210 = asn1tools.parse_files('tests/files/ietf/rfc4210.asn')
         self.assertEqual(rfc4210, RFC4210)
 
     def test_parse_rfc4211(self):
-        rfc4211 = asn1tools.parse_files('tests/files/rfc/rfc4211.asn')
+        rfc4211 = asn1tools.parse_files('tests/files/ietf/rfc4211.asn')
         self.assertEqual(rfc4211, RFC4211)
 
     def test_parse_rfc4511(self):
-        rfc4511 = asn1tools.parse_files('tests/files/rfc/rfc4511.asn')
+        rfc4511 = asn1tools.parse_files('tests/files/ietf/rfc4511.asn')
         self.assertEqual(rfc4511, RFC4511)
 
     def test_parse_rfc5280(self):
-        rfc5280 = asn1tools.parse_files('tests/files/rfc/rfc5280.asn')
+        rfc5280 = asn1tools.parse_files('tests/files/ietf/rfc5280.asn')
         self.assertEqual(rfc5280, RFC5280)
 
     def test_parse_zforce(self):

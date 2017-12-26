@@ -57,8 +57,8 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
     def test_command_line_decode_ber_rrc_bcch_dl_sch_message(self):
         argv = ['asn1tools',
                 'decode',
-                'tests/files/rfc/rfc1155.asn',
-                'tests/files/rfc/rfc1157.asn',
+                'tests/files/ietf/rfc1155.asn',
+                'tests/files/ietf/rfc1157.asn',
                 'Message',
                 '30819f02010004067075626c6963a3819102013c020100020100308185302206'
                 '122b06010401817d08330a0201070a86deb735040c3137322e33312e31392e37'
