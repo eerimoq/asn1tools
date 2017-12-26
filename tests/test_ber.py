@@ -792,9 +792,14 @@ class Asn1ToolsBerTest(unittest.TestCase):
         print('{} ms per decode call.'.format(round(ms_per_call, 3)))
 
     def test_rfc4511(self):
-        return
+        # Fails because the Filter type is recursive. This should be
+        # addressed in the compiler(s).
+        with self.assertRaises(RuntimeError) as cm:
+            rfc4511 = asn1tools.compile_dict(deepcopy(RFC4511))
 
-        rfc4511 = asn1tools.compile_dict(deepcopy(RFC4511))
+        self.assertTrue('maximum recursion depth exceeded' in str(cm.exception))
+
+        return
 
         # A search request message.
         decoded_message = {
