@@ -17,10 +17,10 @@ informationFramework, authenticationFramework
      usefulDefinitions(0) 3}
 
 ATTRIBUTE, Name
-     FROM InformationFramework -- informationFramework
+     FROM InformationFramework informationFramework
 
 ALGORITHM
-     FROM AuthenticationFramework; -- authenticationFramework;
+     FROM AuthenticationFramework authenticationFramework;
 
 -- Certificate requests
 CertificationRequestInfo ::= SEQUENCE {

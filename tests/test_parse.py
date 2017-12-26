@@ -2,7 +2,7 @@ import sys
 import unittest
 
 import asn1tools
-
+from pprint import pprint
 sys.path.append('tests/files')
 sys.path.append('tests/files/rfc')
 sys.path.append('tests/files/3gpp')
@@ -11,6 +11,12 @@ from foo import FOO
 from rrc_8_6_0 import RRC_8_6_0
 from s1ap_14_4_0 import S1AP_14_4_0
 from simple_class import SIMPLE_CLASS
+from rfc3161 import RFC3161
+from rfc3279 import RFC3279
+from rfc3281 import RFC3281
+from rfc3852 import RFC3852
+from rfc4210 import RFC4210
+from rfc4211 import RFC4211
 from rfc4511 import RFC4511
 from rfc5280 import RFC5280
 from zforce import ZFORCE
@@ -38,6 +44,39 @@ class Asn1ToolsParseTest(unittest.TestCase):
         with self.assertRaises(asn1tools.ParseError):
             s1ap_14_4_0 = asn1tools.parse_files('tests/files/3gpp/s1ap_14_4_0.asn')
             self.assertEqual(s1ap_14_4_0, S1AP_14_4_0)
+
+    def test_parse_rfc2986(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_files('tests/files/rfc/rfc2986.asn')
+
+        self.assertEqual(str(cm.exception),
+                         "Invalid ASN.1 syntax at line 27, column 38: "
+                         "'version       INTEGER { v1(0) } >!<(v1,...),': "
+                         "Expected \"}\".")
+
+    def test_parse_rfc3161(self):
+        rfc3161 = asn1tools.parse_files('tests/files/rfc/rfc3161.asn')
+        self.assertEqual(rfc3161, RFC3161)
+
+    def test_parse_rfc3279(self):
+        rfc3279 = asn1tools.parse_files('tests/files/rfc/rfc3279.asn')
+        self.assertEqual(rfc3279, RFC3279)
+
+    def test_parse_rfc3281(self):
+        rfc3281 = asn1tools.parse_files('tests/files/rfc/rfc3281.asn')
+        self.assertEqual(rfc3281, RFC3281)
+
+    def test_parse_rfc3852(self):
+        rfc3852 = asn1tools.parse_files('tests/files/rfc/rfc3852.asn')
+        self.assertEqual(rfc3852, RFC3852)
+
+    def test_parse_rfc4210(self):
+        rfc4210 = asn1tools.parse_files('tests/files/rfc/rfc4210.asn')
+        self.assertEqual(rfc4210, RFC4210)
+
+    def test_parse_rfc4211(self):
+        rfc4211 = asn1tools.parse_files('tests/files/rfc/rfc4211.asn')
+        self.assertEqual(rfc4211, RFC4211)
 
     def test_parse_rfc4511(self):
         rfc4511 = asn1tools.parse_files('tests/files/rfc/rfc4511.asn')
@@ -125,6 +164,11 @@ class Asn1ToolsParseTest(unittest.TestCase):
             str(cm.exception),
             "Invalid ASN.1 syntax at line 1, column 43: 'A DEFINITIONS ::= "
             "BEGIN  A ::= SEQUENCE { >!<A } END': Expected \"}\".")
+
+    def test_parse_imports_global_module_reference(self):
+        asn1tools.parse_string('A DEFINITIONS ::= BEGIN'
+                               ' IMPORTS a FROM B global-module-reference; '
+                               'END')
 
 
 if __name__ == '__main__':

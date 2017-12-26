@@ -37,7 +37,7 @@ class ParseError(Exception):
 def convert_number(token):
     try:
         return int(token)
-    except ValueError:
+    except (ValueError, TypeError):
         return token
 
 
@@ -99,7 +99,7 @@ def convert_members(tokens):
         member['optional'] = 'OPTIONAL' in qualifiers
 
         if 'DEFAULT' in qualifiers:
-            member['default'] = convert_number(qualifiers[1])
+            member['default'] = convert_number(qualifiers[1][0])
 
         tag = convert_tag(member_tokens[1])
 
@@ -561,7 +561,7 @@ def create_grammar():
                        - type_)
     component_type = Group(named_type
                            + Group(Optional(OPTIONAL
-                                            | (DEFAULT + word)))
+                                            | (DEFAULT + value)))
                            | dotx3
                            | (COMPONENTS + OF + type_))
     component_type_list = delimitedList(component_type)
@@ -685,7 +685,13 @@ def create_grammar():
                      | choice_value
                      | word)
 
-    value <<= Group(oid | builtin_value)
+    object_class_field_value = oid
+
+    referenced_value = NoMatch()
+
+    value <<= Group(object_class_field_value
+                    | referenced_value
+                    | builtin_value)
 
     bit_string_value <<= (bstring
                           | hstring
@@ -745,20 +751,32 @@ def create_grammar():
                        | type_assignment
                        | value_assignment)
 
-    symbols_imported = Group((Group(delimitedList(word))
-                              + FROM
-                              + word
-                              + Suppress(Optional(oid))))
+    module_reference = word
+
+    object_identifier_value = oid
+
+    defined_value = value_reference
+
+    assigned_identifier = Suppress(Optional(object_identifier_value
+                                            | defined_value))
+
+    global_module_reference = (module_reference + assigned_identifier)
+
+    symbol_list = Group(delimitedList(word))
+
+    symbols_from_module = (symbol_list
+                           + FROM
+                           + global_module_reference)
+
+    symbols_imported = OneOrMore(Group(symbols_from_module))
 
     imports = Group(Optional(IMPORTS
-                             - OneOrMore(symbols_imported)
+                             - symbols_imported
                              - scolon))
 
     assignment_list = Group(ZeroOrMore(assignment))
 
     module_body = (imports + assignment_list)
-
-    module_reference = word
 
     definitive_identification = Group(Optional(oid))
 
