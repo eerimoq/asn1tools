@@ -1,0 +1,60 @@
+ErrorClass DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+ERROR-CLASS ::= CLASS {
+    &category PrintableString (SIZE(1)),
+    &code INTEGER,
+    &Type
+} WITH SYNTAX {
+    &category
+    &code
+    &Type
+}
+
+ErrorSet ERROR-CLASS ::= {
+    {"A" 1 INTEGER} |
+    {"A" 2 REAL} |
+    {"B" 1 CHARACTER STRING} |
+    {"B" 2 GeneralString}
+}
+
+ErrorReturn ::= SEQUENCE {
+    errorCategory ERROR-CLASS.&category ({ErrorSet}) OPTIONAL,
+    errors SEQUENCE OF SEQUENCE {
+        errorCode ERROR-CLASS.&code     ({ErrorSet}{@errorCategory}),
+        errorInfo ERROR-CLASS.&Type     ({ErrorSet}{@errorCategory,@.errorCode})
+    } OPTIONAL
+}
+
+-- The "AtNotation" provides a pointer to other components of the
+-- ASN.1 structure in which it appears. The parent structure for the
+-- first "identifier" in the "ComponentIdList" is determined as
+-- follows:
+
+-- a) if the first alternative of "AtNotation" is selected (there is
+-- no "." following the "@"), then the parent structure is the
+-- outermost textually enclosing set type, sequence type or choice
+-- type.
+
+-- b) if the second alternative is selected (there is a "." following
+-- the "@"), then the parent structure is obtained by moving upwards
+-- from the innermost textually enclosing set type or sequence type by
+-- a number of levels (set, set-of, sequence, sequence-of, choice)
+-- equal to the number of additional "." following "@.". The number of
+-- additional "." shall not exceed the number of constructions (set,
+-- set-of, sequence, sequence-of, choice) containing the innermost set
+-- or sequence type where the "AtNotation" occurs.
+
+-- ErrorMessage ::= SEQUENCE {
+--     severity ERROR.&severity            ({Errors}),
+--     parameters SEQUENCE OF SEQUENCE {
+--         errorId ERROR.&id                   ({Errors}),
+--         data SEQUENCE OF SEQUENCE {
+--             value ERROR.&Type               ({Errors}{@severity,@...errorId}),
+--             text VisibleString
+--         }
+--     }
+-- }
+
+END

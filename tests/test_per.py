@@ -331,23 +331,39 @@ class Asn1ToolsPerTest(unittest.TestCase):
         simple_class = asn1tools.compile_files('tests/files/simple_class.asn',
                                                'per')
 
-        # Message 1.
+        # Message 1 - without constraints.
         decoded_message = {
             'id': 0,
-            'value': b'\x31',
+            'value': b'\x05',
             'comment': 'item 0',
             'extra': 2
         }
 
         encoded_message = (
-            b'\x01\x00\x01\x31\x06\x69\x74\x65\x6D\x20\x30\x01\x02'
+            b'\x01\x00\x01\x05\x06\x69\x74\x65\x6D\x20\x30\x01\x02'
         )
-
-        encoded = simple_class.encode('ItemWithConstraints', decoded_message)
-        self.assertEqual(encoded, encoded_message)
 
         encoded = simple_class.encode('ItemWithoutConstraints', decoded_message)
         self.assertEqual(encoded, encoded_message)
+
+        # Message 1 - with constraints.
+        decoded_message = {
+            'id': 0,
+            'value': 5,
+            'comment': 'item 0',
+            'extra': 2
+        }
+
+        encoded_message = (
+            b'\x01\x00\x02\x01\x05\x06\x69\x74\x65\x6D\x20\x30\x01\x02'
+        )
+
+        # ToDo: Constraints are not yet implemented.
+        with self.assertRaises(TypeError) as cm:
+            encoded = simple_class.encode('ItemWithConstraints', decoded_message)
+            self.assertEqual(encoded, encoded_message)
+
+        self.assertEqual(str(cm.exception), "object of type 'int' has no len()")
 
 
 if __name__ == '__main__':
