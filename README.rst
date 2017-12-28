@@ -124,6 +124,37 @@ Contributing
 
 #. Create a pull request.
 
+Specifications
+==============
+
+General
+-------
+
+- `X.680: Specification of basic notation
+  <https://www.itu.int/ITU-T/studygroups/com17/languages/X.680-0207.pdf>`_
+
+- `X.681: Information object specification
+  <https://www.itu.int/ITU-T/studygroups/com17/languages/X.681-0207.pdf>`_
+
+- `X.682: Constraint specification
+  <https://www.itu.int/ITU-T/studygroups/com17/languages/X.682-0207.pdf>`_
+
+- `X.683: Parameterization of ASN.1 specifications
+  <https://www.itu.int/ITU-T/studygroups/com17/languages/X.683-0207.pdf>`_
+
+Encodings
+---------
+
+- `X.690: Specification of Basic Encoding Rules (BER), Canonical
+  Encoding Rules (CER) and Distinguished Encoding Rules (DER)
+  <https://www.itu.int/ITU-T/studygroups/com17/languages/X.690-0207.pdf>`_
+
+- `X.691: Specification of Packed Encoding Rules (PER)
+  <https://www.itu.int/ITU-T/studygroups/com17/languages/X.691-0207.pdf>`_
+
+- `X.693: XML Encoding Rules (XER)
+  <https://www.itu.int/ITU-T/studygroups/com17/languages/X.693-0112.pdf>`_
+
 .. |buildstatus| image:: https://travis-ci.org/eerimoq/asn1tools.svg?branch=master
 .. _buildstatus: https://travis-ci.org/eerimoq/asn1tools
 
