@@ -54,6 +54,20 @@ def convert_size(tokens):
         return [int(tokens[0])]
 
 
+def convert_table(tokens):
+    try:
+        defined_object_set = tokens[1][0][0]
+    except IndexError:
+        return None
+
+    try:
+        component_ids = tokens[4]
+    except IndexError:
+        return defined_object_set
+
+    return [defined_object_set, component_ids]
+
+
 def convert_enum_values(tokens):
     number = 0
     values = {}
@@ -159,8 +173,6 @@ def convert_type(tokens):
             minimum = convert_number(tokens[1][1])
             maximum = convert_number(tokens[1][3])
             converted_type['restricted-to'] = [(minimum, maximum)]
-    elif tokens[0] == 'BOOLEAN':
-        converted_type = {'type': 'BOOLEAN'}
     elif tokens[0:2] == ['ENUMERATED', '{']:
         converted_type = {
             'type': 'ENUMERATED',
@@ -181,6 +193,11 @@ def convert_type(tokens):
             'type': 'ANY DEFINED BY',
             'value': tokens[3],
             'choices': {}
+        }
+    elif '&' in tokens[0]:
+        converted_type = {
+            'type': tokens[0],
+            'table': convert_table(tokens[1:])
         }
     else:
         converted_type = {'type': tokens[0]}
@@ -486,15 +503,15 @@ def create_grammar():
 
     component_id_list = identifier
 
-    at_notation = (at
+    at_notation = (Suppress(at)
                    - (component_id_list
-                      | (level + component_id_list)))
+                      | Combine(level + component_id_list)))
 
     component_relation_constraint = (lbrace
-                                     + defined_object_set
+                                     + Group(Group(defined_object_set))
                                      + rbrace
                                      + lbrace
-                                     - delimitedList(at_notation)
+                                     - Group(delimitedList(at_notation))
                                      - rbrace)
 
     table_constraint = (component_relation_constraint

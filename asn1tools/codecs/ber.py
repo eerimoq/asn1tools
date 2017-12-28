@@ -138,7 +138,7 @@ def decode_signed_integer(data):
     return value
 
 
-def decode_tag(_data, offset):
+def decode_tag(_, offset):
     return 0, 0, offset + 1
 
 
