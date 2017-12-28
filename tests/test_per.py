@@ -388,7 +388,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
                                                 decoded_message)
             self.assertEqual(encoded, encoded_message)
 
-        self.assertEqual(str(cm.exception), "can't concat bytearray to dict")
+        self.assertTrue("can't concat" in str(cm.exception))
 
         # Message 3 - error class.
         decoded_message = {
