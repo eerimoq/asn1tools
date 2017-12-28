@@ -10,7 +10,7 @@ sys.path.append('tests/files/3gpp')
 from foo import FOO
 from rrc_8_6_0 import RRC_8_6_0
 from s1ap_14_4_0 import S1AP_14_4_0
-from simple_class import SIMPLE_CLASS
+from information_object import INFORMATION_OBJECT
 from rfc1155 import RFC1155
 from rfc1157 import RFC1157
 from rfc3161 import RFC3161
@@ -38,9 +38,9 @@ class Asn1ToolsParseTest(unittest.TestCase):
         rrc_8_6_0 = asn1tools.parse_files('tests/files/3gpp/rrc_8_6_0.asn')
         self.assertEqual(rrc_8_6_0, RRC_8_6_0)
 
-    def test_parse_simple_class(self):
-        simple_class = asn1tools.parse_files('tests/files/simple_class.asn')
-        self.assertEqual(simple_class, SIMPLE_CLASS)
+    def test_parse_information_object(self):
+        information_object = asn1tools.parse_files('tests/files/information_object.asn')
+        self.assertEqual(information_object, INFORMATION_OBJECT)
 
     def test_parse_s1ap_14_4_0(self):
         with self.assertRaises(asn1tools.ParseError):

@@ -667,7 +667,7 @@ class Any(Type):
 class OpenType(Type):
 
     def __init__(self, name):
-        super(OpenType, self).__init__(name, 'ANY')
+        super(OpenType, self).__init__(name, 'OpenType')
 
     def encode(self, data, encoder):
         encoder.append_bytes(bytearray([len(data)]) + data)

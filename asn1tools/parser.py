@@ -35,6 +35,9 @@ class ParseError(Exception):
 
 
 def convert_number(token):
+    if isinstance(token, list):
+        token = token[0]
+
     try:
         return int(token)
     except (ValueError, TypeError):
@@ -239,10 +242,18 @@ def convert_object_set_tokens(tokens):
     members = []
 
     for member_tokens in tokens[4]:
-        member = {}
+        if len(member_tokens) == 1:
+            member = member_tokens[0]
+        else:
+            member = {}
 
-        for name, value in member_tokens:
-            member[name] = convert_number(value)
+            for item_tokens in member_tokens:
+                if len(item_tokens) == 2:
+                    name, value = item_tokens
+                else:
+                    name, value, _ = item_tokens
+
+                member[name] = convert_number(value)
 
         members.append(member)
 
@@ -323,6 +334,7 @@ def create_grammar():
     qmark = Literal('"')
     pipe = Literal('|')
     comma = Literal(',')
+    at = Literal('@')
     integer = Word(nums)
     real_number = Regex(r'[+-]?\d+\.?\d*([eE][+-]?\d+)?')
     bstring = Regex(r"'[01\s]*'B")
@@ -354,6 +366,8 @@ def create_grammar():
     boolean_value = Forward()
     character_string_value = Forward()
     choice_value = Forward()
+    value = Forward()
+    type_ = Forward()
 
     range_ = (word + dotx2 + word)
 
@@ -372,8 +386,28 @@ def create_grammar():
 
     unions = delimitedList(intersections, delim=pipe)
 
-    object_ = NoMatch()
-    defined_object_set = NoMatch()
+    object_set_reference = type_reference
+    object_ = Forward()
+    object_set = Forward()
+    defined_object = NoMatch()
+    value_set = NoMatch()
+    setting = (type_ | value | value_set | object_ | object_set | QuotedString('"'))
+    primitive_field_name = Forward()
+    field_setting =  Group(primitive_field_name + setting)
+    default_syntax = (Suppress(lbrace)
+                      + delimitedList(field_setting)
+                      + Suppress(rbrace))
+    defined_syntax = NoMatch()
+    object_defn = Group(default_syntax | defined_syntax)
+    object_from_object = NoMatch()
+    parameterized_object = NoMatch()
+    object_ <<= (defined_object
+                 | object_defn
+                 | object_from_object
+                 | parameterized_object)
+    external_object_set_reference = NoMatch()
+    defined_object_set = (external_object_set_reference
+                          | object_set_reference)
     object_set_from_objects = NoMatch()
     actual_parameter_list = Group(Suppress(lbrace)
                                   + delimitedList(
@@ -382,14 +416,12 @@ def create_grammar():
                                             + (word
                                                | QuotedString('"'))))
                                   + Suppress(rbrace))
-    parameterized_object_set = actual_parameter_list
+    parameterized_object_set = NoMatch() # actual_parameter_list
 
     object_set_elements = (object_
                            | defined_object_set
                            | object_set_from_objects
                            | parameterized_object_set)
-
-    value = Forward()
 
     single_value = value
     contained_subtype = NoMatch()
@@ -445,7 +477,37 @@ def create_grammar():
 
     subtype_constraint = element_set_specs
 
-    constraint_spec = (size | subtype_constraint)
+    user_defined_constraint = NoMatch()
+
+    simple_table_constraint = object_set
+
+    level = OneOrMore(dot)
+
+    component_id_list = identifier
+
+    at_notation = (at
+                   + (component_id_list
+                      | (dot + Optional(level) + component_id_list)))
+
+    component_relation_constraint = (lbrace
+                                     + defined_object_set
+                                     + rbrace
+                                     + lbrace
+                                     - delimitedList(at_notation)
+                                     - rbrace)
+
+    table_constraint = (component_relation_constraint
+                        | simple_table_constraint)
+
+    contents_constraint = NoMatch()
+
+    general_constraint = (user_defined_constraint
+                          | table_constraint
+                          | contents_constraint)
+
+    constraint_spec = (size
+                       | general_constraint
+                       | subtype_constraint)
 
     constraint <<= (Suppress(lparen)
                     + constraint_spec
@@ -469,10 +531,10 @@ def create_grammar():
     referenced_type = type_reference
     referenced_type.setName('ReferencedType')
 
-    type_ = ((builtin_type
-              | any_defined_by_type
-              | referenced_type)
-             + Optional(constraint))
+    type_ <<= ((builtin_type
+                | any_defined_by_type
+                | referenced_type)
+               + Optional(constraint))
 
     tag = Group(Optional(Suppress(lbracket)
                          + Group(Optional(APPLICATION | PRIVATE) + word)
@@ -506,16 +568,15 @@ def create_grammar():
     value_set_field_reference = NoMatch()
     object_field_reference = NoMatch()
     object_set_field_reference = NoMatch()
-    object_set_reference = type_reference
 
     object_set_spec = delimitedList(root_element_set_spec)
-    object_set = (lbrace + Group(object_set_spec) + rbrace)
+    object_set <<= (lbrace + Group(object_set_spec) + rbrace)
 
-    primitive_field_name = (type_field_reference
-                            | value_field_reference
-                            | value_set_field_reference
-                            | object_field_reference
-                            | object_set_field_reference)
+    primitive_field_name <<= (type_field_reference
+                              | value_field_reference
+                              | value_set_field_reference
+                              | object_field_reference
+                              | object_set_field_reference)
 
     literal = NoMatch()
 
@@ -739,6 +800,13 @@ def create_grammar():
                         - assign
                         - value)
 
+    object_reference = value_reference
+
+    object_assignment = (object_reference
+                         + defined_object_class
+                         + assign
+                         + object_)
+
     object_set_assignment = (object_set_reference
                              + defined_object_class
                              - assign
@@ -749,6 +817,7 @@ def create_grammar():
                                + object_class)
 
     assignment = Group(object_set_assignment
+                       | object_assignment
                        | object_class_assignment
                        | type_assignment
                        | value_assignment)

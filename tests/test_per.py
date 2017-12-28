@@ -327,9 +327,9 @@ class Asn1ToolsPerTest(unittest.TestCase):
             encoded = s1ap.encode('S1AP-PDU', decoded_message)
             self.assertEqual(encoded, encoded_message)
 
-    def test_simple_class(self):
-        simple_class = asn1tools.compile_files('tests/files/simple_class.asn',
-                                               'per')
+    def test_information_object(self):
+        information_object = asn1tools.compile_files(
+            'tests/files/information_object.asn', 'per')
 
         # Message 1 - without constraints.
         decoded_message = {
@@ -340,30 +340,79 @@ class Asn1ToolsPerTest(unittest.TestCase):
         }
 
         encoded_message = (
-            b'\x01\x00\x01\x05\x06\x69\x74\x65\x6D\x20\x30\x01\x02'
+            b'\x01\x00\x01\x05\x06\x69\x74\x65\x6d\x20\x30\x01\x02'
         )
 
-        encoded = simple_class.encode('ItemWithoutConstraints', decoded_message)
+        encoded = information_object.encode('ItemWithoutConstraints',
+                                            decoded_message)
         self.assertEqual(encoded, encoded_message)
 
         # Message 1 - with constraints.
         decoded_message = {
             'id': 0,
-            'value': 5,
+            'value': True,
             'comment': 'item 0',
             'extra': 2
         }
 
         encoded_message = (
-            b'\x01\x00\x02\x01\x05\x06\x69\x74\x65\x6D\x20\x30\x01\x02'
+            b'\x01\x00\x01\x80\x06\x69\x74\x65\x6d\x20\x30\x01\x02'
         )
 
         # ToDo: Constraints are not yet implemented.
         with self.assertRaises(TypeError) as cm:
-            encoded = simple_class.encode('ItemWithConstraints', decoded_message)
+            encoded = information_object.encode('ItemWithConstraints',
+                                                decoded_message)
             self.assertEqual(encoded, encoded_message)
 
-        self.assertEqual(str(cm.exception), "object of type 'int' has no len()")
+        self.assertEqual(str(cm.exception), "object of type 'bool' has no len()")
+
+        # Message 2.
+        decoded_message = {
+            'id': 1,
+            'value': {
+                'myValue': 7,
+                'myType': 0
+            },
+            'comment': 'item 1',
+            'extra': 5
+        }
+
+        encoded_message = (
+            b'\x01\x01\x05\x02\x01\x07\x01\x00\x06\x69\x74\x65\x6d\x20\x31\x01\x05'
+        )
+
+        # ToDo: Constraints are not yet implemented.
+        with self.assertRaises(TypeError) as cm:
+            encoded = information_object.encode('ItemWithConstraints',
+                                                decoded_message)
+            self.assertEqual(encoded, encoded_message)
+
+        self.assertEqual(str(cm.exception), "can't concat bytearray to dict")
+
+        # Message 3 - error class.
+        decoded_message = {
+            'errorCategory': 'A',
+            'errors': [
+                {
+                    'errorCode': 1,
+                    'errorInfo': 3
+                },
+                {
+                    'errorCode': 2,
+                    'errorInfo': True
+                }
+            ]
+        }
+
+        encoded_message = (
+            b'\x41\x02\x01\x01\x02\x01\x03\x01\x02\x01\x80'
+        )
+
+        # ToDo: Constraints are not yet implemented.
+        with self.assertRaises(NotImplementedError):
+            encoded = information_object.encode('ErrorReturn', decoded_message)
+            self.assertEqual(encoded, encoded_message)
 
 
 if __name__ == '__main__':
