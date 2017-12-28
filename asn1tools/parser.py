@@ -266,60 +266,60 @@ def create_grammar():
     '''
 
     # Keywords.
-    SEQUENCE = Keyword('SEQUENCE')
-    CHOICE = Keyword('CHOICE')
-    ENUMERATED = Keyword('ENUMERATED')
-    DEFINITIONS = Keyword('DEFINITIONS')
-    BEGIN = Keyword('BEGIN')
-    END = Keyword('END')
-    AUTOMATIC = Keyword('AUTOMATIC')
-    TAGS = Keyword('TAGS')
-    OPTIONAL = Keyword('OPTIONAL')
-    OF = Keyword('OF')
-    SIZE = Keyword('SIZE')
-    INTEGER = Keyword('INTEGER')
-    REAL = Keyword('REAL')
-    BIT = Keyword('BIT')
-    STRING = Keyword('STRING')
-    OCTET = Keyword('OCTET')
-    DEFAULT = Keyword('DEFAULT')
-    IMPORTS = Keyword('IMPORTS')
-    EXPORTS = Keyword('EXPORTS')
-    FROM = Keyword('FROM')
-    CONTAINING = Keyword('CONTAINING')
-    IMPLICIT = Keyword('IMPLICIT')
-    EXPLICIT = Keyword('EXPLICIT')
-    OBJECT = Keyword('OBJECT')
-    IDENTIFIER = Keyword('IDENTIFIER')
-    APPLICATION = Keyword('APPLICATION')
-    PRIVATE = Keyword('PRIVATE')
-    SET = Keyword('SET')
-    ANY = Keyword('ANY')
-    DEFINED = Keyword('DEFINED')
-    BY = Keyword('BY')
-    EXTENSIBILITY = Keyword('EXTENSIBILITY')
-    IMPLIED = Keyword('IMPLIED')
-    BOOLEAN = Keyword('BOOLEAN')
-    TRUE = Keyword('TRUE')
-    FALSE = Keyword('FALSE')
-    CLASS = Keyword('CLASS')
-    WITH = Keyword('WITH')
-    SYNTAX = Keyword('SYNTAX')
-    UNIQUE = Keyword('UNIQUE')
-    NULL = Keyword('NULL')
-    COMPONENT = Keyword('COMPONENT')
-    COMPONENTS = Keyword('COMPONENTS')
-    PRESENT = Keyword('PRESENT')
-    ABSENT = Keyword('ABSENT')
-    ALL = Keyword('ALL')
+    SEQUENCE = Keyword('SEQUENCE').setName('SEQUENCE')
+    CHOICE = Keyword('CHOICE').setName('CHOICE')
+    ENUMERATED = Keyword('ENUMERATED').setName('ENUMERATED')
+    DEFINITIONS = Keyword('DEFINITIONS').setName('DEFINITIONS')
+    BEGIN = Keyword('BEGIN').setName('BEGIN')
+    END = Keyword('END').setName('END')
+    AUTOMATIC = Keyword('AUTOMATIC').setName('AUTOMATIC')
+    TAGS = Keyword('TAGS').setName('TAGS')
+    OPTIONAL = Keyword('OPTIONAL').setName('OPTIONAL')
+    OF = Keyword('OF').setName('OF')
+    SIZE = Keyword('SIZE').setName('SIZE')
+    INTEGER = Keyword('INTEGER').setName('INTEGER')
+    REAL = Keyword('REAL').setName('REAL')
+    BIT = Keyword('BIT').setName('BIT')
+    STRING = Keyword('STRING').setName('STRING')
+    OCTET = Keyword('OCTET').setName('OCTET')
+    DEFAULT = Keyword('DEFAULT').setName('DEFAULT')
+    IMPORTS = Keyword('IMPORTS').setName('IMPORTS')
+    EXPORTS = Keyword('EXPORTS').setName('EXPORTS')
+    FROM = Keyword('FROM').setName('FROM')
+    CONTAINING = Keyword('CONTAINING').setName('CONTAINING')
+    IMPLICIT = Keyword('IMPLICIT').setName('IMPLICIT')
+    EXPLICIT = Keyword('EXPLICIT').setName('EXPLICIT')
+    OBJECT = Keyword('OBJECT').setName('OBJECT')
+    IDENTIFIER = Keyword('IDENTIFIER').setName('IDENTIFIER')
+    APPLICATION = Keyword('APPLICATION').setName('APPLICATION')
+    PRIVATE = Keyword('PRIVATE').setName('PRIVATE')
+    SET = Keyword('SET').setName('SET')
+    ANY = Keyword('ANY').setName('ANY')
+    DEFINED = Keyword('DEFINED').setName('DEFINED')
+    BY = Keyword('BY').setName('BY')
+    EXTENSIBILITY = Keyword('EXTENSIBILITY').setName('EXTENSIBILITY')
+    IMPLIED = Keyword('IMPLIED').setName('IMPLIED')
+    BOOLEAN = Keyword('BOOLEAN').setName('BOOLEAN')
+    TRUE = Keyword('TRUE').setName('TRUE')
+    FALSE = Keyword('FALSE').setName('FALSE')
+    CLASS = Keyword('CLASS').setName('CLASS')
+    WITH = Keyword('WITH').setName('WITH')
+    SYNTAX = Keyword('SYNTAX').setName('SYNTAX')
+    UNIQUE = Keyword('UNIQUE').setName('UNIQUE')
+    NULL = Keyword('NULL').setName('NULL')
+    COMPONENT = Keyword('COMPONENT').setName('COMPONENT')
+    COMPONENTS = Keyword('COMPONENTS').setName('COMPONENTS')
+    PRESENT = Keyword('PRESENT').setName('PRESENT')
+    ABSENT = Keyword('ABSENT').setName('ABSENT')
+    ALL = Keyword('ALL').setName('ALL')
 
     # Various literals.
-    word = Word(printables, excludeChars=',(){}[].:=;"|').setName('"word"')
-    type_reference = (NotAny(END) + Regex(r'[A-Z][a-zA-Z0-9-]*'))
-    identifier = Regex(r'[a-z][a-zA-Z0-9-]*').setName('"identifier"')
-    value_reference = identifier
+    word = Word(printables, excludeChars=',(){}[].:=;"|').setName('word')
+    type_reference = (NotAny(END) + Regex(r'[A-Z][a-zA-Z0-9-]*')).setName('typereference')
+    identifier = Regex(r'[a-z][a-zA-Z0-9-]*').setName('identifier')
+    value_reference = Regex(r'[a-z][a-zA-Z0-9-]*').setName('valuereference')
     value_name = Word(alphanums + '-')
-    assign = Literal('::=')
+    assign = Literal('::=').setName('::=')
     lparen = Literal('(')
     rparen = Literal(')')
     lbrace = Literal('{')
@@ -339,7 +339,7 @@ def create_grammar():
     real_number = Regex(r'[+-]?\d+\.?\d*([eE][+-]?\d+)?')
     bstring = Regex(r"'[01\s]*'B")
     hstring = Regex(r"'[0-9A-F\s]*'H")
-    cstring = NoMatch()
+    cstring = NoMatch().setName('"cstring" not implemented')
     number = word
     ampersand = Literal('&')
     value_field_reference = Combine(ampersand + value_reference)
@@ -389,26 +389,26 @@ def create_grammar():
     object_set_reference = type_reference
     object_ = Forward()
     object_set = Forward()
-    defined_object = NoMatch()
-    value_set = NoMatch()
+    defined_object = NoMatch().setName('"definedObject" not implemented')
+    value_set = NoMatch().setName('"valueSet" not implemented')
     setting = (type_ | value | value_set | object_ | object_set | QuotedString('"'))
     primitive_field_name = Forward()
     field_setting =  Group(primitive_field_name + setting)
     default_syntax = (Suppress(lbrace)
                       + delimitedList(field_setting)
                       + Suppress(rbrace))
-    defined_syntax = NoMatch()
+    defined_syntax = NoMatch().setName('"definedSyntax" not implemented')
     object_defn = Group(default_syntax | defined_syntax)
-    object_from_object = NoMatch()
-    parameterized_object = NoMatch()
+    object_from_object = NoMatch().setName('"objectFromObject" not implemented')
+    parameterized_object = NoMatch().setName('"parameterizedObject" not implemented')
     object_ <<= (defined_object
                  | object_defn
                  | object_from_object
                  | parameterized_object)
-    external_object_set_reference = NoMatch()
+    external_object_set_reference = NoMatch().setName('"externalObjectSetReference" not implemented')
     defined_object_set = (external_object_set_reference
                           | object_set_reference)
-    object_set_from_objects = NoMatch()
+    object_set_from_objects = NoMatch().setName('"objectSetFromObjects" not implemented')
     actual_parameter_list = Group(Suppress(lbrace)
                                   + delimitedList(
                                       Group((value_field_reference
@@ -416,7 +416,8 @@ def create_grammar():
                                             + (word
                                                | QuotedString('"'))))
                                   + Suppress(rbrace))
-    parameterized_object_set = NoMatch() # actual_parameter_list
+    parameterized_object_set = NoMatch().setName('"parameterizedObjectSet" not implemented')
+    # actual_parameter_list
 
     object_set_elements = (object_
                            | defined_object_set
@@ -424,8 +425,8 @@ def create_grammar():
                            | parameterized_object_set)
 
     single_value = value
-    contained_subtype = NoMatch()
-    value_range = NoMatch()
+    contained_subtype = NoMatch().setName('"containedSubtype" not implemented')
+    value_range = NoMatch().setName('"valueRange" not implemented')
 
     permitted_alphabet = Suppress(FROM
                                   + delimitedList(qmark + word + qmark
@@ -446,11 +447,11 @@ def create_grammar():
     single_type_constraint = constraint
     multiple_type_constraints = (full_specification | partial_specification)
 
-    size_constraint = NoMatch()
-    type_constraint = NoMatch()
+    size_constraint = NoMatch().setName('"sizeConstraint" not implemented')
+    type_constraint = NoMatch().setName('"typeConstraint" not implemented')
     inner_type_constraints = ((WITH + COMPONENT + single_type_constraint)
                               | (WITH + COMPONENTS + multiple_type_constraints))
-    pattern_constraint = NoMatch()
+    pattern_constraint = NoMatch().setName('"patternConstraint" not implemented')
 
     subtype_elements = (contained_subtype
                         | size_constraint
@@ -477,7 +478,7 @@ def create_grammar():
 
     subtype_constraint = element_set_specs
 
-    user_defined_constraint = NoMatch()
+    user_defined_constraint = NoMatch().setName('"userDefinedConstraint" not implemented')
 
     simple_table_constraint = object_set
 
@@ -486,8 +487,8 @@ def create_grammar():
     component_id_list = identifier
 
     at_notation = (at
-                   + (component_id_list
-                      | (dot + Optional(level) + component_id_list)))
+                   - (component_id_list
+                      | (level + component_id_list)))
 
     component_relation_constraint = (lbrace
                                      + defined_object_set
@@ -499,7 +500,7 @@ def create_grammar():
     table_constraint = (component_relation_constraint
                         | simple_table_constraint)
 
-    contents_constraint = NoMatch()
+    contents_constraint = NoMatch().setName('"contentsConstraint" not implemented')
 
     general_constraint = (user_defined_constraint
                           | table_constraint
@@ -551,11 +552,11 @@ def create_grammar():
                                    + Optional(OPTIONAL
                                               | (DEFAULT - type_)))
 
-    variable_type_value_field_spec = NoMatch()
-    fixed_type_value_set_field_spec = NoMatch()
-    variable_type_value_set_field_spec = NoMatch()
-    object_field_spec = NoMatch()
-    object_set_field_spec = NoMatch()
+    variable_type_value_field_spec = NoMatch().setName('"variableTypeValueFieldSpec" not implemented')
+    fixed_type_value_set_field_spec = NoMatch().setName('"fixedTypeValueSetFieldSpec" not implemented')
+    variable_type_value_set_field_spec = NoMatch().setName('"variableTypeValueSetFieldSpec" not implemented')
+    object_field_spec = NoMatch().setName('"objectFieldSpec" not implemented')
+    object_set_field_spec = NoMatch().setName('"objectSetFieldSpec" not implemented')
 
     field_spec = Group(type_field_spec
                        | fixed_type_value_field_spec
@@ -565,9 +566,9 @@ def create_grammar():
                        | object_field_spec
                        | object_set_field_spec)
 
-    value_set_field_reference = NoMatch()
-    object_field_reference = NoMatch()
-    object_set_field_reference = NoMatch()
+    value_set_field_reference = NoMatch().setName('"valueSetFieldReference" not implemented')
+    object_field_reference = NoMatch().setName('"objectFieldReference" not implemented')
+    object_set_field_reference = NoMatch().setName('"objectSetFieldReference" not implemented')
 
     object_set_spec = delimitedList(root_element_set_spec)
     object_set <<= (lbrace + Group(object_set_spec) + rbrace)
@@ -578,7 +579,7 @@ def create_grammar():
                               | object_field_reference
                               | object_set_field_reference)
 
-    literal = NoMatch()
+    literal = NoMatch().setName('"literal" not implemented')
 
     required_token = (literal | primitive_field_name)
 
@@ -607,7 +608,7 @@ def create_grammar():
                          - Suppress(rbrace)
                          - Optional(with_syntax_spec))
 
-    parameterized_object_class = NoMatch()
+    parameterized_object_class = NoMatch().setName('"parameterizedObjectClass" not implemented')
 
     object_class = (object_class_defn
 #                    | defined_object_class
@@ -750,7 +751,7 @@ def create_grammar():
 
     object_class_field_value = oid
 
-    referenced_value = NoMatch()
+    referenced_value = NoMatch().setName('"referencedValue" not implemented')
 
     value <<= Group(object_class_field_value
                     | referenced_value
@@ -763,7 +764,7 @@ def create_grammar():
 
     boolean_value <<= (TRUE | FALSE)
 
-    charsyms = NoMatch()
+    charsyms = NoMatch().setName('"charsyms" not implemented')
 
     character_string_list = (lbrace + charsyms + rbrace)
 
@@ -787,7 +788,7 @@ def create_grammar():
                                          | quadruple
                                          | tuple_)
 
-    unrestricted_character_string_value = NoMatch()
+    unrestricted_character_string_value = NoMatch().setName('"unrestrictedCharacterStringValue" not implemented')
 
     character_string_value <<= (restricted_character_string_value
                                 | unrestricted_character_string_value)
