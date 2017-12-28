@@ -127,6 +127,8 @@ Contributing
 Specifications
 ==============
 
+ASN.1 specifications released by ITU.
+
 General
 -------
 
