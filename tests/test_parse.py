@@ -48,10 +48,10 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "Invalid ASN.1 syntax at line 1138, column 35: 'E-RAB-IE-ContainerList"
-            "            >!<{ S1AP-PROTOCOL-IES      : IEsSetParam }    ::= "
-            "ProtocolIE-ContainerList     { 1, maxnoofE-RABs,   {IEsSetParam} }': "
-            "Expected ::=.")
+            "Invalid ASN.1 syntax at line 1138, column 112: 'E-RAB-IE-ContainerList"
+            "            { S1AP-PROTOCOL-IES      : IEsSetParam }    ::= "
+            "ProtocolIE-ContainerList     >!<{ 1, maxnoofE-RABs,   {IEsSetParam} }': "
+            "Expected END.")
 
     def test_parse_lpp_14_3_0(self):
         lpp_14_3_0 = asn1tools.parse_files('tests/files/3gpp/lpp_14_3_0.asn')
@@ -92,9 +92,16 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "Invalid ASN.1 syntax at line 122, column 21: 'AlgorithmIdentifier "
-            ">!<{ ALGORITHM-IDENTIFIER:InfoObjectSet } ::= SEQUENCE {': Expected "
-            "::=.")
+            "Invalid ASN.1 syntax at line 163, column 24: \'algorithm   "
+            "id-sha1>!<,\': Expected {{Suppress:(\"{\") [Group:({{W:(ABCD...) "
+            "Suppress:(\"(\") word Suppress:(\")\")} | word})]... Suppress:(\"}\")} "
+            "| \"referencedValue\" not implemented | Re:(\"\'[01\\\\s]*\'B\") | "
+            "Re:(\"\'[0-9A-F\\\\s]*\'H\") | {\"{\" [identifier [, identifier]...] "
+            "\"}\"} | {CONTAINING - Forward: ...} | TRUE | FALSE | \"cstring\" not "
+            "implemented | {\"{\" \"charsyms\" not implemented \"}\"} | {\"{\" word "
+            "\",\" word \",\" word \",\" word \"}\"} | {\"{\" word \",\" word \"}\"} "
+            "| \"unrestrictedCharacterStringValue\" not implemented | {identifier "
+            "\":\" Forward: ...} | word}.")
 
     def test_parse_rfc3852(self):
         rfc3852 = asn1tools.parse_files('tests/files/ietf/rfc3852.asn')

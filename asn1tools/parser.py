@@ -392,6 +392,7 @@ def create_grammar():
     optional_extension_marker = Forward()
     additional_element_set_spec = Forward()
     reference = Forward()
+    defined_object_class = Forward()
 
     value_field_reference = Combine(ampersand + value_reference)
     type_field_reference = Combine(ampersand + type_reference)
@@ -438,6 +439,14 @@ def create_grammar():
 
     identifier_list = delimitedList(identifier)
 
+    # X.683: 8. Parameterized assignments
+    dummy_reference = reference
+    dummy_governor = dummy_reference
+    governor = (type_ | defined_object_class)
+    param_governor = (governor | dummy_governor)
+    parameter = (Optional(param_governor + colon) + dummy_reference)
+    parameter_list = Suppress(Optional(left_brace + delimitedList(parameter) + right_brace))
+
     # X.683: 9. Referencing parameterized definitions
     parameterized_reference = (reference + Optional(left_brace + right_brace))
 
@@ -481,7 +490,7 @@ def create_grammar():
     defined_object_set <<= (external_object_set_reference
                             | object_set_reference)
     defined_object = NoMatch().setName('"definedObject" not implemented')
-    defined_object_class = object_class_reference
+    defined_object_class <<= object_class_reference
 
     # X.681: 9. Information object class definition and assignment
     field_name = primitive_field_name
@@ -520,9 +529,10 @@ def create_grammar():
     object_class = (object_class_defn
                     # | defined_object_class
                     | parameterized_object_class)
-    object_class_assignment = (object_class_reference
-                               + assign
-                               + object_class)
+    parameterized_object_class_assignment = (object_class_reference
+                                             + parameter_list
+                                             + assign
+                                             + object_class)
 
     # X.681: 10. Syntax list
     literal = (word | comma)
@@ -547,10 +557,11 @@ def create_grammar():
                  | object_defn
                  | object_from_object
                  | parameterized_object)
-    object_assignment = (object_reference
-                         + Group(defined_object_class)
-                         + assign
-                         + object_)
+    parameterized_object_assignment = (object_reference
+                                       + parameter_list
+                                       + Group(defined_object_class)
+                                       + assign
+                                       + object_)
 
     # X.681: 12. Information object set definition and assignment
     object_set_elements = (object_
@@ -564,10 +575,11 @@ def create_grammar():
                                               + additional_element_set_spec)))
                        | (ellipsis + Optional(comma + additional_element_set_spec)))
     object_set <<= (left_brace + Group(object_set_spec) + right_brace)
-    object_set_assignment = (object_set_reference
-                             + defined_object_class
-                             - assign
-                             - object_set)
+    parameterized_object_set_assignment = (object_set_reference
+                                           + parameter_list
+                                           + defined_object_class
+                                           - assign
+                                           - object_set)
 
     # X.681: 13. Associated tables
 
@@ -876,15 +888,17 @@ def create_grammar():
     type_reference <<= (NotAny(END) + Regex(r'[A-Z][a-zA-Z0-9-]*'))
     value_reference <<= Regex(r'[a-z][a-zA-Z0-9-]*')
     value_set <<= NoMatch().setName('"valueSet" not implemented')
-    type_assignment = (type_reference
-                       - assign
-                       - tag
-                       - type_)
-    value_assignment = (value_reference
-                        - Group(INTEGER
-                                | type_)
-                        - assign
-                        - value)
+    parameterized_type_assignment = (type_reference
+                                     + parameter_list
+                                     - assign
+                                     - tag
+                                     - type_)
+    parameterized_value_assignment = (value_reference
+                                      + parameter_list
+                                      - Group(INTEGER
+                                              | type_)
+                                      - assign
+                                      - value)
 
     # X.680: 14. Notation to support references to ASN.1 components
 
@@ -915,11 +929,11 @@ def create_grammar():
     exports = Suppress(Group(Optional(EXPORTS
                                       - (ALL
                                          | (symbols_exported + semi_colon)))))
-    assignment = Group(object_set_assignment
-                       | object_assignment
-                       | object_class_assignment
-                       | type_assignment
-                       | value_assignment)
+    assignment = Group(parameterized_object_set_assignment
+                       | parameterized_object_assignment
+                       | parameterized_object_class_assignment
+                       | parameterized_type_assignment
+                       | parameterized_value_assignment)
     assignment_list = Group(ZeroOrMore(assignment))
     module_body = (exports + imports + assignment_list)
     definitive_identification = Group(Optional(oid))
