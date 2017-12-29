@@ -9,7 +9,6 @@ sys.path.append('tests/files/3gpp')
 
 from foo import FOO
 from rrc_8_6_0 import RRC_8_6_0
-from s1ap_14_4_0 import S1AP_14_4_0
 from lpp_14_3_0 import LPP_14_3_0
 from information_object import INFORMATION_OBJECT
 from rfc1155 import RFC1155
@@ -45,8 +44,7 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
     def test_parse_s1ap_14_4_0(self):
         with self.assertRaises(asn1tools.ParseError) as cm:
-            s1ap_14_4_0 = asn1tools.parse_files('tests/files/3gpp/s1ap_14_4_0.asn')
-            self.assertEqual(s1ap_14_4_0, S1AP_14_4_0)
+            asn1tools.parse_files('tests/files/3gpp/s1ap_14_4_0.asn')
 
         self.assertEqual(
             str(cm.exception),
@@ -88,6 +86,14 @@ class Asn1ToolsParseTest(unittest.TestCase):
     def test_parse_rfc3281(self):
         rfc3281 = asn1tools.parse_files('tests/files/ietf/rfc3281.asn')
         self.assertEqual(rfc3281, RFC3281)
+
+    def test_parse_rfc3447(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_files('tests/files/ietf/rfc3447.asn')
+
+        self.assertEqual(str(cm.exception),
+                         "Invalid ASN.1 syntax at line 106, column 15: '} WITH "
+                         "SYNTAX >!<{': Expected ::=.")
 
     def test_parse_rfc3852(self):
         rfc3852 = asn1tools.parse_files('tests/files/ietf/rfc3852.asn')
