@@ -361,25 +361,6 @@ def create_grammar():
     ampersand = Literal('&')
 
     # Forward declarations.
-    object_class_field_type = Forward().setName('ObjectClassField')
-    sequence_type = Forward().setName('SEQUENCE')
-    choice_type = Forward().setName('CHOICE')
-    integer_type = Forward().setName('INTEGER')
-    null_type = Forward().setName('NULL')
-    real_type = Forward().setName('REAL')
-    bit_string_type = Forward().setName('BIT STRING')
-    octet_string_type = Forward().setName('OCTET STRING')
-    enumerated_type = Forward().setName('ENUMERATED')
-    sequence_of_type = Forward().setName('SEQUENCE OF')
-    set_of_type = Forward().setName('SET OF')
-    set_type = Forward().setName('SET')
-    object_identifier_type = Forward().setName('OBJECT IDENTIFIER')
-    boolean_type = Forward().setName('BOOLEAN')
-    any_defined_by_type = Forward().setName('ANY DEFINED BY')
-    bit_string_value = Forward()
-    boolean_value = Forward()
-    character_string_value = Forward()
-    choice_value = Forward()
     value = Forward()
     type_ = Forward()
     object_ = Forward()
@@ -393,6 +374,10 @@ def create_grammar():
     value_set = Forward().setName('"valueSet" not implemented')
     named_type = Forward()
     root_element_set_spec = Forward()
+    defined_object_set = Forward()
+    syntax_list = Forward()
+    object_from_object = Forward()
+    object_set_from_objects = Forward()
 
     value_field_reference = Combine(ampersand + value_reference)
     type_field_reference = Combine(ampersand + type_reference)
@@ -408,25 +393,7 @@ def create_grammar():
                   + size
                   + Suppress(Optional(rparen)))
 
-    object_set_reference = type_reference
-    defined_object = NoMatch().setName('"definedObject" not implemented')
-    setting = (type_ | value | value_set | object_ | object_set | QuotedString('"'))
-    field_setting =  Group(primitive_field_name + setting)
-    default_syntax = (Suppress(lbrace)
-                      + delimitedList(field_setting)
-                      + Suppress(rbrace))
-    defined_syntax = NoMatch().setName('"definedSyntax" not implemented')
-    object_defn = Group(default_syntax | defined_syntax)
-    object_from_object = NoMatch().setName('"objectFromObject" not implemented')
     parameterized_object = NoMatch().setName('"parameterizedObject" not implemented')
-    object_ <<= (defined_object
-                 | object_defn
-                 | object_from_object
-                 | parameterized_object)
-    external_object_set_reference = NoMatch().setName('"externalObjectSetReference" not implemented')
-    defined_object_set = (external_object_set_reference
-                          | object_set_reference)
-    object_set_from_objects = NoMatch().setName('"objectSetFromObjects" not implemented')
     actual_parameter_list = Group(Suppress(lbrace)
                                   + delimitedList(
                                       Group((value_field_reference
@@ -437,122 +404,15 @@ def create_grammar():
     parameterized_object_set = NoMatch().setName('"parameterizedObjectSet" not implemented')
     # actual_parameter_list
 
-    object_set_elements = (object_
-                           | defined_object_set
-                           | object_set_from_objects
-                           | parameterized_object_set)
-
-
-    user_defined_constraint = NoMatch().setName('"userDefinedConstraint" not implemented')
-
-    simple_table_constraint = object_set
-
-    level = OneOrMore(dot)
-
-    component_id_list = identifier
-
-    at_notation = (Suppress(at)
-                   - (component_id_list
-                      | Combine(level + component_id_list)))
-
-    component_relation_constraint = (lbrace
-                                     + Group(Group(defined_object_set))
-                                     + rbrace
-                                     + lbrace
-                                     - Group(delimitedList(at_notation))
-                                     - rbrace)
-
-    table_constraint = (component_relation_constraint
-                        | simple_table_constraint)
-
-    contents_constraint = NoMatch().setName('"contentsConstraint" not implemented')
-
-    general_constraint = (user_defined_constraint
-                          | table_constraint
-                          | contents_constraint)
-
     tag = Group(Optional(Suppress(lbracket)
                          + Group(Optional(APPLICATION | PRIVATE) + word)
                          + Suppress(rbracket)
                          + Group(Optional(IMPLICIT | EXPLICIT))))
 
-    type_field_spec = (type_field_reference
-                       + Optional(OPTIONAL
-                                  | (DEFAULT - type_)))
-
-    fixed_type_value_field_spec = (value_field_reference
-                                   + type_
-                                   + Optional(UNIQUE)
-                                   + Optional(OPTIONAL
-                                              | (DEFAULT - type_)))
-
-    variable_type_value_field_spec = NoMatch().setName('"variableTypeValueFieldSpec" not implemented')
-    fixed_type_value_set_field_spec = NoMatch().setName('"fixedTypeValueSetFieldSpec" not implemented')
-    variable_type_value_set_field_spec = NoMatch().setName('"variableTypeValueSetFieldSpec" not implemented')
-    object_field_spec = NoMatch().setName('"objectFieldSpec" not implemented')
-    object_set_field_spec = NoMatch().setName('"objectSetFieldSpec" not implemented')
-
-    field_spec = Group(type_field_spec
-                       | fixed_type_value_field_spec
-                       | variable_type_value_field_spec
-                       | fixed_type_value_set_field_spec
-                       | variable_type_value_set_field_spec
-                       | object_field_spec
-                       | object_set_field_spec)
-
-    value_set_field_reference = NoMatch().setName('"valueSetFieldReference" not implemented')
-    object_field_reference = NoMatch().setName('"objectFieldReference" not implemented')
-    object_set_field_reference = NoMatch().setName('"objectSetFieldReference" not implemented')
-
-    object_set_spec = delimitedList(root_element_set_spec)
-    object_set <<= (lbrace + Group(object_set_spec) + rbrace)
-
-    primitive_field_name <<= (type_field_reference
-                              | value_field_reference
-                              | value_set_field_reference
-                              | object_field_reference
-                              | object_set_field_reference)
-
-    literal = NoMatch().setName('"literal" not implemented')
-
-    required_token = (literal | primitive_field_name)
-
-    optional_group = (lbracket
-                      + token_or_group_spec
-                      + rbracket)
-
-    token_or_group_spec <<= (required_token | optional_group)
-
-    syntax_list = (lbrace
-                   + OneOrMore(token_or_group_spec)
-                   + rbrace)
-
-
-    with_syntax_spec = (WITH + SYNTAX + syntax_list)
-
-    object_class_reference = type_reference
-
-    defined_object_class = object_class_reference
-
-    object_class_defn = (CLASS
-                         - Suppress(lbrace)
-                         - Group(delimitedList(field_spec))
-                         - Suppress(rbrace)
-                         - Optional(with_syntax_spec))
-
     parameterized_object_class = NoMatch().setName('"parameterizedObjectClass" not implemented')
 
-    object_class = (object_class_defn
-#                    | defined_object_class
-                    | parameterized_object_class)
-
-    field_name = primitive_field_name
-
-    object_class_field_type <<= Combine(defined_object_class
-                                        + dot
-                                        + field_name)
-
-    any_defined_by_type <<= (ANY + DEFINED + BY + word)
+    any_defined_by_type = (ANY + DEFINED + BY + word)
+    any_defined_by_type.setName('ANY DEFINED BY')
 
     oid = (Suppress(lbrace)
            + ZeroOrMore(Group((value_name
@@ -564,23 +424,148 @@ def create_grammar():
 
     identifier_list = delimitedList(identifier)
 
-    object_class_field_value = oid
+    # X.682: 8. General constant specification
+    # X.682: 8. General constant specification
+    # X.682: 8. General constant specification
+    # X.682: 8. General constant specification
+    # X.682: 8. General constant specification
+    # X.682: 8. General constant specification
 
+    # X.682: 11. Contents constraints
+    contents_constraint = NoMatch().setName('"contentsConstraint" not implemented')
+
+    # X.682: 10. Table constraints, including component relation constraints
+    level = OneOrMore(dot)
+    component_id_list = identifier
+    at_notation = (Suppress(at)
+                   - (component_id_list
+                      | Combine(level + component_id_list)))
+    component_relation_constraint = (lbrace
+                                     + Group(Group(defined_object_set))
+                                     + rbrace
+                                     + lbrace
+                                     - Group(delimitedList(at_notation))
+                                     - rbrace)
+    simple_table_constraint = object_set
+    table_constraint = (component_relation_constraint
+                        | simple_table_constraint)
+
+    # X.682: 9. User-defined constants
+    user_defined_constraint = NoMatch().setName('"userDefinedConstraint" not implemented')
+
+    # X.682: 8. General constraint specification
+    general_constraint = (user_defined_constraint
+                          | table_constraint
+                          | contents_constraint)
+
+    # X.681: 7. ASN.1 lexical items
+    object_set_reference = type_reference
+    value_set_field_reference = NoMatch().setName('"valueSetFieldReference" not implemented')
+    object_field_reference = NoMatch().setName('"objectFieldReference" not implemented')
+    object_set_field_reference = NoMatch().setName('"objectSetFieldReference" not implemented')
+    object_class_reference = type_reference
     object_reference = value_reference
 
+    # X.681: 8. Referencing definitions
+    external_object_set_reference = NoMatch().setName('"externalObjectSetReference" not implemented')
+    defined_object_set <<= (external_object_set_reference
+                            | object_set_reference)
+    defined_object = NoMatch().setName('"definedObject" not implemented')
+    defined_object_class = object_class_reference
+
+    # X.681: 9. Information object class definition and assignment
+    field_name = primitive_field_name
+    primitive_field_name <<= (type_field_reference
+                              | value_field_reference
+                              | value_set_field_reference
+                              | object_field_reference
+                              | object_set_field_reference)
+    object_set_field_spec = NoMatch().setName('"objectSetFieldSpec" not implemented')
+    object_field_spec = NoMatch().setName('"objectFieldSpec" not implemented')
+    variable_type_value_set_field_spec = NoMatch().setName(
+        '"variableTypeValueSetFieldSpec" not implemented')
+    fixed_type_value_set_field_spec = NoMatch().setName('"fixedTypeValueSetFieldSpec" not implemented')
+    variable_type_value_field_spec = NoMatch().setName('"variableTypeValueFieldSpec" not implemented')
+    fixed_type_value_field_spec = (value_field_reference
+                                   + type_
+                                   + Optional(UNIQUE)
+                                   + Optional(OPTIONAL
+                                              | (DEFAULT - type_)))
+    type_field_spec = (type_field_reference
+                       + Optional(OPTIONAL
+                                  | (DEFAULT - type_)))
+    field_spec = Group(type_field_spec
+                       | fixed_type_value_field_spec
+                       | variable_type_value_field_spec
+                       | fixed_type_value_set_field_spec
+                       | variable_type_value_set_field_spec
+                       | object_field_spec
+                       | object_set_field_spec)
+    with_syntax_spec = (WITH + SYNTAX + syntax_list)
+    object_class_defn = (CLASS
+                         - Suppress(lbrace)
+                         - Group(delimitedList(field_spec))
+                         - Suppress(rbrace)
+                         - Optional(with_syntax_spec))
+    object_class = (object_class_defn
+                    # | defined_object_class
+                    | parameterized_object_class)
+    object_class_assignment = (object_class_reference
+                               + assign
+                               + object_class)
+
+    # X.681: 10. Syntax list
+    literal = NoMatch().setName('"literal" not implemented')
+    required_token = (literal | primitive_field_name)
+    optional_group = (lbracket
+                      + token_or_group_spec
+                      + rbracket)
+    token_or_group_spec <<= (required_token | optional_group)
+    syntax_list <<= (lbrace
+                     + OneOrMore(token_or_group_spec)
+                     + rbrace)
+
+    # X.681: 11. Information object definition and assignment
+    setting = (type_ | value | value_set | object_ | object_set | QuotedString('"'))
+    field_setting =  Group(primitive_field_name + setting)
+    default_syntax = (Suppress(lbrace)
+                      + delimitedList(field_setting)
+                      + Suppress(rbrace))
+    defined_syntax = NoMatch().setName('"definedSyntax" not implemented')
+    object_defn = Group(default_syntax | defined_syntax)
+    object_ <<= (defined_object
+                 | object_defn
+                 | object_from_object
+                 | parameterized_object)
     object_assignment = (object_reference
                          + defined_object_class
                          + assign
                          + object_)
 
+    # X.681: 12. Information object set definition and assignment
+    object_set_elements = (object_
+                           | defined_object_set
+                           | object_set_from_objects
+                           | parameterized_object_set)
+    object_set_spec = delimitedList(root_element_set_spec)
+    object_set <<= (lbrace + Group(object_set_spec) + rbrace)
     object_set_assignment = (object_set_reference
                              + defined_object_class
                              - assign
                              - object_set)
 
-    object_class_assignment = (object_class_reference
-                               + assign
-                               + object_class)
+    # X.681: 13. Associated tables
+
+    # X.681: 14. Notation for the object class field type
+    object_class_field_value = oid
+    object_class_field_type = Combine(defined_object_class
+                                      + dot
+                                      + field_name)
+    object_class_field_type.setName('ObjectClassFieldType')
+
+    # X.681: 15. Information from objects
+    object_set_from_objects <<= NoMatch().setName('"objectSetFromObjects" not implemented')
+    object_from_object <<= NoMatch().setName('"objectFromObject" not implemented')
 
     # X.680: 49. The exception identifier
     exception_spec = NoMatch().setName('"exceptionSpec" not implemented')
@@ -667,8 +652,8 @@ def create_grammar():
                                          | tuple_)
 
     # X.680: 36. Notation for character string types
-    character_string_value <<= (restricted_character_string_value
-                                | unrestricted_character_string_value)
+    character_string_value = (restricted_character_string_value
+                              | unrestricted_character_string_value)
 
     # X.680: 35. The character string types
 
@@ -679,10 +664,11 @@ def create_grammar():
     # X.680: 32. Notation for relative object identifier type
 
     # X.680: 31. Notation for object identifier type
-    object_identifier_type <<= (OBJECT - IDENTIFIER
-                                + Optional(lparen
-                                           + delimitedList(word, delim='|')
-                                           + rparen))
+    object_identifier_type = (OBJECT - IDENTIFIER
+                              + Optional(lparen
+                                         + delimitedList(word, delim='|')
+                                         + rparen))
+    object_identifier_type.setName('OBJECT IDENTIFIER')
     object_identifier_value = oid
 
     # X.680: 30. Notation for tagged types
@@ -690,45 +676,49 @@ def create_grammar():
     # X.680: 29. Notation for selection types
 
     # X.680: 28. Notation for the choice types
-    choice_type <<= (CHOICE
-                     - lbrace
-                     + Group(Optional(delimitedList(
-                         Group(Group(identifier
-                                     - tag
-                                     - type_)
-                               + Group(Optional(OPTIONAL)
-                                       + Optional(DEFAULT + word))
-                               | ellipsis))))
-                     - rbrace)
-    choice_value <<= (identifier + colon + value)
+    choice_type = (CHOICE
+                   - lbrace
+                   + Group(Optional(delimitedList(
+                       Group(Group(identifier
+                                   - tag
+                                   - type_)
+                             + Group(Optional(OPTIONAL)
+                                     + Optional(DEFAULT + word))
+                             | ellipsis))))
+                   - rbrace)
+    choice_type.setName('CHOICE')
+    choice_value = (identifier + colon + value)
 
     # X.680: 27. Notation for the set-of types
-    set_of_type <<= (SET
-                     + Group(Optional(size))
-                     + OF
-                     + Optional(Suppress(identifier))
-                     - tag
-                     - type_)
+    set_of_type = (SET
+                   + Group(Optional(size))
+                   + OF
+                   + Optional(Suppress(identifier))
+                   - tag
+                   - type_)
+    set_of_type.setName('SET OF')
 
     # X.680: 26. Notation for the set types
-    set_type <<= (SET
-                  - lbrace
-                  + Group(Optional(delimitedList(
-                      Group(Group(identifier
-                                  - tag
-                                  - type_)
-                            + Group(Optional(OPTIONAL)
-                                    + Optional(DEFAULT + word))
-                            | ellipsis))))
-                  - rbrace)
+    set_type = (SET
+                - lbrace
+                + Group(Optional(delimitedList(
+                    Group(Group(identifier
+                                - tag
+                                - type_)
+                          + Group(Optional(OPTIONAL)
+                                  + Optional(DEFAULT + word))
+                          | ellipsis))))
+                - rbrace)
+    set_type.setName('SET')
 
     # X.680: 25. Notation for the sequence-of types
-    sequence_of_type <<= (SEQUENCE
-                          + Group(Optional(size_paren))
-                          + OF
-                          + Optional(Suppress(identifier))
-                          - tag
-                          - type_)
+    sequence_of_type = (SEQUENCE
+                        + Group(Optional(size_paren))
+                        + OF
+                        + Optional(Suppress(identifier))
+                        - tag
+                        - type_)
+    sequence_of_type.setName('SEQUENCE OF')
 
     # X.680: 24. Notation for the sequence types
     component_type = Group(named_type
@@ -762,74 +752,79 @@ def create_grammar():
                                    + Suppress(comma)
                                    + root_component_type_list)
                                   | optional_extension_marker)))
-    sequence_type <<= (SEQUENCE
-                       - lbrace
-                       + Group(Optional(component_type_lists
-                                        | (extension_and_exception
-                                           + optional_extension_marker)))
-                       - rbrace)
+    sequence_type = (SEQUENCE
+                     - lbrace
+                     + Group(Optional(component_type_lists
+                                    | (extension_and_exception
+                                       + optional_extension_marker)))
+                     - rbrace)
+    sequence_type.setName('SEQUENCE')
 
     # X.680: 23. Notation for the null type
-    null_type <<= NULL
+    null_type = NULL
 
     # X.680: 22. Notation for the octetstring type
-    octet_string_type <<= (OCTET - STRING
-                           + Group(Optional(Suppress(lparen)
-                                            + (size | (CONTAINING + word))
-                                            + Suppress(rparen))))
+    octet_string_type = (OCTET - STRING
+                         + Group(Optional(Suppress(lparen)
+                                          + (size | (CONTAINING + word))
+                                          + Suppress(rparen))))
+    octet_string_type.setName('OCTET STRING')
 
     # X.680: 21. Notation for the bitstring type
-    bit_string_type <<= (BIT - STRING
-                         + Group(Optional((lbrace
-                                           + Group(delimitedList(word
-                                                                 + lparen
-                                                                 + word
-                                                                 + rparen))
-                                           + rbrace)))
+    bit_string_type = (BIT - STRING
+                       + Group(Optional((lbrace
+                                         + Group(delimitedList(word
+                                                               + lparen
+                                                               + word
+                                                               + rparen))
+                                         + rbrace)))
                          + Group(Optional(constraint)))
-    bit_string_value <<= (bstring
-                          | hstring
-                          | (lbrace + Optional(identifier_list) + rbrace)
-                          | (CONTAINING - value))
+    bit_string_type.setName('BIT STRING')
+    bit_string_value = (bstring
+                        | hstring
+                        | (lbrace + Optional(identifier_list) + rbrace)
+                        | (CONTAINING - value))
 
     # X.680: 20. Notation for the real type
-    real_type <<= (REAL
-                   + Optional(lparen
-                              + ((integer + dot + range_separator)
-                                 | (integer + range_separator)
-                                 | (real_number + range_separator))
-                              + real_number
-                              + rparen))
+    real_type = (REAL
+                 + Optional(lparen
+                            + ((integer + dot + range_separator)
+                               | (integer + range_separator)
+                               | (real_number + range_separator))
+                            + real_number
+                            + rparen))
+    real_type.setName('REAL')
 
     # X.680: 19. Notation for the enumerated type
-    enumerated_type <<= (ENUMERATED
-                         - lbrace
-                         + Group(delimitedList(Group((word
-                                                      + Optional(Suppress(lparen)
-                                                                 + word
-                                                                 + Suppress(rparen)))
-                                                     | ellipsis)))
-                         - rbrace)
-
+    enumerated_type = (ENUMERATED
+                       - lbrace
+                       + Group(delimitedList(Group((word
+                                                    + Optional(Suppress(lparen)
+                                                               + word
+                                                               + Suppress(rparen)))
+                                                   | ellipsis)))
+                       - rbrace)
+    enumerated_type.setName('ENUMERATED')
 
     # X.680: 18. Notation for the integer type
-    integer_type <<= (INTEGER
-                      + Group(Optional((lparen
-                                        + delimitedList(range_ | word, delim=pipe)
-                                        + rparen)
-                                       | (lbrace
-                                          + Group(delimitedList(word
-                                                                + lparen
-                                                                + word
-                                                                + rparen))
-                                          + rbrace)))
-                      + Optional(lparen
-                                 + range_
-                                 + rparen))
+    integer_type = (INTEGER
+                    + Group(Optional((lparen
+                                      + delimitedList(range_ | word, delim=pipe)
+                                      + rparen)
+                                     | (lbrace
+                                        + Group(delimitedList(word
+                                                              + lparen
+                                                              + word
+                                                              + rparen))
+                                        + rbrace)))
+                    + Optional(lparen
+                               + range_
+                               + rparen))
+    integer_type.setName('INTEGER')
 
     # X.680: 17. Notation for boolean type
-    boolean_type <<= BOOLEAN
-    boolean_value <<= (TRUE | FALSE)
+    boolean_type = BOOLEAN
+    boolean_value = (TRUE | FALSE)
 
     # X.680: 16. Definition of types and values
     referenced_value = NoMatch().setName('"referencedValue" not implemented')

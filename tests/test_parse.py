@@ -51,7 +51,7 @@ class Asn1ToolsParseTest(unittest.TestCase):
             "Invalid ASN.1 syntax at line 199, column 57: '&criticality                "
             "Criticality     DEFAULT >!<ignore': Expected {CHOICE | INTEGER | NULL | "
             "REAL | BIT STRING | OCTET STRING | ENUMERATED | SEQUENCE OF | SEQUENCE | "
-            "ObjectClassField | SET OF | SET | OBJECT IDENTIFIER | BOOLEAN | "
+            "ObjectClassFieldType | SET OF | SET | OBJECT IDENTIFIER | BOOLEAN | "
             "ANY DEFINED BY | ReferencedType}.")
 
     def test_parse_lpp_14_3_0(self):
@@ -180,7 +180,7 @@ class Asn1ToolsParseTest(unittest.TestCase):
             "Invalid ASN.1 syntax at line 1, column 45: 'A DEFINITIONS ::= BEGIN  "
             "A ::= SEQUENCE { a >!<} END': Expected {CHOICE | INTEGER | NULL | REAL | "
             "BIT STRING | OCTET STRING | ENUMERATED | SEQUENCE OF | SEQUENCE | "
-            "ObjectClassField | SET OF | SET | OBJECT IDENTIFIER | BOOLEAN | "
+            "ObjectClassFieldType | SET OF | SET | OBJECT IDENTIFIER | BOOLEAN | "
             "ANY DEFINED BY | ReferencedType}.")
 
     def test_parse_error_sequence_missing_member_name(self):
