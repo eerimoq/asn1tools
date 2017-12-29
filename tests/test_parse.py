@@ -10,6 +10,7 @@ sys.path.append('tests/files/3gpp')
 from foo import FOO
 from rrc_8_6_0 import RRC_8_6_0
 from s1ap_14_4_0 import S1AP_14_4_0
+from lpp_14_3_0 import LPP_14_3_0
 from information_object import INFORMATION_OBJECT
 from rfc1155 import RFC1155
 from rfc1157 import RFC1157
@@ -43,9 +44,21 @@ class Asn1ToolsParseTest(unittest.TestCase):
         self.assertEqual(information_object, INFORMATION_OBJECT)
 
     def test_parse_s1ap_14_4_0(self):
-        with self.assertRaises(asn1tools.ParseError):
+        with self.assertRaises(asn1tools.ParseError) as cm:
             s1ap_14_4_0 = asn1tools.parse_files('tests/files/3gpp/s1ap_14_4_0.asn')
             self.assertEqual(s1ap_14_4_0, S1AP_14_4_0)
+
+        self.assertEqual(
+            str(cm.exception),
+            "Invalid ASN.1 syntax at line 199, column 57: '&criticality                "
+            "Criticality     DEFAULT >!<ignore': Expected {CHOICE | INTEGER | NULL | "
+            "REAL | BIT STRING | OCTET STRING | ENUMERATED | SEQUENCE OF | SEQUENCE | "
+            "ObjectClassField | SET OF | SET | OBJECT IDENTIFIER | BOOLEAN | "
+            "ANY DEFINED BY | ReferencedType}.")
+
+    def test_parse_lpp_14_3_0(self):
+        lpp_14_3_0 = asn1tools.parse_files('tests/files/3gpp/lpp_14_3_0.asn')
+        self.assertEqual(lpp_14_3_0, LPP_14_3_0)
 
     def test_parse_rfc1155(self):
         rfc1155 = asn1tools.parse_files('tests/files/ietf/rfc1155.asn')

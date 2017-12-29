@@ -104,7 +104,7 @@ def convert_members(tokens):
     members = []
 
     for member_tokens in tokens:
-        if member_tokens == ['...']:
+        if member_tokens in [['...'], '...']:
             member_tokens = [['...', [], ''], []]
 
         if member_tokens[:2] == ['COMPONENTS', 'OF']:
@@ -346,8 +346,10 @@ def create_grammar():
     colon = Literal(':')
     scolon = Literal(';')
     dot = Literal('.')
-    dotx2 = Literal('..')
-    dotx3 = Literal('...')
+    range_separator = Literal('..')
+    ellipsis = Literal('...')
+    left_version_brackets = Literal('[[')
+    right_version_brackets = Literal(']]')
     qmark = Literal('"')
     pipe = Literal('|')
     comma = Literal(',')
@@ -386,7 +388,7 @@ def create_grammar():
     value = Forward()
     type_ = Forward()
 
-    range_ = (word + dotx2 + word)
+    range_ = (word + range_separator + word)
 
     size = (SIZE
             + lparen
@@ -447,7 +449,7 @@ def create_grammar():
 
     permitted_alphabet = Suppress(FROM
                                   + delimitedList(qmark + word + qmark
-                                                  + dotx2
+                                                  + range_separator
                                                   + qmark + word + qmark,
                                                   delim=pipe))
 
@@ -459,7 +461,7 @@ def create_grammar():
     named_constraint = (identifier + component_constraint)
     type_constraints = delimitedList(named_constraint)
     full_specification = (lbrace + type_constraints + rbrace)
-    partial_specification = (lbrace + dotx3 + comma + type_constraints + rbrace)
+    partial_specification = (lbrace + ellipsis + comma + type_constraints + rbrace)
 
     single_type_constraint = constraint
     multiple_type_constraints = (full_specification | partial_specification)
@@ -643,14 +645,51 @@ def create_grammar():
     component_type = Group(named_type
                            + Group(Optional(OPTIONAL
                                             | (DEFAULT + value)))
-                           | dotx3
                            | (COMPONENTS + OF + type_))
+
+    version_number = (number + Suppress(colon))
+
+    extension_addition_group = (Suppress(left_version_brackets)
+                                + Suppress(Group(Optional(version_number)))
+                                + delimitedList(component_type)
+                                + Suppress(right_version_brackets))
+
+    exception_spec = NoMatch().setName('"exceptionSpec" not implemented')
+
+    extension_and_exception = (ellipsis + Optional(exception_spec))
+
+    extension_addition = (component_type | extension_addition_group)
+
+    extension_addition_list = delimitedList(extension_addition)
+
+    extension_additions = Optional(Suppress(comma) + extension_addition_list)
+
+    extension_end_marker = (Suppress(comma) + ellipsis)
+
+    optional_extension_marker = Optional(Suppress(comma) + ellipsis)
+
     component_type_list = delimitedList(component_type)
     root_component_type_list = component_type_list
-    component_type_lists = root_component_type_list
+    component_type_lists = ((root_component_type_list
+                             + Optional(Suppress(comma)
+                                        + extension_and_exception
+                                        + extension_additions
+                                        + ((extension_end_marker
+                                            + Suppress(comma)
+                                            + root_component_type_list)
+                                           | optional_extension_marker)))
+                            | (extension_and_exception
+                               + extension_additions
+                               + ((extension_end_marker
+                                   + Suppress(comma)
+                                   + root_component_type_list)
+                                  | optional_extension_marker)))
+
     sequence_type <<= (SEQUENCE
                        - lbrace
-                       + Group(Optional(component_type_lists))
+                       + Group(Optional(component_type_lists
+                                        | (extension_and_exception
+                                           + optional_extension_marker)))
                        - rbrace)
 
     sequence_of_type <<= (SEQUENCE
@@ -675,7 +714,7 @@ def create_grammar():
                                   - type_)
                             + Group(Optional(OPTIONAL)
                                     + Optional(DEFAULT + word))
-                            | dotx3))))
+                            | ellipsis))))
                   - rbrace)
 
     choice_type <<= (CHOICE
@@ -686,7 +725,7 @@ def create_grammar():
                                      - type_)
                                + Group(Optional(OPTIONAL)
                                        + Optional(DEFAULT + word))
-                               | dotx3))))
+                               | ellipsis))))
                      - rbrace)
 
     enumerated_type <<= (ENUMERATED
@@ -695,7 +734,7 @@ def create_grammar():
                                                       + Optional(Suppress(lparen)
                                                                  + word
                                                                  + Suppress(rparen)))
-                                                     | dotx3)))
+                                                     | ellipsis)))
                          - rbrace)
 
     integer_type <<= (INTEGER
@@ -716,9 +755,9 @@ def create_grammar():
 
     real_type <<= (REAL
                    + Optional(lparen
-                              + ((integer + dot + dotx2)
-                                 | (integer + dotx2)
-                                 | (real_number + dotx2))
+                              + ((integer + dot + range_separator)
+                                 | (integer + range_separator)
+                                 | (real_number + range_separator))
                               + real_number
                               + rparen))
 
