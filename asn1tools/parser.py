@@ -389,6 +389,9 @@ def create_grammar():
     object_from_object = Forward()
     object_set_from_objects = Forward()
     defined_value = Forward()
+    component_type_lists = Forward()
+    extension_and_exception = Forward()
+    optional_extension_marker = Forward()
 
     value_field_reference = Combine(ampersand + value_reference)
     type_field_reference = Combine(ampersand + type_reference)
@@ -716,13 +719,9 @@ def create_grammar():
     # X.680: 26. Notation for the set types
     set_type = (SET
                 - lbrace
-                + Group(Optional(delimitedList(
-                    Group(Group(identifier
-                                - tag
-                                - type_)
-                          + Group(Optional(OPTIONAL)
-                                  + Optional(DEFAULT + word))
-                          | ellipsis))))
+                + Group(Optional(component_type_lists
+                                 | (extension_and_exception
+                                    + optional_extension_marker)))
                 - rbrace)
     set_type.setName('SET')
 
@@ -745,28 +744,28 @@ def create_grammar():
                                 + Suppress(Group(Optional(version_number)))
                                 + delimitedList(component_type)
                                 + Suppress(right_version_brackets))
-    extension_and_exception = (ellipsis + Optional(exception_spec))
+    extension_and_exception <<= (ellipsis + Optional(exception_spec))
     extension_addition = (component_type | extension_addition_group)
     extension_addition_list = delimitedList(extension_addition)
     extension_additions = Optional(Suppress(comma) + extension_addition_list)
     extension_end_marker = (Suppress(comma) + ellipsis)
-    optional_extension_marker = Optional(Suppress(comma) + ellipsis)
+    optional_extension_marker <<= Optional(Suppress(comma) + ellipsis)
     component_type_list = delimitedList(component_type)
     root_component_type_list = component_type_list
-    component_type_lists = ((root_component_type_list
-                             + Optional(Suppress(comma)
-                                        + extension_and_exception
-                                        + extension_additions
-                                        + ((extension_end_marker
-                                            + Suppress(comma)
-                                            + root_component_type_list)
-                                           | optional_extension_marker)))
-                            | (extension_and_exception
-                               + extension_additions
-                               + ((extension_end_marker
-                                   + Suppress(comma)
-                                   + root_component_type_list)
-                                  | optional_extension_marker)))
+    component_type_lists <<= ((root_component_type_list
+                               + Optional(Suppress(comma)
+                                          + extension_and_exception
+                                          + extension_additions
+                                          + ((extension_end_marker
+                                              + Suppress(comma)
+                                              + root_component_type_list)
+                                             | optional_extension_marker)))
+                              | (extension_and_exception
+                                 + extension_additions
+                                 + ((extension_end_marker
+                                     + Suppress(comma)
+                                     + root_component_type_list)
+                                    | optional_extension_marker)))
     sequence_type = (SEQUENCE
                      - lbrace
                      + Group(Optional(component_type_lists
