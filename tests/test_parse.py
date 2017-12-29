@@ -48,11 +48,10 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "Invalid ASN.1 syntax at line 199, column 57: '&criticality                "
-            "Criticality     DEFAULT >!<ignore': Expected {CHOICE | INTEGER | NULL | "
-            "REAL | BIT STRING | OCTET STRING | ENUMERATED | SEQUENCE OF | SEQUENCE | "
-            "ObjectClassFieldType | SET OF | SET | OBJECT IDENTIFIER | BOOLEAN | "
-            "ANY DEFINED BY | ReferencedType}.")
+            "Invalid ASN.1 syntax at line 1138, column 35: 'E-RAB-IE-ContainerList"
+            "            >!<{ S1AP-PROTOCOL-IES      : IEsSetParam }    ::= "
+            "ProtocolIE-ContainerList     { 1, maxnoofE-RABs,   {IEsSetParam} }': "
+            "Expected ::=.")
 
     def test_parse_lpp_14_3_0(self):
         lpp_14_3_0 = asn1tools.parse_files('tests/files/3gpp/lpp_14_3_0.asn')
@@ -91,9 +90,11 @@ class Asn1ToolsParseTest(unittest.TestCase):
         with self.assertRaises(asn1tools.ParseError) as cm:
             asn1tools.parse_files('tests/files/ietf/rfc3447.asn')
 
-        self.assertEqual(str(cm.exception),
-                         "Invalid ASN.1 syntax at line 106, column 15: '} WITH "
-                         "SYNTAX >!<{': Expected ::=.")
+        self.assertEqual(
+            str(cm.exception),
+            "Invalid ASN.1 syntax at line 122, column 21: 'AlgorithmIdentifier "
+            ">!<{ ALGORITHM-IDENTIFIER:InfoObjectSet } ::= SEQUENCE {': Expected "
+            "::=.")
 
     def test_parse_rfc3852(self):
         rfc3852 = asn1tools.parse_files('tests/files/ietf/rfc3852.asn')

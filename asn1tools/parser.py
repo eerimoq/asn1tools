@@ -338,6 +338,7 @@ def create_grammar():
     ALL = Keyword('ALL').setName('ALL')
     MIN = Keyword('MIN').setName('MIN')
     MAX = Keyword('MAX').setName('MAX')
+    INCLUDES = Keyword('INCLUDES').setName('INCLUDES')
 
     # Various literals.
     word = Word(printables, excludeChars=',(){}[].:=;"|').setName('word')
@@ -392,6 +393,8 @@ def create_grammar():
     component_type_lists = Forward()
     extension_and_exception = Forward()
     optional_extension_marker = Forward()
+    additional_element_set_spec = Forward()
+    reference = Forward()
 
     value_field_reference = Combine(ampersand + value_reference)
     type_field_reference = Combine(ampersand + type_reference)
@@ -438,12 +441,8 @@ def create_grammar():
 
     identifier_list = delimitedList(identifier)
 
-    # X.682: 8. General constant specification
-    # X.682: 8. General constant specification
-    # X.682: 8. General constant specification
-    # X.682: 8. General constant specification
-    # X.682: 8. General constant specification
-    # X.682: 8. General constant specification
+    # X.683: 9. Referencing parameterized definitions
+    parameterized_reference = (reference + Optional(lbrace + rbrace))
 
     # X.682: 11. Contents constraints
     contents_constraint = NoMatch().setName('"contentsConstraint" not implemented')
@@ -504,7 +503,7 @@ def create_grammar():
                                    + type_
                                    + Optional(UNIQUE)
                                    + Optional(OPTIONAL
-                                              | (DEFAULT - type_)))
+                                              | (DEFAULT - value)))
     type_field_spec = (type_field_reference
                        + Optional(OPTIONAL
                                   | (DEFAULT - type_)))
@@ -515,7 +514,7 @@ def create_grammar():
                        | variable_type_value_set_field_spec
                        | object_field_spec
                        | object_set_field_spec)
-    with_syntax_spec = (WITH + SYNTAX + syntax_list)
+    with_syntax_spec = (WITH - SYNTAX - syntax_list)
     object_class_defn = (CLASS
                          - Suppress(lbrace)
                          - Group(delimitedList(field_spec))
@@ -529,10 +528,10 @@ def create_grammar():
                                + object_class)
 
     # X.681: 10. Syntax list
-    literal = NoMatch().setName('"literal" not implemented')
+    literal = (word | comma)
     required_token = (literal | primitive_field_name)
     optional_group = (lbracket
-                      + token_or_group_spec
+                      + OneOrMore(token_or_group_spec)
                       + rbracket)
     token_or_group_spec <<= (required_token | optional_group)
     syntax_list <<= (lbrace
@@ -561,7 +560,12 @@ def create_grammar():
                            | defined_object_set
                            | object_set_from_objects
                            | parameterized_object_set)
-    object_set_spec = delimitedList(root_element_set_spec)
+    object_set_spec = ((root_element_set_spec
+                        + Optional(comma
+                                   + ellipsis
+                                   + Optional(comma
+                                              + additional_element_set_spec)))
+                       | (ellipsis + Optional(comma + additional_element_set_spec)))
     object_set <<= (lbrace + Group(object_set_spec) + rbrace)
     object_set_assignment = (object_set_reference
                              + defined_object_class
@@ -602,23 +606,23 @@ def create_grammar():
                                                   + range_separator
                                                   + qmark + word + qmark,
                                                   delim=pipe))
-    type_constraint = NoMatch().setName('"typeConstraint" not implemented')
-    size_constraint = NoMatch().setName('"sizeConstraint" not implemented')
+    type_constraint = type_
+    size_constraint = (SIZE + constraint)
     upper_end_value = (value | MAX)
     lower_end_value = (value | MIN)
     upper_endpoint = (Optional(less_than) + upper_end_value)
     lower_endpoint = (lower_end_value + Optional(less_than))
     value_range = (lower_endpoint + range_separator + upper_endpoint)
-    contained_subtype = NoMatch().setName('"containedSubtype" not implemented')
+    contained_subtype = (Optional(INCLUDES) + type_)
     single_value = value
-    subtype_elements = (contained_subtype
-                        | size_constraint
+    subtype_elements = (size_constraint
                         | permitted_alphabet
                         | value_range
-                        | type_constraint
                         | inner_type_constraints
                         | single_value
-                        | pattern_constraint)
+                        | pattern_constraint
+                        | contained_subtype
+                        | type_constraint)
 
     # X.680: 46. Element set specification
     elements = Group(subtype_elements
@@ -628,6 +632,7 @@ def create_grammar():
     unions = delimitedList(intersections, delim=pipe)
     element_set_spec <<= unions
     root_element_set_spec <<= element_set_spec
+    additional_element_set_spec <<= element_set_spec
     root_element_set_specs = root_element_set_spec
     element_set_specs = root_element_set_specs
 
@@ -894,7 +899,14 @@ def create_grammar():
     assigned_identifier = Suppress(Optional(object_identifier_value
                                             | (defined_value + ~comma)))
     global_module_reference = (module_reference + assigned_identifier)
-    symbol_list = Group(delimitedList(word))
+    reference <<= (type_reference
+                   | value_reference
+                   | object_class_reference
+                   | object_reference
+                   | object_set_reference)
+    symbol = (parameterized_reference
+              | reference)
+    symbol_list = Group(delimitedList(symbol))
     symbols_from_module = (symbol_list
                            + FROM
                            + global_module_reference)
