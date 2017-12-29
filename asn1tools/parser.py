@@ -445,7 +445,9 @@ def create_grammar():
     governor = (type_ | defined_object_class)
     param_governor = (governor | dummy_governor)
     parameter = (Optional(param_governor + colon) + dummy_reference)
-    parameter_list = Suppress(Optional(left_brace + delimitedList(parameter) + right_brace))
+    parameter_list = Suppress(Optional(left_brace
+                                       + delimitedList(parameter)
+                                       + right_brace))
 
     # X.683: 9. Referencing parameterized definitions
     parameterized_reference = (reference + Optional(left_brace + right_brace))
