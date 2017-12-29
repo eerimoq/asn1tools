@@ -55,8 +55,13 @@ def convert_size(tokens):
 
 
 def convert_table(tokens):
+    tokens = tokens[0]
+
     try:
-        defined_object_set = tokens[1][0][0]
+        if isinstance(tokens[1][0][0], list):
+            defined_object_set = tokens[1][0][0][0]
+        else:
+            defined_object_set = tokens[1][0][0]
     except IndexError:
         return None
 
@@ -168,24 +173,30 @@ def convert_type(tokens):
         }
     elif tokens[0] == 'INTEGER':
         converted_type = {'type': 'INTEGER'}
+        restricted_to = []
 
-        if '..' in tokens[1]:
-            minimum = convert_number(tokens[1][1])
-            maximum = convert_number(tokens[1][3])
-            converted_type['restricted-to'] = [(minimum, maximum)]
+        if len(tokens) > 2:
+            for constraint_tokens in tokens[2]:
+                if '..' == constraint_tokens[1]:
+                    minimum = convert_number(constraint_tokens[0])
+                    maximum = convert_number(constraint_tokens[2])
+                    restricted_to.append((minimum, maximum))
+
+            if restricted_to:
+                converted_type['restricted-to'] = restricted_to
     elif tokens[0:2] == ['ENUMERATED', '{']:
         converted_type = {
             'type': 'ENUMERATED',
             'values': convert_enum_values(tokens[2])
         }
-    elif tokens[0:2] == ['OBJECT', 'IDENTIFIER']:
+    elif tokens[0:1] == ['OBJECT IDENTIFIER']:
         converted_type = {'type': 'OBJECT IDENTIFIER'}
-    elif tokens[0:2] == ['BIT', 'STRING']:
+    elif tokens[0:1] == ['BIT STRING']:
         converted_type = {'type': 'BIT STRING',
-                          'size': convert_size(tokens[3][2:-1])}
-    elif tokens[0:2] == ['OCTET', 'STRING']:
-        converted_type = {'type': 'OCTET STRING',
                           'size': convert_size(tokens[2][2:-1])}
+    elif tokens[0:1] == ['OCTET STRING']:
+        converted_type = {'type': 'OCTET STRING',
+                          'size': convert_size(tokens[1][2:-1])}
     elif tokens[0] == 'IA5String':
         converted_type = {'type': 'IA5String'}
     elif tokens[0:3] == ['ANY', 'DEFINED', 'BY']:
@@ -216,12 +227,12 @@ def convert_type_tokens(tokens):
 
 
 def convert_value_tokens(tokens):
-    type_ = tokens[1]
+    type_ = tokens[1][0]
 
-    if type_ == ['INTEGER']:
+    if type_ == 'INTEGER':
         value_type = 'INTEGER'
         value = int(tokens[3][0])
-    elif type_ == ['OBJECT', 'IDENTIFIER']:
+    elif type_ == 'OBJECT IDENTIFIER':
         value_type = 'OBJECT IDENTIFIER'
         value = []
 
@@ -231,7 +242,7 @@ def convert_value_tokens(tokens):
             else:
                 value.append(convert_number(value_tokens[0]))
     else:
-        value_type = type_[0]
+        value_type = type_
         value = tokens[3]
 
     return {'type': value_type, 'value': value}
@@ -257,20 +268,17 @@ def convert_object_class_tokens(tokens):
 
 def convert_object_set_tokens(tokens):
     members = []
-
     for member_tokens in tokens[4]:
-        if len(member_tokens) == 1:
-            member = member_tokens[0]
+        if len(member_tokens[0]) == 1:
+            member = member_tokens[0][0]
         else:
-            member = {}
+            for item_tokens in member_tokens[0]:
+                member = {}
 
-            for item_tokens in member_tokens:
-                if len(item_tokens) == 2:
-                    name, value = item_tokens
-                else:
-                    name, value, _ = item_tokens
-
-                member[name] = convert_number(value)
+                for item_tokens in member_tokens[0]:
+                    name = item_tokens[0]
+                    value = item_tokens[1]
+                    member[name] = convert_number(value)
 
         members.append(member)
 
@@ -296,9 +304,8 @@ def create_grammar():
     SIZE = Keyword('SIZE').setName('SIZE')
     INTEGER = Keyword('INTEGER').setName('INTEGER')
     REAL = Keyword('REAL').setName('REAL')
-    BIT = Keyword('BIT').setName('BIT')
-    STRING = Keyword('STRING').setName('STRING')
-    OCTET = Keyword('OCTET').setName('OCTET')
+    BIT_STRING = Keyword('BIT STRING').setName('BIT STRING')
+    OCTET_STRING = Keyword('OCTET STRING').setName('OCTET STRING')
     DEFAULT = Keyword('DEFAULT').setName('DEFAULT')
     IMPORTS = Keyword('IMPORTS').setName('IMPORTS')
     EXPORTS = Keyword('EXPORTS').setName('EXPORTS')
@@ -306,7 +313,7 @@ def create_grammar():
     CONTAINING = Keyword('CONTAINING').setName('CONTAINING')
     IMPLICIT = Keyword('IMPLICIT').setName('IMPLICIT')
     EXPLICIT = Keyword('EXPLICIT').setName('EXPLICIT')
-    OBJECT = Keyword('OBJECT').setName('OBJECT')
+    OBJECT_IDENTIFIER = Keyword('OBJECT IDENTIFIER').setName('OBJECT IDENTIFIER')
     IDENTIFIER = Keyword('IDENTIFIER').setName('IDENTIFIER')
     APPLICATION = Keyword('APPLICATION').setName('APPLICATION')
     PRIVATE = Keyword('PRIVATE').setName('PRIVATE')
@@ -329,6 +336,8 @@ def create_grammar():
     PRESENT = Keyword('PRESENT').setName('PRESENT')
     ABSENT = Keyword('ABSENT').setName('ABSENT')
     ALL = Keyword('ALL').setName('ALL')
+    MIN = Keyword('MIN').setName('MIN')
+    MAX = Keyword('MAX').setName('MAX')
 
     # Various literals.
     word = Word(printables, excludeChars=',(){}[].:=;"|').setName('word')
@@ -359,6 +368,7 @@ def create_grammar():
     cstring = NoMatch().setName('"cstring" not implemented')
     number = word
     ampersand = Literal('&')
+    less_than = Literal('<')
 
     # Forward declarations.
     value = Forward()
@@ -378,6 +388,7 @@ def create_grammar():
     syntax_list = Forward()
     object_from_object = Forward()
     object_set_from_objects = Forward()
+    defined_value = Forward()
 
     value_field_reference = Combine(ampersand + value_reference)
     type_field_reference = Combine(ampersand + type_reference)
@@ -538,7 +549,7 @@ def create_grammar():
                  | object_from_object
                  | parameterized_object)
     object_assignment = (object_reference
-                         + defined_object_class
+                         + Group(defined_object_class)
                          + assign
                          + object_)
 
@@ -590,7 +601,11 @@ def create_grammar():
                                                   delim=pipe))
     type_constraint = NoMatch().setName('"typeConstraint" not implemented')
     size_constraint = NoMatch().setName('"sizeConstraint" not implemented')
-    value_range = NoMatch().setName('"valueRange" not implemented')
+    upper_end_value = (value | MAX)
+    lower_end_value = (value | MIN)
+    upper_endpoint = (Optional(less_than) + upper_end_value)
+    lower_endpoint = (lower_end_value + Optional(less_than))
+    value_range = (lower_endpoint + range_separator + upper_endpoint)
     contained_subtype = NoMatch().setName('"containedSubtype" not implemented')
     single_value = value
     subtype_elements = (contained_subtype
@@ -603,9 +618,9 @@ def create_grammar():
                         | pattern_constraint)
 
     # X.680: 46. Element set specification
-    elements = (subtype_elements
-                | object_set_elements
-                | (lparen + element_set_spec + rparen))
+    elements = Group(subtype_elements
+                     | object_set_elements
+                     | (lparen + element_set_spec + rparen))
     intersections = elements
     unions = delimitedList(intersections, delim=pipe)
     element_set_spec <<= unions
@@ -664,7 +679,7 @@ def create_grammar():
     # X.680: 32. Notation for relative object identifier type
 
     # X.680: 31. Notation for object identifier type
-    object_identifier_type = (OBJECT - IDENTIFIER
+    object_identifier_type = (OBJECT_IDENTIFIER
                               + Optional(lparen
                                          + delimitedList(word, delim='|')
                                          + rparen))
@@ -764,21 +779,20 @@ def create_grammar():
     null_type = NULL
 
     # X.680: 22. Notation for the octetstring type
-    octet_string_type = (OCTET - STRING
+    octet_string_type = (OCTET_STRING
                          + Group(Optional(Suppress(lparen)
                                           + (size | (CONTAINING + word))
                                           + Suppress(rparen))))
     octet_string_type.setName('OCTET STRING')
 
     # X.680: 21. Notation for the bitstring type
-    bit_string_type = (BIT - STRING
-                       + Group(Optional((lbrace
-                                         + Group(delimitedList(word
-                                                               + lparen
-                                                               + word
-                                                               + rparen))
-                                         + rbrace)))
-                         + Group(Optional(constraint)))
+    bit_string_type = (BIT_STRING
+                       + Group(Optional(lbrace
+                                        + Group(delimitedList(word
+                                                              + lparen
+                                                              + word
+                                                              + rparen))
+                                        + rbrace)))
     bit_string_type.setName('BIT STRING')
     bit_string_value = (bstring
                         | hstring
@@ -807,19 +821,16 @@ def create_grammar():
     enumerated_type.setName('ENUMERATED')
 
     # X.680: 18. Notation for the integer type
+    signed_number = number
+    named_number = (identifier
+                    + lparen
+                    + (signed_number | defined_value)
+                    + rparen)
+    named_number_list = delimitedList(named_number)
     integer_type = (INTEGER
-                    + Group(Optional((lparen
-                                      + delimitedList(range_ | word, delim=pipe)
-                                      + rparen)
-                                     | (lbrace
-                                        + Group(delimitedList(word
-                                                              + lparen
-                                                              + word
-                                                              + rparen))
-                                        + rbrace)))
-                    + Optional(lparen
-                               + range_
-                               + rparen))
+                    + Group(Optional(lbrace
+                                     + named_number_list
+                                     + rbrace)))
     integer_type.setName('INTEGER')
 
     # X.680: 17. Notation for boolean type
@@ -858,7 +869,7 @@ def create_grammar():
     type_ <<= ((builtin_type
                 | any_defined_by_type
                 | referenced_type)
-               + Optional(constraint))
+               + Group(Optional(constraint)))
 
     # X.680: 15. Assigning types and values
     type_reference <<= (NotAny(END) + Regex(r'[A-Z][a-zA-Z0-9-]*'))
@@ -877,7 +888,7 @@ def create_grammar():
     # X.680: 14. Notation to support references to ASN.1 components
 
     # X.680: 13. Referencing type and value definitions
-    defined_value = value_reference
+    defined_value <<= value_reference
 
     # X.680: 12. Module definition
     module_reference = word
