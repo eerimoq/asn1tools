@@ -176,8 +176,11 @@ class Asn1ToolsParseTest(unittest.TestCase):
             "BEGIN  A ::= SEQUENCE { >!<A } END': Expected \"}\".")
 
     def test_parse_imports_global_module_reference(self):
-        asn1tools.parse_string('A DEFINITIONS ::= BEGIN'
-                               ' IMPORTS a FROM B global-module-reference; '
+        asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
+                               'IMPORTS '
+                               'a FROM B '
+                               'c, d FROM E global-module-reference '
+                               'f, g FROM H {iso(1)}; '
                                'END')
 
 

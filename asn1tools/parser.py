@@ -847,7 +847,7 @@ def create_grammar():
     defined_value = value_reference
 
     assigned_identifier = Suppress(Optional(object_identifier_value
-                                            | defined_value))
+                                            | (defined_value + ~comma)))
 
     global_module_reference = (module_reference + assigned_identifier)
 
@@ -859,15 +859,15 @@ def create_grammar():
 
     symbols_imported = OneOrMore(Group(symbols_from_module))
 
+    imports = Group(Optional(IMPORTS
+                             - symbols_imported
+                             - scolon))
+
     symbols_exported = OneOrMore(symbol_list)
 
     exports = Suppress(Group(Optional(EXPORTS
                                       - (ALL
                                          | (symbols_exported + scolon)))))
-
-    imports = Group(Optional(IMPORTS
-                             - symbols_imported
-                             - scolon))
 
     assignment_list = Group(ZeroOrMore(assignment))
 
