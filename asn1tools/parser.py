@@ -332,9 +332,7 @@ def create_grammar():
 
     # Various literals.
     word = Word(printables, excludeChars=',(){}[].:=;"|').setName('word')
-    type_reference = (NotAny(END) + Regex(r'[A-Z][a-zA-Z0-9-]*')).setName('typereference')
     identifier = Regex(r'[a-z][a-zA-Z0-9-]*').setName('identifier')
-    value_reference = Regex(r'[a-z][a-zA-Z0-9-]*').setName('valuereference')
     value_name = Word(alphanums + '-')
     assign = Literal('::=').setName('::=')
     lparen = Literal('(')
@@ -361,8 +359,6 @@ def create_grammar():
     cstring = NoMatch().setName('"cstring" not implemented')
     number = word
     ampersand = Literal('&')
-    value_field_reference = Combine(ampersand + value_reference)
-    type_field_reference = Combine(ampersand + type_reference)
 
     # Forward declarations.
     object_class_field_type = Forward().setName('ObjectClassField')
@@ -380,13 +376,26 @@ def create_grammar():
     object_identifier_type = Forward().setName('OBJECT IDENTIFIER')
     boolean_type = Forward().setName('BOOLEAN')
     any_defined_by_type = Forward().setName('ANY DEFINED BY')
-
     bit_string_value = Forward()
     boolean_value = Forward()
     character_string_value = Forward()
     choice_value = Forward()
     value = Forward()
     type_ = Forward()
+    object_ = Forward()
+    object_set = Forward()
+    primitive_field_name = Forward()
+    constraint = Forward()
+    element_set_spec = Forward()
+    token_or_group_spec = Forward()
+    value_reference = Forward().setName('valuereference')
+    type_reference = Forward().setName('typereference')
+    value_set = Forward().setName('"valueSet" not implemented')
+    named_type = Forward()
+    root_element_set_spec = Forward()
+
+    value_field_reference = Combine(ampersand + value_reference)
+    type_field_reference = Combine(ampersand + type_reference)
 
     range_ = (word + range_separator + word)
 
@@ -399,19 +408,9 @@ def create_grammar():
                   + size
                   + Suppress(Optional(rparen)))
 
-    elements = Forward()
-
-    intersections = elements
-
-    unions = delimitedList(intersections, delim=pipe)
-
     object_set_reference = type_reference
-    object_ = Forward()
-    object_set = Forward()
     defined_object = NoMatch().setName('"definedObject" not implemented')
-    value_set = NoMatch().setName('"valueSet" not implemented')
     setting = (type_ | value | value_set | object_ | object_set | QuotedString('"'))
-    primitive_field_name = Forward()
     field_setting =  Group(primitive_field_name + setting)
     default_syntax = (Suppress(lbrace)
                       + delimitedList(field_setting)
@@ -443,59 +442,6 @@ def create_grammar():
                            | object_set_from_objects
                            | parameterized_object_set)
 
-    single_value = value
-    contained_subtype = NoMatch().setName('"containedSubtype" not implemented')
-    value_range = NoMatch().setName('"valueRange" not implemented')
-
-    permitted_alphabet = Suppress(FROM
-                                  + delimitedList(qmark + word + qmark
-                                                  + range_separator
-                                                  + qmark + word + qmark,
-                                                  delim=pipe))
-
-    constraint = Forward()
-
-    value_constraint = constraint
-    presence_constraint = (PRESENT | ABSENT | OPTIONAL)
-    component_constraint = Optional(value_constraint | presence_constraint)
-    named_constraint = (identifier + component_constraint)
-    type_constraints = delimitedList(named_constraint)
-    full_specification = (lbrace + type_constraints + rbrace)
-    partial_specification = (lbrace + ellipsis + comma + type_constraints + rbrace)
-
-    single_type_constraint = constraint
-    multiple_type_constraints = (full_specification | partial_specification)
-
-    size_constraint = NoMatch().setName('"sizeConstraint" not implemented')
-    type_constraint = NoMatch().setName('"typeConstraint" not implemented')
-    inner_type_constraints = ((WITH + COMPONENT + single_type_constraint)
-                              | (WITH + COMPONENTS + multiple_type_constraints))
-    pattern_constraint = NoMatch().setName('"patternConstraint" not implemented')
-
-    subtype_elements = (contained_subtype
-                        | size_constraint
-                        | permitted_alphabet
-                        | value_range
-                        | type_constraint
-                        | inner_type_constraints
-                        | single_value
-                        | pattern_constraint)
-
-    element_set_spec = Forward()
-
-    elements <<= (subtype_elements
-                  | object_set_elements
-                  | (lparen + element_set_spec + rparen))
-
-    element_set_spec <<= unions
-
-    root_element_set_spec = element_set_spec
-
-    root_element_set_specs = root_element_set_spec
-
-    element_set_specs = root_element_set_specs
-
-    subtype_constraint = element_set_specs
 
     user_defined_constraint = NoMatch().setName('"userDefinedConstraint" not implemented')
 
@@ -524,37 +470,6 @@ def create_grammar():
     general_constraint = (user_defined_constraint
                           | table_constraint
                           | contents_constraint)
-
-    constraint_spec = (size
-                       | general_constraint
-                       | subtype_constraint)
-
-    constraint <<= (Suppress(lparen)
-                    + constraint_spec
-                    + Suppress(rparen))
-
-    builtin_type = (choice_type
-                    | integer_type
-                    | null_type
-                    | real_type
-                    | bit_string_type
-                    | octet_string_type
-                    | enumerated_type
-                    | sequence_of_type
-                    | sequence_type
-                    | object_class_field_type
-                    | set_of_type
-                    | set_type
-                    | object_identifier_type
-                    | boolean_type)
-
-    referenced_type = type_reference
-    referenced_type.setName('ReferencedType')
-
-    type_ <<= ((builtin_type
-                | any_defined_by_type
-                | referenced_type)
-               + Optional(constraint))
 
     tag = Group(Optional(Suppress(lbracket)
                          + Group(Optional(APPLICATION | PRIVATE) + word)
@@ -602,8 +517,6 @@ def create_grammar():
 
     required_token = (literal | primitive_field_name)
 
-    token_or_group_spec = Forward()
-
     optional_group = (lbracket
                       + token_or_group_spec
                       + rbracket)
@@ -639,155 +552,7 @@ def create_grammar():
                                         + dot
                                         + field_name)
 
-    named_type = Group(identifier
-                       - tag
-                       - type_)
-    component_type = Group(named_type
-                           + Group(Optional(OPTIONAL
-                                            | (DEFAULT + value)))
-                           | (COMPONENTS + OF + type_))
-
-    version_number = (number + Suppress(colon))
-
-    extension_addition_group = (Suppress(left_version_brackets)
-                                + Suppress(Group(Optional(version_number)))
-                                + delimitedList(component_type)
-                                + Suppress(right_version_brackets))
-
-    exception_spec = NoMatch().setName('"exceptionSpec" not implemented')
-
-    extension_and_exception = (ellipsis + Optional(exception_spec))
-
-    extension_addition = (component_type | extension_addition_group)
-
-    extension_addition_list = delimitedList(extension_addition)
-
-    extension_additions = Optional(Suppress(comma) + extension_addition_list)
-
-    extension_end_marker = (Suppress(comma) + ellipsis)
-
-    optional_extension_marker = Optional(Suppress(comma) + ellipsis)
-
-    component_type_list = delimitedList(component_type)
-    root_component_type_list = component_type_list
-    component_type_lists = ((root_component_type_list
-                             + Optional(Suppress(comma)
-                                        + extension_and_exception
-                                        + extension_additions
-                                        + ((extension_end_marker
-                                            + Suppress(comma)
-                                            + root_component_type_list)
-                                           | optional_extension_marker)))
-                            | (extension_and_exception
-                               + extension_additions
-                               + ((extension_end_marker
-                                   + Suppress(comma)
-                                   + root_component_type_list)
-                                  | optional_extension_marker)))
-
-    sequence_type <<= (SEQUENCE
-                       - lbrace
-                       + Group(Optional(component_type_lists
-                                        | (extension_and_exception
-                                           + optional_extension_marker)))
-                       - rbrace)
-
-    sequence_of_type <<= (SEQUENCE
-                          + Group(Optional(size_paren))
-                          + OF
-                          + Optional(Suppress(identifier))
-                          - tag
-                          - type_)
-
-    set_of_type <<= (SET
-                     + Group(Optional(size))
-                     + OF
-                     + Optional(Suppress(identifier))
-                     - tag
-                     - type_)
-
-    set_type <<= (SET
-                  - lbrace
-                  + Group(Optional(delimitedList(
-                      Group(Group(identifier
-                                  - tag
-                                  - type_)
-                            + Group(Optional(OPTIONAL)
-                                    + Optional(DEFAULT + word))
-                            | ellipsis))))
-                  - rbrace)
-
-    choice_type <<= (CHOICE
-                     - lbrace
-                     + Group(Optional(delimitedList(
-                         Group(Group(identifier
-                                     - tag
-                                     - type_)
-                               + Group(Optional(OPTIONAL)
-                                       + Optional(DEFAULT + word))
-                               | ellipsis))))
-                     - rbrace)
-
-    enumerated_type <<= (ENUMERATED
-                         - lbrace
-                         + Group(delimitedList(Group((word
-                                                      + Optional(Suppress(lparen)
-                                                                 + word
-                                                                 + Suppress(rparen)))
-                                                     | ellipsis)))
-                         - rbrace)
-
-    integer_type <<= (INTEGER
-                      + Group(Optional((lparen
-                                        + delimitedList(range_ | word, delim=pipe)
-                                        + rparen)
-                                       | (lbrace
-                                          + Group(delimitedList(word
-                                                                + lparen
-                                                                + word
-                                                                + rparen))
-                                          + rbrace)))
-                      + Optional(lparen
-                                 + range_
-                                 + rparen))
-
-    null_type <<= NULL
-
-    real_type <<= (REAL
-                   + Optional(lparen
-                              + ((integer + dot + range_separator)
-                                 | (integer + range_separator)
-                                 | (real_number + range_separator))
-                              + real_number
-                              + rparen))
-
-    bit_string_type <<= (BIT - STRING
-                         + Group(Optional((lbrace
-                                           + Group(delimitedList(word
-                                                                 + lparen
-                                                                 + word
-                                                                 + rparen))
-                                           + rbrace)))
-                         + Group(Optional(constraint)))
-
-    octet_string_type <<= (OCTET - STRING
-                           + Group(Optional(Suppress(lparen)
-                                            + (size | (CONTAINING + word))
-                                            + Suppress(rparen))))
-
-    object_identifier_type <<= (OBJECT - IDENTIFIER
-                                + Optional(lparen
-                                           + delimitedList(word, delim='|')
-                                           + rparen))
-
-    boolean_type <<= BOOLEAN
-
     any_defined_by_type <<= (ANY + DEFINED + BY + word)
-
-    type_assignment = (type_reference
-                       - assign
-                       - tag
-                       - type_)
 
     oid = (Suppress(lbrace)
            + ZeroOrMore(Group((value_name
@@ -799,63 +564,7 @@ def create_grammar():
 
     identifier_list = delimitedList(identifier)
 
-    builtin_value = (bit_string_value
-                     | boolean_value
-                     | character_string_value
-                     | choice_value
-                     | word)
-
     object_class_field_value = oid
-
-    referenced_value = NoMatch().setName('"referencedValue" not implemented')
-
-    value <<= Group(object_class_field_value
-                    | referenced_value
-                    | builtin_value)
-
-    bit_string_value <<= (bstring
-                          | hstring
-                          | (lbrace + Optional(identifier_list) + rbrace)
-                          | (CONTAINING - value))
-
-    boolean_value <<= (TRUE | FALSE)
-
-    charsyms = NoMatch().setName('"charsyms" not implemented')
-
-    character_string_list = (lbrace + charsyms + rbrace)
-
-    group = number
-    plane = number
-    row = number
-    cell = number
-    quadruple = (lbrace
-                 + group + comma
-                 + plane + comma
-                 + row + comma +
-                 cell
-                 + rbrace)
-
-    table_column = number
-    table_row = number
-    tuple_ = (lbrace + table_column + comma + table_row + rbrace)
-
-    restricted_character_string_value = (cstring
-                                         | character_string_list
-                                         | quadruple
-                                         | tuple_)
-
-    unrestricted_character_string_value = NoMatch().setName('"unrestrictedCharacterStringValue" not implemented')
-
-    character_string_value <<= (restricted_character_string_value
-                                | unrestricted_character_string_value)
-
-    choice_value <<= (identifier + colon + value)
-
-    value_assignment = (value_reference
-                        - Group(INTEGER
-                                | type_)
-                        - assign
-                        - value)
 
     object_reference = value_reference
 
@@ -873,53 +582,336 @@ def create_grammar():
                                + assign
                                + object_class)
 
+    # X.680: 49. The exception identifier
+    exception_spec = NoMatch().setName('"exceptionSpec" not implemented')
+
+    # X.680: 47. Subtype elements
+    pattern_constraint = NoMatch().setName('"patternConstraint" not implemented')
+    value_constraint = constraint
+    presence_constraint = (PRESENT | ABSENT | OPTIONAL)
+    component_constraint = Optional(value_constraint | presence_constraint)
+    named_constraint = (identifier + component_constraint)
+    type_constraints = delimitedList(named_constraint)
+    full_specification = (lbrace + type_constraints + rbrace)
+    partial_specification = (lbrace + ellipsis + comma + type_constraints + rbrace)
+    single_type_constraint = constraint
+    multiple_type_constraints = (full_specification | partial_specification)
+    inner_type_constraints = ((WITH + COMPONENT + single_type_constraint)
+                              | (WITH + COMPONENTS + multiple_type_constraints))
+    permitted_alphabet = Suppress(FROM
+                                  + delimitedList(qmark + word + qmark
+                                                  + range_separator
+                                                  + qmark + word + qmark,
+                                                  delim=pipe))
+    type_constraint = NoMatch().setName('"typeConstraint" not implemented')
+    size_constraint = NoMatch().setName('"sizeConstraint" not implemented')
+    value_range = NoMatch().setName('"valueRange" not implemented')
+    contained_subtype = NoMatch().setName('"containedSubtype" not implemented')
+    single_value = value
+    subtype_elements = (contained_subtype
+                        | size_constraint
+                        | permitted_alphabet
+                        | value_range
+                        | type_constraint
+                        | inner_type_constraints
+                        | single_value
+                        | pattern_constraint)
+
+    # X.680: 46. Element set specification
+    elements = (subtype_elements
+                | object_set_elements
+                | (lparen + element_set_spec + rparen))
+    intersections = elements
+    unions = delimitedList(intersections, delim=pipe)
+    element_set_spec <<= unions
+    root_element_set_spec <<= element_set_spec
+    root_element_set_specs = root_element_set_spec
+    element_set_specs = root_element_set_specs
+
+    # X.680: 45. Constrained types
+    subtype_constraint = element_set_specs
+    constraint_spec = (size
+                       | general_constraint
+                       | subtype_constraint)
+    constraint <<= (Suppress(lparen)
+                    + constraint_spec
+                    + Suppress(rparen))
+
+    # X.680: 40. Definition of unrestricted character string types
+    unrestricted_character_string_value = NoMatch().setName(
+        '"unrestrictedCharacterStringValue" not implemented')
+
+    # X.680: 39. Canonical order of characters
+
+    # X.680: 38. Specification of the ASN.1 module "ASN.1-CHARACTER-MODULE"
+
+    # X.680: 37. Definition of restricted character string types
+    group = number
+    plane = number
+    row = number
+    cell = number
+    quadruple = (lbrace
+                 + group + comma
+                 + plane + comma
+                 + row + comma +
+                 cell
+                 + rbrace)
+    table_column = number
+    table_row = number
+    tuple_ = (lbrace + table_column + comma + table_row + rbrace)
+    charsyms = NoMatch().setName('"charsyms" not implemented')
+    character_string_list = (lbrace + charsyms + rbrace)
+    restricted_character_string_value = (cstring
+                                         | character_string_list
+                                         | quadruple
+                                         | tuple_)
+
+    # X.680: 36. Notation for character string types
+    character_string_value <<= (restricted_character_string_value
+                                | unrestricted_character_string_value)
+
+    # X.680: 35. The character string types
+
+    # X.680: 34. Notation for the external type
+
+    # X.680: 33. Notation for embedded-pdv type
+
+    # X.680: 32. Notation for relative object identifier type
+
+    # X.680: 31. Notation for object identifier type
+    object_identifier_type <<= (OBJECT - IDENTIFIER
+                                + Optional(lparen
+                                           + delimitedList(word, delim='|')
+                                           + rparen))
+    object_identifier_value = oid
+
+    # X.680: 30. Notation for tagged types
+
+    # X.680: 29. Notation for selection types
+
+    # X.680: 28. Notation for the choice types
+    choice_type <<= (CHOICE
+                     - lbrace
+                     + Group(Optional(delimitedList(
+                         Group(Group(identifier
+                                     - tag
+                                     - type_)
+                               + Group(Optional(OPTIONAL)
+                                       + Optional(DEFAULT + word))
+                               | ellipsis))))
+                     - rbrace)
+    choice_value <<= (identifier + colon + value)
+
+    # X.680: 27. Notation for the set-of types
+    set_of_type <<= (SET
+                     + Group(Optional(size))
+                     + OF
+                     + Optional(Suppress(identifier))
+                     - tag
+                     - type_)
+
+    # X.680: 26. Notation for the set types
+    set_type <<= (SET
+                  - lbrace
+                  + Group(Optional(delimitedList(
+                      Group(Group(identifier
+                                  - tag
+                                  - type_)
+                            + Group(Optional(OPTIONAL)
+                                    + Optional(DEFAULT + word))
+                            | ellipsis))))
+                  - rbrace)
+
+    # X.680: 25. Notation for the sequence-of types
+    sequence_of_type <<= (SEQUENCE
+                          + Group(Optional(size_paren))
+                          + OF
+                          + Optional(Suppress(identifier))
+                          - tag
+                          - type_)
+
+    # X.680: 24. Notation for the sequence types
+    component_type = Group(named_type
+                           + Group(Optional(OPTIONAL
+                                            | (DEFAULT + value)))
+                           | (COMPONENTS + OF + type_))
+    version_number = (number + Suppress(colon))
+    extension_addition_group = (Suppress(left_version_brackets)
+                                + Suppress(Group(Optional(version_number)))
+                                + delimitedList(component_type)
+                                + Suppress(right_version_brackets))
+    extension_and_exception = (ellipsis + Optional(exception_spec))
+    extension_addition = (component_type | extension_addition_group)
+    extension_addition_list = delimitedList(extension_addition)
+    extension_additions = Optional(Suppress(comma) + extension_addition_list)
+    extension_end_marker = (Suppress(comma) + ellipsis)
+    optional_extension_marker = Optional(Suppress(comma) + ellipsis)
+    component_type_list = delimitedList(component_type)
+    root_component_type_list = component_type_list
+    component_type_lists = ((root_component_type_list
+                             + Optional(Suppress(comma)
+                                        + extension_and_exception
+                                        + extension_additions
+                                        + ((extension_end_marker
+                                            + Suppress(comma)
+                                            + root_component_type_list)
+                                           | optional_extension_marker)))
+                            | (extension_and_exception
+                               + extension_additions
+                               + ((extension_end_marker
+                                   + Suppress(comma)
+                                   + root_component_type_list)
+                                  | optional_extension_marker)))
+    sequence_type <<= (SEQUENCE
+                       - lbrace
+                       + Group(Optional(component_type_lists
+                                        | (extension_and_exception
+                                           + optional_extension_marker)))
+                       - rbrace)
+
+    # X.680: 23. Notation for the null type
+    null_type <<= NULL
+
+    # X.680: 22. Notation for the octetstring type
+    octet_string_type <<= (OCTET - STRING
+                           + Group(Optional(Suppress(lparen)
+                                            + (size | (CONTAINING + word))
+                                            + Suppress(rparen))))
+
+    # X.680: 21. Notation for the bitstring type
+    bit_string_type <<= (BIT - STRING
+                         + Group(Optional((lbrace
+                                           + Group(delimitedList(word
+                                                                 + lparen
+                                                                 + word
+                                                                 + rparen))
+                                           + rbrace)))
+                         + Group(Optional(constraint)))
+    bit_string_value <<= (bstring
+                          | hstring
+                          | (lbrace + Optional(identifier_list) + rbrace)
+                          | (CONTAINING - value))
+
+    # X.680: 20. Notation for the real type
+    real_type <<= (REAL
+                   + Optional(lparen
+                              + ((integer + dot + range_separator)
+                                 | (integer + range_separator)
+                                 | (real_number + range_separator))
+                              + real_number
+                              + rparen))
+
+    # X.680: 19. Notation for the enumerated type
+    enumerated_type <<= (ENUMERATED
+                         - lbrace
+                         + Group(delimitedList(Group((word
+                                                      + Optional(Suppress(lparen)
+                                                                 + word
+                                                                 + Suppress(rparen)))
+                                                     | ellipsis)))
+                         - rbrace)
+
+
+    # X.680: 18. Notation for the integer type
+    integer_type <<= (INTEGER
+                      + Group(Optional((lparen
+                                        + delimitedList(range_ | word, delim=pipe)
+                                        + rparen)
+                                       | (lbrace
+                                          + Group(delimitedList(word
+                                                                + lparen
+                                                                + word
+                                                                + rparen))
+                                          + rbrace)))
+                      + Optional(lparen
+                                 + range_
+                                 + rparen))
+
+    # X.680: 17. Notation for boolean type
+    boolean_type <<= BOOLEAN
+    boolean_value <<= (TRUE | FALSE)
+
+    # X.680: 16. Definition of types and values
+    referenced_value = NoMatch().setName('"referencedValue" not implemented')
+    builtin_value = (bit_string_value
+                     | boolean_value
+                     | character_string_value
+                     | choice_value
+                     | word)
+    value <<= Group(object_class_field_value
+                    | referenced_value
+                    | builtin_value)
+    named_type <<= Group(identifier
+                         - tag
+                         - type_)
+    referenced_type = type_reference
+    referenced_type.setName('ReferencedType')
+    builtin_type = (choice_type
+                    | integer_type
+                    | null_type
+                    | real_type
+                    | bit_string_type
+                    | octet_string_type
+                    | enumerated_type
+                    | sequence_of_type
+                    | sequence_type
+                    | object_class_field_type
+                    | set_of_type
+                    | set_type
+                    | object_identifier_type
+                    | boolean_type)
+    type_ <<= ((builtin_type
+                | any_defined_by_type
+                | referenced_type)
+               + Optional(constraint))
+
+    # X.680: 15. Assigning types and values
+    type_reference <<= (NotAny(END) + Regex(r'[A-Z][a-zA-Z0-9-]*'))
+    value_reference <<= Regex(r'[a-z][a-zA-Z0-9-]*')
+    value_set <<= NoMatch().setName('"valueSet" not implemented')
+    type_assignment = (type_reference
+                       - assign
+                       - tag
+                       - type_)
+    value_assignment = (value_reference
+                        - Group(INTEGER
+                                | type_)
+                        - assign
+                        - value)
+
+    # X.680: 14. Notation to support references to ASN.1 components
+
+    # X.680: 13. Referencing type and value definitions
+    defined_value = value_reference
+
+    # X.680: 12. Module definition
+    module_reference = word
+    assigned_identifier = Suppress(Optional(object_identifier_value
+                                            | (defined_value + ~comma)))
+    global_module_reference = (module_reference + assigned_identifier)
+    symbol_list = Group(delimitedList(word))
+    symbols_from_module = (symbol_list
+                           + FROM
+                           + global_module_reference)
+    symbols_imported = OneOrMore(Group(symbols_from_module))
+    imports = Group(Optional(IMPORTS
+                             - symbols_imported
+                             - scolon))
+    symbols_exported = OneOrMore(symbol_list)
+    exports = Suppress(Group(Optional(EXPORTS
+                                      - (ALL
+                                         | (symbols_exported + scolon)))))
     assignment = Group(object_set_assignment
                        | object_assignment
                        | object_class_assignment
                        | type_assignment
                        | value_assignment)
-
-    module_reference = word
-
-    object_identifier_value = oid
-
-    defined_value = value_reference
-
-    assigned_identifier = Suppress(Optional(object_identifier_value
-                                            | (defined_value + ~comma)))
-
-    global_module_reference = (module_reference + assigned_identifier)
-
-    symbol_list = Group(delimitedList(word))
-
-    symbols_from_module = (symbol_list
-                           + FROM
-                           + global_module_reference)
-
-    symbols_imported = OneOrMore(Group(symbols_from_module))
-
-    imports = Group(Optional(IMPORTS
-                             - symbols_imported
-                             - scolon))
-
-    symbols_exported = OneOrMore(symbol_list)
-
-    exports = Suppress(Group(Optional(EXPORTS
-                                      - (ALL
-                                         | (symbols_exported + scolon)))))
-
     assignment_list = Group(ZeroOrMore(assignment))
-
     module_body = (exports + imports + assignment_list)
-
     definitive_identification = Group(Optional(oid))
-
     module_identifier = (module_reference + definitive_identification)
-
     tag_default = Group(Optional((AUTOMATIC | EXPLICIT | IMPLICIT) + TAGS))
-
     extension_default = Group(Optional(EXTENSIBILITY + IMPLIED))
-
     module_definition = Group(Group(module_identifier
                                     - DEFINITIONS
                                     + tag_default
