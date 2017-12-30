@@ -46,11 +46,19 @@ def convert_number(token):
 def convert_size(tokens):
     if len(tokens) == 0:
         return None
-    elif '..' in tokens:
+
+    tokens = tokens[0]
+
+    if tokens[0] != 'SIZE':
+        return None
+
+    tokens = tokens[1]
+
+    if '..' in tokens:
         return [(convert_number(tokens[0]),
                  convert_number(tokens[2]))]
     else:
-        return [int(tokens[0])]
+        return [convert_number(token) for token in tokens]
 
 
 def convert_table(tokens):
@@ -142,7 +150,7 @@ def convert_type(tokens):
         converted_type = {
             'type': 'SEQUENCE OF',
             'element': convert_type(tokens[4:]),
-            'size': convert_size(tokens[1][2:-1])
+            'size': convert_size(tokens[1])
         }
 
         tag = convert_tag(tokens[3])
@@ -158,7 +166,7 @@ def convert_type(tokens):
         converted_type = {
             'type': 'SET OF',
             'element': convert_type(tokens[4:]),
-            'size': convert_size(tokens[1][2:-1])
+            'size': convert_size(tokens[1])
         }
 
         tag = convert_tag(tokens[3])
@@ -176,10 +184,12 @@ def convert_type(tokens):
 
         if len(tokens) > 2:
             for constraint_tokens in tokens[2]:
-                if '..' == constraint_tokens[1]:
+                if '..' in constraint_tokens:
                     minimum = convert_number(constraint_tokens[0])
                     maximum = convert_number(constraint_tokens[2])
                     restricted_to.append((minimum, maximum))
+                elif len(constraint_tokens) == 1:
+                    restricted_to.append(convert_number(constraint_tokens[0]))
 
             if restricted_to:
                 converted_type['restricted-to'] = restricted_to
@@ -192,10 +202,10 @@ def convert_type(tokens):
         converted_type = {'type': 'OBJECT IDENTIFIER'}
     elif tokens[0:1] == ['BIT STRING']:
         converted_type = {'type': 'BIT STRING',
-                          'size': convert_size(tokens[2][2:-1])}
+                          'size': convert_size(tokens[2])}
     elif tokens[0:1] == ['OCTET STRING']:
         converted_type = {'type': 'OCTET STRING',
-                          'size': convert_size(tokens[1][2:-1])}
+                          'size': convert_size(tokens[1])}
     elif tokens[0] == 'IA5String':
         converted_type = {'type': 'IA5String'}
     elif tokens[0] == 'ANY DEFINED BY':
@@ -335,6 +345,8 @@ def create_grammar():
     MIN = Keyword('MIN').setName('MIN')
     MAX = Keyword('MAX').setName('MAX')
     INCLUDES = Keyword('INCLUDES').setName('INCLUDES')
+    PATTERN = Keyword('PATTERN').setName('PATTERN')
+    CONSTRAINED_BY = Keyword('CONSTRAINED BY').setName('CONSTRAINED BY')
 
     # Various literals.
     word = Word(printables, excludeChars=',(){}[].:=;"|').setName('word')
@@ -411,10 +423,10 @@ def create_grammar():
 
     range_ = (word + range_separator + word)
 
-    size = (SIZE
-            + left_parenthesis
-            + delimitedList(range_ | word, delim=pipe)
-            + right_parenthesis)
+    size = Group(SIZE
+                 + Group(Suppress(left_parenthesis)
+                         + delimitedList(range_ | word, delim=pipe)
+                         + Suppress(right_parenthesis)))
 
     size_paren = (Suppress(Optional(left_parenthesis))
                   + size
@@ -485,7 +497,18 @@ def create_grammar():
                         | simple_table_constraint)
 
     # X.682: 9. User-defined constants
-    user_defined_constraint = NoMatch().setName('"userDefinedConstraint" not implemented')
+    user_defined_constraint_parameter = ((governor
+                                          + colon
+                                          + (value
+                                             | value_set
+                                             | object_
+                                             | object_set))
+                                         | type_
+                                         | defined_object_class)
+    user_defined_constraint = (CONSTRAINED_BY
+                               - left_brace
+                               - Optional(delimitedList(user_defined_constraint_parameter))
+                               - right_brace)
 
     # X.682: 8. General constraint specification
     general_constraint = (user_defined_constraint
@@ -616,7 +639,7 @@ def create_grammar():
     exception_spec = NoMatch().setName('"exceptionSpec" not implemented')
 
     # X.680: 47. Subtype elements
-    pattern_constraint = NoMatch().setName('"patternConstraint" not implemented')
+    pattern_constraint = (PATTERN + value)
     value_constraint = constraint
     presence_constraint = (PRESENT | ABSENT | OPTIONAL)
     component_constraint = Optional(value_constraint | presence_constraint)
@@ -660,13 +683,15 @@ def create_grammar():
     element_set_spec <<= unions
     root_element_set_spec <<= element_set_spec
     additional_element_set_spec <<= element_set_spec
-    root_element_set_specs = root_element_set_spec
-    element_set_specs = root_element_set_specs
+    element_set_specs = (root_element_set_spec
+                         + Optional(Suppress(comma
+                                             + ellipsis)
+                                    + Optional(Suppress(comma)
+                                               + additional_element_set_spec)))
 
     # X.680: 45. Constrained types
     subtype_constraint = element_set_specs
-    constraint_spec = (size
-                       | general_constraint
+    constraint_spec = (general_constraint
                        | subtype_constraint)
     constraint <<= (Suppress(left_parenthesis)
                     - constraint_spec
@@ -849,10 +874,7 @@ def create_grammar():
     octet_string_value = (bstring
                           | hstring
                           | (CONTAINING + value))
-    octet_string_type = (OCTET_STRING
-                         + Group(Optional(Suppress(left_parenthesis)
-                                          + (size | (CONTAINING + word))
-                                          + Suppress(right_parenthesis))))
+    octet_string_type = OCTET_STRING
     octet_string_type.setName('OCTET STRING')
 
     # X.680: 21. Notation for the bitstring type
