@@ -408,7 +408,7 @@ def create_grammar():
     real_number = Regex(r'[+-]?\d+\.?\d*([eE][+-]?\d+)?')
     bstring = Regex(r"'[01\s]*'B")
     hstring = Regex(r"'[0-9A-F\s]*'H")
-    cstring = NoMatch().setName('"cstring" not implemented')
+    cstring = QuotedString('"')
     number = word
     ampersand = Literal('&')
     less_than = Literal('<')
