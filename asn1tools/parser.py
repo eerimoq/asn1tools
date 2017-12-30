@@ -393,6 +393,20 @@ def create_grammar():
     additional_element_set_spec = Forward()
     reference = Forward()
     defined_object_class = Forward()
+    defined_type = Forward()
+    module_reference = Forward()
+    external_type_reference = Forward()
+    external_value_reference = Forward()
+    simple_defined_type = Forward()
+    defined_object = Forward()
+    referenced_value = Forward()
+    builtin_value = Forward()
+    named_value = Forward()
+    sequence_value = Forward()
+    signed_number = Forward()
+    name_and_number_form = Forward()
+    number_form = Forward()
+    definitive_number_form = Forward()
 
     value_field_reference = Combine(ampersand + value_reference)
     type_field_reference = Combine(ampersand + type_reference)
@@ -408,34 +422,13 @@ def create_grammar():
                   + size
                   + Suppress(Optional(right_parenthesis)))
 
-    parameterized_object = NoMatch().setName('"parameterizedObject" not implemented')
-    actual_parameter_list = Group(Suppress(left_brace)
-                                  + delimitedList(
-                                      Group((value_field_reference
-                                             | type_field_reference)
-                                            + (word
-                                               | QuotedString('"'))))
-                                  + Suppress(right_brace))
-    parameterized_object_set = NoMatch().setName('"parameterizedObjectSet" not implemented')
-    # actual_parameter_list
-
     tag = Group(Optional(Suppress(left_bracket)
                          + Group(Optional(APPLICATION | PRIVATE) + word)
                          + Suppress(right_bracket)
                          + Group(Optional(IMPLICIT | EXPLICIT))))
 
-    parameterized_object_class = NoMatch().setName('"parameterizedObjectClass" not implemented')
-
     any_defined_by_type = (ANY_DEFINED_BY + word)
     any_defined_by_type.setName('ANY DEFINED BY')
-
-    oid = (Suppress(left_brace)
-           + ZeroOrMore(Group((value_name
-                               + Suppress(left_parenthesis)
-                               + word
-                               + Suppress(right_parenthesis))
-                              | word))
-           + Suppress(right_brace))
 
     identifier_list = delimitedList(identifier)
 
@@ -450,6 +443,26 @@ def create_grammar():
                                        + right_brace))
 
     # X.683: 9. Referencing parameterized definitions
+    actual_parameter_list = Group(Suppress(left_brace)
+                                  + delimitedList(
+                                      Group((value_field_reference
+                                             | type_field_reference)
+                                            + (word
+                                               | QuotedString('"'))))
+                                  + Suppress(right_brace))
+    parameterized_object = (defined_object + actual_parameter_list)
+    parameterized_object_set = (defined_object_set + actual_parameter_list)
+    parameterized_object_class = (defined_object_class + actual_parameter_list)
+    parameterized_value_set_type = (simple_defined_type
+                                    + actual_parameter_list)
+    simple_defined_value = (external_value_reference
+                            | value_reference)
+    parameterized_value = (simple_defined_value
+                           + actual_parameter_list)
+    simple_defined_type <<= (external_type_reference
+                             | type_reference)
+    parameterized_type = (simple_defined_type
+                          + actual_parameter_list)
     parameterized_reference = (reference + Optional(left_brace + right_brace))
 
     # X.682: 11. Contents constraints
@@ -491,7 +504,7 @@ def create_grammar():
     external_object_set_reference = NoMatch().setName('"externalObjectSetReference" not implemented')
     defined_object_set <<= (external_object_set_reference
                             | object_set_reference)
-    defined_object = NoMatch().setName('"definedObject" not implemented')
+    defined_object <<= NoMatch().setName('"definedObject" not implemented')
     defined_object_class <<= object_class_reference
 
     # X.681: 9. Information object class definition and assignment
@@ -586,7 +599,10 @@ def create_grammar():
     # X.681: 13. Associated tables
 
     # X.681: 14. Notation for the object class field type
-    object_class_field_value = oid
+    fixed_type_field_val = (builtin_value | referenced_value)
+    open_type_field_val = (type_ + colon + value)
+    object_class_field_value = (open_type_field_val
+                                | fixed_type_field_val)
     object_class_field_type = Combine(defined_object_class
                                       + dot
                                       + field_name)
@@ -692,20 +708,48 @@ def create_grammar():
     # X.680: 35. The character string types
 
     # X.680: 34. Notation for the external type
+    external_value = sequence_value
 
     # X.680: 33. Notation for embedded-pdv type
+    embedded_pdv_value = sequence_value
 
     # X.680: 32. Notation for relative object identifier type
+    relative_oid_components = Group(number_form
+                                    | name_and_number_form
+                                    | defined_value)
+    relative_oid_component_list = OneOrMore(relative_oid_components)
+    relative_oid_value = (Suppress(left_brace)
+                          + relative_oid_component_list
+                          + Suppress(right_brace))
 
     # X.680: 31. Notation for object identifier type
+    name_and_number_form <<= (identifier
+                              + Suppress(left_parenthesis)
+                              - number_form
+                              - Suppress(right_parenthesis))
+    number_form <<= (number | defined_value)
+    name_form = identifier
+    obj_id_components = Group(name_and_number_form
+                              | defined_value
+                              | number_form
+                              | name_form)
+    obj_id_components_list = OneOrMore(obj_id_components)
+    object_identifier_value = ((Suppress(left_brace)
+                                + obj_id_components_list
+                                + Suppress(right_brace))
+                               | (Suppress(left_brace)
+                                  + defined_value
+                                  + obj_id_components_list
+                                  + Suppress(right_brace)))
+
     object_identifier_type = (OBJECT_IDENTIFIER
                               + Optional(left_parenthesis
                                          + delimitedList(word, delim='|')
                                          + right_parenthesis))
     object_identifier_type.setName('OBJECT IDENTIFIER')
-    object_identifier_value = oid
 
     # X.680: 30. Notation for tagged types
+    tagged_value = NoMatch()
 
     # X.680: 29. Notation for selection types
 
@@ -724,6 +768,7 @@ def create_grammar():
     choice_value = (identifier + colon + value)
 
     # X.680: 27. Notation for the set-of types
+    set_of_value = NoMatch()
     set_of_type = (SET
                    + Group(Optional(size))
                    + OF
@@ -733,6 +778,7 @@ def create_grammar():
     set_of_type.setName('SET OF')
 
     # X.680: 26. Notation for the set types
+    set_value = NoMatch()
     set_type = (SET
                 - left_brace
                 + Group(Optional(component_type_lists
@@ -742,6 +788,7 @@ def create_grammar():
     set_type.setName('SET')
 
     # X.680: 25. Notation for the sequence-of types
+    sequence_of_value = NoMatch()
     sequence_of_type = (SEQUENCE
                         + Group(Optional(size_paren))
                         + OF
@@ -751,6 +798,10 @@ def create_grammar():
     sequence_of_type.setName('SEQUENCE OF')
 
     # X.680: 24. Notation for the sequence types
+    component_value_list = delimitedList(named_value)
+    sequence_value <<= (left_brace
+                        + Optional(component_value_list)
+                        + right_brace)
     component_type = Group(named_type
                            + Group(Optional(OPTIONAL
                                             | (DEFAULT + value)))
@@ -791,9 +842,13 @@ def create_grammar():
     sequence_type.setName('SEQUENCE')
 
     # X.680: 23. Notation for the null type
+    null_value = NULL
     null_type = NULL
 
     # X.680: 22. Notation for the octetstring type
+    octet_string_value = (bstring
+                          | hstring
+                          | (CONTAINING + value))
     octet_string_type = (OCTET_STRING
                          + Group(Optional(Suppress(left_parenthesis)
                                           + (size | (CONTAINING + word))
@@ -811,10 +866,13 @@ def create_grammar():
     bit_string_type.setName('BIT STRING')
     bit_string_value = (bstring
                         | hstring
-                        | (left_brace + Optional(identifier_list) + right_brace)
+                        | (Suppress(left_brace)
+                           + Optional(identifier_list)
+                           + Suppress(right_brace))
                         | (CONTAINING - value))
 
     # X.680: 20. Notation for the real type
+    real_value = NoMatch()
     real_type = (REAL
                  + Optional(left_parenthesis
                             + ((integer + dot + range_separator)
@@ -825,6 +883,7 @@ def create_grammar():
     real_type.setName('REAL')
 
     # X.680: 19. Notation for the enumerated type
+    enumerated_value = identifier
     enumerated_type = (ENUMERATED
                        - left_brace
                        + Group(delimitedList(Group((word
@@ -836,7 +895,8 @@ def create_grammar():
     enumerated_type.setName('ENUMERATED')
 
     # X.680: 18. Notation for the integer type
-    signed_number = number
+    integer_value = (signed_number | identifier)
+    signed_number <<= number
     named_number = (identifier
                     + left_parenthesis
                     + (signed_number | defined_value)
@@ -853,19 +913,35 @@ def create_grammar():
     boolean_value = (TRUE | FALSE)
 
     # X.680: 16. Definition of types and values
-    referenced_value = NoMatch().setName('"referencedValue" not implemented')
-    builtin_value = (bit_string_value
-                     | boolean_value
-                     | character_string_value
-                     | choice_value
-                     | word)
+    named_value <<= (identifier + value)
+    referenced_value <<= NoMatch().setName('"referencedValue" not implemented')
+    builtin_value <<= (bit_string_value
+                       | boolean_value
+                       | character_string_value
+                       | choice_value
+                       | relative_oid_value
+                       | sequence_value
+                       | embedded_pdv_value
+                       | enumerated_value
+                       | external_value
+                       # | instance_of_value
+                       | integer_value
+                       | null_value
+                       | object_identifier_value
+                       | octet_string_value
+                       | real_value
+                       | sequence_of_value
+                       | set_value
+                       | set_of_value
+                       | tagged_value
+                       | word)
     value <<= Group(object_class_field_value
                     | referenced_value
                     | builtin_value)
     named_type <<= Group(identifier
                          - tag
                          - type_)
-    referenced_type = type_reference
+    referenced_type = defined_type
     referenced_type.setName('ReferencedType')
     builtin_type = (choice_type
                     | integer_type
@@ -905,10 +981,22 @@ def create_grammar():
     # X.680: 14. Notation to support references to ASN.1 components
 
     # X.680: 13. Referencing type and value definitions
-    defined_value <<= value_reference
+    external_value_reference <<= (module_reference
+                                  + dot
+                                  + value_reference)
+    external_type_reference <<= (module_reference
+                                 + dot
+                                 + type_reference)
+    defined_type <<= (external_type_reference
+                      | parameterized_type
+                      | parameterized_value_set_type
+                      | type_reference)
+    defined_value <<= (external_value_reference
+                       | parameterized_value
+                       | value_reference)
 
     # X.680: 12. Module definition
-    module_reference = word
+    module_reference <<= word
     assigned_identifier = Suppress(Optional(object_identifier_value
                                             | (defined_value + ~comma)))
     global_module_reference = (module_reference + assigned_identifier)
@@ -938,8 +1026,20 @@ def create_grammar():
                        | parameterized_value_assignment)
     assignment_list = Group(ZeroOrMore(assignment))
     module_body = (exports + imports + assignment_list)
-    definitive_identification = Group(Optional(oid))
-    module_identifier = (module_reference + definitive_identification)
+    definitive_name_and_number_form = (identifier
+                                       + Suppress(left_parenthesis)
+                                       - definitive_number_form
+                                       - Suppress(right_parenthesis))
+    definitive_number_form <<= number
+    definitive_obj_id_component = Group(definitive_name_and_number_form
+                                        | name_form
+                                        | definitive_number_form)
+    definitive_obj_id_components_list = OneOrMore(definitive_obj_id_component)
+    definitive_identifier = Group(Optional(Suppress(left_brace)
+                                           - definitive_obj_id_components_list
+                                           - Suppress(right_brace)))
+    module_identifier = (module_reference
+                         + definitive_identifier)
     tag_default = Group(Optional((AUTOMATIC | EXPLICIT | IMPLICIT) + TAGS))
     extension_default = Group(Optional(EXTENSIBILITY + IMPLIED))
     module_definition = Group(Group(module_identifier

@@ -92,16 +92,9 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "Invalid ASN.1 syntax at line 163, column 24: \'algorithm   "
-            "id-sha1>!<,\': Expected {{Suppress:(\"{\") [Group:({{W:(ABCD...) "
-            "Suppress:(\"(\") word Suppress:(\")\")} | word})]... Suppress:(\"}\")} "
-            "| \"referencedValue\" not implemented | Re:(\"\'[01\\\\s]*\'B\") | "
-            "Re:(\"\'[0-9A-F\\\\s]*\'H\") | {\"{\" [identifier [, identifier]...] "
-            "\"}\"} | {CONTAINING - Forward: ...} | TRUE | FALSE | \"cstring\" not "
-            "implemented | {\"{\" \"charsyms\" not implemented \"}\"} | {\"{\" word "
-            "\",\" word \",\" word \",\" word \"}\"} | {\"{\" word \",\" word \"}\"} "
-            "| \"unrestrictedCharacterStringValue\" not implemented | {identifier "
-            "\":\" Forward: ...} | word}.")
+            "Invalid ASN.1 syntax at line 168, column 39: 'HashAlgorithm "
+            "::= AlgorithmIdentifier >!<{ {OAEP-PSSDigestAlgorithms} }': "
+            "Expected END.")
 
     def test_parse_rfc3852(self):
         rfc3852 = asn1tools.parse_files('tests/files/ietf/rfc3852.asn')
