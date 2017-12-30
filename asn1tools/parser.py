@@ -227,7 +227,11 @@ def convert_type(tokens):
 
 def convert_type_tokens(tokens):
     converted_type = convert_type(tokens[3:])
-    tag = convert_tag(tokens[2])
+
+    try:
+        tag = convert_tag(tokens[2])
+    except ValueError:
+        tag = None
 
     if tag:
         converted_type['tag'] = tag
@@ -277,19 +281,23 @@ def convert_object_class_tokens(tokens):
 
 def convert_object_set_tokens(tokens):
     members = []
-    for member_tokens in tokens[4]:
-        if len(member_tokens[0]) == 1:
-            member = member_tokens[0][0]
-        else:
-            for item_tokens in member_tokens[0]:
-                member = {}
 
+    try:
+        for member_tokens in tokens[4]:
+            if len(member_tokens[0]) == 1:
+                member = member_tokens[0][0]
+            else:
                 for item_tokens in member_tokens[0]:
-                    name = item_tokens[0]
-                    value = item_tokens[1]
-                    member[name] = convert_number(value)
+                    member = {}
 
-        members.append(member)
+                    for item_tokens in member_tokens[0]:
+                        name = item_tokens[0]
+                        value = item_tokens[1]
+                        member[name] = convert_number(value)
+
+            members.append(member)
+    except IndexError:
+        pass
 
     return {'class': tokens[1], 'members': members}
 

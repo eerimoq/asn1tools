@@ -286,7 +286,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
         self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
 
     def test_s1ap_14_4_0(self):
-        with self.assertRaises(KeyError):
+        with self.assertRaises(TypeError):
             s1ap = asn1tools.compile_dict(deepcopy(S1AP_14_4_0), 'per')
 
             # Message 1.

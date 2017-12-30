@@ -9,6 +9,7 @@ sys.path.append('tests/files/3gpp')
 
 from foo import FOO
 from rrc_8_6_0 import RRC_8_6_0
+from s1ap_14_4_0 import S1AP_14_4_0
 from lpp_14_3_0 import LPP_14_3_0
 from information_object import INFORMATION_OBJECT
 from rfc1155 import RFC1155
@@ -17,6 +18,7 @@ from rfc2986 import RFC2986
 from rfc3161 import RFC3161
 from rfc3279 import RFC3279
 from rfc3281 import RFC3281
+from rfc3447 import RFC3447
 from rfc3852 import RFC3852
 from rfc4210 import RFC4210
 from rfc4211 import RFC4211
@@ -35,21 +37,17 @@ class Asn1ToolsParseTest(unittest.TestCase):
         foo = asn1tools.parse_files('tests/files/foo.asn')
         self.assertEqual(foo, FOO)
 
-    def test_parse_rrc_8_6_0(self):
-        rrc_8_6_0 = asn1tools.parse_files('tests/files/3gpp/rrc_8_6_0.asn')
-        self.assertEqual(rrc_8_6_0, RRC_8_6_0)
-
     def test_parse_information_object(self):
         information_object = asn1tools.parse_files('tests/files/information_object.asn')
         self.assertEqual(information_object, INFORMATION_OBJECT)
 
-    def test_parse_s1ap_14_4_0(self):
-        with self.assertRaises(ValueError) as cm:
-            asn1tools.parse_files('tests/files/3gpp/s1ap_14_4_0.asn')
+    def test_parse_rrc_8_6_0(self):
+        rrc_8_6_0 = asn1tools.parse_files('tests/files/3gpp/rrc_8_6_0.asn')
+        self.assertEqual(rrc_8_6_0, RRC_8_6_0)
 
-        self.assertEqual(
-            str(cm.exception),
-            "invalid literal for int() with base 10: 'P'")
+    def test_parse_s1ap_14_4_0(self):
+        s1ap_14_4_0 = asn1tools.parse_files('tests/files/3gpp/s1ap_14_4_0.asn')
+        self.assertEqual(s1ap_14_4_0, S1AP_14_4_0)
 
     def test_parse_lpp_14_3_0(self):
         lpp_14_3_0 = asn1tools.parse_files('tests/files/3gpp/lpp_14_3_0.asn')
@@ -80,12 +78,8 @@ class Asn1ToolsParseTest(unittest.TestCase):
         self.assertEqual(rfc3281, RFC3281)
 
     def test_parse_rfc3447(self):
-        with self.assertRaises(IndexError) as cm:
-            asn1tools.parse_files('tests/files/ietf/rfc3447.asn')
-
-        self.assertEqual(
-            str(cm.exception),
-            "list index out of range")
+        rfc3447 = asn1tools.parse_files('tests/files/ietf/rfc3447.asn')
+        self.assertEqual(rfc3447, RFC3447)
 
     def test_parse_rfc3852(self):
         rfc3852 = asn1tools.parse_files('tests/files/ietf/rfc3852.asn')
