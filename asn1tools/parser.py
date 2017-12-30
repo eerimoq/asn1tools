@@ -441,12 +441,14 @@ def create_grammar():
                                        + right_brace))
 
     # X.683: 9. Referencing parameterized definitions
+    actual_parameter = Group(type_
+                             | value
+                             | value_set
+                             | defined_object_class
+                             | object_
+                             | object_set)
     actual_parameter_list = Group(Suppress(left_brace)
-                                  + delimitedList(
-                                      Group((value_field_reference
-                                             | type_field_reference)
-                                            + (word
-                                               | QuotedString('"'))))
+                                  + delimitedList(actual_parameter)
                                   + Suppress(right_brace))
     parameterized_object = (defined_object + actual_parameter_list)
     parameterized_object_set = (defined_object_set + actual_parameter_list)
@@ -667,8 +669,8 @@ def create_grammar():
                        | general_constraint
                        | subtype_constraint)
     constraint <<= (Suppress(left_parenthesis)
-                    + constraint_spec
-                    + Suppress(right_parenthesis))
+                    - constraint_spec
+                    - Suppress(right_parenthesis))
 
     # X.680: 40. Definition of unrestricted character string types
     unrestricted_character_string_value = NoMatch().setName(
@@ -961,7 +963,10 @@ def create_grammar():
                + Group(Optional(constraint)))
 
     # X.680: 15. Assigning types and values
-    type_reference <<= (NotAny(END) + Regex(r'[A-Z][a-zA-Z0-9-]*'))
+    type_reference <<= (NotAny(END
+                               | SEQUENCE
+                               | ENUMERATED)
+                        + Regex(r'[A-Z][a-zA-Z0-9-]*'))
     value_reference <<= Regex(r'[a-z][a-zA-Z0-9-]*')
     value_set <<= NoMatch().setName('"valueSet" not implemented')
     parameterized_type_assignment = (type_reference
