@@ -34,6 +34,10 @@ class ParseError(Exception):
     pass
 
 
+class InternalParserError(Exception):
+    pass
+
+
 def convert_number(token):
     if isinstance(token, list):
         token = token[0]
@@ -1214,8 +1218,8 @@ def parse_string(string):
                              name,
                              values[name])
             else:
-                raise ParseError('Unrecognized assignment tokens {}.'.format(
-                    assignment))
+                raise InternalParserError(
+                    'Unrecognized assignment tokens {}.'.format(assignment))
 
         modules[module_name] = {
             'imports': imports,
