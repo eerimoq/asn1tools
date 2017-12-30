@@ -3,6 +3,7 @@
 """
 
 import logging
+import re
 
 from pyparsing import Literal
 from pyparsing import Keyword
@@ -54,12 +55,18 @@ def convert_size(tokens):
 
     tokens = tokens[1]
 
-    if '..' in tokens:
-        return [(convert_number(tokens[0]),
-                 convert_number(tokens[2]))]
-    else:
-        return [convert_number(token) for token in tokens]
+    size = []
 
+    for item_tokens in tokens:
+        if '..' in item_tokens:
+            value = (convert_number(item_tokens[0]),
+                     convert_number(item_tokens[2]))
+        else:
+            value = convert_number(item_tokens[0])
+
+        size.append(value)
+
+    return size
 
 def convert_table(tokens):
     tokens = tokens[0]
@@ -193,6 +200,21 @@ def convert_type(tokens):
 
             if restricted_to:
                 converted_type['restricted-to'] = restricted_to
+    elif tokens[0] == 'REAL':
+        converted_type = {'type': 'REAL'}
+        restricted_to = []
+
+        if len(tokens) > 1:
+            for constraint_tokens in tokens[1]:
+                if '..' in constraint_tokens:
+                    minimum = constraint_tokens[0][0]
+                    maximum = constraint_tokens[2][0]
+                    restricted_to.append((minimum, maximum))
+                elif len(constraint_tokens) == 1:
+                    restricted_to.append(constraint_tokens[0][0])
+
+            if restricted_to:
+                converted_type['restricted-to'] = restricted_to
     elif tokens[0:2] == ['ENUMERATED', '{']:
         converted_type = {
             'type': 'ENUMERATED',
@@ -243,10 +265,8 @@ def convert_value_tokens(tokens):
     type_ = tokens[1][0]
 
     if type_ == 'INTEGER':
-        value_type = 'INTEGER'
         value = int(tokens[3][0])
     elif type_ == 'OBJECT IDENTIFIER':
-        value_type = 'OBJECT IDENTIFIER'
         value = []
 
         for value_tokens in tokens[3]:
@@ -255,13 +275,17 @@ def convert_value_tokens(tokens):
             else:
                 value.append(convert_number(value_tokens[0]))
     elif type_ == 'BOOLEAN':
-        value_type = 'BOOLEAN'
         value = tokens[3][0]
+    elif type_ == 'BIT STRING':
+        value = tokens[3][0]
+        if value[-1] == 'B':
+            value = '0b' + re.sub(r"[\sB']", '', value)
+        else:
+            value = '0x' + re.sub(r"[\sH']", '', value)
     else:
-        value_type = type_
         value = tokens[3]
 
-    return {'type': value_type, 'value': value}
+    return {'type': type_, 'value': value}
 
 
 def convert_object_class_tokens(tokens):
@@ -436,7 +460,7 @@ def create_grammar():
 
     size = Group(SIZE
                  + Group(Suppress(left_parenthesis)
-                         + delimitedList(range_ | word, delim=pipe)
+                         + Group(delimitedList(range_ | word, delim=pipe))
                          + Suppress(right_parenthesis)))
 
     size_paren = (Suppress(Optional(left_parenthesis))
@@ -668,7 +692,7 @@ def create_grammar():
                                                   + qmark + word + qmark,
                                                   delim=pipe))
     type_constraint = type_
-    size_constraint = (SIZE + constraint)
+    size_constraint = (SIZE + Group(constraint))
     upper_end_value = (value | MAX)
     lower_end_value = (value | MIN)
     upper_endpoint = (Optional(less_than) + upper_end_value)
@@ -907,12 +931,12 @@ def create_grammar():
     # X.680: 20. Notation for the real type
     real_value = NoMatch()
     real_type = (REAL
-                 + Optional(left_parenthesis
-                            + ((integer + dot + range_separator)
-                               | (integer + range_separator)
-                               | (real_number + range_separator))
-                            + real_number
-                            + right_parenthesis))
+                 + Group(Optional(Group(Suppress(left_parenthesis)
+                                        + ((Group(Combine(integer + dot)) + range_separator)
+                                           | (Group(integer) + range_separator)
+                                           | (Group(real_number) + range_separator))
+                                        + Group(real_number)
+                                        + Suppress(right_parenthesis)))))
     real_type.setName('REAL')
 
     # X.680: 19. Notation for the enumerated type
