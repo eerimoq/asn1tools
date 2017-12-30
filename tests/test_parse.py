@@ -121,6 +121,171 @@ class Asn1ToolsParseTest(unittest.TestCase):
         all_types = asn1tools.parse_files('tests/files/all_types.asn')
         self.assertEqual(all_types, ALL_TYPES)
 
+    def test_parse_imports_global_module_reference(self):
+        actual = asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
+                                        'IMPORTS '
+                                        'a FROM B '
+                                        'c, d FROM E global-module-reference '
+                                        'f, g FROM H {iso(1)}; '
+                                        'END')
+
+        expected = {
+            'A': {
+                'extensibility-implied': False,
+                'imports': {
+                    'B': ['a'],
+                    'E': ['c', 'd'],
+                    'H': ['f', 'g']
+                },
+                'object-classes': {},
+                'object-sets': {},
+                'types': {},
+                'values': {}
+            }
+        }
+
+        self.assertEqual(actual, expected)
+
+    def test_parse_x680_14_10(self):
+        actual = asn1tools.parse_string('M DEFINITIONS ::= BEGIN'
+                                        '      T ::= SEQUENCE {'
+                                        '            a BOOLEAN,'
+                                        '            b SET OF INTEGER'
+                                        '      }'
+                                        'END')
+
+        expected = {
+            'M': {
+                'extensibility-implied': False,
+                'imports': {},
+                'object-classes': {},
+                'object-sets': {},
+                'types': {
+                    'T': {
+                        'type': 'SEQUENCE',
+                        'members': [
+                            {
+                                'name': 'a',
+                                'type': 'BOOLEAN',
+                                'optional': False
+                            },
+                            {
+                                'name': 'b',
+                                'type': 'SET OF',
+                                'optional': False,
+                                'size': None,
+                                'element': {
+                                    'type': 'INTEGER'
+                                }
+                            }
+                        ]
+                    }
+                },
+                'values': {}
+            }
+        }
+
+        self.assertEqual(actual, expected)
+
+    def test_parse_x680_19_5(self):
+        actual = asn1tools.parse_string(
+            'M DEFINITIONS ::= BEGIN'
+            '      C ::= ENUMERATED {'
+            '            a,'
+            '            b(3),'
+            '            ...,'
+            '            c(1)'
+            '      }'
+            '      D ::= ENUMERATED {'
+            '            a,'
+            '            b,'
+            '            ...,'
+            '            c(2)'
+            '      }'
+            'END')
+
+        # ToDo: Incorrect enumeration numbers.
+        expected = {
+            'M': {
+                'extensibility-implied': False,
+                'imports': {},
+                'object-classes': {},
+                'object-sets': {},
+                'types': {
+                    'C': {
+                        'type': 'ENUMERATED',
+                        'values': {
+                            0: 'a',
+                            1: 'c',
+                            3: 'b',
+                            4: '...'
+                        }
+                    },
+                    'D': {
+                        'type': 'ENUMERATED',
+                        'values': {
+                            0: 'a',
+                            1: 'b',
+                            2: 'c'
+                        }
+                    }
+                },
+                'values': {}
+            }
+        }
+
+        self.assertEqual(actual, expected)
+
+    def test_parse_x680_19_6(self):
+        actual = asn1tools.parse_string(
+            'M DEFINITIONS ::= BEGIN'
+            '      A ::= ENUMERATED {a, b, ..., c}'
+            '      B ::= ENUMERATED {a, b, c(0), ..., d}'
+            '      C ::= ENUMERATED {a, b, ..., c(3), d}'
+            '      D ::= ENUMERATED {a, z(25), ..., d}'
+            'END')
+
+        # ToDo: Incorrect enumeration numbers.
+        expected = {
+            'M': {
+                'extensibility-implied': False,
+                'imports': {},
+                'object-classes': {},
+                'object-sets': {},
+                'types': {
+                    'A': {'type': 'ENUMERATED',
+                          'values': {
+                              0: 'a',
+                              1: 'b',
+                              2: '...',
+                              3: 'c'}
+                    },
+                    'B': {'type': 'ENUMERATED',
+                          'values': {0: 'c',
+                                     1: '...',
+                                     2: 'd'}
+                    },
+                    'C': {'type': 'ENUMERATED',
+                          'values': {0: 'a',
+                                     1: 'b',
+                                     2: '...',
+                                     3: 'c',
+                                     4: 'd'}
+                    },
+                    'D': {'type': 'ENUMERATED',
+                          'values': {0: 'a',
+                                     25: 'z',
+                                     26: '...',
+                                     27: 'd'}
+                    }
+                },
+                'values': {}
+            }
+        }
+
+
+        self.assertEqual(actual, expected)
+
     def test_parse_error_empty_string(self):
         with self.assertRaises(asn1tools.ParseError) as cm:
             asn1tools.parse_string('')
@@ -187,14 +352,6 @@ class Asn1ToolsParseTest(unittest.TestCase):
             str(cm.exception),
             "Invalid ASN.1 syntax at line 1, column 43: 'A DEFINITIONS ::= "
             "BEGIN  A ::= SEQUENCE { >!<A } END': Expected \"}\".")
-
-    def test_parse_imports_global_module_reference(self):
-        asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
-                               'IMPORTS '
-                               'a FROM B '
-                               'c, d FROM E global-module-reference '
-                               'f, g FROM H {iso(1)}; '
-                               'END')
 
     def test_parse_error_definitive_identifier(self):
         with self.assertRaises(asn1tools.ParseError) as cm:
