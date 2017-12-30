@@ -38,6 +38,26 @@ class InternalParserError(Exception):
     pass
 
 
+def is_parameterized_object_set_assignment(tokens):
+    return tokens[0][0].isupper() and tokens[2:4] == ['::=', '{']
+
+
+def is_parameterized_object_assignment(_):
+    return False
+
+
+def is_parameterized_object_class_assignment(tokens):
+    return tokens[0][0].isupper() and tokens[1:3] == ['::=', 'CLASS']
+
+
+def is_parameterized_type_assignment(tokens):
+    return tokens[0][0].isupper()
+
+
+def is_parameterized_value_assignment(tokens):
+    return tokens[0][0].islower()
+
+
 def convert_number(token):
     if isinstance(token, list):
         token = token[0]
@@ -251,7 +271,48 @@ def convert_type(tokens):
     return converted_type
 
 
-def convert_type_tokens(tokens):
+def convert_parameterized_object_set_assignment(tokens):
+    members = []
+
+    try:
+        for member_tokens in tokens[4]:
+            if len(member_tokens[0]) == 1:
+                member = member_tokens[0][0]
+            else:
+                for item_tokens in member_tokens[0]:
+                    member = {}
+
+                    for item_tokens in member_tokens[0]:
+                        name = item_tokens[0]
+                        value = item_tokens[1]
+                        member[name] = convert_number(value)
+
+            members.append(member)
+    except IndexError:
+        pass
+
+    return {'class': tokens[1], 'members': members}
+
+
+def convert_parameterized_object_class_assignment(tokens):
+    members = []
+
+    for member in tokens[3]:
+        if member[0][1].islower():
+            type_ = member[1]
+        else:
+            type_ = 'OpenType'
+
+        members.append({
+            'name': member[0],
+            'type': type_,
+            'optional': False
+        })
+
+    return {'members': members}
+
+
+def convert_parameterized_type_assignment(tokens):
     converted_type = convert_type(tokens[3:])
 
     try:
@@ -265,7 +326,7 @@ def convert_type_tokens(tokens):
     return converted_type
 
 
-def convert_value_tokens(tokens):
+def convert_parameterized_value_assignment(tokens):
     type_ = tokens[1][0]
 
     if type_ == 'INTEGER':
@@ -290,47 +351,6 @@ def convert_value_tokens(tokens):
         value = tokens[3]
 
     return {'type': type_, 'value': value}
-
-
-def convert_object_class_tokens(tokens):
-    members = []
-
-    for member in tokens[3]:
-        if member[0][1].islower():
-            type_ = member[1]
-        else:
-            type_ = 'OpenType'
-
-        members.append({
-            'name': member[0],
-            'type': type_,
-            'optional': False
-        })
-
-    return {'members': members}
-
-
-def convert_object_set_tokens(tokens):
-    members = []
-
-    try:
-        for member_tokens in tokens[4]:
-            if len(member_tokens[0]) == 1:
-                member = member_tokens[0][0]
-            else:
-                for item_tokens in member_tokens[0]:
-                    member = {}
-
-                    for item_tokens in member_tokens[0]:
-                        name = item_tokens[0]
-                        value = item_tokens[1]
-                        member[name] = convert_number(value)
-
-            members.append(member)
-    except IndexError:
-        pass
-
-    return {'class': tokens[1], 'members': members}
 
 
 def create_grammar():
@@ -1123,26 +1143,6 @@ def create_grammar():
     return specification
 
 
-def is_parameterized_object_set_assignment(tokens):
-    return tokens[0][0].isupper() and tokens[2:4] == ['::=', '{']
-
-
-def is_parameterized_object_assignment(_):
-    return False
-
-
-def is_parameterized_object_class_assignment(tokens):
-    return tokens[0][0].isupper() and tokens[1:3] == ['::=', 'CLASS']
-
-
-def is_parameterized_type_assignment(tokens):
-    return tokens[0][0].isupper()
-
-
-def is_parameterized_value_assignment(tokens):
-    return tokens[0][0].islower()
-
-
 def parse_string(string):
     """Parse given ASN.1 specification string and return a dictionary of
     its contents.
@@ -1193,30 +1193,26 @@ def parse_string(string):
 
             if is_parameterized_object_set_assignment(assignment):
                 LOGGER.debug("Converting object set '%s'.", name)
-                object_sets[name] = convert_object_set_tokens(assignment)
-                LOGGER.debug("Converted object set '%s' to %s.",
-                             name,
-                             object_sets[name])
+                value = convert_parameterized_object_set_assignment(assignment)
+                LOGGER.debug("Converted object set '%s' to %s.", name, value)
+                object_sets[name] = value
             elif is_parameterized_object_assignment(assignment):
                 pass
             elif is_parameterized_object_class_assignment(assignment):
                 LOGGER.debug("Converting object class '%s'.", name)
-                object_classes[name] = convert_object_class_tokens(assignment)
-                LOGGER.debug("Converted object class '%s' to %s.",
-                             name,
-                             object_classes[name])
+                value = convert_parameterized_object_class_assignment(assignment)
+                LOGGER.debug("Converted object class '%s' to %s.", name, value)
+                object_classes[name] = value
             elif is_parameterized_type_assignment(assignment):
                 LOGGER.debug("Converting type '%s'.", name)
-                types[name] = convert_type_tokens(assignment)
-                LOGGER.debug("Converted type '%s' to %s.",
-                             name,
-                             types[name])
+                value = convert_parameterized_type_assignment(assignment)
+                LOGGER.debug("Converted type '%s' to %s.", name, value)
+                types[name] = value
             elif is_parameterized_value_assignment(assignment):
                 LOGGER.debug("Converting value '%s'.", name)
-                values[name] = convert_value_tokens(assignment)
-                LOGGER.debug("Converted value '%s' to %s.",
-                             name,
-                             values[name])
+                value = convert_parameterized_value_assignment(assignment)
+                LOGGER.debug("Converted value '%s' to %s.", name, value)
+                values[name] = value
             else:
                 raise InternalParserError(
                     'Unrecognized assignment tokens {}.'.format(assignment))
