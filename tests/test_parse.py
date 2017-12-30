@@ -203,6 +203,18 @@ class Asn1ToolsParseTest(unittest.TestCase):
                                'f, g FROM H {iso(1)}; '
                                'END')
 
+    def test_parse_error_definitive_identifier(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('A {} DEFINITIONS ::= BEGIN '
+                                   'END')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Invalid ASN.1 syntax at line 1, column 4: 'A {>!<} DEFINITIONS "
+            "::= BEGIN END': Expected {{identifier Suppress:(\"(\") - "
+            "definitiveNumberForm - Suppress:(\")\")} | identifier | "
+            "definitiveNumberForm}.")
+
 
 if __name__ == '__main__':
     unittest.main()

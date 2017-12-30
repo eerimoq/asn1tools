@@ -16,7 +16,6 @@ from pyparsing import Optional
 from pyparsing import Forward
 from pyparsing import StringEnd
 from pyparsing import OneOrMore
-from pyparsing import alphanums
 from pyparsing import nums
 from pyparsing import Suppress
 from pyparsing import ParseException
@@ -286,9 +285,9 @@ def convert_object_set_tokens(tokens):
 
 
 def create_grammar():
-    '''Return the ASN.1 grammar as Pyparsing objects.
+    """Return the ASN.1 grammar as Pyparsing objects.
 
-    '''
+    """
 
     # Keywords.
     SEQUENCE = Keyword('SEQUENCE').setName('SEQUENCE')
@@ -340,7 +339,6 @@ def create_grammar():
     # Various literals.
     word = Word(printables, excludeChars=',(){}[].:=;"|').setName('word')
     identifier = Regex(r'[a-z][a-zA-Z0-9-]*').setName('identifier')
-    value_name = Word(alphanums + '-')
     assign = Literal('::=').setName('::=')
     left_parenthesis = Literal('(')
     right_parenthesis = Literal(')')
@@ -405,8 +403,8 @@ def create_grammar():
     sequence_value = Forward()
     signed_number = Forward()
     name_and_number_form = Forward()
-    number_form = Forward()
-    definitive_number_form = Forward()
+    number_form = Forward().setName('numberForm')
+    definitive_number_form = Forward().setName('definitiveNumberForm')
 
     value_field_reference = Combine(ampersand + value_reference)
     type_field_reference = Combine(ampersand + type_reference)

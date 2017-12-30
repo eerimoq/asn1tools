@@ -1498,9 +1498,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
 
     def test_integer_explicit_tags(self):
-        '''Test explicit tags on integers.
+        """Test explicit tags on integers.
 
-        '''
+        """
 
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] INTEGER END'
         foo = asn1tools.compile_string(spec)
@@ -1531,9 +1531,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(decoded, True)
 
     def test_integer_implicit_tags(self):
-        '''Test implicit tags on integers.
+        """Test implicit tags on integers.
 
-        '''
+        """
 
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] IMPLICIT INTEGER END'
         foo = asn1tools.compile_string(spec)
@@ -1558,9 +1558,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(decoded, 1)
 
     def test_boolean_explicit_tags(self):
-        '''Test explicit tags on booleans.
+        """Test explicit tags on booleans.
 
-        '''
+        """
 
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] BOOLEAN END'
         foo = asn1tools.compile_string(spec)
@@ -1584,9 +1584,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
                          ': expected BOOLEAN with tag 0x01 but got 0x02 at offset 2')
 
     def test_boolean_implicit_tags(self):
-        '''Test implicit tags on booleans.
+        """Test implicit tags on booleans.
 
-        '''
+        """
 
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] IMPLICIT BOOLEAN END'
         foo = asn1tools.compile_string(spec)
@@ -1596,9 +1596,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(decoded, True)
 
     def test_octet_string_explicit_tags(self):
-        '''Test explicit tags on octet strings.
+        """Test explicit tags on octet strings.
 
-        '''
+        """
 
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] OCTET STRING END'
         foo = asn1tools.compile_string(spec)
@@ -1608,9 +1608,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(decoded, b'\x56')
 
     def test_bit_string_explicit_tags(self):
-        '''Test explicit tags on bit strings.
+        """Test explicit tags on bit strings.
 
-        '''
+        """
 
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] BIT STRING END'
         foo = asn1tools.compile_string(spec)
@@ -1620,9 +1620,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(decoded, (b'\x56', 7))
 
     def test_utc_time_explicit_tags(self):
-        '''Test explicit tags on UTC time.
+        """Test explicit tags on UTC time.
 
-        '''
+        """
 
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] UTCTime END'
         foo = asn1tools.compile_string(spec)
@@ -1632,9 +1632,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(decoded, '121001230001')
 
     def test_utf8_string_explicit_tags(self):
-        '''Test explicit tags on UTC time.
+        """Test explicit tags on UTC time.
 
-        '''
+        """
 
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] UTF8String END'
         foo = asn1tools.compile_string(spec)
@@ -1644,13 +1644,13 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(decoded, 'foo')
 
     def test_nested_explicit_tags(self):
-        '''Test nested explicit tags.
+        """Test nested explicit tags.
 
         Based on https://github.com/wbond/asn1crypto/issues/63 by tiran.
 
-        '''
+        """
 
-        spec = '''
+        spec = """
         TESTCASE DEFINITIONS EXPLICIT TAGS ::=
         BEGIN
         INNERSEQ ::= SEQUENCE {
@@ -1666,7 +1666,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         OUTER ::= [APPLICATION 10] OUTERSEQ
         END
-        '''
+        """
 
         decoded_message = {
             'outernumber': 23,
@@ -1687,22 +1687,22 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(decoded, decoded_message)
 
     def test_duplicated_type(self):
-        '''Duplicated types makes the types dictionary None.
+        """Duplicated types makes the types dictionary None.
 
-        '''
+        """
 
-        spec = '''
+        spec = """
         Foo DEFINITIONS ::= BEGIN Fum ::= INTEGER END
         Bar DEFINITIONS ::= BEGIN Fum ::= BOOLEAN END
-        '''
+        """
 
         foo_bar = asn1tools.compile_string(spec)
         self.assertEqual(foo_bar.types, None)
 
     def test_zforce(self):
-        '''
+        """
 
-        '''
+        """
 
         zforce = asn1tools.compile_dict(deepcopy(ZFORCE))
 
@@ -1806,9 +1806,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(decoded, decoded_message)
 
     def test_bar(self):
-        '''A simple example.
+        """A simple example.
 
-        '''
+        """
 
         bar = asn1tools.compile_files('tests/files/bar.asn')
 
@@ -1848,7 +1848,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(decoded, decoded_message)
 
     def test_any_defined_by_integer(self):
-        spec = '''
+        spec = """
         Foo DEFINITIONS ::= BEGIN
 
         Fie ::= SEQUENCE {
@@ -1857,7 +1857,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         }
 
         END
-        '''
+        """
 
         any_defined_by_choices = {
             ('Foo', 'Fie', 'fum'): {
@@ -1915,7 +1915,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(str(cm.exception), "2")
 
     def test_any_defined_by_object_identifier(self):
-        spec = '''
+        spec = """
         Foo DEFINITIONS ::= BEGIN
 
         Fie ::= SEQUENCE {
@@ -1924,7 +1924,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         }
 
         END
-        '''
+        """
 
         any_defined_by_choices = {
             ('Foo', 'Fie', 'fum'): {

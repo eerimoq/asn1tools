@@ -207,9 +207,9 @@ class Asn1ToolsPerTest(unittest.TestCase):
             all_types.decode('Utctime', b'\x17\x0d010203040506Y')
 
     def test_bar(self):
-        '''A simple example.
+        """A simple example.
 
-        '''
+        """
 
         bar = asn1tools.compile_files('tests/files/bar.asn', 'per')
 

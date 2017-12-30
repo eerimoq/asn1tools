@@ -18,9 +18,9 @@ class Encoder(object):
         self.buf = bytearray()
 
     def append_bit(self, bit):
-        '''Append given bit.
+        """Append given bit.
 
-        '''
+        """
 
         self.byte |= (bit << self.index)
         self.index -= 1
@@ -31,25 +31,25 @@ class Encoder(object):
             self.index = 7
 
     def append_bits(self, data, number_of_bits):
-        '''Append given bits.
+        """Append given bits.
 
-        '''
+        """
 
         for i in range(number_of_bits):
             self.append_bit((bytearray(data)[i // 8] >> (7 - (i % 8))) & 0x1)
 
     def append_integer(self, value, number_of_bits):
-        '''Append given integer value.
+        """Append given integer value.
 
-        '''
+        """
 
         for i in range(number_of_bits):
             self.append_bit((value >> (number_of_bits - i - 1)) & 0x1)
 
     def append_bytes(self, data):
-        '''Append given data aligned to a byte boundary.
+        """Append given data aligned to a byte boundary.
 
-        '''
+        """
 
         if self.index != 7:
             self.buf.append(self.byte)
@@ -59,9 +59,9 @@ class Encoder(object):
         self.buf.extend(data)
 
     def as_bytearray(self):
-        '''Return the bits as a bytearray.
+        """Return the bits as a bytearray.
 
-        '''
+        """
 
         if self.index < 7:
             return self.buf + bytearray([self.byte])
@@ -81,9 +81,9 @@ class Decoder(object):
         self.buf = encoded
 
     def read_bit(self):
-        '''Read a bit.
+        """Read a bit.
 
-        '''
+        """
 
         if self.index == 0:
             self.byte = self.buf[0]
@@ -96,9 +96,9 @@ class Decoder(object):
         return bit
 
     def read_integer(self, number_of_bits):
-        '''Read an integer value of given number of bits.
+        """Read an integer value of given number of bits.
 
-        '''
+        """
 
         value = 0
 
@@ -109,9 +109,9 @@ class Decoder(object):
         return value
 
     def read_bytes(self, number_of_bytes):
-        '''Read given number of bytes.
+        """Read given number of bytes.
 
-        '''
+        """
 
         self.index = 0
         data = self.buf[self.offset:self.offset + number_of_bytes]
