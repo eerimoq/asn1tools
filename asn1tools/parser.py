@@ -254,6 +254,9 @@ def convert_value_tokens(tokens):
                 value.append((value_tokens[0], int(value_tokens[1])))
             else:
                 value.append(convert_number(value_tokens[0]))
+    elif type_ == 'BOOLEAN':
+        value_type = 'BOOLEAN'
+        value = tokens[3][0]
     else:
         value_type = type_
         value = tokens[3]
@@ -1092,6 +1095,26 @@ def create_grammar():
     return specification
 
 
+def is_parameterized_object_set_assignment(tokens):
+    return tokens[0][0].isupper() and tokens[2:4] == ['::=', '{']
+
+
+def is_parameterized_object_assignment(_):
+    return False
+
+
+def is_parameterized_object_class_assignment(tokens):
+    return tokens[0][0].isupper() and tokens[1:3] == ['::=', 'CLASS']
+
+
+def is_parameterized_type_assignment(tokens):
+    return tokens[0][0].isupper()
+
+
+def is_parameterized_value_assignment(tokens):
+    return tokens[0][0].islower()
+
+
 def parse_string(string):
     """Parse given ASN.1 specification string and return a dictionary of
     its contents.
@@ -1117,7 +1140,7 @@ def parse_string(string):
     for module in tokens:
         module_name = module[0][0]
 
-        LOGGER.debug("Found module '%s'.", module_name)
+        LOGGER.debug("Converting module '%s'.", module_name)
 
         imports = {}
         types = {}
@@ -1130,7 +1153,7 @@ def parse_string(string):
         if imports_tokens:
             for from_tokens in imports_tokens[1:-1]:
                 from_name = from_tokens[2]
-                LOGGER.debug("Found imports from '%s'.", from_name)
+                LOGGER.debug("Converting imports from '%s'.", from_name)
                 imports[from_name] = from_tokens[0]
 
         assignment_tokens = module[2]
@@ -1138,19 +1161,37 @@ def parse_string(string):
         for assignment in assignment_tokens:
             name = assignment[0]
 
-            if name[0].isupper():
-                if assignment[1:3] == ['::=', 'CLASS']:
-                    LOGGER.debug("Found object class '%s'.", name)
-                    object_classes[name] = convert_object_class_tokens(assignment)
-                elif assignment[2:4] == ['::=', '{']:
-                    LOGGER.debug("Found object set '%s'.", name)
-                    object_sets[name] = convert_object_set_tokens(assignment)
-                else:
-                    LOGGER.debug("Found type '%s'.", name)
-                    types[name] = convert_type_tokens(assignment)
-            else:
-                LOGGER.debug("Found value '%s'.", name)
+            LOGGER.debug("Converting assignment tokens '%s'.", assignment)
+
+            if is_parameterized_object_set_assignment(assignment):
+                LOGGER.debug("Converting object set '%s'.", name)
+                object_sets[name] = convert_object_set_tokens(assignment)
+                LOGGER.debug("Converted object set '%s' to %s.",
+                             name,
+                             object_sets[name])
+            elif is_parameterized_object_assignment(assignment):
+                pass
+            elif is_parameterized_object_class_assignment(assignment):
+                LOGGER.debug("Converting object class '%s'.", name)
+                object_classes[name] = convert_object_class_tokens(assignment)
+                LOGGER.debug("Converted object class '%s' to %s.",
+                             name,
+                             object_classes[name])
+            elif is_parameterized_type_assignment(assignment):
+                LOGGER.debug("Converting type '%s'.", name)
+                types[name] = convert_type_tokens(assignment)
+                LOGGER.debug("Converted type '%s' to %s.",
+                             name,
+                             types[name])
+            elif is_parameterized_value_assignment(assignment):
+                LOGGER.debug("Converting value '%s'.", name)
                 values[name] = convert_value_tokens(assignment)
+                LOGGER.debug("Converted value '%s' to %s.",
+                             name,
+                             values[name])
+            else:
+                raise ParseError('Unrecognized assignment tokens {}.'.format(
+                    assignment))
 
         modules[module_name] = {
             'imports': imports,

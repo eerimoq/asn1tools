@@ -1,5 +1,6 @@
 import sys
 import unittest
+import logging
 
 import asn1tools
 
@@ -32,6 +33,13 @@ from all_types import ALL_TYPES
 class Asn1ToolsParseTest(unittest.TestCase):
 
     maxDiff = None
+
+    def setUp(self):
+        logging.basicConfig()
+        logging.getLogger('asn1tools.parser').setLevel(logging.DEBUG)
+
+    def tearDown(self):
+        logging.getLogger('asn1tools.parser').setLevel(logging.ERROR)
 
     def test_parse_foo(self):
         foo = asn1tools.parse_files('tests/files/foo.asn')
