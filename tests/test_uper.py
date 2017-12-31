@@ -7,6 +7,7 @@ sys.path.append('tests/files')
 sys.path.append('tests/files/3gpp')
 
 from rrc_8_6_0 import RRC_8_6_0
+from lpp_14_3_0 import LPP_14_3_0
 
 
 class Asn1ToolsUPerTest(unittest.TestCase):
@@ -465,6 +466,36 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         encoded = rrc.encode('UL-DCCH-Message', decoded_message)
         self.assertEqual(encoded, encoded_message)
         decoded = rrc.decode('UL-DCCH-Message', encoded)
+        self.assertEqual(decoded, decoded_message)
+
+    def test_lpp_14_3_0(self):
+        lpp = asn1tools.compile_dict(deepcopy(LPP_14_3_0), 'uper')
+
+        # Message 1.
+        decoded_message = {
+            'transactionID': {
+                'initiator': 'targetDevice',
+                'transactionNumber': 254
+            },
+            'endTransaction': True,
+            'lpp-MessageBody': {
+                'c1': {
+                    'provideAssistanceData': {
+                        'criticalExtensions': {
+                            'c1': {
+                                'spare1': None
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        encoded_message = b'\x93\xfd\x1b'
+
+        encoded = lpp.encode('LPP-Message', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = lpp.decode('LPP-Message', encoded)
         self.assertEqual(decoded, decoded_message)
 
     def test_encode_all_types(self):
