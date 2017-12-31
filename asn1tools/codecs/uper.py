@@ -385,12 +385,64 @@ class Set(Type):
         super(Set, self).__init__(name, 'SET')
         self.members = members
         self.extension = extension
+        self.optionals = [
+            member
+            for member in members
+            if member.optional or member.default is not None
+        ]
 
     def encode(self, data, encoder):
-        raise NotImplementedError()
+        if self.extension is not None:
+            if len(self.extension) == 0:
+                encoder.append_bit(0)
+            else:
+                raise NotImplementedError()
+
+        for optional in self.optionals:
+            if optional.optional:
+                encoder.append_bit(optional.name in data)
+            elif optional.name in data:
+                encoder.append_bit(data[optional.name] != optional.default)
+            else:
+                encoder.append_bit(0)
+
+        for member in self.members:
+            name = member.name
+
+            if name in data:
+                if member.default is None:
+                    member.encode(data[name], encoder)
+                elif data[name] != member.default:
+                    member.encode(data[name], encoder)
+            elif member.optional or member.default is not None:
+                pass
+            else:
+                raise EncodeError(
+                    "Set member '{}' not found in {}.".format(
+                        name,
+                        data))
 
     def decode(self, decoder):
-        raise NotImplementedError()
+        if self.extension is not None:
+            if len(self.extension) == 0:
+                decoder.read_bit()
+            else:
+                raise NotImplementedError()
+
+        values = {}
+        optionals = {
+            optional: decoder.read_bit()
+            for optional in self.optionals
+        }
+
+        for member in self.members:
+            if optionals.get(member, True):
+                value = member.decode(decoder)
+                values[member.name] = value
+            elif member.default is not None:
+                values[member.name] = member.default
+
+        return values
 
     def __repr__(self):
         return 'Set({}, [{}])'.format(
@@ -414,7 +466,7 @@ class SequenceOf(Type):
 
     def encode(self, data, encoder):
         if self.number_of_bits is None:
-            raise NotImplementedError()
+            encoder.append_bytes(bytearray([len(data)]))
         else:
             encoder.append_integer(len(data) - self.minimum,
                                    self.number_of_bits)
@@ -424,7 +476,7 @@ class SequenceOf(Type):
 
     def decode(self, decoder):
         if self.number_of_bits is None:
-            raise NotImplementedError()
+            number_of_elements = decoder.read_integer(8)
         else:
             number_of_elements = decoder.read_integer(self.number_of_bits)
             number_of_elements += self.minimum
@@ -575,10 +627,19 @@ class VisibleString(Type):
         super(VisibleString, self).__init__(name, 'VisibleString')
 
     def encode(self, data, encoder):
-        raise NotImplementedError()
+        encoder.append_bytes(bytearray([len(data)]))
+
+        for byte in bytearray(data.encode('ascii')):
+            encoder.append_bits(bytearray([(byte << 1) & 0xff]), 7)
 
     def decode(self, decoder):
-        raise NotImplementedError()
+        length = decoder.read_integer(8)
+        data = []
+
+        for _ in range(length):
+            data.append(decoder.read_integer(7))
+
+        return bytearray(data).decode('ascii')
 
     def __repr__(self):
         return 'VisibleString({})'.format(self.name)

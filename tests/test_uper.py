@@ -48,6 +48,62 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             str(cm.exception),
             "Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
 
+    def test_x691_a1(self):
+        a1 = asn1tools.compile_files('tests/files/x691_a1.asn', 'uper')
+
+        decoded_message = {
+            'name': {
+                'givenName': 'John',
+                'initial': 'P',
+                'familyName': 'Smith'
+            },
+            'title': 'Director',
+            'number': 51,
+            'dateOfHire': '19710917',
+            'nameOfSpouse': {
+                'givenName': 'Mary',
+                'initial': 'T',
+                'familyName': 'Smith'
+            },
+            'children': [
+                {
+                    'name': {
+                        'givenName': 'Ralph',
+                        'initial': 'T',
+                        'familyName': 'Smith'
+                    },
+                    'dateOfBirth': '19571111'
+                },
+                {
+                    'name': {
+                        'givenName': 'Susan',
+                        'initial': 'B',
+                        'familyName': 'Jones'
+                    },
+                    'dateOfBirth': '19590717'
+                }
+            ]
+        }
+
+        encoded_message = (
+            b'\x82\x4a\xdf\xa3\x70\x0d\x00\x5a\x7b\x74\xf4\xd0\x02\x66\x11'
+            b'\x13\x4f\x2c\xb8\xfa\x6f\xe4\x10\xc5\xcb\x76\x2c\x1c\xb1\x6e'
+            b'\x09\x37\x0f\x2f\x20\x35\x01\x69\xed\xd3\xd3\x40\x10\x2d\x2c'
+            b'\x3b\x38\x68\x01\xa8\x0b\x4f\x6e\x9e\x9a\x02\x18\xb9\x6a\xdd'
+            b'\x8b\x16\x2c\x41\x69\xf5\xe7\x87\x70\x0c\x20\x59\x5b\xf7\x65'
+            b'\xe6\x10\xc5\xcb\x57\x2c\x1b\xb1\x6e'
+        )
+
+        encoded = a1.encode('PersonnelRecord', decoded_message)
+
+        # ToDo: Encoder does not encode set members ordered by tags
+        #       (see X.680 8.6). 'title' and 'number' are swapped.
+        with self.assertRaises(AssertionError):
+            self.assertEqual(encoded, encoded_message)
+
+        decoded = a1.decode('PersonnelRecord', encoded)
+        self.assertEqual(decoded, decoded_message)
+
     def test_rrc_8_6_0(self):
         rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0), 'uper')
 

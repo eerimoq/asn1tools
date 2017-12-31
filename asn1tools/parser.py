@@ -159,7 +159,12 @@ def convert_members(tokens):
         member['optional'] = 'OPTIONAL' in qualifiers
 
         if 'DEFAULT' in qualifiers:
-            member['default'] = convert_number(qualifiers[1][0])
+            if len(qualifiers[1]) == 0:
+                value = []
+            else:
+                value = convert_number(qualifiers[1][0])
+
+            member['default'] = value
 
         tag = convert_tag(member_tokens[1])
 
