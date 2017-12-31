@@ -1,4 +1,4 @@
-X691-A1 DEFINITIONS ::= BEGIN
+X691 DEFINITIONS ::= BEGIN
 
     PersonnelRecord ::= [APPLICATION 0] IMPLICIT SET {
         name            Name,

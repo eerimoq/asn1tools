@@ -49,7 +49,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             "Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
 
     def test_x691_a1(self):
-        a1 = asn1tools.compile_files('tests/files/x691_a1.asn', 'uper')
+        a1 = asn1tools.compile_files('tests/files/x691.asn', 'uper')
 
         decoded_message = {
             'name': {
