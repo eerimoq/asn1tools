@@ -9,10 +9,13 @@ sys.path.append('tests/files/ietf')
 sys.path.append('tests/files/3gpp')
 
 from foo import FOO
+from bar import BAR
+from all_types import ALL_TYPES
+from information_object import INFORMATION_OBJECT
+from x691 import X691
 from rrc_8_6_0 import RRC_8_6_0
 from s1ap_14_4_0 import S1AP_14_4_0
 from lpp_14_3_0 import LPP_14_3_0
-from information_object import INFORMATION_OBJECT
 from rfc1155 import RFC1155
 from rfc1157 import RFC1157
 from rfc2986 import RFC2986
@@ -26,9 +29,6 @@ from rfc4211 import RFC4211
 from rfc4511 import RFC4511
 from rfc5280 import RFC5280
 from zforce import ZFORCE
-from bar import BAR
-from all_types import ALL_TYPES
-from x691 import X691
 
 
 class Asn1ToolsParseTest(unittest.TestCase):
@@ -46,9 +46,21 @@ class Asn1ToolsParseTest(unittest.TestCase):
         actual = asn1tools.parse_files('tests/files/foo.asn')
         self.assertEqual(actual, FOO)
 
+    def test_parse_bar(self):
+        actual = asn1tools.parse_files('tests/files/bar.asn')
+        self.assertEqual(actual, BAR)
+
+    def test_parse_all_types(self):
+        actual = asn1tools.parse_files('tests/files/all_types.asn')
+        self.assertEqual(actual, ALL_TYPES)
+
     def test_parse_information_object(self):
         actual = asn1tools.parse_files('tests/files/information_object.asn')
         self.assertEqual(actual, INFORMATION_OBJECT)
+
+    def test_parse_x691(self):
+        actual = asn1tools.parse_files('tests/files/x691.asn')
+        self.assertEqual(actual, X691)
 
     def test_parse_rrc_8_6_0(self):
         actual = asn1tools.parse_files('tests/files/3gpp/rrc_8_6_0.asn')
@@ -113,18 +125,6 @@ class Asn1ToolsParseTest(unittest.TestCase):
     def test_parse_zforce(self):
         actual = asn1tools.parse_files('tests/files/zforce.asn')
         self.assertEqual(actual, ZFORCE)
-
-    def test_parse_bar(self):
-        actual = asn1tools.parse_files('tests/files/bar.asn')
-        self.assertEqual(actual, BAR)
-
-    def test_parse_all_types(self):
-        actual = asn1tools.parse_files('tests/files/all_types.asn')
-        self.assertEqual(actual, ALL_TYPES)
-
-    def test_parse_x691(self):
-        actual = asn1tools.parse_files('tests/files/x691.asn')
-        self.assertEqual(actual, X691)
 
     def test_parse_imports_global_module_reference(self):
         actual = asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
