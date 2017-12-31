@@ -411,6 +411,8 @@ def create_grammar():
     INCLUDES = Keyword('INCLUDES').setName('INCLUDES')
     PATTERN = Keyword('PATTERN').setName('PATTERN')
     CONSTRAINED_BY = Keyword('CONSTRAINED BY').setName('CONSTRAINED BY')
+    UNION = Keyword('UNION').setName('UNION')
+    INTERSECTION = Keyword('INTERSECTION').setName('INTERSECTION')
 
     # Various literals.
     word = Word(printables, excludeChars=',(){}[].:=;"|').setName('word')
@@ -431,6 +433,7 @@ def create_grammar():
     ellipsis = Literal('...')
     qmark = Literal('"')
     pipe = Literal('|')
+    caret = Literal('^')
     comma = Literal(',')
     at = Literal('@')
     integer = Word(nums)
@@ -715,11 +718,7 @@ def create_grammar():
     multiple_type_constraints = (full_specification | partial_specification)
     inner_type_constraints = ((WITH + COMPONENT + single_type_constraint)
                               | (WITH + COMPONENTS + multiple_type_constraints))
-    permitted_alphabet = Suppress(FROM
-                                  + delimitedList(qmark + word + qmark
-                                                  + range_separator
-                                                  + qmark + word + qmark,
-                                                  delim=pipe))
+    permitted_alphabet = Suppress(FROM - constraint)
     type_constraint = type_
     size_constraint = (SIZE + Group(constraint))
     upper_end_value = (value | MAX)
@@ -739,11 +738,12 @@ def create_grammar():
                         | type_constraint)
 
     # X.680: 46. Element set specification
+    union_mark = (pipe | UNION)
+    intersection_mark = (caret | INTERSECTION)
     elements = Group(subtype_elements
                      | object_set_elements
                      | (left_parenthesis + element_set_spec + right_parenthesis))
-    intersections = elements
-    unions = delimitedList(intersections, delim=pipe)
+    unions = delimitedList(elements, delim=(union_mark | intersection_mark))
     element_set_spec <<= unions
     root_element_set_spec <<= element_set_spec
     additional_element_set_spec <<= element_set_spec

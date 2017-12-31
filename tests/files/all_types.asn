@@ -72,11 +72,11 @@ Printablestring ::= PrintableString
 
 Ia5string ::= IA5String
 
-Ia5string2 ::= IA5String (FROM "a".."f" | "0".."9")
+Ia5string2 ::= IA5String (FROM ("a".."f" | "0".."9"))
 
 Ia5string3 ::= IA5String ("foo" | "bar" | "fie")
 
-Ia5string4 ::= IA5String -- (SIZE (1) ^ FROM ("0".."2"))
+Ia5string4 ::= IA5String (SIZE (1) ^ FROM ("0".."2"))
 
 ia5string IA5String ::= { 1, 2 }
 
