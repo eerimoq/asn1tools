@@ -150,7 +150,7 @@ def convert_members(tokens):
         if member_tokens in [['...'], '...']:
             member_tokens = [['...', [], ''], []]
 
-        if member_tokens[:2] == ['COMPONENTS', 'OF']:
+        if member_tokens[0] == 'COMPONENTS OF':
             continue
 
         member_tokens, qualifiers = member_tokens
@@ -397,12 +397,12 @@ def create_grammar():
     TRUE = Keyword('TRUE').setName('TRUE')
     FALSE = Keyword('FALSE').setName('FALSE')
     CLASS = Keyword('CLASS').setName('CLASS')
-    WITH = Keyword('WITH').setName('WITH')
-    SYNTAX = Keyword('SYNTAX').setName('SYNTAX')
+    WITH_SYNTAX = Keyword('WITH SYNTAX').setName('WITH SYNTAX')
     UNIQUE = Keyword('UNIQUE').setName('UNIQUE')
     NULL = Keyword('NULL').setName('NULL')
-    COMPONENT = Keyword('COMPONENT').setName('COMPONENT')
-    COMPONENTS = Keyword('COMPONENTS').setName('COMPONENTS')
+    WITH_COMPONENT = Keyword('WITH COMPONENT').setName('WITH COMPONENT')
+    WITH_COMPONENTS = Keyword('WITH COMPONENTS').setName('WITH COMPONENTS')
+    COMPONENTS_OF = Keyword('COMPONENTS OF').setName('COMPONENTS OF')
     PRESENT = Keyword('PRESENT').setName('PRESENT')
     ABSENT = Keyword('ABSENT').setName('ABSENT')
     ALL = Keyword('ALL').setName('ALL')
@@ -558,6 +558,7 @@ def create_grammar():
                                      + left_brace
                                      - Group(delimitedList(at_notation))
                                      - right_brace)
+    component_relation_constraint.setName('"{"')
     simple_table_constraint = object_set
     table_constraint = (component_relation_constraint
                         | simple_table_constraint)
@@ -575,6 +576,7 @@ def create_grammar():
                                - left_brace
                                - Optional(delimitedList(user_defined_constraint_parameter))
                                - right_brace)
+    user_defined_constraint.setName('CONSTRAINED_BY')
 
     # X.682: 8. General constraint specification
     general_constraint = (user_defined_constraint
@@ -624,7 +626,7 @@ def create_grammar():
                        | variable_type_value_set_field_spec
                        | object_field_spec
                        | object_set_field_spec)
-    with_syntax_spec = (WITH - SYNTAX - syntax_list)
+    with_syntax_spec = (WITH_SYNTAX - syntax_list)
     object_class_defn = (CLASS
                          - Suppress(left_brace)
                          - Group(delimitedList(field_spec))
@@ -679,6 +681,7 @@ def create_grammar():
                                               + additional_element_set_spec)))
                        | (ellipsis + Optional(comma + additional_element_set_spec)))
     object_set <<= (left_brace + Group(object_set_spec) + right_brace)
+    object_set.setName('"{"')
     parameterized_object_set_assignment = (object_set_reference
                                            + parameter_list
                                            + defined_object_class
@@ -715,11 +718,11 @@ def create_grammar():
     partial_specification = (left_brace + ellipsis + comma + type_constraints + right_brace)
     single_type_constraint = constraint
     multiple_type_constraints = (full_specification | partial_specification)
-    inner_type_constraints = ((WITH + COMPONENT + single_type_constraint)
-                              | (WITH + COMPONENTS + multiple_type_constraints))
+    inner_type_constraints = ((WITH_COMPONENT - single_type_constraint)
+                              | (WITH_COMPONENTS - multiple_type_constraints))
     permitted_alphabet = Suppress(FROM - constraint)
     type_constraint = type_
-    size_constraint = (SIZE + Group(constraint))
+    size_constraint = (SIZE - Group(constraint))
     upper_end_value = (value | MAX)
     lower_end_value = (value | MIN)
     upper_endpoint = (Optional(less_than) + upper_end_value)
@@ -755,6 +758,7 @@ def create_grammar():
     subtype_constraint = element_set_specs
     constraint_spec = (general_constraint
                        | subtype_constraint)
+    constraint_spec.setName('one or more constraints')
     constraint <<= (Suppress(left_parenthesis)
                     - constraint_spec
                     - Suppress(right_parenthesis))
@@ -892,7 +896,7 @@ def create_grammar():
     component_type = Group(named_type
                            + Group(Optional(OPTIONAL
                                             | (DEFAULT + value)))
-                           | (COMPONENTS + OF + type_))
+                           | (COMPONENTS_OF - type_))
     version_number = (number + Suppress(colon))
     extension_addition_group = (Suppress(left_version_brackets)
                                 + Suppress(Group(Optional(version_number)))

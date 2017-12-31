@@ -365,6 +365,62 @@ class Asn1ToolsParseTest(unittest.TestCase):
             "definitiveNumberForm - Suppress:(\")\")} | identifier | "
             "definitiveNumberForm}.")
 
+    def test_parse_error_missing_union_member_beginning(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
+                                   'B ::= INTEGER (| SIZE (1))'
+                                   'END')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Invalid ASN.1 syntax at line 1, column 40: 'A DEFINITIONS ::= BEGIN "
+            "B ::= INTEGER (>!<| SIZE (1))END': Expected one or more constraints.")
+
+    def test_parse_error_missing_union_member_middle(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
+                                   'B ::= INTEGER (SIZE (1) | | (0))'
+                                   'END')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Invalid ASN.1 syntax at line 1, column 49: \'A DEFINITIONS "
+            "::= BEGIN B ::= INTEGER (SIZE (1) >!<| | (0))END\': Expected \")\".")
+
+    def test_parse_error_missing_union_member_end(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
+                                   'B ::= INTEGER (SIZE (1) |)'
+                                   'END')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Invalid ASN.1 syntax at line 1, column 49: \'A DEFINITIONS "
+            "::= BEGIN B ::= INTEGER (SIZE (1) >!<|)END\': Expected \")\".")
+
+    def test_parse_error_size_constraint_missing_parentheses(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
+                                   'B ::= INTEGER (SIZE 1)'
+                                   'END')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Invalid ASN.1 syntax at line 1, column 45: \'A DEFINITIONS ::= "
+            "BEGIN B ::= INTEGER (SIZE >!<1)END\': Expected \"(\".")
+
+    def test_parse_error_size_constraint_missing_size(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
+                                   'B ::= INTEGER (SIZE ())'
+                                   'END')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Invalid ASN.1 syntax at line 1, column 46: 'A DEFINITIONS ::= "
+            "BEGIN B ::= INTEGER (SIZE (>!<))END': Expected one or more "
+            "constraints.")
+
 
 if __name__ == '__main__':
     unittest.main()
