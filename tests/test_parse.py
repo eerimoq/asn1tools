@@ -15,6 +15,7 @@ from information_object import INFORMATION_OBJECT
 from x680 import X680
 from x691 import X691
 from rrc_8_6_0 import RRC_8_6_0
+from rrc_14_4_0 import RRC_14_4_0
 from s1ap_14_4_0 import S1AP_14_4_0
 from lpp_14_3_0 import LPP_14_3_0
 from rfc1155 import RFC1155
@@ -70,6 +71,10 @@ class Asn1ToolsParseTest(unittest.TestCase):
     def test_parse_rrc_8_6_0(self):
         actual = asn1tools.parse_files('tests/files/3gpp/rrc_8_6_0.asn')
         self.assertEqual(actual, RRC_8_6_0)
+
+    def test_parse_rrc_14_4_0(self):
+        actual = asn1tools.parse_files('tests/files/3gpp/rrc_14_4_0.asn')
+        self.assertEqual(actual, RRC_14_4_0)
 
     def test_parse_s1ap_14_4_0(self):
         actual = asn1tools.parse_files('tests/files/3gpp/s1ap_14_4_0.asn')
