@@ -1,4 +1,4 @@
-X680 DEFINITIONS ::= BEGIN
+X680 DEFINITIONS AUTOMATIC TAGS ::= BEGIN
 
     -- 14.10
     T-14-10 ::= SEQUENCE {
@@ -94,9 +94,9 @@ X680 DEFINITIONS ::= BEGIN
 
     AngleInRadians-E-2-4 ::= REAL
 
-    pi-E-2-4-a REAL ::= {mantissa 3141592653589793238462643383279, base 10, exponent -30}
+    pi-E-2-4-a REAL ::= {mantissa 3141592653589793, base 10, exponent -30}
 
-    pi-E-2-4-b REAL ::= 3.14159265358979323846264338327
+    pi-E-2-4-b REAL ::= 3.141592653589793
 
     App-X-Real-E-2-4 ::= REAL (WITH COMPONENTS {
          mantissa (-16777215..16777215),
@@ -123,25 +123,25 @@ X680 DEFINITIONS ::= BEGIN
 
     map2-E-2-5 BitField-E-2-5 ::= '9A4'H
 
-    DaysOfTheWeek-E-2-5 ::= BIT STRING {
+    DaysOfTheWeek-E-2-5-a ::= BIT STRING {
         sunday(0), monday (1), tuesday(2),
         wednesday(3), thursday(4), friday(5),
         saturday(6) } (SIZE (0..7))
 
-    sunnyDaysLastWeek1-E-2-5 DaysOfTheWeek-E-2-5 ::= {sunday, monday, wednesday}
+    sunnyDaysLastWeek1-E-2-5-a DaysOfTheWeek-E-2-5-a ::= {sunday, monday, wednesday}
 
-    sunnyDaysLastWeek2-E-2-5 DaysOfTheWeek-E-2-5 ::= '1101'B
+    sunnyDaysLastWeek2-E-2-5-a DaysOfTheWeek-E-2-5-a ::= '1101'B
 
-    sunnyDaysLastWeek3-E-2-5 DaysOfTheWeek-E-2-5 ::= '1101000'B
+    sunnyDaysLastWeek3-E-2-5-a DaysOfTheWeek-E-2-5-a ::= '1101000'B
 
-    DaysOfTheWeek-E-2-5 ::= BIT STRING {
+    DaysOfTheWeek-E-2-5-b ::= BIT STRING {
         sunday(0), monday (1), tuesday(2),
         wednesday(3), thursday(4), friday(5),
         saturday(6) } (SIZE (7))
 
-    sunnyDaysLastWeek1-E-2-5 DaysOfTheWeek-E-2-5 ::= {sunday, monday, wednesday}
+    sunnyDaysLastWeek1-E-2-5-b DaysOfTheWeek-E-2-5-b ::= {sunday, monday, wednesday}
 
-    sunnyDaysLastWeek3-E-2-5 DaysOfTheWeek-E-2-5 ::= '1101000'B
+    sunnyDaysLastWeek3-E-2-5-b DaysOfTheWeek-E-2-5-b ::= '1101000'B
 
     PersonalStatus-E-2-5 ::= BIT STRING
         {married(0), employed(1), veteran(2), collegeGraduate(3)}
@@ -154,7 +154,7 @@ X680 DEFINITIONS ::= BEGIN
 
     G4FacsimileImage-E-2-6 ::= OCTET STRING
 
-    image-E-2-6 G4FacsimilePage-E-2-6 ::= '3FE2EBAD471005'H
+    image-E-2-6 G4FacsimileImage-E-2-6 ::= '3FE2EBAD471005'H
 
     Surname-E-2-6 ::= PrintableString
 
@@ -234,23 +234,27 @@ X680 DEFINITIONS ::= BEGIN
         password VisibleString,
         accountNumber INTEGER,
         ...,
-        [[2: -- Extension addition added in protocol version 2
+        [[ --2: \-\- Extension addition added in protocol version 2
         lastLoggedIn GeneralizedTime OPTIONAL,
         minutesLastLoggedIn INTEGER
         ]],
         ...
     }
 
+    ThumbPrint ::= NULL
+
+    Certificate ::= NULL
+
     Record-E-2-10-c ::= SEQUENCE { -- Third version of protocol containing "Record"
         userName VisibleString,
         password VisibleString,
         accountNumber INTEGER,
         ...,
-        [[2: -- Extension addition added in protocol version 2
+        [[ --2: \-\- Extension addition added in protocol version 2
         lastLoggedIn GeneralizedTime OPTIONAL,
         minutesLastLoggedIn INTEGER
         ]],
-        [[4: -- Extension addition added in protocol version 3
+        [[ --4: \-\- Extension addition added in protocol version 3
         certificate Certificate,
         thumb ThumbPrint OPTIONAL
         ]],
@@ -294,8 +298,8 @@ X680 DEFINITIONS ::= BEGIN
         organizationName VisibleString OPTIONAL,
         countryName VisibleString OPTIONAL,
         ...,
-        [[2: -- Extension addition added in protocol version 2
-        internetEmailAddress VisbleString,
+        [[ --2: \-\- Extension addition added in protocol version 2
+        internetEmailAddress VisibleString,
         faxNumber VisibleString OPTIONAL
         ]],
         ...
@@ -311,11 +315,11 @@ X680 DEFINITIONS ::= BEGIN
         organizationName VisibleString OPTIONAL,
         countryName VisibleString OPTIONAL,
         ...,
-        [[2: -- Extension addition added in version 2
-        internetEmailAddress VisbleString,
+        [[ --2: \-\- Extension addition added in version 2
+        internetEmailAddress VisibleString,
         faxNumber VisibleString OPTIONAL
         ]],
-        [[5: -- Extension addition added in version 5
+        [[ --5: \-\- Extension addition added in version 5
         phoneNumber VisibleString OPTIONAL
         ]],
         ...
@@ -403,9 +407,11 @@ X680 DEFINITIONS ::= BEGIN
         ...
     }
 
-    fileId1-E-2-13-a FileIdentifier-E-2-13-c ::= relativeName : "MarchProgressReport.doc"
+    fileId1-E-2-13-b FileIdentifier-E-2-13-c ::= relativeName : "MarchProgressReport.doc"
 
     fileId2-E-2-13-a FileIdentifier-E-2-13-c ::= serialNumber : 214
+
+    VendorExt ::= OCTET STRING
 
     FileIdentifier-E-2-13-d ::= CHOICE { -- Third version of FileIdentifier
         relativeName VisibleString,
@@ -419,11 +425,11 @@ X680 DEFINITIONS ::= BEGIN
         ...
     }
 
-    fileId1-E-2-13-b FileIdentifier-E-2-13-d ::= relativeName : "MarchProgressReport.doc"
+    fileId1-E-2-13-c FileIdentifier-E-2-13-d ::= relativeName : "MarchProgressReport.doc"
 
     fileId2-E-2-13-b FileIdentifier-E-2-13-d ::= serialNumber : 214
 
-    fileId3-E-2-13-c FileIdentifier-E-2-13-d ::= unidentified : NULL
+    fileId3-E-2-13-a FileIdentifier-E-2-13-d ::= unidentified : NULL
 
     Greeting-E-2-13-a ::= CHOICE { -- First version of "Greeting"
         postCard VisibleString,
@@ -431,10 +437,14 @@ X680 DEFINITIONS ::= BEGIN
         ...
     }
 
+    Audio ::= NULL
+
+    Video ::= REAL
+
     Greeting-E-2-13-b ::= CHOICE { -- Second version of "Greeting"
         postCard VisibleString,
         ...,
-        [[2: -- Extension addition added in version 2
+        [[ --2: \-\- Extension addition added in version 2
         audio Audio,
         video Video
         ]],
@@ -443,7 +453,7 @@ X680 DEFINITIONS ::= BEGIN
 
     Greeting-E-2-13-c ::= [APPLICATION 12] CHOICE {
         postCard VisibleString,
-        recording Voice
+        recording Voice-E-2-13
     }
 
     Voice-E-2-13 ::= CHOICE {
@@ -459,12 +469,12 @@ X680 DEFINITIONS ::= BEGIN
     --     date-last-used INTEGER,
     --     file-name VisibleString
     -- }
-    -- 
+    --
     -- AttributeList-E-2-14 ::= SEQUENCE {
     --     first-attribute date-last-used < FileAttribute,
     --     second-attribute file-name < FileAttribute
     -- }
-    -- 
+    --
     -- listOfAttributes-E-2-14 AttributeList-E-2-14 ::= {
     --     first-attribute 27,
     --     second-attribute "PROGRAM"
@@ -478,20 +488,20 @@ X680 DEFINITIONS ::= BEGIN
     }
 
     Attribute-E-2-15 ::= SEQUENCE {
-        attributeID ATTRIBUTE.&attributeId, -- this is normally constrained.
-        attributeValue ATTRIBUTE.&AttributeType -- this is normally constrained.
+        attributeID ATTRIBUTE-E-2-15.&attributeId, -- this is normally constrained.
+        attributeValue ATTRIBUTE-E-2-15.&AttributeType -- this is normally constrained.
     }
 
     -- E.2.16 Embedded-pdv
 
     -- FileContents-E-2-16 ::= EMBEDDED PDV
-    -- 
+    --
     -- DocumentList-E-2-16 ::= SEQUENCE OF document EMBEDDED PDV
 
     -- E.2.18 Instance-of
 
     -- ACCESS-CONTROL-CLASS-E-2-18 ::= TYPE-IDENTIFIER
-    -- 
+    --
     -- Get-Invoke-E-2-18 ::= SEQUENCE {
     --     objectClass ObjectClass,
     --     objectInstance ObjectInstance,
@@ -499,7 +509,7 @@ X680 DEFINITIONS ::= BEGIN
     --                                                     \-\- constrained.
     --     attributeID ATTRIBUTE-E-2-15.&attributeId
     -- }
-    -- 
+    --
     -- Get-Invoke-E-2-18 ::= SEQUENCE {
     --     objectClass ObjectClass,
     --     objectInstance ObjectInstance,
@@ -519,6 +529,8 @@ X680 DEFINITIONS ::= BEGIN
     -- TouchToneString-E-4 ::= IA5String
     --     (FROM ("0123456789" | "*" | "#")) (SIZE (1..63))
 
+    Parameter ::= NULL
+
     ParameterList-E-4 ::= SET SIZE (1..63) OF Parameter
 
     SmallPrime-E-4-a ::= INTEGER (2|3|5|7|11|13|17|19|23|29)
@@ -529,21 +541,27 @@ X680 DEFINITIONS ::= BEGIN
 
     SmallPrime-E-4-d ::= INTEGER (2 | 3, ..., 5 | 7 | 11 | 13 | 17 | 19)
 
+    TypeA ::= INTEGER
+
+    TypeB ::= BIT STRING
+
+    TypeC ::= REAL
+
     Envelope-E-4 ::= SET {
         typeA TypeA,
         typeB TypeB OPTIONAL,
         typeC TypeC OPTIONAL
     }
 
-    ABEnvelope-E-4-a ::= Envelope (WITH COMPONENTS
+    ABEnvelope-E-4-a ::= Envelope-E-4 (WITH COMPONENTS
         {... , typeB PRESENT, typeC ABSENT})
 
-    ACEnvelope-E-4-a ::= Envelope (WITH COMPONENTS
+    ACEnvelope-E-4-a ::= Envelope-E-4 (WITH COMPONENTS
         {... , typeB ABSENT, typeC PRESENT})
 
-    ABEnvelope-E-4-b ::= Envelope (WITH COMPONENTS {typeA, typeB})
+    ABEnvelope-E-4-b ::= Envelope-E-4 (WITH COMPONENTS {typeA, typeB})
 
-    ACEnvelope-E-4-b ::= Envelope (WITH COMPONENTS {typeA, typeC})
+    ACEnvelope-E-4-b ::= Envelope-E-4 (WITH COMPONENTS {typeA, typeC})
 
     PDU-E-4 ::= SET {
         alpha INTEGER,
@@ -552,7 +570,7 @@ X680 DEFINITIONS ::= BEGIN
         delta BOOLEAN
     }
 
-    TestPDU-E-4 ::= PDU (WITH COMPONENTS
+    TestPDU-E-4 ::= PDU-E-4 (WITH COMPONENTS
         {... , delta (FALSE), alpha (MIN..<0)})
 
     -- FurtherTestPDU-E-4 ::= TestPDU-E-4
@@ -562,6 +580,16 @@ X680 DEFINITIONS ::= BEGIN
 
     -- Address-E-4 ::= Text-block (SIZE (1..6)) (WITH COMPONENT (SIZE (1..32)))
 
+    A ::= NULL
+
+    B ::= NULL
+
+    C ::= NULL
+
+    D ::= NULL
+
+    E ::= NULL
+
     Z-E-4 ::= CHOICE {
         a A,
         b B,
@@ -570,13 +598,13 @@ X680 DEFINITIONS ::= BEGIN
         e E
     }
 
-    V-E-4 ::= Z (WITH COMPONENTS { ..., a ABSENT, b ABSENT })
+    V-E-4 ::= Z-E-4 (WITH COMPONENTS { ..., a ABSENT, b ABSENT })
 
-    W-E-4 ::= Z (WITH COMPONENTS { ..., a PRESENT })
+    W-E-4 ::= Z-E-4 (WITH COMPONENTS { ..., a PRESENT })
 
-    X-E-4 ::= Z (WITH COMPONENTS { a PRESENT })
+    X-E-4 ::= Z-E-4 (WITH COMPONENTS { a PRESENT })
 
-    Y-E-4 ::= Z (WITH COMPONENTS { a ABSENT, b, c })
+    Y-E-4 ::= Z-E-4 (WITH COMPONENTS { a ABSENT, b, c })
 
     Months-E-4 ::= ENUMERATED {
         january (1),
@@ -593,16 +621,16 @@ X680 DEFINITIONS ::= BEGIN
         december (12)
     }
 
-    First-quarter-E-4 ::= Months ( january | february | march )
+    First-quarter-E-4 ::= Months-E-4 ( january | february | march )
 
-    Second-quarter-E-4 ::= Months ( april | may | june )
+    Second-quarter-E-4 ::= Months-E-4 ( april | may | june )
 
-    Third-quarter-E-4 ::= Months ( july | august | september )
+    Third-quarter-E-4 ::= Months-E-4 ( july | august | september )
 
-    Fourth-quarter-E-4 ::= Months ( october | november | december )
+    Fourth-quarter-E-4 ::= Months-E-4 ( october | november | december )
 
-    First-half-E-4 ::= Months ( First-quarter | Second-quarter )
+    First-half-E-4 ::= Months-E-4 ( First-quarter-E-4 | Second-quarter-E-4 )
 
-    Second-half-E-4 ::= Months ( Third-quarter | Fourth-quarter )
+    Second-half-E-4 ::= Months-E-4 ( Third-quarter-E-4 | Fourth-quarter-E-4 )
 
 END

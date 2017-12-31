@@ -1255,6 +1255,9 @@ def parse_string(string):
             LOGGER.debug("Converting assignment tokens '%s'.", assignment)
 
             if is_parameterized_object_set_assignment(assignment):
+                if name in object_sets:
+                    LOGGER.warning("Object set '%s' already defined.", name)
+                    
                 LOGGER.debug("Converting object set '%s'.", name)
                 value = convert_parameterized_object_set_assignment(assignment)
                 LOGGER.debug("Converted object set '%s' to %s.", name, value)
@@ -1262,16 +1265,25 @@ def parse_string(string):
             elif is_parameterized_object_assignment(assignment):
                 pass
             elif is_parameterized_object_class_assignment(assignment):
+                if name in object_classes:
+                    LOGGER.warning("Object class '%s' already defined.", name)
+
                 LOGGER.debug("Converting object class '%s'.", name)
                 value = convert_parameterized_object_class_assignment(assignment)
                 LOGGER.debug("Converted object class '%s' to %s.", name, value)
                 object_classes[name] = value
             elif is_parameterized_type_assignment(assignment):
+                if name in types:
+                    LOGGER.warning("Type '%s' already defined.", name)
+
                 LOGGER.debug("Converting type '%s'.", name)
                 value = convert_parameterized_type_assignment(assignment)
                 LOGGER.debug("Converted type '%s' to %s.", name, value)
                 types[name] = value
             elif is_parameterized_value_assignment(assignment):
+                if name in values:
+                    LOGGER.warning("Value '%s' already defined.", name)
+
                 LOGGER.debug("Converting value '%s'.", name)
                 value = convert_parameterized_value_assignment(assignment)
                 LOGGER.debug("Converted value '%s' to %s.", name, value)
