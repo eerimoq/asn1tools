@@ -1,0 +1,608 @@
+X680 DEFINITIONS ::= BEGIN
+
+    -- 14.10
+    T-14-10 ::= SEQUENCE {
+        a BOOLEAN,
+        b SET OF INTEGER
+    }
+
+    -- 19.5
+    A-19-5 ::= ENUMERATED {
+        a,
+        b(3),
+        ...,
+        c(1)
+    }
+
+    D-19-5 ::= ENUMERATED {
+        a,
+        b,
+        ...,
+        c(2)
+    }
+
+    -- 19.6
+    A-19-6 ::= ENUMERATED {a, b, ..., c}
+    B-19-6 ::= ENUMERATED {a, b, c(0), ..., d}
+    C-19-6 ::= ENUMERATED {a, b, ..., c(3), d}
+    D-19-6 ::= ENUMERATED {a, z(25), ..., d}
+
+    -- Annex E
+
+    -- E.1.1 Informal description of Personnel Record
+
+    PersonnelRecord-E-1-1 ::= [APPLICATION 0] SET {
+        name Name-E-1-1,
+        title VisibleString,
+        number EmployeeNumber-E-1-1,
+        dateOfHire Date-E-1-1,
+        nameOfSpouse Name-E-1-1,
+        children SEQUENCE OF ChildInformation-E-1-1 DEFAULT {}
+    }
+
+    ChildInformation-E-1-1 ::= SET {
+        name Name-E-1-1,
+        dateOfBirth Date-E-1-1
+    }
+
+    Name-E-1-1 ::= [APPLICATION 1] SEQUENCE {
+        givenName VisibleString,
+        initial VisibleString,
+        familyName VisibleString
+    }
+
+    EmployeeNumber-E-1-1 ::= [APPLICATION 2] INTEGER
+
+    Date-E-1-1 ::= [APPLICATION 3] VisibleString -- YYYY MMDD
+
+    -- E.2.1 Boolean
+
+    Employed-E-2-1 ::= BOOLEAN
+
+    -- E.2.2 Integer
+
+    CheckingAccountBalance-E-2-2 ::= INTEGER -- in cents; negative means overdrawn.
+
+    balance-E-2-2 CheckingAccountBalance-E-2-2 ::= 0
+
+    DayOfTheMonth-E-2-2 ::= INTEGER {first(1), last(31)}
+
+    today-E-2-2 DayOfTheMonth-E-2-2 ::= first
+
+    unknown-E-2-2 DayOfTheMonth-E-2-2 ::= 0
+
+    DayOfTheMonth-E-2-2-a ::= INTEGER {first(1), last(31)} (first | last)
+
+    DayOfTheMonth-E-2-2-b ::= INTEGER {first(1), last(31)} (first .. last)
+
+    dayOfTheMonth-E-2-2-c DayOfTheMonth-E-2-2 ::= 4
+
+    -- E.2.3 Enumerated
+
+    DayOfTheWeek-E-2-3 ::= ENUMERATED {sunday(0), monday(1), tuesday(2),
+                                 wednesday(3), thursday(4), friday(5), saturday(6)}
+
+    firstDay-E-2-3 DayOfTheWeek-E-2-3 ::= sunday
+
+    MaritalStatus-E-2-3-a ::= ENUMERATED {single, married}
+
+    MaritalStatus-E-2-3-b ::= ENUMERATED {single, married, ..., widowed}
+
+    MaritalStatus-E-2-3-c ::= ENUMERATED {single, married, ..., widowed, divorced}
+
+    -- E.2.4 Real
+
+    AngleInRadians-E-2-4 ::= REAL
+
+    pi-E-2-4 REAL ::= {mantissa 3141592653589793238462643383279, base 10, exponent -30}
+
+    pi-E-2-4 REAL ::= 3.14159265358979323846264338327
+
+    App-X-Real-E-2-4 ::= REAL (WITH COMPONENTS {
+         mantissa (-16777215..16777215),
+         base (2),
+         exponent (-125..128) } )
+
+    girth-E-2-4 App-X-Real-E-2-4 ::= {mantissa 16, base 2, exponent 1}
+
+    -- E.2.5 Bit string
+
+    G3FacsimilePage-E-2-5 ::= BIT STRING
+
+    image-E-2-5 G3FacsimilePage-E-2-5 ::= '100110100100001110110'B
+
+    trailer-E-2-5 BIT STRING ::= '0123456789ABCDEF'H
+
+    body1-E-2-5 G3FacsimilePage-E-2-5 ::= '1101'B
+
+    body2-E-2-5 G3FacsimilePage-E-2-5 ::= '1101000'B
+
+    BitField-E-2-5 ::= BIT STRING (SIZE (12))
+
+    map1-E-2-5 BitField-E-2-5 ::= '100110100100'B
+
+    map2-E-2-5 BitField-E-2-5 ::= '9A4'H
+
+    DaysOfTheWeek-E-2-5 ::= BIT STRING {
+        sunday(0), monday (1), tuesday(2),
+        wednesday(3), thursday(4), friday(5),
+        saturday(6) } (SIZE (0..7))
+
+    sunnyDaysLastWeek1-E-2-5 DaysOfTheWeek-E-2-5 ::= {sunday, monday, wednesday}
+
+    sunnyDaysLastWeek2-E-2-5 DaysOfTheWeek-E-2-5 ::= '1101'B
+
+    sunnyDaysLastWeek3-E-2-5 DaysOfTheWeek-E-2-5 ::= '1101000'B
+
+    DaysOfTheWeek-E-2-5 ::= BIT STRING {
+        sunday(0), monday (1), tuesday(2),
+        wednesday(3), thursday(4), friday(5),
+        saturday(6) } (SIZE (7))
+
+    sunnyDaysLastWeek1-E-2-5 DaysOfTheWeek-E-2-5 ::= {sunday, monday, wednesday}
+
+    sunnyDaysLastWeek3-E-2-5 DaysOfTheWeek-E-2-5 ::= '1101000'B
+
+    PersonalStatus-E-2-5 ::= BIT STRING
+        {married(0), employed(1), veteran(2), collegeGraduate(3)}
+
+    billClinton-E-2-5 PersonalStatus-E-2-5 ::= {married, employed, collegeGraduate}
+
+    hillaryClinton-E-2-5 PersonalStatus-E-2-5 ::= '110100'B
+
+    -- E.2.6 Octet string
+
+    G4FacsimileImage-E-2-6 ::= OCTET STRING
+
+    image-E-2-6 G4FacsimilePage-E-2-6 ::= '3FE2EBAD471005'H
+
+    Surname-E-2-6 ::= PrintableString
+
+    president-E-2-6 Surname-E-2-6 ::= "Clinton"
+
+    -- E.2.7 UniversalString, BMPString and UTF8String
+
+    greekCapitalLetterSigma-E-2-7 BMPString ::= {0, 0, 3, 163}
+
+    rightwardsArrow-E-2-7 UTF8String ::= {0, 0, 33, 146}
+
+    infinity-E-2-7 UTF8String ::= {0, 0, 34, 30}
+
+    property-E-2-7 UTF8String ::=
+        {"f ", rightwardsArrow-E-2-7, " ", infinity-E-2-7}
+
+    -- E.2.8 CHARACTER STRING
+
+    PackedBCDString-E-2-8 ::= CHARACTER STRING (WITH COMPONENTS {
+        identification (WITH COMPONENTS {
+            fixed PRESENT } ) } )
+
+    -- E.2.9 Null
+
+    PatientIdentifier-E-2-9 ::= SEQUENCE {
+        name VisibleString,
+        roomNumber CHOICE {
+            room INTEGER,
+            outPatient NULL -- if an out-patient --
+        }
+    }
+
+    lastPatient-E-2-9 PatientIdentifier-E-2-9 ::= {
+        name "Jane Doe",
+        roomNumber outPatient : NULL
+    }
+
+    -- E.2.10 Sequence and sequence-of
+
+    NamesOfMemberNations-E-2-10 ::= SEQUENCE OF VisibleString
+
+    firstTwo-E-2-10 NamesOfMemberNations-E-2-10 ::= {"Australia", "Austria"}
+
+    NamesOfMemberNations2-E-2-10 ::= SEQUENCE OF memberNation VisibleString
+
+    firstTwo2-E-2-10 NamesOfMemberNations2-E-2-10 ::=
+        {memberNation "Australia", memberNation "Austria"}
+
+    NamesOfOfficers-E-2-10 ::= SEQUENCE {
+        president VisibleString,
+        vicePresident VisibleString,
+        secretary VisibleString
+    }
+
+    acmeCorp-E-2-10 NamesOfOfficers-E-2-10 ::= {
+        president "Jane Doe",
+        vicePresident "John Doe",
+        secretary "Joe Doe"
+    }
+
+    Credentials-E-2-10 ::= SEQUENCE {
+        userName VisibleString,
+        password VisibleString,
+        accountNumber INTEGER
+    }
+
+    Record-E-2-10 ::= SEQUENCE { -- First version of protocol containing "Record"
+        userName VisibleString,
+        password VisibleString,
+        accountNumber INTEGER,
+        ...,
+        ...
+    }
+
+    Record-E-2-10 ::= SEQUENCE { -- Second version of protocol containing "Record"
+        userName VisibleString,
+        password VisibleString,
+        accountNumber INTEGER,
+        ...,
+        [[2: -- Extension addition added in protocol version 2
+        lastLoggedIn GeneralizedTime OPTIONAL,
+        minutesLastLoggedIn INTEGER
+        ]],
+        ...
+    }
+
+    Record-E-2-10 ::= SEQUENCE { -- Third version of protocol containing "Record"
+        userName VisibleString,
+        password VisibleString,
+        accountNumber INTEGER,
+        ...,
+        [[2: -- Extension addition added in protocol version 2
+        lastLoggedIn GeneralizedTime OPTIONAL,
+        minutesLastLoggedIn INTEGER
+        ]],
+        [[4: -- Extension addition added in protocol version 3
+        certificate Certificate,
+        thumb ThumbPrint OPTIONAL
+        ]],
+        ...
+    }
+
+    -- E.2.11 Set and set-of
+
+    UserName-E-2-11 ::= SET {
+        personalName [0] VisibleString,
+        organizationName [1] VisibleString,
+        countryName [2] VisibleString
+    }
+
+    user-E-2-11 UserName-E-2-11 ::= {
+        countryName "Nigeria",
+        personalName "Jonas Maruba",
+        organizationName "Meteorology, Ltd."
+    }
+
+    UserName-E-2-11 ::= SET {
+        personalName [0] VisibleString,
+        organizationName [1] VisibleString OPTIONAL
+        -- defaults to that of the local organization -- ,
+        countryName [2] VisibleString OPTIONAL
+        -- defaults to that of the local country --
+    }
+
+    UserName-E-2-11 ::= SET {
+        personalName VisibleString, -- First version of "UserName"
+        organizationName VisibleString OPTIONAL ,
+        countryName VisibleString OPTIONAL,
+        ...,
+        ...
+    }
+
+    user-E-2-11 UserName-E-2-11 ::= { personalName "Jonas Maruba" }
+
+    UserName-E-2-11 ::= SET { -- Second version of "UserName"
+        personalName VisibleString,
+        organizationName VisibleString OPTIONAL,
+        countryName VisibleString OPTIONAL,
+        ...,
+        [[2: -- Extension addition added in protocol version 2
+        internetEmailAddress VisbleString,
+        faxNumber VisibleString OPTIONAL
+        ]],
+        ...
+    }
+
+    user-E-2-11 UserName-E-2-11 ::= {
+        personalName "Jonas Maruba",
+        internetEmailAddress "jonas@meteor.ngo.com"
+    }
+
+    UserName-E-2-11 ::= SET { -- Fifth version of protocol containing "UserName"
+        personalName VisibleString,
+        organizationName VisibleString OPTIONAL,
+        countryName VisibleString OPTIONAL,
+        ...,
+        [[2: -- Extension addition added in version 2
+        internetEmailAddress VisbleString,
+        faxNumber VisibleString OPTIONAL
+        ]],
+        [[5: -- Extension addition added in version 5
+        phoneNumber VisibleString OPTIONAL
+        ]],
+        ...
+    }
+
+    user-E-2-11 UserName-E-2-11 ::= {
+        personalName "Jonas Maruba",
+        internetEmailAddress "jonas@meteor.ngo.com"
+    }
+
+    Keywords-E-2-11 ::= SET OF VisibleString -- in arbitrary order
+
+    someASN1Keywords-E-2-11 Keywords-E-2-11 ::= {"INTEGER", "BOOLEAN", "REAL"}
+
+    Keywords2-E-2-11 ::= SET OF keyword VisibleString -- in arbitrary order
+
+    someASN1Keywords2-E-2-11 Keywords2-E-2-11 ::=
+        {keyword "INTEGER", keyword "BOOLEAN", keyword "REAL"}
+
+    -- E.2.12 Tagged
+
+    FileName-E-2-12 ::= [APPLICATION 8] SEQUENCE {
+        directoryName VisibleString,
+        directoryRelativeFileName VisibleString}
+
+    CustomerRecord-E-2-12 ::= SET {
+        name [0] VisibleString,
+        mailingAddress [1] VisibleString,
+        accountNumber [2] INTEGER,
+        balanceDue [3] INTEGER -- in cents --
+    }
+
+    CustomerAttribute-E-2-12 ::= CHOICE {
+        name [0] VisibleString,
+        mailingAddress [1] VisibleString,
+        accountNumber [2] INTEGER,
+        balanceDue [3] INTEGER -- in cents --
+    }
+
+    AcmeBadgeNumber-E-2-12 ::= [PRIVATE 2] INTEGER
+
+    badgeNumber-E-2-12 AcmeBadgeNumber-E-2-12 ::= 2345
+
+    CustomerRecord-E-2-12 ::= SET {
+        name [0] IMPLICIT VisibleString,
+        mailingAddress [1] IMPLICIT VisibleString,
+        accountNumber [2] IMPLICIT INTEGER,
+        balanceDue [3] IMPLICIT INTEGER -- in cents --
+    }
+
+    CustomerAttribute-E-2-12 ::= CHOICE {
+        name [0] IMPLICIT VisibleString,
+        mailingAddress [1] IMPLICIT VisibleString,
+        accountNumber [2] IMPLICIT INTEGER,
+        balanceDue [3] IMPLICIT INTEGER -- in cents --
+    }
+
+    -- E.2.13 Choice
+
+    FileIdentifier-E-2-13 ::= CHOICE {
+        relativeName VisibleString,
+        -- name of file (for example, "MarchProgressReport")
+        absoluteName VisibleString,
+        -- name of file and containing directory
+        -- (for example, "<Williams>MarchProgressReport")
+        serialNumber INTEGER
+        -- system-assigned identifier for file --
+    }
+
+    file-E-2-13 FileIdentifier-E-2-13 ::= serialNumber : 106448503
+
+    FileIdentifier-E-2-13 ::= CHOICE { -- First version of FileIdentifier
+        relativeName VisibleString,
+        absoluteName VisibleString,
+        ..., ...
+    }
+
+    fileId1-E-2-13 FileIdentifier-E-2-13 ::= relativeName : "MarchProgressReport.doc"
+
+    FileIdentifier-E-2-13 ::= CHOICE { -- Second version of FileIdentifier
+        relativeName VisibleString,
+        absoluteName VisibleString,
+        ...,
+        serialNumber INTEGER, -- Extension addition added in version 2
+        ...
+    }
+
+    fileId1-E-2-13 FileIdentifier-E-2-13 ::= relativeName : "MarchProgressReport.doc"
+
+    fileId2-E-2-13 FileIdentifier-E-2-13 ::= serialNumber : 214
+
+    FileIdentifier-E-2-13 ::= CHOICE { -- Third version of FileIdentifier
+        relativeName VisibleString,
+        absoluteName VisibleString,
+        ...,
+        serialNumber INTEGER, -- Extension addition added in version 2
+        [[ -- Extension addition added in version 3
+        vendorSpecific VendorExt,
+        unidentified NULL
+        ]],
+        ...
+    }
+
+    fileId1-E-2-13 FileIdentifier-E-2-13 ::= relativeName : "MarchProgressReport.doc"
+
+    fileId2-E-2-13 FileIdentifier-E-2-13 ::= serialNumber : 214
+
+    fileId3-E-2-13 FileIdentifier-E-2-13 ::= unidentified : NULL
+
+    Greeting-E-2-13 ::= CHOICE { -- First version of "Greeting"
+        postCard VisibleString,
+        ...,
+        ...
+    }
+
+    Greeting-E-2-13 ::= CHOICE { -- Second version of "Greeting"
+        postCard VisibleString,
+        ...,
+        [[2: -- Extension addition added in version 2
+        audio Audio,
+        video Video
+        ]],
+        ...
+    }
+
+    Greeting-E-2-13 ::= [APPLICATION 12] CHOICE {
+        postCard VisibleString,
+        recording Voice
+    }
+
+    Voice-E-2-13 ::= CHOICE {
+        english OCTET STRING,
+        swahili OCTET STRING
+    }
+
+    myGreeting-E-2-13 Greeting-E-2-13 ::= recording : english : '019838547E0'H
+
+    -- E.2.14 Selection type
+
+    -- FileAttribute-E-2-14 ::= CHOICE {
+    --     date-last-used INTEGER,
+    --     file-name VisibleString
+    -- }
+    -- 
+    -- AttributeList-E-2-14 ::= SEQUENCE {
+    --     first-attribute date-last-used < FileAttribute,
+    --     second-attribute file-name < FileAttribute
+    -- }
+    -- 
+    -- listOfAttributes-E-2-14 AttributeList-E-2-14 ::= {
+    --     first-attribute 27,
+    --     second-attribute "PROGRAM"
+    -- }
+
+    -- E.2.15 Object class field type
+
+    ATTRIBUTE-E-2-15 ::= CLASS {
+        &AttributeType,
+        &attributeId OBJECT IDENTIFIER UNIQUE
+    }
+
+    Attribute-E-2-15 ::= SEQUENCE {
+        attributeID ATTRIBUTE.&attributeId, -- this is normally constrained.
+        attributeValue ATTRIBUTE.&AttributeType -- this is normally constrained.
+    }
+
+    -- E.2.16 Embedded-pdv
+
+    -- FileContents-E-2-16 ::= EMBEDDED PDV
+    -- 
+    -- DocumentList-E-2-16 ::= SEQUENCE OF document EMBEDDED PDV
+
+    -- E.2.18 Instance-of
+
+    -- ACCESS-CONTROL-CLASS-E-2-18 ::= TYPE-IDENTIFIER
+    -- 
+    -- Get-Invoke-E-2-18 ::= SEQUENCE {
+    --     objectClass ObjectClass,
+    --     objectInstance ObjectInstance,
+    --     accessControl INSTANCE OF ACCESS-CONTROL-CLASS-E-2-18, \-\- this is normally
+    --                                                     \-\- constrained.
+    --     attributeID ATTRIBUTE-E-2-15.&attributeId
+    -- }
+    -- 
+    -- Get-Invoke-E-2-18 ::= SEQUENCE {
+    --     objectClass ObjectClass,
+    --     objectInstance ObjectInstance,
+    --     accessControl [UNIVERSAL 8] IMPLICIT SEQUENCE {
+    --         type-id ACCESS-CONTROL-CLASS-E-2-18.&id, \-\- this is normally
+    --                                                  \-\- constrained.
+    --         value [0] ACCESS-CONTROL-CLASS-E-2-18.&Type \-\- this is normally
+    --                                                     \-\- constrained.
+    --     },
+    --     attributeID ATTRIBUTE-E-2-15.&attributeId
+    -- }
+
+    -- E.4 Subtypes
+
+    AtomicNumber-E-4 ::= INTEGER (1..104)
+
+    -- TouchToneString-E-4 ::= IA5String
+    --     (FROM ("0123456789" | "*" | "#")) (SIZE (1..63))
+
+    ParameterList-E-4 ::= SET SIZE (1..63) OF Parameter
+
+    SmallPrime-E-4 ::= INTEGER (2|3|5|7|11|13|17|19|23|29)
+
+    SmallPrime-E-4 ::= INTEGER (2 | 3, ...) -- First version of
+
+    SmallPrime-E-4 ::= INTEGER (2 | 3, ..., 5 | 7 | 11)
+
+    SmallPrime-E-4 ::= INTEGER (2 | 3, ..., 5 | 7 | 11 | 13 | 17 | 19)
+
+    Envelope-E-4 ::= SET {
+        typeA TypeA,
+        typeB TypeB OPTIONAL,
+        typeC TypeC OPTIONAL
+    }
+
+    ABEnvelope-E-4 ::= Envelope (WITH COMPONENTS
+        {... , typeB PRESENT, typeC ABSENT})
+
+    ACEnvelope-E-4 ::= Envelope (WITH COMPONENTS
+        {... , typeB ABSENT, typeC PRESENT})
+
+    ABEnvelope-E-4 ::= Envelope (WITH COMPONENTS {typeA, typeB})
+
+    ACEnvelope-E-4 ::= Envelope (WITH COMPONENTS {typeA, typeC})
+
+    PDU-E-4 ::= SET {
+        alpha INTEGER,
+        beta IA5String OPTIONAL,
+        gamma SEQUENCE OF Parameter,
+        delta BOOLEAN
+    }
+
+    TestPDU-E-4 ::= PDU (WITH COMPONENTS
+        {... , delta (FALSE), alpha (MIN..<0)})
+
+    -- FurtherTestPDU-E-4 ::= TestPDU-E-4
+    --     (WITH COMPONENTS {... , beta (SIZE (5|12)) PRESENT} )
+
+    Text-block-E-4 ::= SEQUENCE OF VisibleString
+
+    -- Address-E-4 ::= Text-block (SIZE (1..6)) (WITH COMPONENT (SIZE (1..32)))
+
+    Z-E-4 ::= CHOICE {
+        a A,
+        b B,
+        c C,
+        d D,
+        e E
+    }
+
+    V-E-4 ::= Z (WITH COMPONENTS { ..., a ABSENT, b ABSENT })
+
+    W-E-4 ::= Z (WITH COMPONENTS { ..., a PRESENT })
+
+    X-E-4 ::= Z (WITH COMPONENTS { a PRESENT })
+
+    Y-E-4 ::= Z (WITH COMPONENTS { a ABSENT, b, c })
+
+    Months-E-4 ::= ENUMERATED {
+        january (1),
+        february (2),
+        march (3),
+        april (4),
+        may (5),
+        june (6),
+        july (7),
+        august (8),
+        september (9),
+        october (10),
+        november (11),
+        december (12)
+    }
+
+    First-quarter-E-4 ::= Months ( january | february | march )
+
+    Second-quarter-E-4 ::= Months ( april | may | june )
+
+    Third-quarter-E-4 ::= Months ( july | august | september )
+
+    Fourth-quarter-E-4 ::= Months ( october | november | december )
+
+    First-half-E-4 ::= Months ( First-quarter | Second-quarter )
+
+    Second-half-E-4 ::= Months ( Third-quarter | Fourth-quarter )
+
+END

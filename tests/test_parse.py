@@ -12,6 +12,7 @@ from foo import FOO
 from bar import BAR
 from all_types import ALL_TYPES
 from information_object import INFORMATION_OBJECT
+from x680 import X680
 from x691 import X691
 from rrc_8_6_0 import RRC_8_6_0
 from s1ap_14_4_0 import S1AP_14_4_0
@@ -57,6 +58,10 @@ class Asn1ToolsParseTest(unittest.TestCase):
     def test_parse_information_object(self):
         actual = asn1tools.parse_files('tests/files/information_object.asn')
         self.assertEqual(actual, INFORMATION_OBJECT)
+
+    def test_parse_x680(self):
+        actual = asn1tools.parse_files('tests/files/x680.asn')
+        self.assertEqual(actual, X680)
 
     def test_parse_x691(self):
         actual = asn1tools.parse_files('tests/files/x691.asn')
@@ -151,146 +156,6 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
         self.assertEqual(actual, expected)
 
-    def test_parse_x680_14_10(self):
-        actual = asn1tools.parse_string('M DEFINITIONS ::= BEGIN'
-                                        '      T ::= SEQUENCE {'
-                                        '            a BOOLEAN,'
-                                        '            b SET OF INTEGER'
-                                        '      }'
-                                        'END')
-
-        expected = {
-            'M': {
-                'extensibility-implied': False,
-                'imports': {},
-                'object-classes': {},
-                'object-sets': {},
-                'types': {
-                    'T': {
-                        'type': 'SEQUENCE',
-                        'members': [
-                            {
-                                'name': 'a',
-                                'type': 'BOOLEAN',
-                                'optional': False
-                            },
-                            {
-                                'name': 'b',
-                                'type': 'SET OF',
-                                'optional': False,
-                                'size': None,
-                                'element': {
-                                    'type': 'INTEGER'
-                                }
-                            }
-                        ]
-                    }
-                },
-                'values': {}
-            }
-        }
-
-        self.assertEqual(actual, expected)
-
-    def test_parse_x680_19_5(self):
-        actual = asn1tools.parse_string(
-            'M DEFINITIONS ::= BEGIN'
-            '      C ::= ENUMERATED {'
-            '            a,'
-            '            b(3),'
-            '            ...,'
-            '            c(1)'
-            '      }'
-            '      D ::= ENUMERATED {'
-            '            a,'
-            '            b,'
-            '            ...,'
-            '            c(2)'
-            '      }'
-            'END')
-
-        # ToDo: Incorrect enumeration numbers.
-        expected = {
-            'M': {
-                'extensibility-implied': False,
-                'imports': {},
-                'object-classes': {},
-                'object-sets': {},
-                'types': {
-                    'C': {
-                        'type': 'ENUMERATED',
-                        'values': {
-                            0: 'a',
-                            1: 'c',
-                            3: 'b',
-                            4: '...'
-                        }
-                    },
-                    'D': {
-                        'type': 'ENUMERATED',
-                        'values': {
-                            0: 'a',
-                            1: 'b',
-                            2: 'c'
-                        }
-                    }
-                },
-                'values': {}
-            }
-        }
-
-        self.assertEqual(actual, expected)
-
-    def test_parse_x680_19_6(self):
-        actual = asn1tools.parse_string(
-            'M DEFINITIONS ::= BEGIN'
-            '      A ::= ENUMERATED {a, b, ..., c}'
-            '      B ::= ENUMERATED {a, b, c(0), ..., d}'
-            '      C ::= ENUMERATED {a, b, ..., c(3), d}'
-            '      D ::= ENUMERATED {a, z(25), ..., d}'
-            'END')
-
-        # ToDo: Incorrect enumeration numbers.
-        expected = {
-            'M': {
-                'extensibility-implied': False,
-                'imports': {},
-                'object-classes': {},
-                'object-sets': {},
-                'types': {
-                    'A': {'type': 'ENUMERATED',
-                          'values': {
-                              0: 'a',
-                              1: 'b',
-                              2: '...',
-                              3: 'c'}
-                    },
-                    'B': {'type': 'ENUMERATED',
-                          'values': {0: 'c',
-                                     1: '...',
-                                     2: 'd'}
-                    },
-                    'C': {'type': 'ENUMERATED',
-                          'values': {0: 'a',
-                                     1: 'b',
-                                     2: '...',
-                                     3: 'c',
-                                     4: 'd'}
-                    },
-                    'D': {'type': 'ENUMERATED',
-                          'values': {0: 'a',
-                                     25: 'z',
-                                     26: '...',
-                                     27: 'd'}
-                    }
-                },
-                'values': {}
-            }
-        }
-
-
-        self.assertEqual(actual, expected)
-
     def test_parse_error_empty_string(self):
         with self.assertRaises(asn1tools.ParseError) as cm:
             asn1tools.parse_string('')
@@ -345,7 +210,10 @@ class Asn1ToolsParseTest(unittest.TestCase):
             "A ::= SEQUENCE { a >!<} END': Expected {CHOICE | INTEGER | NULL | REAL | "
             "BIT STRING | OCTET STRING | ENUMERATED | SEQUENCE OF | SEQUENCE | "
             "ObjectClassFieldType | SET OF | SET | OBJECT IDENTIFIER | BOOLEAN | "
-            "ANY DEFINED BY | ReferencedType}.")
+            "BMPString | GeneralString | GraphicString | IA5String | ISO646String | "
+            "NumericString | PrintableString | TeletexString | T61String | "
+            "UniversalString | UTF8String | VideotexString | VisibleString | "
+            "CHARACTER STRING | ANY DEFINED BY | ReferencedType}.")
 
     def test_parse_error_sequence_missing_member_name(self):
         with self.assertRaises(asn1tools.ParseError) as cm:

@@ -153,7 +153,11 @@ def convert_members(tokens):
         if member_tokens[0] == 'COMPONENTS OF':
             continue
 
-        member_tokens, qualifiers = member_tokens
+        if len(member_tokens) == 2:
+            member_tokens, qualifiers = member_tokens
+        else:
+            qualifiers = []
+
         member = convert_type(member_tokens[2:])
         member['name'] = member_tokens[0]
         member['optional'] = 'OPTIONAL' in qualifiers
@@ -413,6 +417,22 @@ def create_grammar():
     CONSTRAINED_BY = Keyword('CONSTRAINED BY').setName('CONSTRAINED BY')
     UNION = Keyword('UNION').setName('UNION')
     INTERSECTION = Keyword('INTERSECTION').setName('INTERSECTION')
+    PLUS_INFINITY = Keyword('PLUS-INFINITY').setName('PLUS-INFINITY')
+    MINUS_INFINITY = Keyword('MINUS-INFINITY').setName('MINUS-INFINITY')
+    BMPString = Keyword('BMPString').setName('BMPString')
+    GeneralString = Keyword('GeneralString').setName('GeneralString')
+    GraphicString = Keyword('GraphicString').setName('GraphicString')
+    IA5String = Keyword('IA5String').setName('IA5String')
+    ISO646String = Keyword('ISO646String').setName('ISO646String')
+    NumericString = Keyword('NumericString').setName('NumericString')
+    PrintableString = Keyword('PrintableString').setName('PrintableString')
+    TeletexString = Keyword('TeletexString').setName('TeletexString')
+    T61String = Keyword('T61String').setName('T61String')
+    UniversalString = Keyword('UniversalString').setName('UniversalString')
+    UTF8String = Keyword('UTF8String').setName('UTF8String')
+    VideotexString = Keyword('VideotexString').setName('VideotexString')
+    VisibleString = Keyword('VisibleString').setName('VisibleString')
+    CHARACTER_STRING = Keyword('CHARACTER STRING').setName('CHARACTER STRING')
 
     # Various literals.
     word = Word(printables, excludeChars=',(){}[].:=;"|').setName('word')
@@ -435,7 +455,7 @@ def create_grammar():
     caret = Literal('^')
     comma = Literal(',')
     at = Literal('@')
-    integer = Word(nums)
+    integer = Word(nums + '-')
     real_number = Regex(r'[+-]?\d+\.?\d*([eE][+-]?\d+)?')
     bstring = Regex(r"'[01\s]*'B")
     hstring = Regex(r"'[0-9A-F\s]*'H")
@@ -483,6 +503,7 @@ def create_grammar():
     name_and_number_form = Forward()
     number_form = Forward().setName('numberForm')
     definitive_number_form = Forward().setName('definitiveNumberForm')
+    version_number = Forward()
 
     value_field_reference = Combine(ampersand + value_reference)
     type_field_reference = Combine(ampersand + type_reference)
@@ -727,7 +748,10 @@ def create_grammar():
     lower_end_value = (value | MIN)
     upper_endpoint = (Optional(less_than) + upper_end_value)
     lower_endpoint = (lower_end_value + Optional(less_than))
-    value_range = (lower_endpoint + range_separator - upper_endpoint)
+    value_range = (((Group(Combine(integer + dot)) + range_separator)
+                    | (Group(integer) + range_separator)
+                    | (lower_endpoint + range_separator))
+                   - upper_endpoint)
     contained_subtype = (Optional(INCLUDES) + type_)
     single_value = value
     subtype_elements = (size_constraint
@@ -764,6 +788,7 @@ def create_grammar():
                     - Suppress(right_parenthesis))
 
     # X.680: 40. Definition of unrestricted character string types
+    unrestricted_character_string_type = CHARACTER_STRING
     unrestricted_character_string_value = NoMatch().setName(
         '"unrestrictedCharacterStringValue" not implemented')
 
@@ -785,16 +810,32 @@ def create_grammar():
     table_column = number
     table_row = number
     tuple_ = (left_brace + table_column + comma + table_row + right_brace)
-    charsyms = NoMatch().setName('"charsyms" not implemented')
+    chars_defn = (cstring | quadruple | tuple_ | defined_value)
+    charsyms = delimitedList(chars_defn)
     character_string_list = (left_brace + charsyms + right_brace)
     restricted_character_string_value = (cstring
                                          | character_string_list
                                          | quadruple
                                          | tuple_)
+    restricted_character_string_type = (BMPString
+                                        | GeneralString
+                                        | GraphicString
+                                        | IA5String
+                                        | ISO646String
+                                        | NumericString
+                                        | PrintableString
+                                        | TeletexString
+                                        | T61String
+                                        | UniversalString
+                                        | UTF8String
+                                        | VideotexString
+                                        | VisibleString)
 
     # X.680: 36. Notation for character string types
     character_string_value = (restricted_character_string_value
                               | unrestricted_character_string_value)
+    character_string_type = (restricted_character_string_type
+                             | unrestricted_character_string_type)
 
     # X.680: 35. The character string types
 
@@ -845,15 +886,25 @@ def create_grammar():
     # X.680: 29. Notation for selection types
 
     # X.680: 28. Notation for the choice types
+    alternative_type_list = delimitedList(named_type)
+    extension_addition_alternatives_group = (Suppress(left_version_brackets)
+                                             + Suppress(version_number)
+                                             - alternative_type_list
+                                             - Suppress(right_version_brackets))
+    extension_addition_alternative = (extension_addition_alternatives_group
+                                      | named_type)
+    extension_addition_alternatives_list = delimitedList(extension_addition_alternative)
+    extension_addition_alternatives = Optional(Suppress(comma)
+                                               + extension_addition_alternatives_list)
+    root_alternative_type_list = alternative_type_list
+    alternative_type_lists = (root_alternative_type_list
+                              + Optional(Suppress(comma)
+                                         + extension_and_exception
+                                         + extension_addition_alternatives
+                                         + optional_extension_marker))
     choice_type = (CHOICE
                    - left_brace
-                   + Group(Optional(delimitedList(
-                       Group(Group(identifier
-                                   - tag
-                                   - type_)
-                             + Group(Optional(OPTIONAL)
-                                     + Optional(DEFAULT + word))
-                             | ellipsis))))
+                   + Group(alternative_type_lists)
                    - right_brace)
     choice_type.setName('CHOICE')
     choice_value = (identifier + colon + value)
@@ -897,9 +948,9 @@ def create_grammar():
                            + Group(Optional(OPTIONAL
                                             | (DEFAULT + value)))
                            | (COMPONENTS_OF - type_))
-    version_number = (number + Suppress(colon))
+    version_number <<= Optional(number + Suppress(colon))
     extension_addition_group = (Suppress(left_version_brackets)
-                                + Suppress(Group(Optional(version_number)))
+                                + Suppress(version_number)
                                 + delimitedList(component_type)
                                 + Suppress(right_version_brackets))
     extension_and_exception <<= (ellipsis + Optional(exception_spec))
@@ -927,8 +978,8 @@ def create_grammar():
     sequence_type = (SEQUENCE
                      - left_brace
                      + Group(Optional(component_type_lists
-                                    | (extension_and_exception
-                                       + optional_extension_marker)))
+                                      | (extension_and_exception
+                                         + optional_extension_marker)))
                      - right_brace)
     sequence_type.setName('SEQUENCE')
 
@@ -960,7 +1011,12 @@ def create_grammar():
                         | (CONTAINING - value))
 
     # X.680: 20. Notation for the real type
-    real_value = NoMatch()
+    special_real_value = (PLUS_INFINITY
+                          | MINUS_INFINITY)
+    numeric_real_value = (real_number
+                          | sequence_value)
+    real_value = (numeric_real_value
+                  | special_real_value)
     real_type = (REAL
                  + Group(Optional(Group(Suppress(left_parenthesis)
                                         + ((Group(Combine(integer + dot)) + range_separator)
@@ -1013,11 +1069,11 @@ def create_grammar():
                        | enumerated_value
                        # | external_value
                        # | instance_of_value
+                       | real_value
                        | integer_value
                        | null_value
                        | object_identifier_value
                        # | octet_string_value
-                       | real_value
                        | sequence_of_value
                        # | set_value
                        # | set_of_value
@@ -1043,7 +1099,8 @@ def create_grammar():
                     | set_of_type
                     | set_type
                     | object_identifier_type
-                    | boolean_type)
+                    | boolean_type
+                    | character_string_type)
     type_ <<= ((builtin_type
                 | any_defined_by_type
                 | referenced_type)
