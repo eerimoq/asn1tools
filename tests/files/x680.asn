@@ -94,9 +94,9 @@ X680 DEFINITIONS ::= BEGIN
 
     AngleInRadians-E-2-4 ::= REAL
 
-    pi-E-2-4 REAL ::= {mantissa 3141592653589793238462643383279, base 10, exponent -30}
+    pi-E-2-4-a REAL ::= {mantissa 3141592653589793238462643383279, base 10, exponent -30}
 
-    pi-E-2-4 REAL ::= 3.14159265358979323846264338327
+    pi-E-2-4-b REAL ::= 3.14159265358979323846264338327
 
     App-X-Real-E-2-4 ::= REAL (WITH COMPONENTS {
          mantissa (-16777215..16777215),
@@ -221,7 +221,7 @@ X680 DEFINITIONS ::= BEGIN
         accountNumber INTEGER
     }
 
-    Record-E-2-10 ::= SEQUENCE { -- First version of protocol containing "Record"
+    Record-E-2-10-a ::= SEQUENCE { -- First version of protocol containing "Record"
         userName VisibleString,
         password VisibleString,
         accountNumber INTEGER,
@@ -229,7 +229,7 @@ X680 DEFINITIONS ::= BEGIN
         ...
     }
 
-    Record-E-2-10 ::= SEQUENCE { -- Second version of protocol containing "Record"
+    Record-E-2-10-b ::= SEQUENCE { -- Second version of protocol containing "Record"
         userName VisibleString,
         password VisibleString,
         accountNumber INTEGER,
@@ -241,7 +241,7 @@ X680 DEFINITIONS ::= BEGIN
         ...
     }
 
-    Record-E-2-10 ::= SEQUENCE { -- Third version of protocol containing "Record"
+    Record-E-2-10-c ::= SEQUENCE { -- Third version of protocol containing "Record"
         userName VisibleString,
         password VisibleString,
         accountNumber INTEGER,
@@ -259,19 +259,19 @@ X680 DEFINITIONS ::= BEGIN
 
     -- E.2.11 Set and set-of
 
-    UserName-E-2-11 ::= SET {
+    UserName-E-2-11-a ::= SET {
         personalName [0] VisibleString,
         organizationName [1] VisibleString,
         countryName [2] VisibleString
     }
 
-    user-E-2-11 UserName-E-2-11 ::= {
+    user-E-2-11-a UserName-E-2-11-a ::= {
         countryName "Nigeria",
         personalName "Jonas Maruba",
         organizationName "Meteorology, Ltd."
     }
 
-    UserName-E-2-11 ::= SET {
+    UserName-E-2-11-b ::= SET {
         personalName [0] VisibleString,
         organizationName [1] VisibleString OPTIONAL
         -- defaults to that of the local organization -- ,
@@ -279,7 +279,7 @@ X680 DEFINITIONS ::= BEGIN
         -- defaults to that of the local country --
     }
 
-    UserName-E-2-11 ::= SET {
+    UserName-E-2-11-c ::= SET {
         personalName VisibleString, -- First version of "UserName"
         organizationName VisibleString OPTIONAL ,
         countryName VisibleString OPTIONAL,
@@ -287,9 +287,9 @@ X680 DEFINITIONS ::= BEGIN
         ...
     }
 
-    user-E-2-11 UserName-E-2-11 ::= { personalName "Jonas Maruba" }
+    user-E-2-11-b UserName-E-2-11-c ::= { personalName "Jonas Maruba" }
 
-    UserName-E-2-11 ::= SET { -- Second version of "UserName"
+    UserName-E-2-11-d ::= SET { -- Second version of "UserName"
         personalName VisibleString,
         organizationName VisibleString OPTIONAL,
         countryName VisibleString OPTIONAL,
@@ -301,12 +301,12 @@ X680 DEFINITIONS ::= BEGIN
         ...
     }
 
-    user-E-2-11 UserName-E-2-11 ::= {
+    user-E-2-11-c UserName-E-2-11-d ::= {
         personalName "Jonas Maruba",
         internetEmailAddress "jonas@meteor.ngo.com"
     }
 
-    UserName-E-2-11 ::= SET { -- Fifth version of protocol containing "UserName"
+    UserName-E-2-11-e ::= SET { -- Fifth version of protocol containing "UserName"
         personalName VisibleString,
         organizationName VisibleString OPTIONAL,
         countryName VisibleString OPTIONAL,
@@ -321,7 +321,7 @@ X680 DEFINITIONS ::= BEGIN
         ...
     }
 
-    user-E-2-11 UserName-E-2-11 ::= {
+    user-E-2-11-d UserName-E-2-11-e ::= {
         personalName "Jonas Maruba",
         internetEmailAddress "jonas@meteor.ngo.com"
     }
@@ -341,14 +341,14 @@ X680 DEFINITIONS ::= BEGIN
         directoryName VisibleString,
         directoryRelativeFileName VisibleString}
 
-    CustomerRecord-E-2-12 ::= SET {
+    CustomerRecord-E-2-12-a ::= SET {
         name [0] VisibleString,
         mailingAddress [1] VisibleString,
         accountNumber [2] INTEGER,
         balanceDue [3] INTEGER -- in cents --
     }
 
-    CustomerAttribute-E-2-12 ::= CHOICE {
+    CustomerAttribute-E-2-12-a ::= CHOICE {
         name [0] VisibleString,
         mailingAddress [1] VisibleString,
         accountNumber [2] INTEGER,
@@ -359,14 +359,14 @@ X680 DEFINITIONS ::= BEGIN
 
     badgeNumber-E-2-12 AcmeBadgeNumber-E-2-12 ::= 2345
 
-    CustomerRecord-E-2-12 ::= SET {
+    CustomerRecord-E-2-12-b ::= SET {
         name [0] IMPLICIT VisibleString,
         mailingAddress [1] IMPLICIT VisibleString,
         accountNumber [2] IMPLICIT INTEGER,
         balanceDue [3] IMPLICIT INTEGER -- in cents --
     }
 
-    CustomerAttribute-E-2-12 ::= CHOICE {
+    CustomerAttribute-E-2-12-b ::= CHOICE {
         name [0] IMPLICIT VisibleString,
         mailingAddress [1] IMPLICIT VisibleString,
         accountNumber [2] IMPLICIT INTEGER,
@@ -375,7 +375,7 @@ X680 DEFINITIONS ::= BEGIN
 
     -- E.2.13 Choice
 
-    FileIdentifier-E-2-13 ::= CHOICE {
+    FileIdentifier-E-2-13-a ::= CHOICE {
         relativeName VisibleString,
         -- name of file (for example, "MarchProgressReport")
         absoluteName VisibleString,
@@ -385,17 +385,17 @@ X680 DEFINITIONS ::= BEGIN
         -- system-assigned identifier for file --
     }
 
-    file-E-2-13 FileIdentifier-E-2-13 ::= serialNumber : 106448503
+    file-E-2-13 FileIdentifier-E-2-13-a ::= serialNumber : 106448503
 
-    FileIdentifier-E-2-13 ::= CHOICE { -- First version of FileIdentifier
+    FileIdentifier-E-2-13-b ::= CHOICE { -- First version of FileIdentifier
         relativeName VisibleString,
         absoluteName VisibleString,
         ..., ...
     }
 
-    fileId1-E-2-13 FileIdentifier-E-2-13 ::= relativeName : "MarchProgressReport.doc"
+    fileId1-E-2-13-a FileIdentifier-E-2-13-b ::= relativeName : "MarchProgressReport.doc"
 
-    FileIdentifier-E-2-13 ::= CHOICE { -- Second version of FileIdentifier
+    FileIdentifier-E-2-13-c ::= CHOICE { -- Second version of FileIdentifier
         relativeName VisibleString,
         absoluteName VisibleString,
         ...,
@@ -403,11 +403,11 @@ X680 DEFINITIONS ::= BEGIN
         ...
     }
 
-    fileId1-E-2-13 FileIdentifier-E-2-13 ::= relativeName : "MarchProgressReport.doc"
+    fileId1-E-2-13-a FileIdentifier-E-2-13-c ::= relativeName : "MarchProgressReport.doc"
 
-    fileId2-E-2-13 FileIdentifier-E-2-13 ::= serialNumber : 214
+    fileId2-E-2-13-a FileIdentifier-E-2-13-c ::= serialNumber : 214
 
-    FileIdentifier-E-2-13 ::= CHOICE { -- Third version of FileIdentifier
+    FileIdentifier-E-2-13-d ::= CHOICE { -- Third version of FileIdentifier
         relativeName VisibleString,
         absoluteName VisibleString,
         ...,
@@ -419,19 +419,19 @@ X680 DEFINITIONS ::= BEGIN
         ...
     }
 
-    fileId1-E-2-13 FileIdentifier-E-2-13 ::= relativeName : "MarchProgressReport.doc"
+    fileId1-E-2-13-b FileIdentifier-E-2-13-d ::= relativeName : "MarchProgressReport.doc"
 
-    fileId2-E-2-13 FileIdentifier-E-2-13 ::= serialNumber : 214
+    fileId2-E-2-13-b FileIdentifier-E-2-13-d ::= serialNumber : 214
 
-    fileId3-E-2-13 FileIdentifier-E-2-13 ::= unidentified : NULL
+    fileId3-E-2-13-c FileIdentifier-E-2-13-d ::= unidentified : NULL
 
-    Greeting-E-2-13 ::= CHOICE { -- First version of "Greeting"
+    Greeting-E-2-13-a ::= CHOICE { -- First version of "Greeting"
         postCard VisibleString,
         ...,
         ...
     }
 
-    Greeting-E-2-13 ::= CHOICE { -- Second version of "Greeting"
+    Greeting-E-2-13-b ::= CHOICE { -- Second version of "Greeting"
         postCard VisibleString,
         ...,
         [[2: -- Extension addition added in version 2
@@ -441,7 +441,7 @@ X680 DEFINITIONS ::= BEGIN
         ...
     }
 
-    Greeting-E-2-13 ::= [APPLICATION 12] CHOICE {
+    Greeting-E-2-13-c ::= [APPLICATION 12] CHOICE {
         postCard VisibleString,
         recording Voice
     }
@@ -451,7 +451,7 @@ X680 DEFINITIONS ::= BEGIN
         swahili OCTET STRING
     }
 
-    myGreeting-E-2-13 Greeting-E-2-13 ::= recording : english : '019838547E0'H
+    myGreeting-E-2-13 Greeting-E-2-13-c ::= recording : english : '019838547E0'H
 
     -- E.2.14 Selection type
 
@@ -521,13 +521,13 @@ X680 DEFINITIONS ::= BEGIN
 
     ParameterList-E-4 ::= SET SIZE (1..63) OF Parameter
 
-    SmallPrime-E-4 ::= INTEGER (2|3|5|7|11|13|17|19|23|29)
+    SmallPrime-E-4-a ::= INTEGER (2|3|5|7|11|13|17|19|23|29)
 
-    SmallPrime-E-4 ::= INTEGER (2 | 3, ...) -- First version of
+    SmallPrime-E-4-b ::= INTEGER (2 | 3, ...) -- First version of
 
-    SmallPrime-E-4 ::= INTEGER (2 | 3, ..., 5 | 7 | 11)
+    SmallPrime-E-4-c ::= INTEGER (2 | 3, ..., 5 | 7 | 11)
 
-    SmallPrime-E-4 ::= INTEGER (2 | 3, ..., 5 | 7 | 11 | 13 | 17 | 19)
+    SmallPrime-E-4-d ::= INTEGER (2 | 3, ..., 5 | 7 | 11 | 13 | 17 | 19)
 
     Envelope-E-4 ::= SET {
         typeA TypeA,
@@ -535,15 +535,15 @@ X680 DEFINITIONS ::= BEGIN
         typeC TypeC OPTIONAL
     }
 
-    ABEnvelope-E-4 ::= Envelope (WITH COMPONENTS
+    ABEnvelope-E-4-a ::= Envelope (WITH COMPONENTS
         {... , typeB PRESENT, typeC ABSENT})
 
-    ACEnvelope-E-4 ::= Envelope (WITH COMPONENTS
+    ACEnvelope-E-4-a ::= Envelope (WITH COMPONENTS
         {... , typeB ABSENT, typeC PRESENT})
 
-    ABEnvelope-E-4 ::= Envelope (WITH COMPONENTS {typeA, typeB})
+    ABEnvelope-E-4-b ::= Envelope (WITH COMPONENTS {typeA, typeB})
 
-    ACEnvelope-E-4 ::= Envelope (WITH COMPONENTS {typeA, typeC})
+    ACEnvelope-E-4-b ::= Envelope (WITH COMPONENTS {typeA, typeC})
 
     PDU-E-4 ::= SET {
         alpha INTEGER,
