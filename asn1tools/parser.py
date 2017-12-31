@@ -431,7 +431,6 @@ def create_grammar():
     dot = Literal('.')
     range_separator = Literal('..')
     ellipsis = Literal('...')
-    qmark = Literal('"')
     pipe = Literal('|')
     caret = Literal('^')
     comma = Literal(',')
@@ -725,7 +724,7 @@ def create_grammar():
     lower_end_value = (value | MIN)
     upper_endpoint = (Optional(less_than) + upper_end_value)
     lower_endpoint = (lower_end_value + Optional(less_than))
-    value_range = (lower_endpoint + range_separator + upper_endpoint)
+    value_range = (lower_endpoint + range_separator - upper_endpoint)
     contained_subtype = (Optional(INCLUDES) + type_)
     single_value = value
     subtype_elements = (size_constraint
@@ -748,10 +747,9 @@ def create_grammar():
     root_element_set_spec <<= element_set_spec
     additional_element_set_spec <<= element_set_spec
     element_set_specs = (root_element_set_spec
-                         + Optional(Suppress(comma
-                                             + ellipsis)
+                         + Optional(Suppress(comma - ellipsis)
                                     + Optional(Suppress(comma)
-                                               + additional_element_set_spec)))
+                                               - additional_element_set_spec)))
 
     # X.680: 45. Constrained types
     subtype_constraint = element_set_specs
@@ -1007,23 +1005,22 @@ def create_grammar():
                        | choice_value
                        | relative_oid_value
                        | sequence_value
-                       | embedded_pdv_value
+                       # | embedded_pdv_value
                        | enumerated_value
-                       | external_value
+                       # | external_value
                        # | instance_of_value
                        | integer_value
                        | null_value
                        | object_identifier_value
-                       | octet_string_value
+                       # | octet_string_value
                        | real_value
                        | sequence_of_value
-                       | set_value
-                       | set_of_value
-                       | tagged_value
-                       | word)
-    value <<= Group(object_class_field_value
-                    | referenced_value
-                    | builtin_value)
+                       # | set_value
+                       # | set_of_value
+                       | tagged_value)
+    value <<= Group(object_class_field_value)
+                    # | referenced_value
+                    # | builtin_value)
     named_type <<= Group(identifier
                          - tag
                          - type_)
