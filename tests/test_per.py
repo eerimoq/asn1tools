@@ -49,6 +49,192 @@ class Asn1ToolsPerTest(unittest.TestCase):
             str(cm.exception),
             "Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
 
+    def test_x691_a1(self):
+        a1 = asn1tools.compile_files('tests/files/x691_a1.asn', 'per')
+
+        decoded_message = {
+            'name': {
+                'givenName': 'John',
+                'initial': 'P',
+                'familyName': 'Smith'
+            },
+            'title': 'Director',
+            'number': 51,
+            'dateOfHire': '19710917',
+            'nameOfSpouse': {
+                'givenName': 'Mary',
+                'initial': 'T',
+                'familyName': 'Smith'
+            },
+            'children': [
+                {
+                    'name': {
+                        'givenName': 'Ralph',
+                        'initial': 'T',
+                        'familyName': 'Smith'
+                    },
+                    'dateOfBirth': '19571111'
+                },
+                {
+                    'name': {
+                        'givenName': 'Susan',
+                        'initial': 'B',
+                        'familyName': 'Jones'
+                    },
+                    'dateOfBirth': '19590717'
+                }
+            ]
+        }
+
+        encoded_message = (
+            b'\x80\x04\x4a\x6f\x68\x6e\x01\x50\x05\x53\x6d\x69\x74\x68\x01\x33'
+            b'\x08\x44\x69\x72\x65\x63\x74\x6f\x72\x08\x31\x39\x37\x31\x30\x39'
+            b'\x31\x37\x04\x4d\x61\x72\x79\x01\x54\x05\x53\x6d\x69\x74\x68\x02'
+            b'\x05\x52\x61\x6c\x70\x68\x01\x54\x05\x53\x6d\x69\x74\x68\x08\x31'
+            b'\x39\x35\x37\x31\x31\x31\x31\x05\x53\x75\x73\x61\x6e\x01\x42\x05'
+            b'\x4a\x6f\x6e\x65\x73\x08\x31\x39\x35\x39\x30\x37\x31\x37'
+        )
+
+        with self.assertRaises(NotImplementedError):
+            encoded = a1.encode('PersonnelRecord', decoded_message)
+            self.assertEqual(encoded, encoded_message)
+            decoded = a1.decode('PersonnelRecord', encoded)
+            self.assertEqual(decoded, decoded_message)
+
+    def test_x691_a2(self):
+        a2 = asn1tools.compile_files('tests/files/x691_a2.asn', 'per')
+
+        decoded_message = {
+            'name': {
+                'givenName': 'John',
+                'initial': 'P',
+                'familyName': 'Smith'
+            },
+            'title': 'Director',
+            'number': 51,
+            'dateOfHire': '19710917',
+            'nameOfSpouse': {
+                'givenName': 'Mary',
+                'initial': 'T',
+                'familyName': 'Smith'
+            },
+            'children': [
+                {
+                    'name': {
+                        'givenName': 'Ralph',
+                        'initial': 'T',
+                        'familyName': 'Smith'
+                    },
+                    'dateOfBirth': '19571111'
+                },
+                {
+                    'name': {
+                        'givenName': 'Susan',
+                        'initial': 'B',
+                        'familyName': 'Jones'
+                    },
+                    'dateOfBirth': '19590717'
+                }
+            ]
+        }
+
+        encoded_message = (
+            b'\x86\x4a\x6f\x68\x6e\x50\x10\x53\x6d\x69\x74\x68\x01\x33\x08\x44'
+            b'\x69\x72\x65\x63\x74\x6f\x72\x19\x71\x09\x17\x0c\x4d\x61\x72\x79'
+            b'\x54\x10\x53\x6d\x69\x74\x68\x02\x10\x52\x61\x6c\x70\x68\x54\x10'
+            b'\x53\x6d\x69\x74\x68\x19\x57\x11\x11\x10\x53\x75\x73\x61\x6e\x42'
+            b'\x10\x4a\x6f\x6e\x65\x73\x19\x59\x07\x17'
+        )
+
+        with self.assertRaises(NotImplementedError):
+            encoded = a2.encode('PersonnelRecord', decoded_message)
+            self.assertEqual(encoded, encoded_message)
+            decoded = a2.decode('PersonnelRecord', encoded)
+            self.assertEqual(decoded, decoded_message)
+
+    def test_x691_a3(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            a3 = asn1tools.compile_files('tests/files/x691_a3.asn', 'per')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Invalid ASN.1 syntax at line 10, column 22: 'SEQUENCE >!<"
+            "(SIZE(2, ...)) OF ChildInformation OPTIONAL,': Expected \"{\".")
+
+        return
+
+        decoded_message = {
+            'name': {
+                'givenName': 'John',
+                'initial': 'P',
+                'familyName': 'Smith'
+            },
+            'title': 'Director',
+            'number': 51,
+            'dateOfHire': '19710917',
+            'nameOfSpouse': {
+                'givenName': 'Mary',
+                'initial': 'T',
+                'familyName': 'Smith'
+            },
+            'children': [
+                {
+                    'name': {
+                        'givenName': 'Ralph',
+                        'initial': 'T',
+                        'familyName': 'Smith'
+                    },
+                    'dateOfBirth': '19571111'
+                },
+                {
+                    'name': {
+                        'givenName': 'Susan',
+                        'initial': 'B',
+                        'familyName': 'Jones'
+                    },
+                    'dateOfBirth': '19590717',
+                    'sex': 'female'
+                }
+            ]
+        }
+
+        encoded_message = (
+            b'\x40\xc0\x4a\x6f\x68\x6e\x50\x08\x53\x6d\x69\x74\x68\x00\x00\x33'
+            b'\x08\x44\x69\x72\x65\x63\x74\x6f\x72\x00\x19\x71\x09\x17\x03\x4d'
+            b'\x61\x72\x79\x54\x08\x53\x6d\x69\x74\x68\x01\x00\x52\x61\x6c\x70'
+            b'\x68\x54\x08\x53\x6d\x69\x74\x68\x00\x19\x57\x11\x11\x82\x00\x53'
+            b'\x75\x73\x61\x6e\x42\x08\x4a\x6f\x6e\x65\x73\x00\x19\x59\x07\x17'
+            b'\x01\x01\x40'
+        )
+
+        encoded = a3.encode('PersonnelRecord', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = a3.decode('PersonnelRecord', encoded)
+        self.assertEqual(decoded, decoded_message)
+
+    def test_x691_a4(self):
+        a4 = asn1tools.compile_files('tests/files/x691_a4.asn', 'per')
+
+        decoded_message = {
+            'a': 253,
+            'b': True,
+            'c': {
+                'e': True
+            },
+            'g': '123',
+            'h': True
+        }
+
+        encoded_message = (
+            b'\x9e\x00\x01\x80\x01\x02\x91\xa4'
+        )
+
+        with self.assertRaises(NotImplementedError):
+            encoded = a4.encode('Ax', decoded_message)
+            self.assertEqual(encoded, encoded_message)
+            decoded = a4.decode('Ax', encoded)
+            self.assertEqual(decoded, decoded_message)
+
     def test_rrc_8_6_0(self):
         rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0), 'per')
 

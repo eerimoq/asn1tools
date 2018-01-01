@@ -1,4 +1,4 @@
-X691 DEFINITIONS ::= BEGIN
+X691-A1 DEFINITIONS ::= BEGIN
 
     PersonnelRecord ::= [APPLICATION 0] IMPLICIT SET {
         name            Name,
@@ -10,14 +10,14 @@ X691 DEFINITIONS ::= BEGIN
     }
 
     ChildInformation ::= SET {
-        name Name,
+        name            Name,
         dateOfBirth     [0] Date
     }
 
     Name ::= [APPLICATION 1] IMPLICIT SEQUENCE {
-        givenName VisibleString,
-        initial VisibleString,
-        familyName VisibleString
+        givenName       VisibleString,
+        initial         VisibleString,
+        familyName      VisibleString
     }
 
     EmployeeNumber ::= [APPLICATION 2] IMPLICIT INTEGER

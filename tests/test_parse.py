@@ -13,7 +13,10 @@ from bar import BAR
 from all_types import ALL_TYPES
 from information_object import INFORMATION_OBJECT
 from x680 import X680
-from x691 import X691
+from x691_a1 import X691_A1
+from x691_a2 import X691_A2
+from x691_a3 import X691_A3
+from x691_a4 import X691_A4
 from rrc_8_6_0 import RRC_8_6_0
 from rrc_14_4_0 import RRC_14_4_0
 from s1ap_14_4_0 import S1AP_14_4_0
@@ -64,9 +67,27 @@ class Asn1ToolsParseTest(unittest.TestCase):
         actual = asn1tools.parse_files('tests/files/x680.asn')
         self.assertEqual(actual, X680)
 
-    def test_parse_x691(self):
-        actual = asn1tools.parse_files('tests/files/x691.asn')
-        self.assertEqual(actual, X691)
+    def test_parse_x691_a1(self):
+        actual = asn1tools.parse_files('tests/files/x691_a1.asn')
+        self.assertEqual(actual, X691_A1)
+
+    def test_parse_x691_a2(self):
+        actual = asn1tools.parse_files('tests/files/x691_a2.asn')
+        self.assertEqual(actual, X691_A2)
+
+    def test_parse_x691_a3(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            actual = asn1tools.parse_files('tests/files/x691_a3.asn')
+            self.assertEqual(actual, X691_A3)
+
+        self.assertEqual(
+            str(cm.exception),
+            "Invalid ASN.1 syntax at line 10, column 22: 'SEQUENCE >!<"
+            "(SIZE(2, ...)) OF ChildInformation OPTIONAL,': Expected \"{\".")
+
+    def test_parse_x691_a4(self):
+        actual = asn1tools.parse_files('tests/files/x691_a4.asn')
+        self.assertEqual(actual, X691_A4)
 
     def test_parse_rrc_8_6_0(self):
         actual = asn1tools.parse_files('tests/files/3gpp/rrc_8_6_0.asn')

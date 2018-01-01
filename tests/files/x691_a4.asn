@@ -1,0 +1,25 @@
+X691-A4 DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+    Ax ::= SEQUENCE {
+        a       INTEGER (250..253),
+        b       BOOLEAN,
+        c CHOICE {
+            d           INTEGER,
+            ...,
+            [[
+            e           BOOLEAN,
+            f           IA5String
+            ]],
+            ...
+        },
+        ...,
+        [[
+        g       NumericString (SIZE(3)),
+        h       BOOLEAN OPTIONAL
+        ]],
+        ...,
+        i       BMPString OPTIONAL,
+        j       PrintableString OPTIONAL
+    }
+
+END

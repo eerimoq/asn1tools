@@ -50,7 +50,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             "Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
 
     def test_x691_a1(self):
-        a1 = asn1tools.compile_files('tests/files/x691.asn', 'uper')
+        a1 = asn1tools.compile_files('tests/files/x691_a1.asn', 'uper')
 
         decoded_message = {
             'name': {
@@ -87,12 +87,12 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         }
 
         encoded_message = (
-            b'\x82\x4a\xdf\xa3\x70\x0d\x00\x5a\x7b\x74\xf4\xd0\x02\x66\x11'
-            b'\x13\x4f\x2c\xb8\xfa\x6f\xe4\x10\xc5\xcb\x76\x2c\x1c\xb1\x6e'
-            b'\x09\x37\x0f\x2f\x20\x35\x01\x69\xed\xd3\xd3\x40\x10\x2d\x2c'
-            b'\x3b\x38\x68\x01\xa8\x0b\x4f\x6e\x9e\x9a\x02\x18\xb9\x6a\xdd'
-            b'\x8b\x16\x2c\x41\x69\xf5\xe7\x87\x70\x0c\x20\x59\x5b\xf7\x65'
-            b'\xe6\x10\xc5\xcb\x57\x2c\x1b\xb1\x6e'
+            b'\x82\x4a\xdf\xa3\x70\x0d\x00\x5a\x7b\x74\xf4\xd0\x02\x66\x11\x13'
+            b'\x4f\x2c\xb8\xfa\x6f\xe4\x10\xc5\xcb\x76\x2c\x1c\xb1\x6e\x09\x37'
+            b'\x0f\x2f\x20\x35\x01\x69\xed\xd3\xd3\x40\x10\x2d\x2c\x3b\x38\x68'
+            b'\x01\xa8\x0b\x4f\x6e\x9e\x9a\x02\x18\xb9\x6a\xdd\x8b\x16\x2c\x41'
+            b'\x69\xf5\xe7\x87\x70\x0c\x20\x59\x5b\xf7\x65\xe6\x10\xc5\xcb\x57'
+            b'\x2c\x1b\xb1\x6e'
         )
 
         encoded = a1.encode('PersonnelRecord', decoded_message)
@@ -104,6 +104,143 @@ class Asn1ToolsUPerTest(unittest.TestCase):
 
         decoded = a1.decode('PersonnelRecord', encoded)
         self.assertEqual(decoded, decoded_message)
+
+    def test_x691_a2(self):
+        a2 = asn1tools.compile_files('tests/files/x691_a2.asn', 'uper')
+
+        decoded_message = {
+            'name': {
+                'givenName': 'John',
+                'initial': 'P',
+                'familyName': 'Smith'
+            },
+            'title': 'Director',
+            'number': 51,
+            'dateOfHire': '19710917',
+            'nameOfSpouse': {
+                'givenName': 'Mary',
+                'initial': 'T',
+                'familyName': 'Smith'
+            },
+            'children': [
+                {
+                    'name': {
+                        'givenName': 'Ralph',
+                        'initial': 'T',
+                        'familyName': 'Smith'
+                    },
+                    'dateOfBirth': '19571111'
+                },
+                {
+                    'name': {
+                        'givenName': 'Susan',
+                        'initial': 'B',
+                        'familyName': 'Jones'
+                    },
+                    'dateOfBirth': '19590717'
+                }
+            ]
+        }
+
+        encoded_message = (
+            b'\x86\x5d\x51\xd2\x88\x8a\x51\x25\xf1\x80\x99\x84\x44\xd3\xcb\x2e'
+            b'\x3e\x9b\xf9\x0c\xb8\x84\x8b\x86\x73\x96\xe8\xa8\x8a\x51\x25\xf1'
+            b'\x81\x08\x9b\x93\xd7\x1a\xa2\x29\x44\x97\xc6\x32\xae\x22\x22\x22'
+            b'\x98\x5c\xe5\x21\x88\x5d\x54\xc1\x70\xca\xc8\x38\xb8 '
+        )
+
+        encoded = a2.encode('PersonnelRecord', decoded_message)
+
+        with self.assertRaises(AssertionError):
+            self.assertEqual(encoded, encoded_message)
+
+        decoded = a2.decode('PersonnelRecord', encoded)
+        self.assertEqual(decoded, decoded_message)
+
+    def test_x691_a3(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            a3 = asn1tools.compile_files('tests/files/x691_a3.asn', 'uper')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Invalid ASN.1 syntax at line 10, column 22: 'SEQUENCE >!<"
+            "(SIZE(2, ...)) OF ChildInformation OPTIONAL,': Expected \"{\".")
+
+        return
+
+        decoded_message = {
+            'name': {
+                'givenName': 'John',
+                'initial': 'P',
+                'familyName': 'Smith'
+            },
+            'title': 'Director',
+            'number': 51,
+            'dateOfHire': '19710917',
+            'nameOfSpouse': {
+                'givenName': 'Mary',
+                'initial': 'T',
+                'familyName': 'Smith'
+            },
+            'children': [
+                {
+                    'name': {
+                        'givenName': 'Ralph',
+                        'initial': 'T',
+                        'familyName': 'Smith'
+                    },
+                    'dateOfBirth': '19571111'
+                },
+                {
+                    'name': {
+                        'givenName': 'Susan',
+                        'initial': 'B',
+                        'familyName': 'Jones'
+                    },
+                    'dateOfBirth': '19590717',
+                    'sex': 'female'
+                }
+            ]
+        }
+
+        encoded_message = (
+            b'\x40\xcb\xaa\x3a\x51\x08\xa5\x12\x5f\x18\x03\x30\x88\x9a\x79\x65'
+            b'\xc7\xd3\x7f\x20\xcb\x88\x48\xb8\x19\xce\x5b\xa2\xa1\x14\xa2\x4b'
+            b'\xe3\x01\x13\x72\x7a\xe3\x54\x22\x94\x49\x7c\x61\x95\x71\x11\x18'
+            b'\x22\x98\x5c\xe5\x21\x84\x2e\xaa\x60\xb8\x32\xb2\x0e\x2e\x02\x02'
+            b'\x80'
+        )
+
+        encoded = a3.encode('PersonnelRecord', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+        decoded = a3.decode('PersonnelRecord', encoded)
+        self.assertEqual(decoded, decoded_message)
+
+    def test_x691_a4(self):
+        a4 = asn1tools.compile_files('tests/files/x691_a4.asn', 'uper')
+
+        decoded_message = {
+            'a': 253,
+            'b': True,
+            'c': {
+                'e': True
+            },
+            'g': '123',
+            'h': True
+        }
+
+        encoded_message = (
+            b'\x9e\x00\x06\x00\x04\x0a\x46\x90'
+        )
+
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            encoded = a4.encode('Ax', decoded_message)
+            self.assertEqual(encoded, encoded_message)
+            decoded = a4.decode('Ax', encoded)
+            self.assertEqual(decoded, decoded_message)
+
+        self.assertEqual(str(cm.exception),
+                         "Expected choices are ['d'], but got 'e'.")
 
     def test_rrc_8_6_0(self):
         rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0), 'uper')
