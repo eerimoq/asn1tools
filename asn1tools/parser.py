@@ -362,6 +362,104 @@ def convert_parameterized_value_assignment(tokens):
     return {'type': type_, 'value': value}
 
 
+def convert_imports(tokens):
+    imports = {}
+
+    if tokens:
+        for from_tokens in tokens[1:-1]:
+            from_name = from_tokens[2]
+            LOGGER.debug("Converting imports from '%s'.", from_name)
+            imports[from_name] = from_tokens[0]
+
+    return {'imports': imports}
+
+
+def convert_assignment_list(tokens):
+    types = {}
+    values = {}
+    object_classes = {}
+    object_sets = {}
+
+    for assignment in tokens:
+        name = assignment[0]
+
+        LOGGER.debug("Converting assignment tokens '%s'.", assignment)
+
+        if is_parameterized_object_set_assignment(assignment):
+            if name in object_sets:
+                LOGGER.warning("Object set '%s' already defined.", name)
+
+            LOGGER.debug("Converting object set '%s'.", name)
+            value = convert_parameterized_object_set_assignment(assignment)
+            LOGGER.debug("Converted object set '%s' to %s.", name, value)
+            object_sets[name] = value
+        elif is_parameterized_object_assignment(assignment):
+            pass
+        elif is_parameterized_object_class_assignment(assignment):
+            if name in object_classes:
+                LOGGER.warning("Object class '%s' already defined.", name)
+
+            LOGGER.debug("Converting object class '%s'.", name)
+            value = convert_parameterized_object_class_assignment(assignment)
+            LOGGER.debug("Converted object class '%s' to %s.", name, value)
+            object_classes[name] = value
+        elif is_parameterized_type_assignment(assignment):
+            if name in types:
+                LOGGER.warning("Type '%s' already defined.", name)
+
+            LOGGER.debug("Converting type '%s'.", name)
+            value = convert_parameterized_type_assignment(assignment)
+            LOGGER.debug("Converted type '%s' to %s.", name, value)
+            types[name] = value
+        elif is_parameterized_value_assignment(assignment):
+            if name in values:
+                LOGGER.warning("Value '%s' already defined.", name)
+
+            LOGGER.debug("Converting value '%s'.", name)
+            value = convert_parameterized_value_assignment(assignment)
+            LOGGER.debug("Converted value '%s' to %s.", name, value)
+            values[name] = value
+        else:
+            raise InternalParserError(
+                'Unrecognized assignment tokens {}.'.format(assignment))
+
+    return {
+        'types': types,
+        'values': values,
+        'object-classes': object_classes,
+        'object-sets': object_sets
+    }
+
+
+def convert_module_body(tokens):
+    module_body = convert_imports(tokens[0])
+    module_body.update(convert_assignment_list(tokens[1]))
+
+    return module_body
+
+
+def convert_module(tokens):
+    module = convert_module_body(tokens[1])
+
+    if tokens[0][2]:
+        module['tags'] = tokens[0][2][0]
+
+    module['extensibility-implied'] = (tokens[0][3] != [])
+
+    return module
+
+
+def convert_specification(tokens):
+    modules = {}
+
+    for module_tokens in tokens:
+        name = module_tokens[0][0]
+        LOGGER.debug("Converting module '%s'.", name)
+        modules[name] = convert_module(module_tokens)
+
+    return modules
+
+
 def create_grammar():
     """Return the ASN.1 grammar as Pyparsing objects.
 
@@ -395,8 +493,7 @@ def create_grammar():
     PRIVATE = Keyword('PRIVATE').setName('PRIVATE')
     SET = Keyword('SET').setName('SET')
     ANY_DEFINED_BY = Keyword('ANY DEFINED BY').setName('ANY DEFINED BY')
-    EXTENSIBILITY = Keyword('EXTENSIBILITY').setName('EXTENSIBILITY')
-    IMPLIED = Keyword('IMPLIED').setName('IMPLIED')
+    EXTENSIBILITY_IMPLIED = Keyword('EXTENSIBILITY IMPLIED').setName('EXTENSIBILITY IMPLIED')
     BOOLEAN = Keyword('BOOLEAN').setName('BOOLEAN')
     TRUE = Keyword('TRUE').setName('TRUE')
     FALSE = Keyword('FALSE').setName('FALSE')
@@ -1188,15 +1285,15 @@ def create_grammar():
     module_identifier = (module_reference
                          + definitive_identifier)
     tag_default = Group(Optional((AUTOMATIC | EXPLICIT | IMPLICIT) + TAGS))
-    extension_default = Group(Optional(EXTENSIBILITY + IMPLIED))
+    extension_default = Group(Optional(EXTENSIBILITY_IMPLIED))
     module_definition = Group(Group(module_identifier
-                                    - DEFINITIONS
+                                    - Suppress(DEFINITIONS)
                                     + tag_default
                                     + extension_default
-                                    - assign
-                                    - BEGIN)
-                              + module_body
-                              - END)
+                                    - Suppress(assign)
+                                    - Suppress(BEGIN))
+                              + Group(module_body)
+                              - Suppress(END))
 
     # The whole specification.
     specification = OneOrMore(module_definition) + StringEnd()
@@ -1226,86 +1323,7 @@ def parse_string(string):
             e.markInputline(),
             e.msg))
 
-    modules = {}
-
-    for module in tokens:
-        module_name = module[0][0]
-
-        LOGGER.debug("Converting module '%s'.", module_name)
-
-        imports = {}
-        types = {}
-        values = {}
-        object_classes = {}
-        object_sets = {}
-
-        imports_tokens = module[1]
-
-        if imports_tokens:
-            for from_tokens in imports_tokens[1:-1]:
-                from_name = from_tokens[2]
-                LOGGER.debug("Converting imports from '%s'.", from_name)
-                imports[from_name] = from_tokens[0]
-
-        assignment_tokens = module[2]
-
-        for assignment in assignment_tokens:
-            name = assignment[0]
-
-            LOGGER.debug("Converting assignment tokens '%s'.", assignment)
-
-            if is_parameterized_object_set_assignment(assignment):
-                if name in object_sets:
-                    LOGGER.warning("Object set '%s' already defined.", name)
-                    
-                LOGGER.debug("Converting object set '%s'.", name)
-                value = convert_parameterized_object_set_assignment(assignment)
-                LOGGER.debug("Converted object set '%s' to %s.", name, value)
-                object_sets[name] = value
-            elif is_parameterized_object_assignment(assignment):
-                pass
-            elif is_parameterized_object_class_assignment(assignment):
-                if name in object_classes:
-                    LOGGER.warning("Object class '%s' already defined.", name)
-
-                LOGGER.debug("Converting object class '%s'.", name)
-                value = convert_parameterized_object_class_assignment(assignment)
-                LOGGER.debug("Converted object class '%s' to %s.", name, value)
-                object_classes[name] = value
-            elif is_parameterized_type_assignment(assignment):
-                if name in types:
-                    LOGGER.warning("Type '%s' already defined.", name)
-
-                LOGGER.debug("Converting type '%s'.", name)
-                value = convert_parameterized_type_assignment(assignment)
-                LOGGER.debug("Converted type '%s' to %s.", name, value)
-                types[name] = value
-            elif is_parameterized_value_assignment(assignment):
-                if name in values:
-                    LOGGER.warning("Value '%s' already defined.", name)
-
-                LOGGER.debug("Converting value '%s'.", name)
-                value = convert_parameterized_value_assignment(assignment)
-                LOGGER.debug("Converted value '%s' to %s.", name, value)
-                values[name] = value
-            else:
-                raise InternalParserError(
-                    'Unrecognized assignment tokens {}.'.format(assignment))
-
-        modules[module_name] = {
-            'imports': imports,
-            'types': types,
-            'values': values,
-            'object-classes': object_classes,
-            'object-sets': object_sets
-        }
-
-        if module[0][3]:
-            modules[module_name]['tags'] = module[0][3][0]
-
-        modules[module_name]['extensibility-implied'] = (module[0][4] != [])
-
-    return modules
+    return convert_specification(tokens)
 
 
 def parse_files(filenames):
