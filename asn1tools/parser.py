@@ -38,6 +38,14 @@ class InternalParserError(Exception):
     pass
 
 
+def is_no_lower(string):
+    for char in string:
+        if char.islower():
+            return False
+
+    return True
+
+
 def is_parameterized_object_set_assignment(tokens):
     return tokens[0][0].isupper() and tokens[2:4] == ['::=', '{']
 
@@ -47,7 +55,11 @@ def is_parameterized_object_assignment(_):
 
 
 def is_parameterized_object_class_assignment(tokens):
-    return tokens[0][0].isupper() and tokens[1:3] == ['::=', 'CLASS']
+    return (is_no_lower(tokens[0][0])
+            and (tokens[1] == '::=')
+            and (tokens[2] == 'CLASS'
+                 or (isinstance(tokens[2], str)
+                     and is_no_lower(tokens[2]))))
 
 
 def is_parameterized_type_assignment(tokens):
@@ -475,6 +487,7 @@ def create_grammar():
 
     # Keywords.
     SEQUENCE = Keyword('SEQUENCE').setName('SEQUENCE')
+    SEQUENCE_OF = Keyword('SEQUENCE OF').setName('SEQUENCE OF')
     CHOICE = Keyword('CHOICE').setName('CHOICE')
     ENUMERATED = Keyword('ENUMERATED').setName('ENUMERATED')
     DEFINITIONS = Keyword('DEFINITIONS').setName('DEFINITIONS')
@@ -497,9 +510,11 @@ def create_grammar():
     IMPLICIT = Keyword('IMPLICIT').setName('IMPLICIT')
     EXPLICIT = Keyword('EXPLICIT').setName('EXPLICIT')
     OBJECT_IDENTIFIER = Keyword('OBJECT IDENTIFIER').setName('OBJECT IDENTIFIER')
+    UNIVERSAL = Keyword('UNIVERSAL').setName('UNIVERSAL')
     APPLICATION = Keyword('APPLICATION').setName('APPLICATION')
     PRIVATE = Keyword('PRIVATE').setName('PRIVATE')
     SET = Keyword('SET').setName('SET')
+    SET_OF = Keyword('SET OF').setName('SET OF')
     ANY_DEFINED_BY = Keyword('ANY DEFINED BY').setName('ANY DEFINED BY')
     EXTENSIBILITY_IMPLIED = Keyword('EXTENSIBILITY IMPLIED').setName('EXTENSIBILITY IMPLIED')
     BOOLEAN = Keyword('BOOLEAN').setName('BOOLEAN')
@@ -629,7 +644,9 @@ def create_grammar():
                   + Suppress(Optional(right_parenthesis)))
 
     tag = Group(Optional(Suppress(left_bracket)
-                         + Group(Optional(APPLICATION | PRIVATE) + word)
+                         + Group(Optional(UNIVERSAL
+                                          | APPLICATION
+                                          | PRIVATE) + word)
                          + Suppress(right_bracket)
                          + Group(Optional(IMPLICIT | EXPLICIT))))
 
