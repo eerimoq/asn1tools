@@ -52,7 +52,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'asn1tools'
-copyright = u'2017, Erik Moqvist'
+copyright = u'2017-2018, Erik Moqvist'
 author = u'Erik Moqvist'
 
 # The version info for the project you're documenting, acts as replacement for
