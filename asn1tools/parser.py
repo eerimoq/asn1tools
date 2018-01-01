@@ -644,10 +644,10 @@ def create_grammar():
                   + Suppress(Optional(right_parenthesis)))
 
     tag = Group(Optional(Suppress(left_bracket)
-                         + Group(Optional(UNIVERSAL
+                         - Group(Optional(UNIVERSAL
                                           | APPLICATION
                                           | PRIVATE) + word)
-                         + Suppress(right_bracket)
+                         - Suppress(right_bracket)
                          + Group(Optional(IMPLICIT | EXPLICIT))))
 
     any_defined_by_type = (ANY_DEFINED_BY + word)

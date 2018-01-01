@@ -320,6 +320,17 @@ class Asn1ToolsParseTest(unittest.TestCase):
             "BEGIN B ::= INTEGER (SIZE (>!<))END': Expected one or more "
             "constraints.")
 
+    def test_parse_error_tag_class_number_missing(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
+                                   'B ::= [] INTEGER '
+                                   'END')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Invalid ASN.1 syntax at line 1, column 32: 'A DEFINITIONS "
+            "::= BEGIN B ::= [>!<] INTEGER END': Expected word.")
+
 
 if __name__ == '__main__':
     unittest.main()
