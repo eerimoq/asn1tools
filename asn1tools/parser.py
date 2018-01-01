@@ -145,7 +145,7 @@ def convert_tag(tokens):
             }
         else:
             tag = {
-                'number': int(tokens[0][1]),
+                'number': convert_number(tokens[0][1]),
                 'class': tokens[0][0]
             }
 

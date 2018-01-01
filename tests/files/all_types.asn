@@ -24,6 +24,12 @@ Real5 ::= REAL (1. ..2)
 
 Real6 ::= REAL (-20.0 .. -10.0)
 
+Real7 ::= [UNIVERSAL 0] REAL
+
+Real8 ::= [APPLICATION 0] REAL
+
+Real9 ::= [PRIVATE 0] REAL
+
 Bitstring ::= BIT STRING
 
 Bitstring2 ::= BIT STRING (SIZE (9))
