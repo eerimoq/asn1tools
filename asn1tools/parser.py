@@ -580,7 +580,7 @@ def create_grammar():
     bstring = Regex(r"'[01\s]*'B")
     hstring = Regex(r"'[0-9A-F\s]*'H")
     cstring = QuotedString('"')
-    number = word
+    number = Word(printables, excludeChars=',(){}[].:=;"|').setName('number')
     ampersand = Literal('&')
     less_than = Literal('<')
 
@@ -606,7 +606,7 @@ def create_grammar():
     syntax_list = Forward()
     object_from_object = Forward()
     object_set_from_objects = Forward()
-    defined_value = Forward()
+    defined_value = Forward().setName('DefinedValue')
     component_type_lists = Forward()
     extension_and_exception = Forward()
     optional_extension_marker = Forward()
@@ -643,10 +643,12 @@ def create_grammar():
                   + size
                   + Suppress(Optional(right_parenthesis)))
 
+    class_number = (number | defined_value).setName('ClassNumber')
     tag = Group(Optional(Suppress(left_bracket)
                          - Group(Optional(UNIVERSAL
                                           | APPLICATION
-                                          | PRIVATE) + word)
+                                          | PRIVATE)
+                                 + class_number)
                          - Suppress(right_bracket)
                          + Group(Optional(IMPLICIT | EXPLICIT))))
 
@@ -1230,7 +1232,7 @@ def create_grammar():
                     | character_string_type)
     type_ <<= ((builtin_type
                 | any_defined_by_type
-                | referenced_type)
+                | referenced_type).setName('Type')
                + Group(Optional(constraint)))
 
     # X.680: 15. Assigning types and values
@@ -1267,7 +1269,8 @@ def create_grammar():
                        | value_reference)
 
     # X.680: 12. Module definition
-    module_reference <<= word
+    module_reference <<= (NotAny(reserved_words)
+                          + Regex(r'[A-Z][a-zA-Z0-9-]*').setName('modulereference'))
     assigned_identifier = Suppress(Optional(object_identifier_value
                                             | (defined_value + ~comma)))
     global_module_reference = (module_reference + assigned_identifier)

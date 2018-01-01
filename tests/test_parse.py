@@ -188,7 +188,7 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
         self.assertEqual(str(cm.exception),
                          "Invalid ASN.1 syntax at line 1, column 1: '>!<': "
-                         "Expected word.")
+                         "Expected modulereference.")
 
     def test_parse_error_begin_missing(self):
         with self.assertRaises(asn1tools.ParseError) as cm:
@@ -232,14 +232,8 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "Invalid ASN.1 syntax at line 1, column 45: 'A DEFINITIONS ::= BEGIN  "
-            "A ::= SEQUENCE { a >!<} END': Expected {CHOICE | INTEGER | NULL | REAL | "
-            "BIT STRING | OCTET STRING | ENUMERATED | SEQUENCE OF | SEQUENCE | "
-            "ObjectClassFieldType | SET OF | SET | OBJECT IDENTIFIER | BOOLEAN | "
-            "BMPString | GeneralString | GraphicString | IA5String | ISO646String | "
-            "NumericString | PrintableString | TeletexString | T61String | "
-            "UniversalString | UTF8String | VideotexString | VisibleString | "
-            "CHARACTER STRING | ANY DEFINED BY | ReferencedType}.")
+            "Invalid ASN.1 syntax at line 1, column 45: 'A DEFINITIONS ::= BEGIN "
+            " A ::= SEQUENCE { a >!<} END': Expected Type.")
 
     def test_parse_error_sequence_missing_member_name(self):
         with self.assertRaises(asn1tools.ParseError) as cm:
@@ -329,7 +323,18 @@ class Asn1ToolsParseTest(unittest.TestCase):
         self.assertEqual(
             str(cm.exception),
             "Invalid ASN.1 syntax at line 1, column 32: 'A DEFINITIONS "
-            "::= BEGIN B ::= [>!<] INTEGER END': Expected word.")
+            "::= BEGIN B ::= [>!<] INTEGER END': Expected ClassNumber.")
+
+    def test_parse_error_missing_type(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
+                                   'B ::= '
+                                   'END')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Invalid ASN.1 syntax at line 1, column 31: 'A DEFINITIONS ::= BEGIN "
+            "B ::= >!<END': Expected Type.")
 
 
 if __name__ == '__main__':
