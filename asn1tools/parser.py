@@ -280,6 +280,32 @@ def convert_type(tokens):
     return converted_type
 
 
+def convert_value(tokens, type_=None):
+    if type_ == 'INTEGER':
+        value = int(tokens[0])
+    elif type_ == 'OBJECT IDENTIFIER':
+        value = []
+
+        for value_tokens in tokens:
+            if len(value_tokens) == 2:
+                value.append((value_tokens[0], int(value_tokens[1])))
+            else:
+                value.append(convert_number(value_tokens[0]))
+    elif type_ == 'BOOLEAN':
+        value = tokens[0]
+    elif type_ == 'BIT STRING':
+        value = tokens[0]
+
+        if value[-1] == 'B':
+            value = '0b' + re.sub(r"[\sB']", '', value)
+        else:
+            value = '0x' + re.sub(r"[\sH']", '', value)
+    else:
+        value = tokens
+
+    return value
+
+
 def convert_parameterized_object_set_assignment(tokens):
     members = []
 
@@ -338,28 +364,10 @@ def convert_parameterized_type_assignment(tokens):
 def convert_parameterized_value_assignment(tokens):
     type_ = tokens[1][0]
 
-    if type_ == 'INTEGER':
-        value = int(tokens[3][0])
-    elif type_ == 'OBJECT IDENTIFIER':
-        value = []
-
-        for value_tokens in tokens[3]:
-            if len(value_tokens) == 2:
-                value.append((value_tokens[0], int(value_tokens[1])))
-            else:
-                value.append(convert_number(value_tokens[0]))
-    elif type_ == 'BOOLEAN':
-        value = tokens[3][0]
-    elif type_ == 'BIT STRING':
-        value = tokens[3][0]
-        if value[-1] == 'B':
-            value = '0b' + re.sub(r"[\sB']", '', value)
-        else:
-            value = '0x' + re.sub(r"[\sH']", '', value)
-    else:
-        value = tokens[3]
-
-    return {'type': type_, 'value': value}
+    return {
+        'type': type_,
+        'value': convert_value(tokens[2], type_)
+    }
 
 
 def convert_imports(tokens):
@@ -784,7 +792,7 @@ def create_grammar():
     parameterized_object_assignment = (object_reference
                                        + parameter_list
                                        + Group(defined_object_class)
-                                       + assign
+                                       + Suppress(assign)
                                        + object_)
 
     # X.681: 12. Information object set definition and assignment
@@ -1218,7 +1226,7 @@ def create_grammar():
     parameterized_value_assignment = (value_reference
                                       + parameter_list
                                       - Group(type_)
-                                      - assign
+                                      - Suppress(assign)
                                       - value)
 
     # X.680: 14. Notation to support references to ASN.1 components
