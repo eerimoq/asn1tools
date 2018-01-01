@@ -569,6 +569,10 @@ def create_grammar():
     ampersand = Literal('&')
     less_than = Literal('<')
 
+    reserved_words = (END
+                      | SEQUENCE
+                      | ENUMERATED)
+
     # Forward declarations.
     value = Forward()
     type_ = Forward()
@@ -714,7 +718,8 @@ def create_grammar():
     value_set_field_reference = NoMatch().setName('"valueSetFieldReference" not implemented')
     object_field_reference = NoMatch().setName('"objectFieldReference" not implemented')
     object_set_field_reference = NoMatch().setName('"objectSetFieldReference" not implemented')
-    object_class_reference = type_reference
+    object_class_reference = (NotAny(reserved_words)
+                              + Regex(r'[A-Z][A-Z0-9-]*'))
     object_reference = value_reference
 
     # X.681: 8. Referencing definitions
@@ -1212,9 +1217,7 @@ def create_grammar():
                + Group(Optional(constraint)))
 
     # X.680: 15. Assigning types and values
-    type_reference <<= (NotAny(END
-                               | SEQUENCE
-                               | ENUMERATED)
+    type_reference <<= (NotAny(reserved_words)
                         + Regex(r'[A-Z][a-zA-Z0-9-]*'))
     value_reference <<= Regex(r'[a-z][a-zA-Z0-9-]*')
     value_set <<= NoMatch().setName('"valueSet" not implemented')
