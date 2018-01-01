@@ -366,7 +366,7 @@ def convert_imports(tokens):
     imports = {}
 
     if tokens:
-        for from_tokens in tokens[1:-1]:
+        for from_tokens in tokens:
             from_name = from_tokens[2]
             LOGGER.debug("Converting imports from '%s'.", from_name)
             imports[from_name] = from_tokens[0]
@@ -1256,9 +1256,9 @@ def create_grammar():
                            + FROM
                            + global_module_reference)
     symbols_imported = OneOrMore(Group(symbols_from_module))
-    imports = Group(Optional(IMPORTS
+    imports = Group(Optional(Suppress(IMPORTS)
                              - symbols_imported
-                             - semi_colon))
+                             - Suppress(semi_colon)))
     symbols_exported = OneOrMore(symbol_list)
     exports = Suppress(Group(Optional(EXPORTS
                                       - (ALL
