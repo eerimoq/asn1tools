@@ -1217,8 +1217,7 @@ def create_grammar():
                                      - type_)
     parameterized_value_assignment = (value_reference
                                       + parameter_list
-                                      - Group(INTEGER
-                                              | type_)
+                                      - Group(type_)
                                       - assign
                                       - value)
 
