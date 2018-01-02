@@ -191,7 +191,7 @@ def convert_members(tokens):
             if len(qualifiers[1]) == 0:
                 value = []
             else:
-                value = convert_number(qualifiers[1][0])
+                value = convert_value(qualifiers[1], member['type'])
 
             member['default'] = value
 
@@ -388,6 +388,23 @@ def convert_type(tokens):
     return converted_type
 
 
+def convert_bit_string_value(tokens):
+    value = tokens[0]
+
+    if value == 'bstring':
+        value = '0b' + re.sub(r"[\sB']", '', value[0])
+    elif value == 'hstring':
+        value = '0x' + re.sub(r"[\sH']", '', value[0])
+    elif value == 'IdentifierList':
+        value = value[:]
+    elif isinstance(value, str):
+        value = value
+    else:
+        value = None
+
+    return value
+
+
 def convert_value(tokens, type_=None):
     if type_ == 'INTEGER':
         value = int(tokens[0])
@@ -401,15 +418,12 @@ def convert_value(tokens, type_=None):
                 value.append(convert_number(value_tokens[0]))
     elif type_ == 'BOOLEAN':
         value = tokens[0]
-    elif type_ == 'BIT STRING':
-        value = tokens[0]
-
-        if value[-1] == 'B':
-            value = '0b' + re.sub(r"[\sB']", '', value)
-        else:
-            value = '0x' + re.sub(r"[\sH']", '', value)
+    elif tokens[0] == 'BitStringValue':
+        value = convert_bit_string_value(tokens[0])
+    elif isinstance(tokens[0], str):
+        value = convert_number(tokens[0])
     else:
-        value = tokens
+        value = None
 
     return value
 
@@ -696,8 +710,8 @@ def create_grammar():
     at = Literal('@')
     integer = Word(nums + '-')
     real_number = Regex(r'[+-]?\d+\.?\d*([eE][+-]?\d+)?')
-    bstring = Regex(r"'[01\s]*'B")
-    hstring = Regex(r"'[0-9A-F\s]*'H")
+    bstring = Tag('bstring', Regex(r"'[01\s]*'B"))
+    hstring = Tag('hstring', Regex(r"'[0-9A-F\s]*'H"))
     cstring = QuotedString('"')
     number = Word(printables, excludeChars=',(){}[].:=;"|').setName('number')
     ampersand = Literal('&')
@@ -1261,12 +1275,14 @@ def create_grammar():
                                                                  + right_parenthesis))
                                            + right_brace)))
     bit_string_type.setName('BIT STRING')
-    bit_string_value = (bstring
-                        | hstring
-                        | (Suppress(left_brace)
-                           + Optional(identifier_list)
-                           + Suppress(right_brace))
-                        | (CONTAINING - value))
+    bit_string_value = Tag('BitStringValue',
+                           bstring
+                           | hstring
+                           | Tag('IdentifierList',
+                                 Suppress(left_brace)
+                                 + Optional(identifier_list)
+                                 + Suppress(right_brace))
+                           | (CONTAINING - value))
 
     # X.680: 20. Notation for the real type
     special_real_value = (PLUS_INFINITY
