@@ -6,6 +6,7 @@ functions and classes, and the command line interface.
 import sys
 import argparse
 import binascii
+import logging
 
 from .compiler import compile_dict, compile_string, compile_files
 from .parser import parse_string, parse_files, ParseError
@@ -63,6 +64,12 @@ def _main():
         description='Various ASN.1 utilities.')
 
     parser.add_argument('-d', '--debug', action='store_true')
+    parser.add_argument('-v', '--verbose',
+                        choices=(0, 1, 2),
+                        type=int,
+                        default=1,
+                        help=('Control the verbosity; disable(0), warning(1) '
+                              'and debug(2). (default: 1).'))
     parser.add_argument('--version',
                         action='version',
                         version=__version__,
@@ -89,6 +96,12 @@ def _main():
     decode_parser.set_defaults(func=_do_decode)
     
     args = parser.parse_args()
+
+    levels = [logging.CRITICAL, logging.WARNING, logging.DEBUG]
+    level = levels[args.verbose]
+
+    logging.basicConfig(format='%(levelname)s: %(message)s',
+                        level=level)
     
     if args.debug:
         args.func(args)
