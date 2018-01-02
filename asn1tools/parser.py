@@ -205,99 +205,178 @@ def convert_members(tokens):
     return members
 
 
+def convert_sequence_type(tokens):
+    return {
+        'type': 'SEQUENCE',
+        'members': convert_members(tokens[2])
+    }
+
+
+def convert_sequence_of_type(tokens):
+    converted_type = {
+        'type': 'SEQUENCE OF',
+        'element': convert_type(tokens[4]),
+        'size': convert_size(tokens[1])
+    }
+
+    tag = convert_tag(tokens[3])
+
+    if tag:
+        converted_type['element']['tag'] = tag
+
+    return converted_type
+
+
+def convert_set_type(tokens):
+    return {
+        'type': 'SET',
+        'members': convert_members(tokens[2])
+    }
+
+
+def convert_set_of_type(tokens):
+    converted_type = {
+        'type': 'SET OF',
+        'element': convert_type(tokens[4]),
+        'size': convert_size(tokens[1])
+    }
+
+    tag = convert_tag(tokens[3])
+
+    if tag:
+        converted_type['element']['tag'] = tag
+
+    return converted_type
+
+
+def convert_choice_type(tokens):
+    return {
+        'type': 'CHOICE',
+        'members': convert_members(tokens[2])
+    }
+
+
+def convert_integer_type(tokens):
+    converted_type = {'type': 'INTEGER'}
+    restricted_to = []
+
+    if len(tokens) > 1:
+        for constraint_tokens in tokens[1]:
+            if '..' in constraint_tokens:
+                minimum = convert_number(constraint_tokens[0])
+                maximum = convert_number(constraint_tokens[2])
+                restricted_to.append((minimum, maximum))
+            elif len(constraint_tokens) == 1:
+                restricted_to.append(convert_number(constraint_tokens[0]))
+
+    if restricted_to:
+        converted_type['restricted-to'] = restricted_to
+
+    return converted_type
+
+
+def convert_real_type(tokens):
+    converted_type = {'type': 'REAL'}
+    restricted_to = []
+
+    if len(tokens) > 1:
+        for constraint_tokens in tokens[0][1]:
+            if '..' in constraint_tokens:
+                minimum = constraint_tokens[0][0]
+                maximum = constraint_tokens[2][0]
+                restricted_to.append((minimum, maximum))
+            elif len(constraint_tokens) == 1:
+                restricted_to.append(constraint_tokens[0][0])
+
+        if restricted_to:
+            converted_type['restricted-to'] = restricted_to
+
+    return converted_type
+
+
+def convert_enumerated_type(tokens):
+    return {
+        'type': 'ENUMERATED',
+        'values': convert_enum_values(tokens[2])
+    }
+
+
+def convert_object_identifier_type():
+    return {
+        'type': 'OBJECT IDENTIFIER'
+    }
+
+
+def convert_bit_string_type(tokens):
+    return {
+        'type': 'BIT STRING',
+        'size': convert_size(tokens[1])
+    }
+
+
+def convert_octet_string_type(tokens):
+    return {
+        'type': 'OCTET STRING',
+        'size': convert_size(tokens[1])
+    }
+
+
+def convert_ia5_string_type():
+    return {
+        'type': 'IA5String'
+    }
+
+
+def convert_any_defined_by_type(tokens):
+    return {
+        'type': 'ANY DEFINED BY',
+        'value': tokens[1],
+        'choices': {}
+    }
+
+
+def convert_null_type():
+    return {
+        'type': 'NULL'
+    }
+
+
+def convert_boolean_type():
+    return {
+        'type': 'BOOLEAN'
+    }
+
 def convert_type(tokens):
     if tokens[0] == 'SequenceType':
-        converted_type = {
-            'type': 'SEQUENCE',
-            'members': convert_members(tokens[0][2])
-        }
-    elif tokens[0] == 'SEQUENCE' and tokens[2] == 'OF':
-        converted_type = {
-            'type': 'SEQUENCE OF',
-            'element': convert_type(tokens[4]),
-            'size': convert_size(tokens[1])
-        }
-
-        tag = convert_tag(tokens[3])
-
-        if tag:
-            converted_type['element']['tag'] = tag
+        converted_type = convert_sequence_type(tokens[0])
+    elif tokens[0] == 'SequenceOfType':
+        converted_type = convert_sequence_of_type(tokens[0])
     elif tokens[0] == 'SetType':
-        converted_type = {
-            'type': 'SET',
-            'members': convert_members(tokens[0][2])
-        }
-    elif tokens[0] == 'SET' and tokens[2] == 'OF':
-        converted_type = {
-            'type': 'SET OF',
-            'element': convert_type(tokens[4]),
-            'size': convert_size(tokens[1])
-        }
-
-        tag = convert_tag(tokens[3])
-
-        if tag:
-            converted_type['element']['tag'] = tag
+        converted_type = convert_set_type(tokens[0])
+    elif tokens[0] == 'SetOfType':
+        converted_type = convert_set_of_type(tokens[0])
     elif tokens[0] == 'ChoiceType':
-        converted_type = {
-            'type': 'CHOICE',
-            'members': convert_members(tokens[0][2])
-        }
+        converted_type = convert_choice_type(tokens[0])
     elif tokens[0] == 'IntegerType':
-        converted_type = {'type': 'INTEGER'}
-        restricted_to = []
-
-        if len(tokens) > 1:
-            for constraint_tokens in tokens[1]:
-                if '..' in constraint_tokens:
-                    minimum = convert_number(constraint_tokens[0])
-                    maximum = convert_number(constraint_tokens[2])
-                    restricted_to.append((minimum, maximum))
-                elif len(constraint_tokens) == 1:
-                    restricted_to.append(convert_number(constraint_tokens[0]))
-
-            if restricted_to:
-                converted_type['restricted-to'] = restricted_to
+        converted_type = convert_integer_type(tokens)
     elif tokens[0] == 'RealType':
-        converted_type = {'type': 'REAL'}
-        restricted_to = []
-
-        if len(tokens) > 1:
-            for constraint_tokens in tokens[0][1]:
-                if '..' in constraint_tokens:
-                    minimum = constraint_tokens[0][0]
-                    maximum = constraint_tokens[2][0]
-                    restricted_to.append((minimum, maximum))
-                elif len(constraint_tokens) == 1:
-                    restricted_to.append(constraint_tokens[0][0])
-
-            if restricted_to:
-                converted_type['restricted-to'] = restricted_to
+        converted_type = convert_real_type(tokens)
     elif tokens[0] == 'EnumeratedType':
-        converted_type = {
-            'type': 'ENUMERATED',
-            'values': convert_enum_values(tokens[0][2])
-        }
+        converted_type = convert_enumerated_type(tokens[0])
     elif tokens[0] == 'ObjectIdentifierType':
-        converted_type = {'type': 'OBJECT IDENTIFIER'}
+        converted_type = convert_object_identifier_type()
     elif tokens[0] == 'BitStringType':
-        converted_type = {'type': 'BIT STRING',
-                          'size': convert_size(tokens[1])}
+        converted_type = convert_bit_string_type(tokens)
     elif tokens[0] == 'OctetStringType':
-        converted_type = {'type': 'OCTET STRING',
-                          'size': convert_size(tokens[1])}
+        converted_type = convert_octet_string_type(tokens)
     elif tokens[0] == 'IA5String':
-        converted_type = {'type': 'IA5String'}
+        converted_type = convert_ia5_string_type()
     elif tokens[0] == 'ANY DEFINED BY':
-        converted_type = {
-            'type': 'ANY DEFINED BY',
-            'value': tokens[1],
-            'choices': {}
-        }
+        converted_type = convert_any_defined_by_type(tokens)
     elif tokens[0] == 'NullType':
-        converted_type = {'type': 'NULL'}
+        converted_type = convert_null_type()
     elif tokens[0] == 'BooleanType':
-        converted_type = {'type': 'BOOLEAN'}
+        converted_type = convert_boolean_type()
     elif '&' in tokens[0]:
         converted_type = {
             'type': tokens[0],
@@ -1085,12 +1164,13 @@ def create_grammar():
 
     # X.680: 27. Notation for the set-of types
     set_of_value = NoMatch()
-    set_of_type = (SET
-                   + Group(Optional(size))
-                   + OF
-                   + Optional(Suppress(identifier))
-                   - tag
-                   - type_)
+    set_of_type = Tag('SetOfType',
+                      SET
+                      + Group(Optional(size))
+                      + OF
+                      + Optional(Suppress(identifier))
+                      - tag
+                      - type_)
     set_of_type.setName('SET OF')
 
     # X.680: 26. Notation for the set types
@@ -1106,12 +1186,13 @@ def create_grammar():
 
     # X.680: 25. Notation for the sequence-of types
     sequence_of_value = NoMatch()
-    sequence_of_type = (SEQUENCE
-                        + Group(Optional(size_paren))
-                        + OF
-                        + Optional(Suppress(identifier))
-                        - tag
-                        - type_)
+    sequence_of_type = Tag('SequenceOfType',
+                           SEQUENCE
+                           + Group(Optional(size_paren))
+                           + OF
+                           + Optional(Suppress(identifier))
+                           - tag
+                           - type_)
     sequence_of_type.setName('SEQUENCE OF')
 
     # X.680: 24. Notation for the sequence types
