@@ -120,6 +120,6 @@ INFORMATION_OBJECT = {'InformationObject': {'extensibility-implied': False,
                        'values': {'innerItem0': {'type': 'INNER-ITEM',
                                                  'value': [['&type', ['0']],
                                                            ['&Value',
-                                                            'INTEGER',
-                                                            [],
-                                                            []]]}}}}
+                                                            ['INTEGER',
+                                                             [],
+                                                             []]]]}}}}

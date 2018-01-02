@@ -90,7 +90,7 @@ def _compile_any_defined_by_type(type_, choices):
     type_['choices'] = {}
 
     for key, value in choices.items():
-        tokens = ['Dummy', '::=', [], value, []]
+        tokens = ['Dummy', '::=', [], [value, []], []]
         type_['choices'][key] = convert_parameterized_type_assignment(tokens)
 
 

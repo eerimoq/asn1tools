@@ -50,8 +50,10 @@ def is_parameterized_object_set_assignment(tokens):
     return tokens[0][0].isupper() and tokens[2:4] == ['::=', '{']
 
 
-def is_parameterized_object_assignment(_):
-    return False
+def is_parameterized_object_assignment(tokens):
+    return (tokens[0][0].islower()
+            and (isinstance(tokens[1], str)
+                 and is_no_lower(tokens[1])))
 
 
 def is_parameterized_object_class_assignment(tokens):
@@ -160,7 +162,7 @@ def convert_members(tokens):
 
     for member_tokens in tokens:
         if member_tokens in [['...'], '...']:
-            member_tokens = [['...', [], ''], []]
+            member_tokens = [['...', [], ['', []]], []]
 
         if member_tokens[0] == 'COMPONENTS OF':
             continue
@@ -170,7 +172,7 @@ def convert_members(tokens):
         else:
             qualifiers = []
 
-        member = convert_type(member_tokens[2:])
+        member = convert_type(member_tokens[2])
         member['name'] = member_tokens[0]
         member['optional'] = 'OPTIONAL' in qualifiers
 
@@ -201,7 +203,7 @@ def convert_type(tokens):
     elif tokens[0] == 'SEQUENCE' and tokens[2] == 'OF':
         converted_type = {
             'type': 'SEQUENCE OF',
-            'element': convert_type(tokens[4:]),
+            'element': convert_type(tokens[4]),
             'size': convert_size(tokens[1])
         }
 
@@ -217,7 +219,7 @@ def convert_type(tokens):
     elif tokens[0] == 'SET' and tokens[2] == 'OF':
         converted_type = {
             'type': 'SET OF',
-            'element': convert_type(tokens[4:]),
+            'element': convert_type(tokens[4]),
             'size': convert_size(tokens[1])
         }
 
@@ -341,12 +343,21 @@ def convert_parameterized_object_set_assignment(tokens):
     return {'class': tokens[1], 'members': members}
 
 
+def convert_parameterized_object_assignment(tokens):
+    type_ = tokens[1]
+
+    return {
+        'type': type_,
+        'value': convert_value(tokens[2], type_)
+    }
+
+
 def convert_parameterized_object_class_assignment(tokens):
     members = []
 
     for member in tokens[3]:
         if member[0][1].islower():
-            type_ = member[1]
+            type_ = member[1][0]
         else:
             type_ = 'OpenType'
 
@@ -360,7 +371,7 @@ def convert_parameterized_object_class_assignment(tokens):
 
 
 def convert_parameterized_type_assignment(tokens):
-    converted_type = convert_type(tokens[3:])
+    converted_type = convert_type(tokens[3])
 
     try:
         tag = convert_tag(tokens[2])
@@ -374,7 +385,7 @@ def convert_parameterized_type_assignment(tokens):
 
 
 def convert_parameterized_value_assignment(tokens):
-    type_ = tokens[1][0]
+    type_ = tokens[1][0][0]
 
     return {
         'type': type_,
@@ -414,7 +425,13 @@ def convert_assignment_list(tokens):
             LOGGER.debug("Converted object set '%s' to %s.", name, value)
             object_sets[name] = value
         elif is_parameterized_object_assignment(assignment):
-            pass
+            if name in values:
+                LOGGER.warning("Object '%s' already defined.", name)
+
+            LOGGER.debug("Converting object '%s'.", name)
+            value = convert_parameterized_object_assignment(assignment)
+            LOGGER.debug("Converted object '%s' to %s.", name, value)
+            values[name] = value
         elif is_parameterized_object_class_assignment(assignment):
             if name in object_classes:
                 LOGGER.warning("Object class '%s' already defined.", name)
@@ -815,7 +832,7 @@ def create_grammar():
                  | parameterized_object)
     parameterized_object_assignment = (object_reference
                                        + parameter_list
-                                       + Group(defined_object_class)
+                                       + defined_object_class
                                        + Suppress(assign)
                                        + object_)
 
@@ -1230,10 +1247,10 @@ def create_grammar():
                     | object_identifier_type
                     | boolean_type
                     | character_string_type)
-    type_ <<= ((builtin_type
-                | any_defined_by_type
-                | referenced_type).setName('Type')
-               + Group(Optional(constraint)))
+    type_ <<= Group((builtin_type
+                     | any_defined_by_type
+                     | referenced_type).setName('Type')
+                    + Group(Optional(constraint)))
 
     # X.680: 15. Assigning types and values
     type_reference <<= (NotAny(reserved_words)
