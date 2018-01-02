@@ -1,25 +1,13 @@
-FOO = {
-    'Foo': {
-        'extensibility-implied': False,
-        'imports': {},
-        'object-classes': {},
-        'object-sets': {},
-        'types': {
-            'Answer': {
-                'type': 'SEQUENCE',
-                'members': [
-                    {'name': 'id', 'optional': False, 'type': 'INTEGER'},
-                    {'name': 'answer','optional': False,'type': 'BOOLEAN'}
-                ]
-            },
-            'Question': {
-                'type': 'SEQUENCE',
-                'members': [
-                    {'name': 'id', 'optional': False, 'type': 'INTEGER'},
-                    {'name': 'question', 'optional': False, 'type': 'IA5String'}
-                ]
-            }
-        },
-        'values': {}
-    }
-}
+EXPECTED = {'Foo': {'extensibility-implied': False,
+         'imports': {},
+         'object-classes': {},
+         'object-sets': {},
+         'types': {'Answer': {'members': [{'name': 'id', 'type': 'INTEGER'},
+                                          {'name': 'answer',
+                                           'type': 'BOOLEAN'}],
+                              'type': 'SEQUENCE'},
+                   'Question': {'members': [{'name': 'id', 'type': 'INTEGER'},
+                                            {'name': 'question',
+                                             'type': 'IA5String'}],
+                                'type': 'SEQUENCE'}},
+         'values': {}}}

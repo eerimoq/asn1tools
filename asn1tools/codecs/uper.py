@@ -3,6 +3,7 @@
 """
 
 import logging
+from operator import attrgetter
 
 from . import EncodeError
 from . import compiler
@@ -13,6 +14,14 @@ LOGGER = logging.getLogger(__name__)
 
 class DecodeChoiceError(Exception):
     pass
+
+
+CLASS_PRIO = {
+    'UNIVERSAL': 0,
+    'APPLICATION': 1,
+    'CONTEXT_SPECIFIC': 2,
+    'PRIVATE': 3
+}
 
 
 class Encoder(object):
@@ -207,8 +216,9 @@ class Type(object):
     def __init__(self, name, type_name):
         self.name = name
         self.type_name = type_name
-        self.optional = None
+        self.optional = False
         self.default = None
+        self.tag = None
 
 
 class Integer(Type):
@@ -919,7 +929,8 @@ class Compiler(compiler.Compiler):
         elif type_descriptor['type'] == 'SET':
             members, extension = self.compile_members(
                 type_descriptor['members'],
-                module_name)
+                module_name,
+                sort_by_tag=True)
             compiled = Set(name,
                            members,
                            extension)
@@ -988,16 +999,21 @@ class Compiler(compiler.Compiler):
                     type_descriptor['type'],
                     module_name))
 
+        # Set any given tag.
+        if 'tag' in type_descriptor:
+            tag = type_descriptor['tag']
+            class_prio = CLASS_PRIO[tag.get('class', 'CONTEXT_SPECIFIC')]
+            class_number = tag['number']
+            compiled.tag = (class_prio, class_number)
+
         return compiled
 
     def compile_type(self, name, type_descriptor, module_name):
-        compiled = self.compile_implicit_type(name,
-                                              type_descriptor,
-                                              module_name)
+        return self.compile_implicit_type(name,
+                                          type_descriptor,
+                                          module_name)
 
-        return compiled
-
-    def compile_members(self, members, module_name):
+    def compile_members(self, members, module_name, sort_by_tag=False):
         compiled_members = []
         extension = None
 
@@ -1014,12 +1030,17 @@ class Compiler(compiler.Compiler):
             compiled_member = self.compile_type(member['name'],
                                                 member,
                                                 module_name)
-            compiled_member.optional = member['optional']
+
+            if 'optional' in member:
+                compiled_member.optional = member['optional']
 
             if 'default' in member:
                 compiled_member.default = member['default']
 
             compiled_members.append(compiled_member)
+
+        if sort_by_tag:
+            compiled_members = sorted(compiled_members, key=attrgetter('tag'))
 
         return compiled_members, extension
 

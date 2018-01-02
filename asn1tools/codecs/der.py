@@ -155,7 +155,7 @@ class Type(object):
         else:
             self.tag = bytearray([flags | 0x1f]) + encode_length_definite(number)
 
-        self.optional = None
+        self.optional = False
         self.default = None
 
     def set_tag(self, number, flags):
@@ -306,19 +306,19 @@ class MembersType(Type):
     def encode(self, data, encoded):
         encoded_members = bytearray()
 
-        for memder in self.members:
-            name = memder.name
+        for member in self.members:
+            name = member.name
 
             if name in data:
-                if isinstance(memder, AnyDefinedBy):
-                    memder.encode(data[name], encoded_members, data)
+                if isinstance(member, AnyDefinedBy):
+                    member.encode(data[name], encoded_members, data)
                 else:
-                    memder.encode(data[name], encoded_members)
-            elif memder.optional:
+                    member.encode(data[name], encoded_members)
+            elif member.optional:
                 pass
-            elif memder.default is None:
+            elif member.default is None:
                 raise EncodeError(
-                    "memder '{}' not found in {}".format(
+                    "member '{}' not found in {}".format(
                         name,
                         data))
 
@@ -337,26 +337,26 @@ class MembersType(Type):
 
         values = {}
 
-        for memder in self.members:
+        for member in self.members:
             try:
-                if isinstance(memder, AnyDefinedBy):
-                    value, offset = memder.decode(data, offset, values)
+                if isinstance(member, AnyDefinedBy):
+                    value, offset = member.decode(data, offset, values)
                 else:
-                    value, offset = memder.decode(data, offset)
+                    value, offset = member.decode(data, offset)
             except (DecodeError, IndexError) as e:
-                if memder.optional:
+                if member.optional:
                     continue
 
-                if memder.default is None:
+                if member.default is None:
                     if isinstance(e, IndexError):
                         e = DecodeError('out of data at offset {}'.format(offset))
 
-                    e.location.append(memder.name)
+                    e.location.append(member.name)
                     raise e
 
-                value = memder.default
+                value = member.default
 
-            values[memder.name] = value
+            values[member.name] = value
 
         return values, offset
 
@@ -364,7 +364,7 @@ class MembersType(Type):
         return '{}({}, [{}])'.format(
             self.__class__.__name__,
             self.name,
-            ', '.join([repr(memder) for memder in self.members]))
+            ', '.join([repr(member) for member in self.members]))
 
 
 class Sequence(MembersType):
@@ -744,13 +744,13 @@ class Choice(Type):
                                     flags | Encoding.CONSTRUCTED)
 
     def encode(self, data, encoded):
-        for memder in self.members:
-            if memder.name in data:
+        for member in self.members:
+            if member.name in data:
                 if self.tag is None:
-                    memder.encode(data[memder.name], encoded)
+                    member.encode(data[member.name], encoded)
                 else:
                     encoded_members = bytearray()
-                    memder.encode(data[memder.name], encoded_members)
+                    member.encode(data[member.name], encoded_members)
                     encoded.extend(self.tag)
                     encoded.extend(encode_length_definite(len(encoded_members)))
                     encoded.extend(encoded_members)
@@ -759,7 +759,7 @@ class Choice(Type):
 
         raise EncodeError(
             "expected choices are {}, but got '{}'".format(
-                [memder.name for memder in self.members],
+                [member.name for member in self.members],
                 ''.join([name for name in data])))
 
     def decode(self, data, offset):
@@ -767,22 +767,22 @@ class Choice(Type):
             offset = self.decode_tag(data, offset)
             _, offset = decode_length_definite(data, offset)
 
-        for memder in self.members:
-            if (isinstance(memder, Choice)
-                or memder.tag == data[offset:offset + len(memder.tag)]):
+        for member in self.members:
+            if (isinstance(member, Choice)
+                or member.tag == data[offset:offset + len(member.tag)]):
                 try:
-                    decoded, offset = memder.decode(data, offset)
+                    decoded, offset = member.decode(data, offset)
                 except DecodeChoiceError:
                     pass
                 else:
-                    return {memder.name: decoded}, offset
+                    return {member.name: decoded}, offset
 
         raise DecodeChoiceError()
 
     def __repr__(self):
         return 'Choice({}, [{}])'.format(
             self.name,
-            ', '.join([repr(memder) for memder in self.members]))
+            ', '.join([repr(member) for member in self.members]))
 
 
 class Null(Type):
@@ -825,23 +825,23 @@ class Any(Type):
 
 class AnyDefinedBy(Type):
 
-    def __init__(self, name, type_memder, choices):
+    def __init__(self, name, type_member, choices):
         super(AnyDefinedBy, self).__init__(name,
                                            'ANY DEFINED BY',
                                            None,
                                            None)
-        self.type_memder = type_memder
+        self.type_member = type_member
         self.choices = choices
 
     def encode(self, data, encoded, values):
         if self.choices:
-            self.choices[values[self.type_memder]].encode(data, encoded)
+            self.choices[values[self.type_member]].encode(data, encoded)
         else:
             encoded.extend(data)
 
     def decode(self, data, offset, values):
         if self.choices:
-            return self.choices[values[self.type_memder]].decode(data,
+            return self.choices[values[self.type_member]].decode(data,
                                                                  offset)
         else:
             start = offset
@@ -1063,23 +1063,25 @@ class Compiler(compiler.Compiler):
         else:
             tag = None
 
-        for memder in members:
-            if memder['name'] == '...':
+        for member in members:
+            if member['name'] == '...':
                 continue
 
-            compiled_memder = self.compile_type(memder['name'],
-                                                memder,
+            compiled_member = self.compile_type(member['name'],
+                                                member,
                                                 module_name)
-            compiled_memder.optional = memder['optional']
 
-            if 'default' in memder:
-                compiled_memder.default = memder['default']
+            if 'optional' in member:
+                compiled_member.optional = member['optional']
+
+            if 'default' in member:
+                compiled_member.default = member['default']
 
             if tag is not None:
-                compiled_memder.set_tag(tag, 0)
+                compiled_member.set_tag(tag, 0)
                 tag += 1
 
-            compiled_members.append(compiled_memder)
+            compiled_members.append(compiled_member)
 
         return compiled_members
 

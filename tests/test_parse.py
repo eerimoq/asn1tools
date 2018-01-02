@@ -1,6 +1,6 @@
 import sys
 import unittest
-import logging
+import importlib
 
 import asn1tools
 
@@ -8,77 +8,49 @@ sys.path.append('tests/files')
 sys.path.append('tests/files/ietf')
 sys.path.append('tests/files/3gpp')
 
-from foo import FOO
-from bar import BAR
-from all_types import ALL_TYPES
-from information_object import INFORMATION_OBJECT
-from x680 import X680
-from x691_a1 import X691_A1
-from x691_a2 import X691_A2
-from x691_a3 import X691_A3
-from x691_a4 import X691_A4
-from rrc_8_6_0 import RRC_8_6_0
-from rrc_14_4_0 import RRC_14_4_0
-from s1ap_14_4_0 import S1AP_14_4_0
-from lpp_14_3_0 import LPP_14_3_0
-from rfc1155 import RFC1155
-from rfc1157 import RFC1157
-from rfc2986 import RFC2986
-from rfc3161 import RFC3161
-from rfc3279 import RFC3279
-from rfc3281 import RFC3281
-from rfc3447 import RFC3447
-from rfc3852 import RFC3852
-from rfc4210 import RFC4210
-from rfc4211 import RFC4211
-from rfc4511 import RFC4511
-from rfc5280 import RFC5280
-from zforce import ZFORCE
-
 
 class Asn1ToolsParseTest(unittest.TestCase):
 
     maxDiff = None
 
-    def setUp(self):
-        logging.basicConfig()
-        logging.getLogger('asn1tools.parser').setLevel(logging.DEBUG)
+    def parse_and_verify(self, module, path='.'):
+        asn_path = 'tests/files/' + path + '/' + module + '.asn'
+        actual = asn1tools.parse_files(asn_path)
 
-    def tearDown(self):
-        logging.getLogger('asn1tools.parser').setLevel(logging.ERROR)
+        #from pprint import pformat
+        #
+        #py_path = 'tests/files/' + path + '/' + module + '.py'
+        #
+        #with open(py_path, 'w') as fout:
+        #    fout.write('EXPECTED = ' + pformat(actual))
 
+        module = importlib.import_module(module)
+        self.assertEqual(actual, module.EXPECTED)
+    
     def test_parse_foo(self):
-        actual = asn1tools.parse_files('tests/files/foo.asn')
-        self.assertEqual(actual, FOO)
+        self.parse_and_verify('foo')
 
     def test_parse_bar(self):
-        actual = asn1tools.parse_files('tests/files/bar.asn')
-        self.assertEqual(actual, BAR)
+        self.parse_and_verify('bar')
 
     def test_parse_all_types(self):
-        actual = asn1tools.parse_files('tests/files/all_types.asn')
-        self.assertEqual(actual, ALL_TYPES)
+        self.parse_and_verify('all_types')
 
     def test_parse_information_object(self):
-        actual = asn1tools.parse_files('tests/files/information_object.asn')
-        self.assertEqual(actual, INFORMATION_OBJECT)
+        self.parse_and_verify('information_object')
 
     def test_parse_x680(self):
-        actual = asn1tools.parse_files('tests/files/x680.asn')
-        self.assertEqual(actual, X680)
+        self.parse_and_verify('x680')
 
     def test_parse_x691_a1(self):
-        actual = asn1tools.parse_files('tests/files/x691_a1.asn')
-        self.assertEqual(actual, X691_A1)
+        self.parse_and_verify('x691_a1')
 
     def test_parse_x691_a2(self):
-        actual = asn1tools.parse_files('tests/files/x691_a2.asn')
-        self.assertEqual(actual, X691_A2)
+        self.parse_and_verify('x691_a2')
 
     def test_parse_x691_a3(self):
         with self.assertRaises(asn1tools.ParseError) as cm:
-            actual = asn1tools.parse_files('tests/files/x691_a3.asn')
-            self.assertEqual(actual, X691_A3)
+            self.parse_and_verify('x691_a3')
 
         self.assertEqual(
             str(cm.exception),
@@ -86,76 +58,58 @@ class Asn1ToolsParseTest(unittest.TestCase):
             "(SIZE(2, ...)) OF ChildInformation OPTIONAL,': Expected \"{\".")
 
     def test_parse_x691_a4(self):
-        actual = asn1tools.parse_files('tests/files/x691_a4.asn')
-        self.assertEqual(actual, X691_A4)
-
-    def test_parse_rrc_8_6_0(self):
-        actual = asn1tools.parse_files('tests/files/3gpp/rrc_8_6_0.asn')
-        self.assertEqual(actual, RRC_8_6_0)
-
-    def test_parse_rrc_14_4_0(self):
-        actual = asn1tools.parse_files('tests/files/3gpp/rrc_14_4_0.asn')
-        self.assertEqual(actual, RRC_14_4_0)
-
-    def test_parse_s1ap_14_4_0(self):
-        actual = asn1tools.parse_files('tests/files/3gpp/s1ap_14_4_0.asn')
-        self.assertEqual(actual, S1AP_14_4_0)
-
-    def test_parse_lpp_14_3_0(self):
-        actual = asn1tools.parse_files('tests/files/3gpp/lpp_14_3_0.asn')
-        self.assertEqual(actual, LPP_14_3_0)
-
-    def test_parse_rfc1155(self):
-        actual = asn1tools.parse_files('tests/files/ietf/rfc1155.asn')
-        self.assertEqual(actual, RFC1155)
-
-    def test_parse_rfc1157(self):
-        actual = asn1tools.parse_files('tests/files/ietf/rfc1157.asn')
-        self.assertEqual(actual, RFC1157)
-
-    def test_parse_rfc2986(self):
-        actual = asn1tools.parse_files('tests/files/ietf/rfc2986.asn')
-        self.assertEqual(actual, RFC2986)
-
-    def test_parse_rfc3161(self):
-        actual = asn1tools.parse_files('tests/files/ietf/rfc3161.asn')
-        self.assertEqual(actual, RFC3161)
-
-    def test_parse_rfc3279(self):
-        actual = asn1tools.parse_files('tests/files/ietf/rfc3279.asn')
-        self.assertEqual(actual, RFC3279)
-
-    def test_parse_rfc3281(self):
-        actual = asn1tools.parse_files('tests/files/ietf/rfc3281.asn')
-        self.assertEqual(actual, RFC3281)
-
-    def test_parse_rfc3447(self):
-        actual = asn1tools.parse_files('tests/files/ietf/rfc3447.asn')
-        self.assertEqual(actual, RFC3447)
-
-    def test_parse_rfc3852(self):
-        actual = asn1tools.parse_files('tests/files/ietf/rfc3852.asn')
-        self.assertEqual(actual, RFC3852)
-
-    def test_parse_rfc4210(self):
-        actual = asn1tools.parse_files('tests/files/ietf/rfc4210.asn')
-        self.assertEqual(actual, RFC4210)
-
-    def test_parse_rfc4211(self):
-        actual = asn1tools.parse_files('tests/files/ietf/rfc4211.asn')
-        self.assertEqual(actual, RFC4211)
-
-    def test_parse_rfc4511(self):
-        actual = asn1tools.parse_files('tests/files/ietf/rfc4511.asn')
-        self.assertEqual(actual, RFC4511)
-
-    def test_parse_rfc5280(self):
-        actual = asn1tools.parse_files('tests/files/ietf/rfc5280.asn')
-        self.assertEqual(actual, RFC5280)
+        self.parse_and_verify('x691_a4')
 
     def test_parse_zforce(self):
-        actual = asn1tools.parse_files('tests/files/zforce.asn')
-        self.assertEqual(actual, ZFORCE)
+        self.parse_and_verify('zforce')
+
+    def test_parse_rrc_8_6_0(self):
+        self.parse_and_verify('rrc_8_6_0', '3gpp')
+
+    def test_parse_rrc_14_4_0(self):
+        self.parse_and_verify('rrc_14_4_0', '3gpp')
+
+    def test_parse_s1ap_14_4_0(self):
+        self.parse_and_verify('s1ap_14_4_0', '3gpp')
+
+    def test_parse_lpp_14_3_0(self):
+        self.parse_and_verify('lpp_14_3_0', '3gpp')
+
+    def test_parse_rfc1155(self):
+        self.parse_and_verify('rfc1155', 'ietf')
+
+    def test_parse_rfc1157(self):
+        self.parse_and_verify('rfc1157', 'ietf')
+
+    def test_parse_rfc2986(self):
+        self.parse_and_verify('rfc2986', 'ietf')
+
+    def test_parse_rfc3161(self):
+        self.parse_and_verify('rfc3161', 'ietf')
+
+    def test_parse_rfc3279(self):
+        self.parse_and_verify('rfc3279', 'ietf')
+
+    def test_parse_rfc3281(self):
+        self.parse_and_verify('rfc3281', 'ietf')
+
+    def test_parse_rfc3447(self):
+        self.parse_and_verify('rfc3447', 'ietf')
+
+    def test_parse_rfc3852(self):
+        self.parse_and_verify('rfc3852', 'ietf')
+
+    def test_parse_rfc4210(self):
+        self.parse_and_verify('rfc4210', 'ietf')
+
+    def test_parse_rfc4211(self):
+        self.parse_and_verify('rfc4211', 'ietf')
+
+    def test_parse_rfc4511(self):
+        self.parse_and_verify('rfc4511', 'ietf')
+
+    def test_parse_rfc5280(self):
+        self.parse_and_verify('rfc5280', 'ietf')
 
     def test_parse_imports_global_module_reference(self):
         actual = asn1tools.parse_string('A DEFINITIONS ::= BEGIN '

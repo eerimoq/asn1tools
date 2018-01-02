@@ -99,23 +99,22 @@ def convert_size(tokens):
 
     tokens = tokens[0]
 
-    if tokens[0] != 'SIZE':
-        return None
+    if tokens[0] == 'SIZE':
+        values = []
 
-    tokens = tokens[1]
+        for item_tokens in tokens[1]:
+            if '..' in item_tokens:
+                value = (convert_number(item_tokens[0]),
+                         convert_number(item_tokens[2]))
+            else:
+                value = convert_number(item_tokens[0])
 
-    size = []
+            values.append(value)
 
-    for item_tokens in tokens:
-        if '..' in item_tokens:
-            value = (convert_number(item_tokens[0]),
-                     convert_number(item_tokens[2]))
-        else:
-            value = convert_number(item_tokens[0])
+        return values
+    elif isinstance(tokens[0], dict):
+        return tokens[0]['size']
 
-        size.append(value)
-
-    return size
 
 def convert_table(tokens):
     tokens = tokens[0]
@@ -168,6 +167,35 @@ def convert_tag(tokens):
         return tag
 
 
+def convert_value_range(_s, _l, tokens):
+    tokens = tokens.asList()
+    minimum = convert_number(tokens[0])
+    maximum = convert_number(tokens[2])
+
+    return (minimum, maximum)
+
+
+def convert_size_constraint(_s, _l, tokens):
+    tokens = tokens.asList()[1]
+    values = []
+
+    for item_tokens in tokens:
+        if '..' in item_tokens:
+            value = (convert_number(item_tokens[0]),
+                     convert_number(item_tokens[2]))
+        else:
+            value = convert_number(item_tokens[0])
+
+        values.append(value)
+
+    return {'size': values}
+
+
+def convert_constraint(_s, _l, tokens):
+    tokens = tokens.asList()
+    # print('constraint:', tokens)
+
+
 def convert_members(tokens):
     members = []
 
@@ -185,7 +213,9 @@ def convert_members(tokens):
 
         member = convert_type(member_tokens[2])
         member['name'] = member_tokens[0]
-        member['optional'] = 'OPTIONAL' in qualifiers
+
+        if 'OPTIONAL' in qualifiers:
+            member['optional'] = True
 
         if 'DEFAULT' in qualifiers:
             if len(qualifiers[1]) == 0:
@@ -256,42 +286,12 @@ def convert_choice_type(tokens):
     }
 
 
-def convert_integer_type(tokens):
-    converted_type = {'type': 'INTEGER'}
-    restricted_to = []
-
-    if len(tokens) > 1:
-        for constraint_tokens in tokens[1]:
-            if '..' in constraint_tokens:
-                minimum = convert_number(constraint_tokens[0])
-                maximum = convert_number(constraint_tokens[2])
-                restricted_to.append((minimum, maximum))
-            elif len(constraint_tokens) == 1:
-                restricted_to.append(convert_number(constraint_tokens[0]))
-
-    if restricted_to:
-        converted_type['restricted-to'] = restricted_to
-
-    return converted_type
+def convert_integer_type():
+    return {'type': 'INTEGER'}
 
 
-def convert_real_type(tokens):
-    converted_type = {'type': 'REAL'}
-    restricted_to = []
-
-    if len(tokens) > 1:
-        for constraint_tokens in tokens[0][1]:
-            if '..' in constraint_tokens:
-                minimum = constraint_tokens[0][0]
-                maximum = constraint_tokens[2][0]
-                restricted_to.append((minimum, maximum))
-            elif len(constraint_tokens) == 1:
-                restricted_to.append(constraint_tokens[0][0])
-
-        if restricted_to:
-            converted_type['restricted-to'] = restricted_to
-
-    return converted_type
+def convert_real_type():
+    return {'type': 'REAL'}
 
 
 def convert_enumerated_type(tokens):
@@ -358,9 +358,9 @@ def convert_type(tokens):
     elif tokens[0] == 'ChoiceType':
         converted_type = convert_choice_type(tokens[0])
     elif tokens[0] == 'IntegerType':
-        converted_type = convert_integer_type(tokens)
+        converted_type = convert_integer_type()
     elif tokens[0] == 'RealType':
-        converted_type = convert_real_type(tokens)
+        converted_type = convert_real_type()
     elif tokens[0] == 'EnumeratedType':
         converted_type = convert_enumerated_type(tokens[0])
     elif tokens[0] == 'ObjectIdentifierType':
@@ -384,6 +384,21 @@ def convert_type(tokens):
         }
     else:
         converted_type = {'type': tokens[0]}
+
+    if converted_type['type'] in ['INTEGER', 'REAL', 'IA5String']:
+        restricted_to = []
+
+        for constraint_tokens in tokens[1]:
+            if len(constraint_tokens) != 1:
+                continue
+
+            if isinstance(constraint_tokens[0], dict):
+                continue
+
+            restricted_to.append(convert_number(constraint_tokens[0]))
+
+        if restricted_to:
+            converted_type['restricted-to'] = restricted_to
 
     return converted_type
 
@@ -480,8 +495,7 @@ def convert_parameterized_object_class_assignment(tokens):
 
         members.append({
             'name': member[0],
-            'type': type_,
-            'optional': False
+            'type': type_
         })
 
     return {'members': members}
@@ -1295,14 +1309,7 @@ def create_grammar():
                           | sequence_value)
     real_value = (numeric_real_value
                   | special_real_value)
-    real_type = Tag('RealType',
-                    REAL
-                    + Group(Optional(Group(Suppress(left_parenthesis)
-                                           + ((Group(Combine(integer + dot)) + range_separator)
-                                              | (Group(integer) + range_separator)
-                                              | (Group(real_number) + range_separator))
-                                           + Group(real_number)
-                                           + Suppress(right_parenthesis)))))
+    real_type = Tag('RealType', REAL)
     real_type.setName('REAL')
 
     # X.680: 19. Notation for the enumerated type
@@ -1487,6 +1494,9 @@ def create_grammar():
     # Parse actions converting tokens to asn1tools representation.
     bstring.setParseAction(convert_bstring)
     hstring.setParseAction(convert_hstring)
+    value_range.setParseAction(convert_value_range)
+    size_constraint.setParseAction(convert_size_constraint)
+    constraint.setParseAction(convert_constraint)
 
     return specification
 

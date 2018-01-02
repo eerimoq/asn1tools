@@ -5,7 +5,7 @@ from copy import deepcopy
 
 sys.path.append('tests/files/3gpp')
 
-from rrc_8_6_0 import RRC_8_6_0
+from rrc_8_6_0 import EXPECTED as RRC_8_6_0
 
 
 class Asn1ToolsXerTest(unittest.TestCase):

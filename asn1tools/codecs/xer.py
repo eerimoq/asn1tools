@@ -13,7 +13,7 @@ class Type(object):
     def __init__(self, name, type_name):
         self.name = name
         self.type_name = type_name
-        self.optional = None
+        self.optional = False
         self.default = None
 
 
@@ -643,7 +643,9 @@ class Compiler(compiler.Compiler):
             compiled_member = self.compile_type(member['name'],
                                                 member,
                                                 module_name)
-            compiled_member.optional = member['optional']
+
+            if 'optional' in member:
+                compiled_member.optional = member['optional']
 
             if 'default' in member:
                 compiled_member.default = member['default']

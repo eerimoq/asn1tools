@@ -6,8 +6,8 @@ from copy import deepcopy
 sys.path.append('tests/files')
 sys.path.append('tests/files/3gpp')
 
-from rrc_8_6_0 import RRC_8_6_0
-from lpp_14_3_0 import LPP_14_3_0
+from rrc_8_6_0 import EXPECTED as RRC_8_6_0
+from lpp_14_3_0 import EXPECTED as LPP_14_3_0
 
 
 class Asn1ToolsUPerTest(unittest.TestCase):
@@ -96,12 +96,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         )
 
         encoded = a1.encode('PersonnelRecord', decoded_message)
-
-        # ToDo: Encoder does not encode set members ordered by tags
-        #       (see X.680 8.6). 'title' and 'number' are swapped.
-        with self.assertRaises(AssertionError):
-            self.assertEqual(encoded, encoded_message)
-
+        self.assertEqual(encoded, encoded_message)
         decoded = a1.decode('PersonnelRecord', encoded)
         self.assertEqual(decoded, decoded_message)
 

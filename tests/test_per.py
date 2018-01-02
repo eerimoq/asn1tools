@@ -6,8 +6,8 @@ from copy import deepcopy
 sys.path.append('tests/files')
 sys.path.append('tests/files/3gpp')
 
-from rrc_8_6_0 import RRC_8_6_0
-from s1ap_14_4_0 import S1AP_14_4_0
+from rrc_8_6_0 import EXPECTED as RRC_8_6_0
+from s1ap_14_4_0 import EXPECTED as S1AP_14_4_0
 
 
 class Asn1ToolsPerTest(unittest.TestCase):

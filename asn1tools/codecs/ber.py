@@ -155,7 +155,7 @@ class Type(object):
         else:
             self.tag = bytearray([flags | 0x1f]) + encode_length_definite(number)
 
-        self.optional = None
+        self.optional = False
         self.default = None
 
     def set_tag(self, number, flags):
@@ -1074,7 +1074,9 @@ class Compiler(compiler.Compiler):
             compiled_member = self.compile_type(member['name'],
                                                 member,
                                                 module_name)
-            compiled_member.optional = member['optional']
+
+            if 'optional' in member:
+                compiled_member.optional = member['optional']
 
             if 'default' in member:
                 compiled_member.default = member['default']

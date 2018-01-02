@@ -9,11 +9,11 @@ sys.path.append('tests/files')
 sys.path.append('tests/files/3gpp')
 sys.path.append('tests/files/ietf')
 
-from rrc_8_6_0 import RRC_8_6_0
-from rfc4511 import RFC4511
-from rfc5280 import RFC5280
+from rrc_8_6_0 import EXPECTED as RRC_8_6_0
+from rfc4511 import EXPECTED as RFC4511
+from rfc5280 import EXPECTED as RFC5280
 from rfc5280_modified import RFC5280_MODIFIED
-from zforce import ZFORCE
+from zforce import EXPECTED as ZFORCE
 
 
 class Asn1ToolsBerTest(unittest.TestCase):

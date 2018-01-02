@@ -12,6 +12,8 @@ Integer2 ::= INTEGER (1..99)
 
 Integer3 ::= INTEGER (1..2 | 9..10)
 
+Integer4 ::= INTEGER ((1..2 | 4..5) ^ SIZE (4))
+
 Real ::= REAL
 
 Real2 ::= REAL (1.0..2.0)
