@@ -388,14 +388,18 @@ def convert_type(tokens):
     return converted_type
 
 
+def convert_bstring(_s, _l, tokens):
+    return '0b' + re.sub(r"[\sB']", '', tokens[0])
+
+
+def convert_hstring(_s, _l, tokens):
+    return '0x' + re.sub(r"[\sH']", '', tokens[0])
+
+
 def convert_bit_string_value(tokens):
     value = tokens[0]
 
-    if value == 'bstring':
-        value = '0b' + re.sub(r"[\sB']", '', value[0])
-    elif value == 'hstring':
-        value = '0x' + re.sub(r"[\sH']", '', value[0])
-    elif value == 'IdentifierList':
+    if value == 'IdentifierList':
         value = value[:]
     elif isinstance(value, str):
         value = value
@@ -710,8 +714,8 @@ def create_grammar():
     at = Literal('@')
     integer = Word(nums + '-')
     real_number = Regex(r'[+-]?\d+\.?\d*([eE][+-]?\d+)?')
-    bstring = Tag('bstring', Regex(r"'[01\s]*'B"))
-    hstring = Tag('hstring', Regex(r"'[0-9A-F\s]*'H"))
+    bstring = Regex(r"'[01\s]*'B")
+    hstring = Regex(r"'[0-9A-F\s]*'H")
     cstring = QuotedString('"')
     number = Word(printables, excludeChars=',(){}[].:=;"|').setName('number')
     ampersand = Literal('&')
@@ -1479,6 +1483,10 @@ def create_grammar():
     specification = OneOrMore(module_definition) + StringEnd()
     comment = (Regex(r"--[\s\S]*?(--|\n)") | Regex(r"--(?:\\\n|[^\n])*"))
     specification.ignore(comment)
+
+    # Parse actions converting tokens to asn1tools representation.
+    bstring.setParseAction(convert_bstring)
+    hstring.setParseAction(convert_hstring)
 
     return specification
 
