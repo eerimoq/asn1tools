@@ -118,8 +118,4 @@ INFORMATION_OBJECT = {'InformationObject': {'extensibility-implied': False,
                                                                          'type': 'INTEGER'}],
                                                             'type': 'SEQUENCE'}},
                        'values': {'innerItem0': {'type': 'INNER-ITEM',
-                                                 'value': [['&type', ['0']],
-                                                           ['&Value',
-                                                            ['INTEGER',
-                                                             [],
-                                                             []]]]}}}}
+                                                 'value': None}}}}

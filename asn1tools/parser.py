@@ -38,38 +38,49 @@ class InternalParserError(Exception):
     pass
 
 
+class Tokens(object):
+
+    def __init__(self, tag, tokens):
+        self.tag = tag
+        self.tokens = tokens
+
+    def __getitem__(self, index):
+        return self.tokens[index]
+
+    def __len__(self):
+        return len(self.tokens)
+
+    def __iter__(self):
+        for token in self.tokens:
+            yield token
+
+    def __bool__(self):
+        return len(self.tokens) > 0
+
+    def __eq__(self, other):
+        return other == self.tag
+
+    def __repr__(self):
+        return "Tokens(tag='{}', tokens='{}')".format(self.tag,
+                                                      self.tokens)
+
+
+class Tag(Group):
+
+    def __init__(self, tag, expr):
+        super(Tag, self).__init__(expr)
+        self.tag = tag
+
+    def postParse(self, instring, loc, tokenlist):
+        return Tokens(self.tag, tokenlist.asList())
+
+
 def is_no_lower(string):
     for char in string:
         if char.islower():
             return False
 
     return True
-
-
-def is_parameterized_object_set_assignment(tokens):
-    return tokens[0][0].isupper() and tokens[2:4] == ['::=', '{']
-
-
-def is_parameterized_object_assignment(tokens):
-    return (tokens[0][0].islower()
-            and (isinstance(tokens[1], str)
-                 and is_no_lower(tokens[1])))
-
-
-def is_parameterized_object_class_assignment(tokens):
-    return (is_no_lower(tokens[0][0])
-            and (tokens[1] == '::=')
-            and (tokens[2] == 'CLASS'
-                 or (isinstance(tokens[2], str)
-                     and is_no_lower(tokens[2]))))
-
-
-def is_parameterized_type_assignment(tokens):
-    return tokens[0][0].isupper()
-
-
-def is_parameterized_value_assignment(tokens):
-    return tokens[0][0].islower()
 
 
 def convert_number(token):
@@ -195,10 +206,10 @@ def convert_members(tokens):
 
 
 def convert_type(tokens):
-    if tokens[0:2] == ['SEQUENCE', '{']:
+    if tokens[0] == 'SequenceType':
         converted_type = {
             'type': 'SEQUENCE',
-            'members': convert_members(tokens[2])
+            'members': convert_members(tokens[0][2])
         }
     elif tokens[0] == 'SEQUENCE' and tokens[2] == 'OF':
         converted_type = {
@@ -211,10 +222,10 @@ def convert_type(tokens):
 
         if tag:
             converted_type['element']['tag'] = tag
-    elif tokens[0:2] == ['SET', '{']:
+    elif tokens[0] == 'SetType':
         converted_type = {
             'type': 'SET',
-            'members': convert_members(tokens[2])
+            'members': convert_members(tokens[0][2])
         }
     elif tokens[0] == 'SET' and tokens[2] == 'OF':
         converted_type = {
@@ -227,17 +238,17 @@ def convert_type(tokens):
 
         if tag:
             converted_type['element']['tag'] = tag
-    elif tokens[0:2] == ['CHOICE', '{']:
+    elif tokens[0] == 'ChoiceType':
         converted_type = {
             'type': 'CHOICE',
-            'members': convert_members(tokens[2])
+            'members': convert_members(tokens[0][2])
         }
-    elif tokens[0] == 'INTEGER':
+    elif tokens[0] == 'IntegerType':
         converted_type = {'type': 'INTEGER'}
         restricted_to = []
 
-        if len(tokens) > 2:
-            for constraint_tokens in tokens[2]:
+        if len(tokens) > 1:
+            for constraint_tokens in tokens[1]:
                 if '..' in constraint_tokens:
                     minimum = convert_number(constraint_tokens[0])
                     maximum = convert_number(constraint_tokens[2])
@@ -247,12 +258,12 @@ def convert_type(tokens):
 
             if restricted_to:
                 converted_type['restricted-to'] = restricted_to
-    elif tokens[0] == 'REAL':
+    elif tokens[0] == 'RealType':
         converted_type = {'type': 'REAL'}
         restricted_to = []
 
         if len(tokens) > 1:
-            for constraint_tokens in tokens[1]:
+            for constraint_tokens in tokens[0][1]:
                 if '..' in constraint_tokens:
                     minimum = constraint_tokens[0][0]
                     maximum = constraint_tokens[2][0]
@@ -262,17 +273,17 @@ def convert_type(tokens):
 
             if restricted_to:
                 converted_type['restricted-to'] = restricted_to
-    elif tokens[0:2] == ['ENUMERATED', '{']:
+    elif tokens[0] == 'EnumeratedType':
         converted_type = {
             'type': 'ENUMERATED',
-            'values': convert_enum_values(tokens[2])
+            'values': convert_enum_values(tokens[0][2])
         }
-    elif tokens[0:1] == ['OBJECT IDENTIFIER']:
+    elif tokens[0] == 'ObjectIdentifierType':
         converted_type = {'type': 'OBJECT IDENTIFIER'}
-    elif tokens[0:1] == ['BIT STRING']:
+    elif tokens[0] == 'BitStringType':
         converted_type = {'type': 'BIT STRING',
-                          'size': convert_size(tokens[2])}
-    elif tokens[0:1] == ['OCTET STRING']:
+                          'size': convert_size(tokens[1])}
+    elif tokens[0] == 'OctetStringType':
         converted_type = {'type': 'OCTET STRING',
                           'size': convert_size(tokens[1])}
     elif tokens[0] == 'IA5String':
@@ -283,6 +294,10 @@ def convert_type(tokens):
             'value': tokens[1],
             'choices': {}
         }
+    elif tokens[0] == 'NullType':
+        converted_type = {'type': 'NULL'}
+    elif tokens[0] == 'BooleanType':
+        converted_type = {'type': 'BOOLEAN'}
     elif '&' in tokens[0]:
         converted_type = {
             'type': tokens[0],
@@ -328,13 +343,15 @@ def convert_parameterized_object_set_assignment(tokens):
             if len(member_tokens[0]) == 1:
                 member = member_tokens[0][0]
             else:
-                for item_tokens in member_tokens[0]:
-                    member = {}
+                member = {}
 
-                    for item_tokens in member_tokens[0]:
-                        name = item_tokens[0]
-                        value = item_tokens[1]
-                        member[name] = convert_number(value)
+                for item_tokens in member_tokens[0]:
+                    name = item_tokens[0]
+                    value = item_tokens[1][0]
+
+                    if isinstance(value, Tokens):
+                        value = value[0]
+                    member[name] = convert_number(value)
 
             members.append(member)
     except IndexError:
@@ -348,7 +365,7 @@ def convert_parameterized_object_assignment(tokens):
 
     return {
         'type': type_,
-        'value': convert_value(tokens[2], type_)
+        'value': None
     }
 
 
@@ -358,6 +375,9 @@ def convert_parameterized_object_class_assignment(tokens):
     for member in tokens[3]:
         if member[0][1].islower():
             type_ = member[1][0]
+
+            if isinstance(type_, Tokens):
+                type_ = type_[0]
         else:
             type_ = 'OpenType'
 
@@ -387,6 +407,9 @@ def convert_parameterized_type_assignment(tokens):
 def convert_parameterized_value_assignment(tokens):
     type_ = tokens[1][0][0]
 
+    if isinstance(type_, Tokens):
+        type_ = type_[0]
+
     return {
         'type': type_,
         'value': convert_value(tokens[2], type_)
@@ -414,9 +437,9 @@ def convert_assignment_list(tokens):
     for assignment in tokens:
         name = assignment[0]
 
-        LOGGER.debug("Converting assignment tokens '%s'.", assignment)
+        LOGGER.debug("Converting assignment '%s'.", assignment)
 
-        if is_parameterized_object_set_assignment(assignment):
+        if assignment == 'ParameterizedObjectSetAssignment':
             if name in object_sets:
                 LOGGER.warning("Object set '%s' already defined.", name)
 
@@ -424,7 +447,7 @@ def convert_assignment_list(tokens):
             value = convert_parameterized_object_set_assignment(assignment)
             LOGGER.debug("Converted object set '%s' to %s.", name, value)
             object_sets[name] = value
-        elif is_parameterized_object_assignment(assignment):
+        elif assignment == 'ParameterizedObjectAssignment':
             if name in values:
                 LOGGER.warning("Object '%s' already defined.", name)
 
@@ -432,7 +455,7 @@ def convert_assignment_list(tokens):
             value = convert_parameterized_object_assignment(assignment)
             LOGGER.debug("Converted object '%s' to %s.", name, value)
             values[name] = value
-        elif is_parameterized_object_class_assignment(assignment):
+        elif assignment == 'ParameterizedObjectClassAssignment':
             if name in object_classes:
                 LOGGER.warning("Object class '%s' already defined.", name)
 
@@ -440,7 +463,7 @@ def convert_assignment_list(tokens):
             value = convert_parameterized_object_class_assignment(assignment)
             LOGGER.debug("Converted object class '%s' to %s.", name, value)
             object_classes[name] = value
-        elif is_parameterized_type_assignment(assignment):
+        elif assignment == 'ParameterizedTypeAssignment':
             if name in types:
                 LOGGER.warning("Type '%s' already defined.", name)
 
@@ -448,7 +471,7 @@ def convert_assignment_list(tokens):
             value = convert_parameterized_type_assignment(assignment)
             LOGGER.debug("Converted type '%s' to %s.", name, value)
             types[name] = value
-        elif is_parameterized_value_assignment(assignment):
+        elif assignment == 'ParameterizedValueAssignment':
             if name in values:
                 LOGGER.warning("Value '%s' already defined.", name)
 
@@ -458,7 +481,7 @@ def convert_assignment_list(tokens):
             values[name] = value
         else:
             raise InternalParserError(
-                'Unrecognized assignment tokens {}.'.format(assignment))
+                'Unrecognized assignment {}.'.format(assignment))
 
     return {
         'types': types,
@@ -802,10 +825,11 @@ def create_grammar():
     object_class = (object_class_defn
                     # | defined_object_class
                     | parameterized_object_class)
-    parameterized_object_class_assignment = (object_class_reference
-                                             + parameter_list
-                                             + assign
-                                             + object_class)
+    parameterized_object_class_assignment = Tag('ParameterizedObjectClassAssignment',
+                                                object_class_reference
+                                                + parameter_list
+                                                + assign
+                                                + object_class)
 
     # X.681: 10. Syntax list
     literal = (word | comma)
@@ -830,11 +854,12 @@ def create_grammar():
                  | object_defn
                  | object_from_object
                  | parameterized_object)
-    parameterized_object_assignment = (object_reference
-                                       + parameter_list
-                                       + defined_object_class
-                                       + Suppress(assign)
-                                       + object_)
+    parameterized_object_assignment = Tag('ParameterizedObjectAssignment',
+                                          object_reference
+                                          + parameter_list
+                                          + defined_object_class
+                                          + Suppress(assign)
+                                          + object_)
 
     # X.681: 12. Information object set definition and assignment
     object_set_elements = (object_
@@ -849,11 +874,12 @@ def create_grammar():
                        | (ellipsis + Optional(comma + additional_element_set_spec)))
     object_set <<= (left_brace + Group(object_set_spec) + right_brace)
     object_set.setName('"{"')
-    parameterized_object_set_assignment = (object_set_reference
-                                           + parameter_list
-                                           + defined_object_class
-                                           - assign
-                                           - object_set)
+    parameterized_object_set_assignment = Tag('ParameterizedObjectSetAssignment',
+                                              object_set_reference
+                                              + parameter_list
+                                              + defined_object_class
+                                              - assign
+                                              - object_set)
 
     # X.681: 13. Associated tables
 
@@ -1020,10 +1046,11 @@ def create_grammar():
                                   + obj_id_components_list
                                   + Suppress(right_brace)))
 
-    object_identifier_type = (OBJECT_IDENTIFIER
-                              + Optional(left_parenthesis
-                                         + delimitedList(word, delim='|')
-                                         + right_parenthesis))
+    object_identifier_type = Tag('ObjectIdentifierType',
+                                 OBJECT_IDENTIFIER
+                                 + Optional(left_parenthesis
+                                            + delimitedList(word, delim='|')
+                                            + right_parenthesis))
     object_identifier_type.setName('OBJECT IDENTIFIER')
 
     # X.680: 30. Notation for tagged types
@@ -1048,10 +1075,11 @@ def create_grammar():
                                          + extension_and_exception
                                          + extension_addition_alternatives
                                          + optional_extension_marker))
-    choice_type = (CHOICE
-                   - left_brace
-                   + Group(alternative_type_lists)
-                   - right_brace)
+    choice_type = Tag('ChoiceType',
+                      CHOICE
+                      - left_brace
+                      + Group(alternative_type_lists)
+                      - right_brace)
     choice_type.setName('CHOICE')
     choice_value = (identifier + colon + value)
 
@@ -1067,12 +1095,13 @@ def create_grammar():
 
     # X.680: 26. Notation for the set types
     set_value = NoMatch()
-    set_type = (SET
-                - left_brace
-                + Group(Optional(component_type_lists
-                                 | (extension_and_exception
-                                    + optional_extension_marker)))
-                - right_brace)
+    set_type = Tag('SetType',
+                   SET
+                   - left_brace
+                   + Group(Optional(component_type_lists
+                                    | (extension_and_exception
+                                       + optional_extension_marker)))
+                   - right_brace)
     set_type.setName('SET')
 
     # X.680: 25. Notation for the sequence-of types
@@ -1121,33 +1150,35 @@ def create_grammar():
                                      + Suppress(comma)
                                      + root_component_type_list)
                                     | optional_extension_marker)))
-    sequence_type = (SEQUENCE
-                     - left_brace
-                     + Group(Optional(component_type_lists
-                                      | (extension_and_exception
-                                         + optional_extension_marker)))
-                     - right_brace)
+    sequence_type = Tag('SequenceType',
+                        SEQUENCE
+                        - left_brace
+                        + Group(Optional(component_type_lists
+                                         | (extension_and_exception
+                                            + optional_extension_marker)))
+                        - right_brace)
     sequence_type.setName('SEQUENCE')
 
     # X.680: 23. Notation for the null type
     null_value = NULL
-    null_type = NULL
+    null_type = Tag('NullType', NULL)
 
     # X.680: 22. Notation for the octetstring type
     octet_string_value = (bstring
                           | hstring
                           | (CONTAINING + value))
-    octet_string_type = OCTET_STRING
+    octet_string_type = Tag('OctetStringType', OCTET_STRING)
     octet_string_type.setName('OCTET STRING')
 
     # X.680: 21. Notation for the bitstring type
-    bit_string_type = (BIT_STRING
-                       + Group(Optional(left_brace
-                                        + Group(delimitedList(word
-                                                              + left_parenthesis
-                                                              + word
-                                                              + right_parenthesis))
-                                        + right_brace)))
+    bit_string_type = Tag('BitStringType',
+                          BIT_STRING
+                          + Group(Optional(left_brace
+                                           + Group(delimitedList(word
+                                                                 + left_parenthesis
+                                                                 + word
+                                                                 + right_parenthesis))
+                                           + right_brace)))
     bit_string_type.setName('BIT STRING')
     bit_string_value = (bstring
                         | hstring
@@ -1163,25 +1194,27 @@ def create_grammar():
                           | sequence_value)
     real_value = (numeric_real_value
                   | special_real_value)
-    real_type = (REAL
-                 + Group(Optional(Group(Suppress(left_parenthesis)
-                                        + ((Group(Combine(integer + dot)) + range_separator)
-                                           | (Group(integer) + range_separator)
-                                           | (Group(real_number) + range_separator))
-                                        + Group(real_number)
-                                        + Suppress(right_parenthesis)))))
+    real_type = Tag('RealType',
+                    REAL
+                    + Group(Optional(Group(Suppress(left_parenthesis)
+                                           + ((Group(Combine(integer + dot)) + range_separator)
+                                              | (Group(integer) + range_separator)
+                                              | (Group(real_number) + range_separator))
+                                           + Group(real_number)
+                                           + Suppress(right_parenthesis)))))
     real_type.setName('REAL')
 
     # X.680: 19. Notation for the enumerated type
     enumerated_value = identifier
-    enumerated_type = (ENUMERATED
-                       - left_brace
-                       + Group(delimitedList(Group((word
-                                                    + Optional(Suppress(left_parenthesis)
-                                                               + word
-                                                               + Suppress(right_parenthesis)))
-                                                   | ellipsis)))
-                       - right_brace)
+    enumerated_type = Tag('EnumeratedType',
+                          ENUMERATED
+                          - left_brace
+                          + Group(delimitedList(Group((word
+                                                       + Optional(Suppress(left_parenthesis)
+                                                                  + word
+                                                                  + Suppress(right_parenthesis)))
+                                                      | ellipsis)))
+                          - right_brace)
     enumerated_type.setName('ENUMERATED')
 
     # X.680: 18. Notation for the integer type
@@ -1192,14 +1225,15 @@ def create_grammar():
                     + (signed_number | defined_value)
                     + right_parenthesis)
     named_number_list = delimitedList(named_number)
-    integer_type = (INTEGER
-                    + Group(Optional(left_brace
-                                     + named_number_list
-                                     + right_brace)))
+    integer_type = Tag('IntegerType',
+                       INTEGER
+                       + Group(Optional(left_brace
+                                        + named_number_list
+                                        + right_brace)))
     integer_type.setName('INTEGER')
 
     # X.680: 17. Notation for boolean type
-    boolean_type = BOOLEAN
+    boolean_type = Tag('BooleanType', BOOLEAN)
     boolean_value = (TRUE | FALSE)
 
     # X.680: 16. Definition of types and values
@@ -1257,16 +1291,18 @@ def create_grammar():
                         + Regex(r'[A-Z][a-zA-Z0-9-]*'))
     value_reference <<= Regex(r'[a-z][a-zA-Z0-9-]*')
     value_set <<= NoMatch().setName('"valueSet" not implemented')
-    parameterized_type_assignment = (type_reference
-                                     + parameter_list
-                                     - assign
-                                     - tag
-                                     - type_)
-    parameterized_value_assignment = (value_reference
-                                      + parameter_list
-                                      - Group(type_)
-                                      - Suppress(assign)
-                                      - value)
+    parameterized_type_assignment = Tag('ParameterizedTypeAssignment',
+                                        type_reference
+                                        + parameter_list
+                                        - assign
+                                        - tag
+                                        - type_)
+    parameterized_value_assignment = Tag('ParameterizedValueAssignment',
+                                         value_reference
+                                         + parameter_list
+                                         - Group(type_)
+                                         - Suppress(assign)
+                                         - value)
 
     # X.680: 14. Notation to support references to ASN.1 components
 
@@ -1310,11 +1346,11 @@ def create_grammar():
     exports = Suppress(Group(Optional(EXPORTS
                                       - (ALL
                                          | (symbols_exported + semi_colon)))))
-    assignment = Group(parameterized_object_set_assignment
-                       | parameterized_object_assignment
-                       | parameterized_object_class_assignment
-                       | parameterized_type_assignment
-                       | parameterized_value_assignment)
+    assignment = (parameterized_object_set_assignment
+                  | parameterized_object_assignment
+                  | parameterized_object_class_assignment
+                  | parameterized_type_assignment
+                  | parameterized_value_assignment)
     assignment_list = Group(ZeroOrMore(assignment))
     module_body = (exports + imports + assignment_list)
     definitive_name_and_number_form = (identifier
