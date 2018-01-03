@@ -184,15 +184,15 @@ def convert_tag(tokens):
 def convert_value_range(_s, _l, tokens):
     tokens = tokens.asList()
     minimum = tokens[0]
-    
+
     if isinstance(minimum, list):
         minimum = minimum[0]
 
     maximum = tokens[1]
-    
+
     if isinstance(maximum, list):
         maximum = maximum[0]
-        
+
     return (minimum, maximum)
 
 
@@ -214,8 +214,9 @@ def convert_size_constraint(_s, _l, tokens):
 
 def convert_permitted_alphabet(_s, _l, tokens):
     tokens = tokens.asList()
-    # print(tokens)
-    
+
+    return {'from': tokens[1]}
+
 
 def convert_constraint(_s, _l, tokens):
     tokens = tokens.asList()
@@ -545,7 +546,7 @@ def convert_parameterized_type_assignment(tokens):
 
 def convert_parameterized_value_assignment(tokens):
     type_ = tokens[1][0][0]
-    
+
     if isinstance(type_, Tokens):
         type_ = type_[0]
 
@@ -1070,7 +1071,7 @@ def create_grammar():
     contained_subtype = (Optional(INCLUDES) + type_)
     single_value = value
     subtype_elements = (size_constraint
-                        | Suppress(permitted_alphabet)
+                        | permitted_alphabet
                         | value_range
                         | inner_type_constraints
                         | single_value

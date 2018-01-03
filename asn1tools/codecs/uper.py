@@ -25,6 +25,22 @@ CLASS_PRIO = {
 }
 
 
+class PermittedAlphabet(object):
+
+    def __init__(self, encode_map, decode_map):
+        self.encode_map = encode_map
+        self.decode_map = decode_map
+
+    def __len__(self):
+        return len(self.encode_map)
+
+    def encode(self, value):
+        return self.encode_map[value]
+
+    def decode(self, value):
+        return self.decode_map[value]
+
+
 class Encoder(object):
 
     def __init__(self):
@@ -651,7 +667,7 @@ class VisibleString(Type):
             self.bits_per_character = 7
         else:
             self.bits_per_character = size_as_number_of_bits(
-                len(permitted_alphabet[0]))
+                len(permitted_alphabet))
 
     def set_size_range(self, minimum, maximum):
         self.minimum = minimum
@@ -670,12 +686,12 @@ class VisibleString(Type):
             encoder.append_integer(len(data) - self.minimum,
                                    self.number_of_bits)
 
-        for byte in bytearray(data.encode('ascii')):
+        for value in bytearray(data.encode('ascii')):
             if self.permitted_alphabet is not None:
-                byte = self.permitted_alphabet[0][byte]
+                value = self.permitted_alphabet.encode(value)
 
             encoder.append_bits(
-                bytearray([(byte << (8 - self.bits_per_character)) & 0xff]),
+                bytearray([(value << (8 - self.bits_per_character)) & 0xff]),
                 self.bits_per_character)
 
     def decode(self, decoder):
@@ -692,7 +708,7 @@ class VisibleString(Type):
             value = decoder.read_integer(self.bits_per_character)
 
             if self.permitted_alphabet is not None:
-                value = self.permitted_alphabet[1][value]
+                value = self.permitted_alphabet.decode(value)
 
             data.append(value)
 
@@ -1102,20 +1118,21 @@ class Compiler(compiler.Compiler):
             return ''.join([chr(char)
                             for char in range(ord(begin), ord(end) + 1)])
 
-        if 'restricted-to' in type_descriptor:
-            restricted_to = type_descriptor['restricted-to']
-            permitted_alphabet = ''
+        if 'permitted-alphabet' in type_descriptor:
+            permitted_alphabet = type_descriptor['permitted-alphabet']
+            value = ''
 
-            for item in restricted_to:
+            for item in permitted_alphabet:
                 if isinstance(item, tuple):
-                    permitted_alphabet += char_range(item[0], item[1])
+                    value += char_range(item[0], item[1])
                 else:
-                    permitted_alphabet += item
+                    value += item
 
-            permitted_alphabet = sorted(permitted_alphabet)
+            value = sorted(value)
+            encode_map = {ord(v): i for i, v in enumerate(value)}
+            decode_map = {i: ord(v) for i, v in enumerate(value)}
 
-            return (dict({ord(v): i for i, v in enumerate(permitted_alphabet)}),
-                    dict({i: ord(v) for i, v in enumerate(permitted_alphabet)}))
+            return PermittedAlphabet(encode_map, decode_map)
 
 
 def compile_dict(specification):
