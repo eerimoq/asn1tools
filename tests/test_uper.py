@@ -24,21 +24,15 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         self.assertEqual(len(foo.modules), 1)
         self.assertTrue(foo.modules['Foo'] is not None)
 
-        # Encode a question.
-        encoded = foo.encode('Question',
-                             {'id': 1, 'question': 'Is 1+1=3?'})
-        self.assertEqual(encoded,
-                         b'\x01\x01\x09\x93\xcd\x03\x15\x6c\x5e\xb3\x7e')
-
-        # Decode the encoded question.
+        # Question.
+        encoded = foo.encode('Question', {'id': 1, 'question': 'Is 1+1=3?'})
+        self.assertEqual(encoded, b'\x01\x01\x09\x93\xcd\x03\x15\x6c\x5e\xb3\x7e')
         decoded = foo.decode('Question', encoded)
         self.assertEqual(decoded, {'id': 1, 'question': 'Is 1+1=3?'})
 
-        # Encode an answer.
+        # Answer.
         encoded = foo.encode('Answer', {'id': 1, 'answer': False})
         self.assertEqual(encoded, b'\x01\x01\x00')
-
-        # Decode the encoded answer.
         decoded = foo.decode('Answer', encoded)
         self.assertEqual(decoded, {'id': 1, 'answer': False})
 
