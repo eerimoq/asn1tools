@@ -83,6 +83,20 @@ def is_no_lower(string):
     return True
 
 
+def convert_integer(_s, _l, tokens):
+    try:
+        return int(tokens[0])
+    except:
+        return tokens
+
+
+def convert_real_number(_s, _l, tokens):
+    if '.' not in tokens[0]:
+        tokens = int(tokens[0])
+
+    return tokens
+
+
 def convert_number(token):
     if isinstance(token, list):
         token = token[0]
@@ -169,9 +183,16 @@ def convert_tag(tokens):
 
 def convert_value_range(_s, _l, tokens):
     tokens = tokens.asList()
-    minimum = convert_number(tokens[0])
-    maximum = convert_number(tokens[2])
+    minimum = tokens[0]
+    
+    if isinstance(minimum, list):
+        minimum = minimum[0]
 
+    maximum = tokens[1]
+    
+    if isinstance(maximum, list):
+        maximum = maximum[0]
+        
     return (minimum, maximum)
 
 
@@ -190,6 +211,11 @@ def convert_size_constraint(_s, _l, tokens):
 
     return {'size': values}
 
+
+def convert_permitted_alphabet(_s, _l, tokens):
+    tokens = tokens.asList()
+    # print(tokens)
+    
 
 def convert_constraint(_s, _l, tokens):
     tokens = tokens.asList()
@@ -441,6 +467,8 @@ def convert_value(tokens, type_=None):
         value = convert_bit_string_value(tokens[0])
     elif isinstance(tokens[0], str):
         value = convert_number(tokens[0])
+    elif isinstance(tokens[0], int):
+        value = tokens[0]
     else:
         value = None
 
@@ -517,7 +545,7 @@ def convert_parameterized_type_assignment(tokens):
 
 def convert_parameterized_value_assignment(tokens):
     type_ = tokens[1][0][0]
-
+    
     if isinstance(type_, Tokens):
         type_ = type_[0]
 
@@ -658,6 +686,7 @@ def create_grammar():
     EXPORTS = Keyword('EXPORTS').setName('EXPORTS')
     FROM = Keyword('FROM').setName('FROM')
     CONTAINING = Keyword('CONTAINING').setName('CONTAINING')
+    ENCODED_BY = Keyword('ENCODED_BY').setName('ENCODED_BY')
     IMPLICIT = Keyword('IMPLICIT').setName('IMPLICIT')
     EXPLICIT = Keyword('EXPLICIT').setName('EXPLICIT')
     OBJECT_IDENTIFIER = Keyword('OBJECT IDENTIFIER').setName('OBJECT IDENTIFIER')
@@ -731,6 +760,7 @@ def create_grammar():
     bstring = Regex(r"'[01\s]*'B")
     hstring = Regex(r"'[0-9A-F\s]*'H")
     cstring = QuotedString('"')
+    number = (Word(nums).setName('number') + ~dot)
     number = Word(printables, excludeChars=',(){}[].:=;"|').setName('number')
     ampersand = Literal('&')
     less_than = Literal('<')
@@ -844,7 +874,9 @@ def create_grammar():
     parameterized_reference = (reference + Optional(left_brace + right_brace))
 
     # X.682: 11. Contents constraints
-    contents_constraint = NoMatch().setName('"contentsConstraint" not implemented')
+    contents_constraint = ((CONTAINING + type_)
+                           | (ENCODED_BY + value)
+                           | (CONTAINING + type_ + ENCODED_BY + value))
 
     # X.682: 10. Table constraints, including component relation constraints
     level = OneOrMore(dot)
@@ -1024,21 +1056,21 @@ def create_grammar():
     multiple_type_constraints = (full_specification | partial_specification)
     inner_type_constraints = ((WITH_COMPONENT - single_type_constraint)
                               | (WITH_COMPONENTS - multiple_type_constraints))
-    permitted_alphabet = Suppress(FROM - constraint)
+    permitted_alphabet = (FROM - constraint)
     type_constraint = type_
     size_constraint = (SIZE - Group(constraint))
     upper_end_value = (value | MAX)
     lower_end_value = (value | MIN)
     upper_endpoint = (Optional(less_than) + upper_end_value)
     lower_endpoint = (lower_end_value + Optional(less_than))
-    value_range = (((Group(Combine(integer + dot)) + range_separator)
-                    | (Group(integer) + range_separator)
-                    | (lower_endpoint + range_separator))
+    value_range = (((Combine(integer + dot) + Suppress(range_separator))
+                    | (integer + Suppress(range_separator))
+                    | (lower_endpoint + Suppress(range_separator)))
                    - upper_endpoint)
     contained_subtype = (Optional(INCLUDES) + type_)
     single_value = value
     subtype_elements = (size_constraint
-                        | permitted_alphabet
+                        | Suppress(permitted_alphabet)
                         | value_range
                         | inner_type_constraints
                         | single_value
@@ -1327,7 +1359,7 @@ def create_grammar():
 
     # X.680: 18. Notation for the integer type
     integer_value = (signed_number | identifier)
-    signed_number <<= number
+    signed_number <<= Combine(Optional('-') + number)
     named_number = (identifier
                     + left_parenthesis
                     + (signed_number | defined_value)
@@ -1492,10 +1524,14 @@ def create_grammar():
     specification.ignore(comment)
 
     # Parse actions converting tokens to asn1tools representation.
+    integer.setParseAction(convert_integer)
+    signed_number.setParseAction(convert_integer)
+    real_number.setParseAction(convert_real_number)
     bstring.setParseAction(convert_bstring)
     hstring.setParseAction(convert_hstring)
     value_range.setParseAction(convert_value_range)
     size_constraint.setParseAction(convert_size_constraint)
+    permitted_alphabet.setParseAction(convert_permitted_alphabet)
     constraint.setParseAction(convert_constraint)
 
     return specification
