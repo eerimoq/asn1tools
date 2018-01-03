@@ -851,7 +851,7 @@ class Compiler(compiler.Compiler):
         compiled_members = []
 
         for member in members:
-            if member['name'] == '...':
+            if member == '...':
                 continue
 
             compiled_member = self.compile_type(member['name'],

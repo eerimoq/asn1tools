@@ -228,7 +228,8 @@ def convert_members(tokens):
 
     for member_tokens in tokens:
         if member_tokens in [['...'], '...']:
-            member_tokens = [['...', [], ['', []]], []]
+            members.append('...')
+            continue
 
         if member_tokens[0] == 'COMPONENTS OF':
             continue

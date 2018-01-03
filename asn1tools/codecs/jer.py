@@ -663,7 +663,7 @@ class Compiler(compiler.Compiler):
         extension = None
 
         for member in members:
-            if member['name'] == '...':
+            if member == '...':
                 extension = []
                 continue
 

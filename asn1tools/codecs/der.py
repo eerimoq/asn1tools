@@ -1064,7 +1064,7 @@ class Compiler(compiler.Compiler):
             tag = None
 
         for member in members:
-            if member['name'] == '...':
+            if member == '...':
                 continue
 
             compiled_member = self.compile_type(member['name'],

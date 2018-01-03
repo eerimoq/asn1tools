@@ -17,12 +17,12 @@ class Asn1ToolsParseTest(unittest.TestCase):
         asn_path = 'tests/files/' + path + '/' + module + '.asn'
         actual = asn1tools.parse_files(asn_path)
 
-        #from pprint import pformat
-        #
-        #py_path = 'tests/files/' + path + '/' + module + '.py'
-        #
-        #with open(py_path, 'w') as fout:
-        #    fout.write('EXPECTED = ' + pformat(actual))
+        # from pprint import pformat
+        # 
+        # py_path = 'tests/files/' + path + '/' + module + '.py'
+        # 
+        # with open(py_path, 'w') as fout:
+        #     fout.write('EXPECTED = ' + pformat(actual))
 
         module = importlib.import_module(module)
         self.assertEqual(actual, module.EXPECTED)
