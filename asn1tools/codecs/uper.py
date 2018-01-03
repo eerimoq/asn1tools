@@ -4,6 +4,7 @@
 
 import logging
 from operator import attrgetter
+import binascii
 
 from . import EncodeError
 from . import compiler
@@ -78,7 +79,7 @@ class Encoder(object):
             return self.buf
 
     def __repr__(self):
-        return str(self.as_bytearray())
+        return binascii.hexlify(self.as_bytearray())
 
 
 class Decoder(object):
@@ -219,6 +220,9 @@ class Type(object):
         self.optional = False
         self.default = None
         self.tag = None
+
+    def set_size_range(self, minimum, maximum):
+        pass
 
 
 class Integer(Type):
@@ -638,21 +642,59 @@ class UniversalString(Type):
 
 class VisibleString(Type):
 
-    def __init__(self, name):
+    def __init__(self, name, minimum, maximum, permitted_alphabet):
         super(VisibleString, self).__init__(name, 'VisibleString')
+        self.set_size_range(minimum, maximum)
+        self.permitted_alphabet = permitted_alphabet
+
+        if permitted_alphabet is None:
+            self.bits_per_character = 7
+        else:
+            self.bits_per_character = size_as_number_of_bits(
+                len(permitted_alphabet[0]))
+
+    def set_size_range(self, minimum, maximum):
+        self.minimum = minimum
+        self.maximum = maximum
+
+        if minimum is None or maximum is None:
+            self.number_of_bits = None
+        else:
+            size = self.maximum - self.minimum
+            self.number_of_bits = size_as_number_of_bits(size)
 
     def encode(self, data, encoder):
-        encoder.append_bytes(bytearray([len(data)]))
+        if self.number_of_bits is None:
+            encoder.append_bytes(bytearray([len(data)]))
+        elif self.minimum != self.maximum:
+            encoder.append_integer(len(data) - self.minimum,
+                                   self.number_of_bits)
 
         for byte in bytearray(data.encode('ascii')):
-            encoder.append_bits(bytearray([(byte << 1) & 0xff]), 7)
+            if self.permitted_alphabet is not None:
+                byte = self.permitted_alphabet[0][byte]
+
+            encoder.append_bits(
+                bytearray([(byte << (8 - self.bits_per_character)) & 0xff]),
+                self.bits_per_character)
 
     def decode(self, decoder):
-        length = decoder.read_integer(8)
+        if self.number_of_bits is None:
+            length = decoder.read_integer(8)
+        elif self.minimum != self.maximum:
+            length = decoder.read_integer(self.number_of_bits) + 1
+        else:
+            length = self.minimum
+
         data = []
 
         for _ in range(length):
-            data.append(decoder.read_integer(7))
+            value = decoder.read_integer(self.bits_per_character)
+
+            if self.permitted_alphabet is not None:
+                value = self.permitted_alphabet[1][value]
+
+            data.append(value)
 
         return bytearray(data).decode('ascii')
 
@@ -959,8 +1001,8 @@ class Compiler(compiler.Compiler):
         elif type_descriptor['type'] == 'OBJECT IDENTIFIER':
             compiled = ObjectIdentifier(name)
         elif type_descriptor['type'] == 'OCTET STRING':
-            minimum, maximum =self.get_size_range(type_descriptor,
-                                                  module_name)
+            minimum, maximum = self.get_size_range(type_descriptor,
+                                                   module_name)
             compiled = OctetString(name, minimum, maximum)
         elif type_descriptor['type'] == 'TeletexString':
             compiled = TeletexString(name)
@@ -971,7 +1013,13 @@ class Compiler(compiler.Compiler):
         elif type_descriptor['type'] == 'IA5String':
             compiled = IA5String(name)
         elif type_descriptor['type'] == 'VisibleString':
-            compiled = VisibleString(name)
+            minimum, maximum = self.get_size_range(type_descriptor,
+                                                   module_name)
+            permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
+            compiled = VisibleString(name,
+                                     minimum,
+                                     maximum,
+                                     permitted_alphabet)
         elif type_descriptor['type'] == 'UTF8String':
             compiled = UTF8String(name)
         elif type_descriptor['type'] == 'BMPString':
@@ -983,8 +1031,8 @@ class Compiler(compiler.Compiler):
         elif type_descriptor['type'] == 'GeneralizedTime':
             compiled = GeneralizedTime(name)
         elif type_descriptor['type'] == 'BIT STRING':
-            minimum, maximum =self.get_size_range(type_descriptor,
-                                                  module_name)
+            minimum, maximum = self.get_size_range(type_descriptor,
+                                                   module_name)
             compiled = BitString(name, minimum, maximum)
         elif type_descriptor['type'] == 'ANY':
             compiled = Any(name)
@@ -1037,12 +1085,37 @@ class Compiler(compiler.Compiler):
             if 'default' in member:
                 compiled_member.default = member['default']
 
+            if 'size' in member and member['size'] is not None:
+                minimum, maximum = self.get_size_range(member,
+                                                       module_name)
+                compiled_member.set_size_range(minimum, maximum)
+
             compiled_members.append(compiled_member)
 
         if sort_by_tag:
             compiled_members = sorted(compiled_members, key=attrgetter('tag'))
 
         return compiled_members, extension
+
+    def get_permitted_alphabet(self, type_descriptor):
+        def char_range(begin, end):
+            return ''.join([chr(char)
+                            for char in range(ord(begin), ord(end) + 1)])
+
+        if 'restricted-to' in type_descriptor:
+            restricted_to = type_descriptor['restricted-to']
+            permitted_alphabet = ''
+
+            for item in restricted_to:
+                if isinstance(item, tuple):
+                    permitted_alphabet += char_range(item[0], item[1])
+                else:
+                    permitted_alphabet += item
+
+            permitted_alphabet = sorted(permitted_alphabet)
+
+            return (dict({ord(v): i for i, v in enumerate(permitted_alphabet)}),
+                    dict({i: ord(v) for i, v in enumerate(permitted_alphabet)}))
 
 
 def compile_dict(specification):

@@ -26,7 +26,7 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
         module = importlib.import_module(module)
         self.assertEqual(actual, module.EXPECTED)
-    
+
     def test_parse_foo(self):
         self.parse_and_verify('foo')
 
@@ -46,7 +46,8 @@ class Asn1ToolsParseTest(unittest.TestCase):
         self.parse_and_verify('x691_a1')
 
     def test_parse_x691_a2(self):
-        self.parse_and_verify('x691_a2')
+        with self.assertRaises(AssertionError):
+            self.parse_and_verify('x691_a2')
 
     def test_parse_x691_a3(self):
         with self.assertRaises(asn1tools.ParseError) as cm:

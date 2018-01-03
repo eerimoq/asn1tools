@@ -8,6 +8,7 @@ sys.path.append('tests/files/3gpp')
 
 from rrc_8_6_0 import EXPECTED as RRC_8_6_0
 from lpp_14_3_0 import EXPECTED as LPP_14_3_0
+from x691_a2 import EXPECTED as X691_A2
 
 
 class Asn1ToolsUPerTest(unittest.TestCase):
@@ -101,7 +102,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         self.assertEqual(decoded, decoded_message)
 
     def test_x691_a2(self):
-        a2 = asn1tools.compile_files('tests/files/x691_a2.asn', 'uper')
+        a2 = asn1tools.compile_dict(X691_A2, 'uper')
 
         decoded_message = {
             'name': {
@@ -141,14 +142,11 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             b'\x86\x5d\x51\xd2\x88\x8a\x51\x25\xf1\x80\x99\x84\x44\xd3\xcb\x2e'
             b'\x3e\x9b\xf9\x0c\xb8\x84\x8b\x86\x73\x96\xe8\xa8\x8a\x51\x25\xf1'
             b'\x81\x08\x9b\x93\xd7\x1a\xa2\x29\x44\x97\xc6\x32\xae\x22\x22\x22'
-            b'\x98\x5c\xe5\x21\x88\x5d\x54\xc1\x70\xca\xc8\x38\xb8 '
+            b'\x98\x5c\xe5\x21\x88\x5d\x54\xc1\x70\xca\xc8\x38\xb8'
         )
 
         encoded = a2.encode('PersonnelRecord', decoded_message)
-
-        with self.assertRaises(AssertionError):
-            self.assertEqual(encoded, encoded_message)
-
+        self.assertEqual(encoded, encoded_message)
         decoded = a2.decode('PersonnelRecord', encoded)
         self.assertEqual(decoded, decoded_message)
 
@@ -238,7 +236,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
                          "Expected choices are ['d'], but got 'e'.")
 
     def test_rrc_8_6_0(self):
-        rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0), 'uper')
+        rrc = asn1tools.compile_dict(RRC_8_6_0, 'uper')
 
         # Message 1.
         decoded_message = {
@@ -601,7 +599,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         self.assertEqual(decoded, decoded_message)
 
     def test_lpp_14_3_0(self):
-        lpp = asn1tools.compile_dict(deepcopy(LPP_14_3_0), 'uper')
+        lpp = asn1tools.compile_dict(LPP_14_3_0, 'uper')
 
         # Message 1.
         decoded_message = {
