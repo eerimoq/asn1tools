@@ -1522,8 +1522,6 @@ def create_grammar():
 
     # The whole specification.
     specification = OneOrMore(module_definition) + StringEnd()
-    comment = (Regex(r"--[\s\S]*?(--|\n)") | Regex(r"--(?:\\\n|[^\n])*"))
-    specification.ignore(comment)
 
     # Parse actions converting tokens to asn1tools representation.
     integer.setParseAction(convert_integer)
@@ -1539,6 +1537,12 @@ def create_grammar():
     return specification
 
 
+def ignore_comments(string):
+    return re.sub(r"--(([\s\S]*?(--|\n))|((?:\\\n|[^\n])*))",
+                  lambda mo: ' ' * len(mo.group(0)),
+                  string)
+
+
 def parse_string(string):
     """Parse given ASN.1 specification string and return a dictionary of
     its contents.
@@ -1551,6 +1555,7 @@ def parse_string(string):
     grammar = create_grammar()
 
     try:
+        string = ignore_comments(string)
         tokens = grammar.parseString(string).asList()
     except (ParseException, ParseSyntaxException) as e:
         raise ParseError("Invalid ASN.1 syntax at line {}, column {}: '{}': {}.".format(
