@@ -66,6 +66,57 @@ Sequence2 ::= SEQUENCE {
   a INTEGER DEFAULT 0
 }
 
+Sequence3 ::= SEQUENCE {
+  a BOOLEAN,
+  ...
+}
+
+Sequence4 ::= SEQUENCE {
+  a BOOLEAN,
+  ...,
+  [[
+  b BOOLEAN
+  ]]
+}
+
+Sequence5 ::= SEQUENCE {
+  a BOOLEAN,
+  ...,
+  [[
+  b BOOLEAN
+  ]],
+  ...
+}
+
+Sequence6 ::= SEQUENCE {
+  a BOOLEAN,
+  ...,
+  [[
+  b BOOLEAN
+  ]],
+  ...,
+  c BOOLEAN
+}
+
+Sequence7 ::= SEQUENCE {
+  a BOOLEAN,
+  ...,
+  [[
+  b BOOLEAN
+  ]],
+  [[
+  c BOOLEAN
+  ]],
+  ...,
+  d BOOLEAN
+}
+
+Sequence8 ::= SEQUENCE {
+  a BOOLEAN,
+  ...,
+  ...
+}
+
 Set ::= SET {}
 
 Set2 ::= SET {

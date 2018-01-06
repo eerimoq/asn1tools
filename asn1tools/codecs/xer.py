@@ -2,10 +2,14 @@
 
 """
 
+import logging
 from xml.etree import ElementTree
 
 from . import EncodeError, DecodeError
 from . import compiler
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class Type(object):
@@ -638,7 +642,9 @@ class Compiler(compiler.Compiler):
                 continue
 
             if extension is not None:
-                raise NotImplementedError()
+                LOGGER.warning("Ignoring extension member '%s'.",
+                               member['name'])
+                continue
 
             compiled_member = self.compile_type(member['name'],
                                                 member,

@@ -301,6 +301,49 @@ class Asn1ToolsParseTest(unittest.TestCase):
                          "Invalid ASN.1 syntax at line 3, column 11: "
                          "'::= BEGIN >!<': Expected END.")
 
+    def test_parse_error_late_extension_additions(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
+                                   'Foo ::= SEQUENCE { '
+                                   'a BOOLEAN, '
+                                   '..., '
+                                   '..., '
+                                   '[[ '
+                                   'c BOOLEAN '
+                                   ']] '
+                                   '} '
+                                   'END')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Invalid ASN.1 syntax at line 1, column 63: \'A DEFINITIONS ::= "
+            "BEGIN Foo ::= SEQUENCE { a BOOLEAN, ..., ...>!<, [[ c BOOLEAN ]] "
+            "} END\': Expected \"}\".")
+
+    def test_parse_error_too_many_extension_markers(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
+                                   'Foo ::= SEQUENCE { '
+                                   'a BOOLEAN, '
+                                   '..., '
+                                   '[[ '
+                                   'b BOOLEAN '
+                                   ']], '
+                                   '[[ '
+                                   'c BOOLEAN '
+                                   ']], '
+                                   '..., '
+                                   'd BOOLEAN, '
+                                   '... '
+                                   '} '
+                                   'END')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Invalid ASN.1 syntax at line 1, column 108: \'A DEFINITIONS ::= "
+            "BEGIN Foo ::= SEQUENCE { a BOOLEAN, ..., [[ b BOOLEAN ]], [[ c "
+            "BOOLEAN ]], ..., d BOOLEAN>!<, ... } END\': Expected \"}\".")
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1086,6 +1086,12 @@ class Compiler(compiler.Compiler):
                 extension = []
                 continue
 
+            #if isinstance(member, tuple):
+            #    group = ExtensionAdditionGroup(
+            #        self.compile_members(member, module_name)[0])
+            #    compiled_members.append(group)
+            #    continue
+
             if extension is not None:
                 LOGGER.warning("Ignoring extension member '%s'.",
                                member['name'])

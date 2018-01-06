@@ -9,6 +9,7 @@ sys.path.append('tests/files/3gpp')
 from rrc_8_6_0 import EXPECTED as RRC_8_6_0
 from lpp_14_3_0 import EXPECTED as LPP_14_3_0
 from x691_a2 import EXPECTED as X691_A2
+from x691_a4 import EXPECTED as X691_A4
 
 
 class Asn1ToolsUPerTest(unittest.TestCase):
@@ -204,7 +205,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         self.assertEqual(decoded, decoded_message)
 
     def test_x691_a4(self):
-        a4 = asn1tools.compile_files('tests/files/x691_a4.asn', 'uper')
+        a4 = asn1tools.compile_dict(X691_A4, 'uper')
 
         decoded_message = {
             'a': 253,
@@ -220,14 +221,11 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             b'\x9e\x00\x06\x00\x04\x0a\x46\x90'
         )
 
-        with self.assertRaises(asn1tools.EncodeError) as cm:
+        with self.assertRaises(asn1tools.EncodeError):
             encoded = a4.encode('Ax', decoded_message)
             self.assertEqual(encoded, encoded_message)
             decoded = a4.decode('Ax', encoded)
             self.assertEqual(decoded, decoded_message)
-
-        self.assertEqual(str(cm.exception),
-                         "Expected choices are ['d'], but got 'e'.")
 
     def test_rrc_8_6_0(self):
         rrc = asn1tools.compile_dict(RRC_8_6_0, 'uper')
@@ -661,6 +659,42 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         self.assertEqual(all_types.encode('Sequence2', {}), b'\x00')
         self.assertEqual(all_types.encode('Sequence2', {'a': 0}), b'\x00')
         self.assertEqual(all_types.encode('Sequence2', {'a': 1}), b'\x80\x80\x80')
+        self.assertEqual(all_types.encode('Sequence3', {'a': True}), b'\x40')
+        self.assertEqual(all_types.encode('Sequence4', {'a': True}), b'\x40')
+
+        with self.assertRaises(AssertionError):
+            self.assertEqual(all_types.encode('Sequence4', {'a': 1, 'b': True}),
+                             b'\xc0\x40\x60\x00')
+
+        self.assertEqual(all_types.encode('Sequence5', {'a': True}), b'\x40')
+
+        with self.assertRaises(AssertionError):
+            self.assertEqual(all_types.encode('Sequence5', {'a': True, 'b': True}),
+                             b'\xc0\x40\x60\x00')
+
+        with self.assertRaises(AssertionError):
+            self.assertEqual(all_types.encode('Sequence6', {'a': True, 'c': True}),
+                             b'\x60')
+
+        with self.assertRaises(AssertionError):
+            self.assertEqual(all_types.encode('Sequence6',
+                                              {'a': True, 'b': True, 'c': True}),
+                             b'\xe0\x20\x30\x00')
+
+        with self.assertRaises(AssertionError):
+            self.assertEqual(all_types.encode('Sequence7', {'a': True, 'd': True}),
+                             b'\x60')
+
+        with self.assertRaises(AssertionError):
+            self.assertEqual(all_types.encode('Sequence7',
+                                              {'a': True, 'b': True, 'd': True}),
+                             b'\xe0\x60\x18\x00')
+
+        with self.assertRaises(AssertionError):
+            self.assertEqual(
+                all_types.encode('Sequence7',
+                                 {'a': True, 'b': True, 'c': True, 'd': True}),
+                b'\xe0\x70\x18\x00\x18\x00')
         self.assertEqual(all_types.encode('Ia5string', 'bar'), b'\x03\xc5\x87\x90')
 
     def test_decode_all_types(self):
