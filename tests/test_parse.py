@@ -18,9 +18,9 @@ class Asn1ToolsParseTest(unittest.TestCase):
         actual = asn1tools.parse_files(asn_path)
 
         # from pprint import pformat
-        # 
+        #
         # py_path = 'tests/files/' + path + '/' + module + '.py'
-        # 
+        #
         # with open(py_path, 'w') as fout:
         #     fout.write('EXPECTED = ' + pformat(actual))
 
@@ -290,6 +290,16 @@ class Asn1ToolsParseTest(unittest.TestCase):
             str(cm.exception),
             "Invalid ASN.1 syntax at line 1, column 31: 'A DEFINITIONS ::= BEGIN "
             "B ::= >!<END': Expected Type.")
+
+    def test_parse_error_end_missing_with_comments(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('A DEFINITIONS -- g -- \n'
+                                   '-- hhhh\n'
+                                   '::= BEGIN ')
+
+        self.assertEqual(str(cm.exception),
+                         "Invalid ASN.1 syntax at line 3, column 11: "
+                         "'::= BEGIN >!<': Expected END.")
 
 
 if __name__ == '__main__':

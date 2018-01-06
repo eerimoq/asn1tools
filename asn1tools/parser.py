@@ -1538,8 +1538,10 @@ def create_grammar():
 
 
 def ignore_comments(string):
-    return re.sub(r"--(([\s\S]*?(--|\n))|((?:\\\n|[^\n])*))",
-                  lambda mo: ' ' * len(mo.group(0)),
+    re_replace = re.compile(r'[^\n]')
+
+    return re.sub(r"--([\s\S]*?(--|\n))",
+                  lambda mo: re_replace.sub(' ', mo.group(0)),
                   string)
 
 
