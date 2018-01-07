@@ -137,6 +137,24 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
         self.assertEqual(actual, expected)
 
+    def test_parse_keyword_in_type_name(self):
+        actual = asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
+                                        'ENDa ::= INTEGER '
+                                        'END')
+
+        expected = {
+            'A': {
+                'extensibility-implied': False,
+                'imports': {},
+                'object-classes': {},
+                'object-sets': {},
+                'types': {'ENDa': {'type': 'INTEGER'}},
+                'values': {}
+            }
+        }
+
+        self.assertEqual(actual, expected)
+
     def test_parse_error_empty_string(self):
         with self.assertRaises(asn1tools.ParseError) as cm:
             asn1tools.parse_string('')

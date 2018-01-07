@@ -752,9 +752,7 @@ def create_grammar():
     ampersand = Literal('&')
     less_than = Literal('<')
 
-    reserved_words = (END
-                      | SEQUENCE
-                      | ENUMERATED)
+    reserved_words = Regex(r'(END|SEQUENCE|ENUMERATED)(\s|$)')
 
     # Forward declarations.
     value = Forward()
@@ -1522,6 +1520,9 @@ def create_grammar():
     parameterized_value_assignment.setParseAction(
         convert_parameterized_value_assignment)
     sequence_type.setParseAction(convert_sequence_type)
+    sequence_of_type.setParseAction(convert_sequence_of_type)
+    set_type.setParseAction(convert_set_type)
+    set_of_type.setParseAction(convert_set_of_type)
     integer_type.setParseAction(convert_integer_type)
     real_type.setParseAction(convert_real_type)
     boolean_type.setParseAction(convert_boolean_type)
@@ -1530,9 +1531,6 @@ def create_grammar():
     null_type.setParseAction(convert_null_type)
     object_identifier_type.setParseAction(convert_object_identifier_type)
     enumerated_type.setParseAction(convert_enumerated_type)
-    set_type.setParseAction(convert_set_type)
-    sequence_of_type.setParseAction(convert_sequence_of_type)
-    set_of_type.setParseAction(convert_set_of_type)
     choice_type.setParseAction(convert_choice_type)
     defined_type.setParseAction(convert_defined_type)
     character_string_type.setParseAction(convert_keyword_type)
@@ -1543,6 +1541,11 @@ def create_grammar():
 
 
 def ignore_comments(string):
+    """Ignore comments in given string by replacing them with spaces. This
+    reduces the parsing time by roughly a factor of two.
+
+    """
+
     re_replace = re.compile(r'[^\n]')
 
     return re.sub(r"--([\s\S]*?(--|\n))",
