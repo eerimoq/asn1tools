@@ -25,6 +25,7 @@ from pyparsing import NotAny
 from pyparsing import NoMatch
 from pyparsing import QuotedString
 from pyparsing import Combine
+from pyparsing import ParseResults
 
 
 LOGGER = logging.getLogger(__name__)
@@ -112,7 +113,7 @@ def convert_size(tokens):
     if tokens[0] == 'SIZE':
         values = []
 
-        for item_tokens in tokens[1]:
+        for item_tokens in tokens[1].asList():
             if '..' in item_tokens:
                 value = (convert_number(item_tokens[0]),
                          convert_number(item_tokens[2]))
@@ -232,6 +233,7 @@ def convert_members(tokens):
 
         if len(member_tokens) == 2:
             member_tokens, qualifiers = member_tokens
+            qualifiers = qualifiers.asList()
         else:
             qualifiers = []
 
@@ -259,14 +261,14 @@ def convert_members(tokens):
     return members
 
 
-def convert_sequence_type(tokens):
+def convert_sequence_type(_s, _l, tokens):
     return {
         'type': 'SEQUENCE',
         'members': convert_members(tokens[2])
     }
 
 
-def convert_sequence_of_type(tokens):
+def convert_sequence_of_type(_s, _l, tokens):
     converted_type = {
         'type': 'SEQUENCE OF',
         'element': convert_type(tokens[4]),
@@ -281,14 +283,14 @@ def convert_sequence_of_type(tokens):
     return converted_type
 
 
-def convert_set_type(tokens):
+def convert_set_type(_s, _l, tokens):
     return {
         'type': 'SET',
         'members': convert_members(tokens[2])
     }
 
 
-def convert_set_of_type(tokens):
+def convert_set_of_type(_s, _l, tokens):
     converted_type = {
         'type': 'SET OF',
         'element': convert_type(tokens[4]),
@@ -303,55 +305,69 @@ def convert_set_of_type(tokens):
     return converted_type
 
 
-def convert_choice_type(tokens):
+def convert_choice_type(_s, _l, tokens):
     return {
         'type': 'CHOICE',
         'members': convert_members(tokens[2])
     }
 
 
-def convert_integer_type():
+def convert_defined_type(_s, _l, tokens):
+    return {
+        'type': tokens[0]
+    }
+
+
+def convert_integer_type(_s, _l, _tokens):
     return {'type': 'INTEGER'}
 
 
-def convert_real_type():
+def convert_real_type(_s, _l, _tokens):
     return {'type': 'REAL'}
 
 
-def convert_enumerated_type(tokens):
+def convert_enumerated_type(_s, _l, tokens):
     return {
         'type': 'ENUMERATED',
         'values': convert_enum_values(tokens[2])
     }
 
 
-def convert_object_identifier_type():
+def convert_keyword_type(_s, _l, tokens):
+    return {
+        'type': tokens[0]
+    }
+
+
+def convert_print(_s, _l, tokens):
+    print('type', tokens)
+
+
+def convert_object_identifier_type(_s, _l, _tokens):
     return {
         'type': 'OBJECT IDENTIFIER'
     }
 
 
-def convert_bit_string_type(tokens):
+def convert_bit_string_type(_s, _l, _tokens):
     return {
-        'type': 'BIT STRING',
-        'size': convert_size(tokens[1])
+        'type': 'BIT STRING'
     }
 
 
-def convert_octet_string_type(tokens):
+def convert_octet_string_type(_s, _l, _tokens):
     return {
-        'type': 'OCTET STRING',
-        'size': convert_size(tokens[1])
+        'type': 'OCTET STRING'
     }
 
 
-def convert_ia5_string_type():
+def convert_ia5_string_type(_s, _l, _tokens):
     return {
         'type': 'IA5String'
     }
 
 
-def convert_any_defined_by_type(tokens):
+def convert_any_defined_by_type(_s, _l, tokens):
     return {
         'type': 'ANY DEFINED BY',
         'value': tokens[1],
@@ -359,61 +375,28 @@ def convert_any_defined_by_type(tokens):
     }
 
 
-def convert_null_type():
+def convert_null_type(_s, _l, _tokens):
     return {
         'type': 'NULL'
     }
 
 
-def convert_boolean_type():
+def convert_boolean_type(_s, _l, _tokens):
     return {
         'type': 'BOOLEAN'
     }
 
 
 def convert_type(tokens):
-    if tokens[0] == 'SequenceType':
-        converted_type = convert_sequence_type(tokens[0])
-    elif tokens[0] == 'SequenceOfType':
-        converted_type = convert_sequence_of_type(tokens[0])
-    elif tokens[0] == 'SetType':
-        converted_type = convert_set_type(tokens[0])
-    elif tokens[0] == 'SetOfType':
-        converted_type = convert_set_of_type(tokens[0])
-    elif tokens[0] == 'ChoiceType':
-        converted_type = convert_choice_type(tokens[0])
-    elif tokens[0] == 'IntegerType':
-        converted_type = convert_integer_type()
-    elif tokens[0] == 'RealType':
-        converted_type = convert_real_type()
-    elif tokens[0] == 'EnumeratedType':
-        converted_type = convert_enumerated_type(tokens[0])
-    elif tokens[0] == 'ObjectIdentifierType':
-        converted_type = convert_object_identifier_type()
-    elif tokens[0] == 'BitStringType':
-        converted_type = convert_bit_string_type(tokens)
-    elif tokens[0] == 'OctetStringType':
-        converted_type = convert_octet_string_type(tokens)
-    elif tokens[0] == 'IA5String':
-        converted_type = convert_ia5_string_type()
-    elif tokens[0] == 'ANY DEFINED BY':
-        converted_type = convert_any_defined_by_type(tokens)
-    elif tokens[0] == 'NullType':
-        converted_type = convert_null_type()
-    elif tokens[0] == 'BooleanType':
-        converted_type = convert_boolean_type()
-    elif '&' in tokens[0]:
-        converted_type = {
-            'type': tokens[0],
-            'table': convert_table(tokens[1:])
-        }
-    else:
-        converted_type = {'type': tokens[0]}
+    converted_type, constraint = tokens
 
     if converted_type['type'] in ['INTEGER', 'REAL', 'IA5String']:
         restricted_to = []
 
-        for constraint_tokens in tokens[1]:
+        for constraint_tokens in constraint:
+            if isinstance(constraint_tokens, ParseResults):
+                constraint_tokens = constraint_tokens.asList()
+
             if len(constraint_tokens) != 1:
                 continue
 
@@ -424,6 +407,12 @@ def convert_type(tokens):
 
         if restricted_to:
             converted_type['restricted-to'] = restricted_to
+
+    if converted_type['type'] in ['BIT STRING', 'OCTET STRING']:
+        converted_type['size'] = convert_size(constraint)
+
+    if '&' in converted_type['type']:
+        converted_type['table'] = convert_table(tokens.asList()[1:])
 
     return converted_type
 
@@ -478,7 +467,7 @@ def convert_parameterized_object_set_assignment(_s, _l, tokens):
     members = []
 
     try:
-        for member_tokens in tokens[4]:
+        for member_tokens in tokens[4].asList():
             if len(member_tokens[0]) == 1:
                 member = member_tokens[0][0]
             else:
@@ -524,17 +513,16 @@ def convert_parameterized_object_class_assignment(_s, _l, tokens):
 
     for member in tokens[3]:
         if member[0][1].islower():
-            type_ = member[1][0]
+            converted_member = member[1][0]
 
-            if isinstance(type_, Tokens):
-                type_ = type_[0]
+            if isinstance(converted_member, Tokens):
+                converted_member = converted_member[0]
         else:
-            type_ = 'OpenType'
+            converted_member = {'type': 'OpenType'}
 
-        members.append({
-            'name': member[0],
-            'type': type_
-        })
+        converted_member['name'] = member[0]
+
+        members.append(converted_member)
 
     converted_type = {
         'members': members
@@ -567,6 +555,8 @@ def convert_parameterized_value_assignment(_s, _l, tokens):
 
     if isinstance(type_, Tokens):
         type_ = type_[0]
+    elif isinstance(type_, dict):
+        type_ = type_['type']
 
     converted_type = {
         'type': type_,
@@ -722,6 +712,8 @@ def create_grammar():
     NumericString = Keyword('NumericString').setName('NumericString')
     PrintableString = Keyword('PrintableString').setName('PrintableString')
     TeletexString = Keyword('TeletexString').setName('TeletexString')
+    UTCTime = Keyword('UTCTime').setName('UTCTime')
+    GeneralizedTime = Keyword('GeneralizedTime').setName('GeneralizedTime')
     T61String = Keyword('T61String').setName('T61String')
     UniversalString = Keyword('UniversalString').setName('UniversalString')
     UTF8String = Keyword('UTF8String').setName('UTF8String')
@@ -1132,6 +1124,8 @@ def create_grammar():
                                         | NumericString
                                         | PrintableString
                                         | TeletexString
+                                        | UTCTime
+                                        | GeneralizedTime
                                         | T61String
                                         | UniversalString
                                         | UTF8String
@@ -1181,11 +1175,10 @@ def create_grammar():
                                   + obj_id_components_list
                                   + Suppress(right_brace)))
 
-    object_identifier_type = Tag('ObjectIdentifierType',
-                                 OBJECT_IDENTIFIER
-                                 + Optional(left_parenthesis
-                                            + delimitedList(word, delim='|')
-                                            + right_parenthesis))
+    object_identifier_type = (OBJECT_IDENTIFIER
+                              + Optional(left_parenthesis
+                                         + delimitedList(word, delim='|')
+                                         + right_parenthesis))
     object_identifier_type.setName('OBJECT IDENTIFIER')
 
     # X.680: 30. Notation for tagged types
@@ -1210,45 +1203,41 @@ def create_grammar():
                                          + extension_and_exception
                                          + extension_addition_alternatives
                                          + optional_extension_marker))
-    choice_type = Tag('ChoiceType',
-                      CHOICE
-                      - left_brace
-                      + Group(alternative_type_lists)
-                      - right_brace)
+    choice_type = (CHOICE
+                   - left_brace
+                   + Group(alternative_type_lists)
+                   - right_brace)
     choice_type.setName('CHOICE')
     choice_value = (identifier + colon + value)
 
     # X.680: 27. Notation for the set-of types
     set_of_value = NoMatch()
-    set_of_type = Tag('SetOfType',
-                      SET
-                      + Group(Optional(size))
-                      + OF
-                      + Optional(Suppress(identifier))
-                      - tag
-                      - type_)
+    set_of_type = (SET
+                   + Group(Optional(size))
+                   + OF
+                   + Optional(Suppress(identifier))
+                   - tag
+                   - type_)
     set_of_type.setName('SET OF')
 
     # X.680: 26. Notation for the set types
     set_value = NoMatch()
-    set_type = Tag('SetType',
-                   SET
-                   - left_brace
-                   + Group(Optional(component_type_lists
-                                    | (extension_and_exception
-                                       + optional_extension_marker)))
-                   - right_brace)
+    set_type = (SET
+                - left_brace
+                + Group(Optional(component_type_lists
+                                 | (extension_and_exception
+                                    + optional_extension_marker)))
+                - right_brace)
     set_type.setName('SET')
 
     # X.680: 25. Notation for the sequence-of types
     sequence_of_value = NoMatch()
-    sequence_of_type = Tag('SequenceOfType',
-                           SEQUENCE
-                           + Group(Optional(size_paren))
-                           + OF
-                           + Optional(Suppress(identifier))
-                           - tag
-                           - type_)
+    sequence_of_type = (SEQUENCE
+                        + Group(Optional(size_paren))
+                        + OF
+                        + Optional(Suppress(identifier))
+                        - tag
+                        - type_)
     sequence_of_type.setName('SEQUENCE OF')
 
     # X.680: 24. Notation for the sequence types
@@ -1287,35 +1276,33 @@ def create_grammar():
                                      + Suppress(comma)
                                      + root_component_type_list)
                                     | optional_extension_marker)))
-    sequence_type = Tag('SequenceType',
-                        SEQUENCE
-                        - left_brace
-                        + Group(Optional(component_type_lists
-                                         | (extension_and_exception
-                                            + optional_extension_marker)))
-                        - right_brace)
+    sequence_type = (SEQUENCE
+                     - left_brace
+                     + Group(Optional(component_type_lists
+                                      | (extension_and_exception
+                                         + optional_extension_marker)))
+                     - right_brace)
     sequence_type.setName('SEQUENCE')
 
     # X.680: 23. Notation for the null type
     null_value = NULL
-    null_type = Tag('NullType', NULL)
+    null_type = NULL
 
     # X.680: 22. Notation for the octetstring type
     octet_string_value = (bstring
                           | hstring
                           | (CONTAINING + value))
-    octet_string_type = Tag('OctetStringType', OCTET_STRING)
+    octet_string_type = OCTET_STRING
     octet_string_type.setName('OCTET STRING')
 
     # X.680: 21. Notation for the bitstring type
-    bit_string_type = Tag('BitStringType',
-                          BIT_STRING
-                          + Group(Optional(left_brace
-                                           + Group(delimitedList(word
-                                                                 + left_parenthesis
-                                                                 + word
-                                                                 + right_parenthesis))
-                                           + right_brace)))
+    bit_string_type = (BIT_STRING
+                       + Group(Optional(left_brace
+                                        + Group(delimitedList(word
+                                                              + left_parenthesis
+                                                              + word
+                                                              + right_parenthesis))
+                                        + right_brace)))
     bit_string_type.setName('BIT STRING')
     bit_string_value = Tag('BitStringValue',
                            bstring
@@ -1333,20 +1320,19 @@ def create_grammar():
                           | sequence_value)
     real_value = (numeric_real_value
                   | special_real_value)
-    real_type = Tag('RealType', REAL)
+    real_type = REAL
     real_type.setName('REAL')
 
     # X.680: 19. Notation for the enumerated type
     enumerated_value = identifier
-    enumerated_type = Tag('EnumeratedType',
-                          ENUMERATED
-                          - left_brace
-                          + Group(delimitedList(Group((word
-                                                       + Optional(Suppress(left_parenthesis)
-                                                                  + word
-                                                                  + Suppress(right_parenthesis)))
-                                                      | ellipsis)))
-                          - right_brace)
+    enumerated_type = (ENUMERATED
+                       - left_brace
+                       + Group(delimitedList(Group((word
+                                                    + Optional(Suppress(left_parenthesis)
+                                                               + word
+                                                               + Suppress(right_parenthesis)))
+                                                   | ellipsis)))
+                       - right_brace)
     enumerated_type.setName('ENUMERATED')
 
     # X.680: 18. Notation for the integer type
@@ -1357,15 +1343,14 @@ def create_grammar():
                     + (signed_number | defined_value)
                     + right_parenthesis)
     named_number_list = delimitedList(named_number)
-    integer_type = Tag('IntegerType',
-                       INTEGER
-                       + Group(Optional(left_brace
-                                        + named_number_list
-                                        + right_brace)))
+    integer_type = (INTEGER
+                    + Group(Optional(left_brace
+                                     + named_number_list
+                                     + right_brace)))
     integer_type.setName('INTEGER')
 
     # X.680: 17. Notation for boolean type
-    boolean_type = Tag('BooleanType', BOOLEAN)
+    boolean_type = BOOLEAN
     boolean_value = (TRUE | FALSE)
 
     # X.680: 16. Definition of types and values
@@ -1536,6 +1521,23 @@ def create_grammar():
         convert_parameterized_type_assignment)
     parameterized_value_assignment.setParseAction(
         convert_parameterized_value_assignment)
+    sequence_type.setParseAction(convert_sequence_type)
+    integer_type.setParseAction(convert_integer_type)
+    real_type.setParseAction(convert_real_type)
+    boolean_type.setParseAction(convert_boolean_type)
+    bit_string_type.setParseAction(convert_bit_string_type)
+    octet_string_type.setParseAction(convert_octet_string_type)
+    null_type.setParseAction(convert_null_type)
+    object_identifier_type.setParseAction(convert_object_identifier_type)
+    enumerated_type.setParseAction(convert_enumerated_type)
+    set_type.setParseAction(convert_set_type)
+    sequence_of_type.setParseAction(convert_sequence_of_type)
+    set_of_type.setParseAction(convert_set_of_type)
+    choice_type.setParseAction(convert_choice_type)
+    defined_type.setParseAction(convert_defined_type)
+    character_string_type.setParseAction(convert_keyword_type)
+    object_class_field_type.setParseAction(convert_keyword_type)
+    any_defined_by_type.setParseAction(convert_any_defined_by_type)
 
     return specification
 
