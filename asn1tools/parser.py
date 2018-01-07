@@ -79,14 +79,6 @@ def merge_dicts(dicts):
     return {k: v for d in dicts for k, v in d.items()}
 
 
-def is_no_lower(string):
-    for char in string:
-        if char.islower():
-            return False
-
-    return True
-
-
 def convert_integer(_s, _l, tokens):
     try:
         return int(tokens[0])
