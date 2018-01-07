@@ -32,7 +32,6 @@ EXPECTED = {'AttributeCertificateVersion1': {'extensibility-implied': False,
                                                                                         'type': 'AttCertValidityPeriod'},
                                                                                        {'element': {'type': 'Attribute'},
                                                                                         'name': 'attributes',
-                                                                                        'size': None,
                                                                                         'type': 'SEQUENCE '
                                                                                                 'OF'},
                                                                                        {'name': 'issuerUniqueID',
@@ -47,7 +46,6 @@ EXPECTED = {'AttributeCertificateVersion1': {'extensibility-implied': False,
                                                                                    {'name': 'signatureAlgorithm',
                                                                                     'type': 'AlgorithmIdentifier'},
                                                                                    {'name': 'signature',
-                                                                                    'size': None,
                                                                                     'type': 'BIT '
                                                                                             'STRING'}],
                                                                        'type': 'SEQUENCE'}},
@@ -68,7 +66,6 @@ EXPECTED = {'AttributeCertificateVersion1': {'extensibility-implied': False,
                                                                                  'IDENTIFIER'},
                                                                         {'element': {'type': 'AttributeValue'},
                                                                          'name': 'attrValues',
-                                                                         'size': None,
                                                                          'type': 'SET '
                                                                                  'OF'}],
                                                             'type': 'SEQUENCE'},
@@ -130,7 +127,6 @@ EXPECTED = {'AttributeCertificateVersion1': {'extensibility-implied': False,
                                                                                   'type': 'OtherCertificateFormat'}],
                                                                      'type': 'CHOICE'},
                                               'CertificateSet': {'element': {'type': 'CertificateChoices'},
-                                                                 'size': None,
                                                                  'type': 'SET '
                                                                          'OF'},
                                               'ContentEncryptionAlgorithmIdentifier': {'type': 'AlgorithmIdentifier'},
@@ -148,12 +144,10 @@ EXPECTED = {'AttributeCertificateVersion1': {'extensibility-implied': False,
                                               'ContentType': {'type': 'OBJECT '
                                                                       'IDENTIFIER'},
                                               'Countersignature': {'type': 'SignerInfo'},
-                                              'Digest': {'size': None,
-                                                         'type': 'OCTET '
+                                              'Digest': {'type': 'OCTET '
                                                                  'STRING'},
                                               'DigestAlgorithmIdentifier': {'type': 'AlgorithmIdentifier'},
                                               'DigestAlgorithmIdentifiers': {'element': {'type': 'DigestAlgorithmIdentifier'},
-                                                                             'size': None,
                                                                              'type': 'SET '
                                                                                      'OF'},
                                               'DigestedData': {'members': [{'name': 'version',
@@ -169,14 +163,12 @@ EXPECTED = {'AttributeCertificateVersion1': {'extensibility-implied': False,
                                                                                        'type': 'ContentType'},
                                                                                       {'name': 'eContent',
                                                                                        'optional': True,
-                                                                                       'size': None,
                                                                                        'tag': {'kind': 'EXPLICIT',
                                                                                                'number': 0},
                                                                                        'type': 'OCTET '
                                                                                                'STRING'}],
                                                                           'type': 'SEQUENCE'},
-                                              'EncryptedContent': {'size': None,
-                                                                   'type': 'OCTET '
+                                              'EncryptedContent': {'type': 'OCTET '
                                                                            'STRING'},
                                               'EncryptedContentInfo': {'members': [{'name': 'contentType',
                                                                                     'type': 'ContentType'},
@@ -198,8 +190,7 @@ EXPECTED = {'AttributeCertificateVersion1': {'extensibility-implied': False,
                                                                                      'number': 1},
                                                                              'type': 'UnprotectedAttributes'}],
                                                                 'type': 'SEQUENCE'},
-                                              'EncryptedKey': {'size': None,
-                                                               'type': 'OCTET '
+                                              'EncryptedKey': {'type': 'OCTET '
                                                                        'STRING'},
                                               'EnvelopedData': {'members': [{'name': 'version',
                                                                              'type': 'CMSVersion'},
@@ -245,7 +236,6 @@ EXPECTED = {'AttributeCertificateVersion1': {'extensibility-implied': False,
                                                                                      'type': 'CertificateSerialNumber'}],
                                                                         'type': 'SEQUENCE'},
                                               'KEKIdentifier': {'members': [{'name': 'keyIdentifier',
-                                                                             'size': None,
                                                                              'type': 'OCTET '
                                                                                      'STRING'},
                                                                             {'name': 'date',
@@ -298,12 +288,10 @@ EXPECTED = {'AttributeCertificateVersion1': {'extensibility-implied': False,
                                                                                     {'name': 'encryptedKey',
                                                                                      'type': 'EncryptedKey'}],
                                                                         'type': 'SEQUENCE'},
-                                              'MessageAuthenticationCode': {'size': None,
-                                                                            'type': 'OCTET '
+                                              'MessageAuthenticationCode': {'type': 'OCTET '
                                                                                     'STRING'},
                                               'MessageAuthenticationCodeAlgorithm': {'type': 'AlgorithmIdentifier'},
-                                              'MessageDigest': {'size': None,
-                                                                'type': 'OCTET '
+                                              'MessageDigest': {'type': 'OCTET '
                                                                         'STRING'},
                                               'OriginatorIdentifierOrKey': {'members': [{'name': 'issuerAndSerialNumber',
                                                                                          'type': 'IssuerAndSerialNumber'},
@@ -328,7 +316,6 @@ EXPECTED = {'AttributeCertificateVersion1': {'extensibility-implied': False,
                                               'OriginatorPublicKey': {'members': [{'name': 'algorithm',
                                                                                    'type': 'AlgorithmIdentifier'},
                                                                                   {'name': 'publicKey',
-                                                                                   'size': None,
                                                                                    'type': 'BIT '
                                                                                            'STRING'}],
                                                                       'type': 'SEQUENCE'},
@@ -390,7 +377,6 @@ EXPECTED = {'AttributeCertificateVersion1': {'extensibility-implied': False,
                                                                                      'type': 'EncryptedKey'}],
                                                                         'type': 'SEQUENCE'},
                                               'RecipientEncryptedKeys': {'element': {'type': 'RecipientEncryptedKey'},
-                                                                         'size': None,
                                                                          'type': 'SEQUENCE '
                                                                                  'OF'},
                                               'RecipientIdentifier': {'members': [{'name': 'issuerAndSerialNumber',
@@ -436,15 +422,12 @@ EXPECTED = {'AttributeCertificateVersion1': {'extensibility-implied': False,
                                                                                     'type': 'OtherRevocationInfoFormat'}],
                                                                        'type': 'CHOICE'},
                                               'RevocationInfoChoices': {'element': {'type': 'RevocationInfoChoice'},
-                                                                        'size': None,
                                                                         'type': 'SET '
                                                                                 'OF'},
-                                              'Signature': {'size': None,
-                                                            'type': 'BIT '
+                                              'Signature': {'type': 'BIT '
                                                                     'STRING'},
                                               'SignatureAlgorithmIdentifier': {'type': 'AlgorithmIdentifier'},
-                                              'SignatureValue': {'size': None,
-                                                                 'type': 'OCTET '
+                                              'SignatureValue': {'type': 'OCTET '
                                                                          'STRING'},
                                               'SignedAttributes': {'element': {'type': 'Attribute'},
                                                                    'size': [(1,
@@ -498,11 +481,9 @@ EXPECTED = {'AttributeCertificateVersion1': {'extensibility-implied': False,
                                                                           'type': 'UnsignedAttributes'}],
                                                              'type': 'SEQUENCE'},
                                               'SignerInfos': {'element': {'type': 'SignerInfo'},
-                                                              'size': None,
                                                               'type': 'SET OF'},
                                               'SigningTime': {'type': 'Time'},
-                                              'SubjectKeyIdentifier': {'size': None,
-                                                                       'type': 'OCTET '
+                                              'SubjectKeyIdentifier': {'type': 'OCTET '
                                                                                'STRING'},
                                               'Time': {'members': [{'name': 'utcTime',
                                                                     'type': 'UTCTime'},
@@ -524,8 +505,7 @@ EXPECTED = {'AttributeCertificateVersion1': {'extensibility-implied': False,
                                                                                'MAX')],
                                                                      'type': 'SET '
                                                                              'OF'},
-                                              'UserKeyingMaterial': {'size': None,
-                                                                     'type': 'OCTET '
+                                              'UserKeyingMaterial': {'type': 'OCTET '
                                                                              'STRING'}},
                                     'values': {'id-contentType': {'type': 'OBJECT '
                                                                           'IDENTIFIER',

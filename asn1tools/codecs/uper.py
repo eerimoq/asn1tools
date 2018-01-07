@@ -1107,7 +1107,7 @@ class Compiler(compiler.Compiler):
             if 'default' in member:
                 compiled_member.default = member['default']
 
-            if 'size' in member and member['size'] is not None:
+            if 'size' in member:
                 minimum, maximum = self.get_size_range(member,
                                                        module_name)
                 compiled_member.set_size_range(minimum, maximum)

@@ -57,7 +57,6 @@ EXPECTED = {'InformationObject': {'extensibility-implied': False,
                                                                                        'type': 'ERROR-CLASS.&Type'}],
                                                                           'type': 'SEQUENCE'},
                                                               'name': 'errors',
-                                                              'size': None,
                                                               'type': 'SEQUENCE '
                                                                       'OF'}],
                                                  'type': 'SEQUENCE'},

@@ -272,9 +272,13 @@ def convert_sequence_of_type(_s, _l, tokens):
     converted_type = {
         'type': 'SEQUENCE OF',
         'element': convert_type(tokens[4]),
-        'size': convert_size(tokens[1])
     }
 
+    size = convert_size(tokens[1])
+
+    if size:
+        converted_type['size'] = size
+    
     tag = convert_tag(tokens[3])
 
     if tag:
@@ -293,9 +297,13 @@ def convert_set_type(_s, _l, tokens):
 def convert_set_of_type(_s, _l, tokens):
     converted_type = {
         'type': 'SET OF',
-        'element': convert_type(tokens[4]),
-        'size': convert_size(tokens[1])
+        'element': convert_type(tokens[4])
     }
+
+    size = convert_size(tokens[1])
+
+    if size:
+        converted_type['size'] = size
 
     tag = convert_tag(tokens[3])
 
@@ -409,7 +417,10 @@ def convert_type(tokens):
             converted_type['restricted-to'] = restricted_to
 
     if converted_type['type'] in ['BIT STRING', 'OCTET STRING']:
-        converted_type['size'] = convert_size(constraint)
+        size = convert_size(constraint)
+
+        if size:
+            converted_type['size'] = size
 
     if '&' in converted_type['type']:
         converted_type['table'] = convert_table(tokens.asList()[1:])
