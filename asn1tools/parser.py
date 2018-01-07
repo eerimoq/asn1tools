@@ -75,6 +75,10 @@ class Tag(Group):
         return Tokens(self.tag, tokenlist.asList())
 
 
+def merge_dicts(dicts):
+    return {k: v for d in dicts for k, v in d.items()}
+
+
 def is_no_lower(string):
     for char in string:
         if char.islower():
@@ -374,6 +378,7 @@ def convert_boolean_type():
         'type': 'BOOLEAN'
     }
 
+
 def convert_type(tokens):
     if tokens[0] == 'SequenceType':
         converted_type = convert_sequence_type(tokens[0])
@@ -477,7 +482,7 @@ def convert_value(tokens, type_=None):
     return value
 
 
-def convert_parameterized_object_set_assignment(tokens):
+def convert_parameterized_object_set_assignment(_s, _l, tokens):
     members = []
 
     try:
@@ -499,19 +504,30 @@ def convert_parameterized_object_set_assignment(tokens):
     except IndexError:
         pass
 
-    return {'class': tokens[1], 'members': members}
+    converted_type = {
+        'class': tokens[1],
+        'members': members
+    }
+
+    return ('parameterized-object-set-assignment',
+            tokens[0],
+            converted_type)
 
 
-def convert_parameterized_object_assignment(tokens):
+def convert_parameterized_object_assignment(_s, _l, tokens):
     type_ = tokens[1]
 
-    return {
+    converted_type = {
         'type': type_,
         'value': None
     }
 
+    return ('parameterized-object-assignment',
+            tokens[0],
+            converted_type)
 
-def convert_parameterized_object_class_assignment(tokens):
+
+def convert_parameterized_object_class_assignment(_s, _l, tokens):
     members = []
 
     for member in tokens[3]:
@@ -528,10 +544,17 @@ def convert_parameterized_object_class_assignment(tokens):
             'type': type_
         })
 
-    return {'members': members}
+    converted_type = {
+        'members': members
+    }
+
+    return ('parameterized-object-class-assignment',
+            tokens[0],
+            converted_type)
 
 
-def convert_parameterized_type_assignment(tokens):
+def convert_parameterized_type_assignment(_s, _l, tokens):
+    tokens = tokens.asList()
     converted_type = convert_type(tokens[3])
 
     try:
@@ -542,22 +565,29 @@ def convert_parameterized_type_assignment(tokens):
     if tag:
         converted_type['tag'] = tag
 
-    return converted_type
+    return ('parameterized-type-assignment',
+            tokens[0],
+            converted_type)
 
 
-def convert_parameterized_value_assignment(tokens):
+def convert_parameterized_value_assignment(_s, _l, tokens):
     type_ = tokens[1][0][0]
 
     if isinstance(type_, Tokens):
         type_ = type_[0]
 
-    return {
+    converted_type = {
         'type': type_,
         'value': convert_value(tokens[2], type_)
     }
 
+    return ('parameterized-value-assignment',
+            tokens[0],
+            converted_type)
 
-def convert_imports(tokens):
+
+def convert_imports(_s, _l, tokens):
+    tokens = tokens.asList()
     imports = {}
 
     if tokens:
@@ -569,60 +599,41 @@ def convert_imports(tokens):
     return {'imports': imports}
 
 
-def convert_assignment_list(tokens):
+def convert_assignment_list(_s, _l, tokens):
     types = {}
     values = {}
     object_classes = {}
     object_sets = {}
 
-    for assignment in tokens:
-        name = assignment[0]
-
-        LOGGER.debug("Converting assignment '%s'.", assignment)
-
-        if assignment == 'ParameterizedObjectSetAssignment':
+    for kind, name, value in tokens:
+        if kind == 'parameterized-object-set-assignment':
             if name in object_sets:
                 LOGGER.warning("Object set '%s' already defined.", name)
 
-            LOGGER.debug("Converting object set '%s'.", name)
-            value = convert_parameterized_object_set_assignment(assignment)
-            LOGGER.debug("Converted object set '%s' to %s.", name, value)
             object_sets[name] = value
-        elif assignment == 'ParameterizedObjectAssignment':
+        elif kind == 'parameterized-object-assignment':
             if name in values:
                 LOGGER.warning("Object '%s' already defined.", name)
 
-            LOGGER.debug("Converting object '%s'.", name)
-            value = convert_parameterized_object_assignment(assignment)
-            LOGGER.debug("Converted object '%s' to %s.", name, value)
             values[name] = value
-        elif assignment == 'ParameterizedObjectClassAssignment':
+        elif kind == 'parameterized-object-class-assignment':
             if name in object_classes:
                 LOGGER.warning("Object class '%s' already defined.", name)
 
-            LOGGER.debug("Converting object class '%s'.", name)
-            value = convert_parameterized_object_class_assignment(assignment)
-            LOGGER.debug("Converted object class '%s' to %s.", name, value)
             object_classes[name] = value
-        elif assignment == 'ParameterizedTypeAssignment':
+        elif kind == 'parameterized-type-assignment':
             if name in types:
                 LOGGER.warning("Type '%s' already defined.", name)
 
-            LOGGER.debug("Converting type '%s'.", name)
-            value = convert_parameterized_type_assignment(assignment)
-            LOGGER.debug("Converted type '%s' to %s.", name, value)
             types[name] = value
-        elif assignment == 'ParameterizedValueAssignment':
+        elif kind == 'parameterized-value-assignment':
             if name in values:
                 LOGGER.warning("Value '%s' already defined.", name)
 
-            LOGGER.debug("Converting value '%s'.", name)
-            value = convert_parameterized_value_assignment(assignment)
-            LOGGER.debug("Converted value '%s' to %s.", name, value)
             values[name] = value
         else:
             raise InternalParserError(
-                'Unrecognized assignment {}.'.format(assignment))
+                'Unrecognized assignment kind {}.'.format(kind))
 
     return {
         'types': types,
@@ -632,33 +643,23 @@ def convert_assignment_list(tokens):
     }
 
 
-def convert_module_body(tokens):
-    module_body = convert_imports(tokens[0])
-    module_body.update(convert_assignment_list(tokens[1]))
-
-    return module_body
+def convert_module_body(_s, _l, tokens):
+    return merge_dicts(tokens)
 
 
-def convert_module(tokens):
-    module = convert_module_body(tokens[1])
+def convert_module_definition(_s, _l, tokens):
+    tokens = tokens.asList()
+    module =  tokens[1][0]
+    module['extensibility-implied'] = (tokens[0][3] != [])
 
     if tokens[0][2]:
         module['tags'] = tokens[0][2][0]
 
-    module['extensibility-implied'] = (tokens[0][3] != [])
-
-    return module
+    return {tokens[0][0]: module}
 
 
-def convert_specification(tokens):
-    modules = {}
-
-    for module_tokens in tokens:
-        name = module_tokens[0][0]
-        LOGGER.debug("Converting module '%s'.", name)
-        modules[name] = convert_module(module_tokens)
-
-    return modules
+def convert_specification(_s, _l, tokens):
+    return merge_dicts(tokens)
 
 
 def create_grammar():
@@ -970,11 +971,10 @@ def create_grammar():
     object_class = (object_class_defn
                     # | defined_object_class
                     | parameterized_object_class)
-    parameterized_object_class_assignment = Tag('ParameterizedObjectClassAssignment',
-                                                object_class_reference
-                                                + parameter_list
-                                                + assign
-                                                + object_class)
+    parameterized_object_class_assignment = (object_class_reference
+                                             + parameter_list
+                                             + assign
+                                             + object_class)
 
     # X.681: 10. Syntax list
     literal = (word | comma)
@@ -999,12 +999,11 @@ def create_grammar():
                  | object_defn
                  | object_from_object
                  | parameterized_object)
-    parameterized_object_assignment = Tag('ParameterizedObjectAssignment',
-                                          object_reference
-                                          + parameter_list
-                                          + defined_object_class
-                                          + Suppress(assign)
-                                          + object_)
+    parameterized_object_assignment = (object_reference
+                                       + parameter_list
+                                       + defined_object_class
+                                       + Suppress(assign)
+                                       + object_)
 
     # X.681: 12. Information object set definition and assignment
     object_set_elements = (object_
@@ -1019,12 +1018,11 @@ def create_grammar():
                        | (ellipsis + Optional(comma + additional_element_set_spec)))
     object_set <<= (left_brace + Group(object_set_spec) + right_brace)
     object_set.setName('"{"')
-    parameterized_object_set_assignment = Tag('ParameterizedObjectSetAssignment',
-                                              object_set_reference
-                                              + parameter_list
-                                              + defined_object_class
-                                              - assign
-                                              - object_set)
+    parameterized_object_set_assignment = (object_set_reference
+                                           + parameter_list
+                                           + defined_object_class
+                                           - assign
+                                           - object_set)
 
     # X.681: 13. Associated tables
 
@@ -1433,18 +1431,16 @@ def create_grammar():
                         + Regex(r'[A-Z][a-zA-Z0-9-]*'))
     value_reference <<= Regex(r'[a-z][a-zA-Z0-9-]*')
     value_set <<= NoMatch().setName('"valueSet" not implemented')
-    parameterized_type_assignment = Tag('ParameterizedTypeAssignment',
-                                        type_reference
-                                        + parameter_list
-                                        - assign
-                                        - tag
-                                        - type_)
-    parameterized_value_assignment = Tag('ParameterizedValueAssignment',
-                                         value_reference
-                                         + parameter_list
-                                         - Group(type_)
-                                         - Suppress(assign)
-                                         - value)
+    parameterized_type_assignment = (type_reference
+                                     + parameter_list
+                                     - assign
+                                     - tag
+                                     - type_)
+    parameterized_value_assignment = (value_reference
+                                      + parameter_list
+                                      - Group(type_)
+                                      - Suppress(assign)
+                                      - value)
 
     # X.680: 14. Notation to support references to ASN.1 components
 
@@ -1481,19 +1477,19 @@ def create_grammar():
                            + FROM
                            + global_module_reference)
     symbols_imported = OneOrMore(Group(symbols_from_module))
-    imports = Group(Optional(Suppress(IMPORTS)
-                             - symbols_imported
-                             - Suppress(semi_colon)))
+    imports = Optional(Suppress(IMPORTS)
+                       - symbols_imported
+                       - Suppress(semi_colon))
     symbols_exported = OneOrMore(symbol_list)
-    exports = Suppress(Group(Optional(EXPORTS
-                                      - (ALL
-                                         | (symbols_exported + semi_colon)))))
+    exports = Suppress(Optional(EXPORTS
+                                - (ALL
+                                   | (symbols_exported + semi_colon))))
     assignment = (parameterized_object_set_assignment
                   | parameterized_object_assignment
                   | parameterized_object_class_assignment
                   | parameterized_type_assignment
                   | parameterized_value_assignment)
-    assignment_list = Group(ZeroOrMore(assignment))
+    assignment_list = ZeroOrMore(assignment)
     module_body = (exports + imports + assignment_list)
     definitive_name_and_number_form = (identifier
                                        + Suppress(left_parenthesis)
@@ -1511,14 +1507,14 @@ def create_grammar():
                          + definitive_identifier)
     tag_default = Group(Optional((AUTOMATIC | EXPLICIT | IMPLICIT) + TAGS))
     extension_default = Group(Optional(EXTENSIBILITY_IMPLIED))
-    module_definition = Group(Group(module_identifier
-                                    - Suppress(DEFINITIONS)
-                                    + tag_default
-                                    + extension_default
-                                    - Suppress(assign)
-                                    - Suppress(BEGIN))
-                              + Group(module_body)
-                              - Suppress(END))
+    module_definition = (Group(module_identifier
+                               - Suppress(DEFINITIONS)
+                               + tag_default
+                               + extension_default
+                               - Suppress(assign)
+                               - Suppress(BEGIN))
+                         + Group(module_body)
+                         - Suppress(END))
 
     # The whole specification.
     specification = OneOrMore(module_definition) + StringEnd()
@@ -1533,6 +1529,21 @@ def create_grammar():
     size_constraint.setParseAction(convert_size_constraint)
     permitted_alphabet.setParseAction(convert_permitted_alphabet)
     constraint.setParseAction(convert_constraint)
+    module_body.setParseAction(convert_module_body)
+    specification.setParseAction(convert_specification)
+    module_definition.setParseAction(convert_module_definition)
+    assignment_list.setParseAction(convert_assignment_list)
+    imports.setParseAction(convert_imports)
+    parameterized_object_set_assignment.setParseAction(
+        convert_parameterized_object_set_assignment)
+    parameterized_object_assignment.setParseAction(
+        convert_parameterized_object_assignment)
+    parameterized_object_class_assignment.setParseAction(
+        convert_parameterized_object_class_assignment)
+    parameterized_type_assignment.setParseAction(
+        convert_parameterized_type_assignment)
+    parameterized_value_assignment.setParseAction(
+        convert_parameterized_value_assignment)
 
     return specification
 
@@ -1566,7 +1577,7 @@ def parse_string(string):
             e.markInputline(),
             e.msg))
 
-    return convert_specification(tokens)
+    return tokens[0]
 
 
 def parse_files(filenames):

@@ -5,7 +5,6 @@ encode and decode types.
 
 from .parser import parse_files
 from .parser import parse_string
-from .parser import convert_parameterized_type_assignment
 from .codecs import ber
 from .codecs import der
 from .codecs import jer
@@ -90,8 +89,8 @@ def _compile_any_defined_by_type(type_, choices):
     type_['choices'] = {}
 
     for key, value in choices.items():
-        tokens = ['Dummy', '::=', [], [value, []], []]
-        type_['choices'][key] = convert_parameterized_type_assignment(tokens)
+        specification = 'A DEFINITIONS ::= BEGIN B ::= {} END'.format(value)
+        type_['choices'][key] = parse_string(specification)['A']['types']['B']
 
 
 def _compile_any_defined_by_choices(specification,
