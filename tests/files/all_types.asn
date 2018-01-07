@@ -117,6 +117,22 @@ Sequence8 ::= SEQUENCE {
   ...
 }
 
+Sequence9 ::= SEQUENCE {
+    a INTEGER,
+    b BOOLEAN OPTIONAL
+}
+
+Sequence10 ::= SEQUENCE {
+    c Sequence9 (WITH COMPONENTS {..., b ABSENT}),
+    d Sequence9,
+    ...
+}
+
+Sequence11 ::= Sequence10 (WITH COMPONENTS {
+    c (WITH COMPONENTS {a (32)}) OPTIONAL,
+    d
+})
+
 Set ::= SET {}
 
 Set2 ::= SET {

@@ -278,7 +278,7 @@ def convert_sequence_of_type(_s, _l, tokens):
 
     if size:
         converted_type['size'] = size
-    
+
     tag = convert_tag(tokens[3])
 
     if tag:
@@ -348,7 +348,7 @@ def convert_keyword_type(_s, _l, tokens):
 
 
 def convert_print(_s, _l, tokens):
-    print('type', tokens)
+    print('convert_print', tokens)
 
 
 def convert_object_identifier_type(_s, _l, _tokens):
@@ -1040,7 +1040,8 @@ def create_grammar():
     pattern_constraint = (PATTERN + value)
     value_constraint = constraint
     presence_constraint = (PRESENT | ABSENT | OPTIONAL)
-    component_constraint = Optional(value_constraint | presence_constraint)
+    component_constraint = (Optional(value_constraint)
+                            + Optional(presence_constraint))
     named_constraint = (identifier + component_constraint)
     type_constraints = delimitedList(named_constraint)
     full_specification = (left_brace + type_constraints + right_brace)
