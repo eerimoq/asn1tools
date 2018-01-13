@@ -133,6 +133,11 @@ Sequence11 ::= Sequence10 (WITH COMPONENTS {
     d
 })
 
+-- Recursive
+Sequence12 ::= SEQUENCE {
+    a SEQUENCE OF Sequence12 OPTIONAL
+}
+
 Set ::= SET {}
 
 Set2 ::= SET {

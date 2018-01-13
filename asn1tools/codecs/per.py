@@ -725,6 +725,27 @@ class ExplicitTag(Type):
         return 'Tag()'
 
 
+class Recursive(Type):
+
+    def __init__(self, name, type_name, module_name):
+        super(Recursive, self).__init__(name, 'RECURSIVE')
+        self.type_name = type_name
+        self.module_name = module_name
+
+    def encode(self, _data, _encoder):
+        raise NotImplementedError(
+            "Recursive types are not yet implemented (type '{}').".format(
+                self.type_name))
+
+    def decode(self, _decoder):
+        raise NotImplementedError(
+            "Recursive types are not yet implemented (type '{}').".format(
+                self.type_name))
+
+    def __repr__(self):
+        return 'Recursive({})'.format(self.name)
+
+
 class CompiledType(object):
 
     def __init__(self, type_):
@@ -763,80 +784,89 @@ class Compiler(compiler.Compiler):
             type_descriptor = self.convert_class_member_type(type_descriptor,
                                                              module_name)
 
-        if type_descriptor['type'] == 'SEQUENCE':
+        type_name = type_descriptor['type']
+
+        if type_name == 'SEQUENCE':
             compiled = Sequence(
                 name,
                 self.compile_members(type_descriptor['members'],
                                      module_name))
-        elif type_descriptor['type'] == 'SEQUENCE OF':
+        elif type_name == 'SEQUENCE OF':
             compiled = SequenceOf(name,
                                   self.compile_type('',
                                                     type_descriptor['element'],
                                                     module_name))
-        elif type_descriptor['type'] == 'SET':
+        elif type_name == 'SET':
             compiled = Set(
                 name,
                 self.compile_members(type_descriptor['members'],
                                      module_name))
-        elif type_descriptor['type'] == 'SET OF':
+        elif type_name == 'SET OF':
             compiled = SetOf(name,
                              self.compile_type('',
                                                type_descriptor['element'],
                                                module_name))
-        elif type_descriptor['type'] == 'CHOICE':
+        elif type_name == 'CHOICE':
             compiled = Choice(
                 name,
                 self.compile_members(type_descriptor['members'],
                                      module_name))
-        elif type_descriptor['type'] == 'INTEGER':
+        elif type_name == 'INTEGER':
             compiled = Integer(name)
-        elif type_descriptor['type'] == 'REAL':
+        elif type_name == 'REAL':
             compiled = Real(name)
-        elif type_descriptor['type'] == 'ENUMERATED':
+        elif type_name == 'ENUMERATED':
             compiled = Enumerated(name, type_descriptor['values'])
-        elif type_descriptor['type'] == 'BOOLEAN':
+        elif type_name == 'BOOLEAN':
             compiled = Boolean(name)
-        elif type_descriptor['type'] == 'OBJECT IDENTIFIER':
+        elif type_name == 'OBJECT IDENTIFIER':
             compiled = ObjectIdentifier(name)
-        elif type_descriptor['type'] == 'OCTET STRING':
+        elif type_name == 'OCTET STRING':
             compiled = OctetString(name)
-        elif type_descriptor['type'] == 'TeletexString':
+        elif type_name == 'TeletexString':
             compiled = TeletexString(name)
-        elif type_descriptor['type'] == 'NumericString':
+        elif type_name == 'NumericString':
             compiled = NumericString(name)
-        elif type_descriptor['type'] == 'PrintableString':
+        elif type_name == 'PrintableString':
             compiled = PrintableString(name)
-        elif type_descriptor['type'] == 'IA5String':
+        elif type_name == 'IA5String':
             compiled = IA5String(name)
-        elif type_descriptor['type'] == 'VisibleString':
+        elif type_name == 'VisibleString':
             compiled = VisibleString(name)
-        elif type_descriptor['type'] == 'UTF8String':
+        elif type_name == 'UTF8String':
             compiled = UTF8String(name)
-        elif type_descriptor['type'] == 'BMPString':
+        elif type_name == 'BMPString':
             compiled = BMPString(name)
-        elif type_descriptor['type'] == 'UTCTime':
+        elif type_name == 'UTCTime':
             compiled = UTCTime(name)
-        elif type_descriptor['type'] == 'UniversalString':
+        elif type_name == 'UniversalString':
             compiled = UniversalString(name)
-        elif type_descriptor['type'] == 'GeneralizedTime':
+        elif type_name == 'GeneralizedTime':
             compiled = GeneralizedTime(name)
-        elif type_descriptor['type'] == 'BIT STRING':
+        elif type_name == 'BIT STRING':
             size = type_descriptor.get('size', None)
             compiled = BitString(name, size)
-        elif type_descriptor['type'] == 'ANY':
+        elif type_name == 'ANY':
             compiled = Any(name)
-        elif type_descriptor['type'] == 'ANY DEFINED BY':
+        elif type_name == 'ANY DEFINED BY':
             compiled = Any(name)
-        elif type_descriptor['type'] == 'NULL':
+        elif type_name == 'NULL':
             compiled = Null(name)
-        elif type_descriptor['type'] == 'OpenType':
+        elif type_name == 'OpenType':
             compiled = OpenType(name)
         else:
-            compiled = self.compile_type(
-                name,
-                *self.lookup_type_descriptor(
-                    type_descriptor['type'],
-                    module_name))
+            if type_name in self.types_backtrace:
+                compiled = Recursive(name,
+                                     type_name,
+                                     module_name)
+            else:
+                self.types_backtrace_push(type_name)
+                compiled = self.compile_type(
+                    name,
+                    *self.lookup_type_descriptor(
+                        type_name,
+                        module_name))
+                self.types_backtrace_pop()
 
         return compiled
 

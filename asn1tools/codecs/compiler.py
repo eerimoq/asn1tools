@@ -10,6 +10,17 @@ class Compiler(object):
 
     def __init__(self, specification):
         self._specification = specification
+        self._types_backtrace = []
+
+    def types_backtrace_push(self, type_name):
+        self._types_backtrace.append(type_name)
+
+    def types_backtrace_pop(self):
+        self._types_backtrace.pop()
+
+    @property
+    def types_backtrace(self):
+        return self._types_backtrace
 
     def get_size_range(self, type_descriptor, module_name):
         """Returns a tuple of the minimum and maximum values allowed according

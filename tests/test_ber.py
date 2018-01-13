@@ -795,47 +795,38 @@ class Asn1ToolsBerTest(unittest.TestCase):
         print('{} ms per decode call.'.format(round(ms_per_call, 3)))
 
     def test_rfc4511(self):
-        # Fails because the Filter type is recursive. This should be
-        # addressed in the compiler(s).
-        with self.assertRaises(RuntimeError) as cm:
-            rfc4511 = asn1tools.compile_dict(deepcopy(RFC4511))
-
-        self.assertTrue('maximum recursion depth exceeded' in str(cm.exception))
-
-        return
+        rfc4511 = asn1tools.compile_dict(deepcopy(RFC4511))
 
         # A search request message.
         decoded_message = {
-            'LDAPMessage': {
-                'messageID': 2,
-                'protocolOp': {
-                    'searchRequest': {
-                        'baseObject': b'',
-                        'scope': 'wholeSubtree',
-                        'derefAliases': 'neverDerefAliases',
-                        'sizeLimit': 0,
-                        'timeLimit': 0,
-                        'typesOnly': False,
-                        'filter': {
-                            'and': [
-                                {
+            'messageID': 2,
+            'protocolOp': {
+                'searchRequest': {
+                    'baseObject': b'',
+                    'scope': 'wholeSubtree',
+                    'derefAliases': 'neverDerefAliases',
+                    'sizeLimit': 0,
+                    'timeLimit': 0,
+                    'typesOnly': False,
+                    'filter': {
+                        'and': [
+                            {
+                                'substrings': {
+                                    'type': b'\x63\x6e',
                                     'substrings': {
-                                        'type': b'\x63\x6e',
-                                        'substrings': {
-                                            'any': b'\x66\x72\x65\x64'
-                                        }
-                                    }
-                                },
-                                {
-                                    'equalityMatch': {
-                                        'attributeDesc': b'\x64\x6e',
-                                        'assertionValue': b'\x6a\x6f\x65'
+                                        'any': b'\x66\x72\x65\x64'
                                     }
                                 }
-                            ]
-                        },
-                        'attributes': {
-                        }
+                            },
+                            {
+                                'equalityMatch': {
+                                    'attributeDesc': b'\x64\x6e',
+                                    'assertionValue': b'\x6a\x6f\x65'
+                                }
+                            }
+                        ]
+                    },
+                    'attributes': {
                     }
                 }
             }
@@ -848,21 +839,23 @@ class Asn1ToolsBerTest(unittest.TestCase):
             b'\x6a\x6f\x65\x30\x00'
         )
 
-        decoded = rfc4511.decode('LDAPMessage', encoded_message)
-        self.assertEqual(decoded, decoded_message)
-        encoded = rfc4511.encode('LDAPMessage', decoded_message)
-        self.assertEqual(encoded, encoded_message)
+        with self.assertRaises(NotImplementedError) as cm:
+            decoded = rfc4511.decode('LDAPMessage', encoded_message)
+            self.assertEqual(decoded, decoded_message)
+            encoded = rfc4511.encode('LDAPMessage', decoded_message)
+            self.assertEqual(encoded, encoded_message)
+
+        self.assertEqual(str(cm.exception),
+                         "Recursive types are not yet implemented (type 'Filter').")
 
         # A search result done message.
         decoded_message = {
-            'LDAPMessage': {
-                'messageID': 2,
-                'protocolOp': {
-                    'searchResDone': {
-                        'resultCode': 'noSuchObject',
-                        'matchedDN': b'',
-                        'diagnosticMessage': b''
-                    }
+            'messageID': 2,
+            'protocolOp': {
+                'searchResDone': {
+                    'resultCode': 'noSuchObject',
+                    'matchedDN': b'',
+                    'diagnosticMessage': b''
                 }
             }
         }
