@@ -340,6 +340,13 @@ class Asn1ToolsXerTest(unittest.TestCase):
             self.assertEqual(all_types.encode(type_, decoded), encoded)
             self.assertEqual(all_types.decode(type_, encoded), decoded)
 
+        with self.assertRaises(NotImplementedError):
+            all_types.encode('Sequence12', {'a': [{'a': []}]})
+
+        with self.assertRaises(NotImplementedError):
+            all_types.decode('Sequence12',
+                             b'<Sequence12><a><Sequence12/></a></Sequence12>')
+
     def test_repr_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
                                             'xer')

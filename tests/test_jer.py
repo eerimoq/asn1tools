@@ -431,11 +431,17 @@ class Asn1ToolsJerTest(unittest.TestCase):
         self.assertEqual(all_types.encode('Sequence', {}), b'{}')
         self.assertEqual(all_types.decode('Sequence', b'{}'), {})
 
-        self.assertEqual(all_types.encode('Set', {}), b'{}')
-        self.assertEqual(all_types.decode('Set', b'{}'), {})
-
         self.assertEqual(all_types.encode('Sequence2', {'a': 1}), b'{"a":1}')
         self.assertEqual(all_types.decode('Sequence2', b'{"a":1}'), {'a': 1})
+
+        with self.assertRaises(NotImplementedError):
+            all_types.encode('Sequence12', {'a': [{'a': []}]})
+
+        with self.assertRaises(NotImplementedError):
+            all_types.decode('Sequence12', b'{"a": [{"a": []}]}')
+
+        self.assertEqual(all_types.encode('Set', {}), b'{}')
+        self.assertEqual(all_types.decode('Set', b'{}'), {})
 
         self.assertEqual(all_types.encode('Set2', {'a': 2}), b'{"a":2}')
         self.assertEqual(all_types.decode('Set2', b'{"a":2}'), {'a': 2})

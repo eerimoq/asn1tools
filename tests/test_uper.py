@@ -695,6 +695,10 @@ class Asn1ToolsUPerTest(unittest.TestCase):
                 all_types.encode('Sequence7',
                                  {'a': True, 'b': True, 'c': True, 'd': True}),
                 b'\xe0\x70\x18\x00\x18\x00')
+
+        with self.assertRaises(NotImplementedError):
+            all_types.encode('Sequence12', {'a': [{'a': []}]})
+
         self.assertEqual(all_types.encode('Ia5string', 'bar'), b'\x03\xc5\x87\x90')
 
     def test_decode_all_types(self):
@@ -735,6 +739,10 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         self.assertEqual(all_types.decode('Sequence', b''), {})
         self.assertEqual(all_types.decode('Sequence2', b'\x00'), {'a': 0})
         self.assertEqual(all_types.decode('Sequence2', b'\x80\x80\x80'), {'a': 1})
+
+        with self.assertRaises(NotImplementedError):
+            all_types.decode('Sequence12', b'\x80\x80')
+
         self.assertEqual(all_types.decode('Ia5string', b'\x03\xc5\x87\x90'), 'bar')
 
     def test_repr_all_types(self):

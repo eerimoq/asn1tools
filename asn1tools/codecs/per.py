@@ -766,18 +766,10 @@ class CompiledType(object):
 
 class Compiler(compiler.Compiler):
 
-    def process(self):
-        return {
-            module_name: {
-                type_name: CompiledType(self.compile_type(
-                    type_name,
-                    type_descriptor,
-                    module_name))
-                for type_name, type_descriptor
-                in self._specification[module_name]['types'].items()
-            }
-            for module_name in self._specification
-        }
+    def process_type(self, type_name, type_descriptor, module_name):
+        return CompiledType(self.compile_type(type_name,
+                                              type_descriptor,
+                                              module_name))
 
     def compile_implicit_type(self, name, type_descriptor, module_name):
         if '.' in type_descriptor['type']:

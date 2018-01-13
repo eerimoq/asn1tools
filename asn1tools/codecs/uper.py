@@ -925,12 +925,12 @@ class Recursive(Type):
         self.type_name = type_name
         self.module_name = module_name
 
-    def encode(self, _data, _encoded):
+    def encode(self, _data, _encoder):
         raise NotImplementedError(
             "Recursive types are not yet implemented (type '{}').".format(
                 self.type_name))
 
-    def decode(self, _data, _offset):
+    def decode(self, _decoder):
         raise NotImplementedError(
             "Recursive types are not yet implemented (type '{}').".format(
                 self.type_name))
@@ -975,18 +975,10 @@ class CompiledType(object):
 
 class Compiler(compiler.Compiler):
 
-    def process(self):
-        return {
-            module_name: {
-                type_name: CompiledType(self.compile_type(
-                    type_name,
-                    type_descriptor,
-                    module_name))
-                for type_name, type_descriptor
-                in self._specification[module_name]['types'].items()
-            }
-            for module_name in self._specification
-        }
+    def process_type(self, type_name, type_descriptor, module_name):
+        return CompiledType(self.compile_type(type_name,
+                                              type_descriptor,
+                                              module_name))
 
     def compile_implicit_type(self, name, type_descriptor, module_name):
         type_name = type_descriptor['type']

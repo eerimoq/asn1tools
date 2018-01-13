@@ -1249,8 +1249,12 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(all_types.encode('Enumerated', 'one'), b'\x0a\x01\x01')
         self.assertEqual(all_types.encode('Utf8string', 'foo'), b'\x0c\x03foo')
         self.assertEqual(all_types.encode('Sequence', {}), b'\x30\x00')
-        self.assertEqual(all_types.encode('Set', {}), b'\x31\x00')
         self.assertEqual(all_types.encode('Sequence2', {'a': 1}), b'\x30\x03\x02\x01\x01')
+
+        with self.assertRaises(NotImplementedError):
+            all_types.encode('Sequence12', {'a': [{'a': []}]})
+
+        self.assertEqual(all_types.encode('Set', {}), b'\x31\x00')
         self.assertEqual(all_types.encode('Set2', {'a': 2}), b'\x31\x03\x02\x01\x02')
         self.assertEqual(all_types.encode('Numericstring', '123'), b'\x12\x03123')
         self.assertEqual(all_types.encode('Printablestring', 'foo'), b'\x13\x03foo')
@@ -1279,9 +1283,13 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(all_types.decode('Enumerated', b'\x0a\x01\x01'), 'one')
         self.assertEqual(all_types.decode('Utf8string', b'\x0c\x03foo'), 'foo')
         self.assertEqual(all_types.decode('Sequence', b'\x30\x00'), {})
-        self.assertEqual(all_types.decode('Set', b'\x31\x00'), {})
         self.assertEqual(all_types.decode('Sequence2', b'\x30\x00'), {'a': 0})
         self.assertEqual(all_types.decode('Sequence2', b'\x30\x03\x02\x01\x01'), {'a': 1})
+
+        with self.assertRaises(NotImplementedError):
+            all_types.decode('Sequence12', b'\x30\x04\xa0\x02\x30\x00')
+
+        self.assertEqual(all_types.decode('Set', b'\x31\x00'), {})
         self.assertEqual(all_types.decode('Set2', b'\x31\x00'), {'a': 1})
         self.assertEqual(all_types.decode('Set2', b'\x31\x03\x02\x01\x02'), {'a': 2})
         self.assertEqual(all_types.decode('Numericstring', b'\x12\x03123'), '123')

@@ -22,6 +22,29 @@ class Compiler(object):
     def types_backtrace(self):
         return self._types_backtrace
 
+    def process(self):
+        compiled = {}
+
+        for module_name in self._specification:
+            items = self._specification[module_name]['types'].items()
+
+            for type_name, type_descriptor in items:
+                self.types_backtrace_push(type_name)
+                compiled_type = self.process_type(type_name,
+                                                  type_descriptor,
+                                                  module_name)
+                self.types_backtrace_pop()
+
+                if module_name not in compiled:
+                    compiled[module_name] = {}
+
+                compiled[module_name][type_name] = compiled_type
+
+        return compiled
+
+    def process_type(self, type_name, type_descriptor, module_name):
+        return NotImplementedError()
+
     def get_size_range(self, type_descriptor, module_name):
         """Returns a tuple of the minimum and maximum values allowed according
         the the ASN.1 specification SIZE parameter. Returns (None,

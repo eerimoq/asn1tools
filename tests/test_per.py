@@ -317,6 +317,9 @@ class Asn1ToolsPerTest(unittest.TestCase):
         self.assertEqual(all_types.encode('Sequence', {}), b'')
 
         with self.assertRaises(NotImplementedError):
+            all_types.encode('Sequence12', {'a': [{'a': []}]})
+
+        with self.assertRaises(NotImplementedError):
             all_types.encode('Set', {})
 
         with self.assertRaises(NotImplementedError):
@@ -365,6 +368,9 @@ class Asn1ToolsPerTest(unittest.TestCase):
             all_types.decode('Utf8string', b'\x0c\x03foo')
 
         self.assertEqual(all_types.decode('Sequence', b''), {})
+
+        with self.assertRaises(NotImplementedError):
+            all_types.decode('Sequence12', b'\x80\x01\x00')
 
         with self.assertRaises(NotImplementedError):
             all_types.decode('Set', b'\x31\x00')
