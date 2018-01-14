@@ -2,6 +2,10 @@ AllTypes DEFINITIONS ::= BEGIN
 
 Boolean ::= BOOLEAN
 
+Boolean2 ::= BOOLEAN (FALSE)
+
+Boolean3 ::= BOOLEAN (TRUE, ...)
+
 boolean BOOLEAN ::= TRUE
 
 boolean2 BOOLEAN ::= FALSE
@@ -13,6 +17,8 @@ Integer2 ::= INTEGER (1..99)
 Integer3 ::= INTEGER (1..2 | 9..10)
 
 Integer4 ::= INTEGER ((1..2 | 4..5) ^ SIZE (4))
+
+Integer5 ::= INTEGER {a(-1), b(0), c(1)}
 
 Real ::= REAL
 
@@ -57,6 +63,8 @@ Null ::= NULL
 Objectidentifier ::= OBJECT IDENTIFIER
 
 Enumerated ::= ENUMERATED { one(1) }
+
+Enumerated2 ::= ENUMERATED { one(1), two(2), ..., three(3) }
 
 Utf8string ::= UTF8String
 
