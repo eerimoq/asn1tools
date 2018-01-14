@@ -88,6 +88,9 @@ class Specification(object):
     def decode_length(self, data):
         """Decode the length of given data `data`.
 
+        This method is only implemented for BER and DER codecs, as
+        other codecs lacks length information in the data.
+
         >>> foo.decode_length(b'\\x30\\x0e\\x02\\x01\\x01')
         16
 
