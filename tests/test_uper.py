@@ -1,7 +1,6 @@
 import unittest
 import asn1tools
 import sys
-from copy import deepcopy
 
 sys.path.append('tests/files')
 sys.path.append('tests/files/3gpp')

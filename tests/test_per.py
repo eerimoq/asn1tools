@@ -1,7 +1,6 @@
 import unittest
 import asn1tools
 import sys
-from copy import deepcopy
 
 sys.path.append('tests/files')
 sys.path.append('tests/files/3gpp')
@@ -236,7 +235,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
             self.assertEqual(decoded, decoded_message)
 
     def test_rrc_8_6_0(self):
-        rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0), 'per')
+        rrc = asn1tools.compile_dict(RRC_8_6_0, 'per')
 
         # Message 1.
         encoded = rrc.encode('PCCH-Message',
@@ -479,7 +478,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
 
     def test_s1ap_14_4_0(self):
         with self.assertRaises(TypeError):
-            s1ap = asn1tools.compile_dict(deepcopy(S1AP_14_4_0), 'per')
+            s1ap = asn1tools.compile_dict(S1AP_14_4_0, 'per')
 
             # Message 1.
             decoded_message = {
