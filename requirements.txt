@@ -1,1 +1,7 @@
 pyparsing
+codespell
+pyasn1
+asn1crypto
+libsnmp
+pyparsing
+pysnmp

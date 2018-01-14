@@ -109,6 +109,12 @@ Decode given encoded Question using the UPER codec.
 Contributing
 ============
 
+#. Install prerequisites.
+
+   .. code-block:: text
+
+      pip install -r requirements.txt
+
 #. Fork the repository.
 
 #. Implement the new feature or bug fix.

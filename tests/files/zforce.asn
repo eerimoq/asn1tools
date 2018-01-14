@@ -665,7 +665,7 @@ BEGIN
                 } OPTIONAL,
                 storageSize [4] INTEGER
                 -- Total size of the storage area.
-                -- Adressable space will always be 0 <= address < storageSize
+                -- Addressable space will always be 0 <= address < storageSize
 
 --		deleteLevel [5] INTEGER {
 --			byteLevel (0),
@@ -708,8 +708,8 @@ BEGIN
         }
 
         StatusNotification ::= [APPLICATION 27] SEQUENCE {
-                -- Hardware Error detected. This only signals that it has occured, not what it is.
-                -- That is read seperately.
+                -- Hardware Error detected. This only signals that it has occurred, not what it is.
+                -- That is read separately.
                 hardwareError [0] NULL OPTIONAL,
 
                 -- True if the device is receiving touches on a single axis. This can be due to
@@ -818,7 +818,7 @@ BEGIN
                 visibleLedDriver [2] VisibleLedDriverErrorEntry
         }
 
-        -- For a desciption of error types, check AsicInformation above.
+        -- For a description of error types, check AsicInformation above.
         AsicErrorEntry ::= SEQUENCE {
                 index [0] INTEGER OPTIONAL,
                 irLedIndex [1] INTEGER OPTIONAL,
