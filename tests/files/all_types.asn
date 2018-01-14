@@ -16,7 +16,7 @@ Integer2 ::= INTEGER (1..99)
 
 Integer3 ::= INTEGER (1..2 | 9..10)
 
-Integer4 ::= INTEGER ((1..2 | 4..5) ^ SIZE (4))
+Integer4 ::= INTEGER ((1..2 UNION 4..5) ^ SIZE (4))
 
 Integer5 ::= INTEGER {a(-1), b(0), c(1)}
 

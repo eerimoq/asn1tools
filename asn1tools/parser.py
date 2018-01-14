@@ -805,15 +805,18 @@ def create_grammar():
     number_form = Forward().setName('numberForm')
     definitive_number_form = Forward().setName('definitiveNumberForm')
     version_number = Forward()
+    union_mark = Forward()
 
     value_field_reference = Combine(ampersand + value_reference)
     type_field_reference = Combine(ampersand + type_reference)
 
     range_ = (word + range_separator + word)
 
+    # ToDo: Remove size and size_paren as they are a workaround for
+    # SEQUENCE/SET OF.
     size = Group(SIZE
                  + Group(Suppress(left_parenthesis)
-                         + Group(delimitedList(range_ | word, delim=pipe))
+                         + Group(delimitedList(range_ | word, delim=union_mark))
                          + Suppress(right_parenthesis)))
 
     size_paren = (Suppress(Optional(left_parenthesis))
@@ -1073,7 +1076,7 @@ def create_grammar():
                         | type_constraint)
 
     # X.680: 46. Element set specification
-    union_mark = (pipe | UNION)
+    union_mark <<= (pipe | UNION)
     intersection_mark = (caret | INTERSECTION)
     elements = Group(subtype_elements
                      | object_set_elements

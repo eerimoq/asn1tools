@@ -633,4 +633,142 @@ X680 DEFINITIONS AUTOMATIC TAGS ::= BEGIN
 
     Second-half-E-4 ::= Months-E-4 ( Third-quarter-E-4 | Fourth-quarter-E-4 )
 
+    -- F.2.6
+
+    -- ToDo: Fix.
+    -- VanillaBMPString ::= BMPString (FROM (ALL EXCEPT ({0,0,0,0}..{0,0,0,31} |
+    --                                           {0,0,0,128}..{0,0,0,159})))
+
+    C0-F-2-6 ::= BMPString (FROM ({0,0,0,0} .. {0,0,0,31})) -- C0 control functions
+
+    C1-F-2-6 ::= BMPString (FROM ({0,0,0,128} .. {0,0,0,159})) -- C1 control functions
+
+    -- ToDo: Fix.
+    -- VanillaBMPString ::= BMPString (FROM (ALL EXCEPT (C0 | C1)))
+
+    -- G.1.4
+
+    A-G-1-4-1 ::= SEQUENCE {
+        a INTEGER,
+        ...
+    }
+
+    A-G-1-4-2 ::= SEQUENCE {
+        a INTEGER,
+        ...,
+        b BOOLEAN,
+        c INTEGER
+    }
+
+    A-G-1-4-3 ::= SEQUENCE {
+        a INTEGER,
+        ...,
+        b BOOLEAN,
+        c INTEGER,
+        d SEQUENCE {
+            e INTEGER,
+            ...,
+            ...,
+            f IA5String
+        }
+    }
+
+    A-G-1-4-4 ::= SEQUENCE {
+        a INTEGER,
+        ...,
+        b BOOLEAN,
+        c INTEGER,
+        d SEQUENCE {
+            e INTEGER,
+            ...,
+            g BOOLEAN OPTIONAL,
+            h BMPString,
+            ...,
+            f IA5String
+        }
+    }
+
+    -- G.1.7
+
+    A-G-1-7-1 ::= SEQUENCE {
+        a INTEGER,
+        ...
+    }
+
+    A-G-1-7-2 ::= SEQUENCE {
+        a INTEGER,
+        ...,
+        [[
+        b BOOLEAN,
+        c INTEGER
+        ]]
+    }
+
+    A-G-1-7-3 ::= SEQUENCE {
+        a INTEGER,
+        ...,
+        [[
+        b BOOLEAN,
+        c INTEGER
+        ]],
+        d SEQUENCE {
+            e INTEGER,
+            ...,
+            ...,
+            f IA5String
+        }
+    }
+
+    A-G-1-7-4 ::= SEQUENCE {
+        a INTEGER,
+        ...,
+        [[
+        b BOOLEAN,
+        c INTEGER
+        ]],
+        d SEQUENCE {
+            e INTEGER,
+            ...,
+            [[
+            g BOOLEAN OPTIONAL,
+            h BMPString
+            ]],
+            ...,
+            f IA5String
+        }
+    }
+
+    -- G.4.1.2
+
+    A-G-4-1-2 ::= INTEGER (MIN .. MAX, ... , 1..10)
+
+    -- G.4.2.3
+
+    A1-G-4-2-3 ::= INTEGER (1..32, ... , 33..128)
+        -- A1 is extensible, and contains values 1 to 128 with 1 to 32
+        -- in the root and 33 to 128 as extension additions.
+
+    B1-G-4-2-3 ::= A1-G-4-2-3 (1..128)
+        -- or equivalently
+
+    -- B1 ::= INTEGER (1..32, ... , 33..128) (1..128)
+    --     \-\- These are illegal, as 128 is not in the parent, which
+    --     \-\- lost its extension additions when it was further constrained
+
+    B2-G-4-2-3 ::= A1-G-4-2-3 (1..16)
+        -- This is legal. B2 is not extensible, and contains 1 to 16.
+
+    -- A2 ::= INTEGER (1..32) (MIN .. 63)
+    --     \-\- MIN is 1, and 63 is illegal
+
+    A3-G-4-2-3 ::= INTEGER ( (1..32) INTERSECTION (MIN..63) )
+        -- This is legal. MIN is minus infinity and A3 contains 1 to 32
+
+    -- G.4.3.4
+
+    -- ToDo: Fix.
+    -- A ::= INTEGER ((1..256, ... , B) INTERSECTION (1..256))
+    --     \-\- A always contains (only) the values 1..256, no matter what values
+    --     \-\- B contains, but is nonetheless formally extensible
+
 END
