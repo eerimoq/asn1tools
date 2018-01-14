@@ -245,7 +245,7 @@ class Boolean(Type):
                     length,
                     offset))
 
-        return (data[offset] != 0), offset + length
+        return bool(data[offset]), offset + length
 
     def __repr__(self):
         return 'Boolean({})'.format(self.name)
