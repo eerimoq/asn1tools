@@ -44,6 +44,15 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             str(cm.exception),
             "Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
 
+    def test_decode_length(self):
+        foo = asn1tools.compile_files('tests/files/foo.asn', 'uper')
+
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode_length(b'')
+
+        self.assertEqual(str(cm.exception),
+                         ': Decode length not supported for this codec.')
+
     def test_x691_a1(self):
         a1 = asn1tools.compile_files('tests/files/x691_a1.asn', 'uper')
 

@@ -5,7 +5,8 @@
 import logging
 from xml.etree import ElementTree
 
-from . import EncodeError, DecodeError
+from . import EncodeError
+from . import DecodeError
 from . import compiler
 
 
@@ -685,3 +686,7 @@ class Compiler(compiler.Compiler):
 
 def compile_dict(specification):
     return Compiler(specification).process()
+
+
+def decode_length(_data):
+    raise DecodeError('Decode length not supported for this codec.')

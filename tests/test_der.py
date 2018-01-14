@@ -95,6 +95,34 @@ class Asn1ToolsDerTest(unittest.TestCase):
                          'SequenceOf(SequenceOf, Integer())')
         self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
 
+    def test_decode_length(self):
+        foo = asn1tools.compile_files('tests/files/foo.asn', 'der')
+
+        # The length can be decoded.
+        datas = [
+            (b'0\x0e\x02\x01\x01\x16\x09Is 1+1=3?', 16),
+            (b'0\x10\x02\x02\x01\x16\x09Is 1+10=14?', 18),
+            (b'0\x0d', 15),
+            (b'0\x84\x00\x00\x00\xb8', 190)
+        ]
+
+        for encoded_message, decoded_length in datas:
+            length = foo.decode_length(encoded_message)
+            self.assertEqual(length, decoded_length)
+
+        # The length cannot be decoded.
+        datas = [
+            b'0',
+            b'',
+            b'0\x84\x00\x00\x00'
+        ]
+
+        for encoded_message in datas:
+            with self.assertRaises(asn1tools.DecodeError) as cm:
+                foo.decode_length(encoded_message)
+
+            self.assertEqual(str(cm.exception), ': Not enough data.')
+
 
 if __name__ == '__main__':
     unittest.main()

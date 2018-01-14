@@ -25,8 +25,9 @@ class Specification(object):
 
     """
 
-    def __init__(self, modules):
+    def __init__(self, modules, decode_length):
         self._modules = modules
+        self._decode_length = decode_length
         self._types = {}
 
         try:
@@ -83,6 +84,16 @@ class Specification(object):
         """
 
         return self._types[name].decode(data)
+
+    def decode_length(self, data):
+        """Decode the length of given data `data`.
+
+        >>> foo.decode_length(b'\\x30\\x0e\\x02\\x01\\x01')
+        16
+
+        """
+
+        return self._decode_length(data)
 
 
 def _compile_any_defined_by_type(type_, choices):
@@ -144,7 +155,8 @@ def compile_dict(specification, codec='ber', any_defined_by_choices=None):
         _compile_any_defined_by_choices(specification,
                                         any_defined_by_choices)
 
-    return Specification(codec.compile_dict(specification))
+    return Specification(codec.compile_dict(specification),
+                         codec.decode_length)
 
 
 def compile_string(string, codec='ber', any_defined_by_choices=None):

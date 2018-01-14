@@ -2,7 +2,9 @@
 
 """
 
-from . import EncodeError, DecodeError, DecodeTagError
+from . import EncodeError
+from . import DecodeError
+from . import DecodeTagError
 from . import compiler
 
 
@@ -78,7 +80,12 @@ def decode_length_definite(encoded, offset):
         return length, offset
     else:
         number_of_bytes = (length & 0x7f)
-        length = decode_integer(encoded[offset:number_of_bytes + offset])
+        encoded = encoded[offset:number_of_bytes + offset]
+
+        if len(encoded) != number_of_bytes:
+            raise DecodeError('Not enough data.')
+
+        length = decode_integer(encoded)
 
         return length, offset + number_of_bytes
 
@@ -1116,3 +1123,10 @@ class Compiler(compiler.Compiler):
 
 def compile_dict(specification):
     return Compiler(specification).process()
+
+
+def decode_length(data):
+    try:
+        return sum(decode_length_definite(bytearray(data), 1))
+    except IndexError:
+        raise DecodeError('Not enough data.')

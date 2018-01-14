@@ -53,6 +53,15 @@ class Asn1ToolsJerTest(unittest.TestCase):
             str(cm.exception),
             "Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
 
+    def test_decode_length(self):
+        foo = asn1tools.compile_files('tests/files/foo.asn', 'jer')
+
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode_length(b'')
+
+        self.assertEqual(str(cm.exception),
+                         ': Decode length not supported for this codec.')
+
     def test_rrc_8_6_0(self):
         rrc = asn1tools.compile_dict(RRC_8_6_0, 'jer')
 
