@@ -336,9 +336,9 @@ class Asn1ToolsXerTest(unittest.TestCase):
             ('SetOf',            [], b'<SetOf />')
         ]
 
-        for type_, decoded, encoded in datas:
-            self.assertEqual(all_types.encode(type_, decoded), encoded)
-            self.assertEqual(all_types.decode(type_, encoded), decoded)
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(all_types.encode(type_name, decoded), encoded)
+            self.assertEqual(all_types.decode(type_name, encoded), decoded)
 
         with self.assertRaises(NotImplementedError):
             all_types.encode('Sequence12', {'a': [{'a': []}]})

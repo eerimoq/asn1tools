@@ -375,32 +375,34 @@ class Asn1ToolsBerTest(unittest.TestCase):
         }
 
         encoded_message = (
-            b'\x30\x82\x01\x96\xa0\x82\x01\x92\xa0\x82\x01\x8e\xa0\x82\x01\x8a'
-            b'\xa0\x82\x01\x86\xa0\x82\x01\x82\xa0\x82\x01\x7e\xa0\x81\xdd\xa0'
-            b'\x0f\x80\x01\x01\xa2\x0a\x80\x01\x0f\x81\x01\x05\x82\x02\x03\xf0'
-            b'\xa1\x81\xad\xa0\x26\xa0\x0e\x80\x01\x05\xa1\x09\x80\x01\x06\x81'
-            b'\x01\x01\x82\x01\x00\xa1\x06\x80\x01\x00\x81\x01\x09\xa2\x09\x80'
-            b'\x01\x05\x81\x01\x04\x82\x01\x05\x83\x01\x08\xa1\x03\x80\x01\x00'
-            b'\xa2\x06\x80\x01\x03\x81\x01\x01\xa3\x12\x80\x02\x03\x44\xa1\x0c'
-            b'\x80\x01\x21\x81\x01\x00\x82\x01\x0a\x83\x01\x40\xa4\x06\x80\x01'
-            b'\xc4\x81\x01\x02\xa5\x1c\xa0\x0c\x80\x01\x01\x81\x01\x00\x82\x01'
-            b'\x0a\x83\x01\x00\xa1\x0c\x80\x01\x01\x81\x01\x16\x82\x01\x00\x83'
-            b'\x01\x05\xa6\x0d\x80\x01\x00\x81\x01\x62\x82\x01\x04\x83\x02\x07'
-            b'\xff\xa7\x0b\xa1\x09\x80\x01\x00\x81\x01\x04\x82\x01\x01\xa8\x1d'
-            b'\x80\x01\x82\x81\x01\x00\x82\x01\x81\xa3\x0f\x80\x01\x00\x81\x01'
-            b'\x00\x82\x01\x01\x83\x01\x00\x84\x01\x01\x84\x01\xff\x89\x01\x00'
-            b'\xa2\x12\x80\x01\x00\x81\x01\x01\x82\x01\x01\x83\x01\x01\x84\x01'
-            b'\x06\x85\x01\x01\xa3\x03\x82\x01\x03\x85\x01\x00\xa1\x37\xa0\x1b'
-            b'\x80\x01\x00\xa1\x16\xa0\x0c\x80\x01\x03\x81\x01\x03\x82\x01\x01'
-            b'\x83\x01\x10\xa1\x06\x80\x01\x00\x81\x01\x01\xa1\x06\x81\x01\x07'
-            b'\x82\x01\x03\xa2\x10\x80\x01\xdf\x82\x01\x00\x84\x01\x00\x85\x02'
-            b'\x06\x80\x86\x01\x04\xa2\x00\xa3\x20\xa0\x1e\x30\x1c\x80\x01\x01'
-            b'\x81\x01\xd3\x83\x01\x00\x85\x01\x1f\x86\x01\x1d\x87\x01\x00\x88'
-            b'\x01\x01\x8a\x02\x06\x00\x8b\x01\x0f\xa4\x03\x82\x01\x03\xa5\x03'
-            b'\x80\x01\x03\xa6\x0b\xa3\x09\x81\x07\x06\x01\x23\x45\x67\x89\x00'
-            b'\xa7\x03\x80\x01\x34\xa8\x0e\x80\x03\x00\x23\x34\x81\x03\x00\x12'
-            b'\x34\x82\x02\x32\x12\xa9\x13\x80\x03\x00\x67\x88\x81\x03\x00\x54'
-            b'\x35\x82\x01\x00\x83\x01\x13\x84\x01\x12'
+            b'\x30\x82\x01\x93\xa0\x82\x01\x8f\xa0\x82\x01\x8b\xa0\x82\x01'
+            b'\x87\xa0\x82\x01\x83\xa0\x82\x01\x7f\xa0\x82\x01\x7b\xa0\x81'
+            b'\xdd\xa0\x0f\x80\x01\x01\xa2\x0a\x80\x01\x0f\x81\x01\x05\x82'
+            b'\x02\x03\xf0\xa1\x81\xad\xa0\x26\xa0\x0e\x80\x01\x05\xa1\x09'
+            b'\x80\x01\x06\x81\x01\x01\x82\x01\x00\xa1\x06\x80\x01\x00\x81'
+            b'\x01\x09\xa2\x09\x80\x01\x05\x81\x01\x04\x82\x01\x05\x83\x01'
+            b'\x08\xa1\x03\x80\x01\x00\xa2\x06\x80\x01\x03\x81\x01\x01\xa3'
+            b'\x12\x80\x02\x03\x44\xa1\x0c\x80\x01\x21\x81\x01\x00\x82\x01'
+            b'\x0a\x83\x01\x40\xa4\x06\x80\x01\xc4\x81\x01\x02\xa5\x1c\xa0'
+            b'\x0c\x80\x01\x01\x81\x01\x00\x82\x01\x0a\x83\x01\x00\xa1\x0c'
+            b'\x80\x01\x01\x81\x01\x16\x82\x01\x00\x83\x01\x05\xa6\x0d\x80'
+            b'\x01\x00\x81\x01\x62\x82\x01\x04\x83\x02\x07\xff\xa7\x0b\xa1'
+            b'\x09\x80\x01\x00\x81\x01\x04\x82\x01\x01\xa8\x1d\x80\x01\x82'
+            b'\x81\x01\x00\x82\x01\x81\xa3\x0f\x80\x01\x00\x81\x01\x00\x82'
+            b'\x01\x01\x83\x01\x00\x84\x01\x01\x84\x01\xff\x89\x01\x00\xa2'
+            b'\x12\x80\x01\x00\x81\x01\x01\x82\x01\x01\x83\x01\x01\x84\x01'
+            b'\x06\x85\x01\x01\xa3\x03\x82\x01\x03\x85\x01\x00\xa1\x37\xa0'
+            b'\x1b\x80\x01\x00\xa1\x16\xa0\x0c\x80\x01\x03\x81\x01\x03\x82'
+            b'\x01\x01\x83\x01\x10\xa1\x06\x80\x01\x00\x81\x01\x01\xa1\x06'
+            b'\x81\x01\x07\x82\x01\x03\xa2\x10\x80\x01\xdf\x82\x01\x00\x84'
+            b'\x01\x00\x85\x02\x06\x80\x86\x01\x04\xa2\x00\xa3\x1d\xa0\x1b'
+            b'\x30\x19\x80\x01\x01\x81\x01\xd3\x83\x01\x00\x85\x01\x1f\x86'
+            b'\x01\x1d\x87\x01\x00\x88\x01\x01\x8a\x02\x06\x00\xa4\x03\x82'
+            b'\x01\x03\xa5\x03\x80\x01\x03\xa6\x0b\xa3\x09\x81\x07\x06\x01'
+            b'\x23\x45\x67\x89\x00\xa7\x03\x80\x01\x34\xa8\x0e\x80\x03\x00'
+            b'\x23\x34\x81\x03\x00\x12\x34\x82\x02\x32\x12\xa9\x13\x80\x03'
+            b'\x00\x67\x88\x81\x03\x00\x54\x35\x82\x01\x00\x83\x01\x13\x84'
+            b'\x01\x12'
         )
 
         encoded = rrc.encode('BCCH-DL-SCH-Message', decoded_message)
@@ -1224,90 +1226,62 @@ class Asn1ToolsBerTest(unittest.TestCase):
                          'tbsCertificate: issuer: expected SEQUENCE with tag '
                          '0x30 but got 0x31 at offset 150')
 
-    def test_encode_all_types(self):
+    def test_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn')
 
-        self.assertEqual(all_types.encode('Boolean', True), b'\x01\x01\x01')
-        self.assertEqual(all_types.encode('Integer', 32768), b'\x02\x03\x00\x80\x00')
-        self.assertEqual(all_types.encode('Integer', 32767), b'\x02\x02\x7f\xff')
-        self.assertEqual(all_types.encode('Integer', 256), b'\x02\x02\x01\x00')
-        self.assertEqual(all_types.encode('Integer', 255), b'\x02\x02\x00\xff')
-        self.assertEqual(all_types.encode('Integer', 128), b'\x02\x02\x00\x80')
-        self.assertEqual(all_types.encode('Integer', 127), b'\x02\x01\x7f')
-        self.assertEqual(all_types.encode('Integer', 1), b'\x02\x01\x01')
-        self.assertEqual(all_types.encode('Integer', 0), b'\x02\x01\x00')
-        self.assertEqual(all_types.encode('Integer', -1), b'\x02\x01\xff')
-        self.assertEqual(all_types.encode('Integer', -128), b'\x02\x01\x80')
-        self.assertEqual(all_types.encode('Integer', -129), b'\x02\x02\xff\x7f')
-        self.assertEqual(all_types.encode('Integer', -256), b'\x02\x02\xff\x00')
-        self.assertEqual(all_types.encode('Integer', -32768), b'\x02\x02\x80\x00')
-        self.assertEqual(all_types.encode('Integer', -32769), b'\x02\x03\xff\x7f\xff')
-        self.assertEqual(all_types.encode('Bitstring', (b'\x80', 1)), b'\x03\x02\x07\x80')
-        self.assertEqual(all_types.encode('Octetstring', b'\x00'), b'\x04\x01\x00')
-        self.assertEqual(all_types.encode('Null', None), b'\x05\x00')
-        self.assertEqual(all_types.encode('Objectidentifier', '1.2'), b'\x06\x01\x2a')
-        self.assertEqual(all_types.encode('Enumerated', 'one'), b'\x0a\x01\x01')
-        self.assertEqual(all_types.encode('Utf8string', 'foo'), b'\x0c\x03foo')
-        self.assertEqual(all_types.encode('Sequence', {}), b'\x30\x00')
-        self.assertEqual(all_types.encode('Sequence2', {'a': 1}), b'\x30\x03\x02\x01\x01')
+        datas = [
+            ('Boolean',                True, b'\x01\x01\x01'),
+            ('Integer',                32768, b'\x02\x03\x00\x80\x00'),
+            ('Integer',                32767, b'\x02\x02\x7f\xff'),
+            ('Integer',                  256, b'\x02\x02\x01\x00'),
+            ('Integer',                  255, b'\x02\x02\x00\xff'),
+            ('Integer',                  128, b'\x02\x02\x00\x80'),
+            ('Integer',                  127, b'\x02\x01\x7f'),
+            ('Integer',                    1, b'\x02\x01\x01'),
+            ('Integer',                    0, b'\x02\x01\x00'),
+            ('Integer',                   -1, b'\x02\x01\xff'),
+            ('Integer',                 -128, b'\x02\x01\x80'),
+            ('Integer',                 -129, b'\x02\x02\xff\x7f'),
+            ('Integer',                 -256, b'\x02\x02\xff\x00'),
+            ('Integer',               -32768, b'\x02\x02\x80\x00'),
+            ('Integer',               -32769, b'\x02\x03\xff\x7f\xff'),
+            ('Bitstring',       (b'\x80', 1), b'\x03\x02\x07\x80'),
+            ('Octetstring',          b'\x00', b'\x04\x01\x00'),
+            ('Null',                    None, b'\x05\x00'),
+            ('Objectidentifier',       '1.2', b'\x06\x01\x2a'),
+            ('Enumerated',             'one', b'\x0a\x01\x01'),
+            ('Utf8string',             'foo', b'\x0c\x03foo'),
+            ('Sequence',                  {}, b'\x30\x00'),
+            ('Sequence2',           {'a': 0}, b'\x30\x00'),
+            ('Sequence2',           {'a': 1}, b'\x30\x03\x02\x01\x01'),
+            ('Set',                       {}, b'\x31\x00'),
+            ('Set2',                {'a': 1}, b'\x31\x00'),
+            ('Set2',                {'a': 2}, b'\x31\x03\x02\x01\x02'),
+            ('Numericstring',          '123', b'\x12\x03123'),
+            ('Printablestring',        'foo', b'\x13\x03foo'),
+            ('Ia5string',              'bar', b'\x16\x03bar'),
+            ('Universalstring',        'bar', b'\x1c\x03bar'),
+            ('Visiblestring',          'bar', b'\x1a\x03bar'),
+            ('Bmpstring',             b'bar', b'\x1e\x03bar'),
+            ('Teletexstring',         b'fum', b'\x14\x03fum'),
+            ('Utctime',       '010203040506', b'\x17\x0d010203040506Z'),
+            ('GeneralizedTime1',
+             '20001231235959.999',
+             b'\x18\x12\x32\x30\x30\x30\x31\x32\x33\x31\x32\x33\x35\x39'
+             b'\x35\x39\x2e\x39\x39\x39'),
+            ('SequenceOf',                [], b'0\x00'),
+            ('SetOf',                     [], b'1\x00')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(all_types.encode(type_name, decoded), encoded)
+            self.assertEqual(all_types.decode(type_name, encoded), decoded)
 
         with self.assertRaises(NotImplementedError):
             all_types.encode('Sequence12', {'a': [{'a': []}]})
 
-        self.assertEqual(all_types.encode('Set', {}), b'\x31\x00')
-        self.assertEqual(all_types.encode('Set2', {'a': 2}), b'\x31\x03\x02\x01\x02')
-        self.assertEqual(all_types.encode('Numericstring', '123'), b'\x12\x03123')
-        self.assertEqual(all_types.encode('Printablestring', 'foo'), b'\x13\x03foo')
-        self.assertEqual(all_types.encode('Ia5string', 'bar'), b'\x16\x03bar')
-        self.assertEqual(all_types.encode('Universalstring', 'bar'), b'\x1c\x03bar')
-        self.assertEqual(all_types.encode('Visiblestring', 'bar'), b'\x1a\x03bar')
-        self.assertEqual(all_types.encode('Bmpstring', b'bar'), b'\x1e\x03bar')
-        self.assertEqual(all_types.encode('Teletexstring', b'fum'), b'\x14\x03fum')
-        self.assertEqual(all_types.encode('Utctime', '010203040506'),
-                         b'\x17\x0d010203040506Z')
-        self.assertEqual(all_types.encode('GeneralizedTime1', '20001231235959.999'),
-                         b'\x18\x12\x32\x30\x30\x30\x31\x32\x33\x31\x32\x33\x35\x39'
-                         b'\x35\x39\x2e\x39\x39\x39')
-        self.assertEqual(all_types.encode('SequenceOf', []), b'0\x00')
-        self.assertEqual(all_types.encode('SetOf', []), b'1\x00')
-
-    def test_decode_all_types(self):
-        all_types = asn1tools.compile_files('tests/files/all_types.asn')
-
-        self.assertEqual(all_types.decode('Boolean', b'\x01\x01\x01'), True)
-        self.assertEqual(all_types.decode('Integer', b'\x02\x01\x01'), 1)
-        self.assertEqual(all_types.decode('Bitstring', b'\x03\x02\x07\x80'), (b'\x80', 1))
-        self.assertEqual(all_types.decode('Octetstring', b'\x04\x01\x00'), b'\x00')
-        self.assertEqual(all_types.decode('Null', b'\x05\x00'), None)
-        self.assertEqual(all_types.decode('Objectidentifier', b'\x06\x01\x2a'), '1.2')
-        self.assertEqual(all_types.decode('Enumerated', b'\x0a\x01\x01'), 'one')
-        self.assertEqual(all_types.decode('Utf8string', b'\x0c\x03foo'), 'foo')
-        self.assertEqual(all_types.decode('Sequence', b'\x30\x00'), {})
-        self.assertEqual(all_types.decode('Sequence2', b'\x30\x00'), {'a': 0})
-        self.assertEqual(all_types.decode('Sequence2', b'\x30\x03\x02\x01\x01'), {'a': 1})
-
         with self.assertRaises(NotImplementedError):
             all_types.decode('Sequence12', b'\x30\x04\xa0\x02\x30\x00')
-
-        self.assertEqual(all_types.decode('Set', b'\x31\x00'), {})
-        self.assertEqual(all_types.decode('Set2', b'\x31\x00'), {'a': 1})
-        self.assertEqual(all_types.decode('Set2', b'\x31\x03\x02\x01\x02'), {'a': 2})
-        self.assertEqual(all_types.decode('Numericstring', b'\x12\x03123'), '123')
-        self.assertEqual(all_types.decode('Printablestring', b'\x13\x03foo'), 'foo')
-        self.assertEqual(all_types.decode('Ia5string', b'\x16\x03bar'), 'bar')
-        self.assertEqual(all_types.decode('Universalstring', b'\x1c\x03bar'), 'bar')
-        self.assertEqual(all_types.decode('Visiblestring', b'\x1a\x03bar'), 'bar')
-        self.assertEqual(all_types.decode('Bmpstring', b'\x1e\x03bar'), b'bar')
-        self.assertEqual(all_types.decode('Teletexstring', b'\x14\x03fum'), b'fum')
-        self.assertEqual(all_types.decode('Utctime', b'\x17\x0d010203040506Z'),
-                         '010203040506')
-        self.assertEqual(
-            all_types.decode('GeneralizedTime1',
-                             b'\x18\x12\x32\x30\x30\x30\x31\x32\x33\x31\x32\x33'
-                             b'\x35\x39\x35\x39\x2e\x39\x39\x39'),
-            '20001231235959.999')
-        self.assertEqual(all_types.decode('SequenceOf', b'0\x00'), [])
-        self.assertEqual(all_types.decode('SetOf', b'1\x00'), [])
 
     def test_decode_all_types_errors(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn')

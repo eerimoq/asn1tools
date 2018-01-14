@@ -310,10 +310,12 @@ class MembersType(Type):
             name = member.name
 
             if name in data:
+                value = data[name]
+
                 if isinstance(member, AnyDefinedBy):
-                    member.encode(data[name], encoded_members, data)
-                else:
-                    member.encode(data[name], encoded_members)
+                    member.encode(value, encoded_members, data)
+                elif member.default != value or isinstance(member, Null):
+                    member.encode(value, encoded_members)
             elif member.optional:
                 pass
             elif member.default is None:

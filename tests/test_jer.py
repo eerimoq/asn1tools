@@ -378,29 +378,37 @@ class Asn1ToolsJerTest(unittest.TestCase):
     def test_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn', 'jer')
 
-        self.assertEqual(all_types.encode('Boolean', True), b'true')
-        self.assertEqual(all_types.decode('Boolean', b'true'), True)
+        datas = [
+            ('Boolean',             True, b'true'),
+            ('Integer',              127, b'127'),
+            ('Integer',                0, b'0'),
+            ('Integer',             -128, b'-128'),
+            ('Real',                 1.0, b'1.0'),
+            ('Real',                -2.0, b'-2.0'),
+            ('Real',        float('inf'), b'"INF"'),
+            ('Real',       float('-inf'), b'"-INF"'),
+            ('Octetstring',      b'\x00', b'"00"'),
+            ('Null',                None, b'null'),
+            ('Enumerated',         'one', b'"one"'),
+            ('Utf8string',         'foo', b'"foo"'),
+            ('Sequence',              {}, b'{}'),
+            ('Sequence2',       {'a': 1}, b'{"a":1}'),
+            ('Set',                   {}, b'{}'),
+            ('Set2',            {'a': 2}, b'{"a":2}'),
+            ('Numericstring',      '123', b'"123"'),
+            ('Printablestring',    'foo', b'"foo"'),
+            ('Ia5string',          'bar', b'"bar"'),
+            ('Universalstring',    'bar', b'"bar"'),
+            ('Visiblestring',      'bar', b'"bar"'),
+            ('Bmpstring',         b'bar', b'"bar"'),
+            ('Teletexstring',     b'fum', b'"fum"'),
+            ('SequenceOf',            [], b'[]'),
+            ('SetOf',                 [], b'[]'),
+        ]
 
-        self.assertEqual(all_types.encode('Integer', 127), b'127')
-        self.assertEqual(all_types.decode('Integer', b'127'), 127)
-
-        self.assertEqual(all_types.encode('Integer', 0), b'0')
-        self.assertEqual(all_types.decode('Integer', b'0'), 0)
-
-        self.assertEqual(all_types.encode('Integer', -128), b'-128')
-        self.assertEqual(all_types.decode('Integer', b'-128'), -128)
-
-        self.assertEqual(all_types.encode('Real', 1.0), b'1.0')
-        self.assertEqual(all_types.decode('Real', b'1.0'), 1.0)
-
-        self.assertEqual(all_types.encode('Real', -2.0), b'-2.0')
-        self.assertEqual(all_types.decode('Real', b'-2.0'), -2.0)
-
-        self.assertEqual(all_types.encode('Real', float('inf')), b'"INF"')
-        self.assertEqual(all_types.decode('Real', b'"INF"'), float('inf'))
-
-        self.assertEqual(all_types.encode('Real', float('-inf')), b'"-INF"')
-        self.assertEqual(all_types.decode('Real', b'"-INF"'), float('-inf'))
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(all_types.encode(type_name, decoded), encoded)
+            self.assertEqual(all_types.decode(type_name, encoded), decoded)
 
         self.assertEqual(all_types.encode('Real', float('nan')), b'"NaN"')
         self.assertTrue(math.isnan(all_types.decode('Real', b'"NaN"')))
@@ -416,62 +424,11 @@ class Asn1ToolsJerTest(unittest.TestCase):
         self.assertEqual(all_types.decode('Bitstring', encoded_message),
                          decoded_message)
 
-        self.assertEqual(all_types.encode('Octetstring', b'\x00'), b'"00"')
-        self.assertEqual(all_types.decode('Octetstring', b'"00"'), b'\x00')
-
-        self.assertEqual(all_types.encode('Null', None), b'null')
-        self.assertEqual(all_types.decode('Null', b'null'), None)
-
-        self.assertEqual(all_types.encode('Enumerated', 'one'), b'"one"')
-        self.assertEqual(all_types.decode('Enumerated', b'"one"'), 'one')
-
-        self.assertEqual(all_types.encode('Utf8string', 'foo'), b'"foo"')
-        self.assertEqual(all_types.decode('Utf8string', b'"foo"'), 'foo')
-
-        self.assertEqual(all_types.encode('Sequence', {}), b'{}')
-        self.assertEqual(all_types.decode('Sequence', b'{}'), {})
-
-        self.assertEqual(all_types.encode('Sequence2', {'a': 1}), b'{"a":1}')
-        self.assertEqual(all_types.decode('Sequence2', b'{"a":1}'), {'a': 1})
-
         with self.assertRaises(NotImplementedError):
             all_types.encode('Sequence12', {'a': [{'a': []}]})
 
         with self.assertRaises(NotImplementedError):
             all_types.decode('Sequence12', b'{"a": [{"a": []}]}')
-
-        self.assertEqual(all_types.encode('Set', {}), b'{}')
-        self.assertEqual(all_types.decode('Set', b'{}'), {})
-
-        self.assertEqual(all_types.encode('Set2', {'a': 2}), b'{"a":2}')
-        self.assertEqual(all_types.decode('Set2', b'{"a":2}'), {'a': 2})
-
-        self.assertEqual(all_types.encode('Numericstring', '123'), b'"123"')
-        self.assertEqual(all_types.decode('Numericstring', b'"123"'), '123')
-
-        self.assertEqual(all_types.encode('Printablestring', 'foo'), b'"foo"')
-        self.assertEqual(all_types.decode('Printablestring', b'"foo"'), 'foo')
-
-        self.assertEqual(all_types.encode('Ia5string', 'bar'), b'"bar"')
-        self.assertEqual(all_types.decode('Ia5string', b'"bar"'), 'bar')
-
-        self.assertEqual(all_types.encode('Universalstring', 'bar'), b'"bar"')
-        self.assertEqual(all_types.decode('Universalstring', b'"bar"'), 'bar')
-
-        self.assertEqual(all_types.encode('Visiblestring', 'bar'), b'"bar"')
-        self.assertEqual(all_types.decode('Visiblestring', b'"bar"'), 'bar')
-
-        self.assertEqual(all_types.encode('Bmpstring', b'bar'), b'"bar"')
-        self.assertEqual(all_types.decode('Bmpstring', b'"bar"'), b'bar')
-
-        self.assertEqual(all_types.encode('Teletexstring', b'fum'), b'"fum"')
-        self.assertEqual(all_types.decode('Teletexstring', b'"fum"'), b'fum')
-
-        self.assertEqual(all_types.encode('SequenceOf', []), b'[]')
-        self.assertEqual(all_types.decode('SequenceOf', b'[]'), [])
-
-        self.assertEqual(all_types.encode('SetOf', []), b'[]')
-        self.assertEqual(all_types.decode('SetOf', b'[]'), [])
 
     def test_repr_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
