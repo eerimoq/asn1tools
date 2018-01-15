@@ -434,17 +434,23 @@ class Choice(Type):
     def encode(self, data):
         for member in self.members:
             if member.name in data:
-                return {member.name: member.encode(data[member.name])}
+                element = ElementTree.Element(self.name)
+                element.append(member.encode(data[member.name]))
+
+                return element
 
         raise EncodeError(
             "Expected choices are {}, but got '{}'.".format(
                 [member.name for member in self.members],
                 ''.join([name for name in data])))
 
-    def decode(self, data):
+    def decode(self, element):
         for member in self.members:
-            if member.name in data:
-                return {member.name: member.decode(data[member.name])}
+            name = member.name
+            member_element = element.find(name)
+
+            if member_element is not None:
+                return {name: member.decode(member_element)}
 
         raise DecodeError('')
 
@@ -493,16 +499,21 @@ class Enumerated(Type):
     def encode(self, data):
         for name in self.values.values():
             if data == name:
-                return data
+                element = ElementTree.Element(self.name)
+                element.append(ElementTree.Element(data))
+
+                return element
 
         raise EncodeError(
             "Enumeration value '{}' not found in {}.".format(
                 data,
                 [value for value in self.values.values()]))
 
-    def decode(self, data):
-        if data in self.values.values():
-            return data
+    def decode(self, element):
+        value = element[0].tag
+
+        if value in self.values.values():
+            return value
 
         raise DecodeError(
             "Enumeration value '{}' not found in {}.".format(

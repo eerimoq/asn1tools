@@ -59,7 +59,7 @@ class Asn1ToolsXerTest(unittest.TestCase):
         self.assertEqual(str(cm.exception),
                          ': Decode length not supported for this codec.')
 
-    def skip_test_rrc_8_6_0(self):
+    def test_rrc_8_6_0(self):
         rrc = asn1tools.compile_dict(RRC_8_6_0, 'xer')
 
         # Message 1.
@@ -76,13 +76,17 @@ class Asn1ToolsXerTest(unittest.TestCase):
         }
 
         encoded_message = (
-            b''
+            b'<PCCH-Message><message><c1><paging><systemInfoModification><tr'
+            b'ue /></systemInfoModification><nonCriticalExtension /></paging><'
+            b'/c1></message></PCCH-Message>'
         )
 
         encoded = rrc.encode('PCCH-Message', decoded_message)
         self.assertEqual(encoded, encoded_message)
         decoded = rrc.decode('PCCH-Message', encoded)
         self.assertEqual(decoded, decoded_message)
+
+        return
 
         # Message 2.
         decoded_message = {
@@ -335,6 +339,7 @@ class Asn1ToolsXerTest(unittest.TestCase):
             ('Integer',         127, b'<Integer>127</Integer>'),
             ('Integer',           0, b'<Integer>0</Integer>'),
             ('Integer',        -128, b'<Integer>-128</Integer>'),
+            ('Enumerated',    'one', b'<Enumerated><one /></Enumerated>'),
             ('Sequence',         {}, b'<Sequence />'),
             ('Set',              {}, b'<Set />'),
             ('Sequence2',  {'a': 1}, b'<Sequence2><a>1</a></Sequence2>'),
