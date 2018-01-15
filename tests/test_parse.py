@@ -36,6 +36,9 @@ class Asn1ToolsParseTest(unittest.TestCase):
     def test_parse_all_types(self):
         self.parse_and_verify('all_types')
 
+    def test_parse_all_types_automatic_tags(self):
+        self.parse_and_verify('all_types_automatic_tags')
+
     def test_parse_information_object(self):
         self.parse_and_verify('information_object')
 

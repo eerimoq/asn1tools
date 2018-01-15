@@ -10,7 +10,8 @@ class Asn1ToolsDerTest(unittest.TestCase):
         all_types = asn1tools.compile_files('tests/files/all_types.asn', 'der')
 
         datas = [
-            ('Boolean',                True, b'\x01\x01\x01'),
+            ('Boolean',                 True, b'\x01\x01\xff'),
+            ('Boolean',                False, b'\x01\x01\x00'),
             ('Integer',                32768, b'\x02\x03\x00\x80\x00'),
             ('Integer',                32767, b'\x02\x02\x7f\xff'),
             ('Integer',                  256, b'\x02\x02\x01\x00'),

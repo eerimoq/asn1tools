@@ -97,7 +97,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         }
 
         encoded_message = (
-            b'\x30\x1e\x01\x01\x01\x02\x01\xf9\x03\x02\x05\x80\x04\x02\x31\x32'
+            b'\x30\x1e\x01\x01\xff\x02\x01\xf9\x03\x02\x05\x80\x04\x02\x31\x32'
             b'\x05\x00\x06\x02\x2b\x02\x0a\x01\x01\x30\x00\x16\x03\x66\x6f\x6f'
         )
 
@@ -404,7 +404,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         encoded_message = (
             b'\x30\x82\x01\x93\xa0\x82\x01\x8f\xa0\x82\x01\x8b\xa0\x82\x01'
             b'\x87\xa0\x82\x01\x83\xa0\x82\x01\x7f\xa0\x82\x01\x7b\xa0\x81'
-            b'\xdd\xa0\x0f\x80\x01\x01\xa2\x0a\x80\x01\x0f\x81\x01\x05\x82'
+            b'\xdd\xa0\x0f\x80\x01\xff\xa2\x0a\x80\x01\x0f\x81\x01\x05\x82'
             b'\x02\x03\xf0\xa1\x81\xad\xa0\x26\xa0\x0e\x80\x01\x05\xa1\x09'
             b'\x80\x01\x06\x81\x01\x01\x82\x01\x00\xa1\x06\x80\x01\x00\x81'
             b'\x01\x09\xa2\x09\x80\x01\x05\x81\x01\x04\x82\x01\x05\x83\x01'
@@ -412,9 +412,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
             b'\x12\x80\x02\x03\x44\xa1\x0c\x80\x01\x21\x81\x01\x00\x82\x01'
             b'\x0a\x83\x01\x40\xa4\x06\x80\x01\xc4\x81\x01\x02\xa5\x1c\xa0'
             b'\x0c\x80\x01\x01\x81\x01\x00\x82\x01\x0a\x83\x01\x00\xa1\x0c'
-            b'\x80\x01\x01\x81\x01\x16\x82\x01\x00\x83\x01\x05\xa6\x0d\x80'
+            b'\x80\x01\xff\x81\x01\x16\x82\x01\x00\x83\x01\x05\xa6\x0d\x80'
             b'\x01\x00\x81\x01\x62\x82\x01\x04\x83\x02\x07\xff\xa7\x0b\xa1'
-            b'\x09\x80\x01\x00\x81\x01\x04\x82\x01\x01\xa8\x1d\x80\x01\x82'
+            b'\x09\x80\x01\x00\x81\x01\x04\x82\x01\xff\xa8\x1d\x80\x01\x82'
             b'\x81\x01\x00\x82\x01\x81\xa3\x0f\x80\x01\x00\x81\x01\x00\x82'
             b'\x01\x01\x83\x01\x00\x84\x01\x01\x84\x01\xff\x89\x01\x00\xa2'
             b'\x12\x80\x01\x00\x81\x01\x01\x82\x01\x01\x83\x01\x01\x84\x01'
@@ -424,7 +424,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
             b'\x81\x01\x07\x82\x01\x03\xa2\x10\x80\x01\xdf\x82\x01\x00\x84'
             b'\x01\x00\x85\x02\x06\x80\x86\x01\x04\xa2\x00\xa3\x1d\xa0\x1b'
             b'\x30\x19\x80\x01\x01\x81\x01\xd3\x83\x01\x00\x85\x01\x1f\x86'
-            b'\x01\x1d\x87\x01\x00\x88\x01\x01\x8a\x02\x06\x00\xa4\x03\x82'
+            b'\x01\x1d\x87\x01\x00\x88\x01\xff\x8a\x02\x06\x00\xa4\x03\x82'
             b'\x01\x03\xa5\x03\x80\x01\x03\xa6\x0b\xa3\x09\x81\x07\x06\x01'
             b'\x23\x45\x67\x89\x00\xa7\x03\x80\x01\x34\xa8\x0e\x80\x03\x00'
             b'\x23\x34\x81\x03\x00\x12\x34\x82\x02\x32\x12\xa9\x13\x80\x03'
@@ -803,7 +803,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         }
 
         encoded_message = (
-            b'\x30\x1e\x01\x01\x01\x02\x01\xf9\x03\x02\x05\x80\x04\x02\x31\x32'
+            b'\x30\x1e\x01\x01\xff\x02\x01\xf9\x03\x02\x05\x80\x04\x02\x31\x32'
             b'\x05\x00\x06\x02\x2b\x02\x0a\x01\x01\x30\x00\x16\x03\x66\x6f\x6f'
         )
 
@@ -1301,7 +1301,8 @@ class Asn1ToolsBerTest(unittest.TestCase):
         all_types = asn1tools.compile_files('tests/files/all_types.asn')
 
         datas = [
-            ('Boolean',                True, b'\x01\x01\x01'),
+            ('Boolean',                 True, b'\x01\x01\xff'),
+            ('Boolean',                False, b'\x01\x01\x00'),
             ('Integer',                32768, b'\x02\x03\x00\x80\x00'),
             ('Integer',                32767, b'\x02\x02\x7f\xff'),
             ('Integer',                  256, b'\x02\x02\x01\x00'),
@@ -1353,6 +1354,20 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         with self.assertRaises(NotImplementedError):
             all_types.decode('Sequence12', b'\x30\x04\xa0\x02\x30\x00')
+
+    def test_all_types_automatic_tags(self):
+        all_types = asn1tools.compile_files(
+            'tests/files/all_types_automatic_tags.asn')
+
+        datas = [
+            ('Sequence14',
+             {'a': 1, 'c': 2,'d': True},
+             b'\x30\x09\x80\x01\x01\x82\x01\x02\x83\x01\xff')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(all_types.encode(type_name, decoded), encoded)
+            self.assertEqual(all_types.decode(type_name, encoded), decoded)
 
     def test_decode_all_types_errors(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn')
@@ -1572,7 +1587,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] BOOLEAN END'
         foo = asn1tools.compile_string(spec)
         encoded = foo.encode('Foo', True)
-        self.assertEqual(encoded, b'\xa2\x03\x01\x01\x01')
+        self.assertEqual(encoded, b'\xa2\x03\x01\x01\xff')
         decoded = foo.decode('Foo', encoded)
         self.assertEqual(decoded, True)
 
@@ -1611,7 +1626,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] BOOLEAN END'
         foo = asn1tools.compile_string(spec)
         encoded = foo.encode('Foo', True)
-        self.assertEqual(encoded, b'\xa2\x03\x01\x01\x01')
+        self.assertEqual(encoded, b'\xa2\x03\x01\x01\xff')
         decoded = foo.decode('Foo', encoded)
         self.assertEqual(decoded, True)
 
@@ -1637,7 +1652,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] IMPLICIT BOOLEAN END'
         foo = asn1tools.compile_string(spec)
         encoded = foo.encode('Foo', True)
-        self.assertEqual(encoded, b'\x82\x01\x01')
+        self.assertEqual(encoded, b'\x82\x01\xff')
         decoded = foo.decode('Foo', encoded)
         self.assertEqual(decoded, True)
 
@@ -1869,7 +1884,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         }
 
         encoded_message = (
-            b'\x60\x29\x01\x01\x01\x01\x01\x00\x61\x0a\xa0\x08\x03\x02\x04'
+            b'\x60\x29\x01\x01\xff\x01\x01\x00\x61\x0a\xa0\x08\x03\x02\x04'
             b'\x40\x03\x02\x04\x80\x04\x15\x2f\x73\x65\x73\x2f\x6d\x61\x67'
             b'\x69\x63\x2f\x6d\x6f\x78\x65\x6e\x2e\x68\x74\x6d\x6c'
         )
@@ -2002,7 +2017,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
             'fum': True
         }
 
-        encoded_message = b'0\t\x06\x04+\x87h\x07\x01\x01\x01'
+        encoded_message = b'0\t\x06\x04+\x87h\x07\x01\x01\xff'
 
         encoded = foo.encode('Fie', decoded_message)
         self.assertEqual(encoded, encoded_message)

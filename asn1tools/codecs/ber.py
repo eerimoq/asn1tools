@@ -233,7 +233,7 @@ class Boolean(Type):
     def encode(self, data, encoded):
         encoded.extend(self.tag)
         encoded.append(1)
-        encoded.append(bool(data))
+        encoded.append(0xff * data)
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)

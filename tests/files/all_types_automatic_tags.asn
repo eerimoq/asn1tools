@@ -1,0 +1,18 @@
+AllTypes DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+Sequence9 ::= SEQUENCE {
+    a INTEGER,
+    b BOOLEAN OPTIONAL
+}
+
+Sequence13 ::= SEQUENCE {
+    COMPONENTS OF Sequence9,
+    c INTEGER
+}
+
+Sequence14 ::= SEQUENCE {
+    COMPONENTS OF Sequence13,
+    d BOOLEAN
+}
+
+END
