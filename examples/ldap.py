@@ -1,6 +1,24 @@
 #!/usr/bin/env python
 
-"""Perform a LDAP bind with an LDAP server.
+"""Perform an LDAP bind with an LDAP server.
+
+Example execution:
+
+$ ./ldap.py
+Sending LDAP bind request:
+
+{'messageID': 1,
+ 'protocolOp': {'bindRequest': {'authentication': {'simple': b'password'},
+                                'name': b'uid=tesla,dc=example,dc=com',
+                                'version': 3}}}
+
+Received LDAP bind response:
+
+{'messageID': 1,
+ 'protocolOp': {'bindResponse': {'diagnosticMessage': bytearray(b''),
+                                 'matchedDN': bytearray(b''),
+                                 'resultCode': 'success'}}}
+$
 
 """
 

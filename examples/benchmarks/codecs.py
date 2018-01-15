@@ -2,6 +2,26 @@
 
 """A performance example comparing the performance of all codecs.
 
+Example execution:
+
+$ ./codecs.py
+Starting encoding and decoding of a message 1000 times. This may take a few seconds.
+
+Encoding the message 1000 times took:
+
+CODEC      SECONDS
+jer        0.222054
+ber        0.341499
+uper       0.620804
+
+Decoding the message 1000 times took:
+
+CODEC      SECONDS
+jer        0.352046
+uper       0.538043
+ber        0.650008
+$
+
 """
 
 from __future__ import print_function

@@ -2,6 +2,54 @@
 
 """Encoding and decoding of a question once for each codec.
 
+Example execution:
+
+$ ./question.py
+ASN.1 specification:
+
+-- A simple protocol taken from Wikipedia.
+
+Foo DEFINITIONS ::= BEGIN
+
+    Question ::= SEQUENCE {
+        id        INTEGER,
+        question  IA5String
+    }
+
+    Answer ::= SEQUENCE {
+        id        INTEGER,
+        answer    BOOLEAN
+    }
+
+END
+
+Question to encode: {'question': 'Is 1+1=3?', 'id': 1}
+
+BER:
+Encoded: 300e0201011609497320312b313d333f (16 bytes)
+Decoded: {'question': 'Is 1+1=3?', 'id': 1}
+
+DER:
+Encoded: 300e0201011609497320312b313d333f (16 bytes)
+Decoded: {'question': 'Is 1+1=3?', 'id': 1}
+
+JER:
+Encoded: 7b227175657374696f6e223a22497320312b313d333f222c226964223a317d (31 bytes)
+Decoded: {'question': 'Is 1+1=3?', 'id': 1}
+
+PER:
+Encoded: 010109497320312b313d333f (12 bytes)
+Decoded: {'question': 'Is 1+1=3?', 'id': 1}
+
+UPER:
+Encoded: 01010993cd03156c5eb37e (11 bytes)
+Decoded: {'question': 'Is 1+1=3?', 'id': 1}
+
+XER:
+Encoded: 3c5175657374696f6e3e3c69643e313c2f69643e3c7175657374696f6e3e497320312b313d333f3c2f7175657374696f6e3e3c2f5175657374696f6e3e (61 bytes)
+Decoded: {'question': 'Is 1+1=3?', 'id': 1}
+$
+
 """
 
 from __future__ import print_function

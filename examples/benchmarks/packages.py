@@ -6,6 +6,28 @@ Python packages.
 This file is based on
 https://gist.github.com/philmayers/67b9300d8fb7282481a1a6af5ed45818.
 
+Example execution:
+
+$ ./packages.py
+Starting encoding and decoding of a message 3000 times. This may take a few seconds.
+
+Encoding the message 3000 times took:
+
+PACKAGE      SECONDS
+asn1tools    0.443244
+libsnmp      inf
+pyasn1       inf
+asn1crypto   inf
+
+Decoding the message 3000 times took:
+
+PACKAGE      SECONDS
+asn1tools    0.388221
+libsnmp      0.590784
+asn1crypto   1.336428
+pyasn1       4.108154
+$
+
 """
 
 from __future__ import print_function
