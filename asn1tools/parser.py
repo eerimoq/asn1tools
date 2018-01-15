@@ -229,6 +229,9 @@ def convert_members(tokens):
             continue
 
         if member_tokens[0] == 'COMPONENTS OF':
+            members.append({
+                'components-of': member_tokens[1][0]['type']
+            })
             continue
 
         if len(member_tokens) == 2:

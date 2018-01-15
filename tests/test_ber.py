@@ -941,15 +941,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
         )
 
         decoded = rfc4511.decode('LDAPMessage', encoded_message)
-
-        # COMPONENTS OF not implemented.
-        with self.assertRaises(AssertionError):
-            self.assertEqual(decoded, decoded_message)
-
+        self.assertEqual(decoded, decoded_message)
         encoded = rfc4511.encode('LDAPMessage', decoded_message)
-
-        with self.assertRaises(AssertionError):
-            self.assertEqual(encoded, encoded_message)
+        self.assertEqual(encoded, encoded_message)
 
     def test_rfc5280(self):
         rfc5280 = asn1tools.compile_dict(RFC5280)

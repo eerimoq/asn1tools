@@ -218,3 +218,24 @@ class Compiler(object):
                 break
 
         return type_descriptor
+
+    def expand_members(self, members, module_name):
+        expanded_members = []
+
+        for member in members:
+            if 'components-of' in member:
+                type_descriptor, inner_module_name = self.lookup_type_descriptor(
+                    member['components-of'],
+                    module_name)
+                inner_members = self.expand_members(
+                    type_descriptor['members'],
+                    inner_module_name)
+
+                for memb in inner_members:
+                    if memb == '...':
+                        break
+                    expanded_members.append(memb)
+            else:
+                expanded_members.append(member)
+
+        return expanded_members
