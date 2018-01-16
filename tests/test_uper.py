@@ -789,6 +789,20 @@ class Asn1ToolsUPerTest(unittest.TestCase):
                          'SequenceOf(SequenceOf, Integer())')
         self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
 
+    def test_all_types_automatic_tags(self):
+        all_types = asn1tools.compile_files(
+            'tests/files/all_types_automatic_tags.asn', 'uper')
+
+        datas = [
+            ('Sequence14',
+             {'a': 1, 'c': 2,'d': True},
+             b'\x00\x80\x80\x81\x40')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(all_types.encode(type_name, decoded), encoded)
+            self.assertEqual(all_types.decode(type_name, encoded), decoded)
+
 
 if __name__ == '__main__':
     unittest.main()

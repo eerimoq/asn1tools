@@ -406,6 +406,20 @@ class Asn1ToolsPerTest(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             all_types.decode('Utctime', b'\x17\x0d010203040506Y')
 
+    def test_all_types_automatic_tags(self):
+        all_types = asn1tools.compile_files(
+            'tests/files/all_types_automatic_tags.asn', 'per')
+
+        datas = [
+            ('Sequence14',
+             {'a': 1, 'c': 2,'d': True},
+             b'\x00\x01\x01\x01\x02\x80')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(all_types.encode(type_name, decoded), encoded)
+            self.assertEqual(all_types.decode(type_name, encoded), decoded)
+
     def test_bar(self):
         """A simple example.
 

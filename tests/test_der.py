@@ -96,6 +96,20 @@ class Asn1ToolsDerTest(unittest.TestCase):
                          'SequenceOf(SequenceOf, Integer())')
         self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
 
+    def test_all_types_automatic_tags(self):
+        all_types = asn1tools.compile_files(
+            'tests/files/all_types_automatic_tags.asn', 'der')
+
+        datas = [
+            ('Sequence14',
+             {'a': 1, 'c': 2,'d': True},
+             b'\x30\x09\x80\x01\x01\x82\x01\x02\x83\x01\xff')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(all_types.encode(type_name, decoded), encoded)
+            self.assertEqual(all_types.decode(type_name, encoded), decoded)
+
     def test_decode_length(self):
         foo = asn1tools.compile_files('tests/files/foo.asn', 'der')
 

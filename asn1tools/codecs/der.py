@@ -1094,6 +1094,8 @@ class Compiler(compiler.Compiler):
         else:
             tag = None
 
+        members = self.expand_members(members, module_name)
+
         for member in members:
             if member == '...':
                 continue

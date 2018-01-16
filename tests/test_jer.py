@@ -475,6 +475,21 @@ class Asn1ToolsJerTest(unittest.TestCase):
                          'SequenceOf(SequenceOf, Integer())')
         self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
 
+    def test_all_types_automatic_tags(self):
+        all_types = asn1tools.compile_files(
+            'tests/files/all_types_automatic_tags.asn', 'jer')
+
+        datas = [
+            ('Sequence14',
+             {'a': 1, 'c': 2,'d': True},
+             b'{"a":1,"c":2,"d":true}')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(loadb(all_types.encode(type_name, decoded)),
+                             loadb(encoded))
+            self.assertEqual(all_types.decode(type_name, encoded), decoded)
+
 
 if __name__ == '__main__':
     unittest.main()

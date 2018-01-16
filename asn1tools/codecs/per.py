@@ -87,7 +87,7 @@ class Decoder(object):
         """
 
         if self.index == 0:
-            self.byte = self.buf[0]
+            self.byte = self.buf[self.offset]
             self.index = 7
             self.offset += 1
 
@@ -117,6 +117,7 @@ class Decoder(object):
         self.index = 0
         data = self.buf[self.offset:self.offset + number_of_bytes]
         self.offset += number_of_bytes
+
         return data
 
 
@@ -293,7 +294,6 @@ class Sequence(Type):
 
             try:
                 value = member.decode(decoder)
-
             except (DecodeError, IndexError) as e:
                 if member.optional:
                     continue
@@ -872,6 +872,8 @@ class Compiler(compiler.Compiler):
 
     def compile_members(self, members, module_name):
         compiled_members = []
+
+        members = self.expand_members(members, module_name)
 
         for member in members:
             if member == '...':
