@@ -9,6 +9,8 @@ import binascii
 from . import EncodeError
 from . import DecodeError
 from . import compiler
+from .per import encode_signed_integer
+from .per import decode_signed_integer
 
 
 LOGGER = logging.getLogger(__name__)
@@ -174,59 +176,6 @@ def size_as_number_of_bits(size):
     """
 
     return len('{:b}'.format(size))
-
-
-def encode_signed_integer(value):
-    """Encode given integer value into a bytearray and return it.
-
-    """
-
-    encoded = bytearray()
-
-    if value < 0:
-        value *= -1
-        value -= 1
-        carry = not value
-
-        while value > 0:
-            encoded.append((value & 0xff) ^ 0xff)
-            carry = (value & 0x80)
-            value >>= 8
-
-        if carry:
-            encoded.append(0xff)
-    elif value > 0:
-        while value > 0:
-            encoded.append(value & 0xff)
-            value >>= 8
-
-        if encoded[-1] & 0x80:
-            encoded.append(0)
-    else:
-        encoded.append(0)
-
-    encoded.append(len(encoded))
-    encoded.reverse()
-
-    return encoded
-
-
-def decode_signed_integer(data):
-    """Decode given data bytes as a signed integer and return it.
-
-    """
-
-    value = 0
-    is_negative = (data[0] & 0x80)
-
-    for byte in data:
-        value <<= 8
-        value += byte
-
-    if is_negative:
-        value -= (1 << (8 * len(data)))
-
-    return value
 
 
 class Type(object):

@@ -122,6 +122,10 @@ class Decoder(object):
 
 
 def encode_signed_integer(data):
+    """Encode given integer value into a bytearray and return it.
+
+    """
+
     encoded = bytearray()
 
     if data < 0:
@@ -153,6 +157,10 @@ def encode_signed_integer(data):
 
 
 def decode_signed_integer(data):
+    """Decode given data bytes as a signed integer and return it.
+
+    """
+
     value = 0
     is_negative = (data[0] & 0x80)
 
