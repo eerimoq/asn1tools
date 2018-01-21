@@ -112,6 +112,9 @@ class Asn1ToolsParseTest(unittest.TestCase):
     def test_parse_rfc4511(self):
         self.parse_and_verify('rfc4511', 'ietf')
 
+    def test_parse_rfc5084(self):
+        self.parse_and_verify('rfc5084', 'ietf')
+
     def test_parse_rfc5280(self):
         self.parse_and_verify('rfc5280', 'ietf')
 
