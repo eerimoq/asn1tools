@@ -569,7 +569,7 @@ class Compiler(compiler.Compiler):
                                               type_descriptor,
                                               module_name))
 
-    def compile_implicit_type(self, name, type_descriptor, module_name):
+    def compile_type(self, name, type_descriptor, module_name):
         type_name = type_descriptor['type']
 
         if type_name == 'SEQUENCE':
@@ -656,13 +656,6 @@ class Compiler(compiler.Compiler):
                         type_name,
                         module_name))
                 self.types_backtrace_pop()
-
-        return compiled
-
-    def compile_type(self, name, type_descriptor, module_name):
-        compiled = self.compile_implicit_type(name,
-                                              type_descriptor,
-                                              module_name)
 
         return compiled
 

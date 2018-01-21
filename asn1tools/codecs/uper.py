@@ -930,7 +930,7 @@ class Compiler(compiler.Compiler):
                                               type_descriptor,
                                               module_name))
 
-    def compile_implicit_type(self, name, type_descriptor, module_name):
+    def compile_type(self, name, type_descriptor, module_name):
         type_name = type_descriptor['type']
 
         if type_name == 'SEQUENCE':
@@ -1043,11 +1043,6 @@ class Compiler(compiler.Compiler):
             compiled.tag = (class_prio, class_number)
 
         return compiled
-
-    def compile_type(self, name, type_descriptor, module_name):
-        return self.compile_implicit_type(name,
-                                          type_descriptor,
-                                          module_name)
 
     def compile_members(self, members, module_name, sort_by_tag=False):
         compiled_members = []
