@@ -260,7 +260,7 @@ class IA5String(Type):
 
     def encode(self, data, encoded):
         encoded.extend(self.tag)
-        encoded.append(len(data))
+        encoded.extend(encode_length_definite(len(data)))
         encoded.extend(data.encode('ascii'))
 
     def decode(self, data, offset):
@@ -283,7 +283,7 @@ class NumericString(Type):
 
     def encode(self, data, encoded):
         encoded.extend(self.tag)
-        encoded.append(len(data))
+        encoded.extend(encode_length_definite(len(data)))
         encoded.extend(data.encode('ascii'))
 
     def decode(self, data, offset):
@@ -487,7 +487,7 @@ class OctetString(Type):
 
     def encode(self, data, encoded):
         encoded.extend(self.tag)
-        encoded.append(len(data))
+        encoded.extend(encode_length_definite(len(data)))
         encoded.extend(data)
 
     def decode(self, data, offset):
@@ -510,7 +510,7 @@ class PrintableString(Type):
 
     def encode(self, data, encoded):
         encoded.extend(self.tag)
-        encoded.append(len(data))
+        encoded.extend(encode_length_definite(len(data)))
         encoded.extend(data.encode('ascii'))
 
     def decode(self, data, offset):
@@ -533,7 +533,7 @@ class UniversalString(Type):
 
     def encode(self, data, encoded):
         encoded.extend(self.tag)
-        encoded.append(len(data))
+        encoded.extend(encode_length_definite(len(data)))
         encoded.extend(data.encode('ascii'))
 
     def decode(self, data, offset):
@@ -556,7 +556,7 @@ class VisibleString(Type):
 
     def encode(self, data, encoded):
         encoded.extend(self.tag)
-        encoded.append(len(data))
+        encoded.extend(encode_length_definite(len(data)))
         encoded.extend(data.encode('ascii'))
 
     def decode(self, data, offset):
@@ -579,7 +579,7 @@ class UTF8String(Type):
 
     def encode(self, data, encoded):
         encoded.extend(self.tag)
-        encoded.append(len(data))
+        encoded.extend(encode_length_definite(len(data)))
         encoded.extend(data.encode('utf-8'))
 
     def decode(self, data, offset):
@@ -602,7 +602,7 @@ class BMPString(Type):
 
     def encode(self, data, encoded):
         encoded.extend(self.tag)
-        encoded.append(len(data))
+        encoded.extend(encode_length_definite(len(data)))
         encoded.extend(data)
 
     def decode(self, data, offset):
@@ -671,7 +671,7 @@ class TeletexString(Type):
 
     def encode(self, data, encoded):
         encoded.extend(self.tag)
-        encoded.append(len(data))
+        encoded.extend(encode_length_definite(len(data)))
         encoded.extend(data)
 
     def decode(self, data, offset):

@@ -1319,6 +1319,8 @@ class Asn1ToolsBerTest(unittest.TestCase):
             ('Integer',               -32769, b'\x02\x03\xff\x7f\xff'),
             ('Bitstring',       (b'\x80', 1), b'\x03\x02\x07\x80'),
             ('Octetstring',          b'\x00', b'\x04\x01\x00'),
+            ('Octetstring',    127 * b'\x55', b'\x04\x7f' + 127 * b'\x55'),
+            ('Octetstring',    128 * b'\xaa', b'\x04\x81\x80' + 128 * b'\xaa'),
             ('Null',                    None, b'\x05\x00'),
             ('Objectidentifier',       '1.2', b'\x06\x01\x2a'),
             ('Enumerated',             'one', b'\x0a\x01\x01'),
