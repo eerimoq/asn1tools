@@ -48,6 +48,12 @@ Decoded: {'question': 'Is 1+1=3?', 'id': 1}
 XER:
 Encoded: 3c5175657374696f6e3e3c69643e313c2f69643e3c7175657374696f6e3e497320312b313d333f3c2f7175657374696f6e3e3c2f5175657374696f6e3e (61 bytes)
 Decoded: {'question': 'Is 1+1=3?', 'id': 1}
+
+Protocol Buffers:
+Encoded: 08011209497320312b313d333f (13 bytes)
+Decoded:
+id: 1
+question: "Is 1+1=3?"
 $
 
 """
