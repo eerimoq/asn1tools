@@ -56,9 +56,10 @@ from __future__ import print_function
 import os
 from binascii import hexlify
 import asn1tools
+from foo_pb2 import Question
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-FOO_ASN_PATH = os.path.join(SCRIPT_DIR, '..', 'tests', 'files', 'foo.asn')
+FOO_ASN_PATH = os.path.join(SCRIPT_DIR, '..', '..', 'tests', 'files', 'foo.asn')
 
 # Print the specification.
 print('ASN.1 specification:')
@@ -83,3 +84,19 @@ for codec in ['ber', 'der', 'jer', 'per', 'uper', 'xer']:
     print('Encoded: {} ({} bytes)'.format(hexlify(encoded).decode('ascii'),
                                           len(encoded)))
     print('Decoded: {}'.format(decoded))
+
+
+# Also encode using protocol buffers.
+question = Question()
+question.id = 1
+question.question = 'Is 1+1=3?'
+
+encoded = question.SerializeToString()
+decoded = question
+
+print()
+print('Protocol Buffers:')
+print('Encoded: {} ({} bytes)'.format(hexlify(encoded).decode('ascii'),
+                                      len(encoded)))
+print('Decoded:')
+print(decoded)

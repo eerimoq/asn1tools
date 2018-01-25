@@ -3,7 +3,7 @@ test:
 	python3 setup.py test
 	env PYTHONPATH=. python3 examples/benchmarks/packages.py
 	env PYTHONPATH=. python3 examples/benchmarks/codecs.py
-	env PYTHONPATH=. python3 examples/question.py
+	env PYTHONPATH=. python3 examples/question/question.py
 	codespell -d $$(git ls-files | grep -v ietf | grep -v 3gpp)
 
 release-to-pypi:

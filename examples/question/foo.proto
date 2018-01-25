@@ -1,0 +1,9 @@
+message Question {
+  required int32 id = 1;
+  required string question = 2;
+}
+
+message Answer {
+  required int32 id = 1;
+  required bool answer = 2;
+}

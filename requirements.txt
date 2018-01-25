@@ -5,3 +5,4 @@ asn1crypto
 libsnmp
 pyparsing
 pysnmp
+protobuf
