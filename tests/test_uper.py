@@ -1,6 +1,7 @@
 import unittest
 import asn1tools
 import sys
+from copy import deepcopy
 
 sys.path.append('tests/files')
 sys.path.append('tests/files/3gpp')
@@ -105,7 +106,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         self.assertEqual(decoded, decoded_message)
 
     def test_x691_a2(self):
-        a2 = asn1tools.compile_dict(X691_A2, 'uper')
+        a2 = asn1tools.compile_dict(deepcopy(X691_A2), 'uper')
 
         decoded_message = {
             'name': {
@@ -213,7 +214,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         self.assertEqual(decoded, decoded_message)
 
     def test_x691_a4(self):
-        a4 = asn1tools.compile_dict(X691_A4, 'uper')
+        a4 = asn1tools.compile_dict(deepcopy(X691_A4), 'uper')
 
         decoded_message = {
             'a': 253,
@@ -236,7 +237,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             self.assertEqual(decoded, decoded_message)
 
     def test_rrc_8_6_0(self):
-        rrc = asn1tools.compile_dict(RRC_8_6_0, 'uper')
+        rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0), 'uper')
 
         # Message 1.
         decoded_message = {
@@ -599,7 +600,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         self.assertEqual(decoded, decoded_message)
 
     def test_lpp_14_3_0(self):
-        lpp = asn1tools.compile_dict(LPP_14_3_0, 'uper')
+        lpp = asn1tools.compile_dict(deepcopy(LPP_14_3_0), 'uper')
 
         # Message 1.
         decoded_message = {

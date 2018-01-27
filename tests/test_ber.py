@@ -1,6 +1,7 @@
 import unittest
 import timeit
 import sys
+from copy import deepcopy
 
 import asn1tools
 
@@ -127,7 +128,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
             "enumeration value 'three' not found in ['one', 'two']")
 
     def test_rrc_8_6_0(self):
-        rrc = asn1tools.compile_dict(RRC_8_6_0)
+        rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0))
 
         # Message 1.
         decoded_message = {
@@ -824,7 +825,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         print('{} ms per decode call.'.format(round(ms_per_call, 3)))
 
     def test_rfc4511(self):
-        rfc4511 = asn1tools.compile_dict(RFC4511)
+        rfc4511 = asn1tools.compile_dict(deepcopy(RFC4511))
 
         # A search request message.
         decoded_message = {
@@ -946,7 +947,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(encoded, encoded_message)
 
     def test_rfc5280(self):
-        rfc5280 = asn1tools.compile_dict(RFC5280)
+        rfc5280 = asn1tools.compile_dict(deepcopy(RFC5280))
 
         decoded_message = {
             'tbsCertificate': {
@@ -1085,7 +1086,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         }
 
         rfc5280 = asn1tools.compile_dict(
-            RFC5280_MODIFIED,
+            deepcopy(RFC5280_MODIFIED),
             any_defined_by_choices=any_defined_by_choices)
 
         decoded_message = {
@@ -1217,7 +1218,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(decoded, decoded_message)
 
     def test_rfc5280_errors(self):
-        rfc5280 = asn1tools.compile_dict(RFC5280)
+        rfc5280 = asn1tools.compile_dict(deepcopy(RFC5280))
 
         # Empty data.
         encoded_message = b''
@@ -1767,7 +1768,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         """
 
-        zforce = asn1tools.compile_dict(ZFORCE)
+        zforce = asn1tools.compile_dict(deepcopy(ZFORCE))
 
         # PDU 1.
         decoded_message = {

@@ -1,7 +1,6 @@
 import sys
 import unittest
 import asn1tools
-import importlib
 from copy import deepcopy
 
 sys.path.append('tests/files')

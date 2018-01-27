@@ -3,8 +3,6 @@ encode and decode types.
 
 """
 
-from copy import deepcopy
-
 from .parser import parse_files
 from .parser import parse_string
 from .codecs import compiler

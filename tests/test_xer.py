@@ -1,6 +1,7 @@
 import unittest
 import asn1tools
 import sys
+from copy import deepcopy
 
 sys.path.append('tests/files/3gpp')
 
@@ -60,7 +61,7 @@ class Asn1ToolsXerTest(unittest.TestCase):
                          ': Decode length not supported for this codec.')
 
     def test_rrc_8_6_0(self):
-        rrc = asn1tools.compile_dict(RRC_8_6_0, 'xer')
+        rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0), 'xer')
 
         # Message 1.
         decoded_message = {
