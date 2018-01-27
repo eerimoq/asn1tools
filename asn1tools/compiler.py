@@ -3,8 +3,11 @@ encode and decode types.
 
 """
 
+from copy import deepcopy
+
 from .parser import parse_files
 from .parser import parse_string
+from .codecs import compiler
 from .codecs import ber
 from .codecs import der
 from .codecs import jer
@@ -193,3 +196,12 @@ def compile_files(filenames, codec='ber', any_defined_by_choices=None):
     return compile_dict(parse_files(filenames),
                         codec,
                         any_defined_by_choices)
+
+
+def pre_process_dict(specification):
+    """Pre-process given specification dictionary, expanding COMPONENTS OF
+    and adding extension markers if EXTENSIBILITY IMPLIED is active.
+
+    """
+
+    return compiler.pre_process(specification)

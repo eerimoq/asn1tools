@@ -874,8 +874,6 @@ class Compiler(compiler.Compiler):
     def compile_members(self, members, module_name):
         compiled_members = []
 
-        members = self.expand_members(members, module_name)
-
         for member in members:
             if member == '...':
                 continue

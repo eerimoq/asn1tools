@@ -8,9 +8,15 @@ import argparse
 import binascii
 import logging
 
-from .compiler import compile_dict, compile_string, compile_files
-from .parser import parse_string, parse_files, ParseError
-from .codecs import EncodeError, DecodeError
+from .compiler import compile_dict
+from .compiler import compile_string
+from .compiler import compile_files
+from .compiler import pre_process_dict
+from .parser import parse_string
+from .parser import parse_files
+from .parser import ParseError
+from .codecs import EncodeError
+from .codecs import DecodeError
 from .errors import CompileError
 
 
@@ -94,7 +100,7 @@ def _main():
     decode_parser.add_argument('type', help='Type to decode.')
     decode_parser.add_argument('hexstring', help='Hexstring to decode.')
     decode_parser.set_defaults(func=_do_decode)
-    
+
     args = parser.parse_args()
 
     levels = [logging.CRITICAL, logging.WARNING, logging.DEBUG]
@@ -102,7 +108,7 @@ def _main():
 
     logging.basicConfig(format='%(levelname)s: %(message)s',
                         level=level)
-    
+
     if args.debug:
         args.func(args)
     else:

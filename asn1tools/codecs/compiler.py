@@ -23,6 +23,8 @@ class Compiler(object):
         return self._types_backtrace
 
     def process(self):
+        self.pre_process()
+
         compiled = {}
 
         for module_name in self._specification:
@@ -41,6 +43,71 @@ class Compiler(object):
                 compiled[module_name][type_name] = compiled_type
 
         return compiled
+
+    def pre_process(self):
+        for module_name in self._specification:
+            module = self._specification[module_name]
+
+            self.pre_process_components_of(module, module_name)
+
+            if module['extensibility-implied']:
+                self.pre_process_extensibility_implied(module)
+
+        return self._specification
+
+    def pre_process_components_of(self, module, module_name):
+        for type_descriptor in module['types'].values():
+            self.pre_process_components_of_type(type_descriptor,
+                                                module_name)
+
+    def pre_process_components_of_type(self, type_descriptor, module_name):
+        type_name = type_descriptor['type']
+
+        if type_name in ['SEQUENCE', 'SET', 'CHOICE']:
+            type_descriptor['members'] = self.pre_process_components_of_expand_members(
+                type_descriptor['members'],
+                module_name)
+
+    def pre_process_components_of_expand_members(self, members, module_name):
+        expanded_members = []
+
+        for member in members:
+            if 'components-of' in member:
+                type_descriptor, inner_module_name = self.lookup_type_descriptor(
+                    member['components-of'],
+                    module_name)
+                inner_members = self.pre_process_components_of_expand_members(
+                    type_descriptor['members'],
+                    inner_module_name)
+
+                for inner_member in inner_members:
+                    if inner_member == '...':
+                        break
+
+                    expanded_members.append(inner_member)
+            else:
+                expanded_members.append(member)
+
+        return expanded_members
+
+    def pre_process_extensibility_implied(self, module):
+        for type_descriptor in module['types'].values():
+            self.pre_process_extensibility_implied_type(type_descriptor)
+
+    def pre_process_extensibility_implied_type(self, type_descriptor):
+        type_name = type_descriptor['type']
+
+        if type_name in ['SEQUENCE', 'SET', 'CHOICE']:
+            members = type_descriptor['members']
+
+            for member in members:
+                if member == '...':
+                    continue
+
+                self.pre_process_extensibility_implied_type(member)
+
+            if '...' not in members:
+                members.append('...')
 
     def process_type(self, type_name, type_descriptor, module_name):
         return NotImplementedError()
@@ -219,23 +286,6 @@ class Compiler(object):
 
         return type_descriptor
 
-    def expand_members(self, members, module_name):
-        expanded_members = []
 
-        for member in members:
-            if 'components-of' in member:
-                type_descriptor, inner_module_name = self.lookup_type_descriptor(
-                    member['components-of'],
-                    module_name)
-                inner_members = self.expand_members(
-                    type_descriptor['members'],
-                    inner_module_name)
-
-                for memb in inner_members:
-                    if memb == '...':
-                        break
-                    expanded_members.append(memb)
-            else:
-                expanded_members.append(member)
-
-        return expanded_members
+def pre_process(specification):
+    return Compiler(specification).pre_process()

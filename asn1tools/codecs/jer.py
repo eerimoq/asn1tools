@@ -682,8 +682,6 @@ class Compiler(compiler.Compiler):
         compiled_members = []
         extension = None
 
-        members = self.expand_members(members, module_name)
-
         for member in members:
             if member == '...':
                 extension = []

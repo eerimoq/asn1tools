@@ -1,0 +1,83 @@
+ExtensibilityImplied DEFINITIONS EXTENSIBILITY IMPLIED::= BEGIN
+
+Sequence ::= SEQUENCE {}
+
+Sequence2 ::= SEQUENCE {
+  a INTEGER DEFAULT 0
+}
+
+Sequence3 ::= SEQUENCE {
+  a BOOLEAN,
+  ...
+}
+
+Sequence4 ::= SEQUENCE {
+  a BOOLEAN,
+  ...,
+  [[
+  b BOOLEAN
+  ]]
+}
+
+Sequence5 ::= SEQUENCE {
+  a BOOLEAN,
+  ...,
+  [[
+  b BOOLEAN
+  ]],
+  ...
+}
+
+Sequence6 ::= SEQUENCE {
+  a BOOLEAN,
+  ...,
+  [[
+  b BOOLEAN
+  ]],
+  ...,
+  c BOOLEAN
+}
+
+Sequence7 ::= SEQUENCE {
+  a BOOLEAN,
+  ...,
+  [[
+  b BOOLEAN
+  ]],
+  [[
+  c BOOLEAN
+  ]],
+  ...,
+  d BOOLEAN
+}
+
+Sequence8 ::= SEQUENCE {
+  a BOOLEAN,
+  ...,
+  ...
+}
+
+Set ::= SET {}
+
+Set2 ::= SET {
+  a INTEGER DEFAULT 1
+}
+
+Choice ::= CHOICE {
+  a INTEGER
+}
+
+Choice2 ::= CHOICE {
+  a INTEGER,
+  ...
+}
+
+Nested ::= SET {
+  a SEQUENCE {
+    b CHOICE {
+      a INTEGER
+    }
+  }
+}
+
+END

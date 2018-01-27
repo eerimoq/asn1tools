@@ -1,10 +1,30 @@
+import sys
 import unittest
 import asn1tools
+import importlib
+from copy import deepcopy
+
+sys.path.append('tests/files')
+sys.path.append('tests/files/ietf')
+sys.path.append('tests/files/3gpp')
+
+from extensibility_implied import EXPECTED as EXTENSIBILITY_IMPLIED
+from extensibility_implied_pp import EXPECTED as EXTENSIBILITY_IMPLIED_PP
+from all_types_automatic_tags import EXPECTED as ALL_TYPES_AUTOMATIC_TAGS
+from all_types_automatic_tags_pp import EXPECTED as ALL_TYPES_AUTOMATIC_TAGS_PP
 
 
 class Asn1ToolsCompileTest(unittest.TestCase):
 
     maxDiff = None
+
+    def test_pre_process_extensibility_implied(self):
+        actual = asn1tools.pre_process_dict(deepcopy(EXTENSIBILITY_IMPLIED))
+        self.assertEqual(actual, EXTENSIBILITY_IMPLIED_PP)
+
+    def test_pre_process_all_types_automatic_tags(self):
+        actual = asn1tools.pre_process_dict(deepcopy(ALL_TYPES_AUTOMATIC_TAGS))
+        self.assertEqual(actual, ALL_TYPES_AUTOMATIC_TAGS_PP)
 
     def test_unsupported_codec(self):
         with self.assertRaises(asn1tools.CompileError) as cm:
