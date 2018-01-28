@@ -1239,7 +1239,7 @@ def create_grammar():
     # X.680: 26. Notation for the set types
     set_value = NoMatch()
     set_type = (SET
-                - left_brace
+                + left_brace
                 + Group(Optional(component_type_lists
                                  | (extension_and_exception
                                     + optional_extension_marker)))
@@ -1456,7 +1456,7 @@ def create_grammar():
     module_reference <<= (NotAny(reserved_words)
                           + Regex(r'[A-Z][a-zA-Z0-9-]*').setName('modulereference'))
     assigned_identifier = Suppress(Optional(object_identifier_value
-                                            | (defined_value + ~comma)))
+                                            | (defined_value + ~(comma | FROM))))
     global_module_reference = (module_reference + assigned_identifier)
     reference <<= (type_reference
                    | value_reference

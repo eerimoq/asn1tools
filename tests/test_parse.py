@@ -146,6 +146,34 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
         self.assertEqual(actual, expected)
 
+    def test_parse_imports_single_value_reference(self):
+        """Test that a value reference, in this test 'c', is not parsed as an
+        assignmed identifer, but an imported value from 'D'.
+
+        """
+
+        actual = asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
+                                        'IMPORTS '
+                                        'A FROM B '
+                                        'c FROM D; '
+                                        'END')
+
+        expected = {
+            'A': {
+                'extensibility-implied': False,
+                'imports': {
+                    'B': ['A'],
+                    'D': ['c']
+                },
+                'object-classes': {},
+                'object-sets': {},
+                'types': {},
+                'values': {}
+            }
+        }
+
+        self.assertEqual(actual, expected)
+
     def test_parse_keyword_in_type_name(self):
         actual = asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
                                         'ENDa ::= INTEGER '
