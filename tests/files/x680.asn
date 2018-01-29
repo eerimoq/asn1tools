@@ -526,8 +526,8 @@ X680 DEFINITIONS AUTOMATIC TAGS ::= BEGIN
 
     AtomicNumber-E-4 ::= INTEGER (1..104)
 
-    -- TouchToneString-E-4 ::= IA5String
-    --     (FROM ("0123456789" | "*" | "#")) (SIZE (1..63))
+    TouchToneString-E-4 ::= IA5String
+        (FROM ("0123456789" | "*" | "#")) (SIZE (1..63))
 
     Parameter ::= NULL
 

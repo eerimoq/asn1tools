@@ -1417,7 +1417,7 @@ def create_grammar():
     type_ <<= Group((builtin_type
                      | any_defined_by_type
                      | referenced_type).setName('Type')
-                    + Group(Optional(constraint)))
+                    + Group(ZeroOrMore(constraint)))
 
     # X.680: 15. Assigning types and values
     type_reference <<= (NotAny(reserved_words)
