@@ -840,14 +840,21 @@ class Any(Type):
 
 class Enumerated(Type):
 
-    def __init__(self, name, values):
+    def __init__(self, name, values, extension):
         super(Enumerated, self).__init__(name, 'ENUMERATED')
         self.values = values
+        self.extension = extension
         self.lowest_value = min(values)
         highest_value = max(values.keys()) - self.lowest_value
         self.number_of_bits = size_as_number_of_bits(highest_value)
 
     def encode(self, data, encoder):
+        if self.extension is not None:
+            if len(self.extension) == 0:
+                encoder.append_bit(0)
+            else:
+                raise NotImplementedError()
+
         for value, name in self.values.items():
             if data == name:
                 encoder.append_integer(value - self.lowest_value,
@@ -860,6 +867,12 @@ class Enumerated(Type):
                 [value for value in self.values.values()]))
 
     def decode(self, decoder):
+        if self.extension is not None:
+            if len(self.extension) == 0:
+                decoder.read_bit()
+            else:
+                raise NotImplementedError()
+
         value = decoder.read_integer(self.number_of_bits)
 
         return self.values[value + self.lowest_value]
@@ -976,7 +989,8 @@ class Compiler(compiler.Compiler):
         elif type_name == 'REAL':
             compiled = Real(name)
         elif type_name == 'ENUMERATED':
-            compiled = Enumerated(name, type_descriptor['values'])
+            extension = self.get_extension(type_descriptor['values'])
+            compiled = Enumerated(name, type_descriptor['values'], extension)
         elif type_name == 'BOOLEAN':
             compiled = Boolean(name)
         elif type_name == 'OBJECT IDENTIFIER':
@@ -1044,6 +1058,14 @@ class Compiler(compiler.Compiler):
 
         return compiled
 
+    def get_extension(self, values):
+        extension = None
+        
+        for value in values:
+            if value == '...':
+                extension = []
+        return extension
+    
     def compile_members(self, members, module_name, sort_by_tag=False):
         compiled_members = []
         extension = None
