@@ -1061,10 +1061,11 @@ class Compiler(compiler.Compiler):
     def get_extension(self, values):
         extension = None
         
-        for value in values:
+        for value in values.values():
             if value == '...':
                 extension = []
         return extension
+
     
     def compile_members(self, members, module_name, sort_by_tag=False):
         compiled_members = []
