@@ -664,6 +664,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         self.assertEqual(all_types.encode('Octetstring4', b'\x89\xab\xcd\xef'),
                          b'\x31\x35\x79\xbd\xe0')
         self.assertEqual(all_types.encode('Enumerated', 'one'), b'\x00')
+        self.assertEqual(all_types.encode('Enumerated2', 'two'), b'\x40')
         self.assertEqual(all_types.encode('Sequence', {}), b'')
         self.assertEqual(all_types.encode('Sequence2', {}), b'\x00')
         self.assertEqual(all_types.encode('Sequence2', {'a': 0}), b'\x00')
@@ -745,6 +746,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         self.assertEqual(all_types.decode('Octetstring4', b'\x31\x35\x79\xbd\xe0'),
                          b'\x89\xab\xcd\xef')
         self.assertEqual(all_types.decode('Enumerated', b'\x00'), 'one')
+        self.assertEqual(all_types.decode('Enumerated2', b'\x40'), 'two')
         self.assertEqual(all_types.decode('Sequence', b''), {})
         self.assertEqual(all_types.decode('Sequence2', b'\x00'), {'a': 0})
         self.assertEqual(all_types.decode('Sequence2', b'\x80\x80\x80'), {'a': 1})
