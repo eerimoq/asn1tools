@@ -840,18 +840,19 @@ class Any(Type):
 
 class Enumerated(Type):
 
-    def __init__(self, name, values, extension):
+    def __init__(self, name, values):
         super(Enumerated, self).__init__(name, 'ENUMERATED')
         self.values = values
-        self.extension = extension
         self.lowest_value = min(values)
+        # ToDo: Enumeration values should probably not be a
+        #       dictionary, as order seems required. Also extension
+        #       members are not properly handled here.
+        self.extension = [] if '...' in values.values() else None
 
-        for key, val in values.items():
-            if val == '...':
-                break
-            highest_value = key
+        highest_value = max(values) - self.lowest_value
 
-        highest_value -= self.lowest_value
+        if self.extension is not None:
+            highest_value -= 1
 
         self.number_of_bits = size_as_number_of_bits(highest_value)
 
@@ -996,8 +997,7 @@ class Compiler(compiler.Compiler):
         elif type_name == 'REAL':
             compiled = Real(name)
         elif type_name == 'ENUMERATED':
-            extension = self.get_extension(type_descriptor['values'])
-            compiled = Enumerated(name, type_descriptor['values'], extension)
+            compiled = Enumerated(name, type_descriptor['values'])
         elif type_name == 'BOOLEAN':
             compiled = Boolean(name)
         elif type_name == 'OBJECT IDENTIFIER':
@@ -1065,15 +1065,6 @@ class Compiler(compiler.Compiler):
 
         return compiled
 
-    def get_extension(self, values):
-        extension = None
-        
-        for value in values.values():
-            if value == '...':
-                extension = []
-        return extension
-
-    
     def compile_members(self, members, module_name, sort_by_tag=False):
         compiled_members = []
         extension = None
