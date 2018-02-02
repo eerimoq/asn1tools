@@ -80,4 +80,11 @@ Nested ::= SET {
   }
 }
 
+
+Enum ::= ENUMERATED {
+  one(1),
+  two(2),
+  ...
+}
+
 END
