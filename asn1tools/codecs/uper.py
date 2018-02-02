@@ -845,7 +845,14 @@ class Enumerated(Type):
         self.values = values
         self.extension = extension
         self.lowest_value = min(values)
-        highest_value = max(values.keys()) - self.lowest_value
+
+        for key, val in values.items():
+            if val == '...':
+                break
+            highest_value = key
+
+        highest_value -= self.lowest_value
+
         self.number_of_bits = size_as_number_of_bits(highest_value)
 
     def encode(self, data, encoder):
