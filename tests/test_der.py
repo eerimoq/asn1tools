@@ -37,6 +37,8 @@ class Asn1ToolsDerTest(unittest.TestCase):
             ('Sequence',                  {}, b'\x30\x00'),
             ('Sequence2',           {'a': 0}, b'\x30\x00'),
             ('Sequence2',           {'a': 1}, b'\x30\x03\x02\x01\x01'),
+            ('Sequence13', {'a': [1]}, b'\x30\x05\xa0\x03\x02\x01\x01'),
+            ('Sequence13', {'b': [1]}, b'\x30\x05\xA1\x03\x02\x01\x01'),
             ('Set',                       {}, b'\x31\x00'),
             ('Set2',                {'a': 1}, b'\x31\x00'),
             ('Set2',                {'a': 2}, b'\x31\x03\x02\x01\x02'),
@@ -59,8 +61,10 @@ class Asn1ToolsDerTest(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             all_types.encode('Sequence12', {'a': [{'a': []}]})
 
-        with self.assertRaises(NotImplementedError):
-            all_types.decode('Sequence12', b'\x30\x04\xa0\x02\x30\x00')
+        # ToDo: Should return {'a': [{'a': []}]}
+        self.assertEqual(
+            all_types.decode('Sequence12', b'\x30\x04\xa0\x02\x30\x00'),
+            {})
 
     def test_repr_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',

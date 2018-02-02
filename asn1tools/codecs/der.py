@@ -412,7 +412,7 @@ class ArrayType(Type):
         encoded.extend(encoded_elements)
 
     def decode(self, data, offset):
-        offset += 1
+        offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         decoded = []
         start_offset = offset

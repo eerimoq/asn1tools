@@ -146,6 +146,13 @@ Sequence12 ::= SEQUENCE {
     a SEQUENCE OF Sequence12 OPTIONAL
 }
 
+List ::= SEQUENCE OF INTEGER
+
+Sequence13 ::= SEQUENCE {
+    a [0] IMPLICIT List OPTIONAL,
+    b [1] IMPLICIT List OPTIONAL
+}
+
 Set ::= SET {}
 
 Set2 ::= SET {
