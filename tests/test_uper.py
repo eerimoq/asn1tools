@@ -797,7 +797,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             'tests/files/all_types_automatic_tags.asn', 'uper')
 
         datas = [
-            ('Sequence14',
+            ('Sequence3',
              {'a': 1, 'c': 2,'d': True},
              b'\x00\x80\x80\x81\x40')
         ]

@@ -1367,9 +1367,19 @@ class Asn1ToolsBerTest(unittest.TestCase):
             'tests/files/all_types_automatic_tags.asn')
 
         datas = [
-            ('Sequence14',
+            ('Sequence3',
              {'a': 1, 'c': 2,'d': True},
-             b'\x30\x09\x80\x01\x01\x82\x01\x02\x83\x01\xff')
+             b'\x30\x09\x80\x01\x01\x82\x01\x02\x83\x01\xff'),
+            ('Sequence14',
+             {'a': 1, 'b': {'a': 3}, 'c': {'a': True}},
+             b'\x30\x0d\x80\x01\x01\xa2\x03\x80\x01\x03\xa2\x03\x80\x01\xff'),
+            ('Sequence15',
+             {'a': 1, 'b': {'a': 3}, 'c': {'a': True}},
+             b'\x30\x0d\x80\x01\x01\xa2\x03\x80\x01\x03\xa3\x03\x80\x01\xff'),
+            # ('Sequence16',
+            #  {'a': 1, 'b': {'a': {'a': 2}}, 'c': {'a': 3}, 'd': {'a': True}},
+            #  b'\x30\x12\x02\x01\x01\xa1\x05\xa0\x03\x80\x01\x02\xa2\x03\x80'
+            #  b'\x01\x03\x80\x01\xff')
         ]
 
         for type_name, decoded, encoded in datas:

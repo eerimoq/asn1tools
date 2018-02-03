@@ -153,10 +153,23 @@ Sequence13 ::= SEQUENCE {
     b [1] IMPLICIT List OPTIONAL
 }
 
+Sequence14 ::= SEQUENCE {
+    a [0] INTEGER,
+    b [1] Choice,
+    c [2] Sequence9,
+    d [3] CHOICE {
+        a BOOLEAN
+    }
+}
+
 Set ::= SET {}
 
 Set2 ::= SET {
   a INTEGER DEFAULT 1
+}
+
+Choice ::= CHOICE {
+    a INTEGER
 }
 
 choice CHOICE { foo A } ::= foo : bar

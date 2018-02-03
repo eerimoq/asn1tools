@@ -1113,7 +1113,8 @@ class Compiler(compiler.Compiler):
                 compiled_member.default = member['default']
 
             if tag is not None:
-                compiled_member.set_tag(tag, 0)
+                if 'tag' not in member:
+                    compiled_member.set_tag(tag, 0)
                 tag += 1
 
             compiled_members.append(compiled_member)

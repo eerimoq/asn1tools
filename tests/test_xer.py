@@ -403,9 +403,9 @@ class Asn1ToolsXerTest(unittest.TestCase):
             'tests/files/all_types_automatic_tags.asn', 'xer')
 
         datas = [
-            ('Sequence14',
+            ('Sequence3',
              {'a': 1, 'c': 2,'d': True},
-             b'<Sequence14><a>1</a><c>2</c><d><true /></d></Sequence14>')
+             b'<Sequence3><a>1</a><c>2</c><d><true /></d></Sequence3>')
         ]
 
         for type_name, decoded, encoded in datas:

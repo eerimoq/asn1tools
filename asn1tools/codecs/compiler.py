@@ -174,8 +174,8 @@ class Compiler(object):
             pass
 
         try:
-            tags = self._specification[module_name].get('tags', None)
-            return bool(type_descriptor['tag']) and (tags != 'IMPLICIT')
+            tags = self._specification[module_name].get('tags', 'EXPLICIT')
+            return bool(type_descriptor['tag']) and (tags == 'EXPLICIT')
         except KeyError:
             pass
 
