@@ -6,8 +6,8 @@ About
 
 A Python package for ASN.1 parsing, encoding and decoding.
 
-This project is under development and does only support a subset of
-the ASN.1 specification syntax.
+This project is *under* *development* and does only support a subset
+of the ASN.1 specification syntax.
 
 Codecs under development:
 
