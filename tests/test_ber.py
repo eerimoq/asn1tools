@@ -1370,21 +1370,96 @@ class Asn1ToolsBerTest(unittest.TestCase):
             ('Sequence3',
              {'a': 1, 'c': 2,'d': True},
              b'\x30\x09\x80\x01\x01\x82\x01\x02\x83\x01\xff'),
-            ('Sequence14',
-             {'a': 1, 'b': {'a': 3}, 'c': {'a': True}},
-             b'\x30\x0d\x80\x01\x01\xa2\x03\x80\x01\x03\xa2\x03\x80\x01\xff'),
-            ('Sequence15',
-             {'a': 1, 'b': {'a': 3}, 'c': {'a': True}},
-             b'\x30\x0d\x80\x01\x01\xa2\x03\x80\x01\x03\xa3\x03\x80\x01\xff'),
-            # ('Sequence16',
-            #  {'a': 1, 'b': {'a': {'a': 2}}, 'c': {'a': 3}, 'd': {'a': True}},
-            #  b'\x30\x12\x02\x01\x01\xa1\x05\xa0\x03\x80\x01\x02\xa2\x03\x80'
-            #  b'\x01\x03\x80\x01\xff')
         ]
 
         for type_name, decoded, encoded in datas:
             self.assertEqual(all_types.encode(type_name, decoded), encoded)
             self.assertEqual(all_types.decode(type_name, encoded), decoded)
+
+    def test_module_tags_explicit(self):
+        all_types = asn1tools.compile_files('tests/files/module_tags_explicit.asn')
+
+        datas = [
+            ('CEBEAE', 1, b'\xa5\x07\xa4\x05\xa3\x03\x02\x01\x01'),
+            ('CEBIAI', 1, b'\xa5\x03\x84\x01\x01'),
+            ('CIBIAE', 1, b'\xa5\x03\x02\x01\x01'),
+            ('CIBIAI', 1, b'\x85\x01\x01'),
+            ('S2',
+             {'a': 1, 'b': {'a': 3}, 'c': {'a': True}},
+             b'\x30\x0d\x02\x01\x01\xa2\x05\x30\x03\x02\x01\x03\x01\x01\xff'),
+            ('S3',
+             {'a': 1, 'b': {'a': 3}, 'c': {'a': True}},
+             b'\x30\x0f\x02\x01\x01\xa2\x05\x30\x03\x02\x01\x03\xa3\x03\x01'
+             b'\x01\xff'),
+            ('S4',
+             {'a': 1, 'b': {'a': {'a': 2}}, 'c': {'a': 3}, 'd': {'a': True}},
+             b'\x30\x16\x02\x01\x01\xa1\x07\xa0\x05\xa0\x03\x02\x01\x02\xa2'
+             b'\x05\x30\x03\x02\x01\x03\x01\x01\xff')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            try:
+                self.assertEqual(all_types.encode(type_name, decoded), encoded)
+                self.assertEqual(all_types.decode(type_name, encoded), decoded)
+            except:
+                print('Type:', type_name)
+                raise
+
+    def test_module_tags_implicit(self):
+        all_types = asn1tools.compile_files('tests/files/module_tags_implicit.asn')
+
+        datas = [
+            ('CBA', 1, b'\x85\x01\x01'),
+            ('CBIAI', 1, b'\x85\x01\x01'),
+            ('CIBIA', 1, b'\x85\x01\x01'),
+            ('CIBIAI', 1, b'\x85\x01\x01'),
+            ('S2',
+             {'a': 1, 'b': {'a': 3}, 'c': {'a': True}},
+             b'\x30\x0b\x02\x01\x01\xa2\x03\x02\x01\x03\x01\x01\xff'),
+            ('S3',
+             {'a': 1, 'b': {'a': 3}, 'c': {'a': True}},
+             b'\x30\x0d\x02\x01\x01\xa2\x03\x02\x01\x03\xa3\x03\x01\x01\xff'),
+            ('S4',
+             {'a': 1, 'b': {'a': {'a': 2}}, 'c': {'a': 3}, 'd': {'a': True}},
+             b'\x30\x12\x02\x01\x01\xa1\x05\xa0\x03\x80\x01\x02\xa2\x03\x02'
+             b'\x01\x03\x01\x01\xff')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            try:
+                self.assertEqual(all_types.encode(type_name, decoded), encoded)
+                self.assertEqual(all_types.decode(type_name, encoded), decoded)
+            except:
+                print('Type:', type_name)
+                raise
+
+    def test_module_tags_automatic(self):
+        all_types = asn1tools.compile_files('tests/files/module_tags_automatic.asn')
+
+        datas = [
+            ('CBA', 1, b'\x85\x01\x01'),
+            ('CBIAI', 1, b'\x85\x01\x01'),
+            ('CIBIA', 1, b'\x85\x01\x01'),
+            ('CIBIAI', 1, b'\x85\x01\x01'),
+            ('S2',
+             {'a': 1, 'b': {'a': 3}, 'c': {'a': True}},
+             b'\x30\x0d\x80\x01\x01\xa2\x03\x80\x01\x03\xa2\x03\x80\x01\xff'),
+            ('S3',
+             {'a': 1, 'b': {'a': 3}, 'c': {'a': True}},
+             b'\x30\x0d\x80\x01\x01\xa2\x03\x80\x01\x03\xa3\x03\x80\x01\xff'),
+            #('S4',
+            # {'a': 1, 'b': {'a': {'a': 2}}, 'c': {'a': 3}, 'd': {'a': True}},
+            # b'\x30\x12\x02\x01\x01\xa1\x05\xa0\x03\x80\x01\x02\xa2\x03\x80'
+            # b'\x01\x03\x80\x01\xff')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            try:
+                self.assertEqual(all_types.encode(type_name, decoded), encoded)
+                self.assertEqual(all_types.decode(type_name, encoded), decoded)
+            except:
+                print('Type:', type_name)
+                raise
 
     def test_decode_all_types_errors(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn')

@@ -1,0 +1,81 @@
+ModuleTagsAutomatic DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+A ::= [3] INTEGER
+
+AI ::= [3] IMPLICIT INTEGER
+
+BA ::= [4] A
+
+BIA ::= [4] IMPLICIT A
+
+BIAI ::= [4] IMPLICIT AI
+
+CBA ::= [5] BA
+
+CBIAI ::= [5] BIAI
+
+CIBIA ::= [5] IMPLICIT BIA
+
+CIBIAI ::= [5] IMPLICIT BIAI
+
+S1 ::= SEQUENCE {
+    a INTEGER,
+    b BOOLEAN OPTIONAL
+}
+
+S2 ::= SEQUENCE {
+    a INTEGER,
+    b [2] S1,
+    c CHOICE {
+        a BOOLEAN
+    }
+}
+
+S3 ::= SEQUENCE {
+    a INTEGER,
+    b [2] S1,
+    c [3] EXPLICIT CHOICE {
+        a BOOLEAN
+    }
+}
+
+-- C1 type becomes EXPLICIT since its type is CHOICE, rest IMPLICIT
+-- (see X.680 30.6-c).
+S4 ::= SEQUENCE {
+    a INTEGER,
+    b [1] C1,
+    c [2] S1,
+    d CHOICE {
+        a BOOLEAN
+    }
+}
+
+S5 ::= SEQUENCE {
+    a INTEGER,
+    b S1,
+    c CHOICE {
+        a BOOLEAN
+    }
+}
+
+S6 ::= SEQUENCE {
+    a INTEGER,
+    ...,
+    b BOOLEAN
+}
+
+S7 ::= SEQUENCE {
+    a [2] INTEGER,
+    ...,
+    b BOOLEAN
+}
+
+C1 ::= CHOICE {
+    a [0] CHOICE {
+        a [0] INTEGER
+    }
+}
+
+END

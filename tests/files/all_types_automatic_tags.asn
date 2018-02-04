@@ -15,36 +15,4 @@ Sequence3 ::= SEQUENCE {
     d BOOLEAN
 }
 
-Sequence14 ::= SEQUENCE {
-    a INTEGER,
-    b [2] Sequence9,
-    c CHOICE {
-        a BOOLEAN
-    }
-}
-
-Sequence15 ::= SEQUENCE {
-    a INTEGER,
-    b [2] Sequence9,
-    c [3] EXPLICIT CHOICE {
-        a BOOLEAN
-    }
-}
-
--- Choice1 type becomes EXPLICIT, rest IMPLICIT (see X.680 30.6-c).
-Sequence16 ::= SEQUENCE {
-    a INTEGER,
-    b [1] Choice1,
-    c [2] Sequence9,
-    d CHOICE {
-        a BOOLEAN
-    }
-}
-
-Choice1 ::= CHOICE {
-    a [0] CHOICE {
-        a [0] INTEGER
-    }
-}
-
 END

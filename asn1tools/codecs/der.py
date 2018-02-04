@@ -342,16 +342,20 @@ class MembersType(Type):
             raise NotImplementedError(
                 'decode until an end-of-contents tag is found')
         else:
-            _, offset = decode_length_definite(data, offset)
+            length, offset = decode_length_definite(data, offset)
 
+        end = offset + length
         values = {}
 
         for member in self.members:
             try:
-                if isinstance(member, AnyDefinedBy):
-                    value, offset = member.decode(data, offset, values)
+                if offset < end:
+                    if isinstance(member, AnyDefinedBy):
+                        value, offset = member.decode(data, offset, values)
+                    else:
+                        value, offset = member.decode(data, offset)
                 else:
-                    value, offset = member.decode(data, offset)
+                    raise IndexError
             except (DecodeError, IndexError) as e:
                 if member.optional:
                     continue

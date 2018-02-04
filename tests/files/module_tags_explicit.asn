@@ -1,0 +1,79 @@
+ModuleTagsExplicit DEFINITIONS ::=
+
+BEGIN
+
+AE ::= [3] INTEGER
+
+AI ::= [3] IMPLICIT INTEGER
+
+BEAE ::= [4] AE
+
+BIAE ::= [4] IMPLICIT AE
+
+BIAI ::= [4] IMPLICIT AI
+
+CEBEAE ::= [5] BEAE
+
+CEBIAI ::= [5] BIAI
+
+CIBIAE ::= [5] IMPLICIT BIAE
+
+CIBIAI ::= [5] IMPLICIT BIAI
+
+S1 ::= SEQUENCE {
+    a INTEGER,
+    b BOOLEAN OPTIONAL
+}
+
+S2 ::= SEQUENCE {
+    a INTEGER,
+    b [2] S1,
+    c CHOICE {
+        a BOOLEAN
+    }
+}
+
+S3 ::= SEQUENCE {
+    a INTEGER,
+    b [2] S1,
+    c [3] EXPLICIT CHOICE {
+        a BOOLEAN
+    }
+}
+
+S4 ::= SEQUENCE {
+    a INTEGER,
+    b [1] C1,
+    c [2] S1,
+    d CHOICE {
+        a BOOLEAN
+    }
+}
+
+S5 ::= SEQUENCE {
+    a INTEGER,
+    b S1,
+    c CHOICE {
+        a BOOLEAN
+    }
+}
+
+S6 ::= SEQUENCE {
+    a INTEGER,
+    ...,
+    b BOOLEAN
+}
+
+S7 ::= SEQUENCE {
+    a [2] INTEGER,
+    ...,
+    b BOOLEAN
+}
+
+C1 ::= CHOICE {
+    a [0] CHOICE {
+        a [0] INTEGER
+    }
+}
+
+END

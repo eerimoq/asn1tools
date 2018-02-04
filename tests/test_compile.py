@@ -11,6 +11,12 @@ from extensibility_implied import EXPECTED as EXTENSIBILITY_IMPLIED
 from extensibility_implied_pp import EXPECTED as EXTENSIBILITY_IMPLIED_PP
 from all_types_automatic_tags import EXPECTED as ALL_TYPES_AUTOMATIC_TAGS
 from all_types_automatic_tags_pp import EXPECTED as ALL_TYPES_AUTOMATIC_TAGS_PP
+from module_tags_explicit import EXPECTED as MODULE_TAGS_EXPLICIT
+from module_tags_explicit_pp import EXPECTED as MODULE_TAGS_EXPLICIT_PP
+from module_tags_implicit import EXPECTED as MODULE_TAGS_IMPLICIT
+from module_tags_implicit_pp import EXPECTED as MODULE_TAGS_IMPLICIT_PP
+from module_tags_automatic import EXPECTED as MODULE_TAGS_AUTOMATIC
+from module_tags_automatic_pp import EXPECTED as MODULE_TAGS_AUTOMATIC_PP
 
 
 class Asn1ToolsCompileTest(unittest.TestCase):
@@ -24,6 +30,18 @@ class Asn1ToolsCompileTest(unittest.TestCase):
     def test_pre_process_all_types_automatic_tags(self):
         actual = asn1tools.pre_process_dict(deepcopy(ALL_TYPES_AUTOMATIC_TAGS))
         self.assertEqual(actual, ALL_TYPES_AUTOMATIC_TAGS_PP)
+
+    def test_pre_process_module_tags_explicit(self):
+        actual = asn1tools.pre_process_dict(deepcopy(MODULE_TAGS_EXPLICIT))
+        self.assertEqual(actual, MODULE_TAGS_EXPLICIT_PP)
+
+    def test_pre_process_module_tags_implicit(self):
+        actual = asn1tools.pre_process_dict(deepcopy(MODULE_TAGS_IMPLICIT))
+        self.assertEqual(actual, MODULE_TAGS_IMPLICIT_PP)
+
+    def test_pre_process_module_tags_automatic(self):
+        actual = asn1tools.pre_process_dict(deepcopy(MODULE_TAGS_AUTOMATIC))
+        self.assertEqual(actual, MODULE_TAGS_AUTOMATIC_PP)
 
     def test_unsupported_codec(self):
         with self.assertRaises(asn1tools.CompileError) as cm:
@@ -39,8 +57,9 @@ class Asn1ToolsCompileTest(unittest.TestCase):
 
     def test_missing_value(self):
         with self.assertRaises(asn1tools.CompileError) as cm:
-            asn1tools.compile_string('A DEFINITIONS ::= BEGIN A ::= INTEGER (1..a) END',
-                                     'uper')
+            asn1tools.compile_string(
+                'A DEFINITIONS ::= BEGIN A ::= INTEGER (1..a) END',
+                'uper')
 
         self.assertEqual(str(cm.exception), "Value 'a' not found in module 'A'.")
 

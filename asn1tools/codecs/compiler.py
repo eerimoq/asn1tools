@@ -53,6 +53,8 @@ class Compiler(object):
             if module['extensibility-implied']:
                 self.pre_process_extensibility_implied(module)
 
+            self.pre_process_tags(module, module_name)
+
         return self._specification
 
     def pre_process_components_of(self, module, module_name):
@@ -108,6 +110,9 @@ class Compiler(object):
 
             if '...' not in members:
                 members.append('...')
+
+    def pre_process_tags(self, module, module_name):
+        pass
 
     def process_type(self, type_name, type_descriptor, module_name):
         return NotImplementedError()
