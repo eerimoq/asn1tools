@@ -763,14 +763,7 @@ class Choice(Type):
     def encode(self, data, encoded):
         for member in self.members:
             if member.name in data:
-                if self.tag is None:
-                    member.encode(data[member.name], encoded)
-                else:
-                    encoded_members = bytearray()
-                    member.encode(data[member.name], encoded_members)
-                    encoded.extend(self.tag)
-                    encoded.extend(encode_length_definite(len(encoded_members)))
-                    encoded.extend(encoded_members)
+                member.encode(data[member.name], encoded)
 
                 return
 
@@ -1073,7 +1066,7 @@ class Compiler(compiler.Compiler):
                                               type_descriptor,
                                               module_name)
 
-        if self.is_explicit_tag(type_descriptor, module_name):
+        if self.is_explicit_tag(type_descriptor):
             compiled = ExplicitTag(name, compiled)
 
         # Set any given tag.
@@ -1095,13 +1088,6 @@ class Compiler(compiler.Compiler):
     def compile_members(self, members, module_name):
         compiled_members = []
 
-        tags = self._specification[module_name].get('tags', None)
-
-        if tags == 'AUTOMATIC':
-            tag = 0
-        else:
-            tag = None
-
         for member in members:
             if member == '...':
                 continue
@@ -1115,11 +1101,6 @@ class Compiler(compiler.Compiler):
 
             if 'default' in member:
                 compiled_member.default = member['default']
-
-            if tag is not None:
-                if 'tag' not in member:
-                    compiled_member.set_tag(tag, 0)
-                tag += 1
 
             compiled_members.append(compiled_member)
 

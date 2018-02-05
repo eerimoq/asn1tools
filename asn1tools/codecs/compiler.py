@@ -86,7 +86,7 @@ class Compiler(object):
                     if inner_member == '...':
                         break
 
-                    expanded_members.append(inner_member)
+                    expanded_members.append(deepcopy(inner_member))
             else:
                 expanded_members.append(member)
 
@@ -112,7 +112,88 @@ class Compiler(object):
                 members.append('...')
 
     def pre_process_tags(self, module, module_name):
-        pass
+        module_tags = module.get('tags', 'EXPLICIT')
+
+        for type_descriptor in module['types'].values():
+            self.pre_process_tags_type(type_descriptor,
+                                       module_tags,
+                                       module_name)
+
+    def pre_process_tags_type(self,
+                              type_descriptor,
+                              module_tags,
+                              module_name):
+        type_name = type_descriptor['type']
+
+        if 'tag' in type_descriptor:
+            tag = type_descriptor['tag']
+
+            if 'kind' not in tag:
+                if self.resolve_type_name(type_name, module_name) == 'CHOICE':
+                    tag['kind'] = 'EXPLICIT'
+                elif module_tags in ['IMPLICIT', 'EXPLICIT']:
+                    tag['kind'] = module_tags
+                else:
+                    tag['kind'] = 'IMPLICIT'
+
+        if type_name in ['SEQUENCE', 'SET', 'CHOICE']:
+            self.pre_process_tags_type_members(type_descriptor,
+                                               module_tags,
+                                               module_name)
+
+        if type_name == 'SEQUENCE OF':
+            self.pre_process_tags_type(type_descriptor['element'],
+                                       module_tags,
+                                       module_name)
+
+    def pre_process_tags_type_members(self,
+                                      type_descriptor,
+                                      module_tags,
+                                      module_name):
+        def is_any_member_tagged(members):
+            for member in members:
+                if member == '...':
+                    continue
+
+                if 'tag' in member:
+                    return True
+
+            return False
+
+        number = None
+        members = type_descriptor['members']
+
+        # Add tag number to all members if AUTOMATIC TAGS are
+        # selected and no member is tagged.
+        if module_tags == 'AUTOMATIC' and not is_any_member_tagged(members):
+            number = 0
+
+        for member in members:
+            if member == '...':
+                continue
+
+            if number is not None:
+                if 'tag' not in member:
+                    member['tag'] = {}
+
+                member['tag']['number'] = number
+                number += 1
+
+            self.pre_process_tags_type(member,
+                                       module_tags,
+                                       module_name)
+
+    def resolve_type_name(self, type_name, module_name):
+        try:
+            while True:
+                type_descriptor, module_name = self.lookup_type_descriptor(
+                    type_name,
+                    module_name)
+                type_name = type_descriptor['type']
+        except CompileError:
+            pass
+
+        return type_name
 
     def process_type(self, type_name, type_descriptor, module_name):
         return NotImplementedError()
@@ -172,15 +253,9 @@ class Compiler(object):
 
         return minimum, maximum
 
-    def is_explicit_tag(self, type_descriptor, module_name):
+    def is_explicit_tag(self, type_descriptor):
         try:
             return type_descriptor['tag']['kind'] == 'EXPLICIT'
-        except KeyError:
-            pass
-
-        try:
-            tags = self._specification[module_name].get('tags', 'EXPLICIT')
-            return bool(type_descriptor['tag']) and (tags == 'EXPLICIT')
         except KeyError:
             pass
 

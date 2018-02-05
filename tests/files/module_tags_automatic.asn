@@ -72,6 +72,13 @@ S7 ::= SEQUENCE {
     b BOOLEAN
 }
 
+S8 ::= SEQUENCE {
+    a SEQUENCE OF CHOICE {
+        a INTEGER,
+        b BOOLEAN
+    }
+}
+
 C1 ::= CHOICE {
     a [0] CHOICE {
         a [0] INTEGER
