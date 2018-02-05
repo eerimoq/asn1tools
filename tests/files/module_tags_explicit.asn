@@ -2,21 +2,21 @@ ModuleTagsExplicit DEFINITIONS ::=
 
 BEGIN
 
-AE ::= [3] INTEGER
+A ::= [3] INTEGER
 
 AI ::= [3] IMPLICIT INTEGER
 
-BEAE ::= [4] AE
+BA ::= [4] A
 
-BIAE ::= [4] IMPLICIT AE
+BIA ::= [4] IMPLICIT A
 
 BIAI ::= [4] IMPLICIT AI
 
-CEBEAE ::= [5] BEAE
+CBA ::= [5] BA
 
-CEBIAI ::= [5] BIAI
+CBIAI ::= [5] BIAI
 
-CIBIAE ::= [5] IMPLICIT BIAE
+CIBIA ::= [5] IMPLICIT BIA
 
 CIBIAI ::= [5] IMPLICIT BIAI
 

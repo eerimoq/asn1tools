@@ -1380,9 +1380,9 @@ class Asn1ToolsBerTest(unittest.TestCase):
         all_types = asn1tools.compile_files('tests/files/module_tags_explicit.asn')
 
         datas = [
-            ('CEBEAE', 1, b'\xa5\x07\xa4\x05\xa3\x03\x02\x01\x01'),
-            ('CEBIAI', 1, b'\xa5\x03\x84\x01\x01'),
-            ('CIBIAE', 1, b'\xa5\x03\x02\x01\x01'),
+            ('CBA', 1, b'\xa5\x07\xa4\x05\xa3\x03\x02\x01\x01'),
+            ('CBIAI', 1, b'\xa5\x03\x84\x01\x01'),
+            ('CIBIA', 1, b'\xa5\x03\x02\x01\x01'),
             ('CIBIAI', 1, b'\x85\x01\x01'),
             ('S2',
              {'a': 1, 'b': {'a': 3}, 'c': {'a': True}},
