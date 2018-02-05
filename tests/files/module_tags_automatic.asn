@@ -55,7 +55,7 @@ S4 ::= SEQUENCE {
 S5 ::= SEQUENCE {
     a INTEGER,
     b S1,
-    c CHOICE {
+    c [5] IMPLICIT CHOICE {
         a BOOLEAN
     }
 }

@@ -1394,7 +1394,10 @@ class Asn1ToolsBerTest(unittest.TestCase):
             ('S4',
              {'a': 1, 'b': {'a': {'a': 2}}, 'c': {'a': 3}, 'd': {'a': True}},
              b'\x30\x16\x02\x01\x01\xa1\x07\xa0\x05\xa0\x03\x02\x01\x02\xa2'
-             b'\x05\x30\x03\x02\x01\x03\x01\x01\xff')
+             b'\x05\x30\x03\x02\x01\x03\x01\x01\xff'),
+            ('S5',
+             {'a': 1, 'b': {'a': 2}, 'c': {'a': True}},
+             b'\x30\x0d\x02\x01\x01\x30\x03\x02\x01\x02\xa5\x03\x01\x01\xff')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -1422,7 +1425,10 @@ class Asn1ToolsBerTest(unittest.TestCase):
             ('S4',
              {'a': 1, 'b': {'a': {'a': 2}}, 'c': {'a': 3}, 'd': {'a': True}},
              b'\x30\x12\x02\x01\x01\xa1\x05\xa0\x03\x80\x01\x02\xa2\x03\x02'
-             b'\x01\x03\x01\x01\xff')
+             b'\x01\x03\x01\x01\xff'),
+            ('S5',
+             {'a': 1, 'b': {'a': 2}, 'c': {'a': True}},
+             b'\x30\x0d\x02\x01\x01\x30\x03\x02\x01\x02\xa5\x03\x01\x01\xff')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -1472,6 +1478,19 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         with self.assertRaises(asn1tools.DecodeError):
             self.assertEqual(all_types.decode('S4', encoded_message),
+                             decoded_message)
+
+        decoded_message = {'a': 1, 'b': {'a': 2}, 'c': {'a': True}}
+        encoded_message = (
+            b'\x30\x0d\x02\x01\x01\x30\x03\x80\x01\x02\xa5\x03\x80\x01\xff'
+        )
+
+        with self.assertRaises(AssertionError):
+            self.assertEqual(all_types.encode('S5', decoded_message),
+                             encoded_message)
+
+        with self.assertRaises(asn1tools.DecodeError):
+            self.assertEqual(all_types.decode('S5', encoded_message),
                              decoded_message)
 
     def test_decode_all_types_errors(self):
