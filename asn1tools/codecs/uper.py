@@ -910,22 +910,6 @@ class Recursive(Type):
         return 'Recursive({})'.format(self.name)
 
 
-class ExplicitTag(Type):
-
-    def __init__(self, name, inner):
-        super(ExplicitTag, self).__init__(name, 'Tag')
-        self.inner = inner
-
-    def encode(self, data, encoder):
-        raise NotImplementedError()
-
-    def decode(self, decoder):
-        raise NotImplementedError()
-
-    def __repr__(self):
-        return 'Tag()'
-
-
 class CompiledType(object):
 
     def __init__(self, type_):
