@@ -1446,11 +1446,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
              b'\x30\x0d\x80\x01\x01\xa2\x03\x80\x01\x03\xa2\x03\x80\x01\xff'),
             ('S3',
              {'a': 1, 'b': {'a': 3}, 'c': {'a': True}},
-             b'\x30\x0d\x80\x01\x01\xa2\x03\x80\x01\x03\xa3\x03\x80\x01\xff'),
-            #('S4',
-            # {'a': 1, 'b': {'a': {'a': 2}}, 'c': {'a': 3}, 'd': {'a': True}},
-            # b'\x30\x12\x02\x01\x01\xa1\x05\xa0\x03\x80\x01\x02\xa2\x03\x80'
-            # b'\x01\x03\x80\x01\xff')
+             b'\x30\x0d\x80\x01\x01\xa2\x03\x80\x01\x03\xa3\x03\x80\x01\xff')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -1460,6 +1456,23 @@ class Asn1ToolsBerTest(unittest.TestCase):
             except:
                 print('Type:', type_name)
                 raise
+
+        # Currently fails due to bugs in the package.
+        decoded_message = {
+            'a': 1, 'b': {'a': {'a': 2}}, 'c': {'a': 3}, 'd': {'a': True}
+        }
+        encoded_message = (
+            b'\x30\x12\x02\x01\x01\xa1\x05\xa0\x03\x80\x01\x02\xa2\x03\x80'
+            b'\x01\x03\x80\x01\xff'
+        )
+
+        with self.assertRaises(AssertionError):
+            self.assertEqual(all_types.encode('S4', decoded_message),
+                             encoded_message)
+
+        with self.assertRaises(asn1tools.DecodeError):
+            self.assertEqual(all_types.decode('S4', encoded_message),
+                             decoded_message)
 
     def test_decode_all_types_errors(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn')
