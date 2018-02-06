@@ -141,7 +141,7 @@ class Compiler(object):
                                                module_tags,
                                                module_name)
 
-        if type_name == 'SEQUENCE OF':
+        if type_name in ['SEQUENCE OF', 'SET OF']:
             self.pre_process_tags_type(type_descriptor['element'],
                                        module_tags,
                                        module_name)
