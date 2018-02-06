@@ -40,7 +40,6 @@ class Specification(object):
                         raise CompileError()
 
                     self._types[type_name] = types[type_name]
-
         except CompileError:
             self._types = None
 
