@@ -1,4 +1,5 @@
 import unittest
+from .utils import Asn1ToolsBaseTest
 import asn1tools
 import sys
 from copy import deepcopy
@@ -12,7 +13,7 @@ from x691_a2 import EXPECTED as X691_A2
 from x691_a4 import EXPECTED as X691_A4
 
 
-class Asn1ToolsUPerTest(unittest.TestCase):
+class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
     maxDiff = None
 
@@ -57,7 +58,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
     def test_x691_a1(self):
         a1 = asn1tools.compile_files('tests/files/x691_a1.asn', 'uper')
 
-        decoded_message = {
+        decoded = {
             'name': {
                 'givenName': 'John',
                 'initial': 'P',
@@ -91,7 +92,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             ]
         }
 
-        encoded_message = (
+        encoded = (
             b'\x82\x4a\xdf\xa3\x70\x0d\x00\x5a\x7b\x74\xf4\xd0\x02\x66\x11\x13'
             b'\x4f\x2c\xb8\xfa\x6f\xe4\x10\xc5\xcb\x76\x2c\x1c\xb1\x6e\x09\x37'
             b'\x0f\x2f\x20\x35\x01\x69\xed\xd3\xd3\x40\x10\x2d\x2c\x3b\x38\x68'
@@ -100,15 +101,12 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             b'\x2c\x1b\xb1\x6e'
         )
 
-        encoded = a1.encode('PersonnelRecord', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = a1.decode('PersonnelRecord', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(a1, 'PersonnelRecord', decoded, encoded)
 
     def test_x691_a2(self):
         a2 = asn1tools.compile_dict(deepcopy(X691_A2), 'uper')
 
-        decoded_message = {
+        decoded = {
             'name': {
                 'givenName': 'John',
                 'initial': 'P',
@@ -142,17 +140,14 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             ]
         }
 
-        encoded_message = (
+        encoded = (
             b'\x86\x5d\x51\xd2\x88\x8a\x51\x25\xf1\x80\x99\x84\x44\xd3\xcb\x2e'
             b'\x3e\x9b\xf9\x0c\xb8\x84\x8b\x86\x73\x96\xe8\xa8\x8a\x51\x25\xf1'
             b'\x81\x08\x9b\x93\xd7\x1a\xa2\x29\x44\x97\xc6\x32\xae\x22\x22\x22'
             b'\x98\x5c\xe5\x21\x88\x5d\x54\xc1\x70\xca\xc8\x38\xb8'
         )
 
-        encoded = a2.encode('PersonnelRecord', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = a2.decode('PersonnelRecord', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(a2, 'PersonnelRecord', decoded, encoded)
 
     def test_x691_a3(self):
         with self.assertRaises(asn1tools.ParseError) as cm:
@@ -165,7 +160,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
 
         return
 
-        decoded_message = {
+        decoded = {
             'name': {
                 'givenName': 'John',
                 'initial': 'P',
@@ -200,7 +195,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             ]
         }
 
-        encoded_message = (
+        encoded = (
             b'\x40\xcb\xaa\x3a\x51\x08\xa5\x12\x5f\x18\x03\x30\x88\x9a\x79\x65'
             b'\xc7\xd3\x7f\x20\xcb\x88\x48\xb8\x19\xce\x5b\xa2\xa1\x14\xa2\x4b'
             b'\xe3\x01\x13\x72\x7a\xe3\x54\x22\x94\x49\x7c\x61\x95\x71\x11\x18'
@@ -208,15 +203,12 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             b'\x80'
         )
 
-        encoded = a3.encode('PersonnelRecord', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = a3.decode('PersonnelRecord', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(a3, 'PersonnelRecord', decoded, encoded)
 
     def test_x691_a4(self):
         a4 = asn1tools.compile_dict(deepcopy(X691_A4), 'uper')
 
-        decoded_message = {
+        decoded = {
             'a': 253,
             'b': True,
             'c': {
@@ -226,21 +218,18 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             'h': True
         }
 
-        encoded_message = (
+        encoded = (
             b'\x9e\x00\x06\x00\x04\x0a\x46\x90'
         )
 
         with self.assertRaises(asn1tools.EncodeError):
-            encoded = a4.encode('Ax', decoded_message)
-            self.assertEqual(encoded, encoded_message)
-            decoded = a4.decode('Ax', encoded)
-            self.assertEqual(decoded, decoded_message)
+            self.assert_encode_decode(a4, 'Ax', decoded, encoded)
 
     def test_rrc_8_6_0(self):
         rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0), 'uper')
 
         # Message 1.
-        decoded_message = {
+        decoded = {
             'message': {
                 'c1' : {
                     'paging': {
@@ -252,15 +241,12 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = b'\x28'
+        encoded = b'\x28'
 
-        encoded = rrc.encode('PCCH-Message', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = rrc.decode('PCCH-Message', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(rrc, 'PCCH-Message', decoded, encoded)
 
         # Message 2.
-        decoded_message = {
+        decoded = {
             'message': {
                 'c1' : {
                     'paging': {
@@ -269,15 +255,12 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = b'\x00'
+        encoded = b'\x00'
 
-        encoded = rrc.encode('PCCH-Message', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = rrc.decode('PCCH-Message', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(rrc, 'PCCH-Message', decoded, encoded)
 
         # Message 3.
-        decoded_message = {
+        decoded = {
             'message': {
                 'dl-Bandwidth': 'n6',
                 'phich-Config': {
@@ -289,15 +272,12 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = b'\x04\x48\xd1'
+        encoded = b'\x04\x48\xd1'
 
-        encoded = rrc.encode('BCCH-BCH-Message', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = rrc.decode('BCCH-BCH-Message', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(rrc, 'BCCH-BCH-Message', decoded, encoded)
 
         # Message 4.
-        decoded_message = {
+        decoded = {
             'message': {
                 'c1': {
                     'systemInformation': {
@@ -508,7 +488,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = (
+        encoded = (
             b'\x04\x81\x3f\xbe\x2a\x64\x12\xb2\xf3\x3a\x24\x2a\x80\x02\x02\x9b'
             b'\x29\x8a\x7f\xf8\x24\x00\x00\x11\x00\x24\xe2\x08\x05\x06\xc3\xc4'
             b'\x76\x92\x81\x41\x00\xc0\x00\x00\x0b\x23\xfd\x10\x80\xca\x19\x82'
@@ -516,13 +496,10 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             b'\xcf\x10\xa8\x6a\x4c\x04\x48'
         )
 
-        encoded = rrc.encode('BCCH-DL-SCH-Message', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = rrc.decode('BCCH-DL-SCH-Message', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(rrc, 'BCCH-DL-SCH-Message', decoded, encoded)
 
         # Message 5.
-        decoded_message = {
+        decoded = {
             'message': {
                 'c1': {
                     'counterCheck': {
@@ -535,15 +512,12 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = b'\x41'
+        encoded = b'\x41'
 
-        encoded = rrc.encode('DL-DCCH-Message', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = rrc.decode('DL-DCCH-Message', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(rrc, 'DL-DCCH-Message', decoded, encoded)
 
         # Message 6.
-        decoded_message = {
+        decoded = {
             'message': {
                 'c1': {
                     'counterCheck': {
@@ -567,15 +541,12 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = b'\x40\x21\xff\xff\xff\xff\xff\xff\xfc'
+        encoded = b'\x40\x21\xff\xff\xff\xff\xff\xff\xfc'
 
-        encoded = rrc.encode('DL-DCCH-Message', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = rrc.decode('DL-DCCH-Message', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(rrc, 'DL-DCCH-Message', decoded, encoded)
 
         # Message 7.
-        decoded_message = {
+        decoded = {
             'message': {
                 'c1': {
                     'counterCheckResponse': {
@@ -592,18 +563,15 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = b'\x50\x80'
+        encoded = b'\x50\x80'
 
-        encoded = rrc.encode('UL-DCCH-Message', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = rrc.decode('UL-DCCH-Message', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(rrc, 'UL-DCCH-Message', decoded, encoded)
 
     def test_lpp_14_3_0(self):
         lpp = asn1tools.compile_dict(deepcopy(LPP_14_3_0), 'uper')
 
         # Message 1.
-        decoded_message = {
+        decoded = {
             'transactionID': {
                 'initiator': 'targetDevice',
                 'transactionNumber': 254
@@ -622,12 +590,9 @@ class Asn1ToolsUPerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = b'\x93\xfd\x1b'
+        encoded = b'\x93\xfd\x1b'
 
-        encoded = lpp.encode('LPP-Message', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = lpp.decode('LPP-Message', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(lpp, 'LPP-Message', decoded, encoded)
 
     def test_encode_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
@@ -803,8 +768,7 @@ class Asn1ToolsUPerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(all_types.encode(type_name, decoded), encoded)
-            self.assertEqual(all_types.decode(type_name, encoded), decoded)
+            self.assert_encode_decode(all_types, type_name, decoded, encoded)
 
 
 if __name__ == '__main__':

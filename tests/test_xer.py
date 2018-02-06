@@ -1,4 +1,5 @@
 import unittest
+from .utils import Asn1ToolsBaseTest
 import asn1tools
 import sys
 from copy import deepcopy
@@ -8,7 +9,7 @@ sys.path.append('tests/files/3gpp')
 from rrc_8_6_0 import EXPECTED as RRC_8_6_0
 
 
-class Asn1ToolsXerTest(unittest.TestCase):
+class Asn1ToolsXerTest(Asn1ToolsBaseTest):
 
     maxDiff = None
 
@@ -64,7 +65,7 @@ class Asn1ToolsXerTest(unittest.TestCase):
         rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0), 'xer')
 
         # Message 1.
-        decoded_message = {
+        decoded = {
             'message': {
                 'c1' : {
                     'paging': {
@@ -76,21 +77,18 @@ class Asn1ToolsXerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = (
+        encoded = (
             b'<PCCH-Message><message><c1><paging><systemInfoModification><tr'
             b'ue /></systemInfoModification><nonCriticalExtension /></paging><'
             b'/c1></message></PCCH-Message>'
         )
 
-        encoded = rrc.encode('PCCH-Message', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = rrc.decode('PCCH-Message', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(rrc, 'PCCH-Message', decoded, encoded)
 
         return
 
         # Message 2.
-        decoded_message = {
+        decoded = {
             'message': {
                 'dl-Bandwidth': 'n6',
                 'phich-Config': {
@@ -102,17 +100,14 @@ class Asn1ToolsXerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = (
+        encoded = (
             b''
         )
 
-        encoded = rrc.encode('BCCH-BCH-Message', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = rrc.decode('BCCH-BCH-Message', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(rrc, 'BCCH-BCH-Message', decoded, encoded)
 
         # Message 3.
-        decoded_message = {
+        decoded = {
             'message': {
                 'c1': {
                     'systemInformation': {
@@ -323,14 +318,11 @@ class Asn1ToolsXerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = (
+        encoded = (
             b''
         )
 
-        encoded = rrc.encode('BCCH-DL-SCH-Message', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = rrc.decode('BCCH-DL-SCH-Message', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(rrc, 'BCCH-DL-SCH-Message', decoded, encoded)
 
     def test_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn', 'xer')
@@ -351,8 +343,7 @@ class Asn1ToolsXerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(all_types.encode(type_name, decoded), encoded)
-            self.assertEqual(all_types.decode(type_name, encoded), decoded)
+            self.assert_encode_decode(all_types, type_name, decoded, encoded)
 
         with self.assertRaises(NotImplementedError):
             all_types.encode('Sequence12', {'a': [{'a': []}]})
@@ -409,8 +400,7 @@ class Asn1ToolsXerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(all_types.encode(type_name, decoded), encoded)
-            self.assertEqual(all_types.decode(type_name, encoded), decoded)
+            self.assert_encode_decode(all_types, type_name, decoded, encoded)
 
 
 if __name__ == '__main__':

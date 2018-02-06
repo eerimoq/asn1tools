@@ -1,4 +1,5 @@
 import unittest
+from .utils import Asn1ToolsBaseTest
 import timeit
 import sys
 from copy import deepcopy
@@ -16,7 +17,7 @@ from rfc5280_modified import RFC5280_MODIFIED
 from zforce import EXPECTED as ZFORCE
 
 
-class Asn1ToolsBerTest(unittest.TestCase):
+class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
     maxDiff = None
 
@@ -65,8 +66,8 @@ class Asn1ToolsBerTest(unittest.TestCase):
             (b'0\x84\x00\x00\x00\xb8', 190)
         ]
 
-        for encoded_message, decoded_length in datas:
-            length = foo.decode_length(encoded_message)
+        for encoded, decoded_length in datas:
+            length = foo.decode_length(encoded)
             self.assertEqual(length, decoded_length)
 
         # The length cannot be decoded.
@@ -76,16 +77,16 @@ class Asn1ToolsBerTest(unittest.TestCase):
             b'0\x84\x00\x00\x00'
         ]
 
-        for encoded_message in datas:
+        for encoded in datas:
             with self.assertRaises(asn1tools.DecodeError) as cm:
-                foo.decode_length(encoded_message)
+                foo.decode_length(encoded)
 
             self.assertEqual(str(cm.exception), ': Not enough data.')
 
     def test_complex(self):
         cmplx = asn1tools.compile_files('tests/files/complex.asn')
 
-        decoded_message = {
+        decoded = {
             'boolean': True,
             'integer': -7,
             'bit-string': (b'\x80', 3),
@@ -97,18 +98,15 @@ class Asn1ToolsBerTest(unittest.TestCase):
             'ia5-string': 'foo'
         }
 
-        encoded_message = (
+        encoded = (
             b'\x30\x1e\x01\x01\xff\x02\x01\xf9\x03\x02\x05\x80\x04\x02\x31\x32'
             b'\x05\x00\x06\x02\x2b\x02\x0a\x01\x01\x30\x00\x16\x03\x66\x6f\x6f'
         )
 
-        encoded = cmplx.encode('AllUniversalTypes', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = cmplx.decode('AllUniversalTypes', encoded_message)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(cmplx, 'AllUniversalTypes', decoded, encoded)
 
         # Ivalid enumeration value.
-        decoded_message = {
+        decoded = {
             'boolean': True,
             'integer': -7,
             'bit-string': (b'\x80', 3),
@@ -121,7 +119,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         }
 
         with self.assertRaises(asn1tools.EncodeError) as cm:
-            cmplx.encode('AllUniversalTypes', decoded_message)
+            cmplx.encode('AllUniversalTypes', decoded)
 
         self.assertEqual(
             str(cm.exception),
@@ -131,7 +129,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0))
 
         # Message 1.
-        decoded_message = {
+        decoded = {
             'message': {
                 'c1' : {
                     'paging': {
@@ -143,15 +141,12 @@ class Asn1ToolsBerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = b'0\x0b\xa0\t\xa0\x07\xa0\x05\x81\x01\x00\xa3\x00'
+        encoded = b'0\x0b\xa0\t\xa0\x07\xa0\x05\x81\x01\x00\xa3\x00'
 
-        encoded = rrc.encode('PCCH-Message', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = rrc.decode('PCCH-Message', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(rrc, 'PCCH-Message', decoded, encoded)
 
         # Message 2.
-        decoded_message = {
+        decoded = {
             'message': {
                 'c1' : {
                     'paging': {
@@ -160,15 +155,12 @@ class Asn1ToolsBerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = b'0\x06\xa0\x04\xa0\x02\xa0\x00'
+        encoded = b'0\x06\xa0\x04\xa0\x02\xa0\x00'
 
-        encoded = rrc.encode('PCCH-Message', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = rrc.decode('PCCH-Message', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(rrc, 'PCCH-Message', decoded, encoded)
 
         # Message 3.
-        decoded_message = {
+        decoded = {
             'message': {
                 'dl-Bandwidth': 'n6',
                 'phich-Config': {
@@ -180,18 +172,15 @@ class Asn1ToolsBerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = (
+        encoded = (
             b'0\x16\xa0\x14\x80\x01\x00\xa1\x06\x80\x01\x00\x81\x01\x01\x82'
             b'\x02\x00\x12\x83\x03\x064V'
         )
 
-        encoded = rrc.encode('BCCH-BCH-Message', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = rrc.decode('BCCH-BCH-Message', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(rrc, 'BCCH-BCH-Message', decoded, encoded)
 
         # Message 4.
-        decoded_message = {
+        decoded = {
             'message': {
                 'c1': {
                     'systemInformation': {
@@ -402,7 +391,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = (
+        encoded = (
             b'\x30\x82\x01\x93\xa0\x82\x01\x8f\xa0\x82\x01\x8b\xa0\x82\x01'
             b'\x87\xa0\x82\x01\x83\xa0\x82\x01\x7f\xa0\x82\x01\x7b\xa0\x81'
             b'\xdd\xa0\x0f\x80\x01\xff\xa2\x0a\x80\x01\x0f\x81\x01\x05\x82'
@@ -433,10 +422,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
             b'\x01\x12'
         )
 
-        encoded = rrc.encode('BCCH-DL-SCH-Message', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = rrc.decode('BCCH-DL-SCH-Message', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(rrc, 'BCCH-DL-SCH-Message', decoded, encoded)
 
     def test_rfc1157(self):
         rfc1157 = asn1tools.compile_files([
@@ -445,7 +431,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         ])
 
         # First message.
-        decoded_message = {
+        decoded = {
             "version": 0,
             "community": b'public',
             "data": {
@@ -495,7 +481,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = (
+        encoded = (
             b'0\x81\x9f\x02\x01\x00\x04\x06public\xa3\x81\x91\x02'
             b'\x01<\x02\x01\x00\x02\x01\x000\x81\x850"\x06\x12+\x06'
             b'\x01\x04\x01\x81}\x083\n\x02\x01\x07\n\x86\xde\xb75'
@@ -506,13 +492,10 @@ class Asn1ToolsBerTest(unittest.TestCase):
             b'}\x083\n\x02\x01\x07\n\x86\xde\xb78\x04\x0b172.31.19.2'
         )
 
-        encoded = rfc1157.encode('Message', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = rfc1157.decode('Message', encoded_message)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(rfc1157, 'Message', decoded, encoded)
 
         # Next message.
-        decoded_message = {
+        decoded = {
             'version': 1,
             'community': b'community',
             'data': {
@@ -628,7 +611,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = (
+        encoded = (
             b'\x30\x81\xe6\x02\x01\x01\x04\x09\x63\x6f\x6d\x6d\x75\x6e\x69\x74'
             b'\x79\xa3\x81\xd5\x02\x04\x64\x8e\x7c\x1c\x02\x01\x00\x02\x01\x00'
             b'\x30\x81\xc6\x30\x0c\x06\x07\x2b\x06\x01\x87\x67\x01\x01\x02\x01'
@@ -646,13 +629,10 @@ class Asn1ToolsBerTest(unittest.TestCase):
             b'\x03\x06\x06\x2a\x03\x83\x3c\x84\x2b'
         )
 
-        encoded = rfc1157.encode('Message', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = rfc1157.decode('Message', encoded_message)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(rfc1157, 'Message', decoded, encoded)
 
         # Next message.
-        decoded_message = {
+        decoded = {
             'version': 1,
             'community': b'community',
             'data': {
@@ -740,7 +720,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = (
+        encoded = (
             b'\x30\x81\xad\x02\x01\x01\x04\x09\x63\x6f\x6d\x6d\x75\x6e\x69\x74'
             b'\x79\xa3\x81\x9c\x02\x04\x64\x8e\x7c\x1c\x02\x01\x00\x02\x01\x00'
             b'\x30\x81\x8d\x30\x0c\x06\x07\x2b\x06\x01\x87\x67\x01\x01\x02\x01'
@@ -754,14 +734,11 @@ class Asn1ToolsBerTest(unittest.TestCase):
             b'\x30\x0e\x06\x07\x2b\x06\x01\x87\x67\x03\x01\x44\x03\x31\x32\x33'
         )
 
-        encoded = rfc1157.encode('Message', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = rfc1157.decode('Message', encoded_message)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(rfc1157, 'Message', decoded, encoded)
 
         # Next message with missing field 'data' -> 'set-request' ->
         # 'variable-bindings[0]' -> 'value' -> 'simple'.
-        decoded_message = {
+        decoded = {
             'version': 1,
             'community': b'community',
             'data': {
@@ -781,7 +758,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         }
 
         with self.assertRaises(asn1tools.EncodeError) as cm:
-            rfc1157.encode('Message', decoded_message)
+            rfc1157.encode('Message', decoded)
 
         self.assertEqual(
             str(cm.exception),
@@ -791,7 +768,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
     def test_performance(self):
         cmplx = asn1tools.compile_files('tests/files/complex.asn')
 
-        decoded_message = {
+        decoded = {
             'boolean': True,
             'integer': -7,
             'bit-string': (b'\x80', 3),
@@ -803,16 +780,16 @@ class Asn1ToolsBerTest(unittest.TestCase):
             'ia5-string': 'foo'
         }
 
-        encoded_message = (
+        encoded = (
             b'\x30\x1e\x01\x01\xff\x02\x01\xf9\x03\x02\x05\x80\x04\x02\x31\x32'
             b'\x05\x00\x06\x02\x2b\x02\x0a\x01\x01\x30\x00\x16\x03\x66\x6f\x6f'
         )
 
         def encode():
-            cmplx.encode('AllUniversalTypes', decoded_message)
+            cmplx.encode('AllUniversalTypes', decoded)
 
         def decode():
-            cmplx.decode('AllUniversalTypes', encoded_message)
+            cmplx.decode('AllUniversalTypes', encoded)
 
         iterations = 1000
 
@@ -828,7 +805,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         rfc4511 = asn1tools.compile_dict(deepcopy(RFC4511))
 
         # A search request message.
-        decoded_message = {
+        decoded = {
             'messageID': 2,
             'protocolOp': {
                 'searchRequest': {
@@ -862,7 +839,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = (
+        encoded = (
             b'\x30\x33\x02\x01\x02\x63\x2e\x04\x00\x0a\x01\x02\x0a\x01\x00\x02'
             b'\x01\x00\x02\x01\x00\x01\x01\x00\xa0\x19\xa4\x0c\x04\x02\x63\x6e'
             b'\x30\x06\x81\x04\x66\x72\x65\x64\xa3\x09\x04\x02\x64\x6e\x04\x03'
@@ -870,16 +847,13 @@ class Asn1ToolsBerTest(unittest.TestCase):
         )
 
         with self.assertRaises(NotImplementedError) as cm:
-            decoded = rfc4511.decode('LDAPMessage', encoded_message)
-            self.assertEqual(decoded, decoded_message)
-            encoded = rfc4511.encode('LDAPMessage', decoded_message)
-            self.assertEqual(encoded, encoded_message)
+            self.assert_encode_decode(rfc4511, 'LDAPMessage', decoded, encoded)
 
         self.assertEqual(str(cm.exception),
                          "Recursive types are not yet implemented (type 'Filter').")
 
         # A search result done message.
-        decoded_message = {
+        decoded = {
             'messageID': 2,
             'protocolOp': {
                 'searchResDone': {
@@ -890,17 +864,14 @@ class Asn1ToolsBerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = (
+        encoded = (
             b'\x30\x0c\x02\x01\x02\x65\x07\x0a\x01\x20\x04\x00\x04\x00'
         )
 
-        decoded = rfc4511.decode('LDAPMessage', encoded_message)
-        self.assertEqual(decoded, decoded_message)
-        encoded = rfc4511.encode('LDAPMessage', decoded_message)
-        self.assertEqual(encoded, encoded_message)
+        self.assert_encode_decode(rfc4511, 'LDAPMessage', decoded, encoded)
 
         # A bind request message.
-        decoded_message = {
+        decoded = {
             'messageID': 1,
             'protocolOp': {
                 'bindRequest': {
@@ -913,20 +884,17 @@ class Asn1ToolsBerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = (
+        encoded = (
             b'\x30\x2f\x02\x01\x01\x60\x2a\x02\x01\x03\x04\x1b\x75\x69\x64\x3d'
             b'\x74\x65\x73\x6c\x61\x2c\x64\x63\x3d\x65\x78\x61\x6d\x70\x6c\x65'
             b'\x2c\x64\x63\x3d\x63\x6f\x6d\x80\x08\x70\x61\x73\x73\x77\x6f\x72'
             b'\x64'
         )
 
-        decoded = rfc4511.decode('LDAPMessage', encoded_message)
-        self.assertEqual(decoded, decoded_message)
-        encoded = rfc4511.encode('LDAPMessage', decoded_message)
-        self.assertEqual(encoded, encoded_message)
+        self.assert_encode_decode(rfc4511, 'LDAPMessage', decoded, encoded)
 
         # A bind response message.
-        decoded_message = {
+        decoded = {
             'messageID': 1,
             'protocolOp': {
                 'bindResponse': {
@@ -937,19 +905,16 @@ class Asn1ToolsBerTest(unittest.TestCase):
             }
         }
 
-        encoded_message = (
+        encoded = (
             b'\x30\x0c\x02\x01\x01\x61\x07\x0a\x01\x00\x04\x00\x04\x00'
         )
 
-        decoded = rfc4511.decode('LDAPMessage', encoded_message)
-        self.assertEqual(decoded, decoded_message)
-        encoded = rfc4511.encode('LDAPMessage', decoded_message)
-        self.assertEqual(encoded, encoded_message)
+        self.assert_encode_decode(rfc4511, 'LDAPMessage', decoded, encoded)
 
     def test_rfc5280(self):
         rfc5280 = asn1tools.compile_dict(deepcopy(RFC5280))
 
-        decoded_message = {
+        decoded = {
             'tbsCertificate': {
                 'version': 'v1',
                 'serialNumber': 3578,
@@ -1026,7 +991,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
                           1024)
         }
 
-        encoded_message = (
+        encoded = (
             b'\x30\x82\x02\x12\x30\x82\x01\x7b\x02\x02\x0d\xfa\x30\x0d\x06\x09'
             b'\x2a\x86\x48\x86\xf7\x0d\x01\x01\x05\x05\x00\x30\x81\x9b\x31\x0b'
             b'\x30\x09\x06\x03\x55\x04\x06\x13\x02\x4a\x50\x31\x0e\x30\x0c\x06'
@@ -1063,10 +1028,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
             b'\x1e\x7f\x86\x9b\x16\x40'
         )
 
-        decoded = rfc5280.decode('Certificate', encoded_message)
-        self.assertEqual(decoded, decoded_message)
-        encoded = rfc5280.encode('Certificate', decoded_message)
-        self.assertEqual(encoded, encoded_message)
+        self.assert_encode_decode(rfc5280, 'Certificate', decoded, encoded)
 
     def test_rfc5280_modified(self):
         any_defined_by_choices = {
@@ -1198,59 +1160,56 @@ class Asn1ToolsBerTest(unittest.TestCase):
         self.assertEqual(decoded, decoded_message)
         # Do not include the version member, which have a default
         # value (is this correct?).
-        del decoded_message['tbsCertificate']['version']
-        encoded = rfc5280.encode('Certificate', decoded_message)
+        del decoded['tbsCertificate']['version']
+        encoded = rfc5280.encode('Certificate', decoded)
         self.assertEqual(encoded, encoded_message)
 
         # Explicit tagging.
-        decoded_message = {
+        decoded = {
             'psap-address': {
                 'pSelector': b'\x12',
                 'nAddresses': [ b'\x34' ]
             }
         }
 
-        encoded_message = b'\xa0\x0c\xa0\x03\x04\x01\x12\xa3\x05\x31\x03\x04\x01\x34'
+        encoded = b'\xa0\x0c\xa0\x03\x04\x01\x12\xa3\x05\x31\x03\x04\x01\x34'
 
-        encoded = rfc5280.encode('ExtendedNetworkAddress', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = rfc5280.decode('ExtendedNetworkAddress', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(rfc5280, 'ExtendedNetworkAddress', decoded, encoded)
 
     def test_rfc5280_errors(self):
         rfc5280 = asn1tools.compile_dict(deepcopy(RFC5280))
 
         # Empty data.
-        encoded_message = b''
+        encoded = b''
 
         with self.assertRaises(asn1tools.DecodeError) as cm:
-            rfc5280.decode('Certificate', encoded_message)
+            rfc5280.decode('Certificate', encoded)
 
         self.assertEqual(str(cm.exception),
                          ': expected SEQUENCE with tag 0x30 but got 0x at offset 0')
 
         # Only tag and length, no contents.
-        encoded_message = b'\x30\x81\x9f'
+        encoded = b'\x30\x81\x9f'
 
         with self.assertRaises(asn1tools.DecodeError) as cm:
-            rfc5280.decode('Certificate', encoded_message)
+            rfc5280.decode('Certificate', encoded)
 
         self.assertEqual(str(cm.exception),
                          'tbsCertificate: expected SEQUENCE with tag 0x30 but got '
                          '0x at offset 3')
 
         # Unexpected tag 0xff.
-        encoded_message = b'\xff\x01\x00'
+        encoded = b'\xff\x01\x00'
 
         with self.assertRaises(asn1tools.DecodeError) as cm:
-            rfc5280.decode('Certificate', encoded_message)
+            rfc5280.decode('Certificate', encoded)
 
         self.assertEqual(str(cm.exception),
                          ': expected SEQUENCE with tag 0x30 but got 0xff at '
                          'offset 0')
 
         # Unexpected type 0x31 embedded in the data.
-        encoded_message = bytearray(
+        encoded = bytearray(
             b'\x30\x82\x02\x12\x30\x82\x01\x7b\x02\x02\x0d\xfa\x30\x0d\x06\x09'
             b'\x2a\x86\x48\x86\xf7\x0d\x01\x01\x05\x05\x00\x30\x81\x9b\x31\x0b'
             b'\x30\x09\x06\x03\x55\x04\x06\x13\x02\x4a\x50\x31\x0e\x30\x0c\x06'
@@ -1289,10 +1248,10 @@ class Asn1ToolsBerTest(unittest.TestCase):
             b'\x1e\x7f\x86\x9b\x16\x40'
         )
 
-        self.assertEqual(encoded_message[150], 49)
+        self.assertEqual(encoded[150], 49)
 
         with self.assertRaises(asn1tools.DecodeError) as cm:
-            rfc5280.decode('Certificate', encoded_message)
+            rfc5280.decode('Certificate', encoded)
 
         self.assertEqual(str(cm.exception),
                          'tbsCertificate: issuer: expected SEQUENCE with tag '
@@ -1351,8 +1310,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(all_types.encode(type_name, decoded), encoded)
-            self.assertEqual(all_types.decode(type_name, encoded), decoded)
+            self.assert_encode_decode(all_types, type_name, decoded, encoded)
 
         with self.assertRaises(NotImplementedError):
             all_types.encode('Sequence12', {'a': [{'a': []}]})
@@ -1373,8 +1331,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(all_types.encode(type_name, decoded), encoded)
-            self.assertEqual(all_types.decode(type_name, encoded), decoded)
+            self.assert_encode_decode(all_types, type_name, decoded, encoded)
 
     def test_module_tags_explicit(self):
         all_types = asn1tools.compile_files('tests/files/module_tags_explicit.asn')
@@ -1398,12 +1355,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            try:
-                self.assertEqual(all_types.encode(type_name, decoded), encoded)
-                self.assertEqual(all_types.decode(type_name, encoded), decoded)
-            except:
-                print('Type:', type_name)
-                raise
+            self.assert_encode_decode(all_types, type_name, decoded, encoded)
 
     def test_module_tags_implicit(self):
         all_types = asn1tools.compile_files('tests/files/module_tags_implicit.asn')
@@ -1426,12 +1378,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            try:
-                self.assertEqual(all_types.encode(type_name, decoded), encoded)
-                self.assertEqual(all_types.decode(type_name, encoded), decoded)
-            except:
-                print('Type:', type_name)
-                raise
+            self.assert_encode_decode(all_types, type_name, decoded, encoded)
 
     def test_module_tags_automatic(self):
         all_types = asn1tools.compile_files('tests/files/module_tags_automatic.asn')
@@ -1455,12 +1402,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            try:
-                self.assertEqual(all_types.encode(type_name, decoded), encoded)
-                self.assertEqual(all_types.decode(type_name, encoded), decoded)
-            except:
-                print('Type:', type_name)
-                raise
+            self.assert_encode_decode(all_types, type_name, decoded, encoded)
 
     def test_decode_all_types_errors(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn')
@@ -1658,31 +1600,19 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] INTEGER END'
         foo = asn1tools.compile_string(spec)
-        encoded = foo.encode('Foo', 1)
-        self.assertEqual(encoded, b'\xa2\x03\x02\x01\x01')
-        decoded = foo.decode('Foo', encoded)
-        self.assertEqual(decoded, 1)
+        self.assert_encode_decode(foo, 'Foo', 1, b'\xa2\x03\x02\x01\x01')
 
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] EXPLICIT INTEGER END'
         foo = asn1tools.compile_string(spec)
-        encoded = foo.encode('Foo', 1)
-        self.assertEqual(encoded, b'\xa2\x03\x02\x01\x01')
-        decoded = foo.decode('Foo', encoded)
-        self.assertEqual(decoded, 1)
+        self.assert_encode_decode(foo, 'Foo', 1, b'\xa2\x03\x02\x01\x01')
 
         spec = 'Foo DEFINITIONS EXPLICIT TAGS ::= BEGIN Foo ::= INTEGER END'
         foo = asn1tools.compile_string(spec)
-        encoded = foo.encode('Foo', 1)
-        self.assertEqual(encoded, b'\x02\x01\x01')
-        decoded = foo.decode('Foo', encoded)
-        self.assertEqual(decoded, 1)
+        self.assert_encode_decode(foo, 'Foo', 1, b'\x02\x01\x01')
 
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] BOOLEAN END'
         foo = asn1tools.compile_string(spec)
-        encoded = foo.encode('Foo', True)
-        self.assertEqual(encoded, b'\xa2\x03\x01\x01\xff')
-        decoded = foo.decode('Foo', encoded)
-        self.assertEqual(decoded, True)
+        self.assert_encode_decode(foo, 'Foo', True, b'\xa2\x03\x01\x01\xff')
 
     def test_integer_implicit_tags(self):
         """Test implicit tags on integers.
@@ -1691,25 +1621,16 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] IMPLICIT INTEGER END'
         foo = asn1tools.compile_string(spec)
-        encoded = foo.encode('Foo', 1)
-        self.assertEqual(encoded, b'\x82\x01\x01')
-        decoded = foo.decode('Foo', encoded)
-        self.assertEqual(decoded, 1)
+        self.assert_encode_decode(foo, 'Foo', 1, b'\x82\x01\x01')
 
         spec = 'Foo DEFINITIONS IMPLICIT TAGS ::= BEGIN Foo ::= INTEGER END'
         foo = asn1tools.compile_string(spec)
-        encoded = foo.encode('Foo', 1)
-        self.assertEqual(encoded, b'\x02\x01\x01')
-        decoded = foo.decode('Foo', encoded)
-        self.assertEqual(decoded, 1)
+        self.assert_encode_decode(foo, 'Foo', 1, b'\x02\x01\x01')
 
         spec = ('Foo DEFINITIONS EXPLICIT TAGS ::= BEGIN '
                 'Foo ::= [2] IMPLICIT INTEGER END')
         foo = asn1tools.compile_string(spec)
-        encoded = foo.encode('Foo', 1)
-        self.assertEqual(encoded, b'\x82\x01\x01')
-        decoded = foo.decode('Foo', encoded)
-        self.assertEqual(decoded, 1)
+        self.assert_encode_decode(foo, 'Foo', 1, b'\x82\x01\x01')
 
     def test_boolean_explicit_tags(self):
         """Test explicit tags on booleans.
@@ -1718,10 +1639,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] BOOLEAN END'
         foo = asn1tools.compile_string(spec)
-        encoded = foo.encode('Foo', True)
-        self.assertEqual(encoded, b'\xa2\x03\x01\x01\xff')
-        decoded = foo.decode('Foo', encoded)
-        self.assertEqual(decoded, True)
+        self.assert_encode_decode(foo, 'Foo', True, b'\xa2\x03\x01\x01\xff')
 
         # Bad explicit tag.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -1744,10 +1662,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] IMPLICIT BOOLEAN END'
         foo = asn1tools.compile_string(spec)
-        encoded = foo.encode('Foo', True)
-        self.assertEqual(encoded, b'\x82\x01\xff')
-        decoded = foo.decode('Foo', encoded)
-        self.assertEqual(decoded, True)
+        self.assert_encode_decode(foo, 'Foo', True, b'\x82\x01\xff')
 
     def test_octet_string_explicit_tags(self):
         """Test explicit tags on octet strings.
@@ -1756,10 +1671,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] OCTET STRING END'
         foo = asn1tools.compile_string(spec)
-        encoded = foo.encode('Foo', b'\x56')
-        self.assertEqual(encoded, b'\xa2\x03\x04\x01\x56')
-        decoded = foo.decode('Foo', encoded)
-        self.assertEqual(decoded, b'\x56')
+        self.assert_encode_decode(foo, 'Foo', b'\x56', b'\xa2\x03\x04\x01\x56')
 
     def test_bit_string_explicit_tags(self):
         """Test explicit tags on bit strings.
@@ -1768,10 +1680,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] BIT STRING END'
         foo = asn1tools.compile_string(spec)
-        encoded = foo.encode('Foo', (b'\x56', 7))
-        self.assertEqual(encoded, b'\xa2\x04\x03\x02\x01\x56')
-        decoded = foo.decode('Foo', encoded)
-        self.assertEqual(decoded, (b'\x56', 7))
+        self.assert_encode_decode(foo, 'Foo', (b'\x56', 7), b'\xa2\x04\x03\x02\x01\x56')
 
     def test_utc_time_explicit_tags(self):
         """Test explicit tags on UTC time.
@@ -1780,10 +1689,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] UTCTime END'
         foo = asn1tools.compile_string(spec)
-        encoded = foo.encode('Foo', '121001230001')
-        self.assertEqual(encoded, b'\xa2\x0f\x17\x0d121001230001Z')
-        decoded = foo.decode('Foo', encoded)
-        self.assertEqual(decoded, '121001230001')
+        self.assert_encode_decode(foo, 'Foo', '121001230001', b'\xa2\x0f\x17\x0d121001230001Z')
 
     def test_utf8_string_explicit_tags(self):
         """Test explicit tags on UTC time.
@@ -1792,10 +1698,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
 
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] UTF8String END'
         foo = asn1tools.compile_string(spec)
-        encoded = foo.encode('Foo', 'foo')
-        self.assertEqual(encoded, b'\xa2\x05\x0c\x03foo')
-        decoded = foo.decode('Foo', encoded)
-        self.assertEqual(decoded, 'foo')
+        self.assert_encode_decode(foo, 'Foo', 'foo', b'\xa2\x05\x0c\x03foo')
 
     def test_nested_explicit_tags(self):
         """Test nested explicit tags.
@@ -1822,23 +1725,20 @@ class Asn1ToolsBerTest(unittest.TestCase):
         END
         """
 
-        decoded_message = {
+        decoded = {
             'outernumber': 23,
             'inner': {
                 'innernumber': 42
             }
         }
 
-        encoded_message = (
+        encoded = (
             b'\x6a\x12\x30\x10\xab\x03\x02\x01\x17\xac\x09\x74\x07\x30'
             b'\x05\xb5\x03\x02\x01\x2a'
         )
 
         testcase = asn1tools.compile_string(spec)
-        encoded = testcase.encode('OUTER', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = testcase.decode('OUTER', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(testcase, 'OUTER', decoded, encoded)
 
     def test_duplicated_type(self):
         """Duplicated types makes the types dictionary None.
@@ -1861,35 +1761,29 @@ class Asn1ToolsBerTest(unittest.TestCase):
         zforce = asn1tools.compile_dict(deepcopy(ZFORCE))
 
         # PDU 1.
-        decoded_message = {
+        decoded = {
             'request': {
                 'deviceAddress': b'\x00\x01'
             }
         }
-        encoded_message = b'\xee\x04\x40\x02\x00\x01'
+        encoded = b'\xee\x04\x40\x02\x00\x01'
 
-        encoded = zforce.encode('ProtocolMessage', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = zforce.decode('ProtocolMessage', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(zforce, 'ProtocolMessage', decoded, encoded)
 
         # PDU 2.
-        decoded_message = {
+        decoded = {
             'request': {
                 'enable': {
                     'enable': 1
                 }
             }
         }
-        encoded_message = b'\xee\x05\x65\x03\x81\x01\x01'
+        encoded = b'\xee\x05\x65\x03\x81\x01\x01'
 
-        encoded = zforce.encode('ProtocolMessage', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = zforce.decode('ProtocolMessage', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(zforce, 'ProtocolMessage', decoded, encoded)
 
         # PDU 3.
-        decoded_message = {
+        decoded = {
             'response': {
                 'enable': {
                     'reset': None
@@ -1900,17 +1794,14 @@ class Asn1ToolsBerTest(unittest.TestCase):
                 }
             }
         }
-        encoded_message = (
+        encoded = (
             b'\xef\x0b\x65\x02\x82\x00\x6a\x05\xa0\x00\x81\x01\x22'
         )
 
-        encoded = zforce.encode('ProtocolMessage', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = zforce.decode('ProtocolMessage', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(zforce, 'ProtocolMessage', decoded, encoded)
 
         # PDU 4.
-        decoded_message = {
+        decoded = {
             'notification': {
                 'notificationMessage': {
                     'ledLevels': [
@@ -1922,18 +1813,15 @@ class Asn1ToolsBerTest(unittest.TestCase):
                 'notificationLatency': 21
             }
         }
-        encoded_message = (
+        encoded = (
             b'\xf0\x13\x6b\x0a\x80\x04\x55\x44\x33\x22\x82\x02\x01\x02\x58'
             b'\x01\x01\x5f\x23\x01\x15'
         )
 
-        encoded = zforce.encode('ProtocolMessage', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = zforce.decode('ProtocolMessage', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(zforce, 'ProtocolMessage', decoded, encoded)
 
         # PDU 5.
-        decoded_message = {
+        decoded = {
             'request': {
                 'errorLog': -2,
                 'errorThresholds': {
@@ -1949,15 +1837,12 @@ class Asn1ToolsBerTest(unittest.TestCase):
                 }
             }
         }
-        encoded_message = (
+        encoded = (
             b'\xee\x1a\x5f\x21\x01\xfe\x7f\x22\x13\xa0\x11\xa0\x0f\x80\x02'
             b'\xff\x00\xa1\x09\x80\x02\xee\x6c\x81\x03\x01\x86\xa0'
         )
 
-        encoded = zforce.encode('ProtocolMessage', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = zforce.decode('ProtocolMessage', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(zforce, 'ProtocolMessage', decoded, encoded)
 
     def test_bar(self):
         """A simple example.
@@ -1967,7 +1852,7 @@ class Asn1ToolsBerTest(unittest.TestCase):
         bar = asn1tools.compile_files('tests/files/bar.asn')
 
         # Message 1.
-        decoded_message = {
+        decoded = {
             'headerOnly': True,
             'lock': False,
             'acceptTypes': {
@@ -1976,30 +1861,24 @@ class Asn1ToolsBerTest(unittest.TestCase):
             'url': b'/ses/magic/moxen.html'
         }
 
-        encoded_message = (
+        encoded = (
             b'\x60\x29\x01\x01\xff\x01\x01\x00\x61\x0a\xa0\x08\x03\x02\x04'
             b'\x40\x03\x02\x04\x80\x04\x15\x2f\x73\x65\x73\x2f\x6d\x61\x67'
             b'\x69\x63\x2f\x6d\x6f\x78\x65\x6e\x2e\x68\x74\x6d\x6c'
         )
 
-        encoded = bar.encode('GetRequest', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = bar.decode('GetRequest', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(bar, 'GetRequest', decoded, encoded)
 
         # Message 2.
-        decoded_message = {
+        decoded = {
             'headerOnly': False,
             'lock': False,
             'url': b'0'
         }
 
-        encoded_message = b'\x60\x09\x01\x01\x00\x01\x01\x00\x04\x01\x30'
+        encoded = b'\x60\x09\x01\x01\x00\x01\x01\x00\x04\x01\x30'
 
-        encoded = bar.encode('GetRequest', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = bar.decode('GetRequest', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(bar, 'GetRequest', decoded, encoded)
 
     def test_any_defined_by_integer(self):
         spec = """
@@ -2025,46 +1904,40 @@ class Asn1ToolsBerTest(unittest.TestCase):
             any_defined_by_choices=any_defined_by_choices)
 
         # Message 1.
-        decoded_message = {
+        decoded = {
             'bar': 0,
             'fum': None
         }
 
-        encoded_message = b'\x30\x05\x02\x01\x00\x05\x00'
+        encoded = b'\x30\x05\x02\x01\x00\x05\x00'
 
-        encoded = foo.encode('Fie', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = foo.decode('Fie', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(foo, 'Fie', decoded, encoded)
 
         # Message 2.
-        decoded_message = {
+        decoded = {
             'bar': 1,
             'fum': 5
         }
 
-        encoded_message = b'\x30\x06\x02\x01\x01\x02\x01\x05'
+        encoded = b'\x30\x06\x02\x01\x01\x02\x01\x05'
 
-        encoded = foo.encode('Fie', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = foo.decode('Fie', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(foo, 'Fie', decoded, encoded)
 
         # Message 3, key not found.
-        decoded_message = {
+        decoded = {
             'bar': 2,
             'fum': 5
         }
 
-        encoded_message = b'\x30\x06\x02\x01\x02\x02\x01\x05'
+        encoded = b'\x30\x06\x02\x01\x02\x02\x01\x05'
 
         with self.assertRaises(KeyError) as cm:
-            foo.encode('Fie', decoded_message)
+            foo.encode('Fie', decoded)
 
         self.assertEqual(str(cm.exception), "2")
 
         with self.assertRaises(KeyError) as cm:
-            decoded = foo.decode('Fie', encoded_message)
+            decoded = foo.decode('Fie', encoded)
 
         self.assertEqual(str(cm.exception), "2")
 
@@ -2092,46 +1965,40 @@ class Asn1ToolsBerTest(unittest.TestCase):
             any_defined_by_choices=any_defined_by_choices)
 
         # Message 1.
-        decoded_message = {
+        decoded = {
             'bar': '1.3.6.2',
             'fum': 'Hello!'
         }
 
-        encoded_message = b'0\r\x06\x03+\x06\x02\x16\x06Hello!'
+        encoded = b'0\r\x06\x03+\x06\x02\x16\x06Hello!'
 
-        encoded = foo.encode('Fie', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = foo.decode('Fie', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(foo, 'Fie', decoded, encoded)
 
         # Message 2.
-        decoded_message = {
+        decoded = {
             'bar': '1.3.1000.7',
             'fum': True
         }
 
-        encoded_message = b'0\t\x06\x04+\x87h\x07\x01\x01\xff'
+        encoded = b'0\t\x06\x04+\x87h\x07\x01\x01\xff'
 
-        encoded = foo.encode('Fie', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = foo.decode('Fie', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(foo, 'Fie', decoded, encoded)
 
         # Message 3, key not found.
-        decoded_message = {
+        decoded = {
             'bar': '1.3.1000.8',
             'fum': True
         }
 
-        encoded_message = b'0\t\x06\x04+\x87h\x08\x01\x01\x01'
+        encoded = b'0\t\x06\x04+\x87h\x08\x01\x01\x01'
 
         with self.assertRaises(KeyError) as cm:
-            foo.encode('Fie', decoded_message)
+            foo.encode('Fie', decoded)
 
         self.assertEqual(str(cm.exception), "'1.3.1000.8'")
 
         with self.assertRaises(KeyError) as cm:
-            decoded = foo.decode('Fie', encoded_message)
+            decoded = foo.decode('Fie', encoded)
 
         self.assertEqual(str(cm.exception), "'1.3.1000.8'")
 

@@ -1,8 +1,9 @@
 import unittest
+from .utils import Asn1ToolsBaseTest
 import asn1tools
 
 
-class Asn1ToolsDerTest(unittest.TestCase):
+class Asn1ToolsDerTest(Asn1ToolsBaseTest):
 
     maxDiff = None
 
@@ -55,8 +56,7 @@ class Asn1ToolsDerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(all_types.encode(type_name, decoded), encoded)
-            self.assertEqual(all_types.decode(type_name, encoded), decoded)
+            self.assert_encode_decode(all_types, type_name, decoded, encoded)
 
         with self.assertRaises(NotImplementedError):
             all_types.encode('Sequence12', {'a': [{'a': []}]})
@@ -113,8 +113,7 @@ class Asn1ToolsDerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(all_types.encode(type_name, decoded), encoded)
-            self.assertEqual(all_types.decode(type_name, encoded), decoded)
+            self.assert_encode_decode(all_types, type_name, decoded, encoded)
 
     def test_decode_length(self):
         foo = asn1tools.compile_files('tests/files/foo.asn', 'der')

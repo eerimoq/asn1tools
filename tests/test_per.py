@@ -1,4 +1,5 @@
 import unittest
+from .utils import Asn1ToolsBaseTest
 import asn1tools
 import sys
 from copy import deepcopy
@@ -10,7 +11,7 @@ from rrc_8_6_0 import EXPECTED as RRC_8_6_0
 from s1ap_14_4_0 import EXPECTED as S1AP_14_4_0
 
 
-class Asn1ToolsPerTest(unittest.TestCase):
+class Asn1ToolsPerTest(Asn1ToolsBaseTest):
 
     maxDiff = None
 
@@ -61,7 +62,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
     def test_x691_a1(self):
         a1 = asn1tools.compile_files('tests/files/x691_a1.asn', 'per')
 
-        decoded_message = {
+        decoded = {
             'name': {
                 'givenName': 'John',
                 'initial': 'P',
@@ -95,7 +96,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
             ]
         }
 
-        encoded_message = (
+        encoded = (
             b'\x80\x04\x4a\x6f\x68\x6e\x01\x50\x05\x53\x6d\x69\x74\x68\x01\x33'
             b'\x08\x44\x69\x72\x65\x63\x74\x6f\x72\x08\x31\x39\x37\x31\x30\x39'
             b'\x31\x37\x04\x4d\x61\x72\x79\x01\x54\x05\x53\x6d\x69\x74\x68\x02'
@@ -105,15 +106,12 @@ class Asn1ToolsPerTest(unittest.TestCase):
         )
 
         with self.assertRaises(NotImplementedError):
-            encoded = a1.encode('PersonnelRecord', decoded_message)
-            self.assertEqual(encoded, encoded_message)
-            decoded = a1.decode('PersonnelRecord', encoded)
-            self.assertEqual(decoded, decoded_message)
+            self.assert_encode_decode(a1, 'PersonnelRecord', decoded, encoded)
 
     def test_x691_a2(self):
         a2 = asn1tools.compile_files('tests/files/x691_a2.asn', 'per')
 
-        decoded_message = {
+        decoded = {
             'name': {
                 'givenName': 'John',
                 'initial': 'P',
@@ -147,7 +145,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
             ]
         }
 
-        encoded_message = (
+        encoded = (
             b'\x86\x4a\x6f\x68\x6e\x50\x10\x53\x6d\x69\x74\x68\x01\x33\x08\x44'
             b'\x69\x72\x65\x63\x74\x6f\x72\x19\x71\x09\x17\x0c\x4d\x61\x72\x79'
             b'\x54\x10\x53\x6d\x69\x74\x68\x02\x10\x52\x61\x6c\x70\x68\x54\x10'
@@ -156,10 +154,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
         )
 
         with self.assertRaises(NotImplementedError):
-            encoded = a2.encode('PersonnelRecord', decoded_message)
-            self.assertEqual(encoded, encoded_message)
-            decoded = a2.decode('PersonnelRecord', encoded)
-            self.assertEqual(decoded, decoded_message)
+            self.assert_encode_decode(a2, 'PersonnelRecord', decoded, encoded)
 
     def test_x691_a3(self):
         with self.assertRaises(asn1tools.ParseError) as cm:
@@ -172,7 +167,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
 
         return
 
-        decoded_message = {
+        decoded = {
             'name': {
                 'givenName': 'John',
                 'initial': 'P',
@@ -207,7 +202,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
             ]
         }
 
-        encoded_message = (
+        encoded = (
             b'\x40\xc0\x4a\x6f\x68\x6e\x50\x08\x53\x6d\x69\x74\x68\x00\x00\x33'
             b'\x08\x44\x69\x72\x65\x63\x74\x6f\x72\x00\x19\x71\x09\x17\x03\x4d'
             b'\x61\x72\x79\x54\x08\x53\x6d\x69\x74\x68\x01\x00\x52\x61\x6c\x70'
@@ -216,15 +211,12 @@ class Asn1ToolsPerTest(unittest.TestCase):
             b'\x01\x01\x40'
         )
 
-        encoded = a3.encode('PersonnelRecord', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = a3.decode('PersonnelRecord', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(a3, 'PersonnelRecord', decoded, encoded)
 
     def test_x691_a4(self):
         a4 = asn1tools.compile_files('tests/files/x691_a4.asn', 'per')
 
-        decoded_message = {
+        decoded = {
             'a': 253,
             'b': True,
             'c': {
@@ -234,15 +226,12 @@ class Asn1ToolsPerTest(unittest.TestCase):
             'h': True
         }
 
-        encoded_message = (
+        encoded = (
             b'\x9e\x00\x01\x80\x01\x02\x91\xa4'
         )
 
         with self.assertRaises(NotImplementedError):
-            encoded = a4.encode('Ax', decoded_message)
-            self.assertEqual(encoded, encoded_message)
-            decoded = a4.decode('Ax', encoded)
-            self.assertEqual(decoded, decoded_message)
+            self.assert_encode_decode(a4, 'Ax', decoded, encoded)
 
     def test_rrc_8_6_0(self):
         rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0), 'per')
@@ -417,8 +406,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(all_types.encode(type_name, decoded), encoded)
-            self.assertEqual(all_types.decode(type_name, encoded), decoded)
+            self.assert_encode_decode(all_types, type_name, decoded, encoded)
 
     def test_bar(self):
         """A simple example.
@@ -428,7 +416,7 @@ class Asn1ToolsPerTest(unittest.TestCase):
         bar = asn1tools.compile_files('tests/files/bar.asn', 'per')
 
         # Message 1.
-        decoded_message = {
+        decoded = {
             'headerOnly': True,
             'lock': False,
             'acceptTypes': {
@@ -437,31 +425,23 @@ class Asn1ToolsPerTest(unittest.TestCase):
             'url': b'/ses/magic/moxen.html'
         }
 
-        encoded_message = (
+        encoded = (
             b'\xd0\x02\x02\x40\x01\x80\x15\x2f\x73\x65\x73\x2f\x6d\x61\x67\x69'
             b'\x63\x2f\x6d\x6f\x78\x65\x6e\x2e\x68\x74\x6d\x6c'
         )
 
-        encoded = bar.encode('GetRequest', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-
-        decoded = bar.decode('GetRequest', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(bar, 'GetRequest', decoded, encoded)
 
         # Message 2.
-        decoded_message = {
+        decoded = {
             'headerOnly': False,
             'lock': False,
             'url': b'0'
         }
 
-        encoded_message = b'\x00\x01\x30'
+        encoded = b'\x00\x01\x30'
 
-        encoded = bar.encode('GetRequest', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-
-        decoded = bar.decode('GetRequest', encoded)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(bar, 'GetRequest', decoded, encoded)
 
     def test_repr_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',

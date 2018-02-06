@@ -1,8 +1,9 @@
 import unittest
+from .utils import Asn1ToolsBaseTest
 import asn1tools
 
 
-class Asn1ToolsTwoModulesTest(unittest.TestCase):
+class Asn1ToolsTwoModulesTest(Asn1ToolsBaseTest):
 
     maxDiff = None
 
@@ -15,7 +16,7 @@ class Asn1ToolsTwoModulesTest(unittest.TestCase):
         spec = asn1tools.compile_files(files, 'uper')
 
         # Message 1.
-        decoded_message = {
+        decoded = {
             'priority': 'high',
             'src': 1,
             'dst': 2,
@@ -23,26 +24,20 @@ class Asn1ToolsTwoModulesTest(unittest.TestCase):
             'length': 256
         }
 
-        encoded_message = b'\x14\x04\x00'
+        encoded = b'\x14\x04\x00'
 
-        encoded = spec.encode('ASequence', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = spec.decode('ASequence', encoded_message)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(spec, 'ASequence', decoded, encoded)
 
         # Message 2.
-        decoded_message = {
+        decoded = {
             'isvalide': True,
             'name': 'toto',
             'identity': 5
         }
 
-        encoded_message = b'\x82\x74\xdf\xd3\x7d'
+        encoded = b'\x82\x74\xdf\xd3\x7d'
 
-        encoded = spec.encode('SeqMod2', decoded_message)
-        self.assertEqual(encoded, encoded_message)
-        decoded = spec.decode('SeqMod2', encoded_message)
-        self.assertEqual(decoded, decoded_message)
+        self.assert_encode_decode(spec, 'SeqMod2', decoded, encoded)
 
 
 if __name__ == '__main__':
