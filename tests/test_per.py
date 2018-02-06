@@ -354,7 +354,6 @@ class Asn1ToolsPerTest(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             all_types.encode('Utctime', '010203040506')
 
-
     def test_decode_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
                                             'per')
