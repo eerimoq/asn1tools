@@ -1051,7 +1051,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             deepcopy(RFC5280_MODIFIED),
             any_defined_by_choices=any_defined_by_choices)
 
-        decoded_message = {
+        decoded = {
             'tbsCertificate': {
                 'version': 'v1',
                 'serialNumber': 3578,
@@ -1119,7 +1119,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                           1024)
         }
 
-        encoded_message = (
+        encoded = (
             b'\x30\x82\x02\x12\x30\x82\x01\x7b\x02\x02\x0d\xfa\x30\x0d\x06\x09'
             b'\x2a\x86\x48\x86\xf7\x0d\x01\x01\x05\x05\x00\x30\x81\x9b\x31\x0b'
             b'\x30\x09\x06\x03\x55\x04\x06\x13\x02\x4a\x50\x31\x0e\x30\x0c\x06'
@@ -1156,13 +1156,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             b'\x1e\x7f\x86\x9b\x16\x40'
         )
 
-        decoded = rfc5280.decode('Certificate', encoded_message)
-        self.assertEqual(decoded, decoded_message)
-        # Do not include the version member, which have a default
-        # value (is this correct?).
-        del decoded['tbsCertificate']['version']
-        encoded = rfc5280.encode('Certificate', decoded)
-        self.assertEqual(encoded, encoded_message)
+        self.assert_encode_decode(rfc5280, 'Certificate', decoded, encoded)
 
         # Explicit tagging.
         decoded = {
