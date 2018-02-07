@@ -718,22 +718,6 @@ class Enumerated(Type):
         return 'Enumerated({})'.format(self.name)
 
 
-class ExplicitTag(Type):
-
-    def __init__(self, name, inner):
-        super(ExplicitTag, self).__init__(name, 'Tag')
-        self.inner = inner
-
-    def encode(self, data, encoder):
-        raise NotImplementedError()
-
-    def decode(self, decoder):
-        raise NotImplementedError()
-
-    def __repr__(self):
-        return 'Tag()'
-
-
 class Recursive(Type):
 
     def __init__(self, name, type_name, module_name):
