@@ -1,4 +1,4 @@
-"""Basic Encoding Rules (DER) codec.
+"""Distinguished Encoding Rules (DER) codec.
 
 """
 
@@ -6,147 +6,18 @@ from . import EncodeError
 from . import DecodeError
 from . import DecodeTagError
 from . import compiler
-
-
-class Class(object):
-    UNIVERSAL        = 0x00
-    APPLICATION      = 0x40
-    CONTEXT_SPECIFIC = 0x80
-    PRIVATE          = 0xc0
-
-
-class Encoding(object):
-    PRIMITIVE   = 0x00
-    CONSTRUCTED = 0x20
-
-
-class Tag(object):
-    END_OF_CONTENTS   = 0x00
-    BOOLEAN           = 0x01
-    INTEGER           = 0x02
-    BIT_STRING        = 0x03
-    OCTET_STRING      = 0x04
-    NULL              = 0x05
-    OBJECT_IDENTIFIER = 0x06
-    OBJECT_DESCRIPTOR = 0x07
-    EXTERNAL          = 0x08
-    REAL              = 0x09
-    ENUMERATED        = 0x0a
-    EMBEDDED_PDV      = 0x0b
-    UTF8_STRING       = 0x0c
-    RELATIVE_OID      = 0x0d
-    SEQUENCE          = 0x10
-    SET               = 0x11
-    NUMERIC_STRING    = 0x12
-    PRINTABLE_STRING  = 0x13
-    T61_STRING        = 0x14
-    VIDEOTEX_STRING   = 0x15
-    IA5_STRING        = 0x16
-    UTC_TIME          = 0x17
-    GENERALIZED_TIME  = 0x18
-    GRAPHIC_STRING    = 0x19
-    VISIBLE_STRING    = 0x1a
-    GENERAL_STRING    = 0x1b
-    UNIVERSAL_STRING  = 0x1c
-    CHARACTER_STRING  = 0x1d
-    BMP_STRING        = 0x1e
+from .ber import Class
+from .ber import Encoding
+from .ber import Tag
+from .ber import encode_length_definite
+from .ber import decode_length_definite
+from .ber import encode_signed_integer
+from .ber import decode_signed_integer
+from .ber import decode_tag
 
 
 class DecodeChoiceError(Exception):
     pass
-
-
-def encode_length_definite(length):
-    if length <= 127:
-        encoded = bytearray([length])
-    else:
-        encoded = bytearray()
-
-        while length > 0:
-            encoded.append(length & 0xff)
-            length >>= 8
-
-        encoded.append(0x80 | len(encoded))
-        encoded.reverse()
-
-    return encoded
-
-
-def decode_length_definite(encoded, offset):
-    length = encoded[offset]
-    offset += 1
-
-    if length <= 127:
-        return length, offset
-    else:
-        number_of_bytes = (length & 0x7f)
-        encoded = encoded[offset:number_of_bytes + offset]
-
-        if len(encoded) != number_of_bytes:
-            raise DecodeError('Not enough data.')
-
-        length = decode_integer(encoded)
-
-        return length, offset + number_of_bytes
-
-
-def decode_integer(data):
-    value = 0
-
-    for byte in data:
-        value <<= 8
-        value += byte
-
-    return value
-
-
-def encode_signed_integer(data):
-    encoded = bytearray()
-
-    if data < 0:
-        data *= -1
-        data -= 1
-        carry = not data
-
-        while data > 0:
-            encoded.append((data & 0xff) ^ 0xff)
-            carry = (data & 0x80)
-            data >>= 8
-
-        if carry:
-            encoded.append(0xff)
-    elif data > 0:
-        while data > 0:
-            encoded.append(data & 0xff)
-            data >>= 8
-
-        if encoded[-1] & 0x80:
-            encoded.append(0)
-    else:
-        encoded.append(0)
-
-    encoded.append(len(encoded))
-    encoded.reverse()
-
-    return encoded
-
-
-def decode_signed_integer(data):
-    value = 0
-    is_negative = (data[0] & 0x80)
-
-    for byte in data:
-        value <<= 8
-        value += byte
-
-    if is_negative:
-        value -= (1 << (8 * len(data)))
-
-    return value
-
-
-def decode_tag(_data, offset):
-    return 0, 0, offset + 1
 
 
 class Type(object):
