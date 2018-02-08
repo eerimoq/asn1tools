@@ -1283,7 +1283,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('Sequence2',           {'a': 0}, b'\x30\x00'),
             ('Sequence2',           {'a': 1}, b'\x30\x03\x02\x01\x01'),
             ('Sequence13', {'a': [1]}, b'\x30\x05\xa0\x03\x02\x01\x01'),
-            ('Sequence13', {'b': [1]}, b'\x30\x05\xA1\x03\x02\x01\x01'),
+            ('Sequence13', {'b': [1]}, b'\x30\x05\xa1\x03\x02\x01\x01'),
             ('Set',                       {}, b'\x31\x00'),
             ('Set2',                {'a': 1}, b'\x31\x00'),
             ('Set2',                {'a': 2}, b'\x31\x03\x02\x01\x02'),
