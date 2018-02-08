@@ -1405,8 +1405,16 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Boolean', b'\xff')
 
-        self.assertEqual(str(cm.exception),
-                         ': expected BOOLEAN with tag 0x01 but got 0xff at offset 0')
+        self.assertEqual(
+            str(cm.exception),
+            ': expected BOOLEAN with tag 0x01 but got 0xff at offset 0')
+
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            all_types.decode('Boolean', b'\x01\x02\x01')
+
+        self.assertEqual(
+            str(cm.exception),
+            ': expected BOOLEAN contents length 1 at offset 1, but got 2')
 
         # INTEGER.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -1586,6 +1594,10 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         self.assertEqual(repr(all_types.types['SequenceOf']),
                          'SequenceOf(SequenceOf, Integer())')
         self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
+        self.assertEqual(repr(all_types.types['GeneralizedTime1']),
+                         'GeneralizedTime(GeneralizedTime1)')
+        self.assertEqual(repr(all_types.types['Choice']),
+                         'Choice(Choice, [Integer(a)])')
 
     def test_integer_explicit_tags(self):
         """Test explicit tags on integers.
