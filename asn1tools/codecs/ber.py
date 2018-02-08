@@ -237,15 +237,15 @@ class Boolean(Type):
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
+        length, contents_offset = decode_length_definite(data, offset)
 
         if length != 1:
             raise DecodeError(
-                'expected one byte data but got {} at offset {}'.format(
-                    length,
-                    offset))
+                'expected BOOLEAN contents length 1 at offset {}, but '
+                'got {}'.format(offset,
+                                length))
 
-        return bool(data[offset]), offset + length
+        return bool(data[contents_offset]), contents_offset + length
 
     def __repr__(self):
         return 'Boolean({})'.format(self.name)
