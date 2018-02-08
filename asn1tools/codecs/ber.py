@@ -893,27 +893,6 @@ class Enumerated(Type):
         return 'Enumerated({})'.format(self.name)
 
 
-class Recursive(Type):
-
-    def __init__(self, name, type_name, module_name):
-        super(Recursive, self).__init__(name, 'RECURSIVE', None)
-        self.type_name = type_name
-        self.module_name = module_name
-
-    def encode(self, _data, _encoded):
-        raise NotImplementedError(
-            "Recursive types are not yet implemented (type '{}').".format(
-                self.type_name))
-
-    def decode(self, _data, _offset):
-        raise NotImplementedError(
-            "Recursive types are not yet implemented (type '{}').".format(
-                self.type_name))
-
-    def __repr__(self):
-        return 'Recursive({})'.format(self.name)
-
-
 class ExplicitTag(Type):
 
     def __init__(self, name, inner):
@@ -938,6 +917,27 @@ class ExplicitTag(Type):
 
     def __repr__(self):
         return 'Tag()'
+
+
+class Recursive(Type):
+
+    def __init__(self, name, type_name, module_name):
+        super(Recursive, self).__init__(name, 'RECURSIVE', None)
+        self.type_name = type_name
+        self.module_name = module_name
+
+    def encode(self, _data, _encoded):
+        raise NotImplementedError(
+            "Recursive types are not yet implemented (type '{}').".format(
+                self.type_name))
+
+    def decode(self, _data, _offset):
+        raise NotImplementedError(
+            "Recursive types are not yet implemented (type '{}').".format(
+                self.type_name))
+
+    def __repr__(self):
+        return 'Recursive({})'.format(self.name)
 
 
 class CompiledType(object):
