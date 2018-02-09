@@ -120,6 +120,18 @@ class Asn1ToolsCompileTest(unittest.TestCase):
         self.assertEqual(str(cm.exception),
                          "Module 'A' cannot import value 'b' from missing module 'C'.")
 
+    def test_duplicated_type(self):
+        """Duplicated types are not part of types dictionary.
+
+        """
+
+        spec = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= BEGIN Fum ::= INTEGER END "
+            "Bar DEFINITIONS ::= BEGIN Fum ::= BOOLEAN END "
+            "Fie DEFINITIONS ::= BEGIN Fum ::= REAL END ")
+
+        self.assertEqual(spec.types, {})
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1746,20 +1746,6 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         testcase = asn1tools.compile_string(spec)
         self.assert_encode_decode(testcase, 'OUTER', decoded, encoded)
 
-    def test_duplicated_type(self):
-        """Duplicated types makes the types dictionary None.
-
-        """
-
-        spec = """
-        Foo DEFINITIONS ::= BEGIN Fum ::= INTEGER END
-        Bar DEFINITIONS ::= BEGIN Fum ::= BOOLEAN END
-        Fie DEFINITIONS ::= BEGIN Fum ::= REAL END
-        """
-
-        foo_bar = asn1tools.compile_string(spec)
-        self.assertEqual(foo_bar.types, {})
-
     def test_zforce(self):
         """
 
