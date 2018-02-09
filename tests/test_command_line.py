@@ -183,6 +183,46 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
         for line in expected_output:
             self.assertIn(line, actual_output)
 
+    def test_command_line_decode_bad_type_name(self):
+        argv = ['asn1tools',
+                'decode',
+                'tests/files/foo.asn',
+                'Question2',
+                '01010993cd03156c5eb37e']
+
+        stdout = sys.stdout
+        sys.argv = argv
+        sys.stdout = StringIO()
+
+        try:
+            with self.assertRaises(SystemExit) as cm:
+                asn1tools._main()
+
+            self.assertEqual(str(cm.exception), "error: bad type name 'Question2'")
+        finally:
+            actual_output = sys.stdout.getvalue()
+            sys.stdout = stdout
+
+    def test_command_line_decode_bad_data(self):
+        argv = ['asn1tools',
+                'decode',
+                'tests/files/foo.asn',
+                'Question',
+                '012']
+
+        stdout = sys.stdout
+        sys.argv = argv
+        sys.stdout = StringIO()
+
+        try:
+            with self.assertRaises(SystemExit) as cm:
+                asn1tools._main()
+
+            self.assertEqual(str(cm.exception), "error: '012': Odd-length string")
+        finally:
+            actual_output = sys.stdout.getvalue()
+            sys.stdout = stdout
+
 
 if __name__ == '__main__':
     unittest.main()
