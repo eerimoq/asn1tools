@@ -32,7 +32,7 @@ class DecodeTagError(DecodeError):
     """
 
     def __init__(self, type_name, expected_tag, actual_tag, offset):
-        message = 'expected {} with tag 0x{} but got 0x{} at offset {}'.format(
+        message = "expected {} with tag '{}' but got '{}' at offset {}".format(
             type_name,
             binascii.hexlify(expected_tag).decode('ascii'),
             binascii.hexlify(actual_tag).decode('ascii'),
