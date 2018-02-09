@@ -61,7 +61,12 @@ def print_dict(dict_, indent=0):
 
 def _do_decode(args):
     specification = compile_files(args.specification, args.codec)
-    encoded = binascii.unhexlify(args.hexstring)
+
+    try:
+        encoded = binascii.unhexlify(args.hexstring)
+    except Exception as e:
+        raise TypeError("'{}': {}".format(args.hexstring, str(e)))
+
     print_dict(specification.decode(args.type, encoded))
 
 
@@ -115,4 +120,4 @@ def _main():
         try:
             args.func(args)
         except BaseException as e:
-            sys.exit(str(e))
+            sys.exit('error: {}'.format(str(e)))
