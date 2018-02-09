@@ -33,22 +33,32 @@ class Specification(object):
         self._decode_length = decode_length
         self._types = {}
 
-        try:
-            for module_name in modules:
-                types = modules[module_name]
+        duplicated = set()
 
-                for type_name in types:
-                    if type_name in self._types:
-                        raise CompileError()
+        for module_name in modules:
+            types = modules[module_name]
 
-                    self._types[type_name] = types[type_name]
-        except CompileError:
-            self._types = None
+            for type_name in types:
+                if type_name in duplicated:
+                    continue
+
+                if type_name in self._types:
+                    del self._types[type_name]
+                    duplicated.add(type_name)
+                    continue
+
+                self._types[type_name] = types[type_name]
 
     @property
     def types(self):
-        """A dictionary of all types in the specification, or ``None`` if a
-        type name was found in two or more modules.
+        """A dictionary of all unique types in the specification. Types found
+        in two or more modules are not part of this dictionary.
+
+        >>> question = foo.types['Question']
+        >>> question
+        Sequence(Question, [Integer(id), IA5String(question)])
+        >>> question.encode({'id': 1, 'question': 'Is 1+1=3?'})
+        b'0\\x0e\\x02\\x01\\x01\\x16\\x09Is 1+1=3?'
 
         """
 
@@ -85,7 +95,8 @@ class Specification(object):
         try:
             return self._types[name].encode(data)
         except KeyError:
-            raise EncodeError("bad type name '{}'".format(name))
+            raise EncodeError("type '{}' not found in types dictionary".format(
+                name))
 
     def decode(self, name, data):
         """Decode given bytes object `data` as given type `name` and return
@@ -99,7 +110,8 @@ class Specification(object):
         try:
             return self._types[name].decode(data)
         except KeyError:
-            raise DecodeError("bad type name '{}'".format(name))
+            raise DecodeError("type '{}' not found in types dictionary".format(
+                name))
 
     def decode_length(self, data):
         """Decode the length of given data `data`.

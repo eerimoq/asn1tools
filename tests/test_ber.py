@@ -1754,10 +1754,11 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         spec = """
         Foo DEFINITIONS ::= BEGIN Fum ::= INTEGER END
         Bar DEFINITIONS ::= BEGIN Fum ::= BOOLEAN END
+        Fie DEFINITIONS ::= BEGIN Fum ::= REAL END
         """
 
         foo_bar = asn1tools.compile_string(spec)
-        self.assertEqual(foo_bar.types, None)
+        self.assertEqual(foo_bar.types, {})
 
     def test_zforce(self):
         """

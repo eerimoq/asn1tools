@@ -198,7 +198,9 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
             with self.assertRaises(SystemExit) as cm:
                 asn1tools._main()
 
-            self.assertEqual(str(cm.exception), "error: bad type name 'Question2'")
+            self.assertEqual(
+                str(cm.exception),
+                "error: type 'Question2' not found in types dictionary")
         finally:
             actual_output = sys.stdout.getvalue()
             sys.stdout = stdout

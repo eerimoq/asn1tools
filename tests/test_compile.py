@@ -56,13 +56,17 @@ class Asn1ToolsCompileTest(unittest.TestCase):
         with self.assertRaises(asn1tools.EncodeError) as cm:
             foo.encode('BadTypeName', b'')
 
-        self.assertEqual(str(cm.exception), "bad type name 'BadTypeName'")
+        self.assertEqual(
+            str(cm.exception),
+            "type 'BadTypeName' not found in types dictionary")
 
         # Decode.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('BadTypeName', b'')
 
-        self.assertEqual(str(cm.exception), "bad type name 'BadTypeName'")
+        self.assertEqual(
+            str(cm.exception),
+            "type 'BadTypeName' not found in types dictionary")
 
     def test_missing_type(self):
         with self.assertRaises(asn1tools.CompileError) as cm:
