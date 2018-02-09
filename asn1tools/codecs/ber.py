@@ -841,14 +841,20 @@ class AnyDefinedBy(Type):
 
     def encode(self, data, encoded, values):
         if self.choices:
-            self.choices[values[self.type_member]].encode(data, encoded)
+            try:
+                self.choices[values[self.type_member]].encode(data, encoded)
+            except KeyError:
+                raise EncodeError('bad AnyDefinedBy choice {}'.format(values[self.type_member]))
         else:
             encoded.extend(data)
 
     def decode(self, data, offset, values):
         if self.choices:
-            return self.choices[values[self.type_member]].decode(data,
-                                                                 offset)
+            try:
+                return self.choices[values[self.type_member]].decode(data,
+                                                                     offset)
+            except KeyError:
+                raise DecodeError('bad AnyDefinedBy choice {}'.format(values[self.type_member]))
         else:
             start = offset
             _, _, offset = decode_tag(data, offset)
