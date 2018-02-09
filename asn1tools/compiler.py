@@ -56,7 +56,15 @@ class Specification(object):
 
     @property
     def modules(self):
-        """A dictionary of all modules in the specification.
+        """A dictionary of all modules in the specification. Unlike
+        :attr:`.types`, this attribute contains every type, even if
+        the type name was found in two or more modules.
+
+        >>> question = foo.modules['Foo']['Question']
+        >>> question
+        Sequence(Question, [Integer(id), IA5String(question)])
+        >>> question.encode({'id': 1, 'question': 'Is 1+1=3?'})
+        b'0\\x0e\\x02\\x01\\x01\\x16\\x09Is 1+1=3?'
 
         """
 
