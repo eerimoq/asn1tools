@@ -6,6 +6,11 @@ try:
 except ImportError:
     from io import StringIO
 
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
+
 import asn1tools
 
 
@@ -16,16 +21,12 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
     def test_command_line_help(self):
         argv = ['asn1tools', '--help']
 
-        stdout = sys.stdout
-        sys.argv = argv
-        sys.stdout = StringIO()
+        stdout = StringIO()
 
-        try:
-            with self.assertRaises(SystemExit):
-                asn1tools._main()
-        finally:
-            actual_output = sys.stdout.getvalue()
-            sys.stdout = stdout
+        with patch('sys.stdout', stdout):
+            with patch('sys.argv', argv):
+                with self.assertRaises(SystemExit):
+                    asn1tools._main()
 
         expected_output = [
             "usage: asn1tools [-h] [-d] [-v {0,1,2}] [--version] {decode} ...",
@@ -49,21 +50,17 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
         ]
 
         for line in expected_output:
-            self.assertIn(line, actual_output)
+            self.assertIn(line, stdout.getvalue())
 
     def test_command_line_decode_help(self):
         argv = ['asn1tools', 'decode', '--help']
 
-        stdout = sys.stdout
-        sys.argv = argv
-        sys.stdout = StringIO()
+        stdout = StringIO()
 
-        try:
-            with self.assertRaises(SystemExit):
-                asn1tools._main()
-        finally:
-            actual_output = sys.stdout.getvalue()
-            sys.stdout = stdout
+        with patch('sys.stdout', stdout):
+            with patch('sys.argv', argv):
+                with self.assertRaises(SystemExit):
+                    asn1tools._main()
 
         expected_output = [
             "asn1tools decode [-h] [-c {ber,der,jer,per,uper,xer}]",
@@ -83,7 +80,7 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
         ]
 
         for line in expected_output:
-            self.assertIn(line, actual_output)
+            self.assertIn(line, stdout.getvalue())
 
     def test_command_line_decode_ber_foo_question(self):
         argv = ['asn1tools',
@@ -92,18 +89,14 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
                 'Question',
                 '300e0201011609497320312b313d333f']
 
-        stdout = sys.stdout
-        sys.argv = argv
-        sys.stdout = StringIO()
+        stdout = StringIO()
 
-        try:
-            asn1tools._main()
-        finally:
-            actual_output = sys.stdout.getvalue()
-            sys.stdout = stdout
+        with patch('sys.stdout', stdout):
+            with patch('sys.argv', argv):
+                asn1tools._main()
 
-        self.assertIn('id: 1', actual_output)
-        self.assertIn('question: Is 1+1=3?', actual_output)
+        self.assertIn('id: 1', stdout.getvalue())
+        self.assertIn('question: Is 1+1=3?', stdout.getvalue())
 
     def test_command_line_decode_uper_foo_question(self):
         argv = ['asn1tools',
@@ -113,18 +106,14 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
                 'Question',
                 '01010993cd03156c5eb37e']
 
-        stdout = sys.stdout
-        sys.argv = argv
-        sys.stdout = StringIO()
+        stdout = StringIO()
 
-        try:
-            asn1tools._main()
-        finally:
-            actual_output = sys.stdout.getvalue()
-            sys.stdout = stdout
+        with patch('sys.stdout', stdout):
+            with patch('sys.argv', argv):
+                asn1tools._main()
 
-        self.assertIn('id: 1', actual_output)
-        self.assertIn('question: Is 1+1=3?', actual_output)
+        self.assertIn('id: 1', stdout.getvalue())
+        self.assertIn('question: Is 1+1=3?', stdout.getvalue())
 
     def test_command_line_decode_ber_rrc_bcch_dl_sch_message(self):
         argv = ['asn1tools',
@@ -139,15 +128,11 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
                 '2106122b06010401817d08330a0201070a86deb738040b3137322e33312e3139'
                 '2e32']
 
-        stdout = sys.stdout
-        sys.argv = argv
-        sys.stdout = StringIO()
+        stdout = StringIO()
 
-        try:
-            asn1tools._main()
-        finally:
-            actual_output = sys.stdout.getvalue()
-            sys.stdout = stdout
+        with patch('sys.stdout', stdout):
+            with patch('sys.argv', argv):
+                asn1tools._main()
 
         expected_output = [
             "community: '7075626c6963'",
@@ -181,7 +166,7 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
         ]
 
         for line in expected_output:
-            self.assertIn(line, actual_output)
+            self.assertIn(line, stdout.getvalue())
 
     def test_command_line_decode_bad_type_name(self):
         argv = ['asn1tools',
@@ -190,20 +175,16 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
                 'Question2',
                 '01010993cd03156c5eb37e']
 
-        stdout = sys.stdout
-        sys.argv = argv
-        sys.stdout = StringIO()
+        stdout = StringIO()
 
-        try:
-            with self.assertRaises(SystemExit) as cm:
-                asn1tools._main()
+        with patch('sys.stdout', stdout):
+            with patch('sys.argv', argv):
+                with self.assertRaises(SystemExit) as cm:
+                    asn1tools._main()
 
-            self.assertEqual(
-                str(cm.exception),
-                "error: type 'Question2' not found in types dictionary")
-        finally:
-            actual_output = sys.stdout.getvalue()
-            sys.stdout = stdout
+                self.assertEqual(
+                    str(cm.exception),
+                    "error: type 'Question2' not found in types dictionary")
 
     def test_command_line_decode_bad_data(self):
         argv = ['asn1tools',
@@ -212,18 +193,15 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
                 'Question',
                 '012']
 
-        stdout = sys.stdout
-        sys.argv = argv
-        sys.stdout = StringIO()
+        stdout = StringIO()
 
-        try:
-            with self.assertRaises(SystemExit) as cm:
-                asn1tools._main()
+        with patch('sys.stdout', stdout):
+            with patch('sys.argv', argv):
+                with self.assertRaises(SystemExit) as cm:
+                    asn1tools._main()
 
-            self.assertEqual(str(cm.exception), "error: '012': Odd-length string")
-        finally:
-            actual_output = sys.stdout.getvalue()
-            sys.stdout = stdout
+                self.assertEqual(str(cm.exception),
+                                 "error: '012': Odd-length string")
 
 
 if __name__ == '__main__':
