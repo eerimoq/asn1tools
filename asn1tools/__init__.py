@@ -15,8 +15,8 @@ from .compiler import pre_process_dict
 from .parser import parse_string
 from .parser import parse_files
 from .parser import ParseError
-from .codecs import EncodeError
-from .codecs import DecodeError
+from .errors import EncodeError
+from .errors import DecodeError
 from .errors import CompileError
 
 

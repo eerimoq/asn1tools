@@ -1,7 +1,9 @@
 import binascii
+from ..errors import EncodeError as _EncodeError
+from ..errors import DecodeError as _DecodeError
 
 
-class EncodeError(Exception):
+class EncodeError(_EncodeError):
     """General ASN.1 encode error.
 
     """
@@ -9,7 +11,7 @@ class EncodeError(Exception):
     pass
 
 
-class DecodeError(Exception):
+class DecodeError(_DecodeError):
     """General ASN.1 decode error.
 
     """

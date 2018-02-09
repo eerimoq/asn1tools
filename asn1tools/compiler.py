@@ -13,6 +13,8 @@ from .codecs import per
 from .codecs import uper
 from .codecs import xer
 from .errors import CompileError
+from .errors import EncodeError
+from .errors import DecodeError
 
 
 class Specification(object):
