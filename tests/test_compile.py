@@ -49,6 +49,21 @@ class Asn1ToolsCompileTest(unittest.TestCase):
 
         self.assertEqual(str(cm.exception), "unsupported codec 'bad_codec'")
 
+    def test_encode_decode_bad_type_name(self):
+        foo = asn1tools.compile_files('tests/files/foo.asn')
+
+        # Encode.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('BadTypeName', b'')
+
+        self.assertEqual(str(cm.exception), "bad type name 'BadTypeName'")
+
+        # Decode.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('BadTypeName', b'')
+
+        self.assertEqual(str(cm.exception), "bad type name 'BadTypeName'")
+
     def test_missing_type(self):
         with self.assertRaises(asn1tools.CompileError) as cm:
             asn1tools.compile_string('A DEFINITIONS ::= BEGIN A ::= B END')

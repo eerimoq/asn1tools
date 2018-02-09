@@ -82,7 +82,10 @@ class Specification(object):
 
         """
 
-        return self._types[name].encode(data)
+        try:
+            return self._types[name].encode(data)
+        except KeyError:
+            raise EncodeError("bad type name '{}'".format(name))
 
     def decode(self, name, data):
         """Decode given bytes object `data` as given type `name` and return
@@ -93,7 +96,10 @@ class Specification(object):
 
         """
 
-        return self._types[name].decode(data)
+        try:
+            return self._types[name].decode(data)
+        except KeyError:
+            raise DecodeError("bad type name '{}'".format(name))
 
     def decode_length(self, data):
         """Decode the length of given data `data`.
