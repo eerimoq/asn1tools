@@ -81,7 +81,8 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             with self.assertRaises(asn1tools.DecodeError) as cm:
                 foo.decode_length(encoded)
 
-            self.assertEqual(str(cm.exception), ': Not enough data.')
+            self.assertEqual(str(cm.exception),
+                             ': not enough data to decode the length')
 
     def test_complex(self):
         cmplx = asn1tools.compile_files('tests/files/complex.asn')
@@ -1179,8 +1180,9 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         with self.assertRaises(asn1tools.DecodeError) as cm:
             rfc5280.decode('Certificate', encoded)
 
-        self.assertEqual(str(cm.exception),
-                         ": expected SEQUENCE with tag '30' but got '' at offset 0")
+        self.assertEqual(
+            str(cm.exception),
+            ": expected SEQUENCE with tag '30' at offset 0, but got ''")
 
         # Only tag and length, no contents.
         encoded = b'\x30\x81\x9f'
@@ -1188,9 +1190,9 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         with self.assertRaises(asn1tools.DecodeError) as cm:
             rfc5280.decode('Certificate', encoded)
 
-        self.assertEqual(str(cm.exception),
-                         "tbsCertificate: expected SEQUENCE with tag '30' but got "
-                         "'' at offset 3")
+        self.assertEqual(
+            str(cm.exception),
+            ': expected at least 159 contents byte(s) at offset 3, but got 0')
 
         # Unexpected tag 'ff'.
         encoded = b'\xff\x01\x00'
@@ -1198,9 +1200,9 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         with self.assertRaises(asn1tools.DecodeError) as cm:
             rfc5280.decode('Certificate', encoded)
 
-        self.assertEqual(str(cm.exception),
-                         ": expected SEQUENCE with tag '30' but got 'ff' at "
-                         "offset 0")
+        self.assertEqual(
+            str(cm.exception),
+            ": expected SEQUENCE with tag '30' at offset 0, but got 'ff'")
 
         # Unexpected type '31' embedded in the data.
         encoded = bytearray(
@@ -1249,7 +1251,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(str(cm.exception),
                          "tbsCertificate: issuer: expected SEQUENCE with tag "
-                         "'30' but got '31' at offset 150")
+                         "'30' at offset 150, but got '31'")
 
     def test_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn')
@@ -1407,10 +1409,10 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            ": expected BOOLEAN with tag '01' but got 'ff' at offset 0")
+            ": expected BOOLEAN with tag '01' at offset 0, but got 'ff'")
 
         with self.assertRaises(asn1tools.DecodeError) as cm:
-            all_types.decode('Boolean', b'\x01\x02\x01')
+            all_types.decode('Boolean', b'\x01\x02\x01\x01')
 
         self.assertEqual(
             str(cm.exception),
@@ -1420,129 +1422,137 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Integer', b'\xfe')
 
-        self.assertEqual(str(cm.exception),
-                         ": expected INTEGER with tag '02' but got 'fe' at offset 0")
+        self.assertEqual(
+            str(cm.exception),
+            ": expected INTEGER with tag '02' at offset 0, but got 'fe'")
 
         # BIT STRING.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Bitstring', b'\xfd')
 
-        self.assertEqual(str(cm.exception),
-                         ": expected BIT STRING with tag '03' but got 'fd' at offset 0")
+        self.assertEqual(
+            str(cm.exception),
+            ": expected BIT STRING with tag '03' at offset 0, but got 'fd'")
 
         # OCTET STRING.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Octetstring', b'\xfc')
 
-        self.assertEqual(str(cm.exception),
-                         ": expected OCTET STRING with tag '04' but got 'fc' at offset 0")
+        self.assertEqual(
+            str(cm.exception),
+            ": expected OCTET STRING with tag '04' at offset 0, but got 'fc'")
 
         # NULL.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Null', b'\xfb')
 
-        self.assertEqual(str(cm.exception),
-                         ": expected NULL with tag '05' but got 'fb' at offset 0")
+        self.assertEqual(
+            str(cm.exception),
+            ": expected NULL with tag '05' at offset 0, but got 'fb'")
 
         # OBJECT IDENTIFIER.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Objectidentifier', b'\xfa')
 
-        self.assertEqual(str(cm.exception),
-                         ": expected OBJECT IDENTIFIER with tag '06' but got "
-                         "'fa' at offset 0")
+        self.assertEqual(
+            str(cm.exception),
+            ": expected OBJECT IDENTIFIER with tag '06' at offset 0, "
+            "but got 'fa'")
 
         # ENUMERATED.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Enumerated', b'\xf9')
 
-        self.assertEqual(str(cm.exception),
-                         ": expected ENUMERATED with tag '0a' but got 'f9' at offset 0")
+        self.assertEqual(
+            str(cm.exception),
+            ": expected ENUMERATED with tag '0a' at offset 0, but got 'f9'")
 
         # UTF8String.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Utf8string', b'\xf8')
 
-        self.assertEqual(str(cm.exception),
-                         ": expected UTF8String with tag '0c' but got 'f8' at offset 0")
+        self.assertEqual(
+            str(cm.exception),
+            ": expected UTF8String with tag '0c' at offset 0, but got 'f8'")
 
         # SEQUENCE.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Sequence', b'\xf7')
 
-        self.assertEqual(str(cm.exception),
-                         ": expected SEQUENCE with tag '30' but got 'f7' at offset 0")
+        self.assertEqual(
+            str(cm.exception),
+            ": expected SEQUENCE with tag '30' at offset 0, but got 'f7'")
 
         # SET.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Set', b'\xf6')
 
         self.assertEqual(str(cm.exception),
-                         ": expected SET with tag '31' but got 'f6' at offset 0")
+                         ": expected SET with tag '31' at offset 0, but got 'f6'")
 
         # NumericString.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Numericstring', b'\xf5')
 
         self.assertEqual(str(cm.exception),
-                         ": expected NumericString with tag '12' but got "
-                         "'f5' at offset 0")
+                         ": expected NumericString with tag '12' at offset 0, "
+                         "but got 'f5'")
 
         # PrintableString.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Printablestring', b'\xf4')
 
         self.assertEqual(str(cm.exception),
-                         ": expected PrintableString with tag '13' but got "
-                         "'f4' at offset 0")
+                         ": expected PrintableString with tag '13' at offset 0, "
+                         "but got 'f4'")
 
         # IA5String.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Ia5string', b'\xf3')
 
-        self.assertEqual(str(cm.exception),
-                         ": expected IA5String with tag '16' but got "
-                         "'f3' at offset 0")
+        self.assertEqual(
+            str(cm.exception),
+            ": expected IA5String with tag '16' at offset 0, but got 'f3'")
 
         # UniversalString.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Universalstring', b'\xf2')
 
-        self.assertEqual(str(cm.exception),
-                         ": expected UniversalString with tag '1c' but got "
-                         "'f2' at offset 0")
+        self.assertEqual(
+            str(cm.exception),
+            ": expected UniversalString with tag '1c' at offset 0, but got 'f2'")
 
         # VisibleString.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Visiblestring', b'\xf1')
 
-        self.assertEqual(str(cm.exception),
-                         ": expected VisibleString with tag '1a' but got "
-                         "'f1' at offset 0")
+        self.assertEqual(
+            str(cm.exception),
+            ": expected VisibleString with tag '1a' at offset 0, but got 'f1'")
 
         # BMPString.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Bmpstring', b'\xf0')
 
-        self.assertEqual(str(cm.exception),
-                         ": expected BMPString with tag '1e' but got "
-                         "'f0' at offset 0")
+        self.assertEqual(
+            str(cm.exception),
+            ": expected BMPString with tag '1e' at offset 0, but got 'f0'")
 
         # TeletexString.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Teletexstring', b'\xef')
 
-        self.assertEqual(str(cm.exception),
-                         ": expected TeletexString with tag '14' but got "
-                         "'ef' at offset 0")
+        self.assertEqual(
+            str(cm.exception),
+            ": expected TeletexString with tag '14' at offset 0, but got 'ef'")
 
         # UTCTime.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Utctime', b'\xee')
 
-        self.assertEqual(str(cm.exception),
-                         ": expected UTCTime with tag '17' but got "
-                         "'ee' at offset 0")
+        self.assertEqual(
+            str(cm.exception),
+            ": expected UTCTime with tag '17' at offset 0, but got 'ee'")
 
         # SequenceOf.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -1550,7 +1560,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            ": expected SEQUENCE OF with tag '30' but got 'ed' at offset 0")
+            ": expected SEQUENCE OF with tag '30' at offset 0, but got 'ed'")
 
         # SetOf.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -1558,7 +1568,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            ": expected SET OF with tag '31' but got 'ec' at offset 0")
+            ": expected SET OF with tag '31' at offset 0, but got 'ec'")
 
     def test_repr_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn')
@@ -1652,14 +1662,15 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             foo.decode('Foo', b'\xa3\x03\x01\x01\x01')
 
         self.assertEqual(str(cm.exception),
-                         ": expected Tag with tag 'a2' but got 'a3' at offset 0")
+                         ": expected Tag with tag 'a2' at offset 0, but got 'a3'")
 
         # Bad tag.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('Foo', b'\xa2\x03\x02\x01\x01')
 
-        self.assertEqual(str(cm.exception),
-                         ": expected BOOLEAN with tag '01' but got '02' at offset 2")
+        self.assertEqual(
+            str(cm.exception),
+            ": expected BOOLEAN with tag '01' at offset 2, but got '02'")
 
     def test_boolean_implicit_tags(self):
         """Test implicit tags on booleans.
@@ -1994,6 +2005,26 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             decoded = foo.decode('Fie', encoded)
 
         self.assertEqual(str(cm.exception), "fum: bad AnyDefinedBy choice 1.3.1000.8")
+
+    def test_decode_bad_length(self):
+        foo = asn1tools.compile_files('tests/files/foo.asn')
+
+        datas = [
+            (b'0\x0e\x02\x01\x01\x16\x09Is 1+1=3',
+             ': expected at least 14 contents byte(s) at offset 2, but got 13'),
+            (b'0\x0f\x02\x01\x01\x16\x09Is 1+1=3?',
+             ': expected at least 15 contents byte(s) at offset 2, but got 14'),
+            (b'0\x0e\x02\x01\x01\x16\x0aIs 1+1=3?',
+             'question: expected at least 10 contents byte(s) at offset 7, but got 9'),
+            (b'0\x0e\x02\x02\x01\x16\x09Is 1+1=3?',
+             "question: expected IA5String with tag '16' at offset 6, but got '09'")
+        ]
+
+        for encoded, message in datas:
+            with self.assertRaises(asn1tools.DecodeError) as cm:
+                foo.decode('Question', encoded)
+
+            self.assertEqual(str(cm.exception), message)
 
 
 if __name__ == '__main__':

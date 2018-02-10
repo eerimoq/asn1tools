@@ -5,6 +5,7 @@
 from . import EncodeError
 from . import DecodeError
 from . import DecodeTagError
+from . import DecodeContentsLengthError
 from . import compiler
 from .ber import Class
 from .ber import Encoding
@@ -977,5 +978,7 @@ def compile_dict(specification):
 def decode_length(data):
     try:
         return sum(decode_length_definite(bytearray(data), 1))
+    except DecodeContentsLengthError as e:
+        return (e.length + e.offset)
     except IndexError:
-        raise DecodeError('Not enough data.')
+        raise DecodeError('not enough data to decode the length')

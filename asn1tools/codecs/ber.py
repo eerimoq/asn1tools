@@ -5,6 +5,7 @@
 from . import EncodeError
 from . import DecodeError
 from . import DecodeTagError
+from . import DecodeContentsLengthError
 from . import compiler
 
 
@@ -76,18 +77,24 @@ def decode_length_definite(encoded, offset):
     length = encoded[offset]
     offset += 1
 
-    if length <= 127:
-        return length, offset
-    else:
+    if length > 127:
         number_of_bytes = (length & 0x7f)
-        encoded = encoded[offset:number_of_bytes + offset]
+        encoded_length = encoded[offset:number_of_bytes + offset]
 
-        if len(encoded) != number_of_bytes:
-            raise DecodeError('Not enough data.')
+        if len(encoded_length) != number_of_bytes:
+            raise IndexError(
+                'expected {} length byte(s) at offset {}, but got {}'.format(
+                    number_of_bytes,
+                    offset,
+                    len(encoded_length)))
 
-        length = decode_integer(encoded)
+        length = decode_integer(encoded_length)
+        offset += number_of_bytes
 
-        return length, offset + number_of_bytes
+    if offset + length > len(encoded):
+        raise DecodeContentsLengthError(length, offset, len(encoded))
+
+    return length, offset
 
 
 def decode_integer(data):
@@ -1116,5 +1123,7 @@ def compile_dict(specification):
 def decode_length(data):
     try:
         return sum(decode_length_definite(bytearray(data), 1))
+    except DecodeContentsLengthError as e:
+        return (e.length + e.offset)
     except IndexError:
-        raise DecodeError('Not enough data.')
+        raise DecodeError('not enough data to decode the length')

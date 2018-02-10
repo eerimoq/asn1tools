@@ -137,11 +137,12 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
             b'0\x84\x00\x00\x00'
         ]
 
-        for encoded_message in datas:
+        for encoded in datas:
             with self.assertRaises(asn1tools.DecodeError) as cm:
-                foo.decode_length(encoded_message)
+                foo.decode_length(encoded)
 
-            self.assertEqual(str(cm.exception), ': Not enough data.')
+            self.assertEqual(str(cm.exception),
+                             ': not enough data to decode the length')
 
 
 if __name__ == '__main__':

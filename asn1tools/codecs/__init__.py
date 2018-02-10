@@ -32,9 +32,26 @@ class DecodeTagError(DecodeError):
     """
 
     def __init__(self, type_name, expected_tag, actual_tag, offset):
-        message = "expected {} with tag '{}' but got '{}' at offset {}".format(
+        message = "expected {} with tag '{}' at offset {}, but got '{}'".format(
             type_name,
             binascii.hexlify(expected_tag).decode('ascii'),
-            binascii.hexlify(actual_tag).decode('ascii'),
-            offset)
+            offset,
+            binascii.hexlify(actual_tag).decode('ascii'))
         super(DecodeTagError, self).__init__(message)
+
+
+class DecodeContentsLengthError(DecodeError):
+    """ASN.1 contents length decode error.
+
+    """
+
+    def __init__(self, length, offset, contents_max):
+        message = ('expected at least {} contents byte(s) at offset {}, '
+                   'but got {}').format(length,
+                                        offset,
+                                        contents_max - offset)
+        super(DecodeContentsLengthError, self).__init__(message)
+
+        self.length = length
+        self.offset = offset
+        self.contents_max = contents_max
