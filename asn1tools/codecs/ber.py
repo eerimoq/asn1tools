@@ -78,6 +78,11 @@ def decode_length_definite(encoded, offset):
     offset += 1
 
     if length > 127:
+        if length == 128:
+            raise DecodeError(
+                'expected definite length at offset {}, but got indefinite'.format(
+                    offset - 1))
+
         number_of_bytes = (length & 0x7f)
         encoded_length = encoded[offset:number_of_bytes + offset]
 
