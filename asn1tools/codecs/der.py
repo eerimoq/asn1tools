@@ -47,15 +47,15 @@ class Type(object):
             self.tag = bytearray([flags | 0x1f]) + encode_length_definite(number)
 
     def decode_tag(self, data, offset):
-        end = offset + len(self.tag)
+        end_offset = offset + len(self.tag)
 
-        if data[offset:end] != self.tag:
+        if data[offset:end_offset] != self.tag:
             raise DecodeTagError(self.type_name,
                                  self.tag,
-                                 data[offset:end],
+                                 data[offset:end_offset],
                                  offset)
 
-        return end
+        return end_offset
 
 
 class Integer(Type):
@@ -72,9 +72,9 @@ class Integer(Type):
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
-        end = offset + length
+        end_offset = offset + length
 
-        return decode_signed_integer(data[offset:end]), end
+        return decode_signed_integer(data[offset:end_offset]), end_offset
 
     def __repr__(self):
         return 'Integer({})'.format(self.name)
@@ -138,9 +138,9 @@ class IA5String(Type):
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
-        end = offset + length
+        end_offset = offset + length
 
-        return data[offset:end].decode('ascii'), end
+        return data[offset:end_offset].decode('ascii'), end_offset
 
     def __repr__(self):
         return 'IA5String({})'.format(self.name)
@@ -161,9 +161,9 @@ class NumericString(Type):
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
-        end = offset + length
+        end_offset = offset + length
 
-        return data[offset:end].decode('ascii'), end
+        return data[offset:end_offset].decode('ascii'), end_offset
 
     def __repr__(self):
         return 'NumericString({})'.format(self.name)
@@ -216,12 +216,12 @@ class MembersType(Type):
         else:
             length, offset = decode_length_definite(data, offset)
 
-        end = offset + length
+        end_offset = offset + length
         values = {}
 
         for member in self.members:
             try:
-                if offset < end:
+                if offset < end_offset:
                     if isinstance(member, AnyDefinedBy):
                         value, offset = member.decode(data, offset, values)
                     else:
@@ -344,11 +344,11 @@ class BitString(Type):
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
-        end = offset + length
+        end_offset = offset + length
         number_of_bits = 8 * (length - 1) - data[offset]
         offset += 1
 
-        return (bytearray(data[offset:end]), number_of_bits), end
+        return (bytearray(data[offset:end_offset]), number_of_bits), end_offset
 
     def __repr__(self):
         return 'BitString({})'.format(self.name)
@@ -369,9 +369,9 @@ class OctetString(Type):
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
-        end = offset + length
+        end_offset = offset + length
 
-        return bytearray(data[offset:end]), end
+        return bytearray(data[offset:end_offset]), end_offset
 
     def __repr__(self):
         return 'OctetString({})'.format(self.name)
@@ -392,9 +392,9 @@ class PrintableString(Type):
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
-        end = offset + length
+        end_offset = offset + length
 
-        return data[offset:end].decode('ascii'), end
+        return data[offset:end_offset].decode('ascii'), end_offset
 
     def __repr__(self):
         return 'PrintableString({})'.format(self.name)
@@ -415,9 +415,9 @@ class UniversalString(Type):
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
-        end = offset + length
+        end_offset = offset + length
 
-        return data[offset:end].decode('ascii'), end
+        return data[offset:end_offset].decode('ascii'), end_offset
 
     def __repr__(self):
         return 'UniversalString({})'.format(self.name)
@@ -438,9 +438,9 @@ class VisibleString(Type):
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
-        end = offset + length
+        end_offset = offset + length
 
-        return data[offset:end].decode('ascii'), end
+        return data[offset:end_offset].decode('ascii'), end_offset
 
     def __repr__(self):
         return 'VisibleString({})'.format(self.name)
@@ -461,9 +461,9 @@ class UTF8String(Type):
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
-        end = offset + length
+        end_offset = offset + length
 
-        return data[offset:end].decode('utf-8'), end
+        return data[offset:end_offset].decode('utf-8'), end_offset
 
     def __repr__(self):
         return 'UTF8String({})'.format(self.name)
@@ -484,9 +484,9 @@ class BMPString(Type):
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
-        end = offset + length
+        end_offset = offset + length
 
-        return bytearray(data[offset:end]), end
+        return bytearray(data[offset:end_offset]), end_offset
 
     def __repr__(self):
         return 'BMPString({})'.format(self.name)
@@ -507,9 +507,9 @@ class UTCTime(Type):
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
-        end = offset + length
+        end_offset = offset + length
 
-        return data[offset:end][:-1].decode('ascii'), end
+        return data[offset:end_offset][:-1].decode('ascii'), end_offset
 
     def __repr__(self):
         return 'UTCTime({})'.format(self.name)
@@ -549,9 +549,9 @@ class TeletexString(Type):
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
-        end = offset + length
+        end_offset = offset + length
 
-        return bytearray(data[offset:end]), end
+        return bytearray(data[offset:end_offset]), end_offset
 
     def __repr__(self):
         return 'TeletexString({})'.format(self.name)
@@ -581,16 +581,16 @@ class ObjectIdentifier(Type):
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
-        end = offset + length
+        end_offset = offset + length
 
         subidentifier, offset = self.decode_subidentifier(data, offset)
         decoded = [subidentifier // 40, subidentifier % 40]
 
-        while offset < end:
+        while offset < end_offset:
             subidentifier, offset = self.decode_subidentifier(data, offset)
             decoded.append(subidentifier)
 
-        return '.'.join([str(v) for v in decoded]), end
+        return '.'.join([str(v) for v in decoded]), end_offset
 
     def encode_subidentifier(self, subidentifier):
         encoded = [subidentifier & 0x7f]
@@ -689,9 +689,9 @@ class Any(Type):
         start = offset
         _, _, offset = decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
-        end = offset + length
+        end_offset = offset + length
 
-        return data[start:end], end
+        return data[start:end_offset], end_offset
 
     def __repr__(self):
         return 'Any({})'.format(self.name)
@@ -721,9 +721,9 @@ class AnyDefinedBy(Type):
             start = offset
             _, _, offset = decode_tag(data, offset)
             length, offset = decode_length_definite(data, offset)
-            end = offset + length
+            end_offset = offset + length
 
-            return data[start:end], end
+            return data[start:end_offset], end_offset
 
     def __repr__(self):
         return 'AnyDefinedBy({})'.format(self.name)
@@ -752,10 +752,10 @@ class Enumerated(Type):
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
-        end = offset + length
-        value = decode_signed_integer(data[offset:end])
+        end_offset = offset + length
+        value = decode_signed_integer(data[offset:end_offset])
 
-        return self.values[value], end
+        return self.values[value], end_offset
 
     def __repr__(self):
         return 'Enumerated({})'.format(self.name)
