@@ -221,10 +221,6 @@ class PrimitiveOrConstructedType(object):
             self.tag = bytearray([flags | number])
             self.constructed_tag = copy(self.tag)
             self.constructed_tag[0] |= Encoding.CONSTRUCTED
-        else:
-            self.tag = bytearray([flags | 0x1f]) + encode_length_definite(number)
-            self.constructed_tag = copy(self.tag)
-            self.constructed_tag[0] |= Encoding.CONSTRUCTED
 
         self.optional = False
         self.default = None
@@ -255,8 +251,6 @@ class PrimitiveOrConstructedType(object):
                                  self.tag,
                                  data[offset:end_offset],
                                  offset)
-
-        return True, end_offset
 
     def decode(self, data, offset):
         is_primitive, offset = self.decode_tag(data, offset)
@@ -690,15 +684,6 @@ class VisibleString(PrimitiveOrConstructedType):
 
     def decode_constructed_segments(self, segments):
         return bytearray().join(segments).decode('ascii')
-
-    def decode_constructed_indefinite(self, data, offset):
-        segments = []
-
-        while data[offset:offset + 2] != b'\x00\x00':
-            decoded, offset = self.segment.decode(data, offset)
-            segments.append(decoded)
-
-        return b''.join(segments).decode('ascii'), offset + 2
 
     def __repr__(self):
         return 'VisibleString({})'.format(self.name)
