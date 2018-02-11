@@ -1301,8 +1301,8 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
              '20001231235959.999',
              b'\x18\x12\x32\x30\x30\x30\x31\x32\x33\x31\x32\x33\x35\x39'
              b'\x35\x39\x2e\x39\x39\x39'),
-            ('SequenceOf',                [], b'0\x00'),
-            ('SetOf',                     [], b'1\x00')
+            ('SequenceOf',                [], b'\x30\x00'),
+            ('SetOf',                     [], b'\x31\x00')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -2025,6 +2025,70 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                 foo.decode('Question', encoded)
 
             self.assertEqual(str(cm.exception), message)
+
+    def test_all_types_constructed_definite_length(self):
+        all_types = asn1tools.compile_files('tests/files/all_types.asn')
+
+        datas = [
+            #('Bitstring',       (b'\x80', 1), b'\x03\x02\x07\x80'),
+            ('Octetstring',      b'\x00\x01', b'\x24\x06\x04\x01\x00\x04\x01\x01'),
+            ('Utf8string',             'foo', b'\x2c\x07\x04\x02fo\x04\x01o'),
+            ('Numericstring',          '123', b'\x32\x07\x04\x0212\x04\x013'),
+            ('Printablestring',        'foo', b'\x33\x07\x04\x02fo\x04\x01o'),
+            ('Ia5string',              'bar', b'\x36\x07\x04\x02ba\x04\x01r'),
+            ('Universalstring',        'bar', b'\x3c\x07\x04\x02ba\x04\x01r'),
+            ('Visiblestring',          'bar', b'\x3a\x07\x04\x02ba\x04\x01r'),
+            ('Bmpstring',             b'fie', b'\x3e\x07\x04\x01f\x04\x02ie'),
+            ('Teletexstring',         b'fum', b'\x34\x07\x04\x01f\x04\x02um')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(all_types.decode(type_name, encoded), decoded)
+
+    def test_all_types_constructed_indefinite_length(self):
+        all_types = asn1tools.compile_files('tests/files/all_types.asn')
+
+        datas = [
+            ('Bitstring',
+             (b'\x11\x22\x80', 17),
+             b'\x23\x80\x03\x02\x00\x11\x03\x02\x00\x22\x03\x02\x07\x80\x00\x00'),
+            ('Octetstring',
+             b'\x00\x01',
+             b'\x24\x80\x04\x01\x00\x24\x80\x04\x01\x01\x00\x00\x00\x00'),
+            ('Utf8string',             'foo', b'\x2c\x80\x04\x02fo\x04\x01o\x00\x00'),
+            #('Sequence',                  {}, b'\x30\x80\x00\x00'),
+            #('Set',                       {}, b'\x31\x80\x00\x00'),
+            ('Numericstring',          '123', b'\x32\x80\x04\x0212\x04\x013\x00\x00'),
+            ('Printablestring',        'foo', b'\x33\x80\x04\x02fo\x04\x01o\x00\x00'),
+            ('Ia5string',              'bar', b'\x36\x80\x04\x02ba\x04\x01r\x00\x00'),
+            ('Universalstring',        'bar', b'\x3c\x80\x04\x02ba\x04\x01r\x00\x00'),
+            ('Visiblestring',          'bar', b'\x3a\x80\x04\x02ba\x04\x01r\x00\x00'),
+            ('Bmpstring',             b'fie', b'\x3e\x80\x04\x01f\x04\x02ie\x00\x00'),
+            ('Teletexstring',         b'fum', b'\x34\x80\x04\x01f\x04\x02um\x00\x00'),
+            #('SequenceOf',                [], b'\x30\x80\x00\x00'),
+            #('SetOf',                     [], b'\x31\x80\x00\x00')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(all_types.decode(type_name, encoded), decoded)
+
+    def test_decode_indefinite_length_in_primitive_encoding(self):
+        """A BOOLEAN always uses primitive encoding with definite length, and
+        decoding should fail if an indefinite length is found.
+
+        """
+
+        spec = 'A DEFINITIONS ::= BEGIN A ::= BOOLEAN END'
+        foo = asn1tools.compile_string(spec)
+
+        encoded = b'\x01\x80\xff'
+
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', encoded)
+
+        self.assertEqual(
+            str(cm.exception),
+            ': expected definite length at offset 1, but got indefinite')
 
 
 if __name__ == '__main__':

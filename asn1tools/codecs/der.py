@@ -29,10 +29,8 @@ class Type(object):
 
         if number is None:
             self.tag = None
-        elif number < 31:
-            self.tag = bytearray([flags | number])
         else:
-            self.tag = bytearray([flags | 0x1f]) + encode_length_definite(number)
+            self.tag = bytearray([flags | number])
 
         self.optional = False
         self.default = None
@@ -289,7 +287,13 @@ class ArrayType(Type):
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
+
+        if data[offset] == 0x80:
+            raise NotImplementedError(
+                'decode until an end-of-contents tag is found')
+        else:
+            length, offset = decode_length_definite(data, offset)
+
         decoded = []
         start_offset = offset
 
