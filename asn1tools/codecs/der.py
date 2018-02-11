@@ -180,13 +180,7 @@ class MembersType(Type):
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
-
-        if data[offset] == 0x80:
-            raise NotImplementedError(
-                'decode until an end-of-contents tag is found')
-        else:
-            length, offset = decode_length_definite(data, offset)
-
+        length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
         values = {}
 
@@ -260,13 +254,7 @@ class ArrayType(Type):
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
-
-        if data[offset] == 0x80:
-            raise NotImplementedError(
-                'decode until an end-of-contents tag is found')
-        else:
-            length, offset = decode_length_definite(data, offset)
-
+        length, offset = decode_length_definite(data, offset)
         decoded = []
         start_offset = offset
 
