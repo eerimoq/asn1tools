@@ -232,8 +232,8 @@ class PrimitiveOrConstructedType(object):
         if number is None:
             self.tag = None
             self.constructed_tag = None
-        elif number < 31:
-            self.tag = bytearray([flags | number])
+        else:
+            self.tag = encode_tag(number, flags)
             self.constructed_tag = copy(self.tag)
             self.constructed_tag[0] |= Encoding.CONSTRUCTED
 
@@ -244,14 +244,9 @@ class PrimitiveOrConstructedType(object):
         if not Class.APPLICATION & flags:
             flags |= Class.CONTEXT_SPECIFIC
 
-        if number < 31:
-            self.tag = bytearray([flags | number])
-            self.constructed_tag = copy(self.tag)
-            self.constructed_tag[0] |= Encoding.CONSTRUCTED
-        else:
-            self.tag = bytearray([flags | 0x1f]) + encode_length_definite(number)
-            self.constructed_tag = copy(self.tag)
-            self.constructed_tag[0] |= Encoding.CONSTRUCTED
+        self.tag = encode_tag(number, flags)
+        self.constructed_tag = copy(self.tag)
+        self.constructed_tag[0] |= Encoding.CONSTRUCTED
 
     def decode_tag(self, data, offset):
         end_offset = offset + len(self.tag)
