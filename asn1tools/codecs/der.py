@@ -511,12 +511,16 @@ class GeneralizedTime(Type):
                                               Tag.GENERALIZED_TIME)
 
     def encode(self, data, encoded):
-        raise NotImplementedError()
+        encoded.extend(self.tag)
+        encoded.append(len(data))
+        encoded.extend(data.encode('ascii'))
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
+        length, offset = decode_length_definite(data, offset)
+        end_offset = offset + length
 
-        raise NotImplementedError()
+        return data[offset:end_offset].decode('ascii'), end_offset
 
     def __repr__(self):
         return 'GeneralizedTime({})'.format(self.name)

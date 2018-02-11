@@ -52,6 +52,10 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
             ('Bmpstring',             b'bar', b'\x1e\x03bar'),
             ('Teletexstring',         b'fum', b'\x14\x03fum'),
             ('Utctime',       '010203040506', b'\x17\x0d010203040506Z'),
+            ('GeneralizedTime1',
+             '20001231235959Z',
+             b'\x18\x0f\x32\x30\x30\x30\x31\x32\x33\x31\x32\x33\x35\x39'
+             b'\x35\x39\x5a'),
             ('SequenceOf',                [], b'0\x00'),
             ('SetOf',                     [], b'1\x00')
         ]
@@ -101,6 +105,8 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
         self.assertEqual(repr(all_types.types['Teletexstring']),
                          'TeletexString(Teletexstring)')
         self.assertEqual(repr(all_types.types['Utctime']), 'UTCTime(Utctime)')
+        self.assertEqual(repr(all_types.types['GeneralizedTime1']),
+                         'GeneralizedTime(GeneralizedTime1)')
         self.assertEqual(repr(all_types.types['SequenceOf']),
                          'SequenceOf(SequenceOf, Integer())')
         self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
