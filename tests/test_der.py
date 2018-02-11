@@ -48,6 +48,7 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
             ('Ia5string',              'bar', b'\x16\x03bar'),
             ('Universalstring',        'bar', b'\x1c\x03bar'),
             ('Visiblestring',          'bar', b'\x1a\x03bar'),
+            ('Generalstring',          'bar', b'\x1b\x03bar'),
             ('Bmpstring',             b'bar', b'\x1e\x03bar'),
             ('Teletexstring',         b'fum', b'\x14\x03fum'),
             ('Utctime',       '010203040506', b'\x17\x0d010203040506Z'),
@@ -93,6 +94,8 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
                          'UniversalString(Universalstring)')
         self.assertEqual(repr(all_types.types['Visiblestring']),
                          'VisibleString(Visiblestring)')
+        self.assertEqual(repr(all_types.types['Generalstring']),
+                         'GeneralString(Generalstring)')
         self.assertEqual(repr(all_types.types['Bmpstring']),
                          'BMPString(Bmpstring)')
         self.assertEqual(repr(all_types.types['Teletexstring']),

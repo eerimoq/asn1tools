@@ -668,6 +668,21 @@ class VisibleString(Type):
         return 'VisibleString({})'.format(self.name)
 
 
+class GeneralString(Type):
+
+    def __init__(self, name):
+        super(GeneralString, self).__init__(name, 'GeneralString')
+
+    def encode(self, data, encoder):
+        raise NotImplementedError()
+
+    def decode(self, decoder):
+        raise NotImplementedError()
+
+    def __repr__(self):
+        return 'GeneralString({})'.format(self.name)
+
+
 class UTF8String(Type):
 
     def __init__(self, name):
@@ -1006,6 +1021,8 @@ class Compiler(compiler.Compiler):
                                      minimum,
                                      maximum,
                                      permitted_alphabet)
+        elif type_name == 'GeneralString':
+            compiled = GeneralString(name)
         elif type_name == 'UTF8String':
             compiled = UTF8String(name)
         elif type_name == 'BMPString':

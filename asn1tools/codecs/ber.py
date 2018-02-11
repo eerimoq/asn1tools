@@ -699,6 +699,29 @@ class VisibleString(PrimitiveOrConstructedType):
         return 'VisibleString({})'.format(self.name)
 
 
+class GeneralString(PrimitiveOrConstructedType):
+
+    def __init__(self, name):
+        super(GeneralString, self).__init__(name,
+                                            'GeneralString',
+                                            Tag.GENERAL_STRING,
+                                            OctetString(name))
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(data.encode('ascii'))
+
+    def decode_primitive_contents(self, data, offset, length):
+        return data[offset:offset + length].decode('ascii')
+
+    def decode_constructed_segments(self, segments):
+        return bytearray().join(segments).decode('ascii')
+
+    def __repr__(self):
+        return 'GeneralString({})'.format(self.name)
+
+
 class UTF8String(PrimitiveOrConstructedType):
 
     def __init__(self, name):
@@ -1145,6 +1168,8 @@ class Compiler(compiler.Compiler):
             compiled = IA5String(name)
         elif type_name == 'VisibleString':
             compiled = VisibleString(name)
+        elif type_name == 'GeneralString':
+            compiled = GeneralString(name)
         elif type_name == 'UTF8String':
             compiled = UTF8String(name)
         elif type_name == 'BMPString':

@@ -194,6 +194,8 @@ Universalstring ::= UniversalString
 
 Visiblestring ::= VisibleString
 
+Generalstring ::= GeneralString
+
 Bmpstring ::= BMPString
 
 Teletexstring ::= TeletexString

@@ -335,6 +335,9 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             all_types.encode('Visiblestring', 'bar')
 
         with self.assertRaises(NotImplementedError):
+            all_types.encode('Generalstring', 'bar')
+
+        with self.assertRaises(NotImplementedError):
             all_types.encode('Bmpstring', b'bar')
 
         with self.assertRaises(NotImplementedError):
@@ -385,6 +388,9 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
 
         with self.assertRaises(NotImplementedError):
             all_types.decode('Visiblestring', b'\x1a\x03bar')
+
+        with self.assertRaises(NotImplementedError):
+            all_types.decode('Generalstring', b'\x1b\x03bar')
 
         with self.assertRaises(NotImplementedError):
             all_types.decode('Bmpstring', b'\x1e\x03bar')
@@ -470,6 +476,8 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
                          'UniversalString(Universalstring)')
         self.assertEqual(repr(all_types.types['Visiblestring']),
                          'VisibleString(Visiblestring)')
+        self.assertEqual(repr(all_types.types['Generalstring']),
+                         'GeneralString(Generalstring)')
         self.assertEqual(repr(all_types.types['Bmpstring']),
                          'BMPString(Bmpstring)')
         self.assertEqual(repr(all_types.types['Teletexstring']),

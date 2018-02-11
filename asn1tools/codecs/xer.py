@@ -335,6 +335,21 @@ class VisibleString(Type):
         return 'VisibleString({})'.format(self.name)
 
 
+class GeneralString(Type):
+
+    def __init__(self, name):
+        super(GeneralString, self).__init__(name, 'GeneralString')
+
+    def encode(self, data):
+        raise NotImplementedError()
+
+    def decode(self, data):
+        raise NotImplementedError()
+
+    def __repr__(self):
+        return 'GeneralString({})'.format(self.name)
+
+
 class UTF8String(Type):
 
     def __init__(self, name):
@@ -623,6 +638,8 @@ class Compiler(compiler.Compiler):
             compiled = IA5String(name)
         elif type_name == 'VisibleString':
             compiled = VisibleString(name)
+        elif type_name == 'GeneralString':
+            compiled = GeneralString(name)
         elif type_name == 'UTF8String':
             compiled = UTF8String(name)
         elif type_name == 'BMPString':

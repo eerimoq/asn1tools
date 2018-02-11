@@ -409,6 +409,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
             ('Ia5string',          'bar', b'"bar"'),
             ('Universalstring',    'bar', b'"bar"'),
             ('Visiblestring',      'bar', b'"bar"'),
+            ('Generalstring',      'bar', b'"bar"'),
             ('Bmpstring',         b'bar', b'"bar"'),
             ('Teletexstring',     b'fum', b'"fum"'),
             ('SequenceOf',            [], b'[]'),
@@ -467,6 +468,8 @@ class Asn1ToolsJerTest(unittest.TestCase):
                          'UniversalString(Universalstring)')
         self.assertEqual(repr(all_types.types['Visiblestring']),
                          'VisibleString(Visiblestring)')
+        self.assertEqual(repr(all_types.types['Generalstring']),
+                         'GeneralString(Generalstring)')
         self.assertEqual(repr(all_types.types['Bmpstring']),
                          'BMPString(Bmpstring)')
         self.assertEqual(repr(all_types.types['Teletexstring']),

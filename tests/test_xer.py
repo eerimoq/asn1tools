@@ -380,6 +380,8 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
                          'UniversalString(Universalstring)')
         self.assertEqual(repr(all_types.types['Visiblestring']),
                          'VisibleString(Visiblestring)')
+        self.assertEqual(repr(all_types.types['Generalstring']),
+                         'GeneralString(Generalstring)')
         self.assertEqual(repr(all_types.types['Bmpstring']),
                          'BMPString(Bmpstring)')
         self.assertEqual(repr(all_types.types['Teletexstring']),

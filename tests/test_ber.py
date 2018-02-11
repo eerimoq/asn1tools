@@ -1294,6 +1294,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('Ia5string',              'bar', b'\x16\x03bar'),
             ('Universalstring',        'bar', b'\x1c\x03bar'),
             ('Visiblestring',          'bar', b'\x1a\x03bar'),
+            ('Generalstring',          'bar', b'\x1b\x03bar'),
             ('Bmpstring',             b'bar', b'\x1e\x03bar'),
             ('Teletexstring',         b'fum', b'\x14\x03fum'),
             ('Utctime',       '010203040506', b'\x17\x0d010203040506Z'),
@@ -1530,6 +1531,14 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             str(cm.exception),
             ": expected VisibleString with tag '1a' at offset 0, but got 'f1'")
 
+        # GeneralString.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            all_types.decode('Generalstring', b'\xf1')
+
+        self.assertEqual(
+            str(cm.exception),
+            ": expected GeneralString with tag '1b' at offset 0, but got 'f1'")
+
         # BMPString.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Bmpstring', b'\xf0')
@@ -1596,6 +1605,8 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                          'UniversalString(Universalstring)')
         self.assertEqual(repr(all_types.types['Visiblestring']),
                          'VisibleString(Visiblestring)')
+        self.assertEqual(repr(all_types.types['Generalstring']),
+                         'GeneralString(Generalstring)')
         self.assertEqual(repr(all_types.types['Bmpstring']),
                          'BMPString(Bmpstring)')
         self.assertEqual(repr(all_types.types['Teletexstring']),
@@ -2038,6 +2049,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('Ia5string',              'bar', b'\x36\x07\x04\x02ba\x04\x01r'),
             ('Universalstring',        'bar', b'\x3c\x07\x04\x02ba\x04\x01r'),
             ('Visiblestring',          'bar', b'\x3a\x07\x04\x02ba\x04\x01r'),
+            ('Generalstring',          'bar', b'\x3b\x07\x04\x02ba\x04\x01r'),
             ('Bmpstring',             b'fie', b'\x3e\x07\x04\x01f\x04\x02ie'),
             ('Teletexstring',         b'fum', b'\x34\x07\x04\x01f\x04\x02um')
         ]
@@ -2063,6 +2075,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('Ia5string',              'bar', b'\x36\x80\x04\x02ba\x04\x01r\x00\x00'),
             ('Universalstring',        'bar', b'\x3c\x80\x04\x02ba\x04\x01r\x00\x00'),
             ('Visiblestring',          'bar', b'\x3a\x80\x04\x02ba\x04\x01r\x00\x00'),
+            ('Generalstring',          'bar', b'\x3b\x80\x04\x02ba\x04\x01r\x00\x00'),
             ('Bmpstring',             b'fie', b'\x3e\x80\x04\x01f\x04\x02ie\x00\x00'),
             ('Teletexstring',         b'fum', b'\x34\x80\x04\x01f\x04\x02um\x00\x00'),
             #('SequenceOf',                [], b'\x30\x80\x00\x00'),

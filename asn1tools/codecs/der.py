@@ -411,6 +411,29 @@ class VisibleString(Type):
         return 'VisibleString({})'.format(self.name)
 
 
+class GeneralString(Type):
+
+    def __init__(self, name):
+        super(GeneralString, self).__init__(name,
+                                            'GeneralString',
+                                            Tag.GENERAL_STRING)
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(data.encode('ascii'))
+
+    def decode(self, data, offset):
+        offset = self.decode_tag(data, offset)
+        length, offset = decode_length_definite(data, offset)
+        end_offset = offset + length
+
+        return data[offset:end_offset].decode('ascii'), end_offset
+
+    def __repr__(self):
+        return 'GeneralString({})'.format(self.name)
+
+
 class UTF8String(Type):
 
     def __init__(self, name):
@@ -797,6 +820,8 @@ class Compiler(compiler.Compiler):
             compiled = IA5String(name)
         elif type_name == 'VisibleString':
             compiled = VisibleString(name)
+        elif type_name == 'GeneralString':
+            compiled = GeneralString(name)
         elif type_name == 'UTF8String':
             compiled = UTF8String(name)
         elif type_name == 'BMPString':
