@@ -2090,6 +2090,21 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             str(cm.exception),
             ': expected definite length at offset 1, but got indefinite')
 
+    def test_long_tag(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS IMPLICIT TAGS ::= BEGIN "
+            "A ::= [31] INTEGER "
+            "B ::= [500] INTEGER "
+            "END")
+
+        datas = [
+            ('A', 1, b'\x9f\x1f\x01\x01'),
+            ('B', 1, b'\x9f\x83\x74\x01\x01')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
 
 if __name__ == '__main__':
     unittest.main()

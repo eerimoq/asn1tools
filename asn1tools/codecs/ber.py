@@ -168,6 +168,24 @@ def decode_signed_integer(data):
     return value
 
 
+def encode_tag(number, flags):
+    if number < 31:
+        tag = bytearray([flags | number])
+    else:
+        tag = bytearray([flags | 0x1f])
+        encoded = bytearray()
+
+        while number > 0:
+            encoded.append(0x80 | (number & 0x7f))
+            number >>= 7
+
+        encoded[0] &= 0x7f
+        encoded.reverse()
+        tag.extend(encoded)
+
+    return tag
+
+
 def decode_tag(_, offset):
     return 0, 0, offset + 1
 
@@ -181,7 +199,7 @@ class Type(object):
         if number is None:
             self.tag = None
         else:
-            self.tag = bytearray([flags | number])
+            self.tag = encode_tag(number, flags)
 
         self.optional = False
         self.default = None
@@ -190,10 +208,7 @@ class Type(object):
         if not Class.APPLICATION & flags:
             flags |= Class.CONTEXT_SPECIFIC
 
-        if number < 31:
-            self.tag = bytearray([flags | number])
-        else:
-            self.tag = bytearray([flags | 0x1f]) + encode_length_definite(number)
+        self.tag = encode_tag(number, flags)
 
     def decode_tag(self, data, offset):
         end_offset = offset + len(self.tag)

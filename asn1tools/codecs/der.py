@@ -14,7 +14,11 @@ from .ber import encode_length_definite
 from .ber import decode_length_definite
 from .ber import encode_signed_integer
 from .ber import decode_signed_integer
+from .ber import encode_tag
 from .ber import decode_tag
+from .ber import Boolean
+from .ber import Enumerated
+from .ber import Null
 
 
 class DecodeChoiceError(Exception):
@@ -30,7 +34,7 @@ class Type(object):
         if number is None:
             self.tag = None
         else:
-            self.tag = bytearray([flags | number])
+            self.tag = encode_tag(number, flags)
 
         self.optional = False
         self.default = None
@@ -39,10 +43,7 @@ class Type(object):
         if not Class.APPLICATION & flags:
             flags |= Class.CONTEXT_SPECIFIC
 
-        if number < 31:
-            self.tag = bytearray([flags | number])
-        else:
-            self.tag = bytearray([flags | 0x1f]) + encode_length_definite(number)
+        self.tag = encode_tag(number, flags)
 
     def decode_tag(self, data, offset):
         end_offset = offset + len(self.tag)
@@ -91,34 +92,6 @@ class Real(Type):
 
     def __repr__(self):
         return 'Real({})'.format(self.name)
-
-
-class Boolean(Type):
-
-    def __init__(self, name):
-        super(Boolean, self).__init__(name,
-                                      'BOOLEAN',
-                                      Tag.BOOLEAN)
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.append(1)
-        encoded.append(0xff * data)
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, contents_offset = decode_length_definite(data, offset)
-
-        if length != 1:
-            raise DecodeError(
-                'expected BOOLEAN contents length 1 at offset {}, but '
-                'got {}'.format(offset,
-                                length))
-
-        return bool(data[contents_offset]), contents_offset + length
-
-    def __repr__(self):
-        return 'Boolean({})'.format(self.name)
 
 
 class IA5String(Type):
@@ -663,24 +636,6 @@ class Choice(Type):
             ', '.join([repr(member) for member in self.members]))
 
 
-class Null(Type):
-
-    def __init__(self, name):
-        super(Null, self).__init__(name, 'NULL', Tag.NULL)
-
-    def encode(self, _, encoded):
-        encoded.extend(self.tag)
-        encoded.append(0)
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-
-        return None, offset + 1
-
-    def __repr__(self):
-        return 'Null({})'.format(self.name)
-
-
 class Any(Type):
 
     def __init__(self, name):
@@ -731,38 +686,6 @@ class AnyDefinedBy(Type):
 
     def __repr__(self):
         return 'AnyDefinedBy({})'.format(self.name)
-
-
-class Enumerated(Type):
-
-    def __init__(self, name, values):
-        super(Enumerated, self).__init__(name,
-                                         'ENUMERATED',
-                                         Tag.ENUMERATED)
-        self.values = values
-
-    def encode(self, data, encoded):
-        for value, name in self.values.items():
-            if data == name:
-                encoded.extend(self.tag)
-                encoded.extend(encode_signed_integer(value))
-                return
-
-        raise EncodeError(
-            "enumeration value '{}' not found in {}".format(
-                data,
-                [value for value in self.values.values()]))
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
-        value = decode_signed_integer(data[offset:end_offset])
-
-        return self.values[value], end_offset
-
-    def __repr__(self):
-        return 'Enumerated({})'.format(self.name)
 
 
 class ExplicitTag(Type):
