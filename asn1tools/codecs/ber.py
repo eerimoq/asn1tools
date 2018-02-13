@@ -2,6 +2,8 @@
 
 """
 
+import math
+import binascii
 from copy import copy
 
 from . import EncodeError
@@ -324,10 +326,86 @@ class Real(Type):
         super(Real, self).__init__(name, 'REAL', Tag.REAL)
 
     def encode(self, data, encoded):
-        raise NotImplementedError()
+        if data == float('inf'):
+            data = b'\x40'
+        elif data == float('-inf'):
+            data = b'\x41'
+        elif math.isnan(data):
+            data = b'\x42'
+        elif data == 0.0:
+            data = b''
+        else:
+            mantissa, exponent = math.frexp(data)
+            mantissa = int(mantissa * 2 ** 53)
+            lowest_set_bit = (mantissa & -mantissa).bit_length() - 1
+            mantissa >>= lowest_set_bit
+            mantissa |= (0x80 << (8 * ((mantissa.bit_length() // 8) + 1)))
+            mantissa = binascii.unhexlify(hex(mantissa)[4:].rstrip('L'))
+            exponent = (52 - lowest_set_bit - exponent)
+
+            if -129 < exponent < 128:
+                exponent = [0x80, ((0xff - exponent) & 0xff)]
+            elif -32769 < exponent < 32768:
+                exponent = ((0xffff - exponent) & 0xffff)
+                exponent = [0x81, (exponent >> 8), exponent & 0xff]
+            else:
+                raise NotImplementedError(
+                    'REAL exponent {} out of range.'.format(exponent))
+
+            data = bytearray(exponent) + mantissa
+
+        encoded.extend(self.tag)
+        encoded.append(len(data))
+        encoded.extend(data)
 
     def decode(self, data, offset):
-        raise NotImplementedError()
+        offset = self.decode_tag(data, offset)
+        length, offset = decode_length_definite(data, offset)
+        end_offset = offset + length
+
+        if length == 0:
+            decoded = 0.0
+        else:
+            control = data[offset]
+
+            if length == 1:
+                if control == 0x40:
+                    decoded = float('inf')
+                elif control == 0x41:
+                    decoded = float('-inf')
+                elif control == 0x42:
+                    decoded = float('nan')
+                else:
+                    raise NotImplementedError(
+                        'Unsupported REAL control word {}.'.format(control))
+            else:
+                if control == 0x80:
+                    exponent = data[offset + 1]
+
+                    if exponent & 0x80:
+                        exponent -= 0x100
+
+                    offset += 2
+                elif control == 0x81:
+                    exponent = ((data[offset + 1] << 8) | data[offset + 2])
+
+                    if exponent & 0x8000:
+                        exponent -= 0x10000
+
+                    offset += 3
+                else:
+                    raise NotImplementedError(
+                        'Unsupported REAL control word {}.'.format(control))
+
+                mantissa = 0
+
+                for value in data[offset:end_offset]:
+                    mantissa <<= 8
+                    mantissa += value
+
+                decoded = float(mantissa * 2 ** exponent)
+
+        return decoded, end_offset
 
     def __repr__(self):
         return 'Real({})'.format(self.name)
