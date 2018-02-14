@@ -369,13 +369,13 @@ class Real(Type):
             control = data[offset]
 
             if length == 1:
-                if control == 0x40:
-                    decoded = float('inf')
-                elif control == 0x41:
-                    decoded = float('-inf')
-                elif control == 0x42:
-                    decoded = float('nan')
-                else:
+                try:
+                    decoded = {
+                        0x40: float('inf'),
+                        0x41: float('-inf'),
+                        0x42: float('nan')
+                    }[control]
+                except KeyError:
                     raise NotImplementedError(
                         'Unsupported REAL control word {}.'.format(control))
             else:
