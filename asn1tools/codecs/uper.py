@@ -178,6 +178,27 @@ def size_as_number_of_bits(size):
     return len('{:b}'.format(size))
 
 
+def encode_length_determinant(length):
+    if length < 128:
+        return bytearray([length])
+    elif length < 16384:
+        return bytearray([(0x80 | (length >> 8)), (length & 0xff)])
+    else:
+        raise NotImplementedError()
+
+
+def decode_length_determinant(decoder):
+    value = decoder.read_integer(8)
+
+    if (value & 0x80) == 0x00:
+        return value
+    elif (value & 0xc0) == 0x80:
+        return (((value & 0x7f) << 8) | (decoder.read_integer(8)))
+    else:
+        raise NotImplementedError()
+
+
+
 class Type(object):
 
     def __init__(self, name, type_name):
@@ -689,10 +710,15 @@ class UTF8String(Type):
         super(UTF8String, self).__init__(name, 'UTF8String')
 
     def encode(self, data, encoder):
-        raise NotImplementedError()
+        encoded = data.encode('utf-8')
+        encoder.append_bytes(encode_length_determinant(len(encoded)))
+        encoder.append_bytes(bytearray(encoded))
 
     def decode(self, decoder):
-        raise NotImplementedError()
+        length = decode_length_determinant(decoder)
+        encoded = decoder.read_bits(8 * length)
+
+        return encoded.decode('utf-8')
 
     def __repr__(self):
         return 'UTF8String({})'.format(self.name)

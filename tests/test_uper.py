@@ -594,48 +594,54 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assert_encode_decode(lpp, 'LPP-Message', decoded, encoded)
 
+    def test_all_types(self):
+        all_types = asn1tools.compile_files('tests/files/all_types.asn',
+                                            'uper')
+
+        datas = [
+            ('Boolean', True, b'\x80'),
+            ('Boolean', False, b'\x00'),
+            ('Integer', 32768, b'\x03\x00\x80\x00'),
+            ('Integer', 32767, b'\x02\x7f\xff'),
+            ('Integer', 256, b'\x02\x01\x00'),
+            ('Integer', 255, b'\x02\x00\xff'),
+            ('Integer', 128, b'\x02\x00\x80'),
+            ('Integer', 127, b'\x01\x7f'),
+            ('Integer', 1, b'\x01\x01'),
+            ('Integer', 0, b'\x01\x00'),
+            ('Integer', -1, b'\x01\xff'),
+            ('Integer', -128, b'\x01\x80'),
+            ('Integer', -129, b'\x02\xff\x7f'),
+            ('Integer', -256, b'\x02\xff\x00'),
+            ('Integer', -32768, b'\x02\x80\x00'),
+            ('Integer', -32769, b'\x03\xff\x7f\xff'),
+            ('Bitstring', (b'\x40', 4), b'\x04\x40'),
+            ('Bitstring2', (b'\x12\x80', 9), b'\x12\x80'),
+            ('Bitstring3', (b'\x34', 6), b'\x4d'),
+            ('Octetstring', b'\x00', b'\x01\x00'),
+            ('Octetstring2', b'\xab\xcd', b'\xab\xcd'),
+            ('Octetstring3', b'\xab\xcd\xef', b'\xab\xcd\xef'),
+            ('Octetstring4', b'\x89\xab\xcd\xef', b'\x31\x35\x79\xbd\xe0'),
+            ('Enumerated', 'one', b'\x00'),
+            ('Enumerated2', 'two', b'\x40'),
+            ('Sequence', {}, b''),
+            ('Sequence2', {'a': 0}, b'\x00'),
+            ('Sequence2', {'a': 1}, b'\x80\x80\x80'),
+            ('Sequence3', {'a': True}, b'\x40'),
+            ('Sequence4', {'a': True}, b'\x40'),
+            ('Ia5string', 'bar', b'\x03\xc5\x87\x90'),
+            ('Utf8string', u'bar', b'\x03\x62\x61\x72'),
+            ('Utf8string', u'a\u1010c', b'\x05\x61\xe1\x80\x90\x63')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(all_types, type_name, decoded, encoded)
+
     def test_encode_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
                                             'uper')
 
-        self.assertEqual(all_types.encode('Boolean', True), b'\x80')
-        self.assertEqual(all_types.encode('Boolean', False), b'\x00')
-        self.assertEqual(all_types.encode('Integer', 32768), b'\x03\x00\x80\x00')
-        self.assertEqual(all_types.encode('Integer', 32767), b'\x02\x7f\xff')
-        self.assertEqual(all_types.encode('Integer', 256), b'\x02\x01\x00')
-        self.assertEqual(all_types.encode('Integer', 255), b'\x02\x00\xff')
-        self.assertEqual(all_types.encode('Integer', 128), b'\x02\x00\x80')
-        self.assertEqual(all_types.encode('Integer', 127), b'\x01\x7f')
-        self.assertEqual(all_types.encode('Integer', 1), b'\x01\x01')
-        self.assertEqual(all_types.encode('Integer', 0), b'\x01\x00')
-        self.assertEqual(all_types.encode('Integer', -1), b'\x01\xff')
-        self.assertEqual(all_types.encode('Integer', -128), b'\x01\x80')
-        self.assertEqual(all_types.encode('Integer', -129), b'\x02\xff\x7f')
-        self.assertEqual(all_types.encode('Integer', -256), b'\x02\xff\x00')
-        self.assertEqual(all_types.encode('Integer', -32768), b'\x02\x80\x00')
-        self.assertEqual(all_types.encode('Integer', -32769), b'\x03\xff\x7f\xff')
-        self.assertEqual(all_types.encode('Bitstring', (b'\x40', 4)),
-                         b'\x04\x40')
-        self.assertEqual(all_types.encode('Bitstring2', (b'\x12\x80', 9)),
-                         b'\x12\x80')
-        self.assertEqual(all_types.encode('Bitstring3', (b'\x34', 6)),
-                         b'\x4d')
-        self.assertEqual(all_types.encode('Octetstring', b'\x00'),
-                         b'\x01\x00')
-        self.assertEqual(all_types.encode('Octetstring2', b'\xab\xcd'),
-                         b'\xab\xcd')
-        self.assertEqual(all_types.encode('Octetstring3', b'\xab\xcd\xef'),
-                         b'\xab\xcd\xef')
-        self.assertEqual(all_types.encode('Octetstring4', b'\x89\xab\xcd\xef'),
-                         b'\x31\x35\x79\xbd\xe0')
-        self.assertEqual(all_types.encode('Enumerated', 'one'), b'\x00')
-        self.assertEqual(all_types.encode('Enumerated2', 'two'), b'\x40')
-        self.assertEqual(all_types.encode('Sequence', {}), b'')
         self.assertEqual(all_types.encode('Sequence2', {}), b'\x00')
-        self.assertEqual(all_types.encode('Sequence2', {'a': 0}), b'\x00')
-        self.assertEqual(all_types.encode('Sequence2', {'a': 1}), b'\x80\x80\x80')
-        self.assertEqual(all_types.encode('Sequence3', {'a': True}), b'\x40')
-        self.assertEqual(all_types.encode('Sequence4', {'a': True}), b'\x40')
 
         with self.assertRaises(AssertionError):
             self.assertEqual(all_types.encode('Sequence4', {'a': 1, 'b': True}),
@@ -674,52 +680,12 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         with self.assertRaises(NotImplementedError):
             all_types.encode('Sequence12', {'a': [{'a': []}]})
 
-        self.assertEqual(all_types.encode('Ia5string', 'bar'), b'\x03\xc5\x87\x90')
-
     def test_decode_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
                                             'uper')
 
-        self.assertEqual(all_types.decode('Boolean', b'\x80'), True)
-        self.assertEqual(all_types.decode('Boolean', b'\x00'), False)
-        self.assertEqual(all_types.decode('Integer', b'\x03\x00\x80\x00'), 32768)
-        self.assertEqual(all_types.decode('Integer', b'\x02\x7f\xff'), 32767)
-        self.assertEqual(all_types.decode('Integer', b'\x02\x01\x00'), 256)
-        self.assertEqual(all_types.decode('Integer', b'\x02\x00\xff'), 255)
-        self.assertEqual(all_types.decode('Integer', b'\x02\x00\x80'), 128)
-        self.assertEqual(all_types.decode('Integer', b'\x01\x7f'), 127)
-        self.assertEqual(all_types.decode('Integer', b'\x01\x01'), 1)
-        self.assertEqual(all_types.decode('Integer', b'\x01\x00'), 0)
-        self.assertEqual(all_types.decode('Integer', b'\x01\xff'), -1)
-        self.assertEqual(all_types.decode('Integer', b'\x01\x80'), -128)
-        self.assertEqual(all_types.decode('Integer', b'\x02\xff\x7f'), -129)
-        self.assertEqual(all_types.decode('Integer', b'\x02\xff\x00'), -256)
-        self.assertEqual(all_types.decode('Integer', b'\x02\x80\x00'), -32768)
-        self.assertEqual(all_types.decode('Integer', b'\x03\xff\x7f\xff'), -32769)
-        self.assertEqual(all_types.decode('Bitstring', b'\x04\x40'),
-                         (b'\x40', 4))
-        self.assertEqual(all_types.decode('Bitstring2', b'\x12\x80'),
-                         (b'\x12\x80', 9))
-        self.assertEqual(all_types.decode('Bitstring3', b'\x4d'),
-                         (b'\x34', 6))
-        self.assertEqual(all_types.decode('Octetstring', b'\x01\x00'),
-                         b'\x00')
-        self.assertEqual(all_types.decode('Octetstring2', b'\xab\xcd'),
-                         b'\xab\xcd')
-        self.assertEqual(all_types.decode('Octetstring3', b'\xab\xcd\xef'),
-                         b'\xab\xcd\xef')
-        self.assertEqual(all_types.decode('Octetstring4', b'\x31\x35\x79\xbd\xe0'),
-                         b'\x89\xab\xcd\xef')
-        self.assertEqual(all_types.decode('Enumerated', b'\x00'), 'one')
-        self.assertEqual(all_types.decode('Enumerated2', b'\x40'), 'two')
-        self.assertEqual(all_types.decode('Sequence', b''), {})
-        self.assertEqual(all_types.decode('Sequence2', b'\x00'), {'a': 0})
-        self.assertEqual(all_types.decode('Sequence2', b'\x80\x80\x80'), {'a': 1})
-
         with self.assertRaises(NotImplementedError):
             all_types.decode('Sequence12', b'\x80\x80')
-
-        self.assertEqual(all_types.decode('Ia5string', b'\x03\xc5\x87\x90'), 'bar')
 
     def test_repr_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
@@ -771,6 +737,31 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(all_types, type_name, decoded, encoded)
+
+    def test_utf8_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "S ::= SEQUENCE { "
+            "    a BOOLEAN, "
+            "    b UTF8String, "
+            "    c UTF8String OPTIONAL"
+            "} "
+            "END",
+            'uper')
+
+        datas = [
+            ('S', {'a': True, 'b': u''}, b'\x40\x00'),
+            ('S',
+             {'a': True, 'b': u'1', 'c': u'foo'},
+             b'\xc0\x4c\x40\xd9\x9b\xdb\xc0'),
+            ('S',
+             {'a': True, 'b': 300 * u'1'},
+             b'\x60\x4b\x0c' + 299 * b'\x4c' + b'\x40')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
 
 
 if __name__ == '__main__':
