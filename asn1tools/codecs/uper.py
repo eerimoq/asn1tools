@@ -282,13 +282,13 @@ class IA5String(Type):
         super(IA5String, self).__init__(name, 'IA5String')
 
     def encode(self, data, encoder):
-        encoder.append_bytes(bytearray([len(data)]))
+        encoder.append_bytes(encode_length_determinant(len(data)))
 
         for byte in bytearray(data.encode('ascii')):
             encoder.append_bits(bytearray([(byte << 1) & 0xff]), 7)
 
     def decode(self, decoder):
-        length = decoder.read_integer(8)
+        length = decode_length_determinant(decoder)
         data = []
 
         for _ in range(length):
@@ -575,17 +575,17 @@ class OctetString(Type):
 
     def encode(self, data, encoder):
         if self.number_of_bits is None:
-            encoder.append_bytes(bytearray([len(data)]) + data)
+            encoder.append_bytes(encode_length_determinant(len(data)))
         else:
             if self.minimum != self.maximum:
                 encoder.append_integer(len(data) - self.minimum,
                                        self.number_of_bits)
 
-            encoder.append_bytes(data)
+        encoder.append_bytes(data)
 
     def decode(self, decoder):
         if self.number_of_bits is None:
-            length = decoder.read_integer(8)
+            length = decode_length_determinant(decoder)
         else:
             length = self.minimum
 
@@ -652,13 +652,15 @@ class VisibleString(Type):
             self.number_of_bits = size_as_number_of_bits(size)
 
     def encode(self, data, encoder):
+        encoded = data.encode('ascii')
+
         if self.number_of_bits is None:
-            encoder.append_bytes(bytearray([len(data)]))
+            encoder.append_bytes(encode_length_determinant(len(encoded)))
         elif self.minimum != self.maximum:
-            encoder.append_integer(len(data) - self.minimum,
+            encoder.append_integer(len(encoded) - self.minimum,
                                    self.number_of_bits)
 
-        for value in bytearray(data.encode('ascii')):
+        for value in bytearray(encoded):
             if self.permitted_alphabet is not None:
                 value = self.permitted_alphabet.encode(value)
 
@@ -668,7 +670,7 @@ class VisibleString(Type):
 
     def decode(self, decoder):
         if self.number_of_bits is None:
-            length = decoder.read_integer(8)
+            length = decode_length_determinant(decoder)
         elif self.minimum != self.maximum:
             length = decoder.read_integer(self.number_of_bits) + 1
         else:

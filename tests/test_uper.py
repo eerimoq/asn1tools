@@ -619,6 +619,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('Bitstring2', (b'\x12\x80', 9), b'\x12\x80'),
             ('Bitstring3', (b'\x34', 6), b'\x4d'),
             ('Octetstring', b'\x00', b'\x01\x00'),
+            ('Octetstring', 500 * b'\x00', b'\x81\xf4' + 500 * b'\x00'),
             ('Octetstring2', b'\xab\xcd', b'\xab\xcd'),
             ('Octetstring3', b'\xab\xcd\xef', b'\xab\xcd\xef'),
             ('Octetstring4', b'\x89\xab\xcd\xef', b'\x31\x35\x79\xbd\xe0'),
