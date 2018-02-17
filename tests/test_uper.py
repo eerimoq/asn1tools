@@ -680,6 +680,24 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         with self.assertRaises(NotImplementedError):
             all_types.encode('Sequence12', {'a': [{'a': []}]})
 
+        with self.assertRaises(NotImplementedError):
+            all_types.encode('Real', 0.0)
+
+        with self.assertRaises(NotImplementedError):
+            all_types.decode('Real', b'\x00')
+
+        with self.assertRaises(NotImplementedError):
+            all_types.encode('Numericstring', '')
+
+        with self.assertRaises(NotImplementedError):
+            all_types.decode('Numericstring', b'\x00')
+
+        with self.assertRaises(NotImplementedError):
+            all_types.encode('SetOf', [])
+
+        with self.assertRaises(NotImplementedError):
+            all_types.decode('SetOf', b'\x00')
+
     def test_decode_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
                                             'uper')
@@ -693,6 +711,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(repr(all_types.types['Boolean']), 'Boolean(Boolean)')
         self.assertEqual(repr(all_types.types['Integer']), 'Integer(Integer)')
+        self.assertEqual(repr(all_types.types['Real']), 'Real(Real)')
         self.assertEqual(repr(all_types.types['Bitstring']), 'BitString(Bitstring)')
         self.assertEqual(repr(all_types.types['Octetstring']), 'OctetString(Octetstring)')
         self.assertEqual(repr(all_types.types['Null']), 'Null(Null)')
@@ -762,6 +781,12 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        with self.assertRaises(NotImplementedError):
+            foo.encode('S', {'a': False, 'b': 16384 * u'0'})
+
+        with self.assertRaises(NotImplementedError):
+            foo.decode('S', b'\x70\x00\x00\x00')
 
 
 if __name__ == '__main__':

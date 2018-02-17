@@ -47,55 +47,68 @@ class PermittedAlphabet(object):
 class Encoder(object):
 
     def __init__(self):
-        self.byte = 0
-        self.index = 7
-        self.buf = bytearray()
+        self.number_of_bits = 0
+        self.value = 0
 
     def append_bit(self, bit):
         """Append given bit.
 
         """
 
-        self.byte |= (bit << self.index)
-        self.index -= 1
-
-        if self.index == -1:
-            self.buf.append(self.byte)
-            self.byte = 0
-            self.index = 7
+        self.number_of_bits += 1
+        self.value <<= 1
+        self.value |= bit
 
     def append_bits(self, data, number_of_bits):
         """Append given bits.
 
         """
 
-        for i in range(number_of_bits):
-            self.append_bit((bytearray(data)[i // 8] >> (7 - (i % 8))) & 0x1)
+        value = int(binascii.hexlify(data), 16)
+        number_of_alignment_bits = (8 - (number_of_bits % 8))
+
+        if number_of_alignment_bits != 8:
+            value >>= number_of_alignment_bits
+
+        self.append_integer(value, number_of_bits)
 
     def append_integer(self, value, number_of_bits):
         """Append given integer value.
 
         """
 
-        for i in range(number_of_bits):
-            self.append_bit((value >> (number_of_bits - i - 1)) & 0x1)
+        self.number_of_bits += number_of_bits
+        self.value <<= number_of_bits
+        self.value |= value
 
     def append_bytes(self, data):
-        """Append given data aligned to a byte boundary.
+        """Append given data.
 
         """
 
-        self.append_bits(data, 8 * len(data))
+        if len(data) > 0:
+            self.append_bits(data, 8 * len(data))
 
     def as_bytearray(self):
         """Return the bits as a bytearray.
 
         """
 
-        if self.index < 7:
-            return self.buf + bytearray([self.byte])
-        else:
-            return self.buf
+        if self.number_of_bits == 0:
+            return bytearray()
+
+        data = self.value
+        number_of_bits = self.number_of_bits
+        number_of_alignment_bits = (8 - (number_of_bits % 8))
+
+        if number_of_alignment_bits != 8:
+            data <<= number_of_alignment_bits
+            number_of_bits += number_of_alignment_bits
+
+        data |= (0x80 << number_of_bits)
+        data = hex(data)[4:].rstrip('L')
+
+        return bytearray(binascii.unhexlify(data))
 
     def __repr__(self):
         return binascii.hexlify(self.as_bytearray())
@@ -104,69 +117,57 @@ class Encoder(object):
 class Decoder(object):
 
     def __init__(self, encoded):
-        self.byte = None
-        self.index = -1
-        self.offset = 0
-        self.buf = encoded
+        self.number_of_bits = (8 * len(encoded))
+
+        if len(encoded) > 0:
+            self.value = int(binascii.hexlify(encoded), 16)
+        else:
+            self.value = 0
 
     def read_bit(self):
         """Read a bit.
 
         """
 
-        if self.index == -1:
-            self.byte = self.buf[self.offset]
-            self.index = 7
-            self.offset += 1
+        self.number_of_bits -= 1
 
-        bit = ((self.byte >> self.index) & 0x1)
-        self.index -= 1
-
-        return bit
+        return ((self.value >> self.number_of_bits) & 1)
 
     def read_bits(self, number_of_bits):
         """Read given number of bits.
 
         """
 
-        value = bytearray()
-        byte = 0
+        self.number_of_bits -= number_of_bits
+        mask = ((1 << number_of_bits) - 1)
+        value = ((self.value >> self.number_of_bits) & mask)
+        value &= mask
+        value |= (0x80 << number_of_bits)
+        number_of_alignment_bits = (8 - (number_of_bits % 8))
 
-        for i in range(number_of_bits):
-            index = i % 8
-            byte |= (self.read_bit() << (7 - index))
+        if number_of_alignment_bits != 8:
+            value <<= number_of_alignment_bits
 
-            if index == 7:
-                value.append(byte)
-                byte = 0
-
-        if number_of_bits % 8 != 0:
-            value.append(byte)
-
-        return value
+        return binascii.unhexlify(hex(value)[4:].rstrip('L'))
 
     def read_integer(self, number_of_bits):
         """Read an integer value of given number of bits.
 
         """
 
-        value = 0
+        self.number_of_bits -= number_of_bits
+        mask = ((1 << number_of_bits) - 1)
 
-        for _ in range(number_of_bits):
-            value <<= 1
-            value |= self.read_bit()
-
-        return value
+        return ((self.value >> self.number_of_bits) & mask)
 
     def read_bytes(self, number_of_bytes):
-        """Read given number of bytes.
+        """Read given number of aligned bytes.
 
         """
 
-        self.index = -1
-        data = self.buf[self.offset:self.offset + number_of_bytes]
-        self.offset += number_of_bytes
-        return data
+        self.number_of_bits -= (self.number_of_bits % 8)
+
+        return bytearray(self.read_bits(8 * number_of_bytes))
 
 
 def size_as_number_of_bits(size):
