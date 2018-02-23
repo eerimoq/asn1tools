@@ -19,6 +19,7 @@ from .ber import decode_tag
 from .ber import Boolean
 from .ber import Enumerated
 from .ber import Null
+from .ber import ObjectIdentifier
 
 
 class DecodeChoiceError(Exception):
@@ -547,67 +548,6 @@ class TeletexString(Type):
 
     def __repr__(self):
         return 'TeletexString({})'.format(self.name)
-
-
-class ObjectIdentifier(Type):
-
-    def __init__(self, name):
-        super(ObjectIdentifier, self).__init__(name,
-                                               'OBJECT IDENTIFIER',
-                                               Tag.OBJECT_IDENTIFIER)
-
-    def encode(self, data, encoded):
-        identifiers = [int(identifier) for identifier in data.split('.')]
-
-        first_subidentifier = (40 * identifiers[0] + identifiers[1])
-        encoded_subidentifiers = self.encode_subidentifier(
-            first_subidentifier)
-
-        for identifier in identifiers[2:]:
-            encoded_subidentifiers += self.encode_subidentifier(identifier)
-
-        encoded.extend(self.tag)
-        encoded.append(len(encoded_subidentifiers))
-        encoded.extend(encoded_subidentifiers)
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
-
-        subidentifier, offset = self.decode_subidentifier(data, offset)
-        decoded = [subidentifier // 40, subidentifier % 40]
-
-        while offset < end_offset:
-            subidentifier, offset = self.decode_subidentifier(data, offset)
-            decoded.append(subidentifier)
-
-        return '.'.join([str(v) for v in decoded]), end_offset
-
-    def encode_subidentifier(self, subidentifier):
-        encoded = [subidentifier & 0x7f]
-        subidentifier >>= 7
-
-        while subidentifier > 0:
-            encoded.append(0x80 | (subidentifier & 0x7f))
-            subidentifier >>= 7
-
-        return encoded[::-1]
-
-    def decode_subidentifier(self, data, offset):
-        decoded = 0
-
-        while data[offset] & 0x80:
-            decoded += (data[offset] & 0x7f)
-            decoded <<= 7
-            offset += 1
-
-        decoded += data[offset]
-
-        return decoded, offset + 1
-
-    def __repr__(self):
-        return 'ObjectIdentifier({})'.format(self.name)
 
 
 class Choice(Type):
