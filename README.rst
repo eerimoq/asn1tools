@@ -106,6 +106,26 @@ Decode given encoded Question using the UPER codec.
    question: Is 1+1=3?
    $
 
+Continuously decode encoded Questions read from standard input. Any
+line that cannot be decoded is printed as is, in this example the
+dates.
+
+.. code-block:: text
+
+   $ cat encoded.txt
+   2018-02-24 11:22:09
+   300e0201011609497320312b313d333f
+   2018-02-24 11:24:15
+   300e0201021609497320322b323d353f
+   $ cat encoded.txt | asn1tools decode tests/files/foo.asn Question -
+   2018-02-24 11:22:09
+   id: 1
+   question: Is 1+1=3?
+   2018-02-24 11:24:15
+   id: 2
+   question: Is 2+2=5?
+   $
+
 Contributing
 ============
 

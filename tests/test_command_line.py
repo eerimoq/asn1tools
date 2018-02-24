@@ -49,6 +49,8 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
             "  {decode}"
         ]
 
+        print(stdout.getvalue())
+
         for line in expected_output:
             self.assertIn(line, stdout.getvalue())
 
@@ -71,7 +73,7 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
             "positional arguments:",
             "  specification         ASN.1 specification as one or more .asn files.",
             "  type                  Type to decode.",
-            "  hexstring             Hexstring to decode.",
+            "  hexstring             Hexstring to decode, or - to ",
             "",
             "optional arguments:",
             "  -h, --help            show this help message and exit",
@@ -79,32 +81,40 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
             "                        Codec (default: ber)."
         ]
 
+        print(stdout.getvalue())
+
         for line in expected_output:
             self.assertIn(line, stdout.getvalue())
 
     def test_command_line_decode_ber_foo_question(self):
-        argv = ['asn1tools',
-                'decode',
-                'tests/files/foo.asn',
-                'Question',
-                '300e0201011609497320312b313d333f']
+        argv = [
+            'asn1tools',
+            'decode',
+            'tests/files/foo.asn',
+            'Question',
+            '300e0201011609497320312b313d333f'
+        ]
 
         stdout = StringIO()
 
         with patch('sys.stdout', stdout):
             with patch('sys.argv', argv):
                 asn1tools._main()
+
+        print(stdout.getvalue())
 
         self.assertIn('id: 1', stdout.getvalue())
         self.assertIn('question: Is 1+1=3?', stdout.getvalue())
 
     def test_command_line_decode_uper_foo_question(self):
-        argv = ['asn1tools',
-                'decode',
-                '--codec', 'uper',
-                'tests/files/foo.asn',
-                'Question',
-                '01010993cd03156c5eb37e']
+        argv = [
+            'asn1tools',
+            'decode',
+            '--codec', 'uper',
+            'tests/files/foo.asn',
+            'Question',
+            '01010993cd03156c5eb37e'
+        ]
 
         stdout = StringIO()
 
@@ -112,21 +122,68 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
             with patch('sys.argv', argv):
                 asn1tools._main()
 
+        print(stdout.getvalue())
+
         self.assertIn('id: 1', stdout.getvalue())
         self.assertIn('question: Is 1+1=3?', stdout.getvalue())
 
+    def test_command_line_decode_ber_foo_question_stdin(self):
+        argv = [
+            'asn1tools',
+            'decode',
+            'tests/files/foo.asn',
+            'Question',
+            '-'
+        ]
+        input_data = '''
+2018-02-24 11:22:09
+300e0201011609497320312b313d333f
+2018-02-24 11:24:15
+300e0201011609497320312b313d333f
+
+2018-02-24 11:24:16
+ff0e0201011609497320312b313d333f
+2018-02-24 13:24:16
+300e0201011609497320312b313d333'''
+
+        stdout = StringIO()
+
+        with patch('sys.stdin', StringIO(input_data)):
+            with patch('sys.stdout', stdout):
+                with patch('sys.argv', argv):
+                    asn1tools._main()
+
+        print(stdout.getvalue())
+
+        self.assertEqual(stdout.getvalue().count('id: 1'), 2)
+        self.assertEqual(stdout.getvalue().count('question: Is 1+1=3?'), 2)
+        expected_output = [
+            '2018-02-24 11:22:09',
+            '2018-02-24 11:24:15',
+            '2018-02-24 11:24:16',
+            'ff0e0201011609497320312b313d333f',
+            ": expected SEQUENCE with tag '30' at offset 0, but got 'ff'",
+            '2018-02-24 13:24:16',
+            "300e0201011609497320312b313d333"
+        ]
+
+        for line in expected_output:
+            self.assertIn(line, stdout.getvalue())
+
     def test_command_line_decode_ber_rrc_bcch_dl_sch_message(self):
-        argv = ['asn1tools',
-                'decode',
-                'tests/files/ietf/rfc1155.asn',
-                'tests/files/ietf/rfc1157.asn',
-                'Message',
-                '30819f02010004067075626c6963a3819102013c020100020100308185302206'
-                '122b06010401817d08330a0201070a86deb735040c3137322e33312e31392e37'
-                '33301706122b06010401817d08330a0201050a86deb960020102302306122b06'
-                '010401817d08330a0201070a86deb736040d3235352e3235352e3235352e3030'
-                '2106122b06010401817d08330a0201070a86deb738040b3137322e33312e3139'
-                '2e32']
+        argv = [
+            'asn1tools',
+            'decode',
+            'tests/files/ietf/rfc1155.asn',
+            'tests/files/ietf/rfc1157.asn',
+            'Message',
+            '30819f02010004067075626c6963a3819102013c020100020100308185302206'
+            '122b06010401817d08330a0201070a86deb735040c3137322e33312e31392e37'
+            '33301706122b06010401817d08330a0201050a86deb960020102302306122b06'
+            '010401817d08330a0201070a86deb736040d3235352e3235352e3235352e3030'
+            '2106122b06010401817d08330a0201070a86deb738040b3137322e33312e3139'
+            '2e32'
+        ]
 
         stdout = StringIO()
 
@@ -165,15 +222,19 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
             "version: 0"
         ]
 
+        print(stdout.getvalue())
+
         for line in expected_output:
             self.assertIn(line, stdout.getvalue())
 
     def test_command_line_decode_bad_type_name(self):
-        argv = ['asn1tools',
-                'decode',
-                'tests/files/foo.asn',
-                'Question2',
-                '01010993cd03156c5eb37e']
+        argv = [
+            'asn1tools',
+            'decode',
+            'tests/files/foo.asn',
+            'Question2',
+            '01010993cd03156c5eb37e'
+        ]
 
         stdout = StringIO()
 
@@ -187,11 +248,13 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
                     "error: type 'Question2' not found in types dictionary")
 
     def test_command_line_decode_bad_data(self):
-        argv = ['asn1tools',
-                'decode',
-                'tests/files/foo.asn',
-                'Question',
-                '012']
+        argv = [
+            'asn1tools',
+            'decode',
+            'tests/files/foo.asn',
+            'Question',
+            '012'
+        ]
 
         stdout = StringIO()
 

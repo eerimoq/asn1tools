@@ -59,15 +59,38 @@ def print_dict(dict_, indent=0):
             print('{}{}: {}'.format(indent * ' ', key, value))
 
 
+def _decode_hexstring(specification, type_name, hexstring):
+    try:
+        encoded = binascii.unhexlify(hexstring)
+    except Exception as e:
+        raise TypeError("'{}': {}".format(hexstring, str(e)))
+
+    print_dict(specification.decode(type_name, encoded))
+
+
 def _do_decode(args):
     specification = compile_files(args.specification, args.codec)
 
-    try:
-        encoded = binascii.unhexlify(args.hexstring)
-    except Exception as e:
-        raise TypeError("'{}': {}".format(args.hexstring, str(e)))
+    if args.hexstring == '-':
+        for hexstring in sys.stdin:
+            hexstring = hexstring.strip('\r\n')
 
-    print_dict(specification.decode(args.type, encoded))
+            if hexstring:
+                try:
+                    _decode_hexstring(specification,
+                                      args.type,
+                                      hexstring)
+                except TypeError:
+                    print(hexstring)
+                except DecodeError as e:
+                    print(hexstring)
+                    print(str(e))
+            else:
+                print(hexstring)
+    else:
+        _decode_hexstring(specification,
+                          args.type,
+                          args.hexstring)
 
 
 def _main():
@@ -103,7 +126,9 @@ def _main():
                                nargs='+',
                                help='ASN.1 specification as one or more .asn files.')
     decode_parser.add_argument('type', help='Type to decode.')
-    decode_parser.add_argument('hexstring', help='Hexstring to decode.')
+    decode_parser.add_argument(
+        'hexstring',
+        help='Hexstring to decode, or - to read hexstrings from standard input.')
     decode_parser.set_defaults(func=_do_decode)
 
     args = parser.parse_args()
