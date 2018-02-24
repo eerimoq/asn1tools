@@ -367,5 +367,13 @@ class Compiler(object):
         return type_descriptor
 
 
+def enum_values_as_dict(values):
+    return {
+        value[1]: value[0]
+        for value in values
+        if value != '...'
+    }
+
+
 def pre_process(specification):
     return Compiler(specification).pre_process()

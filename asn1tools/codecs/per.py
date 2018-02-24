@@ -5,6 +5,7 @@
 from . import EncodeError
 from . import DecodeError
 from . import compiler
+from .compiler import enum_values_as_dict
 
 
 class DecodeChoiceError(Exception):
@@ -707,6 +708,7 @@ class Enumerated(Type):
 
     def __init__(self, name, values):
         super(Enumerated, self).__init__(name, 'ENUMERATED')
+        values = enum_values_as_dict(values)
         self.values = values
         self.lowest_value = min(values)
         highest_value = max(values.keys()) - self.lowest_value

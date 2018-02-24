@@ -9,6 +9,7 @@ import binascii
 from . import EncodeError
 from . import DecodeError
 from . import compiler
+from .compiler import enum_values_as_dict
 from .per import encode_signed_integer
 from .per import decode_signed_integer
 
@@ -886,12 +887,14 @@ class Enumerated(Type):
 
     def __init__(self, name, values):
         super(Enumerated, self).__init__(name, 'ENUMERATED')
-        self.values = values
+        self.values = enum_values_as_dict(values)
+        self.extension = [] if '...' in values else None
+        values = [
+            value[1]
+            for value in values
+            if value != '...'
+        ]
         self.lowest_value = min(values)
-        # ToDo: Enumeration values should probably not be a
-        #       dictionary, as order seems required. Also extension
-        #       members are not properly handled here.
-        self.extension = [] if '...' in values.values() else None
 
         highest_value = max(values) - self.lowest_value
 

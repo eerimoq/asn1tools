@@ -130,6 +130,12 @@ class Asn1ToolsParseTest(unittest.TestCase):
     def test_parse_rfc5280(self):
         self.parse_and_verify('rfc5280', 'ietf')
 
+    def test_parse_rfc5280_modified(self):
+        self.parse_and_verify('rfc5280_modified', 'ietf')
+
+    def test_parse_enumerated(self):
+        self.parse_and_verify('enumerated')
+
     def test_parse_imports_global_module_reference(self):
         actual = asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
                                         'IMPORTS '

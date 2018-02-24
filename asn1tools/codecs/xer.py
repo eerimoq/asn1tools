@@ -8,6 +8,7 @@ from xml.etree import ElementTree
 from . import EncodeError
 from . import DecodeError
 from . import compiler
+from .compiler import enum_values_as_dict
 
 
 LOGGER = logging.getLogger(__name__)
@@ -509,7 +510,7 @@ class Enumerated(Type):
 
     def __init__(self, name, values):
         super(Enumerated, self).__init__(name, 'ENUMERATED')
-        self.values = values
+        self.values = enum_values_as_dict(values)
 
     def encode(self, data):
         for name in self.values.values():

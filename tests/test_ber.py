@@ -14,8 +14,9 @@ sys.path.append('tests/files/ietf')
 from rrc_8_6_0 import EXPECTED as RRC_8_6_0
 from rfc4511 import EXPECTED as RFC4511
 from rfc5280 import EXPECTED as RFC5280
-from rfc5280_modified import RFC5280_MODIFIED
+from rfc5280_modified import EXPECTED as RFC5280_MODIFIED
 from zforce import EXPECTED as ZFORCE
+from enumerated import EXPECTED as ENUMERATED
 
 
 class Asn1ToolsBerTest(Asn1ToolsBaseTest):
@@ -2143,6 +2144,39 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_enumerated(self):
+        enumerated = asn1tools.compile_dict(deepcopy(ENUMERATED))
+
+        datas = [
+            ('A', 'a', b'\x0a\x01\x00'),
+            ('A', 'b', b'\x0a\x01\x01'),
+            ('A', 'c', b'\x0a\x01\x02'),
+            ('B', 'c', b'\x0a\x01\x00'),
+            ('B', 'a', b'\x0a\x01\x01'),
+            ('B', 'b', b'\x0a\x01\x02'),
+            ('B', 'd', b'\x0a\x01\x03'),
+            ('C', 'a', b'\x0a\x01\x00'),
+            ('C', 'b', b'\x0a\x01\x01'),
+            ('C', 'c', b'\x0a\x01\x03'),
+            ('C', 'd', b'\x0a\x01\x04'),
+            ('D', 'a', b'\x0a\x01\x00'),
+            ('D', 'd', b'\x0a\x01\x01'),
+            ('D', 'z', b'\x0a\x01\x19'),
+            ('E', 'c', b'\x0a\x01\x00'),
+            ('E', 'a', b'\x0a\x01\x01'),
+            ('E', 'b', b'\x0a\x01\x02'),
+            ('E', 'd', b'\x0a\x01\x03'),
+            ('E', 'f', b'\x0a\x01\x04'),
+            ('E', 'g', b'\x0a\x01\x05'),
+            ('E', 'e', b'\x0a\x01\x19')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(enumerated,
+                                      type_name,
+                                      decoded,
+                                      encoded)
 
 
 if __name__ == '__main__':

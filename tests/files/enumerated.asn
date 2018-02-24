@@ -1,0 +1,10 @@
+E DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+    A ::= ENUMERATED {a, b, ..., c}
+    B ::= ENUMERATED {a, b, c(0), ..., d}
+    C ::= ENUMERATED {a, b, ..., c(3), d}
+    D ::= ENUMERATED {a, z(25), ..., d}
+    E ::= ENUMERATED {a, b, c(0), d, e(25), f, ..., g}
+    F ::= ENUMERATED {a, ...}
+
+END

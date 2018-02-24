@@ -11,6 +11,7 @@ from . import DecodeError
 from . import DecodeTagError
 from . import DecodeContentsLengthError
 from . import compiler
+from .compiler import enum_values_as_dict
 
 
 class Class(object):
@@ -1099,7 +1100,7 @@ class Enumerated(Type):
         super(Enumerated, self).__init__(name,
                                          'ENUMERATED',
                                          Tag.ENUMERATED)
-        self.values = values
+        self.values = enum_values_as_dict(values)
 
     def encode(self, data, encoded):
         for value, name in self.values.items():

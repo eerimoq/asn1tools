@@ -148,14 +148,41 @@ def convert_table(tokens):
 
 def convert_enum_values(tokens):
     number = 0
-    values = {}
+    values = []
+    used_numbers = []
 
-    for token in tokens:
-        if len(token) == 2:
-            number = int(token[1])
+    root, extension = tokens
+    root = root.asList()
+    extension = extension.asList()
 
-        values[number] = token[0]
-        number += 1
+    # Root enumeration.
+    for token in root:
+        if isinstance(token, list):
+            used_numbers.append(int(token[2]))
+
+    for token in root:
+        if isinstance(token, list):
+            values.append((token[0], int(token[2])))
+        else:
+            while number in used_numbers:
+                number += 1
+
+            values.append((token, number))
+            number += 1
+
+    # Optional additional enumeration.
+    if extension:
+        values.append('...')
+        additional = extension[1:]
+
+        for token in additional:
+            if isinstance(token, list):
+                number = int(token[2])
+                values.append((token[0], number))
+            else:
+                values.append((token, number))
+
+            number += 1
 
     return values
 
@@ -756,6 +783,7 @@ def create_grammar():
     caret = Literal('^')
     comma = Literal(',')
     at = Literal('@')
+    exclamation_mark = Literal('!')
     integer = Word(nums + '-')
     real_number = Regex(r'[+-]?\d+\.?\d*([eE][+-]?\d+)?')
     bstring = Regex(r"'[01\s]*'B")
@@ -809,6 +837,7 @@ def create_grammar():
     definitive_number_form = Forward().setName('definitiveNumberForm')
     version_number = Forward()
     union_mark = Forward()
+    named_number = Forward()
 
     value_field_reference = Combine(ampersand + value_reference)
     type_field_reference = Combine(ampersand + type_reference)
@@ -1040,7 +1069,9 @@ def create_grammar():
     object_from_object <<= NoMatch().setName('"objectFromObject" not implemented')
 
     # X.680: 49. The exception identifier
-    exception_spec = NoMatch().setName('"exceptionSpec" not implemented')
+    exception_spec = Optional(
+        exclamation_mark
+        + NoMatch().setName('"exceptionSpec" not implemented'))
 
     # X.680: 47. Subtype elements
     pattern_constraint = (PATTERN + value)
@@ -1341,23 +1372,29 @@ def create_grammar():
 
     # X.680: 19. Notation for the enumerated type
     enumerated_value = identifier
+    enumeration_item = (Group(named_number) | identifier)
+    enumeration = delimitedList(enumeration_item)
+    root_enumeration = enumeration
+    additional_enumeration = enumeration
+    enumerations = Group(Group(root_enumeration)
+                         + Group(Optional(Group(Suppress(comma
+                                                         - ellipsis
+                                                         + exception_spec))
+                                          + Optional(Suppress(comma)
+                                                     - additional_enumeration))))
     enumerated_type = (ENUMERATED
                        - left_brace
-                       + Group(delimitedList(Group((word
-                                                    + Optional(Suppress(left_parenthesis)
-                                                               + word
-                                                               + Suppress(right_parenthesis)))
-                                                   | ellipsis)))
+                       + enumerations
                        - right_brace)
     enumerated_type.setName('ENUMERATED')
 
     # X.680: 18. Notation for the integer type
     integer_value = (signed_number | identifier)
     signed_number <<= Combine(Optional('-') + number)
-    named_number = (identifier
-                    + left_parenthesis
-                    + (signed_number | defined_value)
-                    + right_parenthesis)
+    named_number <<= (identifier
+                      + left_parenthesis
+                      + (signed_number | defined_value)
+                      + right_parenthesis)
     named_number_list = delimitedList(named_number)
     integer_type = (INTEGER
                     + Group(Optional(left_brace
