@@ -414,6 +414,33 @@ class Asn1ToolsParseTest(unittest.TestCase):
             "BEGIN Foo ::= SEQUENCE { a BOOLEAN, ..., [[ b BOOLEAN ]], [[ c "
             "BOOLEAN ]], ..., d BOOLEAN>!<, ... } END\': Expected \"}\".")
 
+    def test_parse_x680_duplicated_enum_number_a_c_0(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.compile_string('A DEFINITIONS ::= BEGIN '
+                                     'E ::= ENUMERATED { a, b, ..., c(0) } '
+                                     'END')
+
+        self.assertEqual(str(cm.exception),
+                         "Duplicated ENUMERATED number 0 at line 1.")
+
+    def test_parse_x680_duplicated_enum_number_c_d_2(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.compile_string('A DEFINITIONS ::= BEGIN '
+                                     'E ::= ENUMERATED { a, b, ..., c, d(2) } '
+                                     'END')
+
+        self.assertEqual(str(cm.exception),
+                         "Duplicated ENUMERATED number 2 at line 1.")
+
+    def test_parse_x680_duplicated_enum_number_a_b_0(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.compile_string('A DEFINITIONS ::= BEGIN '
+                                     'E ::= ENUMERATED { a(0), b(0) } '
+                                     'END')
+
+        self.assertEqual(str(cm.exception),
+                         "Duplicated ENUMERATED number 0 at line 1.")
+
 
 if __name__ == '__main__':
     unittest.main()

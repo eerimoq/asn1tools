@@ -26,6 +26,7 @@ from pyparsing import NoMatch
 from pyparsing import QuotedString
 from pyparsing import Combine
 from pyparsing import ParseResults
+from pyparsing import lineno
 
 
 LOGGER = logging.getLogger(__name__)
@@ -146,19 +147,31 @@ def convert_table(tokens):
     return [defined_object_set, component_ids]
 
 
-def convert_enum_values(tokens):
+def convert_enum_values(string, location, tokens):
     number = 0
     values = []
     used_numbers = []
-
     root, extension = tokens
     root = root.asList()
     extension = extension.asList()
 
+    def add_used_numbers(items):
+        for item in items:
+            if not isinstance(item, list):
+                continue
+
+            item_number = int(item[2])
+
+            if item_number in used_numbers:
+                raise ParseError(
+                    'Duplicated ENUMERATED number {} at line {}.'.format(
+                        item_number,
+                        lineno(location, string)))
+
+            used_numbers.append(item_number)
+
     # Root enumeration.
-    for token in root:
-        if isinstance(token, list):
-            used_numbers.append(int(token[2]))
+    add_used_numbers(root)
 
     for token in root:
         if isinstance(token, list):
@@ -167,6 +180,7 @@ def convert_enum_values(tokens):
             while number in used_numbers:
                 number += 1
 
+            used_numbers.append(number)
             values.append((token, number))
             number += 1
 
@@ -174,13 +188,21 @@ def convert_enum_values(tokens):
     if extension:
         values.append('...')
         additional = extension[1:]
+        add_used_numbers(additional)
 
         for token in additional:
             if isinstance(token, list):
                 number = int(token[2])
                 values.append((token[0], number))
             else:
+                if number in used_numbers:
+                    raise ParseError(
+                        'Duplicated ENUMERATED number {} at line {}.'.format(
+                            number,
+                            lineno(location, string)))
+
                 values.append((token, number))
+                used_numbers.append(number)
 
             number += 1
 
@@ -364,10 +386,10 @@ def convert_real_type(_s, _l, _tokens):
     return {'type': 'REAL'}
 
 
-def convert_enumerated_type(_s, _l, tokens):
+def convert_enumerated_type(string, location, tokens):
     return {
         'type': 'ENUMERATED',
-        'values': convert_enum_values(tokens[2])
+        'values': convert_enum_values(string, location, tokens[2])
     }
 
 
