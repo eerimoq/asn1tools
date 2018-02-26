@@ -125,7 +125,8 @@ def convert_size(tokens):
 
         return values
     elif isinstance(tokens[0], dict):
-        return tokens[0]['size']
+        if 'size' in tokens[0]:
+            return tokens[0]['size']
 
 
 def convert_table(tokens):
@@ -450,7 +451,13 @@ def convert_boolean_type(_s, _l, _tokens):
 def convert_type(tokens):
     converted_type, constraint = tokens
 
-    if converted_type['type'] in ['INTEGER', 'REAL', 'IA5String']:
+    types = [
+        'INTEGER',
+        'REAL',
+        'IA5String'
+    ]
+
+    if converted_type['type'] in types:
         restricted_to = []
 
         for constraint_tokens in constraint:
@@ -468,7 +475,13 @@ def convert_type(tokens):
         if restricted_to:
             converted_type['restricted-to'] = restricted_to
 
-    if converted_type['type'] in ['BIT STRING', 'OCTET STRING']:
+    types = [
+        'BIT STRING',
+        'OCTET STRING',
+        'IA5String'
+    ]
+
+    if converted_type['type'] in types:
         size = convert_size(constraint)
 
         if size:

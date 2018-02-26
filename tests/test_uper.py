@@ -714,12 +714,15 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         self.assertEqual(repr(all_types.types['Integer']), 'Integer(Integer)')
         self.assertEqual(repr(all_types.types['Real']), 'Real(Real)')
         self.assertEqual(repr(all_types.types['Bitstring']), 'BitString(Bitstring)')
-        self.assertEqual(repr(all_types.types['Octetstring']), 'OctetString(Octetstring)')
+        self.assertEqual(repr(all_types.types['Octetstring']),
+                         'OctetString(Octetstring)')
         self.assertEqual(repr(all_types.types['Null']), 'Null(Null)')
         self.assertEqual(repr(all_types.types['Objectidentifier']),
                          'ObjectIdentifier(Objectidentifier)')
-        self.assertEqual(repr(all_types.types['Enumerated']), 'Enumerated(Enumerated)')
-        self.assertEqual(repr(all_types.types['Utf8string']), 'UTF8String(Utf8string)')
+        self.assertEqual(repr(all_types.types['Enumerated']),
+                         'Enumerated(Enumerated)')
+        self.assertEqual(repr(all_types.types['Utf8string']),
+                         'UTF8String(Utf8string)')
         self.assertEqual(repr(all_types.types['Sequence']), 'Sequence(Sequence, [])')
         self.assertEqual(repr(all_types.types['Set']), 'Set(Set, [])')
         self.assertEqual(repr(all_types.types['Sequence2']),
@@ -788,6 +791,21 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         with self.assertRaises(NotImplementedError):
             foo.decode('S', b'\x70\x00\x00\x00')
+
+    def test_ia5_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= IA5String (SIZE (1..256)) "
+            "END",
+            'uper')
+
+        datas = [
+            ('A', 'Hej', b'\x02\x91\x97\x50')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
 
 
 if __name__ == '__main__':

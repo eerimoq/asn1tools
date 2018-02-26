@@ -279,17 +279,24 @@ class Boolean(Type):
 
 class IA5String(Type):
 
-    def __init__(self, name):
+    def __init__(self, name, minimum_size):
         super(IA5String, self).__init__(name, 'IA5String')
 
+        if minimum_size is None:
+            minimum_size = 0
+
+        self.minimum_size = minimum_size
+
     def encode(self, data, encoder):
-        encoder.append_bytes(encode_length_determinant(len(data)))
+        length = (len(data) - self.minimum_size)
+        encoder.append_bytes(encode_length_determinant(length))
 
         for byte in bytearray(data.encode('ascii')):
             encoder.append_bits(bytearray([(byte << 1) & 0xff]), 7)
 
     def decode(self, decoder):
         length = decode_length_determinant(decoder)
+        length += self.minimum_size
         data = []
 
         for _ in range(length):
@@ -1044,7 +1051,9 @@ class Compiler(compiler.Compiler):
         elif type_name == 'PrintableString':
             compiled = PrintableString(name)
         elif type_name == 'IA5String':
-            compiled = IA5String(name)
+            minimum, _ = self.get_size_range(type_descriptor,
+                                             module_name)
+            compiled = IA5String(name, minimum)
         elif type_name == 'VisibleString':
             minimum, maximum = self.get_size_range(type_descriptor,
                                                    module_name)
