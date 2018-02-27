@@ -844,7 +844,6 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "A ::= VisibleString (SIZE (19..133)) "
             "B ::= VisibleString (SIZE (5)) "
             "C ::= VisibleString (SIZE (19..1000)) "
-            ""
             "END",
             'uper')
 
@@ -875,6 +874,30 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
              b'\x23\x4f\x0e\x10\x71\x63\xc9\x96\x46\x5d\x52\x37\xf0\xe1\x23\x0f'
              b'\x0e\x12\x34\xf0\xe1\x07\x16\x3c\x99\x64\x65\xd5\x23\x7f\x0e\x12'
              b'\x30\xf0\xe1\x23\x4f\x0e\x10\x71\x63\xc9\x94')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_sequence_of(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE OF INTEGER "
+            "B ::= SEQUENCE SIZE (2) OF INTEGER "
+            "C ::= SEQUENCE SIZE (1..5) OF INTEGER "
+            "END",
+            'uper')
+
+        datas = [
+            ('A', [], b'\x00'),
+            ('A', [1], b'\x01\x01\x01'),
+            ('A', [1, 2], b'\x02\x01\x01\x01\x02'),
+            ('A', 1000 * [1, 2], b'\x87\xd0' + 1000 * b'\x01\x01\x01\x02'),
+            ('B', [1, 2], b'\x01\x01\x01\x02'),
+            ('B', [4663, 222322233], b'\x02\x12\x37\x04\x0d\x40\x5e\x39'),
+            ('C', [1], b'\x00\x20\x20'),
+            ('C', [1, 2], b'\x20\x20\x20\x20\x40')
         ]
 
         for type_name, decoded, encoded in datas:

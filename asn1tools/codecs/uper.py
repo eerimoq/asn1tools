@@ -514,8 +514,8 @@ class SequenceOf(Type):
 
     def encode(self, data, encoder):
         if self.number_of_bits is None:
-            encoder.append_bytes(bytearray([len(data)]))
-        else:
+            encoder.append_bytes(encode_length_determinant(len(data)))
+        elif self.minimum != self.maximum:
             encoder.append_integer(len(data) - self.minimum,
                                    self.number_of_bits)
 
@@ -524,14 +524,16 @@ class SequenceOf(Type):
 
     def decode(self, decoder):
         if self.number_of_bits is None:
-            number_of_elements = decoder.read_integer(8)
+            length = decode_length_determinant(decoder)
+        elif self.minimum != self.maximum:
+            length = decoder.read_integer(self.number_of_bits)
+            length += self.minimum
         else:
-            number_of_elements = decoder.read_integer(self.number_of_bits)
-            number_of_elements += self.minimum
+            length = self.minimum
 
         decoded = []
 
-        for _ in range(number_of_elements):
+        for _ in range(length):
             decoded_element = self.element_type.decode(decoder)
             decoded.append(decoded_element)
 
