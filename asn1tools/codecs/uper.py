@@ -279,24 +279,35 @@ class Boolean(Type):
 
 class IA5String(Type):
 
-    def __init__(self, name, minimum_size):
+    def __init__(self, name, minimum, maximum):
         super(IA5String, self).__init__(name, 'IA5String')
+        if minimum is None or maximum is None:
+            self.length = None
+        elif minimum == maximum:
+            self.length = minimum
+        else:
+            self.length = None
 
-        if minimum_size is None:
-            minimum_size = 0
+        if minimum is None:
+            minimum = 0
 
-        self.minimum_size = minimum_size
+        self.minimum = minimum
 
     def encode(self, data, encoder):
-        length = (len(data) - self.minimum_size)
-        encoder.append_bytes(encode_length_determinant(length))
+        if self.length is None:
+            length = (len(data) - self.minimum)
+            encoder.append_bytes(encode_length_determinant(length))
 
         for byte in bytearray(data.encode('ascii')):
             encoder.append_bits(bytearray([(byte << 1) & 0xff]), 7)
 
     def decode(self, decoder):
-        length = decode_length_determinant(decoder)
-        length += self.minimum_size
+        if self.length is None:
+            length = decode_length_determinant(decoder)
+            length += self.minimum
+        else:
+            length = self.length
+
         data = []
 
         for _ in range(length):
@@ -1051,9 +1062,9 @@ class Compiler(compiler.Compiler):
         elif type_name == 'PrintableString':
             compiled = PrintableString(name)
         elif type_name == 'IA5String':
-            minimum, _ = self.get_size_range(type_descriptor,
-                                             module_name)
-            compiled = IA5String(name, minimum)
+            minimum, maximum = self.get_size_range(type_descriptor,
+                                                   module_name)
+            compiled = IA5String(name, minimum, maximum)
         elif type_name == 'VisibleString':
             minimum, maximum = self.get_size_range(type_descriptor,
                                                    module_name)
