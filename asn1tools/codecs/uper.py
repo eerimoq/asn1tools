@@ -214,6 +214,42 @@ class Type(object):
         pass
 
 
+class StringType(Type):
+
+    def __init__(self, name, string_type, minimum, maximum):
+        super(StringType, self).__init__(name, string_type)
+
+        self.set_size_range(minimum, maximum)
+
+    def set_size_range(self, minimum, maximum):
+        self.minimum = minimum
+        self.maximum = maximum
+
+        if minimum is None or maximum is None:
+            self.number_of_bits = None
+        else:
+            size = maximum - minimum
+            self.number_of_bits = size_as_number_of_bits(size)
+
+    def encode_length(self, encoder, length):
+        if self.number_of_bits is None:
+            encoder.append_bytes(encode_length_determinant(length))
+        elif self.minimum != self.maximum:
+            encoder.append_integer(length - self.minimum,
+                                   self.number_of_bits)
+
+    def decode_length(self, decoder):
+        if self.number_of_bits is None:
+            length = decode_length_determinant(decoder)
+        elif self.minimum != self.maximum:
+            length = decoder.read_integer(self.number_of_bits)
+            length += self.minimum
+        else:
+            length = self.minimum
+
+        return length
+
+
 class Integer(Type):
 
     def __init__(self, name, minimum, maximum):
@@ -277,38 +313,23 @@ class Boolean(Type):
         return 'Boolean({})'.format(self.name)
 
 
-class IA5String(Type):
+class IA5String(StringType):
 
     def __init__(self, name, minimum, maximum):
-        super(IA5String, self).__init__(name, 'IA5String')
-
-        if minimum is None or maximum is None:
-            self.length = None
-        elif minimum == maximum:
-            self.length = minimum
-        else:
-            self.length = None
-
-        if minimum is None:
-            minimum = 0
-
-        self.minimum = minimum
+        super(IA5String, self).__init__(name,
+                                        'IA5String',
+                                        minimum,
+                                        maximum)
 
     def encode(self, data, encoder):
-        if self.length is None:
-            length = (len(data) - self.minimum)
-            encoder.append_bytes(encode_length_determinant(length))
+        encoded = data.encode('ascii')
+        self.encode_length(encoder, len(encoded))
 
-        for byte in bytearray(data.encode('ascii')):
+        for byte in bytearray(encoded):
             encoder.append_bits(bytearray([(byte << 1) & 0xff]), 7)
 
     def decode(self, decoder):
-        if self.length is None:
-            length = decode_length_determinant(decoder)
-            length += self.minimum
-        else:
-            length = self.length
-
+        length = self.decode_length(decoder)
         data = []
 
         for _ in range(length):
@@ -488,7 +509,7 @@ class SequenceOf(Type):
         if minimum is None or maximum is None:
             self.number_of_bits = None
         else:
-            size = self.maximum - self.minimum
+            size = maximum - minimum
             self.number_of_bits = size_as_number_of_bits(size)
 
     def encode(self, data, encoder):
@@ -648,11 +669,14 @@ class UniversalString(Type):
         return 'UniversalString({})'.format(self.name)
 
 
-class VisibleString(Type):
+class VisibleString(StringType):
 
     def __init__(self, name, minimum, maximum, permitted_alphabet):
-        super(VisibleString, self).__init__(name, 'VisibleString')
-        self.set_size_range(minimum, maximum)
+        super(VisibleString, self).__init__(name,
+                                            'VisibleString',
+                                            minimum,
+                                            maximum)
+
         self.permitted_alphabet = permitted_alphabet
 
         if permitted_alphabet is None:
@@ -661,24 +685,9 @@ class VisibleString(Type):
             self.bits_per_character = size_as_number_of_bits(
                 len(permitted_alphabet))
 
-    def set_size_range(self, minimum, maximum):
-        self.minimum = minimum
-        self.maximum = maximum
-
-        if minimum is None or maximum is None:
-            self.number_of_bits = None
-        else:
-            size = self.maximum - self.minimum
-            self.number_of_bits = size_as_number_of_bits(size)
-
     def encode(self, data, encoder):
         encoded = data.encode('ascii')
-
-        if self.number_of_bits is None:
-            encoder.append_bytes(encode_length_determinant(len(encoded)))
-        elif self.minimum != self.maximum:
-            encoder.append_integer(len(encoded) - self.minimum,
-                                   self.number_of_bits)
+        self.encode_length(encoder, len(encoded))
 
         for value in bytearray(encoded):
             if self.permitted_alphabet is not None:
@@ -689,13 +698,7 @@ class VisibleString(Type):
                 self.bits_per_character)
 
     def decode(self, decoder):
-        if self.number_of_bits is None:
-            length = decode_length_determinant(decoder)
-        elif self.minimum != self.maximum:
-            length = decoder.read_integer(self.number_of_bits) + 1
-        else:
-            length = self.minimum
-
+        length = self.decode_length(decoder)
         data = []
 
         for _ in range(length):
@@ -727,18 +730,21 @@ class GeneralString(Type):
         return 'GeneralString({})'.format(self.name)
 
 
-class UTF8String(Type):
+class UTF8String(StringType):
 
-    def __init__(self, name):
-        super(UTF8String, self).__init__(name, 'UTF8String')
+    def __init__(self, name, minimum, maximum):
+        super(UTF8String, self).__init__(name,
+                                         'UTF8String',
+                                         minimum,
+                                         maximum)
 
     def encode(self, data, encoder):
         encoded = data.encode('utf-8')
-        encoder.append_bytes(encode_length_determinant(len(encoded)))
+        self.encode_length(encoder, len(encoded))
         encoder.append_bytes(bytearray(encoded))
 
     def decode(self, decoder):
-        length = decode_length_determinant(decoder)
+        length = self.decode_length(decoder)
         encoded = decoder.read_bits(8 * length)
 
         return encoded.decode('utf-8')
@@ -1077,7 +1083,9 @@ class Compiler(compiler.Compiler):
         elif type_name == 'GeneralString':
             compiled = GeneralString(name)
         elif type_name == 'UTF8String':
-            compiled = UTF8String(name)
+            minimum, maximum = self.get_size_range(type_descriptor,
+                                                   module_name)
+            compiled = UTF8String(name, minimum, maximum)
         elif type_name == 'BMPString':
             compiled = BMPString(name)
         elif type_name == 'UTCTime':

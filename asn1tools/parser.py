@@ -454,7 +454,9 @@ def convert_type(tokens):
     types = [
         'INTEGER',
         'REAL',
-        'IA5String'
+        'IA5String',
+        'VisibleString',
+        'UTF8String'
     ]
 
     if converted_type['type'] in types:
@@ -478,7 +480,9 @@ def convert_type(tokens):
     types = [
         'BIT STRING',
         'OCTET STRING',
-        'IA5String'
+        'IA5String',
+        'VisibleString',
+        'UTF8String'
     ]
 
     if converted_type['type'] in types:
