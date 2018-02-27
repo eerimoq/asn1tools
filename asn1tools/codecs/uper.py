@@ -281,6 +281,7 @@ class IA5String(Type):
 
     def __init__(self, name, minimum, maximum):
         super(IA5String, self).__init__(name, 'IA5String')
+
         if minimum is None or maximum is None:
             self.length = None
         elif minimum == maximum:

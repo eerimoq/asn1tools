@@ -797,11 +797,13 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
             "A ::= IA5String (SIZE (1..256)) "
+            "B ::= IA5String (SIZE (2)) "
             "END",
             'uper')
 
         datas = [
-            ('A', 'Hej', b'\x02\x91\x97\x50')
+            ('A', 'Hej', b'\x02\x91\x97\x50'),
+            ('B',  'He', b'\x91\x94')
         ]
 
         for type_name, decoded, encoded in datas:
