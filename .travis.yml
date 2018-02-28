@@ -10,6 +10,7 @@ script:
   - (cd examples/benchmarks && wget https://github.com/ANSSI-FR/pycrate/archive/master.zip && unzip -qq master.zip)
   - env PYTHONPATH=.:examples/benchmarks/pycrate-master python examples/benchmarks/packages.py
   - env PYTHONPATH=. python examples/benchmarks/codecs.py
-  - env PYTHONPATH=. python examples/question/question.py
+  - env PYTHONPATH=. python examples/benchmarks/question/question.py
+  - env PYTHONPATH=. python examples/hello_world.py
 after_success:
   coveralls
