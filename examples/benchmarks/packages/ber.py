@@ -1,20 +1,21 @@
 #!/usr/bin/env python
 
-"""A performance example comparing the performance of four ASN.1
-Python packages.
+"""A performance example comparing the BER encoding and decoding
+performance of five ASN.1 Python packages.
 
 This file is based on
 https://gist.github.com/philmayers/67b9300d8fb7282481a1a6af5ed45818.
 
 Example execution:
 
-$ ./packages.py
+$ ./ber.py
 Starting encoding and decoding of a message 3000 times. This may take a few seconds.
 
 Encoding the message 3000 times took:
 
 PACKAGE      SECONDS
 asn1tools    0.443244
+pycrate      1.634455
 libsnmp      inf
 pyasn1       inf
 asn1crypto   inf
@@ -26,6 +27,7 @@ asn1tools    0.388221
 libsnmp      0.590784
 asn1crypto   1.336428
 pyasn1       4.108154
+pycrate      4.342234
 $
 
 """
@@ -39,6 +41,7 @@ import asn1tools
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 SNMP_V1_ASN_PATHS = [
     os.path.join(SCRIPT_DIR,
+                 '..',
                  '..',
                  '..',
                  'tests',
