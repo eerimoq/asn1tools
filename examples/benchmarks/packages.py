@@ -47,7 +47,7 @@ SNMP_V1_ASN_PATHS = [
                  filename)
     for filename in ['rfc1155.asn', 'rfc1157.asn']]
 
-DECODED_MESSAGE = {
+DECODED_MESSAGE_ASN1TOOLS = {
     "version": 0,
     "community": b'public',
     "data": {
@@ -97,6 +97,38 @@ DECODED_MESSAGE = {
     }
 }
 
+DECODED_MESSAGE_PYCRATE = {
+    'version': 0,
+    'community': b'public',
+    'data': (
+        'set-request',
+        {
+            'request-id': 60,
+            'error-status': 0,
+            'error-index': 0,
+            'variable-bindings': [
+                {
+                    'name': (1, 3, 6, 1, 4, 1, 253, 8, 51, 10, 2, 1, 7, 10, 14130101),
+                    'value': (
+                        'simple', ('string', b'172.31.19.73'))
+                },
+                {
+                    'name': (1, 3, 6, 1, 4, 1, 253, 8, 51, 10, 2, 1, 5, 10, 14130400),
+                    'value': ('simple', ('number', 2))
+                },
+                {
+                    'name': (1, 3, 6, 1, 4, 1, 253, 8, 51, 10, 2, 1, 7, 10, 14130102),
+                    'value': ('simple', ('string', b'255.255.255.0'))
+                },
+                {
+                    'name': (1, 3, 6, 1, 4, 1, 253, 8, 51, 10, 2, 1, 7, 10, 14130104),
+                    'value': ('simple', ('string', b'172.31.19.2'))
+                }
+            ]
+        }
+    )
+}
+
 ENCODED_MESSAGE = (
     b'0\x81\x9f\x02\x01\x00\x04\x06public\xa3\x81\x91\x02'
     b'\x01<\x02\x01\x00\x02\x01\x000\x81\x850"\x06\x12+\x06'
@@ -115,7 +147,7 @@ def asn1tools_encode_decode():
     snmp_v1 = asn1tools.compile_files(SNMP_V1_ASN_PATHS)
 
     def encode():
-        snmp_v1.encode('Message', DECODED_MESSAGE)
+        snmp_v1.encode('Message', DECODED_MESSAGE_ASN1TOOLS)
 
     def decode():
         snmp_v1.decode('Message', ENCODED_MESSAGE)
@@ -262,6 +294,35 @@ def asn1crypto_encode_decode():
 
     return encode_time, decode_time
 
+
+def pycrate_encode_decode():
+    try:
+        import rfc1155_1157_pycrate
+
+        snmp_v1 = rfc1155_1157_pycrate.RFC1157_SNMP.Message
+
+        def encode():
+            snmp_v1.set_val(DECODED_MESSAGE_PYCRATE)
+            snmp_v1.to_ber()
+
+        def decode():
+            snmp_v1.from_ber(ENCODED_MESSAGE)
+            snmp_v1()
+
+        encode_time = timeit.timeit(encode, number=ITERATIONS)
+        decode_time = timeit.timeit(decode, number=ITERATIONS)
+    except ImportError:
+        encode_time = float('inf')
+        decode_time = float('inf')
+        print('Unable to import pycrate.')
+    except Exception as e:
+        encode_time = float('inf')
+        decode_time = float('inf')
+        print('pycrate error: {}'.format(str(e)))
+
+    return encode_time, decode_time
+
+
 print('Starting encoding and decoding of a message {} times. This may '
       'take a few seconds.'.format(ITERATIONS))
 
@@ -269,13 +330,15 @@ asn1tools_encode_time, asn1tools_decode_time = asn1tools_encode_decode()
 libsnmp_encode_time, libsnmp_decode_time = libsnmp_encode_decode()
 pyasn1_encode_time, pyasn1_decode_time = pyasn1_encode_decode()
 asn1crypto_encode_time, asn1crypto_decode_time = asn1crypto_encode_decode()
+pycrate_encode_time, pycrate_decode_time = pycrate_encode_decode()
 
 # Encode comparsion output.
 measurements = [
     ('asn1tools', asn1tools_encode_time),
     ('libsnmp', libsnmp_encode_time),
     ('pyasn1', pyasn1_encode_time),
-    ('asn1crypto', asn1crypto_encode_time)
+    ('asn1crypto', asn1crypto_encode_time),
+    ('pycrate', pycrate_encode_time)
 ]
 
 measurements = sorted(measurements, key=lambda m: m[1])
@@ -292,7 +355,8 @@ measurements = [
     ('asn1tools', asn1tools_decode_time),
     ('libsnmp', libsnmp_decode_time),
     ('pyasn1', pyasn1_decode_time),
-    ('asn1crypto', asn1crypto_decode_time)
+    ('asn1crypto', asn1crypto_decode_time),
+    ('pycrate', pycrate_decode_time)
 ]
 
 measurements = sorted(measurements, key=lambda m: m[1])
