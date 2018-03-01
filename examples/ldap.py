@@ -7,15 +7,17 @@ Example execution:
 $ ./ldap.py
 Connecting to ldap.forumsys.com:389... done.
 {'messageID': 1,
- 'protocolOp': {'bindRequest': {'authentication': {'simple': b'password'},
-                                'name': b'uid=tesla,dc=example,dc=com',
-                                'version': 3}}}
+ 'protocolOp': ('bindRequest',
+                {'authentication': ('simple', b'password'),
+                 'name': b'uid=tesla,dc=example,dc=com',
+                 'version': 3})}
 Sending LDAP bind request to the server... done.
 Receiving LDAP bind response from the server... done.
 {'messageID': 1,
- 'protocolOp': {'bindResponse': {'diagnosticMessage': bytearray(b''),
-                                 'matchedDN': bytearray(b''),
-                                 'resultCode': 'success'}}}
+ 'protocolOp': ('bindResponse',
+                {'diagnosticMessage': bytearray(b''),
+                 'matchedDN': bytearray(b''),
+                 'resultCode': 'success'})}
 $
 
 """
@@ -46,15 +48,16 @@ print('done.')
 # Encode the LDAP bind request and send it to the server.
 bind_request = {
     'messageID': 1,
-    'protocolOp': {
-        'bindRequest': {
+    'protocolOp': (
+        'bindRequest',
+        {
             'version': 3,
             'name': b'uid=tesla,dc=example,dc=com',
-            'authentication': {
-                'simple': b'password'
-            }
+            'authentication': (
+                'simple', b'password'
+            )
         }
-    }
+    )
 }
 
 encoded_bind_request = db.encode('LDAPMessage', bind_request)
