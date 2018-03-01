@@ -214,10 +214,10 @@ class Type(object):
         pass
 
 
-class StringType(Type):
+class KnownMultiplierStringType(Type):
 
     def __init__(self, name, string_type, minimum, maximum):
-        super(StringType, self).__init__(name, string_type)
+        super(KnownMultiplierStringType, self).__init__(name, string_type)
 
         self.set_size_range(minimum, maximum)
 
@@ -313,7 +313,7 @@ class Boolean(Type):
         return 'Boolean({})'.format(self.name)
 
 
-class IA5String(StringType):
+class IA5String(KnownMultiplierStringType):
 
     def __init__(self, name, minimum, maximum):
         super(IA5String, self).__init__(name,
@@ -671,7 +671,7 @@ class UniversalString(Type):
         return 'UniversalString({})'.format(self.name)
 
 
-class VisibleString(StringType):
+class VisibleString(KnownMultiplierStringType):
 
     def __init__(self, name, minimum, maximum, permitted_alphabet):
         super(VisibleString, self).__init__(name,
@@ -732,21 +732,18 @@ class GeneralString(Type):
         return 'GeneralString({})'.format(self.name)
 
 
-class UTF8String(StringType):
+class UTF8String(Type):
 
-    def __init__(self, name, minimum, maximum):
-        super(UTF8String, self).__init__(name,
-                                         'UTF8String',
-                                         minimum,
-                                         maximum)
+    def __init__(self, name):
+        super(UTF8String, self).__init__(name, 'UTF8String')
 
     def encode(self, data, encoder):
         encoded = data.encode('utf-8')
-        self.encode_length(encoder, len(encoded))
+        encoder.append_bytes(encode_length_determinant(len(encoded)))
         encoder.append_bytes(bytearray(encoded))
 
     def decode(self, decoder):
-        length = self.decode_length(decoder)
+        length = decode_length_determinant(decoder)
         encoded = decoder.read_bits(8 * length)
 
         return encoded.decode('utf-8')
@@ -1085,9 +1082,7 @@ class Compiler(compiler.Compiler):
         elif type_name == 'GeneralString':
             compiled = GeneralString(name)
         elif type_name == 'UTF8String':
-            minimum, maximum = self.get_size_range(type_descriptor,
-                                                   module_name)
-            compiled = UTF8String(name, minimum, maximum)
+            compiled = UTF8String(name)
         elif type_name == 'BMPString':
             compiled = BMPString(name)
         elif type_name == 'UTCTime':

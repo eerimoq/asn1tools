@@ -765,32 +765,39 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
-            "S ::= SEQUENCE { "
+            "A ::= SEQUENCE { "
             "    a BOOLEAN, "
             "    b UTF8String, "
             "    c UTF8String OPTIONAL"
             "} "
+            "B ::= UTF8String (SIZE(10)) "
+            "C ::= UTF8String (SIZE(0..1)) "
+            "D ::= UTF8String (SIZE(2..3) ^ (FROM (\"a\"..\"g\"))) "
             "END",
             'uper')
 
         datas = [
-            ('S', {'a': True, 'b': u''}, b'\x40\x00'),
-            ('S',
+            ('A', {'a': True, 'b': u''}, b'\x40\x00'),
+            ('A',
              {'a': True, 'b': u'1', 'c': u'foo'},
              b'\xc0\x4c\x40\xd9\x9b\xdb\xc0'),
-            ('S',
+            ('A',
              {'a': True, 'b': 300 * u'1'},
-             b'\x60\x4b\x0c' + 299 * b'\x4c' + b'\x40')
+             b'\x60\x4b\x0c' + 299 * b'\x4c' + b'\x40'),
+            ('B', u'1234567890', b'\x0a\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'),
+            ('C', u'', b'\x00'),
+            ('C', u'P', b'\x01\x50'),
+            ('D', u'agg', b'\x03\x61\x67\x67')
         ]
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
         with self.assertRaises(NotImplementedError):
-            foo.encode('S', {'a': False, 'b': 16384 * u'0'})
+            foo.encode('A', {'a': False, 'b': 16384 * u'0'})
 
         with self.assertRaises(NotImplementedError):
-            foo.decode('S', b'\x70\x00\x00\x00')
+            foo.decode('A', b'\x70\x00\x00\x00')
 
     def test_ia5_string(self):
         foo = asn1tools.compile_string(
