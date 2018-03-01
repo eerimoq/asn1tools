@@ -211,9 +211,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         decoded = {
             'a': 253,
             'b': True,
-            'c': {
-                'e': True
-            },
+            'c': ('e', True),
             'g': '123',
             'h': True
         }
@@ -230,15 +228,17 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         # Message 1.
         decoded = {
-            'message': {
-                'c1' : {
-                    'paging': {
+            'message': (
+                'c1',
+                (
+                    'paging',
+                    {
                         'systemInfoModification': 'true',
                         'nonCriticalExtension': {
                         }
                     }
-                }
-            }
+                )
+            )
         }
 
         encoded = b'\x28'
@@ -247,12 +247,10 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         # Message 2.
         decoded = {
-            'message': {
-                'c1' : {
-                    'paging': {
-                    }
-                }
-            }
+            'message': (
+                'c1',
+                ('paging', {})
+            )
         }
 
         encoded = b'\x00'
@@ -276,16 +274,19 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assert_encode_decode(rrc, 'BCCH-BCH-Message', decoded, encoded)
 
-        # Message 4.
         decoded = {
-            'message': {
-                'c1': {
-                    'systemInformation': {
-                        'criticalExtensions': {
-                            'systemInformation-r8': {
+            'message': (
+                'c1',
+                (
+                    'systemInformation',
+                    {
+                        'criticalExtensions': (
+                            'systemInformation-r8',
+                            {
                                 'sib-TypeAndInfo': [
-                                    {
-                                        'sib2': {
+                                    (
+                                        'sib2',
+                                        {
                                             'ac-BarringInfo': {
                                                 'ac-BarringForEmergency': True,
                                                 'ac-BarringForMO-Data': {
@@ -355,13 +356,13 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
                                                     'nCS-AN': 4,
                                                     'n1PUCCH-AN': 2047
                                                 },
-                                                'soundingRS-UL-ConfigCommon': {
-                                                    'setup': {
+                                                'soundingRS-UL-ConfigCommon': (
+                                                    'setup',
+                                                    {
                                                         'srs-BandwidthConfig': 'bw0',
                                                         'srs-SubframeConfig': 'sc4',
                                                         'ackNackSRS-SimultaneousTransmission': True
-                                                    }
-                                                },
+                                                    }),
                                                 'uplinkPowerControlCommon': {
                                                     'p0-NominalPUSCH': -126,
                                                     'alpha': 'al0',
@@ -390,9 +391,10 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
                                             },
                                             'timeAlignmentTimerCommon': 'sf500'
                                         }
-                                    },
-                                    {
-                                        'sib3': {
+                                    ),
+                                    (
+                                        'sib3',
+                                        {
                                             'cellReselectionInfoCommon': {
                                                 'q-Hyst': 'dB0',
                                                 'speedStateReselectionPars': {
@@ -420,72 +422,77 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
                                                 't-ReselectionEUTRA': 4
                                             }
                                         }
-                                    },
-                                    {
-                                        'sib4': {
+                                    ),
+                                    (
+                                        'sib4',
+                                        {
                                         }
-                                    },
-                                    {
-                                        'sib5': {
+                                    ),
+                                    (
+                                        'sib5',
+                                        {
                                             'interFreqCarrierFreqList': [
                                                 {
                                                     'dl-CarrierFreq': 1,
                                                     'q-RxLevMin': -45,
                                                     't-ReselectionEUTRA': 0,
                                                     'threshX-High': 31,
-                                                    'threshX-Low': 29 ,
+                                                    'threshX-Low': 29,
                                                     'allowedMeasBandwidth': 'mbw6',
                                                     'presenceAntennaPort1': True,
-                                                    'q-OffsetFreq': 'dB0',
-                                                    'neighCellConfig': (b'\x00', 2)
+                                                    'neighCellConfig': (b'\x00', 2),
+                                                    'q-OffsetFreq': 'dB0'
                                                 }
                                             ]
                                         }
-                                    },
-                                    {
-                                        'sib6': {
+                                    ),
+                                    (
+                                        'sib6',
+                                        {
                                             't-ReselectionUTRA': 3
                                         }
-                                    },
-                                    {
-                                        'sib7': {
-                                            't-ReselectionGERAN': 3
+                                    ),
+                                    ('sib7',
+                                     {
+                                         't-ReselectionGERAN': 3
+                                     }
+                                    ),
+                                    ('sib8',
+                                     {
+                                         'parameters1XRTT': {
+                                             'longCodeState1XRTT': (b'\x01#Eg\x89\x00', 42)
+                                         }
+                                     }
+                                    ),
+                                    (
+                                        'sib9',
+                                        {
+                                            'hnb-Name': b'4'
                                         }
-                                    },
-                                    {
-                                        'sib8': {
-                                            'parameters1XRTT': {
-                                                'longCodeState1XRTT': (b'\x01\x23\x45\x67\x89\x00', 42)
-                                            }
-                                        }
-                                    },
-                                    {
-                                        'sib9': {
-                                            'hnb-Name': b'\x34'
-                                        }
-                                    },
-                                    {
-                                        'sib10': {
-                                            'messageIdentifier': (b'\x23\x34', 16),
-                                            'serialNumber': (b'\x12\x34', 16),
-                                            'warningType': b'\x32\x12'
-                                        }
-                                    },
-                                    {
-                                        'sib11': {
-                                            'messageIdentifier': (b'\x67\x88', 16),
-                                            'serialNumber': (b'\x54\x35', 16),
+                                    ),
+                                    ('sib10',
+                                     {
+                                         'messageIdentifier': (b'#4', 16),
+                                         'serialNumber': (b'\x124', 16),
+                                         'warningType': b'2\x12'
+                                     }
+                                    ),
+                                    (
+                                        'sib11',
+                                        {
+                                            'messageIdentifier': (b'g\x88', 16),
+                                            'serialNumber': (b'T5', 16),
                                             'warningMessageSegmentType': 'notLastSegment',
                                             'warningMessageSegmentNumber': 19,
                                             'warningMessageSegment': b'\x12'
                                         }
-                                    }
+                                    )
                                 ]
                             }
-                        }
+                        )
                     }
-                }
-            }
+                )
+            )
         }
 
         encoded = (
@@ -500,16 +507,19 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         # Message 5.
         decoded = {
-            'message': {
-                'c1': {
-                    'counterCheck': {
+            'message': (
+                'c1',
+                (
+                    'counterCheck', {
                         'rrc-TransactionIdentifier': 0,
-                        'criticalExtensions': {
-                            'criticalExtensionsFuture': {}
-                        }
+                        'criticalExtensions': (
+                            'criticalExtensionsFuture',
+                            {
+                            }
+                        )
                     }
-                }
-            }
+                )
+            )
         }
 
         encoded = b'\x41'
@@ -518,13 +528,17 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         # Message 6.
         decoded = {
-            'message': {
-                'c1': {
-                    'counterCheck': {
+            'message': (
+                'c1',
+                (
+                    'counterCheck',
+                    {
                         'rrc-TransactionIdentifier': 0,
-                        'criticalExtensions': {
-                            'c1': {
-                                'counterCheck-r8': {
+                        'criticalExtensions': (
+                            'c1',
+                            (
+                                'counterCheck-r8',
+                                {
                                     'drb-CountMSB-InfoList': [
                                         {
                                             'drb-Identity': 32,
@@ -532,13 +546,14 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
                                             'countMSB-Downlink': 33554431
                                         }
                                     ],
-                                    'nonCriticalExtension': {}
+                                    'nonCriticalExtension': {
+                                    }
                                 }
-                            }
-                        }
+                            )
+                        )
                     }
-                }
-            }
+                )
+            )
         }
 
         encoded = b'\x40\x21\xff\xff\xff\xff\xff\xff\xfc'
@@ -547,20 +562,24 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         # Message 7.
         decoded = {
-            'message': {
-                'c1': {
-                    'counterCheckResponse': {
+            'message': (
+                'c1',
+                (
+                    'counterCheckResponse',
+                    {
                         'rrc-TransactionIdentifier': 0,
-                        'criticalExtensions': {
-                            'counterCheckResponse-r8': {
+                        'criticalExtensions': (
+                            'counterCheckResponse-r8',
+                            {
                                 'drb-CountInfoList': [
                                 ],
-                                'nonCriticalExtension': {}
+                                'nonCriticalExtension': {
+                                }
                             }
-                        }
+                        )
                     }
-                }
-            }
+                )
+            )
         }
 
         encoded = b'\x50\x80'
@@ -577,17 +596,21 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
                 'transactionNumber': 254
             },
             'endTransaction': True,
-            'lpp-MessageBody': {
-                'c1': {
-                    'provideAssistanceData': {
-                        'criticalExtensions': {
-                            'c1': {
-                                'spare1': None
-                            }
-                        }
+            'lpp-MessageBody': (
+                'c1',
+                (
+                    'provideAssistanceData',
+                    {
+                        'criticalExtensions': (
+                            'c1',
+                            (
+                                'spare1',
+                                None
+                            )
+                        )
                     }
-                }
-            }
+                )
+            )
         }
 
         encoded = b'\x93\xfd\x1b'
@@ -680,12 +703,6 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         with self.assertRaises(NotImplementedError):
             all_types.encode('Sequence12', {'a': [{'a': []}]})
-
-        with self.assertRaises(NotImplementedError):
-            all_types.encode('Real', 0.0)
-
-        with self.assertRaises(NotImplementedError):
-            all_types.decode('Real', b'\x00')
 
         with self.assertRaises(NotImplementedError):
             all_types.encode('Numericstring', '')
@@ -905,6 +922,39 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('B', [4663, 222322233], b'\x02\x12\x37\x04\x0d\x40\x5e\x39'),
             ('C', [1], b'\x00\x20\x20'),
             ('C', [1, 2], b'\x20\x20\x20\x20\x40')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_real(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= REAL "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',                     0.0, b'\x00'),
+            ('A',                    -0.0, b'\x00'),
+            ('A',            float('inf'), b'\x01\x40'),
+            ('A',           float('-inf'), b'\x01\x41'),
+            ('A',                     1.0, b'\x03\x80\x00\x01'),
+            ('A',
+             1.1,
+             b'\x09\x80\xcd\x08\xcc\xcc\xcc\xcc\xcc\xcd'),
+            ('A',
+             1234.5678,
+             b'\x09\x80\xd6\x13\x4a\x45\x6d\x5c\xfa\xad'),
+            ('A',                       8, b'\x03\x80\x03\x01'),
+            ('A',                   0.625, b'\x03\x80\xfd\x05'),
+            ('A',
+             10000000000000000146306952306748730309700429878646550592786107871697963642511482159104,
+             b'\x0a\x81\x00\xe9\x02\x92\xe3\x2a\xc6\x85\x59'),
+            ('A',
+             0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000001,
+             b'\x0a\x81\xfe\xae\x13\xe4\x97\x06\x5c\xd6\x1f'),
         ]
 
         for type_name, decoded, encoded in datas:

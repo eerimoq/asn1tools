@@ -478,19 +478,22 @@ class Choice(Type):
         self.members = members
 
     def encode(self, data):
+        if not isinstance(data, tuple):
+            raise EncodeError("expected tuple, but got '{}'".format(data))
+
         for member in self.members:
-            if member.name in data:
-                return {member.name: member.encode(data[member.name])}
+            if member.name == data[0]:
+                return {member.name: member.encode(data[1])}
 
         raise EncodeError(
             "Expected choices are {}, but got '{}'.".format(
                 [member.name for member in self.members],
-                ''.join([name for name in data])))
+                data[0]))
 
     def decode(self, data):
         for member in self.members:
             if member.name in data:
-                return {member.name: member.decode(data[member.name])}
+                return (member.name, member.decode(data[member.name]))
 
         raise DecodeError('')
 

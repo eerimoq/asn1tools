@@ -448,17 +448,20 @@ class Choice(Type):
         self.members = members
 
     def encode(self, data):
+        if not isinstance(data, tuple):
+            raise EncodeError("expected tuple, but got '{}'".format(data))
+
         for member in self.members:
-            if member.name in data:
+            if member.name == data[0]:
                 element = ElementTree.Element(self.name)
-                element.append(member.encode(data[member.name]))
+                element.append(member.encode(data[1]))
 
                 return element
 
         raise EncodeError(
             "Expected choices are {}, but got '{}'.".format(
                 [member.name for member in self.members],
-                ''.join([name for name in data])))
+                data[0]))
 
     def decode(self, element):
         for member in self.members:
@@ -466,7 +469,7 @@ class Choice(Type):
             member_element = element.find(name)
 
             if member_element is not None:
-                return {name: member.decode(member_element)}
+                return (name, member.decode(member_element))
 
         raise DecodeError('')
 

@@ -193,6 +193,86 @@ def decode_tag(_, offset):
     return 0, 0, offset + 1
 
 
+def encode_real(data):
+    if data == float('inf'):
+        data = b'\x40'
+    elif data == float('-inf'):
+        data = b'\x41'
+    elif math.isnan(data):
+        data = b'\x42'
+    elif data == 0.0:
+        data = b''
+    else:
+        mantissa, exponent = math.frexp(data)
+        mantissa = int(mantissa * 2 ** 53)
+        lowest_set_bit = (mantissa & -mantissa).bit_length() - 1
+        mantissa >>= lowest_set_bit
+        mantissa |= (0x80 << (8 * ((mantissa.bit_length() // 8) + 1)))
+        mantissa = binascii.unhexlify(hex(mantissa)[4:].rstrip('L'))
+        exponent = (52 - lowest_set_bit - exponent)
+
+        if -129 < exponent < 128:
+            exponent = [0x80, ((0xff - exponent) & 0xff)]
+        elif -32769 < exponent < 32768:
+            exponent = ((0xffff - exponent) & 0xffff)
+            exponent = [0x81, (exponent >> 8), exponent & 0xff]
+        else:
+            raise NotImplementedError(
+                'REAL exponent {} out of range.'.format(exponent))
+
+        data = bytearray(exponent) + mantissa
+
+    return data
+
+
+def decode_real(data):
+    offset = 0
+
+    if len(data) == 0:
+        decoded = 0.0
+    else:
+        control = data[offset]
+
+        if len(data) == 1:
+            try:
+                decoded = {
+                    0x40: float('inf'),
+                    0x41: float('-inf'),
+                    0x42: float('nan')
+                }[control]
+            except KeyError:
+                raise NotImplementedError(
+                    'Unsupported REAL control word {}.'.format(control))
+        else:
+            if control == 0x80:
+                exponent = data[offset + 1]
+
+                if exponent & 0x80:
+                    exponent -= 0x100
+
+                offset += 2
+            elif control == 0x81:
+                exponent = ((data[offset + 1] << 8) | data[offset + 2])
+
+                if exponent & 0x8000:
+                    exponent -= 0x10000
+
+                offset += 3
+            else:
+                raise NotImplementedError(
+                    'Unsupported REAL control word {}.'.format(control))
+
+            mantissa = 0
+
+            for value in data[offset:]:
+                mantissa <<= 8
+                mantissa += value
+
+            decoded = float(mantissa * 2 ** exponent)
+
+    return decoded
+
+
 class Type(object):
 
     def __init__(self, name, type_name, number, flags=0):
@@ -327,34 +407,7 @@ class Real(Type):
         super(Real, self).__init__(name, 'REAL', Tag.REAL)
 
     def encode(self, data, encoded):
-        if data == float('inf'):
-            data = b'\x40'
-        elif data == float('-inf'):
-            data = b'\x41'
-        elif math.isnan(data):
-            data = b'\x42'
-        elif data == 0.0:
-            data = b''
-        else:
-            mantissa, exponent = math.frexp(data)
-            mantissa = int(mantissa * 2 ** 53)
-            lowest_set_bit = (mantissa & -mantissa).bit_length() - 1
-            mantissa >>= lowest_set_bit
-            mantissa |= (0x80 << (8 * ((mantissa.bit_length() // 8) + 1)))
-            mantissa = binascii.unhexlify(hex(mantissa)[4:].rstrip('L'))
-            exponent = (52 - lowest_set_bit - exponent)
-
-            if -129 < exponent < 128:
-                exponent = [0x80, ((0xff - exponent) & 0xff)]
-            elif -32769 < exponent < 32768:
-                exponent = ((0xffff - exponent) & 0xffff)
-                exponent = [0x81, (exponent >> 8), exponent & 0xff]
-            else:
-                raise NotImplementedError(
-                    'REAL exponent {} out of range.'.format(exponent))
-
-            data = bytearray(exponent) + mantissa
-
+        data = encode_real(data)
         encoded.extend(self.tag)
         encoded.append(len(data))
         encoded.extend(data)
@@ -363,48 +416,7 @@ class Real(Type):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
-
-        if length == 0:
-            decoded = 0.0
-        else:
-            control = data[offset]
-
-            if length == 1:
-                try:
-                    decoded = {
-                        0x40: float('inf'),
-                        0x41: float('-inf'),
-                        0x42: float('nan')
-                    }[control]
-                except KeyError:
-                    raise NotImplementedError(
-                        'Unsupported REAL control word {}.'.format(control))
-            else:
-                if control == 0x80:
-                    exponent = data[offset + 1]
-
-                    if exponent & 0x80:
-                        exponent -= 0x100
-
-                    offset += 2
-                elif control == 0x81:
-                    exponent = ((data[offset + 1] << 8) | data[offset + 2])
-
-                    if exponent & 0x8000:
-                        exponent -= 0x10000
-
-                    offset += 3
-                else:
-                    raise NotImplementedError(
-                        'Unsupported REAL control word {}.'.format(control))
-
-                mantissa = 0
-
-                for value in data[offset:end_offset]:
-                    mantissa <<= 8
-                    mantissa += value
-
-                decoded = float(mantissa * 2 ** exponent)
+        decoded = decode_real(data[offset:end_offset])
 
         return decoded, end_offset
 
@@ -988,16 +1000,19 @@ class Choice(Type):
                                     flags | Encoding.CONSTRUCTED)
 
     def encode(self, data, encoded):
+        if not isinstance(data, tuple):
+            raise EncodeError("expected tuple, but got '{}'".format(data))
+
         for member in self.members:
-            if member.name in data:
-                member.encode(data[member.name], encoded)
+            if member.name == data[0]:
+                member.encode(data[1], encoded)
 
                 return
 
         raise EncodeError(
             "expected choices are {}, but got '{}'".format(
                 [member.name for member in self.members],
-                ''.join([name for name in data])))
+                data[0]))
 
     def decode(self, data, offset):
         for member in self.members:
@@ -1008,7 +1023,7 @@ class Choice(Type):
                 except DecodeChoiceError:
                     pass
                 else:
-                    return {member.name: decoded}, offset
+                    return (member.name, decoded), offset
 
         raise DecodeChoiceError()
 
@@ -1181,6 +1196,7 @@ class CompiledType(object):
     def encode(self, data):
         encoded = bytearray()
         self._type.encode(data, encoded)
+
         return encoded
 
     def decode(self, data):

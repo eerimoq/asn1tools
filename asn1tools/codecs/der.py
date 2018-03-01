@@ -563,15 +563,15 @@ class Choice(Type):
 
     def encode(self, data, encoded):
         for member in self.members:
-            if member.name in data:
-                member.encode(data[member.name], encoded)
+            if member.name == data[0]:
+                member.encode(data[1], encoded)
 
                 return
 
         raise EncodeError(
             "expected choices are {}, but got '{}'".format(
                 [member.name for member in self.members],
-                ''.join([name for name in data])))
+                data[0]))
 
     def decode(self, data, offset):
         for member in self.members:
@@ -582,7 +582,7 @@ class Choice(Type):
                 except DecodeChoiceError:
                     pass
                 else:
-                    return {member.name: decoded}, offset
+                    return (member.name, decoded), offset
 
         raise DecodeChoiceError()
 

@@ -21,19 +21,39 @@ from .errors import CompileError
 
 
 __author__ = 'Erik Moqvist'
-__version__ = '0.40.0'
+__version__ = '0.41.0'
+
+
+def print_tuple(tuple_, indent):
+    if isinstance(tuple_[0], bytearray):
+        decoded = binascii.hexlify(tuple_[0]).decode('ascii')
+        print("('{}', {})".format(decoded, tuple_[1]))
+    elif isinstance(tuple_[1], list):
+        print('{}{}:'.format(indent * ' ', tuple_[0]))
+        print_list(tuple_[1], indent + 2)
+    elif isinstance(tuple_[1], dict):
+        print('{}{}:'.format(indent * ' ', tuple_[0]))
+        print_dict(tuple_[1], indent + 2)
+    elif isinstance(tuple_[1], tuple):
+        print('{}{}:'.format(indent * ' ', tuple_[0]))
+        print_tuple(tuple_[1], indent + 2)
+    elif isinstance(tuple_[1], bytearray):
+        decoded = binascii.hexlify(tuple_[1]).decode('ascii')
+        print("{}{}: '{}'".format(indent * ' ', tuple_[0], decoded))
+    else:
+        print("{}{}: {}".format(indent * ' ', tuple_[0], tuple_[1]))
 
 
 def print_list(list_, indent):
     for i, element in enumerate(list_):
         print('{}[{}]:'.format(indent * ' ', i))
+
         if isinstance(element, list):
             print_list(element, indent + 2)
         elif isinstance(element, dict):
             print_dict(element, indent + 2)
         elif isinstance(element, tuple):
-            decoded = binascii.hexlify(element[0]).decode('ascii')
-            print('{}"{}"'.format(indent * ' ', decoded))
+            print_tuple(element, indent + 2)
         elif isinstance(element, bytearray):
             decoded = binascii.hexlify(element).decode('ascii')
             print("{}'{}'".format(indent * ' ', decoded))
@@ -50,8 +70,12 @@ def print_dict(dict_, indent=0):
             print('{}{}:'.format(indent * ' ', key))
             print_dict(value, indent + 2)
         elif isinstance(value, tuple):
-            decoded = binascii.hexlify(value[0]).decode('ascii')
-            print('{}{}: "{}"'.format(indent * ' ', key, decoded))
+            if isinstance(value[0], bytearray):
+                sys.stdout.write('{}{}: '.format(indent * ' ', key))
+            else:
+                print('{}{}:'.format(indent * ' ', key))
+
+            print_tuple(value, indent + 2)
         elif isinstance(value, bytearray):
             decoded = binascii.hexlify(value).decode('ascii')
             print("{}{}: '{}'".format(indent * ' ', key, decoded))

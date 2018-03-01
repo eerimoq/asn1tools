@@ -92,11 +92,11 @@ class Specification(object):
 
         """
 
-        try:
-            return self._types[name].encode(data)
-        except KeyError:
+        if name not in self._types:
             raise EncodeError("type '{}' not found in types dictionary".format(
                 name))
+
+        return self._types[name].encode(data)
 
     def decode(self, name, data):
         """Decode given bytes object `data` as given type `name` and return
@@ -107,11 +107,11 @@ class Specification(object):
 
         """
 
-        try:
-            return self._types[name].decode(data)
-        except KeyError:
+        if name not in self._types:
             raise DecodeError("type '{}' not found in types dictionary".format(
                 name))
+
+        return self._types[name].decode(data)
 
     def decode_length(self, data):
         """Decode the length of given data `data`.

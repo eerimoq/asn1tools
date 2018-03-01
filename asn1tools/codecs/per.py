@@ -626,30 +626,33 @@ class Choice(Type):
         self.number_of_bits = len('{:b}'.format(len(members) - 1))
 
     def encode(self, data, encoder):
+        if not isinstance(data, tuple):
+            raise EncodeError("expected tuple, but got '{}'".format(data))
+
         for i, member in enumerate(self.members):
-            if member.name in data:
+            if member.name == data[0]:
                 if len(self.members) > 1:
                     encoder.append_integer(i, self.number_of_bits)
 
-                member.encode(data[member.name], encoder)
+                member.encode(data[1], encoder)
                 return
 
         raise EncodeError(
             "Expected choices are {}, but got '{}'.".format(
                 [member.name for member in self.members],
-                ''.join([name for name in data])))
+                data[0]))
 
     def decode(self, data, offset):
         for member in self.members:
             if isinstance(member, Choice):
                 try:
                     decoded, offset = member.decode(data, offset)
-                    return {member.name: decoded}, offset
+                    return (member.name, decoded), offset
                 except DecodeChoiceError:
                     pass
             elif member.tag == data[offset]:
                 decoded, offset = member.decode(data, offset)
-                return {member.name: decoded}, offset
+                return (member.name, decoded), offset
 
         raise DecodeChoiceError()
 

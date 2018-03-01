@@ -12,6 +12,8 @@ from . import compiler
 from .compiler import enum_values_as_dict
 from .per import encode_signed_integer
 from .per import decode_signed_integer
+from .ber import encode_real
+from .ber import decode_real
 
 
 LOGGER = logging.getLogger(__name__)
@@ -289,10 +291,14 @@ class Real(Type):
         super(Real, self).__init__(name, 'REAL')
 
     def encode(self, data, encoder):
-        raise NotImplementedError()
+        encoded = encode_real(data)
+        encoder.append_bytes(encode_length_determinant(len(encoded)))
+        encoder.append_bytes(encoded)
 
     def decode(self, decoder):
-        raise NotImplementedError()
+        length = decode_length_determinant(decoder)
+
+        return decode_real(decoder.read_bytes(length))
 
     def __repr__(self):
         return 'Real({})'.format(self.name)
@@ -836,6 +842,9 @@ class Choice(Type):
         self.number_of_bits = size_as_number_of_bits(len(members) - 1)
 
     def encode(self, data, encoder):
+        if not isinstance(data, tuple):
+            raise EncodeError("expected tuple, but got '{}'".format(data))
+
         if self.extension is not None:
             if len(self.extension) == 0:
                 encoder.append_bit(0)
@@ -843,17 +852,17 @@ class Choice(Type):
                 raise NotImplementedError()
 
         for i, member in enumerate(self.members):
-            if member.name in data:
+            if member.name == data[0]:
                 if len(self.members) > 1:
                     encoder.append_integer(i, self.number_of_bits)
 
-                member.encode(data[member.name], encoder)
+                member.encode(data[1], encoder)
                 return
 
         raise EncodeError(
             "Expected choices are {}, but got '{}'.".format(
                 [member.name for member in self.members],
-                ''.join([name for name in data])))
+                data[0]))
 
     def decode(self, decoder):
         if self.extension is not None:
@@ -869,7 +878,7 @@ class Choice(Type):
 
         member = self.members[index]
 
-        return {member.name: member.decode(decoder)}
+        return (member.name, member.decode(decoder))
 
     def __repr__(self):
         return 'Choice({}, [{}])'.format(

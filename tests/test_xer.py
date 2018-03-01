@@ -66,15 +66,17 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
 
         # Message 1.
         decoded = {
-            'message': {
-                'c1' : {
-                    'paging': {
+            'message': (
+                'c1',
+                (
+                    'paging',
+                    {
                         'systemInfoModification': 'true',
                         'nonCriticalExtension': {
                         }
                     }
-                }
-            }
+                )
+            )
         }
 
         encoded = (

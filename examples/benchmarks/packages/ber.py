@@ -53,51 +53,59 @@ SNMP_V1_ASN_PATHS = [
 DECODED_MESSAGE_ASN1TOOLS = {
     "version": 0,
     "community": b'public',
-    "data": {
-        "set-request": {
+    "data": (
+        "set-request",
+        {
             "request-id": 60,
             "error-status": 0,
             "error-index": 0,
             "variable-bindings": [
                 {
                     "name": "1.3.6.1.4.1.253.8.51.10.2.1.7.10.14130101",
-                    "value": {
-                        "simple": {
-                            "string": (b'\x31\x37\x32\x2e\x33\x31'
-                                       b'\x2e\x31\x39\x2e\x37\x33')
-                        }
-                    }
+                    "value": (
+                        "simple",
+                        (
+                            "string",
+                            (b'\x31\x37\x32\x2e\x33\x31'
+                             b'\x2e\x31\x39\x2e\x37\x33')
+                        )
+                    )
                 },
                 {
                     "name": "1.3.6.1.4.1.253.8.51.10.2.1.5.10.14130400",
-                    "value": {
-                        "simple": {
-                            "number": 2
-                        }
-                    }
+                    "value": (
+                        "simple", (
+                            "number",
+                            2
+                        )
+                    )
                 },
                 {
                     "name": "1.3.6.1.4.1.253.8.51.10.2.1.7.10.14130102",
-                    "value": {
-                        "simple": {
-                            "string": (b'\x32\x35\x35\x2e\x32\x35'
-                                       b'\x35\x2e\x32\x35\x35\x2e'
-                                       b'\x30')
-                        }
-                    }
+                    "value": (
+                        "simple",
+                        (
+                            "string",
+                            (b'\x32\x35\x35\x2e\x32\x35'
+                             b'\x35\x2e\x32\x35\x35\x2e'
+                             b'\x30')
+                        )
+                    )
                 },
                 {
                     "name": "1.3.6.1.4.1.253.8.51.10.2.1.7.10.14130104",
-                    "value": {
-                        "simple": {
-                            "string": (b'\x31\x37\x32\x2e\x33\x31'
-                                       b'\x2e\x31\x39\x2e\x32')
-                        }
-                    }
+                    "value": (
+                        "simple",
+                        (
+                            "string",
+                            (b'\x31\x37\x32\x2e\x33\x31'
+                             b'\x2e\x31\x39\x2e\x32')
+                        )
+                    )
                 }
             ]
         }
-    }
+    )
 }
 
 DECODED_MESSAGE_PYCRATE = {
@@ -113,19 +121,38 @@ DECODED_MESSAGE_PYCRATE = {
                 {
                     'name': (1, 3, 6, 1, 4, 1, 253, 8, 51, 10, 2, 1, 7, 10, 14130101),
                     'value': (
-                        'simple', ('string', b'172.31.19.73'))
+                        'simple',
+                        (
+                            'string', b'172.31.19.73'
+                        )
+                    )
                 },
                 {
                     'name': (1, 3, 6, 1, 4, 1, 253, 8, 51, 10, 2, 1, 5, 10, 14130400),
-                    'value': ('simple', ('number', 2))
+                    'value': (
+                        'simple',
+                        (
+                            'number', 2
+                        )
+                    )
                 },
                 {
                     'name': (1, 3, 6, 1, 4, 1, 253, 8, 51, 10, 2, 1, 7, 10, 14130102),
-                    'value': ('simple', ('string', b'255.255.255.0'))
+                    'value': (
+                        'simple',
+                        (
+                            'string', b'255.255.255.0'
+                        )
+                    )
                 },
                 {
                     'name': (1, 3, 6, 1, 4, 1, 253, 8, 51, 10, 2, 1, 7, 10, 14130104),
-                    'value': ('simple', ('string', b'172.31.19.2'))
+                    'value': (
+                        'simple',
+                        (
+                            'string', b'172.31.19.2'
+                        )
+                    )
                 }
             ]
         }

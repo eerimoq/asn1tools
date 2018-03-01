@@ -219,9 +219,9 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         decoded = {
             'a': 253,
             'b': True,
-            'c': {
-                'e': True
-            },
+            'c': (
+                'e', True
+            ),
             'g': '123',
             'h': True
         }
@@ -239,27 +239,30 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         # Message 1.
         encoded = rrc.encode('PCCH-Message',
                              {
-                                 'message': {
-                                     'c1' : {
-                                         'paging': {
+                                 'message': (
+                                     'c1',
+                                     (
+                                         'paging',
+                                         {
                                              'systemInfoModification': 'true',
                                              'nonCriticalExtension': {
                                              }
                                          }
-                                     }
-                                 }
+                                     )
+                                 )
                              })
         self.assertEqual(encoded, b'\x28')
 
         # Message 2.
         encoded = rrc.encode('PCCH-Message',
                              {
-                                 'message': {
-                                     'c1' : {
-                                         'paging': {
+                                 'message': (
+                                     'c1',
+                                     (
+                                         'paging', {
                                          }
-                                     }
-                                 }
+                                     )
+                                 )
                              })
         self.assertEqual(encoded, b'\x00')
 
@@ -492,8 +495,9 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             s1ap = asn1tools.compile_dict(deepcopy(S1AP_14_4_0), 'per')
 
             # Message 1.
-            decoded_message = {
-                'successfulOutcome': {
+            decoded_message = (
+                'successfulOutcome',
+                {
                     'procedureCode': 17,
                     'criticality': 'reject',
                     'value': {
@@ -519,7 +523,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
                         ]
                     }
                 }
-            }
+            )
 
             encoded_message = (
                 b'\x20\x11\x00\x15\x00\x00\x01\x00\x69\x00\x0e\x00\x40\xab\xcd\xef\x12'

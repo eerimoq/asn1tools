@@ -133,15 +133,17 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         # Message 1.
         decoded = {
-            'message': {
-                'c1' : {
-                    'paging': {
+            'message': (
+                'c1',
+                (
+                    'paging',
+                    {
                         'systemInfoModification': 'true',
                         'nonCriticalExtension': {
                         }
                     }
-                }
-            }
+                )
+            )
         }
 
         encoded = b'0\x0b\xa0\t\xa0\x07\xa0\x05\x81\x01\x00\xa3\x00'
@@ -150,12 +152,10 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         # Message 2.
         decoded = {
-            'message': {
-                'c1' : {
-                    'paging': {
-                    }
-                }
-            }
+            'message': (
+                'c1',
+                ('paging', {})
+            )
         }
 
         encoded = b'0\x06\xa0\x04\xa0\x02\xa0\x00'
@@ -184,14 +184,18 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         # Message 4.
         decoded = {
-            'message': {
-                'c1': {
-                    'systemInformation': {
-                        'criticalExtensions': {
-                            'systemInformation-r8': {
+            'message': (
+                'c1',
+                (
+                    'systemInformation',
+                    {
+                        'criticalExtensions': (
+                            'systemInformation-r8',
+                            {
                                 'sib-TypeAndInfo': [
-                                    {
-                                        'sib2': {
+                                    (
+                                        'sib2',
+                                        {
                                             'ac-BarringInfo': {
                                                 'ac-BarringForEmergency': True,
                                                 'ac-BarringForMO-Data': {
@@ -261,13 +265,13 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                                                     'nCS-AN': 4,
                                                     'n1PUCCH-AN': 2047
                                                 },
-                                                'soundingRS-UL-ConfigCommon': {
-                                                    'setup': {
+                                                'soundingRS-UL-ConfigCommon': (
+                                                    'setup',
+                                                    {
                                                         'srs-BandwidthConfig': 'bw0',
                                                         'srs-SubframeConfig': 'sc4',
                                                         'ackNackSRS-SimultaneousTransmission': True
-                                                    }
-                                                },
+                                                    }),
                                                 'uplinkPowerControlCommon': {
                                                     'p0-NominalPUSCH': -126,
                                                     'alpha': 'al0',
@@ -296,9 +300,10 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                                             },
                                             'timeAlignmentTimerCommon': 'sf500'
                                         }
-                                    },
-                                    {
-                                        'sib3': {
+                                    ),
+                                    (
+                                        'sib3',
+                                        {
                                             'cellReselectionInfoCommon': {
                                                 'q-Hyst': 'dB0',
                                                 'speedStateReselectionPars': {
@@ -326,72 +331,77 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                                                 't-ReselectionEUTRA': 4
                                             }
                                         }
-                                    },
-                                    {
-                                        'sib4': {
+                                    ),
+                                    (
+                                        'sib4',
+                                        {
                                         }
-                                    },
-                                    {
-                                        'sib5': {
+                                    ),
+                                    (
+                                        'sib5',
+                                        {
                                             'interFreqCarrierFreqList': [
                                                 {
                                                     'dl-CarrierFreq': 1,
                                                     'q-RxLevMin': -45,
                                                     't-ReselectionEUTRA': 0,
                                                     'threshX-High': 31,
-                                                    'threshX-Low': 29 ,
+                                                    'threshX-Low': 29,
                                                     'allowedMeasBandwidth': 'mbw6',
                                                     'presenceAntennaPort1': True,
-                                                    'q-OffsetFreq': 'dB0',
-                                                    'neighCellConfig': (b'\x00', 2)
+                                                    'neighCellConfig': (b'\x00', 2),
+                                                    'q-OffsetFreq': 'dB0'
                                                 }
                                             ]
                                         }
-                                    },
-                                    {
-                                        'sib6': {
+                                    ),
+                                    (
+                                        'sib6',
+                                        {
                                             't-ReselectionUTRA': 3
                                         }
-                                    },
-                                    {
-                                        'sib7': {
-                                            't-ReselectionGERAN': 3
+                                    ),
+                                    ('sib7',
+                                     {
+                                         't-ReselectionGERAN': 3
+                                     }
+                                    ),
+                                    ('sib8',
+                                     {
+                                         'parameters1XRTT': {
+                                             'longCodeState1XRTT': (b'\x01#Eg\x89\x00', 42)
+                                         }
+                                     }
+                                    ),
+                                    (
+                                        'sib9',
+                                        {
+                                            'hnb-Name': b'4'
                                         }
-                                    },
-                                    {
-                                        'sib8': {
-                                            'parameters1XRTT': {
-                                                'longCodeState1XRTT': (b'\x01\x23\x45\x67\x89\x00', 42)
-                                            }
-                                        }
-                                    },
-                                    {
-                                        'sib9': {
-                                            'hnb-Name': b'\x34'
-                                        }
-                                    },
-                                    {
-                                        'sib10': {
-                                            'messageIdentifier': (b'\x23\x34', 16),
-                                            'serialNumber': (b'\x12\x34', 16),
-                                            'warningType': b'\x32\x12'
-                                        }
-                                    },
-                                    {
-                                        'sib11': {
-                                            'messageIdentifier': (b'\x67\x88', 16),
-                                            'serialNumber': (b'\x54\x35', 16),
+                                    ),
+                                    ('sib10',
+                                     {
+                                         'messageIdentifier': (b'#4', 16),
+                                         'serialNumber': (b'\x124', 16),
+                                         'warningType': b'2\x12'
+                                     }
+                                    ),
+                                    (
+                                        'sib11',
+                                        {
+                                            'messageIdentifier': (b'g\x88', 16),
+                                            'serialNumber': (b'T5', 16),
                                             'warningMessageSegmentType': 'notLastSegment',
                                             'warningMessageSegmentNumber': 19,
                                             'warningMessageSegment': b'\x12'
                                         }
-                                    }
+                                    )
                                 ]
                             }
-                        }
+                        )
                     }
-                }
-            }
+                )
+            )
         }
 
         encoded = (
@@ -437,51 +447,59 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         decoded = {
             "version": 0,
             "community": b'public',
-            "data": {
-                "set-request": {
+            "data": (
+                "set-request",
+                {
                     "request-id": 60,
                     "error-status": 0,
                     "error-index": 0,
                     "variable-bindings": [
                         {
                             "name": "1.3.6.1.4.1.253.8.51.10.2.1.7.10.14130101",
-                            "value": {
-                                "simple": {
-                                    "string": (b'\x31\x37\x32\x2e\x33\x31'
-                                               b'\x2e\x31\x39\x2e\x37\x33')
-                                }
-                            }
+                            "value": (
+                                "simple",
+                                (
+                                    "string",
+                                    (b'\x31\x37\x32\x2e\x33\x31'
+                                     b'\x2e\x31\x39\x2e\x37\x33')
+                                )
+                            )
                         },
                         {
                             "name": "1.3.6.1.4.1.253.8.51.10.2.1.5.10.14130400",
-                            "value": {
-                                "simple": {
-                                    "number": 2
-                                }
-                            }
+                            "value": (
+                                "simple", (
+                                    "number",
+                                    2
+                                )
+                            )
                         },
                         {
                             "name": "1.3.6.1.4.1.253.8.51.10.2.1.7.10.14130102",
-                            "value": {
-                                "simple": {
-                                    "string": (b'\x32\x35\x35\x2e\x32\x35'
-                                               b'\x35\x2e\x32\x35\x35\x2e'
-                                               b'\x30')
-                                }
-                            }
+                            "value": (
+                                "simple",
+                                (
+                                    "string",
+                                    (b'\x32\x35\x35\x2e\x32\x35'
+                                     b'\x35\x2e\x32\x35\x35\x2e'
+                                     b'\x30')
+                                )
+                            )
                         },
                         {
                             "name": "1.3.6.1.4.1.253.8.51.10.2.1.7.10.14130104",
-                            "value": {
-                                "simple": {
-                                    "string": (b'\x31\x37\x32\x2e\x33\x31'
-                                               b'\x2e\x31\x39\x2e\x32')
-                                }
-                            }
+                            "value": (
+                                "simple",
+                                (
+                                    "string",
+                                    (b'\x31\x37\x32\x2e\x33\x31'
+                                     b'\x2e\x31\x39\x2e\x32')
+                                )
+                            )
                         }
                     ]
                 }
-            }
+            )
         }
 
         encoded = (
@@ -501,117 +519,133 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         decoded = {
             'version': 1,
             'community': b'community',
-            'data': {
-                'set-request': {
+            'data': (
+                'set-request',
+                {
                     'request-id': 1687059484,
                     'error-status': 0,
                     'error-index': 0,
                     'variable-bindings': [
                         {
                             'name': '1.3.6.1.999.1.1',
-                            'value': {
-                                'simple': {
-                                    'number': 1
-                                }
-                            }
+                            'value': (
+                                'simple',
+                                (
+                                    'number', 1
+                                )
+                            )
                         },
                         {
                             'name': '1.3.6.1.999.2.1',
-                            'value': {
-                                'simple': {
-                                    'string': b'f00'
-                                }
-                            }
+                            'value': (
+                                'simple',
+                                (
+                                    'string', b'f00'
+                                )
+                            )
                         },
                         {
                             'name': '1.3.6.1.999.3.1',
-                            'value': {
-                                'application-wide': {
-                                    'address': {
-                                        'internet': b'\xc0\xa8\x01\x01'
-                                    }
-                                }
-                            }
+                            'value': (
+                                'application-wide',
+                                (
+                                    'address',
+                                    (
+                                        'internet', b'\xc0\xa8\x01\x01'
+                                    )
+                                )
+                            )
                         },
                         {
                             'name': '1.3.6.1.999.4.1',
-                            'value': {
-                                'simple': {
-                                    'object': '1.2.3.444.555'
-                                }
-                            }
+                            'value': (
+                                'simple',
+                                (
+                                    'object', '1.2.3.444.555'
+                                )
+                            )
                         },
                         {
                             'name': '1.3.6.1.999.1.2',
-                            'value': {
-                                'simple': {
-                                    'number': 1
-                                }
-                            }
+                            'value': (
+                                'simple',
+                                (
+                                    'number', 1
+                                )
+                            )
                         },
                         {
                             'name': '1.3.6.1.999.2.2',
-                            'value': {
-                                'simple': {
-                                'string': b'f00'
-                                }
-                            }
+                            'value': (
+                                'simple',
+                                (
+                                    'string', b'f00'
+                                )
+                            )
                         },
                         {
                             'name': '1.3.6.1.999.3.2',
-                            'value': {
-                                'application-wide': {
-                                    'address': {
-                                        'internet': b'\xc0\xa8\x01\x01'
-                                    }
-                                }
-                            }
+                            'value': (
+                                'application-wide',
+                                (
+                                    'address',
+                                    (
+                                        'internet', b'\xc0\xa8\x01\x01'
+                                    )
+                                )
+                            )
                         },
                         {
                             'name': '1.3.6.1.999.4.2',
-                            'value': {
-                                'simple': {
-                                    'object': '1.2.3.444.555'
-                                }
-                            }
+                            'value': (
+                                'simple',
+                                (
+                                    'object', '1.2.3.444.555'
+                                )
+                            )
                         },
                         {
                             'name': '1.3.6.1.999.1.3',
-                            'value': {
-                                'simple': {
-                                    'number': 1
-                                }
-                            }
+                            'value': (
+                                'simple',
+                                (
+                                    'number', 1
+                                )
+                            )
                         },
                         {
                             'name': '1.3.6.1.999.2.3',
-                            'value': {
-                                'simple': {
-                                    'string': b'f00'
-                                }
-                            }
+                            'value': (
+                                'simple',
+                                (
+                                    'string', b'f00'
+                                )
+                            )
                         },
                         {
                             'name': '1.3.6.1.999.3.3',
-                            'value': {
-                                'application-wide': {
-                                    'address': {
-                                        'internet': b'\xc0\xa8\x01\x01'
-                                    }
-                                }
-                            }
+                            'value': (
+                                'application-wide',
+                                (
+                                    'address',
+                                    (
+                                        'internet', b'\xc0\xa8\x01\x01'
+                                    )
+                                )
+                            )
                         },
                         {
                             'name': '1.3.6.1.999.4.3',
-                            'value': {
-                                'simple': {
-                                    'object': '1.2.3.444.555'
-                                }
-                            }
+                            'value': (
+                                'simple',
+                                (
+                                    'object', '1.2.3.444.555'
+                                )
+                            )
                         }
                     ]
                 }
-            }
+            )
         }
 
         encoded = (
@@ -638,89 +672,99 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         decoded = {
             'version': 1,
             'community': b'community',
-            'data': {
-                'set-request': {
+            'data': (
+                'set-request',
+                {
                     'request-id': 1687059484,
                     'error-status': 0,
                     'error-index': 0,
                     'variable-bindings': [
                         {
                             'name': '1.3.6.1.999.1.1',
-                            'value': {
-                                'simple': {
-                                    'number': -1
-                                }
-                            }
+                            'value': (
+                                'simple',
+                                (
+                                    'number', -1
+                                )
+                            )
                         },
                         {
                             'name': '1.3.6.1.999.2.1',
-                            'value': {
-                                'simple': {
-                                    'string': b'f00'
-                                }
-                            }
+                            'value': (
+                                'simple',
+                                (
+                                    'string', b'f00'
+                                )
+                            )
                         },
                         {
                             'name': '1.3.6.1.999.4.1',
-                            'value': {
-                                'simple': {
-                                    'object': '1.2.3.444.555'
-                                }
-                            }
+                            'value': (
+                                'simple',
+                                (
+                                    'object', '1.2.3.444.555'
+                                )
+                            )
                         },
                         {
                             'name': '1.3.6.1.999.4.1',
-                            'value': {
-                                'simple': {
-                                    'empty': None
-                                }
-                            }
+                            'value': (
+                                'simple',
+                                (
+                                    'empty', None
+                                )
+                            )
                         },
                         {
                             'name': '1.3.6.1.999.3.1',
-                            'value': {
-                                'application-wide': {
-                                    'address': {
-                                        'internet': b'\xc0\xa8\x01\x01'
-                                    }
-                                }
-                            }
+                            'value': (
+                                'application-wide',
+                                (
+                                    'address', (
+                                        'internet', b'\xc0\xa8\x01\x01'
+                                    )
+                                )
+                            )
                         },
                         {
                             'name': '1.3.6.1.999.3.1',
-                            'value': {
-                                'application-wide': {
-                                    'counter': 0
-                                }
-                            }
+                            'value': (
+                                'application-wide',
+                                (
+                                    'counter', 0
+                                )
+                            )
                         },
                         {
                             'name': '1.3.6.1.999.3.1',
-                            'value': {
-                                'application-wide': {
-                                    'gauge': 4294967295
-                                }
-                            }
+                            'value': (
+                                'application-wide',
+                                (
+                                    'gauge', 4294967295
+                                )
+                            )
                         },
                         {
                             'name': '1.3.6.1.999.3.1',
-                            'value': {
-                                'application-wide': {
-                                    'ticks': 88
-                                }
-                            }
+                            'value': (
+                                'application-wide',
+                                (
+                                    'ticks', 88
+                                )
+                            )
                         },
                         {
                             'name': '1.3.6.1.999.3.1',
-                            'value': {
-                                'application-wide': {
-                                    'arbitrary': b'\x31\x32\x33'
-                                }
-                            }
+                            'value': (
+                                'application-wide',
+                                (
+                                    'arbitrary', b'\x31\x32\x33'
+                                )
+                            )
                         }
                     ]
                 }
-            }
+            )
         }
 
         encoded = (
@@ -744,20 +788,20 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         decoded = {
             'version': 1,
             'community': b'community',
-            'data': {
-                'set-request': {
+            'data': (
+                'set-request',
+                {
                     'request-id': 1687059484,
                     'error-status': 0,
                     'error-index': 0,
                     'variable-bindings': [
                         {
                             'name': '1.3.6.1.999.1.1',
-                            'value': {
-                            }
+                            'value': ('', ())
                         }
                     ]
                 }
-            }
+            )
         }
 
         with self.assertRaises(asn1tools.EncodeError) as cm:
@@ -810,16 +854,18 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         # A search request message.
         decoded = {
             'messageID': 2,
-            'protocolOp': {
-                'searchRequest': {
+            'protocolOp': (
+                'searchRequest',
+                {
                     'baseObject': b'',
                     'scope': 'wholeSubtree',
                     'derefAliases': 'neverDerefAliases',
                     'sizeLimit': 0,
                     'timeLimit': 0,
                     'typesOnly': False,
-                    'filter': {
-                        'and': [
+                    'filter': (
+                        'and',
+                        [
                             {
                                 'substrings': {
                                     'type': b'\x63\x6e',
@@ -835,11 +881,11 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                                 }
                             }
                         ]
-                    },
+                    ),
                     'attributes': {
                     }
                 }
-            }
+            )
         }
 
         encoded = (
@@ -858,13 +904,14 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         # A search result done message.
         decoded = {
             'messageID': 2,
-            'protocolOp': {
-                'searchResDone': {
+            'protocolOp': (
+                'searchResDone',
+                {
                     'resultCode': 'noSuchObject',
                     'matchedDN': b'',
                     'diagnosticMessage': b''
                 }
-            }
+            )
         }
 
         encoded = (
@@ -876,15 +923,16 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         # A bind request message.
         decoded = {
             'messageID': 1,
-            'protocolOp': {
-                'bindRequest': {
+            'protocolOp': (
+                'bindRequest',
+                {
                     'version': 3,
                     'name': b'uid=tesla,dc=example,dc=com',
-                    'authentication': {
-                        'simple': b'password'
-                    }
+                    'authentication': (
+                        'simple', b'password'
+                    )
                 }
-            }
+            )
         }
 
         encoded = (
@@ -899,13 +947,14 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         # A bind response message.
         decoded = {
             'messageID': 1,
-            'protocolOp': {
-                'bindResponse': {
+            'protocolOp': (
+                'bindResponse',
+                {
                     'resultCode': 'success',
                     'matchedDN': b'',
                     'diagnosticMessage': b''
                 }
-            }
+            )
         }
 
         encoded = (
@@ -925,8 +974,9 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                     'algorithm': '1.2.840.113549.1.1.5',
                     'parameters': b'\x05\x00'
                 },
-                'issuer': {
-                    'rdnSequence': [
+                'issuer': (
+                    'rdnSequence',
+                    [
                         [{'type': '2.5.4.6',
                           'value': b'\x13\x02\x4a\x50'}],
                         [{'type': '2.5.4.8',
@@ -945,13 +995,14 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                           'value': (b'\x16\x14\x73\x75\x70\x70\x6f\x72\x74\x40\x66'
                                     b'\x72\x61\x6e\x6b\x34\x64\x64\x2e\x63\x6f\x6d')}]
                     ]
-                },
+                ),
                 'validity': {
-                    'notAfter': {'utcTime': '170821052654'},
-                    'notBefore': {'utcTime': '120822052654'}
+                    'notAfter': ('utcTime', '170821052654'),
+                    'notBefore': ('utcTime', '120822052654')
                 },
-                'subject': {
-                    'rdnSequence': [
+                'subject': (
+                    'rdnSequence',
+                    [
                         [{'type': '2.5.4.6',
                           'value': b'\x13\x02\x4a\x50'}],
                         [{'type': '2.5.4.8',
@@ -962,7 +1013,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                           'value': (b'\x0c\x0f\x77\x77\x77\x2e\x65\x78\x61\x6d\x70'
                                     b'\x6c\x65\x2e\x63\x6f\x6d')}]
                     ]
-                },
+                ),
                 'subjectPublicKeyInfo': {
                     'algorithm': {
                         'algorithm': '1.2.840.113549.1.1.1',
@@ -1062,35 +1113,37 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                     'algorithm': '1.2.840.113549.1.1.5',
                     'parameters': None
                 },
-                'issuer': {
-                    'rdnSequence': [
+                'issuer': (
+                    'rdnSequence',
+                    [
                         [{'type': '2.5.4.6', 'value': 'JP'}],
                         [{'type': '2.5.4.8',
-                          'value': {'printableString': 'Tokyo'}}],
+                          'value': ('printableString', 'Tokyo')}],
                         [{'type': '2.5.4.7', 'value': 'Chuo-ku'}],
                         [{'type': '2.5.4.10',
-                          'value': {'printableString': 'Frank4DD'}}],
+                          'value': ('printableString', 'Frank4DD')}],
                         [{'type': '2.5.4.11', 'value': 'WebCert Support'}],
                         [{'type': '2.5.4.3',
-                          'value': {'printableString': 'Frank4DD Web CA'}}],
+                          'value': ('printableString', 'Frank4DD Web CA')}],
                         [{'type': '1.2.840.113549.1.9.1',
                           'value': 'support@frank4dd.com'}]
                     ]
-                },
+                ),
                 'validity': {
-                    'notAfter': {'utcTime': '170821052654'},
-                    'notBefore': {'utcTime': '120822052654'}
+                    'notAfter': ('utcTime', '170821052654'),
+                    'notBefore': ('utcTime', '120822052654')
                 },
-                'subject': {
-                    'rdnSequence': [
+                'subject': (
+                    'rdnSequence',
+                    [
                         [{'type': '2.5.4.6', 'value': 'JP'}],
-                        [{'type': '2.5.4.8', 'value': {'utf8String': 'Tokyo'}}],
+                        [{'type': '2.5.4.8', 'value': ('utf8String', 'Tokyo')}],
                         [{'type': '2.5.4.10',
-                          'value': {'utf8String': 'Frank4DD'}}],
+                          'value': ('utf8String', 'Frank4DD')}],
                         [{'type': '2.5.4.3',
-                          'value': {'utf8String': 'www.example.com'}}]
+                          'value': ('utf8String', 'www.example.com')}]
                     ]
-                },
+                ),
                 'subjectPublicKeyInfo': {
                     'algorithm': {
                         'algorithm': '1.2.840.113549.1.1.1',
@@ -1162,12 +1215,13 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         self.assert_encode_decode(rfc5280, 'Certificate', decoded, encoded)
 
         # Explicit tagging.
-        decoded = {
-            'psap-address': {
+        decoded = (
+            'psap-address',
+            {
                 'pSelector': b'\x12',
                 'nAddresses': [ b'\x34' ]
             }
-        }
+        )
 
         encoded = b'\xa0\x0c\xa0\x03\x04\x01\x12\xa3\x05\x31\x03\x04\x01\x34'
 
@@ -1366,14 +1420,14 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('CIBIA', 1, b'\xa5\x03\x02\x01\x01'),
             ('CIBIAI', 1, b'\x85\x01\x01'),
             ('S2',
-             {'a': 1, 'b': {'a': 3}, 'c': {'a': True}},
+             {'a': 1, 'b': {'a': 3}, 'c': ('a', True)},
              b'\x30\x0d\x02\x01\x01\xa2\x05\x30\x03\x02\x01\x03\x01\x01\xff'),
             ('S3',
-             {'a': 1, 'b': {'a': 3}, 'c': {'a': True}},
+             {'a': 1, 'b': {'a': 3}, 'c': ('a', True)},
              b'\x30\x0f\x02\x01\x01\xa2\x05\x30\x03\x02\x01\x03\xa3\x03\x01'
              b'\x01\xff'),
             ('S4',
-             {'a': 1, 'b': {'a': {'a': 2}}, 'c': {'a': 3}, 'd': {'a': True}},
+             {'a': 1, 'b': ('a', ('a', 2)), 'c': {'a': 3}, 'd': ('a', True)},
              b'\x30\x16\x02\x01\x01\xa1\x07\xa0\x05\xa0\x03\x02\x01\x02\xa2'
              b'\x05\x30\x03\x02\x01\x03\x01\x01\xff')
         ]
@@ -1390,13 +1444,13 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('CIBIA', 1, b'\x85\x01\x01'),
             ('CIBIAI', 1, b'\x85\x01\x01'),
             ('S2',
-             {'a': 1, 'b': {'a': 3}, 'c': {'a': True}},
+             {'a': 1, 'b': {'a': 3}, 'c': ('a', True)},
              b'\x30\x0b\x02\x01\x01\xa2\x03\x02\x01\x03\x01\x01\xff'),
             ('S3',
-             {'a': 1, 'b': {'a': 3}, 'c': {'a': True}},
+             {'a': 1, 'b': {'a': 3}, 'c': ('a', True)},
              b'\x30\x0d\x02\x01\x01\xa2\x03\x02\x01\x03\xa3\x03\x01\x01\xff'),
             ('S4',
-             {'a': 1, 'b': {'a': {'a': 2}}, 'c': {'a': 3}, 'd': {'a': True}},
+             {'a': 1, 'b': ('a', ('a', 2)), 'c': {'a': 3}, 'd': ('a', True)},
              b'\x30\x12\x02\x01\x01\xa1\x05\xa0\x03\x80\x01\x02\xa2\x03\x02'
              b'\x01\x03\x01\x01\xff')
         ]
@@ -1413,13 +1467,13 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('CIBIA', 1, b'\x85\x01\x01'),
             ('CIBIAI', 1, b'\x85\x01\x01'),
             ('S2',
-             {'a': 1, 'b': {'a': 3}, 'c': {'a': True}},
+             {'a': 1, 'b': {'a': 3}, 'c': ('a', True)},
              b'\x30\x0b\x02\x01\x01\xa2\x03\x80\x01\x03\x80\x01\xff'),
             ('S3',
-             {'a': 1, 'b': {'a': 3}, 'c': {'a': True}},
+             {'a': 1, 'b': {'a': 3}, 'c': ('a', True)},
              b'\x30\x0d\x02\x01\x01\xa2\x03\x80\x01\x03\xa3\x03\x80\x01\xff'),
             ('S4',
-             {'a': 1, 'b': {'a': {'a': 2}}, 'c': {'a': 3}, 'd': {'a': True}},
+             {'a': 1, 'b': ('a', ('a', 2)), 'c': {'a': 3}, 'd': ('a', True)},
              b'\x30\x12\x02\x01\x01\xa1\x05\xa0\x03\x80\x01\x02\xa2\x03\x80'
              b'\x01\x03\x80\x01\xff'
             )
@@ -1803,30 +1857,33 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         zforce = asn1tools.compile_dict(deepcopy(ZFORCE))
 
         # PDU 1.
-        decoded = {
-            'request': {
+        decoded = (
+            'request',
+            {
                 'deviceAddress': b'\x00\x01'
             }
-        }
+        )
         encoded = b'\xee\x04\x40\x02\x00\x01'
 
         self.assert_encode_decode(zforce, 'ProtocolMessage', decoded, encoded)
 
         # PDU 2.
-        decoded = {
-            'request': {
+        decoded = (
+            'request',
+            {
                 'enable': {
                     'enable': 1
                 }
             }
-        }
+        )
         encoded = b'\xee\x05\x65\x03\x81\x01\x01'
 
         self.assert_encode_decode(zforce, 'ProtocolMessage', decoded, encoded)
 
         # PDU 3.
-        decoded = {
-            'response': {
+        decoded = (
+            'response',
+            {
                 'enable': {
                     'reset': None
                 },
@@ -1835,7 +1892,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                     'errorCount': 34
                 }
             }
-        }
+        )
         encoded = (
             b'\xef\x0b\x65\x02\x82\x00\x6a\x05\xa0\x00\x81\x01\x22'
         )
@@ -1843,18 +1900,20 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         self.assert_encode_decode(zforce, 'ProtocolMessage', decoded, encoded)
 
         # PDU 4.
-        decoded = {
-            'notification': {
-                'notificationMessage': {
-                    'ledLevels': [
-                        {'uint8': b'\x55\x44\x33\x22'},
-                        {'uint16': b'\x01\x02'}
+        decoded = (
+            'notification',
+            {
+                'notificationMessage': (
+                    'ledLevels',
+                    [
+                        ('uint8', b'\x55\x44\x33\x22'),
+                        ('uint16', b'\x01\x02')
                     ]
-                },
+                ),
                 'notificationTimestamp': 1,
                 'notificationLatency': 21
             }
-        }
+        )
         encoded = (
             b'\xf0\x13\x6b\x0a\x80\x04\x55\x44\x33\x22\x82\x02\x01\x02\x58'
             b'\x01\x01\x5f\x23\x01\x15'
@@ -1863,8 +1922,9 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         self.assert_encode_decode(zforce, 'ProtocolMessage', decoded, encoded)
 
         # PDU 5.
-        decoded = {
-            'request': {
+        decoded = (
+            'request',
+            {
                 'errorLog': -2,
                 'errorThresholds': {
                     'asicsThresholds': [
@@ -1878,7 +1938,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                     ]
                 }
             }
-        }
+        )
         encoded = (
             b'\xee\x1a\x5f\x21\x01\xfe\x7f\x22\x13\xa0\x11\xa0\x0f\x80\x02'
             b'\xff\x00\xa1\x09\x80\x02\xee\x6c\x81\x03\x01\x86\xa0'

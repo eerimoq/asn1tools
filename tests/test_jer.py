@@ -68,15 +68,17 @@ class Asn1ToolsJerTest(unittest.TestCase):
 
         # Message 1.
         decoded_message = {
-            'message': {
-                'c1' : {
-                    'paging': {
+            'message': (
+                'c1',
+                (
+                    'paging',
+                    {
                         'systemInfoModification': 'true',
                         'nonCriticalExtension': {
                         }
                     }
-                }
-            }
+                )
+            )
         }
 
         encoded_message = (
@@ -114,15 +116,20 @@ class Asn1ToolsJerTest(unittest.TestCase):
         self.assertEqual(decoded, decoded_message)
 
         # Message 3.
+
         decoded_message = {
-            'message': {
-                'c1': {
-                    'systemInformation': {
-                        'criticalExtensions': {
-                            'systemInformation-r8': {
+            'message': (
+                'c1',
+                (
+                    'systemInformation',
+                    {
+                        'criticalExtensions': (
+                            'systemInformation-r8',
+                            {
                                 'sib-TypeAndInfo': [
-                                    {
-                                        'sib2': {
+                                    (
+                                        'sib2',
+                                        {
                                             'ac-BarringInfo': {
                                                 'ac-BarringForEmergency': True,
                                                 'ac-BarringForMO-Data': {
@@ -192,13 +199,13 @@ class Asn1ToolsJerTest(unittest.TestCase):
                                                     'nCS-AN': 4,
                                                     'n1PUCCH-AN': 2047
                                                 },
-                                                'soundingRS-UL-ConfigCommon': {
-                                                    'setup': {
+                                                'soundingRS-UL-ConfigCommon': (
+                                                    'setup',
+                                                    {
                                                         'srs-BandwidthConfig': 'bw0',
                                                         'srs-SubframeConfig': 'sc4',
                                                         'ackNackSRS-SimultaneousTransmission': True
-                                                    }
-                                                },
+                                                    }),
                                                 'uplinkPowerControlCommon': {
                                                     'p0-NominalPUSCH': -126,
                                                     'alpha': 'al0',
@@ -227,9 +234,10 @@ class Asn1ToolsJerTest(unittest.TestCase):
                                             },
                                             'timeAlignmentTimerCommon': 'sf500'
                                         }
-                                    },
-                                    {
-                                        'sib3': {
+                                    ),
+                                    (
+                                        'sib3',
+                                        {
                                             'cellReselectionInfoCommon': {
                                                 'q-Hyst': 'dB0',
                                                 'speedStateReselectionPars': {
@@ -257,72 +265,77 @@ class Asn1ToolsJerTest(unittest.TestCase):
                                                 't-ReselectionEUTRA': 4
                                             }
                                         }
-                                    },
-                                    {
-                                        'sib4': {
+                                    ),
+                                    (
+                                        'sib4',
+                                        {
                                         }
-                                    },
-                                    {
-                                        'sib5': {
+                                    ),
+                                    (
+                                        'sib5',
+                                        {
                                             'interFreqCarrierFreqList': [
                                                 {
                                                     'dl-CarrierFreq': 1,
                                                     'q-RxLevMin': -45,
                                                     't-ReselectionEUTRA': 0,
                                                     'threshX-High': 31,
-                                                    'threshX-Low': 29 ,
+                                                    'threshX-Low': 29,
                                                     'allowedMeasBandwidth': 'mbw6',
                                                     'presenceAntennaPort1': True,
-                                                    'q-OffsetFreq': 'dB0',
-                                                    'neighCellConfig': (b'\x00', 2)
+                                                    'neighCellConfig': (b'\x00', 2),
+                                                    'q-OffsetFreq': 'dB0'
                                                 }
                                             ]
                                         }
-                                    },
-                                    {
-                                        'sib6': {
+                                    ),
+                                    (
+                                        'sib6',
+                                        {
                                             't-ReselectionUTRA': 3
                                         }
-                                    },
-                                    {
-                                        'sib7': {
-                                            't-ReselectionGERAN': 3
+                                    ),
+                                    ('sib7',
+                                     {
+                                         't-ReselectionGERAN': 3
+                                     }
+                                    ),
+                                    ('sib8',
+                                     {
+                                         'parameters1XRTT': {
+                                             'longCodeState1XRTT': (b'\x01#Eg\x89\x00', 42)
+                                         }
+                                     }
+                                    ),
+                                    (
+                                        'sib9',
+                                        {
+                                            'hnb-Name': b'4'
                                         }
-                                    },
-                                    {
-                                        'sib8': {
-                                            'parameters1XRTT': {
-                                                'longCodeState1XRTT': (b'\x01\x23\x45\x67\x89\x00', 42)
-                                            }
-                                        }
-                                    },
-                                    {
-                                        'sib9': {
-                                            'hnb-Name': b'\x34'
-                                        }
-                                    },
-                                    {
-                                        'sib10': {
-                                            'messageIdentifier': (b'\x23\x34', 16),
-                                            'serialNumber': (b'\x12\x34', 16),
-                                            'warningType': b'\x32\x12'
-                                        }
-                                    },
-                                    {
-                                        'sib11': {
-                                            'messageIdentifier': (b'\x67\x88', 16),
-                                            'serialNumber': (b'\x54\x35', 16),
+                                    ),
+                                    ('sib10',
+                                     {
+                                         'messageIdentifier': (b'#4', 16),
+                                         'serialNumber': (b'\x124', 16),
+                                         'warningType': b'2\x12'
+                                     }
+                                    ),
+                                    (
+                                        'sib11',
+                                        {
+                                            'messageIdentifier': (b'g\x88', 16),
+                                            'serialNumber': (b'T5', 16),
                                             'warningMessageSegmentType': 'notLastSegment',
                                             'warningMessageSegmentNumber': 19,
                                             'warningMessageSegment': b'\x12'
                                         }
-                                    }
+                                    )
                                 ]
                             }
-                        }
+                        )
                     }
-                }
-            }
+                )
+            )
         }
 
         encoded_message = (

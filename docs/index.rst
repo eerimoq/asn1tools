@@ -22,7 +22,9 @@ Basic Usage
 Types
 =====
 
-ASN.1 types are mapped to Python types as shown in the table below.
+ASN.1 types are mapped to Python 3 types as shown in the table
+below. In Python 2, INTEGER may be ``long`` and all string types are
+``unicode``.
 
 +-------------------+-------------+-----------------------+
 | ASN.1 type        | Python type | Example               |
@@ -50,6 +52,8 @@ ASN.1 types are mapped to Python types as shown in the table below.
 | SET               | ``dict``    | ``{'foo': 'bar'}``    |
 +-------------------+-------------+-----------------------+
 | SET OF            | ``list``    | ``[3, 0, 7]``         |
++-------------------+-------------+-----------------------+
+| CHOICE            | ``tuple``   | ``('a', 5)``          |
 +-------------------+-------------+-----------------------+
 | UTF8String        | ``str``     | ``'hello'``           |
 +-------------------+-------------+-----------------------+
