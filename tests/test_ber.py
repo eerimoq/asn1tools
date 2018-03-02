@@ -997,8 +997,8 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                     ]
                 ),
                 'validity': {
-                    'notAfter': ('utcTime', '170821052654'),
-                    'notBefore': ('utcTime', '120822052654')
+                    'notAfter': ('utcTime', '170821052654Z'),
+                    'notBefore': ('utcTime', '120822052654Z')
                 },
                 'subject': (
                     'rdnSequence',
@@ -1130,8 +1130,8 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                     ]
                 ),
                 'validity': {
-                    'notAfter': ('utcTime', '170821052654'),
-                    'notBefore': ('utcTime', '120822052654')
+                    'notAfter': ('utcTime', '170821052654Z'),
+                    'notBefore': ('utcTime', '120822052654Z')
                 },
                 'subject': (
                     'rdnSequence',
@@ -1372,7 +1372,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('Generalstring',          'bar', b'\x1b\x03bar'),
             ('Bmpstring',             b'bar', b'\x1e\x03bar'),
             ('Teletexstring',         b'fum', b'\x14\x03fum'),
-            ('Utctime',       '010203040506', b'\x17\x0d010203040506Z'),
+            ('Utctime',      '010203040506Z', b'\x17\x0d010203040506Z'),
             ('GeneralizedTime1',
              '20001231235959.999',
              b'\x18\x12\x32\x30\x30\x30\x31\x32\x33\x31\x32\x33\x35\x39'
@@ -1798,7 +1798,10 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] UTCTime END'
         foo = asn1tools.compile_string(spec)
-        self.assert_encode_decode(foo, 'Foo', '121001230001', b'\xa2\x0f\x17\x0d121001230001Z')
+        self.assert_encode_decode(foo,
+                                  'Foo',
+                                  '121001230001Z',
+                                  b'\xa2\x0f\x17\x0d121001230001Z')
 
     def test_utf8_string_explicit_tags(self):
         """Test explicit tags on UTC time.

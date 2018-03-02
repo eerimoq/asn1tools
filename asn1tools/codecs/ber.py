@@ -869,14 +869,14 @@ class UTCTime(Type):
     def encode(self, data, encoded):
         encoded.extend(self.tag)
         encoded.append(13)
-        encoded.extend(bytearray((data + 'Z').encode('ascii')))
+        encoded.extend(bytearray((data).encode('ascii')))
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
 
-        return data[offset:end_offset][:-1].decode('ascii'), end_offset
+        return data[offset:end_offset].decode('ascii'), end_offset
 
     def __repr__(self):
         return 'UTCTime({})'.format(self.name)
