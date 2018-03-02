@@ -960,6 +960,40 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+    def test_utc_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UTCTime "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',
+             '010203040506Z',
+             b'\x0d\x60\xc5\x83\x26\x0c\xd8\x34\x60\xd5\x83\x6b\x40'),
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_generalized_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= GeneralizedTime "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',
+             '20001231235959.999Z',
+             b'\x13\x64\xc1\x83\x06\x2c\x99\xb1\x64\xcd\xab\x96\xae\x57\x39\x72'
+             b'\xe6\xd0')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
 
 if __name__ == '__main__':
     unittest.main()

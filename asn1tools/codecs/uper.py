@@ -679,7 +679,11 @@ class UniversalString(Type):
 
 class VisibleString(KnownMultiplierStringType):
 
-    def __init__(self, name, minimum, maximum, permitted_alphabet):
+    def __init__(self,
+                 name,
+                 minimum=None,
+                 maximum=None,
+                 permitted_alphabet=None):
         super(VisibleString, self).__init__(name,
                                             'VisibleString',
                                             minimum,
@@ -773,31 +777,19 @@ class BMPString(Type):
         return 'BMPString({})'.format(self.name)
 
 
-class UTCTime(Type):
+class UTCTime(VisibleString):
 
     def __init__(self, name):
         super(UTCTime, self).__init__(name, 'UTCTime')
-
-    def encode(self, data, encoder):
-        raise NotImplementedError()
-
-    def decode(self, decoder):
-        raise NotImplementedError()
 
     def __repr__(self):
         return 'UTCTime({})'.format(self.name)
 
 
-class GeneralizedTime(Type):
+class GeneralizedTime(VisibleString):
 
     def __init__(self, name):
         super(GeneralizedTime, self).__init__(name, 'GeneralizedTime')
-
-    def encode(self, data, encoder):
-        raise NotImplementedError()
-
-    def decode(self, decoder):
-        raise NotImplementedError()
 
     def __repr__(self):
         return 'GeneralizedTime({})'.format(self.name)
