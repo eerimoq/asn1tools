@@ -452,17 +452,19 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
                                             't-ReselectionUTRA': 3
                                         }
                                     ),
-                                    ('sib7',
-                                     {
-                                         't-ReselectionGERAN': 3
-                                     }
+                                    (
+                                        'sib7',
+                                        {
+                                            't-ReselectionGERAN': 3
+                                        }
                                     ),
-                                    ('sib8',
-                                     {
-                                         'parameters1XRTT': {
-                                             'longCodeState1XRTT': (b'\x01#Eg\x89\x00', 42)
-                                         }
-                                     }
+                                    (
+                                        'sib8',
+                                        {
+                                            'parameters1XRTT': {
+                                                'longCodeState1XRTT': (b'\x01#Eg\x89\x00', 42)
+                                            }
+                                        }
                                     ),
                                     (
                                         'sib9',
@@ -470,12 +472,13 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
                                             'hnb-Name': b'4'
                                         }
                                     ),
-                                    ('sib10',
-                                     {
-                                         'messageIdentifier': (b'#4', 16),
-                                         'serialNumber': (b'\x124', 16),
-                                         'warningType': b'2\x12'
-                                     }
+                                    (
+                                        'sib10',
+                                        {
+                                            'messageIdentifier': (b'#4', 16),
+                                            'serialNumber': (b'\x124', 16),
+                                            'warningType': b'2\x12'
+                                        }
                                     ),
                                     (
                                         'sib11',
