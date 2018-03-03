@@ -21,7 +21,7 @@ from .errors import CompileError
 
 
 __author__ = 'Erik Moqvist'
-__version__ = '0.41.0'
+__version__ = '0.42.0'
 
 
 def _decode_hexstring(codec_spec, asn1_spec, type_name, hexstring):
