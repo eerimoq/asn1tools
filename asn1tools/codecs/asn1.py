@@ -1,10 +1,8 @@
-"""ASN.1 value notation codec.
+"""Basic ASN.1 notation codec.
 
 """
 
-import json
 import binascii
-import math
 import logging
 
 from . import EncodeError
