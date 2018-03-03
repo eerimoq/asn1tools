@@ -198,7 +198,7 @@ Encodings
 .. |coverage| image:: https://coveralls.io/repos/github/eerimoq/asn1tools/badge.svg?branch=master
 .. _coverage: https://coveralls.io/github/eerimoq/asn1tools
 
-.. _Compile: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compile_file
+.. _Compile: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compile_files
 .. _encode: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compiler.Specification.encode
 .. _decode: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compiler.Specification.decode
 .. _examples: https://github.com/eerimoq/asn1tools/tree/master/examples
