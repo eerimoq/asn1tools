@@ -17,6 +17,7 @@ Codecs under development:
 - Aligned Packed Encoding Rules (PER)
 - Unaligned Packed Encoding Rules (UPER)
 - XML Encoding Rules (XER)
+- Basic ASN.1 value notation
 
 Planned codecs:
 
