@@ -1,9 +1,9 @@
-import json
 import unittest
-import asn1tools
+from .utils import Asn1ToolsBaseTest
 import sys
-import math
 from copy import deepcopy
+
+import asn1tools
 
 sys.path.append('tests/files')
 sys.path.append('tests/files/3gpp')
@@ -11,112 +11,42 @@ sys.path.append('tests/files/3gpp')
 from rrc_8_6_0 import EXPECTED as RRC_8_6_0
 
 
-def loadb(encoded):
-    return json.loads(encoded.decode('utf-8'))
-
-
-class Asn1ToolsJerTest(unittest.TestCase):
+class Asn1ToolsAsn1Asn1Test(Asn1ToolsBaseTest):
 
     maxDiff = None
 
     def test_foo(self):
-        foo = asn1tools.compile_files(['tests/files/foo.asn'], 'jer')
+        foo = asn1tools.compile_files(['tests/files/foo.asn'], 'asn1')
 
-        self.assertEqual(len(foo.types), 2)
-        self.assertTrue(foo.types['Question'] is not None)
-        self.assertTrue(foo.types['Answer'] is not None)
-        self.assertEqual(len(foo.modules), 1)
-        self.assertTrue(foo.modules['Foo'] is not None)
+        datas = [
+            ('Question',
+             {'id': 1, 'question': 'Is 1+1=3?'},
+             b'question Question ::= { id 1, question "Is 1+1=3?" }')
+        ]
 
-        # Question.
-        decoded_message = {'id': 1, 'question': 'Is 1+1=3?'}
-        encoded_message = b'{"id":1,"question":"Is 1+1=3?"}'
+        for name, decoded, encoded in datas:
+            self.assertEqual(foo.encode(name, decoded), encoded)
 
-        encoded = foo.encode('Question', decoded_message)
-        self.assertEqual(loadb(encoded), loadb(encoded_message))
-        decoded = foo.decode('Question', encoded)
-        self.assertEqual(decoded, decoded_message)
+    def test_foo_indent(self):
+        foo = asn1tools.compile_files(['tests/files/foo.asn'], 'asn1')
 
-        # Answer.
-        decoded_message = {'id': 1, 'answer': False}
-        encoded_message = b'{"id":1,"answer":false}'
+        datas = [
+            ('Question',
+             {'id': 1, 'question': 'Is 1+1=3?'},
+             b'question Question ::= {\n'
+             b'  id 1,\n'
+             b'  question "Is 1+1=3?"\n'
+             b'}')
+        ]
 
-        encoded = foo.encode('Answer', decoded_message)
-        self.assertEqual(loadb(encoded), loadb(encoded_message))
-        decoded = foo.decode('Answer', encoded)
-        self.assertEqual(decoded, decoded_message)
-
-        # Encode a question with missing field 'id'.
-        with self.assertRaises(asn1tools.EncodeError) as cm:
-            encoded = foo.encode('Question', {'question': 'Is 1+1=3?'})
-
-        self.assertEqual(
-            str(cm.exception),
-            "Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
-
-    def test_decode_length(self):
-        foo = asn1tools.compile_files('tests/files/foo.asn', 'jer')
-
-        with self.assertRaises(asn1tools.DecodeError) as cm:
-            foo.decode_length(b'')
-
-        self.assertEqual(str(cm.exception),
-                         ': Decode length not supported for this codec.')
+        for name, decoded, encoded in datas:
+            actual = foo.encode(name, decoded, indent=2)
+            self.assertEqual(actual, encoded)
 
     def test_rrc_8_6_0(self):
-        rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0), 'jer')
+        rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0), 'asn1')
 
-        # Message 1.
-        decoded_message = {
-            'message': (
-                'c1',
-                (
-                    'paging',
-                    {
-                        'systemInfoModification': 'true',
-                        'nonCriticalExtension': {
-                        }
-                    }
-                )
-            )
-        }
-
-        encoded_message = (
-            b'{"message":{"c1":{"paging":{"systemInfoModification":"true","'
-            b'nonCriticalExtension":{}}}}}'
-        )
-
-        encoded = rrc.encode('PCCH-Message', decoded_message)
-        self.assertEqual(loadb(encoded), loadb(encoded_message))
-        decoded = rrc.decode('PCCH-Message', encoded)
-        self.assertEqual(decoded, decoded_message)
-
-        # Message 2.
-        decoded_message = {
-            'message': {
-                'dl-Bandwidth': 'n6',
-                'phich-Config': {
-                    'phich-Duration': 'normal',
-                    'phich-Resource': 'half'
-                },
-                'systemFrameNumber': (b'\x12', 8),
-                'spare': (b'\x34\x40', 10)
-            }
-        }
-
-        encoded_message = (
-            b'{"message":{"dl-Bandwidth":"n6","phich-Config":{"phich-Duration'
-            b'":"normal","phich-Resource":"half"},"spare":"3440","'
-            b'systemFrameNumber":"12"}}'
-        )
-
-        encoded = rrc.encode('BCCH-BCH-Message', decoded_message)
-        self.assertEqual(loadb(encoded), loadb(encoded_message))
-        decoded = rrc.decode('BCCH-BCH-Message', encoded)
-        self.assertEqual(decoded, decoded_message)
-
-        # Message 3.
-        decoded_message = {
+        decoded = {
             'message': (
                 'c1',
                 (
@@ -337,174 +267,193 @@ class Asn1ToolsJerTest(unittest.TestCase):
             )
         }
 
-        encoded_message = (
-            b'{"message":{"c1":{"systemInformation":{"criticalExtensions":{"sy'
-            b'stemInformation-r8":{"sib-TypeAndInfo":[{"sib2":{"ac-BarringInfo'
-            b'":{"ac-BarringForEmergency":true,"ac-BarringForMO-Data":{"ac-Bar'
-            b'ringFactor":"p95","ac-BarringForSpecialAC":"f0","ac-BarringTime"'
-            b':"s128"}},"freqInfo":{"additionalSpectrumEmission":3},"radioReso'
-            b'urceConfigCommon":{"bcch-Config":{"modificationPeriodCoeff":"n2"'
-            b'},"pcch-Config":{"defaultPagingCycle":"rf256","nB":"twoT"},"pdsc'
-            b'h-ConfigCommon":{"p-b":2,"referenceSignalPower":-60},"prach-Conf'
-            b'ig":{"prach-ConfigInfo":{"highSpeedFlag":false,"prach-ConfigInde'
-            b'x":33,"prach-FreqOffset":64,"zeroCorrelationZoneConfig":10},"roo'
-            b'tSequenceIndex":836},"pucch-ConfigCommon":{"deltaPUCCH-Shift":"d'
-            b's1","n1PUCCH-AN":2047,"nCS-AN":4,"nRB-CQI":98},"pusch-ConfigComm'
-            b'on":{"pusch-ConfigBasic":{"enable64QAM":false,"hoppingMode":"int'
-            b'erSubFrame","n-SB":1,"pusch-HoppingOffset":10},"ul-ReferenceSign'
-            b'alsPUSCH":{"cyclicShift":5,"groupAssignmentPUSCH":22,"groupHoppi'
-            b'ngEnabled":true,"sequenceHoppingEnabled":false}},"rach-ConfigCom'
-            b'mon":{"maxHARQ-Msg3Tx":8,"powerRampingParameters":{"powerRamping'
-            b'Step":"dB0","preambleInitialReceivedTargetPower":"dBm-102"},"pre'
-            b'ambleInfo":{"numberOfRA-Preambles":"n24","preamblesGroupAConfig"'
-            b':{"messagePowerOffsetGroupB":"minusinfinity","messageSizeGroupA"'
-            b':"b144","sizeOfRA-PreamblesGroupA":"n28"}},"ra-SupervisionInfo":'
-            b'{"mac-ContentionResolutionTimer":"sf48","preambleTransMax":"n8",'
-            b'"ra-ResponseWindowSize":"sf6"}},"soundingRS-UL-ConfigCommon":{"s'
-            b'etup":{"ackNackSRS-SimultaneousTransmission":true,"srs-Bandwidth'
-            b'Config":"bw0","srs-SubframeConfig":"sc4"}},"ul-CyclicPrefixLengt'
-            b'h":"len1","uplinkPowerControlCommon":{"alpha":"al0","deltaFList-'
-            b'PUCCH":{"deltaF-PUCCH-Format1":"deltaF-2","deltaF-PUCCH-Format1b'
-            b'":"deltaF1","deltaF-PUCCH-Format2":"deltaF0","deltaF-PUCCH-Forma'
-            b't2a":"deltaF-2","deltaF-PUCCH-Format2b":"deltaF0"},"deltaPreambl'
-            b'eMsg3":-1,"p0-NominalPUCCH":-127,"p0-NominalPUSCH":-126}},"timeA'
-            b'lignmentTimerCommon":"sf500","ue-TimersAndConstants":{"n310":"n2'
-            b'","n311":"n2","t300":"ms100","t301":"ms200","t310":"ms50","t311"'
-            b':"ms30000"}}},{"sib3":{"cellReselectionInfoCommon":{"q-Hyst":"dB'
-            b'0","speedStateReselectionPars":{"mobilityStateParameters":{"n-Ce'
-            b'llChangeHigh":16,"n-CellChangeMedium":1,"t-Evaluation":"s180","t'
-            b'-HystNormal":"s180"},"q-HystSF":{"sf-High":"dB-4","sf-Medium":"d'
-            b'B-6"}}},"cellReselectionServingFreqInfo":{"cellReselectionPriori'
-            b'ty":3,"threshServingLow":7},"intraFreqCellReselectionInfo":{"nei'
-            b'ghCellConfig":"80","presenceAntennaPort1":false,"q-RxLevMin":-33'
-            b',"s-IntraSearch":0,"t-ReselectionEUTRA":4}}},{"sib4":{}},{"sib5"'
-            b':{"interFreqCarrierFreqList":[{"allowedMeasBandwidth":"mbw6","dl'
-            b'-CarrierFreq":1,"neighCellConfig":"00","presenceAntennaPort1":tr'
-            b'ue,"q-OffsetFreq":"dB0","q-RxLevMin":-45,"t-ReselectionEUTRA":0,'
-            b'"threshX-High":31,"threshX-Low":29}]}},{"sib6":{"t-ReselectionUT'
-            b'RA":3}},{"sib7":{"t-ReselectionGERAN":3}},{"sib8":{"parameters1X'
-            b'RTT":{"longCodeState1XRTT":"012345678900"}}},{"sib9":{"hnb-Name"'
-            b':"34"}},{"sib10":{"messageIdentifier":"2334","serialNumber":"123'
-            b'4","warningType":"3212"}},{"sib11":{"messageIdentifier":"6788","'
-            b'serialNumber":"5435","warningMessageSegment":"12","warningMessag'
-            b'eSegmentNumber":19,"warningMessageSegmentType":"notLastSegment"}'
-            b'}]}}}}}}'
+        encoded = (
+            b"bcch-dl-sch-message BCCH-DL-SCH-Message ::= {\n"
+            b"  message c1 : systemInformation : {\n"
+            b"    criticalExtensions systemInformation-r8 : {\n"
+            b"      sib-TypeAndInfo {\n"
+            b"        sib2 : {\n"
+            b"          ac-BarringInfo {\n"
+            b"            ac-BarringForEmergency TRUE,\n"
+            b"            ac-BarringForMO-Data {\n"
+            b"              ac-BarringFactor p95,\n"
+            b"              ac-BarringTime s128,\n"
+            b"              ac-BarringForSpecialAC '11110'B\n"
+            b"            }\n"
+            b"          },\n"
+            b"          radioResourceConfigCommon {\n"
+            b"            rach-ConfigCommon {\n"
+            b"              preambleInfo {\n"
+            b"                numberOfRA-Preambles n24,\n"
+            b"                preamblesGroupAConfig {\n"
+            b"                  sizeOfRA-PreamblesGroupA n28,\n"
+            b"                  messageSizeGroupA b144,\n"
+            b"                  messagePowerOffsetGroupB minusinfinity\n"
+            b"                }\n"
+            b"              },\n"
+            b"              powerRampingParameters {\n"
+            b"                powerRampingStep dB0,\n"
+            b"                preambleInitialReceivedTargetPower dBm-102\n"
+            b"              },\n"
+            b"              ra-SupervisionInfo {\n"
+            b"                preambleTransMax n8,\n"
+            b"                ra-ResponseWindowSize sf6,\n"
+            b"                mac-ContentionResolutionTimer sf48\n"
+            b"              },\n"
+            b"              maxHARQ-Msg3Tx 8\n"
+            b"            },\n"
+            b"            bcch-Config {\n"
+            b"              modificationPeriodCoeff n2\n"
+            b"            },\n"
+            b"            pcch-Config {\n"
+            b"              defaultPagingCycle rf256,\n"
+            b"              nB twoT\n"
+            b"            },\n"
+            b"            prach-Config {\n"
+            b"              rootSequenceIndex 836,\n"
+            b"              prach-ConfigInfo {\n"
+            b"                prach-ConfigIndex 33,\n"
+            b"                highSpeedFlag FALSE,\n"
+            b"                zeroCorrelationZoneConfig 10,\n"
+            b"                prach-FreqOffset 64\n"
+            b"              }\n"
+            b"            },\n"
+            b"            pdsch-ConfigCommon {\n"
+            b"              referenceSignalPower -60,\n"
+            b"              p-b 2\n"
+            b"            },\n"
+            b"            pusch-ConfigCommon {\n"
+            b"              pusch-ConfigBasic {\n"
+            b"                n-SB 1,\n"
+            b"                hoppingMode interSubFrame,\n"
+            b"                pusch-HoppingOffset 10,\n"
+            b"                enable64QAM FALSE\n"
+            b"              },\n"
+            b"              ul-ReferenceSignalsPUSCH {\n"
+            b"                groupHoppingEnabled TRUE,\n"
+            b"                groupAssignmentPUSCH 22,\n"
+            b"                sequenceHoppingEnabled FALSE,\n"
+            b"                cyclicShift 5\n"
+            b"              }\n"
+            b"            },\n"
+            b"            pucch-ConfigCommon {\n"
+            b"              deltaPUCCH-Shift ds1,\n"
+            b"              nRB-CQI 98,\n"
+            b"              nCS-AN 4,\n"
+            b"              n1PUCCH-AN 2047\n"
+            b"            },\n"
+            b"            soundingRS-UL-ConfigCommon setup : {\n"
+            b"              srs-BandwidthConfig bw0,\n"
+            b"              srs-SubframeConfig sc4,\n"
+            b"              ackNackSRS-SimultaneousTransmission TRUE\n"
+            b"            },\n"
+            b"            uplinkPowerControlCommon {\n"
+            b"              p0-NominalPUSCH -126,\n"
+            b"              alpha al0,\n"
+            b"              p0-NominalPUCCH -127,\n"
+            b"              deltaFList-PUCCH {\n"
+            b"                deltaF-PUCCH-Format1 deltaF-2,\n"
+            b"                deltaF-PUCCH-Format1b deltaF1,\n"
+            b"                deltaF-PUCCH-Format2 deltaF0,\n"
+            b"                deltaF-PUCCH-Format2a deltaF-2,\n"
+            b"                deltaF-PUCCH-Format2b deltaF0\n"
+            b"              },\n"
+            b"              deltaPreambleMsg3 -1\n"
+            b"            },\n"
+            b"            ul-CyclicPrefixLength len1\n"
+            b"          },\n"
+            b"          ue-TimersAndConstants {\n"
+            b"            t300 ms100,\n"
+            b"            t301 ms200,\n"
+            b"            t310 ms50,\n"
+            b"            n310 n2,\n"
+            b"            t311 ms30000,\n"
+            b"            n311 n2\n"
+            b"          },\n"
+            b"          freqInfo {\n"
+            b"            additionalSpectrumEmission 3\n"
+            b"          },\n"
+            b"          timeAlignmentTimerCommon sf500\n"
+            b"        },\n"
+            b"        sib3 : {\n"
+            b"          cellReselectionInfoCommon {\n"
+            b"            q-Hyst dB0,\n"
+            b"            speedStateReselectionPars {\n"
+            b"              mobilityStateParameters {\n"
+            b"                t-Evaluation s180,\n"
+            b"                t-HystNormal s180,\n"
+            b"                n-CellChangeMedium 1,\n"
+            b"                n-CellChangeHigh 16\n"
+            b"              },\n"
+            b"              q-HystSF {\n"
+            b"                sf-Medium dB-6,\n"
+            b"                sf-High dB-4\n"
+            b"              }\n"
+            b"            }\n"
+            b"          },\n"
+            b"          cellReselectionServingFreqInfo {\n"
+            b"            threshServingLow 7,\n"
+            b"            cellReselectionPriority 3\n"
+            b"          },\n"
+            b"          intraFreqCellReselectionInfo {\n"
+            b"            q-RxLevMin -33,\n"
+            b"            s-IntraSearch 0,\n"
+            b"            presenceAntennaPort1 FALSE,\n"
+            b"            neighCellConfig '10'B,\n"
+            b"            t-ReselectionEUTRA 4\n"
+            b"          }\n"
+            b"        },\n"
+            b"        sib4 : {\n"
+            b"        },\n"
+            b"        sib5 : {\n"
+            b"          interFreqCarrierFreqList {\n"
+            b"            {\n"
+            b"              dl-CarrierFreq 1,\n"
+            b"              q-RxLevMin -45,\n"
+            b"              t-ReselectionEUTRA 0,\n"
+            b"              threshX-High 31,\n"
+            b"              threshX-Low 29,\n"
+            b"              allowedMeasBandwidth mbw6,\n"
+            b"              presenceAntennaPort1 TRUE,\n"
+            b"              neighCellConfig '00'B,\n"
+            b"              q-OffsetFreq dB0\n"
+            b"            }\n"
+            b"          }\n"
+            b"        },\n"
+            b"        sib6 : {\n"
+            b"          t-ReselectionUTRA 3\n"
+            b"        },\n"
+            b"        sib7 : {\n"
+            b"          t-ReselectionGERAN 3\n"
+            b"        },\n"
+            b"        sib8 : {\n"
+            b"          parameters1XRTT {\n"
+            b"            longCodeState1XRTT '000000010010001101000101011001111000100100'B\n"
+            b"          }\n"
+            b"        },\n"
+            b"        sib9 : {\n"
+            b"          hnb-Name '34'H\n"
+            b"        },\n"
+            b"        sib10 : {\n"
+            b"          messageIdentifier '0010001100110100'B,\n"
+            b"          serialNumber '0001001000110100'B,\n"
+            b"          warningType '3212'H\n"
+            b"        },\n"
+            b"        sib11 : {\n"
+            b"          messageIdentifier '0110011110001000'B,\n"
+            b"          serialNumber '0101010000110101'B,\n"
+            b"          warningMessageSegmentType notLastSegment,\n"
+            b"          warningMessageSegmentNumber 19,\n"
+            b"          warningMessageSegment '12'H\n"
+            b"        }\n"
+            b"      }\n"
+            b"    }\n"
+            b"  }\n"
+            b"}"
         )
 
-        encoded = rrc.encode('BCCH-DL-SCH-Message', decoded_message)
-        self.assertEqual(loadb(encoded), loadb(encoded_message))
-        decoded = rrc.decode('BCCH-DL-SCH-Message', encoded)
-        self.assertEqual(decoded, decoded_message)
-
-    def test_all_types(self):
-        all_types = asn1tools.compile_files('tests/files/all_types.asn', 'jer')
-
-        datas = [
-            ('Boolean',             True, b'true'),
-            ('Integer',              127, b'127'),
-            ('Integer',                0, b'0'),
-            ('Integer',             -128, b'-128'),
-            ('Real',                 1.0, b'1.0'),
-            ('Real',                -2.0, b'-2.0'),
-            ('Real',        float('inf'), b'"INF"'),
-            ('Real',       float('-inf'), b'"-INF"'),
-            ('Octetstring',      b'\x00', b'"00"'),
-            ('Null',                None, b'null'),
-            ('Enumerated',         'one', b'"one"'),
-            ('Utf8string',         'foo', b'"foo"'),
-            ('Sequence',              {}, b'{}'),
-            ('Sequence2',       {'a': 1}, b'{"a":1}'),
-            ('Set',                   {}, b'{}'),
-            ('Set2',            {'a': 2}, b'{"a":2}'),
-            ('Numericstring',      '123', b'"123"'),
-            ('Printablestring',    'foo', b'"foo"'),
-            ('Ia5string',          'bar', b'"bar"'),
-            ('Universalstring',    'bar', b'"bar"'),
-            ('Visiblestring',      'bar', b'"bar"'),
-            ('Generalstring',      'bar', b'"bar"'),
-            ('Bmpstring',         b'bar', b'"bar"'),
-            ('Teletexstring',     b'fum', b'"fum"'),
-            ('SequenceOf',            [], b'[]'),
-            ('SetOf',                 [], b'[]'),
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assertEqual(all_types.encode(type_name, decoded), encoded)
-            self.assertEqual(all_types.decode(type_name, encoded), decoded)
-
-        self.assertEqual(all_types.encode('Real', float('nan')), b'"NaN"')
-        self.assertTrue(math.isnan(all_types.decode('Real', b'"NaN"')))
-
-        self.assertEqual(all_types.decode('Real', b'"0"'), 0.0)
-        self.assertEqual(all_types.decode('Real', b'"-0"'), 0.0)
-
-        decoded_message = (b'\x80', 1)
-        encoded_message = b'{"value":"80","length":1}'
-
-        self.assertEqual(loadb(all_types.encode('Bitstring', decoded_message)),
-                         loadb(encoded_message))
-        self.assertEqual(all_types.decode('Bitstring', encoded_message),
-                         decoded_message)
-
-        with self.assertRaises(NotImplementedError):
-            all_types.encode('Sequence12', {'a': [{'a': []}]})
-
-        with self.assertRaises(NotImplementedError):
-            all_types.decode('Sequence12', b'{"a": [{"a": []}]}')
-
-    def test_repr_all_types(self):
-        all_types = asn1tools.compile_files('tests/files/all_types.asn',
-                                            'jer')
-
-        self.assertEqual(repr(all_types.types['Boolean']), 'Boolean(Boolean)')
-        self.assertEqual(repr(all_types.types['Integer']), 'Integer(Integer)')
-        self.assertEqual(repr(all_types.types['Real']), 'Real(Real)')
-        self.assertEqual(repr(all_types.types['Bitstring']), 'BitString(Bitstring)')
-        self.assertEqual(repr(all_types.types['Octetstring']), 'OctetString(Octetstring)')
-        self.assertEqual(repr(all_types.types['Null']), 'Null(Null)')
-        self.assertEqual(repr(all_types.types['Objectidentifier']),
-                         'ObjectIdentifier(Objectidentifier)')
-        self.assertEqual(repr(all_types.types['Enumerated']), 'Enumerated(Enumerated)')
-        self.assertEqual(repr(all_types.types['Utf8string']), 'UTF8String(Utf8string)')
-        self.assertEqual(repr(all_types.types['Sequence']), 'Sequence(Sequence, [])')
-        self.assertEqual(repr(all_types.types['Set']), 'Set(Set, [])')
-        self.assertEqual(repr(all_types.types['Sequence2']),
-                         'Sequence(Sequence2, [Integer(a)])')
-        self.assertEqual(repr(all_types.types['Set2']), 'Set(Set2, [Integer(a)])')
-        self.assertEqual(repr(all_types.types['Numericstring']),
-                         'NumericString(Numericstring)')
-        self.assertEqual(repr(all_types.types['Printablestring']),
-                         'PrintableString(Printablestring)')
-        self.assertEqual(repr(all_types.types['Ia5string']), 'IA5String(Ia5string)')
-        self.assertEqual(repr(all_types.types['Universalstring']),
-                         'UniversalString(Universalstring)')
-        self.assertEqual(repr(all_types.types['Visiblestring']),
-                         'VisibleString(Visiblestring)')
-        self.assertEqual(repr(all_types.types['Generalstring']),
-                         'GeneralString(Generalstring)')
-        self.assertEqual(repr(all_types.types['Bmpstring']),
-                         'BMPString(Bmpstring)')
-        self.assertEqual(repr(all_types.types['Teletexstring']),
-                         'TeletexString(Teletexstring)')
-        self.assertEqual(repr(all_types.types['Utctime']), 'UTCTime(Utctime)')
-        self.assertEqual(repr(all_types.types['SequenceOf']),
-                         'SequenceOf(SequenceOf, Integer())')
-        self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
-
-    def test_all_types_automatic_tags(self):
-        all_types = asn1tools.compile_files(
-            'tests/files/all_types_automatic_tags.asn', 'jer')
-
-        datas = [
-            ('Sequence3',
-             {'a': 1, 'c': 2,'d': True},
-             b'{"a":1,"c":2,"d":true}')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(all_types.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(all_types.decode(type_name, encoded), decoded)
+        self.assertEqual(rrc.encode('BCCH-DL-SCH-Message', decoded, indent=2),
+                         encoded)
 
 
 if __name__ == '__main__':

@@ -12,6 +12,7 @@ from .codecs import jer
 from .codecs import per
 from .codecs import uper
 from .codecs import xer
+from .codecs import asn1
 from .errors import CompileError
 from .errors import EncodeError
 from .errors import DecodeError
@@ -80,7 +81,7 @@ class Specification(object):
 
         return self._modules
 
-    def encode(self, name, data):
+    def encode(self, name, data, **kwargs):
         """Encode given dictionary `data` as given type `name` and return the
         encoded data as a bytes object.
 
@@ -96,7 +97,7 @@ class Specification(object):
             raise EncodeError("type '{}' not found in types dictionary".format(
                 name))
 
-        return self._types[name].encode(data)
+        return self._types[name].encode(data, **kwargs)
 
     def decode(self, name, data):
         """Decode given bytes object `data` as given type `name` and return
@@ -163,7 +164,7 @@ def compile_dict(specification, codec='ber', any_defined_by_choices=None):
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec
     `codec`. `codec` may be one of ``'ber'``, ``'der'``, ``'jer'``,
-    ``'per'``, ``'uper'`` and ``'xer'``.
+    ``'per'``, ``'uper'``, ``'xer'`` and ``'asn1'``.
 
     >>> foo = asn1tools.compile_dict(asn1tools.parse_files('foo.asn'))
 
@@ -175,7 +176,8 @@ def compile_dict(specification, codec='ber', any_defined_by_choices=None):
         'jer': jer,
         'per': per,
         'uper': uper,
-        'xer': xer
+        'xer': xer,
+        'asn1': asn1
     }
 
     try:
@@ -196,7 +198,7 @@ def compile_string(string, codec='ber', any_defined_by_choices=None):
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec
     `codec`. `codec` may be one of ``'ber'``, ``'der'``, ``'jer'``,
-    ``'per'``, ``'uper'`` and ``'xer'``.
+    ``'per'``, ``'uper'``, ``'xer'`` and ``'asn1'``.
 
     >>> with open('foo.asn') as fin:
     ...     foo = asn1tools.compile_string(fin.read())
@@ -213,7 +215,7 @@ def compile_files(filenames, codec='ber', any_defined_by_choices=None):
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec
     `codec`. `codec` may be one of ``'ber'``, ``'der'``, ``'jer'``,
-    ``'per'``, ``'uper'`` and ``'xer'``.
+    ``'per'``, ``'uper'``, ``'xer'`` and ``'asn1'``.
 
     >>> foo = asn1tools.compile_files('foo.asn')
 

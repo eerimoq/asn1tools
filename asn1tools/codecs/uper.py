@@ -220,7 +220,6 @@ class KnownMultiplierStringType(Type):
 
     def __init__(self, name, string_type, minimum, maximum):
         super(KnownMultiplierStringType, self).__init__(name, string_type)
-
         self.set_size_range(minimum, maximum)
 
     def set_size_range(self, minimum, maximum):
@@ -688,7 +687,6 @@ class VisibleString(KnownMultiplierStringType):
                                             'VisibleString',
                                             minimum,
                                             maximum)
-
         self.permitted_alphabet = permitted_alphabet
 
         if permitted_alphabet is None:
