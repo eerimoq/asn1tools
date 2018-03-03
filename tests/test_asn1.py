@@ -455,6 +455,97 @@ class Asn1ToolsAsn1Asn1Test(Asn1ToolsBaseTest):
         self.assertEqual(rrc.encode('BCCH-DL-SCH-Message', decoded, indent=2),
                          encoded)
 
+    def test_null(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= NULL "
+            "END",
+            'asn1')
+
+        decoded = None
+        encoded = b'a A ::= NULL'
+
+        self.assertEqual(foo.encode('A', decoded), encoded)
+
+    def test_null(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= NULL "
+            "END",
+            'asn1')
+
+        decoded = None
+        encoded = b'a A ::= NULL'
+
+        self.assertEqual(foo.encode('A', decoded), encoded)
+
+    def test_utc_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UTCTime "
+            "END",
+            'asn1')
+
+        decoded = '010203040506Z'
+        encoded = b'a A ::= "010203040506Z"'
+
+        self.assertEqual(foo.encode('A', decoded), encoded)
+
+    def test_generalized_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= GeneralizedTime "
+            "END",
+            'asn1')
+
+        decoded = '20001231235959.999Z'
+        encoded = b'a A ::= "20001231235959.999Z"'
+
+        self.assertEqual(foo.encode('A', decoded), encoded)
+
+    def test_visible_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= VisibleString "
+            "END",
+            'asn1')
+
+        decoded = 'foo'
+        encoded = b'a A ::= "foo"'
+
+        self.assertEqual(foo.encode('A', decoded), encoded)
+
+    def test_universal_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UniversalString "
+            "END",
+            'asn1')
+
+        decoded = 'bar'
+        encoded = b'a A ::= "bar"'
+
+        self.assertEqual(foo.encode('A', decoded), encoded)
+
+    def test_printable_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= PrintableString "
+            "END",
+            'asn1')
+
+        decoded = 'foo'
+        encoded = b'a A ::= "foo"'
+
+        self.assertEqual(foo.encode('A', decoded), encoded)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -88,8 +88,8 @@ class NumericString(Type):
     def __init__(self, name):
         super(NumericString, self).__init__(name, 'NumericString')
 
-    def encode(self, data, separator, indent):
-        raise NotImplementedError
+    def encode(self, data, _separator, _indent):
+        return '"{}"'.format(data)
 
     def decode(self, data):
         raise NotImplementedError
@@ -243,8 +243,8 @@ class PrintableString(Type):
     def __init__(self, name):
         super(PrintableString, self).__init__(name, 'PrintableString')
 
-    def encode(self, data, separator, indent):
-        raise NotImplementedError
+    def encode(self, data, _separator, _indent):
+        return '"{}"'.format(data)
 
     def decode(self, data):
         raise NotImplementedError
@@ -258,8 +258,8 @@ class UniversalString(Type):
     def __init__(self, name):
         super(UniversalString, self).__init__(name, 'UniversalString')
 
-    def encode(self, data, separator, indent):
-        raise NotImplementedError
+    def encode(self, data, _separator, _indent):
+        return '"{}"'.format(data)
 
     def decode(self, data):
         raise NotImplementedError
@@ -273,8 +273,8 @@ class VisibleString(Type):
     def __init__(self, name):
         super(VisibleString, self).__init__(name, 'VisibleString')
 
-    def encode(self, data, separator, indent):
-        raise NotImplementedError
+    def encode(self, data, _separator, _indent):
+        return '"{}"'.format(data)
 
     def decode(self, data):
         raise NotImplementedError
@@ -289,7 +289,7 @@ class GeneralString(Type):
         super(GeneralString, self).__init__(name, 'GeneralString')
 
     def encode(self, data, separator, indent):
-        raise NotImplementedError
+        return '"{}"'.format(data)
 
     def decode(self, data):
         raise NotImplementedError
@@ -303,8 +303,8 @@ class UTF8String(Type):
     def __init__(self, name):
         super(UTF8String, self).__init__(name, 'UTF8String')
 
-    def encode(self, data, separator, indent):
-        raise NotImplementedError
+    def encode(self, data, _separator, _indent):
+        return '"{}"'.format(data)
 
     def decode(self, data):
         raise NotImplementedError
@@ -333,8 +333,8 @@ class UTCTime(Type):
     def __init__(self, name):
         super(UTCTime, self).__init__(name, 'UTCTime')
 
-    def encode(self, data, separator, indent):
-        raise NotImplementedError
+    def encode(self, data, _separator, _indent):
+        return '"{}"'.format(data)
 
     def decode(self, data):
         raise NotImplementedError
@@ -348,8 +348,8 @@ class GeneralizedTime(Type):
     def __init__(self, name):
         super(GeneralizedTime, self).__init__(name, 'GeneralizedTime')
 
-    def encode(self, data, separator, indent):
-        raise NotImplementedError
+    def encode(self, data, _separator, _indent):
+        return '"{}"'.format(data)
 
     def decode(self, data):
         raise NotImplementedError
@@ -423,8 +423,8 @@ class Null(Type):
     def __init__(self, name):
         super(Null, self).__init__(name, 'NULL')
 
-    def encode(self, data, separator, indent):
-        raise NotImplementedError
+    def encode(self, _data, _separator, _indent):
+        return 'NULL'
 
     def decode(self, data):
         raise NotImplementedError
