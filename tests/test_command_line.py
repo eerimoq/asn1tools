@@ -95,6 +95,13 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
             '300e0201011609497320312b313d333f'
         ]
 
+        expected_output = (
+            'question Question ::= {\n'
+            '    id 1,\n'
+            '    question "Is 1+1=3?"\n'
+            '}\n'
+        )
+
         stdout = StringIO()
 
         with patch('sys.stdout', stdout):
@@ -102,9 +109,8 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
                 asn1tools._main()
 
         print(stdout.getvalue())
-
-        self.assertIn('id: 1', stdout.getvalue())
-        self.assertIn('question: Is 1+1=3?', stdout.getvalue())
+        
+        self.assertEqual(expected_output, stdout.getvalue())
 
     def test_command_line_decode_uper_foo_question(self):
         argv = [
@@ -116,6 +122,13 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
             '01010993cd03156c5eb37e'
         ]
 
+        expected_output = (
+            'question Question ::= {\n'
+            '    id 1,\n'
+            '    question "Is 1+1=3?"\n'
+            '}\n'
+        )
+
         stdout = StringIO()
 
         with patch('sys.stdout', stdout):
@@ -123,9 +136,8 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
                 asn1tools._main()
 
         print(stdout.getvalue())
-
-        self.assertIn('id: 1', stdout.getvalue())
-        self.assertIn('question: Is 1+1=3?', stdout.getvalue())
+        
+        self.assertEqual(expected_output, stdout.getvalue())
 
     def test_command_line_decode_ber_foo_question_stdin(self):
         argv = [
@@ -135,7 +147,7 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
             'Question',
             '-'
         ]
-        input_data = '''
+        input_data = '''\
 2018-02-24 11:22:09
 300e0201011609497320312b313d333f
 2018-02-24 11:24:15
@@ -146,6 +158,25 @@ ff0e0201011609497320312b313d333f
 2018-02-24 13:24:16
 300e0201011609497320312b313d333'''
 
+        expected_output = (
+            "2018-02-24 11:22:09\n"
+            "question Question ::= {\n"
+            "    id 1,\n"
+            '    question "Is 1+1=3?"\n'
+            "}\n"
+            "2018-02-24 11:24:15\n"
+            "question Question ::= {\n"
+            "    id 1,\n"
+            '    question "Is 1+1=3?"\n'
+            "}\n"
+            "\n"
+            "2018-02-24 11:24:16\n"
+            "ff0e0201011609497320312b313d333f\n"
+            ": expected SEQUENCE with tag '30' at offset 0, but got 'ff'\n"
+            "2018-02-24 13:24:16\n"
+            "300e0201011609497320312b313d333\n"
+        )
+
         stdout = StringIO()
 
         with patch('sys.stdin', StringIO(input_data)):
@@ -155,20 +186,7 @@ ff0e0201011609497320312b313d333f
 
         print(stdout.getvalue())
 
-        self.assertEqual(stdout.getvalue().count('id: 1'), 2)
-        self.assertEqual(stdout.getvalue().count('question: Is 1+1=3?'), 2)
-        expected_output = [
-            '2018-02-24 11:22:09',
-            '2018-02-24 11:24:15',
-            '2018-02-24 11:24:16',
-            'ff0e0201011609497320312b313d333f',
-            ": expected SEQUENCE with tag '30' at offset 0, but got 'ff'",
-            '2018-02-24 13:24:16',
-            "300e0201011609497320312b313d333"
-        ]
-
-        for line in expected_output:
-            self.assertIn(line, stdout.getvalue())
+        self.assertEqual(expected_output, stdout.getvalue())
 
     def test_command_line_decode_rfc1155_1157(self):
         argv = [
@@ -185,47 +203,45 @@ ff0e0201011609497320312b313d333f
             '2e32'
         ]
 
+        expected_output = (
+            "message Message ::= {\n"
+            "    version 0,\n"
+            "    community '7075626C6963'H,\n"
+            "    data set-request : {\n"
+            "        request-id 60,\n"
+            "        error-status 0,\n"
+            "        error-index 0,\n"
+            "        variable-bindings {\n"
+            "            {\n"
+            "                name 1.3.6.1.4.1.253.8.51.10.2.1.7.10.14130101,\n"
+            "                value simple : string : '3137322E33312E31392E3733'H\n"
+            "            },\n"
+            "            {\n"
+            "                name 1.3.6.1.4.1.253.8.51.10.2.1.5.10.14130400,\n"
+            "                value simple : number : 2\n"
+            "            },\n"
+            "            {\n"
+            "                name 1.3.6.1.4.1.253.8.51.10.2.1.7.10.14130102,\n"
+            "                value simple : string : '3235352E3235352E3235352E30'H\n"
+            "            },\n"
+            "            {\n"
+            "                name 1.3.6.1.4.1.253.8.51.10.2.1.7.10.14130104,\n"
+            "                value simple : string : '3137322E33312E31392E32'H\n"
+            "            }\n"
+            "        }\n"
+            "    }\n"
+            "}\n"
+        )
+
         stdout = StringIO()
 
         with patch('sys.stdout', stdout):
             with patch('sys.argv', argv):
                 asn1tools._main()
 
-        expected_output = [
-            "version: 0",
-            "community: '7075626c6963'",
-            "data:",
-            "  set-request:",
-            "    variable-bindings:",
-            "      [0]:",
-            "        name: 1.3.6.1.4.1.253.8.51.10.2.1.7.10.14130101",
-            "        value:",
-            "          simple:",
-            "            string: '3137322e33312e31392e3733'",
-            "      [1]:",
-            "        name: 1.3.6.1.4.1.253.8.51.10.2.1.5.10.14130400",
-            "        value:",
-            "          simple:",
-            "            number: 2",
-            "      [2]:",
-            "        name: 1.3.6.1.4.1.253.8.51.10.2.1.7.10.14130102",
-            "        value:",
-            "          simple:",
-            "            string: '3235352e3235352e3235352e30'",
-            "      [3]:",
-            "        name: 1.3.6.1.4.1.253.8.51.10.2.1.7.10.14130104",
-            "        value:",
-            "          simple:",
-            "            string: '3137322e33312e31392e32'",
-            "    error-index: 0",
-            "    error-status: 0",
-            "    request-id: 60"
-        ]
-
         print(stdout.getvalue())
 
-        for line in expected_output:
-            self.assertIn(line, stdout.getvalue())
+        self.assertEqual(expected_output, stdout.getvalue())
 
     def test_command_line_decode_rrc_8_6_0_bcch_dl_sch_message(self):
         argv = [
@@ -249,164 +265,196 @@ ff0e0201011609497320312b313d333f
             '0067888103005435820100830113840112'
         ]
 
+        expected_output = (
+            "bcch-dl-sch-message BCCH-DL-SCH-Message ::= {\n"
+            "    message c1 : systemInformation : {\n"
+            "        criticalExtensions systemInformation-r8 : {\n"
+            "            sib-TypeAndInfo {\n"
+            "                sib2 : {\n"
+            "                    ac-BarringInfo {\n"
+            "                        ac-BarringForEmergency TRUE,\n"
+            "                        ac-BarringForMO-Data {\n"
+            "                            ac-BarringFactor p95,\n"
+            "                            ac-BarringTime s128,\n"
+            "                            ac-BarringForSpecialAC '11110'B\n"
+            "                        }\n"
+            "                    },\n"
+            "                    radioResourceConfigCommon {\n"
+            "                        rach-ConfigCommon {\n"
+            "                            preambleInfo {\n"
+            "                                numberOfRA-Preambles n24,\n"
+            "                                preamblesGroupAConfig {\n"
+            "                                    sizeOfRA-PreamblesGroupA n28,\n"
+            "                                    messageSizeGroupA b144,\n"
+            "                                    messagePowerOffsetGroupB minusinfinity\n"
+            "                                }\n"
+            "                            },\n"
+            "                            powerRampingParameters {\n"
+            "                                powerRampingStep dB0,\n"
+            "                                preambleInitialReceivedTargetPower dBm-102\n"
+            "                            },\n"
+            "                            ra-SupervisionInfo {\n"
+            "                                preambleTransMax n8,\n"
+            "                                ra-ResponseWindowSize sf6,\n"
+            "                                mac-ContentionResolutionTimer sf48\n"
+            "                            },\n"
+            "                            maxHARQ-Msg3Tx 8\n"
+            "                        },\n"
+            "                        bcch-Config {\n"
+            "                            modificationPeriodCoeff n2\n"
+            "                        },\n"
+            "                        pcch-Config {\n"
+            "                            defaultPagingCycle rf256,\n"
+            "                            nB twoT\n"
+            "                        },\n"
+            "                        prach-Config {\n"
+            "                            rootSequenceIndex 836,\n"
+            "                            prach-ConfigInfo {\n"
+            "                                prach-ConfigIndex 33,\n"
+            "                                highSpeedFlag FALSE,\n"
+            "                                zeroCorrelationZoneConfig 10,\n"
+            "                                prach-FreqOffset 64\n"
+            "                            }\n"
+            "                        },\n"
+            "                        pdsch-ConfigCommon {\n"
+            "                            referenceSignalPower -60,\n"
+            "                            p-b 2\n"
+            "                        },\n"
+            "                        pusch-ConfigCommon {\n"
+            "                            pusch-ConfigBasic {\n"
+            "                                n-SB 1,\n"
+            "                                hoppingMode interSubFrame,\n"
+            "                                pusch-HoppingOffset 10,\n"
+            "                                enable64QAM FALSE\n"
+            "                            },\n"
+            "                            ul-ReferenceSignalsPUSCH {\n"
+            "                                groupHoppingEnabled TRUE,\n"
+            "                                groupAssignmentPUSCH 22,\n"
+            "                                sequenceHoppingEnabled FALSE,\n"
+            "                                cyclicShift 5\n"
+            "                            }\n"
+            "                        },\n"
+            "                        pucch-ConfigCommon {\n"
+            "                            deltaPUCCH-Shift ds1,\n"
+            "                            nRB-CQI 98,\n"
+            "                            nCS-AN 4,\n"
+            "                            n1PUCCH-AN 2047\n"
+            "                        },\n"
+            "                        soundingRS-UL-ConfigCommon setup : {\n"
+            "                            srs-BandwidthConfig bw0,\n"
+            "                            srs-SubframeConfig sc4,\n"
+            "                            ackNackSRS-SimultaneousTransmission TRUE\n"
+            "                        },\n"
+            "                        uplinkPowerControlCommon {\n"
+            "                            p0-NominalPUSCH -126,\n"
+            "                            alpha al0,\n"
+            "                            p0-NominalPUCCH -127,\n"
+            "                            deltaFList-PUCCH {\n"
+            "                                deltaF-PUCCH-Format1 deltaF-2,\n"
+            "                                deltaF-PUCCH-Format1b deltaF1,\n"
+            "                                deltaF-PUCCH-Format2 deltaF0,\n"
+            "                                deltaF-PUCCH-Format2a deltaF-2,\n"
+            "                                deltaF-PUCCH-Format2b deltaF0\n"
+            "                            },\n"
+            "                            deltaPreambleMsg3 -1\n"
+            "                        },\n"
+            "                        ul-CyclicPrefixLength len1\n"
+            "                    },\n"
+            "                    ue-TimersAndConstants {\n"
+            "                        t300 ms100,\n"
+            "                        t301 ms200,\n"
+            "                        t310 ms50,\n"
+            "                        n310 n2,\n"
+            "                        t311 ms30000,\n"
+            "                        n311 n2\n"
+            "                    },\n"
+            "                    freqInfo {\n"
+            "                        additionalSpectrumEmission 3\n"
+            "                    },\n"
+            "                    timeAlignmentTimerCommon sf500\n"
+            "                },\n"
+            "                sib3 : {\n"
+            "                    cellReselectionInfoCommon {\n"
+            "                        q-Hyst dB0,\n"
+            "                        speedStateReselectionPars {\n"
+            "                            mobilityStateParameters {\n"
+            "                                t-Evaluation s180,\n"
+            "                                t-HystNormal s180,\n"
+            "                                n-CellChangeMedium 1,\n"
+            "                                n-CellChangeHigh 16\n"
+            "                            },\n"
+            "                            q-HystSF {\n"
+            "                                sf-Medium dB-6,\n"
+            "                                sf-High dB-4\n"
+            "                            }\n"
+            "                        }\n"
+            "                    },\n"
+            "                    cellReselectionServingFreqInfo {\n"
+            "                        threshServingLow 7,\n"
+            "                        cellReselectionPriority 3\n"
+            "                    },\n"
+            "                    intraFreqCellReselectionInfo {\n"
+            "                        q-RxLevMin -33,\n"
+            "                        s-IntraSearch 0,\n"
+            "                        presenceAntennaPort1 FALSE,\n"
+            "                        neighCellConfig '10'B,\n"
+            "                        t-ReselectionEUTRA 4\n"
+            "                    }\n"
+            "                },\n"
+            "                sib4 : {\n"
+            "                },\n"
+            "                sib5 : {\n"
+            "                    interFreqCarrierFreqList {\n"
+            "                        {\n"
+            "                            dl-CarrierFreq 1,\n"
+            "                            q-RxLevMin -45,\n"
+            "                            t-ReselectionEUTRA 0,\n"
+            "                            threshX-High 31,\n"
+            "                            threshX-Low 29,\n"
+            "                            allowedMeasBandwidth mbw6,\n"
+            "                            presenceAntennaPort1 TRUE,\n"
+            "                            neighCellConfig '00'B,\n"
+            "                            q-OffsetFreq dB0\n"
+            "                        }\n"
+            "                    }\n"
+            "                },\n"
+            "                sib6 : {\n"
+            "                    t-ReselectionUTRA 3\n"
+            "                },\n"
+            "                sib7 : {\n"
+            "                    t-ReselectionGERAN 3\n"
+            "                },\n"
+            "                sib8 : {\n"
+            "                    parameters1XRTT {\n"
+            "                        longCodeState1XRTT '000000010010001101000101011001111000100100'B\n"
+            "                    }\n"
+            "                },\n"
+            "                sib9 : {\n"
+            "                    hnb-Name '34'H\n"
+            "                },\n"
+            "                sib10 : {\n"
+            "                    messageIdentifier '0010001100110100'B,\n"
+            "                    serialNumber '0001001000110100'B,\n"
+            "                    warningType '3212'H\n"
+            "                },\n"
+            "                sib11 : {\n"
+            "                    messageIdentifier '0110011110001000'B,\n"
+            "                    serialNumber '0101010000110101'B,\n"
+            "                    warningMessageSegmentType notLastSegment,\n"
+            "                    warningMessageSegmentNumber 19,\n"
+            "                    warningMessageSegment '12'H\n"
+            "                }\n"
+            "            }\n"
+            "        }\n"
+            "    }\n"
+            "}\n"
+        )
+
         stdout = StringIO()
 
         with patch('sys.stdout', stdout):
             with patch('sys.argv', argv):
                 asn1tools._main()
-
-        expected_output = [
-            "message:",
-            "  c1:",
-            "    systemInformation:",
-            "      criticalExtensions:",
-            "        systemInformation-r8:",
-            "          sib-TypeAndInfo:",
-            "            [0]:",
-            "              sib2:",
-            "                ac-BarringInfo:",
-            "                  ac-BarringForEmergency: True",
-            "                  ac-BarringForMO-Data:",
-            "                    ac-BarringFactor: p95",
-            "                    ac-BarringTime: s128",
-            "                    ac-BarringForSpecialAC: ('f0', 5)",
-            "                radioResourceConfigCommon:",
-            "                  rach-ConfigCommon:",
-            "                    preambleInfo:",
-            "                      numberOfRA-Preambles: n24",
-            "                      preamblesGroupAConfig:",
-            "                        sizeOfRA-PreamblesGroupA: n28",
-            "                        messageSizeGroupA: b144",
-            "                        messagePowerOffsetGroupB: minusinfinity",
-            "                    powerRampingParameters:",
-            "                      powerRampingStep: dB0",
-            "                      preambleInitialReceivedTargetPower: dBm-102",
-            "                    ra-SupervisionInfo:",
-            "                      preambleTransMax: n8",
-            "                      ra-ResponseWindowSize: sf6",
-            "                      mac-ContentionResolutionTimer: sf48",
-            "                    maxHARQ-Msg3Tx: 8",
-            "                  bcch-Config:",
-            "                    modificationPeriodCoeff: n2",
-            "                  pcch-Config:",
-            "                    defaultPagingCycle: rf256",
-            "                    nB: twoT",
-            "                  prach-Config:",
-            "                    rootSequenceIndex: 836",
-            "                    prach-ConfigInfo:",
-            "                      prach-ConfigIndex: 33",
-            "                      highSpeedFlag: False",
-            "                      zeroCorrelationZoneConfig: 10",
-            "                      prach-FreqOffset: 64",
-            "                  pdsch-ConfigCommon:",
-            "                    referenceSignalPower: -60",
-            "                    p-b: 2",
-            "                  pusch-ConfigCommon:",
-            "                    pusch-ConfigBasic:",
-            "                      n-SB: 1",
-            "                      hoppingMode: interSubFrame",
-            "                      pusch-HoppingOffset: 10",
-            "                      enable64QAM: False",
-            "                    ul-ReferenceSignalsPUSCH:",
-            "                      groupHoppingEnabled: True",
-            "                      groupAssignmentPUSCH: 22",
-            "                      sequenceHoppingEnabled: False",
-            "                      cyclicShift: 5",
-            "                  pucch-ConfigCommon:",
-            "                    deltaPUCCH-Shift: ds1",
-            "                    nRB-CQI: 98",
-            "                    nCS-AN: 4",
-            "                    n1PUCCH-AN: 2047",
-            "                  soundingRS-UL-ConfigCommon:",
-            "                    setup:",
-            "                      srs-BandwidthConfig: bw0",
-            "                      srs-SubframeConfig: sc4",
-            "                      ackNackSRS-SimultaneousTransmission: True",
-            "                  uplinkPowerControlCommon:",
-            "                    p0-NominalPUSCH: -126",
-            "                    alpha: al0",
-            "                    p0-NominalPUCCH: -127",
-            "                    deltaFList-PUCCH:",
-            "                      deltaF-PUCCH-Format1: deltaF-2",
-            "                      deltaF-PUCCH-Format1b: deltaF1",
-            "                      deltaF-PUCCH-Format2: deltaF0",
-            "                      deltaF-PUCCH-Format2a: deltaF-2",
-            "                      deltaF-PUCCH-Format2b: deltaF0",
-            "                    deltaPreambleMsg3: -1",
-            "                  ul-CyclicPrefixLength: len1",
-            "                ue-TimersAndConstants:",
-            "                  t300: ms100",
-            "                  t301: ms200",
-            "                  t310: ms50",
-            "                  n310: n2",
-            "                  t311: ms30000",
-            "                  n311: n2",
-            "                freqInfo:",
-            "                  additionalSpectrumEmission: 3",
-            "                timeAlignmentTimerCommon: sf500",
-            "            [1]:",
-            "              sib3:",
-            "                cellReselectionInfoCommon:",
-            "                  q-Hyst: dB0",
-            "                  speedStateReselectionPars:",
-            "                    mobilityStateParameters:",
-            "                      t-Evaluation: s180",
-            "                      t-HystNormal: s180",
-            "                      n-CellChangeMedium: 1",
-            "                      n-CellChangeHigh: 16",
-            "                    q-HystSF:",
-            "                      sf-Medium: dB-6",
-            "                      sf-High: dB-4",
-            "                cellReselectionServingFreqInfo:",
-            "                  threshServingLow: 7",
-            "                  cellReselectionPriority: 3",
-            "                intraFreqCellReselectionInfo:",
-            "                  q-RxLevMin: -33",
-            "                  s-IntraSearch: 0",
-            "                  presenceAntennaPort1: False",
-            "                  neighCellConfig: ('80', 2)",
-            "                  t-ReselectionEUTRA: 4",
-            "            [2]:",
-            "              sib4:",
-            "            [3]:",
-            "              sib5:",
-            "                interFreqCarrierFreqList:",
-            "                  [0]:",
-            "                    dl-CarrierFreq: 1",
-            "                    q-RxLevMin: -45",
-            "                    t-ReselectionEUTRA: 0",
-            "                    threshX-High: 31",
-            "                    threshX-Low: 29",
-            "                    allowedMeasBandwidth: mbw6",
-            "                    presenceAntennaPort1: True",
-            "                    neighCellConfig: ('00', 2)",
-            "                    q-OffsetFreq: dB0",
-            "            [4]:",
-            "              sib6:",
-            "                t-ReselectionUTRA: 3",
-            "            [5]:",
-            "              sib7:",
-            "                t-ReselectionGERAN: 3",
-            "            [6]:",
-            "              sib8:",
-            "                parameters1XRTT:",
-            "                  longCodeState1XRTT: ('012345678900', 42)",
-            "            [7]:",
-            "              sib9:",
-            "                hnb-Name: '34'",
-            "            [8]:",
-            "              sib10:",
-            "                messageIdentifier: ('2334', 16)",
-            "                serialNumber: ('1234', 16)",
-            "                warningType: '3212'",
-            "            [9]:",
-            "              sib11:",
-            "                messageIdentifier: ('6788', 16)",
-            "                serialNumber: ('5435', 16)",
-            "                warningMessageSegmentType: notLastSegment",
-            "                warningMessageSegmentNumber: 19",
-            "                warningMessageSegment: '12'"
-        ]
 
         print(stdout.getvalue())
 

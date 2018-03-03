@@ -93,8 +93,10 @@ Decode given encoded Question using the default codec (BER).
 .. code-block:: text
 
    $ asn1tools decode tests/files/foo.asn Question 300e0201011609497320312b313d333f
-   id: 1
-   question: Is 1+1=3?
+   question Question ::= {
+       id 1,
+       question "Is 1+1=3?"
+   }
    $
 
 Decode given encoded Question using the UPER codec.
@@ -102,8 +104,10 @@ Decode given encoded Question using the UPER codec.
 .. code-block:: text
 
    $ asn1tools decode --codec uper tests/files/foo.asn Question 01010993cd03156c5eb37e
-   id: 1
-   question: Is 1+1=3?
+   question Question ::= {
+       id 1,
+       question "Is 1+1=3?"
+   }
    $
 
 Continuously decode encoded Questions read from standard input. Any
@@ -119,11 +123,15 @@ dates.
    300e0201021609497320322b323d353f
    $ cat encoded.txt | asn1tools decode tests/files/foo.asn Question -
    2018-02-24 11:22:09
-   id: 1
-   question: Is 1+1=3?
+   question Question ::= {
+       id 1,
+       question "Is 1+1=3?"
+   }
    2018-02-24 11:24:15
-   id: 2
-   question: Is 2+2=5?
+   question Question ::= {
+       id 2,
+       question "Is 2+2=5?"
+   }
    $
 
 Contributing

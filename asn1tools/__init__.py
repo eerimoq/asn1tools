@@ -24,76 +24,21 @@ __author__ = 'Erik Moqvist'
 __version__ = '0.41.0'
 
 
-def print_tuple(tuple_, indent):
-    if isinstance(tuple_[0], bytearray):
-        decoded = binascii.hexlify(tuple_[0]).decode('ascii')
-        print("('{}', {})".format(decoded, tuple_[1]))
-    elif isinstance(tuple_[1], list):
-        print('{}{}:'.format(indent * ' ', tuple_[0]))
-        print_list(tuple_[1], indent + 2)
-    elif isinstance(tuple_[1], dict):
-        print('{}{}:'.format(indent * ' ', tuple_[0]))
-        print_dict(tuple_[1], indent + 2)
-    elif isinstance(tuple_[1], tuple):
-        print('{}{}:'.format(indent * ' ', tuple_[0]))
-        print_tuple(tuple_[1], indent + 2)
-    elif isinstance(tuple_[1], bytearray):
-        decoded = binascii.hexlify(tuple_[1]).decode('ascii')
-        print("{}{}: '{}'".format(indent * ' ', tuple_[0], decoded))
-    else:
-        print("{}{}: {}".format(indent * ' ', tuple_[0], tuple_[1]))
-
-
-def print_list(list_, indent):
-    for i, element in enumerate(list_):
-        print('{}[{}]:'.format(indent * ' ', i))
-
-        if isinstance(element, list):
-            print_list(element, indent + 2)
-        elif isinstance(element, dict):
-            print_dict(element, indent + 2)
-        elif isinstance(element, tuple):
-            print_tuple(element, indent + 2)
-        elif isinstance(element, bytearray):
-            decoded = binascii.hexlify(element).decode('ascii')
-            print("{}'{}'".format(indent * ' ', decoded))
-        else:
-            print('{}{}'.format(indent * ' ', element))
-
-
-def print_dict(dict_, indent=0):
-    for key, value in dict_.items():
-        if isinstance(value, list):
-            print('{}{}:'.format(indent * ' ', key))
-            print_list(value, indent + 2)
-        elif isinstance(value, dict):
-            print('{}{}:'.format(indent * ' ', key))
-            print_dict(value, indent + 2)
-        elif isinstance(value, tuple):
-            if isinstance(value[0], bytearray):
-                sys.stdout.write('{}{}: '.format(indent * ' ', key))
-            else:
-                print('{}{}:'.format(indent * ' ', key))
-
-            print_tuple(value, indent + 2)
-        elif isinstance(value, bytearray):
-            decoded = binascii.hexlify(value).decode('ascii')
-            print("{}{}: '{}'".format(indent * ' ', key, decoded))
-        else:
-            print('{}{}: {}'.format(indent * ' ', key, value))
-
-
-def _decode_hexstring(specification, type_name, hexstring):
+def _decode_hexstring(codec_spec, asn1_spec, type_name, hexstring):
     try:
         encoded = binascii.unhexlify(hexstring)
     except Exception as e:
         raise TypeError("'{}': {}".format(hexstring, str(e)))
 
-    print_dict(specification.decode(type_name, encoded))
+    decoded = codec_spec.decode(type_name, encoded)
+    
+    print(asn1_spec.encode(type_name, decoded, indent=4).decode('utf-8'))
 
 
 def _do_decode(args):
-    specification = compile_files(args.specification, args.codec)
+    parsed = parse_files(args.specification)
+    codec_spec = compile_dict(parsed, args.codec)
+    asn1_spec = compile_dict(parsed, 'asn1')
 
     if args.hexstring == '-':
         for hexstring in sys.stdin:
@@ -101,7 +46,8 @@ def _do_decode(args):
 
             if hexstring:
                 try:
-                    _decode_hexstring(specification,
+                    _decode_hexstring(codec_spec,
+                                      asn1_spec,
                                       args.type,
                                       hexstring)
                 except TypeError:
@@ -112,7 +58,8 @@ def _do_decode(args):
             else:
                 print(hexstring)
     else:
-        _decode_hexstring(specification,
+        _decode_hexstring(codec_spec,
+                          asn1_spec,
                           args.type,
                           args.hexstring)
 

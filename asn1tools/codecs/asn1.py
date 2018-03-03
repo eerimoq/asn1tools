@@ -216,7 +216,7 @@ class BitString(Type):
         encoded = int(binascii.hexlify(data[0]), 16)
         encoded |= (0x80 << (8 * len(data[0])))
 
-        return "'{}'B".format(bin(encoded)[10:10 + data[1]])
+        return "'{}'B".format(bin(encoded)[10:10 + data[1]]).upper()
 
     def decode(self, data):
         raise NotImplementedError
@@ -231,7 +231,7 @@ class OctetString(Type):
         super(OctetString, self).__init__(name, 'OCTET STRING')
 
     def encode(self, data, _separator, _indent):
-        return "'{}'H".format(binascii.hexlify(data).decode('ascii'))
+        return "'{}'H".format(binascii.hexlify(data).decode('ascii')).upper()
 
     def decode(self, data):
         raise NotImplementedError
@@ -381,7 +381,7 @@ class ObjectIdentifier(Type):
         super(ObjectIdentifier, self).__init__(name, 'OBJECT IDENTIFIER')
 
     def encode(self, data, separator, indent):
-        raise NotImplementedError
+        return data
 
     def decode(self, data):
         raise NotImplementedError
