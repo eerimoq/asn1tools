@@ -6,6 +6,18 @@ from copy import deepcopy
 from ..errors import CompileError
 
 
+def flatten(dlist):
+    flist = []
+
+    for item in dlist:
+        if isinstance(item, list):
+            flist.extend(item)
+        else:
+            flist.append(item)
+
+    return flist
+
+
 class Compiler(object):
 
     def __init__(self, specification):
@@ -103,7 +115,7 @@ class Compiler(object):
             members = type_descriptor['members']
 
             for member in members:
-                if member == '...':
+                if member == '...' or isinstance(member, list):
                     continue
 
                 self.pre_process_extensibility_implied_type(member)
@@ -161,7 +173,7 @@ class Compiler(object):
             return False
 
         number = None
-        members = type_descriptor['members']
+        members = flatten(type_descriptor['members'])
 
         # Add tag number to all members if AUTOMATIC TAGS are
         # selected and no member is tagged.

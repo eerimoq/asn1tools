@@ -1339,6 +1339,11 @@ class Compiler(compiler.Compiler):
             if member == '...':
                 continue
 
+            if isinstance(member, list):
+                compiled_members.extend(self.compile_members(member,
+                                                             module_name))
+                continue
+
             compiled_member = self.compile_type(member['name'],
                                                 member,
                                                 module_name)

@@ -592,7 +592,7 @@ class Compiler(compiler.Compiler):
         type_name = type_descriptor['type']
 
         if type_name == 'SEQUENCE':
-            members, _ = self.compile_members(
+            members = self.compile_members(
                 type_descriptor['members'],
                 module_name)
             compiled = Sequence(name, members)
@@ -604,7 +604,7 @@ class Compiler(compiler.Compiler):
                                                     type_descriptor['element'],
                                                     module_name))
         elif type_name == 'SET':
-            members, _ = self.compile_members(
+            members = self.compile_members(
                 type_descriptor['members'],
                 module_name)
             compiled = Set(name, members)
@@ -614,7 +614,7 @@ class Compiler(compiler.Compiler):
                                                type_descriptor['element'],
                                                module_name))
         elif type_name == 'CHOICE':
-            members, _ = self.compile_members(
+            members = self.compile_members(
                 type_descriptor['members'],
                 module_name)
             compiled = Choice(name, members)
@@ -682,16 +682,14 @@ class Compiler(compiler.Compiler):
 
     def compile_members(self, members, module_name):
         compiled_members = []
-        extension = None
 
         for member in members:
             if member == '...':
-                extension = []
                 continue
 
-            if extension is not None:
-                LOGGER.warning("Ignoring extension member '%s'.",
-                               member['name'])
+            if isinstance(member, list):
+                compiled_members.extend(self.compile_members(member,
+                                                             module_name))
                 continue
 
             compiled_member = self.compile_type(member['name'],
@@ -706,7 +704,7 @@ class Compiler(compiler.Compiler):
 
             compiled_members.append(compiled_member)
 
-        return compiled_members, extension
+        return compiled_members
 
 
 def compile_dict(specification):

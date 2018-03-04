@@ -649,11 +649,6 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('Octetstring2', b'\xab\xcd', b'\xab\xcd'),
             ('Octetstring3', b'\xab\xcd\xef', b'\xab\xcd\xef'),
             ('Octetstring4', b'\x89\xab\xcd\xef', b'\x31\x35\x79\xbd\xe0'),
-            ('Sequence', {}, b''),
-            ('Sequence2', {'a': 0}, b'\x00'),
-            ('Sequence2', {'a': 1}, b'\x80\x80\x80'),
-            ('Sequence3', {'a': True}, b'\x40'),
-            ('Sequence4', {'a': True}, b'\x40'),
             ('Ia5string', 'bar', b'\x03\xc5\x87\x90'),
             ('Utf8string', u'bar', b'\x03\x62\x61\x72'),
             ('Utf8string', u'a\u1010c', b'\x05\x61\xe1\x80\x90\x63')
@@ -665,42 +660,6 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
     def test_encode_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
                                             'uper')
-
-        self.assertEqual(all_types.encode('Sequence2', {}), b'\x00')
-
-        with self.assertRaises(AssertionError):
-            self.assertEqual(all_types.encode('Sequence4', {'a': 1, 'b': True}),
-                             b'\xc0\x40\x60\x00')
-
-        self.assertEqual(all_types.encode('Sequence5', {'a': True}), b'\x40')
-
-        with self.assertRaises(AssertionError):
-            self.assertEqual(all_types.encode('Sequence5', {'a': True, 'b': True}),
-                             b'\xc0\x40\x60\x00')
-
-        with self.assertRaises(AssertionError):
-            self.assertEqual(all_types.encode('Sequence6', {'a': True, 'c': True}),
-                             b'\x60')
-
-        with self.assertRaises(AssertionError):
-            self.assertEqual(all_types.encode('Sequence6',
-                                              {'a': True, 'b': True, 'c': True}),
-                             b'\xe0\x20\x30\x00')
-
-        with self.assertRaises(AssertionError):
-            self.assertEqual(all_types.encode('Sequence7', {'a': True, 'd': True}),
-                             b'\x60')
-
-        with self.assertRaises(AssertionError):
-            self.assertEqual(all_types.encode('Sequence7',
-                                              {'a': True, 'b': True, 'd': True}),
-                             b'\xe0\x60\x18\x00')
-
-        with self.assertRaises(AssertionError):
-            self.assertEqual(
-                all_types.encode('Sequence7',
-                                 {'a': True, 'b': True, 'c': True, 'd': True}),
-                b'\xe0\x70\x18\x00\x18\x00')
 
         with self.assertRaises(NotImplementedError):
             all_types.encode('Sequence12', {'a': [{'a': []}]})
@@ -1043,6 +1002,132 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_sequence(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE {} "
+            "B ::= SEQUENCE { "
+            "  a INTEGER DEFAULT 0 "
+            "} "
+            "C ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ... "
+            "} "
+            "D ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]] "
+            "} "
+            "E ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]], "
+            "  ... "
+            "} "
+            "F ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]], "
+            "  ..., "
+            "  c BOOLEAN "
+            "} "
+            "G ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]], "
+            "  [[ "
+            "  c BOOLEAN "
+            "  ]], "
+            "  ..., "
+            "  d BOOLEAN "
+            "} "
+            "H ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  ... "
+            "} "
+            "I ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b BOOLEAN "
+            "} "
+            "J ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b BOOLEAN OPTIONAL "
+            "} "
+            "K ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b BOOLEAN, "
+            "  c BOOLEAN "
+            "} "
+            "L ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN, "
+            "  c BOOLEAN "
+            "  ]] "
+            "} "
+            "M ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b SEQUENCE { "
+            "    a INTEGER"
+            "  } OPTIONAL, "
+            "  c BOOLEAN "
+            "  ]] "
+            "} "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',                                {}, b''),
+            ('B',                          {'a': 0}, b'\x00'),
+            ('B',                          {'a': 1}, b'\x80\x80\x80'),
+            ('C',                       {'a': True}, b'\x40'),
+            ('D',                       {'a': True}, b'\x40'),
+            ('E',                       {'a': True}, b'\x40'),
+            ('H',                       {'a': True}, b'\x40'),
+            ('I',                       {'a': True}, b'\x40'),
+            ('J',                       {'a': True}, b'\x40'),
+            ('K',                       {'a': True}, b'\x40'),
+            ('L',                       {'a': True}, b'\x40'),
+            ('M',                       {'a': True}, b'\x40'),
+            ('D',            {'a': True, 'b': True}, b'\xc0\x40\x60\x00'),
+            ('E',            {'a': True, 'b': True}, b'\xc0\x40\x60\x00'),
+            ('F',            {'a': True, 'c': True}, b'\x60'),
+            ('G',            {'a': True, 'd': True}, b'\x60'),
+            ('I',            {'a': True, 'b': True}, b'\xc0\x40\x60\x00'),
+            ('J',            {'a': True, 'b': True}, b'\xc0\x40\x60\x00'),
+            ('K',            {'a': True, 'b': True}, b'\xc0\xc0\x30\x00'),
+            ('F', {'a': True, 'b': True, 'c': True}, b'\xe0\x20\x30\x00'),
+            ('K', {'a': True, 'b': True, 'c': True}, b'\xc0\xe0\x30\x00\x30\x00'),
+            ('L', {'a': True, 'b': True, 'c': True}, b'\xc0\x40\x70\x00'),
+            ('G', {'a': True, 'b': True, 'd': True}, b'\xe0\x60\x18\x00'),
+            ('G',
+             {'a': True, 'b': True, 'c': True, 'd': True},
+             b'\xe0\x70\x18\x00\x18\x00'),
+            ('M',
+             {'a': True, 'b': {'a': 5}, 'c': True},
+             b'\xc0\x40\xe0\x20\xb0\x00')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
 
 if __name__ == '__main__':
     unittest.main()

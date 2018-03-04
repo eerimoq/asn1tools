@@ -54,6 +54,22 @@ class Encoder(object):
         self.number_of_bits = 0
         self.value = 0
 
+    def __iadd__(self, other):
+        self.append_integer(other.value, other.number_of_bits)
+
+        return self
+
+    def number_of_bytes(self):
+        return (self.number_of_bits + 7) // 8
+
+    def set_bit(self, pos):
+        self.value |= (1 << (self.number_of_bits - pos - 1))
+
+    def align(self):
+        width = (8 * self.number_of_bytes() - self.number_of_bits)
+        self.number_of_bits += width
+        self.value <<= width
+
     def append_bit(self, bit):
         """Append given bit.
 
@@ -133,8 +149,14 @@ class Encoder(object):
             self.append_length_determinant(length)
             self.append_integer(value, 8 * length)
 
+    def append_normally_small_length(self, value):
+        if value <= 64:
+            self.append_integer(value - 1, 7)
+        else:
+            raise NotImplementedError()
+
     def __repr__(self):
-        return binascii.hexlify(self.as_bytearray())
+        return binascii.hexlify(self.as_bytearray()).decode('ascii')
 
 
 class Decoder(object):
@@ -146,6 +168,9 @@ class Decoder(object):
             self.value = int(binascii.hexlify(encoded), 16)
         else:
             self.value = 0
+
+    def skip_bits(self, number_of_bits):
+        self.number_of_bits -= number_of_bits
 
     def read_bit(self):
         """Read a bit.
@@ -212,6 +237,12 @@ class Decoder(object):
             decoded = self.read_integer(8 * length)
 
         return decoded
+
+    def read_normally_small_length(self):
+        if not self.read_bit():
+            return self.read_integer(6) + 1
+        else:
+            raise NotImplementedError()
 
 
 def size_as_number_of_bits(size):
@@ -383,23 +414,31 @@ class NumericString(Type):
 
 class Sequence(Type):
 
-    def __init__(self, name, members, extension):
+    def __init__(self,
+                 name,
+                 root_members,
+                 extension_additions):
         super(Sequence, self).__init__(name, 'SEQUENCE')
-        self.members = members
-        self.extension = extension
+        self.root_members = root_members
+        self.extension_additions = extension_additions
         self.optionals = [
             member
-            for member in members
+            for member in root_members
             if member.optional or member.default is not None
         ]
 
     def encode(self, data, encoder):
-        if self.extension is not None:
-            if len(self.extension) == 0:
-                encoder.append_bit(0)
-            else:
-                raise NotImplementedError()
+        if self.extension_additions is not None:
+            encoder.append_bit(0)
+            self.encode_root(data, encoder)
 
+            if len(self.extension_additions) > 0:
+                if self.encode_extension_additions(data, encoder):
+                    encoder.set_bit(0)
+        else:
+            self.encode_root(data, encoder)
+
+    def encode_root(self, data, encoder):
         for optional in self.optionals:
             if optional.optional:
                 encoder.append_bit(optional.name in data)
@@ -408,36 +447,84 @@ class Sequence(Type):
             else:
                 encoder.append_bit(0)
 
-        for member in self.members:
-            name = member.name
+        for member in self.root_members:
+            self.encode_member(member, data, encoder)
 
-            if name in data:
-                if member.default is None:
-                    member.encode(data[name], encoder)
-                elif data[name] != member.default:
-                    member.encode(data[name], encoder)
-            elif member.optional or member.default is not None:
-                pass
-            else:
-                raise EncodeError(
-                    "Sequence member '{}' not found in {}.".format(
-                        name,
-                        data))
+    def encode_extension_additions(self, data, encoder):
+        # Encode extension additions.
+        presence_bits = 0
+        addition_encoders = []
+
+        try:
+            for addition in self.extension_additions:
+                presence_bits <<= 1
+                addition_encoder = Encoder()
+
+                if isinstance(addition, Sequence):
+                    addition.encode(data, addition_encoder)
+                else:
+                    self.encode_member(addition, data, addition_encoder)
+
+                if addition_encoder.number_of_bits > 0:
+                    addition_encoders.append(addition_encoder)
+                    presence_bits |= 1
+        except EncodeError:
+            pass
+
+        # Return false if no extension additions are present.
+        if not addition_encoders:
+            return False
+
+        # Presence bit field.
+        number_of_extension_additions = len(self.extension_additions)
+        encoder.append_normally_small_length(number_of_extension_additions)
+        encoder.append_integer(presence_bits, number_of_extension_additions)
+
+        # Embed each encoded extension addition in an open type (add a
+        # length field and multiple of 8 bits).
+        for addition_encoder in addition_encoders:
+            addition_encoder.align()
+            encoder.append_length_determinant(addition_encoder.number_of_bytes())
+            encoder += addition_encoder
+
+        return True
+
+    def encode_member(self, member, data, encoder):
+        name = member.name
+
+        if name in data:
+            if member.default is None:
+                member.encode(data[name], encoder)
+            elif data[name] != member.default:
+                member.encode(data[name], encoder)
+        elif member.optional or member.default is not None:
+            pass
+        else:
+            raise EncodeError(
+                "Sequence member '{}' not found in {}.".format(
+                    name,
+                    data))
 
     def decode(self, decoder):
-        if self.extension is not None:
-            if len(self.extension) == 0:
-                decoder.read_bit()
-            else:
-                raise NotImplementedError()
+        if self.extension_additions is not None:
+            if decoder.read_bit():
+                decoded = self.decode_root(decoder)
+                decoded.update(self.decode_extension_additions(decoder))
 
+                return decoded
+            else:
+                return self.decode_root(decoder)
+        else:
+            return self.decode_root(decoder)
+
+    def decode_root(self, decoder):
         values = {}
         optionals = {
             optional: decoder.read_bit()
             for optional in self.optionals
         }
 
-        for member in self.members:
+        for member in self.root_members:
             if optionals.get(member, True):
                 value = member.decode(decoder)
                 values[member.name] = value
@@ -446,18 +533,44 @@ class Sequence(Type):
 
         return values
 
+    def decode_extension_additions(self, decoder):
+        # Presence bit field.
+        length = decoder.read_normally_small_length()
+        presence_bits = decoder.read_integer(length)
+        decoded = {}
+
+        for i in range(length):
+            if presence_bits & (1 << (length - i - 1)):
+                addition = self.extension_additions[i]
+
+                # Open type decoding.
+                decoder.read_length_determinant()
+                offset = decoder.number_of_bits
+
+                if isinstance(addition, Sequence):
+                    decoded.update(addition.decode(decoder))
+                else:
+                    decoded[addition.name] = addition.decode(decoder)
+
+                alignment_bits = (offset - decoder.number_of_bits) % 8
+
+                if alignment_bits != 0:
+                    decoder.skip_bits(8 - alignment_bits)
+
+        return decoded
+
     def __repr__(self):
         return 'Sequence({}, [{}])'.format(
             self.name,
-            ', '.join([repr(member) for member in self.members]))
+            ', '.join([repr(member) for member in self.root_members]))
 
 
 class Set(Type):
 
-    def __init__(self, name, members, extension):
+    def __init__(self, name, members, extension_additions):
         super(Set, self).__init__(name, 'SET')
         self.members = members
-        self.extension = extension
+        self.extension_additions = extension_additions
         self.optionals = [
             member
             for member in members
@@ -465,11 +578,8 @@ class Set(Type):
         ]
 
     def encode(self, data, encoder):
-        if self.extension is not None:
-            if len(self.extension) == 0:
-                encoder.append_bit(0)
-            else:
-                raise NotImplementedError()
+        if self.extension_additions is not None:
+            encoder.append_bit(0)
 
         for optional in self.optionals:
             if optional.optional:
@@ -496,11 +606,8 @@ class Set(Type):
                         data))
 
     def decode(self, decoder):
-        if self.extension is not None:
-            if len(self.extension) == 0:
-                decoder.read_bit()
-            else:
-                raise NotImplementedError()
+        if self.extension_additions is not None:
+            decoder.read_bit()
 
         values = {}
         optionals = {
@@ -845,21 +952,18 @@ class ObjectIdentifier(Type):
 
 class Choice(Type):
 
-    def __init__(self, name, members, extension):
+    def __init__(self, name, members, extension_additions):
         super(Choice, self).__init__(name, 'CHOICE')
         self.members = members
-        self.extension = extension
+        self.extension_additions = extension_additions
         self.number_of_bits = size_as_number_of_bits(len(members) - 1)
 
     def encode(self, data, encoder):
         if not isinstance(data, tuple):
             raise EncodeError("expected tuple, but got '{}'".format(data))
 
-        if self.extension is not None:
-            if len(self.extension) == 0:
-                encoder.append_bit(0)
-            else:
-                raise NotImplementedError()
+        if self.extension_additions is not None:
+            encoder.append_bit(0)
 
         for i, member in enumerate(self.members):
             if member.name == data[0]:
@@ -875,11 +979,8 @@ class Choice(Type):
                 data[0]))
 
     def decode(self, decoder):
-        if self.extension is not None:
-            if len(self.extension) == 0:
-                decoder.read_bit()
-            else:
-                raise NotImplementedError()
+        if self.extension_additions is not None:
+            decoder.read_bit()
 
         if len(self.members) > 1:
             index = decoder.read_integer(self.number_of_bits)
@@ -1017,6 +1118,22 @@ class Recursive(Type):
         return 'Recursive({})'.format(self.name)
 
 
+class Extension(Type):
+
+    def __init__(self, name, compiled_type, _module_name):
+        super(Extension, self).__init__(name, 'EXTENSION')
+        print('Extension', compiled_type)
+
+    def encode(self, _data, _encoder):
+        raise NotImplementedError
+
+    def decode(self, _decoder):
+        raise NotImplementedError
+
+    def __repr__(self):
+        return 'Extension({})'.format(self.name)
+
+
 class CompiledType(object):
 
     def __init__(self, type_):
@@ -1046,12 +1163,12 @@ class Compiler(compiler.Compiler):
         type_name = type_descriptor['type']
 
         if type_name == 'SEQUENCE':
-            members, extension = self.compile_members(
+            root_members, extension_additions = self.compile_members(
                 type_descriptor['members'],
                 module_name)
             compiled = Sequence(name,
-                                members,
-                                extension)
+                                root_members,
+                                extension_additions)
         elif type_name == 'SEQUENCE OF':
             minimum, maximum = self.get_size_range(type_descriptor,
                                                    module_name)
@@ -1062,25 +1179,25 @@ class Compiler(compiler.Compiler):
                                   minimum,
                                   maximum)
         elif type_name == 'SET':
-            members, extension = self.compile_members(
+            members, extension_additions = self.compile_members(
                 type_descriptor['members'],
                 module_name,
                 sort_by_tag=True)
             compiled = Set(name,
                            members,
-                           extension)
+                           extension_additions)
         elif type_name == 'SET OF':
             compiled = SetOf(name,
                              self.compile_type('',
                                                type_descriptor['element'],
                                                module_name))
         elif type_name == 'CHOICE':
-            members, extension = self.compile_members(
+            members, extension_additions = self.compile_members(
                 type_descriptor['members'],
                 module_name)
             compiled = Choice(name,
                               members,
-                              extension)
+                              extension_additions)
         elif type_name == 'INTEGER':
             minimum, maximum = self.get_restricted_to_range(type_descriptor,
                                                             module_name)
@@ -1162,45 +1279,57 @@ class Compiler(compiler.Compiler):
 
     def compile_members(self, members, module_name, sort_by_tag=False):
         compiled_members = []
-        extension = None
+        in_extension = False
+        extension_additions = None
 
         for member in members:
             if member == '...':
-                extension = []
+                in_extension = not in_extension
+
+                if in_extension:
+                    extension_additions = []
+
                 continue
 
-            #if isinstance(member, tuple):
-            #    group = ExtensionAdditionGroup(
-            #        self.compile_members(member, module_name)[0])
-            #    compiled_members.append(group)
-            #    continue
+            if in_extension:
+                if isinstance(member, list):
+                    compiled_member, _ = self.compile_members(member,
+                                                              module_name)
+                    compiled_member = Sequence('ExtensionAddition',
+                                               compiled_member,
+                                               None)
+                else:
+                    compiled_member = self.compile_member(member,
+                                                          module_name)
 
-            if extension is not None:
-                LOGGER.warning("Ignoring extension member '%s'.",
-                               member['name'])
-                continue
-
-            compiled_member = self.compile_type(member['name'],
-                                                member,
-                                                module_name)
-
-            if 'optional' in member:
-                compiled_member.optional = member['optional']
-
-            if 'default' in member:
-                compiled_member.default = member['default']
-
-            if 'size' in member:
-                minimum, maximum = self.get_size_range(member,
-                                                       module_name)
-                compiled_member.set_size_range(minimum, maximum)
-
-            compiled_members.append(compiled_member)
+                extension_additions.append(compiled_member)
+            else:
+                compiled_member = self.compile_member(member,
+                                                      module_name)
+                compiled_members.append(compiled_member)
 
         if sort_by_tag:
             compiled_members = sorted(compiled_members, key=attrgetter('tag'))
 
-        return compiled_members, extension
+        return compiled_members, extension_additions
+
+    def compile_member(self, member, module_name):
+        compiled_member = self.compile_type(member['name'],
+                                            member,
+                                            module_name)
+
+        if 'optional' in member:
+            compiled_member.optional = member['optional']
+
+        if 'default' in member:
+            compiled_member.default = member['default']
+
+        if 'size' in member:
+            minimum, maximum = self.get_size_range(member,
+                                                   module_name)
+            compiled_member.set_size_range(minimum, maximum)
+
+        return compiled_member
 
     def get_permitted_alphabet(self, type_descriptor):
         def char_range(begin, end):

@@ -284,6 +284,10 @@ def convert_members(tokens):
             })
             continue
 
+        if member_tokens[0] == '[[':
+            members.append(convert_members(member_tokens[1]))
+            continue
+
         if len(member_tokens) == 2:
             member_tokens, qualifiers = member_tokens
             qualifiers = qualifiers.asList()
@@ -1274,10 +1278,10 @@ def create_grammar():
 
     # X.680: 28. Notation for the choice types
     alternative_type_list = delimitedList(named_type)
-    extension_addition_alternatives_group = (Suppress(left_version_brackets)
-                                             + Suppress(version_number)
-                                             - alternative_type_list
-                                             - Suppress(right_version_brackets))
+    extension_addition_alternatives_group = Group(left_version_brackets
+                                                  + Suppress(version_number)
+                                                  - Group(alternative_type_list)
+                                                  - right_version_brackets)
     extension_addition_alternative = (extension_addition_alternatives_group
                                       | named_type)
     extension_addition_alternatives_list = delimitedList(extension_addition_alternative)
@@ -1336,10 +1340,10 @@ def create_grammar():
                                             | (DEFAULT + value)))
                            | (COMPONENTS_OF - type_))
     version_number <<= Optional(number + Suppress(colon))
-    extension_addition_group = (Suppress(left_version_brackets)
-                                + Suppress(version_number)
-                                + delimitedList(component_type)
-                                + Suppress(right_version_brackets))
+    extension_addition_group = Group(left_version_brackets
+                                     + Suppress(version_number)
+                                     + Group(delimitedList(component_type))
+                                     + right_version_brackets)
     extension_and_exception <<= (ellipsis + Optional(exception_spec))
     extension_addition = (component_type | extension_addition_group)
     extension_addition_list = delimitedList(extension_addition)
