@@ -4,12 +4,13 @@
 
 import logging
 from operator import attrgetter
+from operator import itemgetter
 import binascii
 
 from . import EncodeError
 from . import DecodeError
 from . import compiler
-from .compiler import enum_values_as_dict
+from .compiler import enum_values_split
 from .per import encode_signed_integer
 from .per import decode_signed_integer
 from .ber import encode_real
@@ -201,6 +202,27 @@ def decode_length_determinant(decoder):
     else:
         raise NotImplementedError()
 
+
+def encode_normally_small_non_negative_whole_number(encoder, value):
+    if value < 64:
+        encoder.append_integer(value, 7)
+    else:
+        encoder.append_bit(1)
+        length = (value.bit_length() + 7) // 8
+        encoder.append_bytes(encode_length_determinant(length))
+        encoder.append_integer(value, 8 * length)
+
+
+def decode_normally_small_non_negative_whole_number(decoder):
+    bit = decoder.read_bit()
+
+    if bit == 0:
+        decoded = decoder.read_integer(6)
+    else:
+        length = decode_length_determinant(decoder)
+        decoded = decoder.read_integer(8 * length)
+
+    return decoded
 
 
 class Type(object):
@@ -910,50 +932,68 @@ class Enumerated(Type):
 
     def __init__(self, name, values):
         super(Enumerated, self).__init__(name, 'ENUMERATED')
-        self.values = enum_values_as_dict(values)
-        self.extension = [] if '...' in values else None
-        values = [
-            value[1]
-            for value in values
-            if value != '...'
-        ]
-        self.lowest_value = min(values)
+        root, additions = enum_values_split(values)
+        root = sorted(root, key=itemgetter(1))
 
-        highest_value = max(values) - self.lowest_value
+        # Root.
+        index_to_name, name_to_index = self.create_maps(root)
+        self.root_index_to_name = index_to_name
+        self.root_name_to_index = name_to_index
+        self.root_number_of_bits = size_as_number_of_bits(
+            len(index_to_name) - 1)
 
-        if self.extension is not None:
-            highest_value -= 1
+        # Optional additions.
+        if additions is None:
+            index_to_name = None
+            name_to_index = None
+        else:
+            index_to_name, name_to_index = self.create_maps(additions)
 
-        self.number_of_bits = size_as_number_of_bits(highest_value)
+        self.additions_index_to_name = index_to_name
+        self.additions_name_to_index = name_to_index
+
+    def create_maps(self, items):
+        index_to_name = {
+            index: value[0]
+            for index, value in enumerate(items)
+        }
+        name_to_index = {
+            name: index
+            for index, name in index_to_name.items()
+        }
+
+        return index_to_name, name_to_index
 
     def encode(self, data, encoder):
-        if self.extension is not None:
-            if len(self.extension) == 0:
+        if self.additions_index_to_name is None:
+            index = self.root_name_to_index[data]
+            encoder.append_integer(index, self.root_number_of_bits)
+        else:
+            if data in self.root_name_to_index:
                 encoder.append_bit(0)
+                index = self.root_name_to_index[data]
+                encoder.append_integer(index, self.root_number_of_bits)
             else:
-                raise NotImplementedError()
-
-        for value, name in self.values.items():
-            if data == name:
-                encoder.append_integer(value - self.lowest_value,
-                                       self.number_of_bits)
-                return
-
-        raise EncodeError(
-            "Enumeration value '{}' not found in {}.".format(
-                data,
-                [value for value in self.values.values()]))
+                encoder.append_bit(1)
+                index = self.additions_name_to_index[data]
+                encode_normally_small_non_negative_whole_number(encoder,
+                                                                index)
 
     def decode(self, decoder):
-        if self.extension is not None:
-            if len(self.extension) == 0:
-                decoder.read_bit()
+        if self.additions_index_to_name is None:
+            index = decoder.read_integer(self.root_number_of_bits)
+            name = self.root_index_to_name[index]
+        else:
+            additions = decoder.read_bit()
+
+            if additions == 0:
+                index = decoder.read_integer(self.root_number_of_bits)
+                name = self.root_index_to_name[index]
             else:
-                raise NotImplementedError()
+                index = decode_normally_small_non_negative_whole_number(decoder)
+                name = self.additions_index_to_name[index]
 
-        value = decoder.read_integer(self.number_of_bits)
-
-        return self.values[value + self.lowest_value]
+        return name
 
     def __repr__(self):
         return 'Enumerated({})'.format(self.name)

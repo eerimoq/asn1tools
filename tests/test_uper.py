@@ -649,8 +649,6 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('Octetstring2', b'\xab\xcd', b'\xab\xcd'),
             ('Octetstring3', b'\xab\xcd\xef', b'\xab\xcd\xef'),
             ('Octetstring4', b'\x89\xab\xcd\xef', b'\x31\x35\x79\xbd\xe0'),
-            ('Enumerated', 'one', b'\x00'),
-            ('Enumerated2', 'two', b'\x40'),
             ('Sequence', {}, b''),
             ('Sequence2', {'a': 0}, b'\x00'),
             ('Sequence2', {'a': 1}, b'\x80\x80\x80'),
@@ -993,6 +991,54 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
              '20001231235959.999Z',
              b'\x13\x64\xc1\x83\x06\x2c\x99\xb1\x64\xcd\xab\x96\xae\x57\x39\x72'
              b'\xe6\xd0')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_enumerated(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= ENUMERATED { one(1) } "
+            "B ::= ENUMERATED { zero(0), one(1), ... } "
+            "C ::= ENUMERATED { one(1), four(4), two(2), ..., six(6), nine(9) } "
+            "D ::= ENUMERATED { a, ..., "
+            "aa, ab, ac, ad, ae, af, ag, ah, ai, aj, ak, al, am, an, ao, ap, "
+            "aq, ar, as, at, au, av, aw, ax, ay, az, ba, bb, bc, bd, be, bf, "
+            "bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, "
+            "bw, bx, by, bz, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, "
+            "cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, da, db, "
+            "dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, "
+            "ds, dt, du, dv, dw, dx, dy, dz, ea, eb, ec, ed, ee, ef, eg, eh, "
+            "ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, "
+            "ey, ez, fa, fb, fc, fd, fe, ff, fg, fh, fi, fj, fk, fl, fm, fn, "
+            "fo, fp, fq, fr, fs, ft, fu, fv, fw, fx, fy, fz, ga, gb, gc, gd, "
+            "ge, gf, gg, gh, gi, gj, gk, gl, gm, gn, go, gp, gq, gr, gs, gt, "
+            "gu, gv, gw, gx, gy, gz, ha, hb, hc, hd, he, hf, hg, hh, hi, hj, "
+            "hk, hl, hm, hn, ho, hp, hq, hr, hs, ht, hu, hv, hw, hx, hy, hz, "
+            "ia, ib, ic, id, ie, if, ig, ih, ii, ij, ik, il, im, in, io, ip, "
+            "iq, ir, is, it, iu, iv, iw, ix, iy, iz, ja, jb, jc, jd, je, jf, "
+            "jg, jh, ji, jj, jk, jl, jm, jn, jo, jp, jq, jr, js, jt, ju, jv, "
+            "jw, jx, jy, jz } "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',   'one', b'\x00'),
+            ('B',  'zero', b'\x00'),
+            ('B',   'one', b'\x40'),
+            ('C',   'one', b'\x00'),
+            ('C',   'two', b'\x20'),
+            ('C',  'four', b'\x40'),
+            ('C',   'six', b'\x80'),
+            ('C',  'nine', b'\x81'),
+            ('D',    'aa', b'\x80'),
+            ('D',    'cl', b'\xbf'),
+            ('D',    'cm', b'\xc0\x50\x00'),
+            ('D',    'jv', b'\xc0\x7f\xc0'),
+            ('D',    'jw', b'\xc0\x80\x40\x00'),
+            ('D',    'jz', b'\xc0\x80\x40\xc0')
         ]
 
         for type_name, decoded, encoded in datas:

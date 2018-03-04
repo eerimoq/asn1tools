@@ -375,5 +375,13 @@ def enum_values_as_dict(values):
     }
 
 
+def enum_values_split(values):
+    if '...' in values:
+        index = values.index('...')
+        return values[:index], values[index + 1:]
+    else:
+        return values, None
+
+
 def pre_process(specification):
     return Compiler(specification).pre_process()
