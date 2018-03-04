@@ -468,19 +468,6 @@ class Asn1ToolsAsn1Asn1Test(Asn1ToolsBaseTest):
 
         self.assertEqual(foo.encode('A', decoded), encoded)
 
-    def test_null(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= NULL "
-            "END",
-            'asn1')
-
-        decoded = None
-        encoded = b'a A ::= NULL'
-
-        self.assertEqual(foo.encode('A', decoded), encoded)
-
     def test_utc_time(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
