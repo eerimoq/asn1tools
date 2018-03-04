@@ -114,6 +114,25 @@ class Encoder(object):
 
         return bytearray(binascii.unhexlify(data))
 
+    def append_length_determinant(self, length):
+        if length < 128:
+            encoded = bytearray([length])
+        elif length < 16384:
+            encoded = bytearray([(0x80 | (length >> 8)), (length & 0xff)])
+        else:
+            raise NotImplementedError()
+
+        self.append_bytes(encoded)
+
+    def append_normally_small_non_negative_whole_number(self, value):
+        if value < 64:
+            self.append_integer(value, 7)
+        else:
+            self.append_bit(1)
+            length = (value.bit_length() + 7) // 8
+            self.append_length_determinant(length)
+            self.append_integer(value, 8 * length)
+
     def __repr__(self):
         return binascii.hexlify(self.as_bytearray())
 
@@ -173,6 +192,27 @@ class Decoder(object):
 
         return bytearray(self.read_bits(8 * number_of_bytes))
 
+    def read_length_determinant(self):
+        value = self.read_integer(8)
+
+        if (value & 0x80) == 0x00:
+            return value
+        elif (value & 0xc0) == 0x80:
+            return (((value & 0x7f) << 8) | (self.read_integer(8)))
+        else:
+            raise NotImplementedError()
+
+    def read_normally_small_non_negative_whole_number(self):
+        bit = self.read_bit()
+
+        if bit == 0:
+            decoded = self.read_integer(6)
+        else:
+            length = self.read_length_determinant()
+            decoded = self.read_integer(8 * length)
+
+        return decoded
+
 
 def size_as_number_of_bits(size):
     """Returns the minimum number of bits needed to fit given positive
@@ -181,48 +221,6 @@ def size_as_number_of_bits(size):
     """
 
     return len('{:b}'.format(size))
-
-
-def encode_length_determinant(length):
-    if length < 128:
-        return bytearray([length])
-    elif length < 16384:
-        return bytearray([(0x80 | (length >> 8)), (length & 0xff)])
-    else:
-        raise NotImplementedError()
-
-
-def decode_length_determinant(decoder):
-    value = decoder.read_integer(8)
-
-    if (value & 0x80) == 0x00:
-        return value
-    elif (value & 0xc0) == 0x80:
-        return (((value & 0x7f) << 8) | (decoder.read_integer(8)))
-    else:
-        raise NotImplementedError()
-
-
-def encode_normally_small_non_negative_whole_number(encoder, value):
-    if value < 64:
-        encoder.append_integer(value, 7)
-    else:
-        encoder.append_bit(1)
-        length = (value.bit_length() + 7) // 8
-        encoder.append_bytes(encode_length_determinant(length))
-        encoder.append_integer(value, 8 * length)
-
-
-def decode_normally_small_non_negative_whole_number(decoder):
-    bit = decoder.read_bit()
-
-    if bit == 0:
-        decoded = decoder.read_integer(6)
-    else:
-        length = decode_length_determinant(decoder)
-        decoded = decoder.read_integer(8 * length)
-
-    return decoded
 
 
 class Type(object):
@@ -256,14 +254,14 @@ class KnownMultiplierStringType(Type):
 
     def encode_length(self, encoder, length):
         if self.number_of_bits is None:
-            encoder.append_bytes(encode_length_determinant(length))
+            encoder.append_length_determinant(length)
         elif self.minimum != self.maximum:
             encoder.append_integer(length - self.minimum,
                                    self.number_of_bits)
 
     def decode_length(self, decoder):
         if self.number_of_bits is None:
-            length = decode_length_determinant(decoder)
+            length = decoder.read_length_determinant()
         elif self.minimum != self.maximum:
             length = decoder.read_integer(self.number_of_bits)
             length += self.minimum
@@ -313,11 +311,11 @@ class Real(Type):
 
     def encode(self, data, encoder):
         encoded = encode_real(data)
-        encoder.append_bytes(encode_length_determinant(len(encoded)))
+        encoder.append_length_determinant(len(encoded))
         encoder.append_bytes(encoded)
 
     def decode(self, decoder):
-        length = decode_length_determinant(decoder)
+        length = decoder.read_length_determinant()
 
         return decode_real(decoder.read_bytes(length))
 
@@ -541,7 +539,7 @@ class SequenceOf(Type):
 
     def encode(self, data, encoder):
         if self.number_of_bits is None:
-            encoder.append_bytes(encode_length_determinant(len(data)))
+            encoder.append_length_determinant(len(data))
         elif self.minimum != self.maximum:
             encoder.append_integer(len(data) - self.minimum,
                                    self.number_of_bits)
@@ -551,7 +549,7 @@ class SequenceOf(Type):
 
     def decode(self, decoder):
         if self.number_of_bits is None:
-            length = decode_length_determinant(decoder)
+            length = decoder.read_length_determinant()
         elif self.minimum != self.maximum:
             length = decoder.read_integer(self.number_of_bits)
             length += self.minimum
@@ -645,7 +643,7 @@ class OctetString(Type):
 
     def encode(self, data, encoder):
         if self.number_of_bits is None:
-            encoder.append_bytes(encode_length_determinant(len(data)))
+            encoder.append_length_determinant(len(data))
         else:
             if self.minimum != self.maximum:
                 encoder.append_integer(len(data) - self.minimum,
@@ -655,7 +653,7 @@ class OctetString(Type):
 
     def decode(self, decoder):
         if self.number_of_bits is None:
-            length = decode_length_determinant(decoder)
+            length = decoder.read_length_determinant()
         else:
             length = self.minimum
 
@@ -769,11 +767,11 @@ class UTF8String(Type):
 
     def encode(self, data, encoder):
         encoded = data.encode('utf-8')
-        encoder.append_bytes(encode_length_determinant(len(encoded)))
+        encoder.append_length_determinant(len(encoded))
         encoder.append_bytes(bytearray(encoded))
 
     def decode(self, decoder):
-        length = decode_length_determinant(decoder)
+        length = decoder.read_length_determinant()
         encoded = decoder.read_bits(8 * length)
 
         return encoded.decode('utf-8')
@@ -976,8 +974,7 @@ class Enumerated(Type):
             else:
                 encoder.append_bit(1)
                 index = self.additions_name_to_index[data]
-                encode_normally_small_non_negative_whole_number(encoder,
-                                                                index)
+                encoder.append_normally_small_non_negative_whole_number(index)
 
     def decode(self, decoder):
         if self.additions_index_to_name is None:
@@ -990,7 +987,7 @@ class Enumerated(Type):
                 index = decoder.read_integer(self.root_number_of_bits)
                 name = self.root_index_to_name[index]
             else:
-                index = decode_normally_small_non_negative_whole_number(decoder)
+                index = decoder.read_normally_small_non_negative_whole_number()
                 name = self.additions_index_to_name[index]
 
         return name
