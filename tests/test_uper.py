@@ -220,7 +220,8 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             b'\x9e\x00\x06\x00\x04\x0a\x46\x90'
         )
 
-        with self.assertRaises(asn1tools.EncodeError):
+        # Numeric string not yet implemented.
+        with self.assertRaises(NotImplementedError):
             self.assert_encode_decode(a4, 'Ax', decoded, encoded)
 
     def test_rrc_8_6_0(self):
@@ -1196,6 +1197,109 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('M',
              {'a': True, 'b': {'a': 5}, 'c': True},
              b'\xc0\x40\xe0\x20\xb0\x00')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_choice(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= CHOICE { "
+            "  a BOOLEAN "
+            "} "
+            "B ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ... "
+            "} "
+            "C ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  b INTEGER, "
+            "  ..., "
+            "  [[ "
+            "  c BOOLEAN "
+            "  ]] "
+            "} "
+            "D ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]], "
+            "  ... "
+            "} "
+            "E ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]], "
+            "  [[ "
+            "  c BOOLEAN "
+            "  ]], "
+            "  ... "
+            "} "
+            "F ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  ... "
+            "} "
+            "G ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b BOOLEAN "
+            "} "
+            "H ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b BOOLEAN, "
+            "  c BOOLEAN "
+            "} "
+            "I ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN, "
+            "  c BOOLEAN "
+            "  ]] "
+            "} "
+            "J ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b CHOICE { "
+            "    a INTEGER"
+            "  }, "
+            "  c BOOLEAN "
+            "  ]] "
+            "} "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',            ('a', True), b'\x80'),
+            ('B',            ('a', True), b'\x40'),
+            ('C',            ('a', True), b'\x20'),
+            ('C',               ('b', 1), b'\x40\x40\x40'),
+            ('C',            ('c', True), b'\x80\x01\x80'),
+            ('D',            ('a', True), b'\x40'),
+            ('D',            ('b', True), b'\x80\x01\x80'),
+            ('E',            ('a', True), b'\x40'),
+            ('E',            ('b', True), b'\x80\x01\x80'),
+            ('E',            ('c', True), b'\x81\x01\x80'),
+            ('F',            ('a', True), b'\x40'),
+            ('G',            ('a', True), b'\x40'),
+            ('G',            ('b', True), b'\x80\x01\x80'),
+            ('H',            ('a', True), b'\x40'),
+            ('H',            ('b', True), b'\x80\x01\x80'),
+            ('H',            ('c', True), b'\x81\x01\x80'),
+            ('I',            ('a', True), b'\x40'),
+            ('I',            ('b', True), b'\x80\x01\x80'),
+            ('I',            ('c', True), b'\x81\x01\x80'),
+            ('J',            ('a', True), b'\x40'),
+            ('J',        ('b', ('a', 1)), b'\x80\x02\x01\x01'),
+            ('J',            ('c', True), b'\x81\x01\x80')
         ]
 
         for type_name, decoded, encoded in datas:
