@@ -429,12 +429,13 @@ class Sequence(Type):
 
     def encode(self, data, encoder):
         if self.extension_additions is not None:
+            offset = encoder.number_of_bits
             encoder.append_bit(0)
             self.encode_root(data, encoder)
 
             if len(self.extension_additions) > 0:
                 if self.encode_extension_additions(data, encoder):
-                    encoder.set_bit(0)
+                    encoder.set_bit(offset)
         else:
             self.encode_root(data, encoder)
 
@@ -1116,22 +1117,6 @@ class Recursive(Type):
 
     def __repr__(self):
         return 'Recursive({})'.format(self.name)
-
-
-class Extension(Type):
-
-    def __init__(self, name, compiled_type, _module_name):
-        super(Extension, self).__init__(name, 'EXTENSION')
-        print('Extension', compiled_type)
-
-    def encode(self, _data, _encoder):
-        raise NotImplementedError
-
-    def decode(self, _decoder):
-        raise NotImplementedError
-
-    def __repr__(self):
-        return 'Extension({})'.format(self.name)
 
 
 class CompiledType(object):

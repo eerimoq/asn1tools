@@ -620,6 +620,78 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assert_encode_decode(lpp, 'LPP-Message', decoded, encoded)
 
+        # Message 2.
+        decoded = {
+            'transactionID': {
+                'initiator': 'targetDevice',
+                'transactionNumber': 254
+            },
+            'endTransaction': True,
+            'lpp-MessageBody': (
+                'c1',
+                (
+                    'requestCapabilities',
+                    {
+                        'criticalExtensions': (
+                            'c1',
+                            (
+                                'requestCapabilities-r9',
+                                {
+                                    'bt-RequestCapabilities-r13':{
+                                    }
+                                }
+                            )
+                        )
+                    }
+                )
+            )
+        }
+
+        encoded = b'\x93\xfd\x00\x80\x04\x04\x40'
+
+        self.assert_encode_decode(lpp, 'LPP-Message', decoded, encoded)
+
+        # Message 3.
+        decoded = {
+            'transactionID': {
+                'initiator': 'targetDevice',
+                'transactionNumber': 255
+            },
+            'endTransaction': False,
+            'lpp-MessageBody': (
+                'c1',
+                (
+                    'requestCapabilities',
+                    {
+                        'criticalExtensions': (
+                            'c1',
+                            (
+                                'requestCapabilities-r9',
+                                {
+                                    'epdu-RequestCapabilities': [
+                                        {
+                                            'ePDU-Identifier': {
+                                                'ePDU-ID': 256
+                                            },
+                                            'ePDU-Body': b''
+                                        }
+                                    ],
+                                    'tbs-RequestCapabilities-r13': {
+                                    },
+                                    'bt-RequestCapabilities-r13':{
+                                    }
+                                }
+                            )
+                        )
+                    }
+                )
+            )
+        }
+
+        encoded = b'\x93\xfe\x00\x84\x0f\xf0\x00\x10\x15\x00'
+
+        self.assert_encode_decode(lpp, 'LPP-Message', decoded, encoded)
+
     def test_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
                                             'uper')
@@ -649,9 +721,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('Octetstring2', b'\xab\xcd', b'\xab\xcd'),
             ('Octetstring3', b'\xab\xcd\xef', b'\xab\xcd\xef'),
             ('Octetstring4', b'\x89\xab\xcd\xef', b'\x31\x35\x79\xbd\xe0'),
-            ('Ia5string', 'bar', b'\x03\xc5\x87\x90'),
-            ('Utf8string', u'bar', b'\x03\x62\x61\x72'),
-            ('Utf8string', u'a\u1010c', b'\x05\x61\xe1\x80\x90\x63')
+            ('Ia5string', 'bar', b'\x03\xc5\x87\x90')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -750,6 +820,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "B ::= UTF8String (SIZE(10)) "
             "C ::= UTF8String (SIZE(0..1)) "
             "D ::= UTF8String (SIZE(2..3) ^ (FROM (\"a\"..\"g\"))) "
+            "E ::= UTF8String "
             "END",
             'uper')
 
@@ -762,9 +833,11 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
              {'a': True, 'b': 300 * u'1'},
              b'\x60\x4b\x0c' + 299 * b'\x4c' + b'\x40'),
             ('B', u'1234567890', b'\x0a\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'),
-            ('C', u'', b'\x00'),
-            ('C', u'P', b'\x01\x50'),
-            ('D', u'agg', b'\x03\x61\x67\x67')
+            ('C',           u'', b'\x00'),
+            ('C',          u'P', b'\x01\x50'),
+            ('D',        u'agg', b'\x03\x61\x67\x67'),
+            ('E',        u'bar', b'\x03\x62\x61\x72'),
+            ('E',   u'a\u1010c', b'\x05\x61\xe1\x80\x90\x63')
         ]
 
         for type_name, decoded, encoded in datas:
