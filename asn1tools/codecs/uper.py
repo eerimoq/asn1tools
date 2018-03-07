@@ -228,9 +228,7 @@ class Decoder(object):
             raise NotImplementedError()
 
     def read_normally_small_non_negative_whole_number(self):
-        bit = self.read_bit()
-
-        if bit == 0:
+        if not self.read_bit():
             decoded = self.read_integer(6)
         else:
             length = self.read_length_determinant()
