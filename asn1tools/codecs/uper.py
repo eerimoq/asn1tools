@@ -462,7 +462,7 @@ class Sequence(Type):
                 addition_encoder = Encoder()
 
                 if isinstance(addition, Sequence):
-                    addition.encode(data, addition_encoder)
+                    addition.encode_addition_group(data, addition_encoder)
                 else:
                     self.encode_member(addition, data, addition_encoder)
 
@@ -489,6 +489,13 @@ class Sequence(Type):
             encoder += addition_encoder
 
         return True
+
+    def encode_addition_group(self, data, encoder):
+        self.encode_root(data, encoder)
+
+        if (encoder.value == 0
+            and encoder.number_of_bits == len(self.optionals)):
+            encoder.number_of_bits = 0
 
     def encode_member(self, member, data, encoder):
         name = member.name

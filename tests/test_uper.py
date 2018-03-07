@@ -693,6 +693,52 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assert_encode_decode(lpp, 'LPP-Message', decoded, encoded)
 
+        # Message 4.
+        decoded = {
+            'transactionID': {
+                'initiator': 'targetDevice',
+                'transactionNumber': 0
+            },
+            'endTransaction': False,
+            'lpp-MessageBody': (
+                'c1',
+                (
+                    'provideLocationInformation',
+                    {
+                        'criticalExtensions': (
+                            'c1',
+                            (
+                                'provideLocationInformation-r9',
+                                {
+                                    'ecid-ProvideLocationInformation': {
+                                        'ecid-SignalMeasurementInformation': {
+                                            'measuredResultsList': [
+                                                {
+                                                    'physCellId': 1,
+                                                    'arfcnEUTRA': 40000,
+                                                    'systemFrameNumber': (
+                                                        b'\x55\x80', 10),
+                                                    'arfcnEUTRA-v9a0': 70000,
+                                                    'nrsrp-Result-r14': 9
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            )
+                        )
+                    }
+                )
+            )
+        }
+
+        encoded = (
+            b'\x92\x00\x28\x09\x00\xa0\x03\x38\x80\xab\x01\xc0\xe0\x8b\x80\x00'
+            b'\xa0\x48\x00'
+        )
+
+        self.assert_encode_decode(lpp, 'LPP-Message', decoded, encoded)
+
     def test_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
                                             'uper')
