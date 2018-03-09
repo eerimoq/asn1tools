@@ -462,7 +462,10 @@ class Sequence(Type):
                 if isinstance(addition, Sequence):
                     addition.encode_addition_group(data, addition_encoder)
                 else:
-                    self.encode_member(addition, data, addition_encoder)
+                    self.encode_member(addition,
+                                       data,
+                                       addition_encoder,
+                                       encode_default=True)
 
                 if addition_encoder.number_of_bits > 0:
                     addition_encoders.append(addition_encoder)
@@ -495,13 +498,13 @@ class Sequence(Type):
             and encoder.number_of_bits == len(self.optionals)):
             encoder.number_of_bits = 0
 
-    def encode_member(self, member, data, encoder):
+    def encode_member(self, member, data, encoder, encode_default=False):
         name = member.name
 
         if name in data:
             if member.default is None:
                 member.encode(data[name], encoder)
-            elif data[name] != member.default:
+            elif data[name] != member.default or encode_default:
                 member.encode(data[name], encoder)
         elif member.optional or member.default is not None:
             pass

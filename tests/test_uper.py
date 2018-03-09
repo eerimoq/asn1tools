@@ -1210,11 +1210,26 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "  c BOOLEAN "
             "  ]] "
             "} "
+            "N ::= SEQUENCE { "
+            "  a BOOLEAN DEFAULT TRUE "
+            "} "
+            "O ::= SEQUENCE { "
+            "  ..., "
+            "  a BOOLEAN DEFAULT TRUE "
+            "} "
+            "P ::= SEQUENCE { "
+            "  ..., "
+            "  [[ "
+            "  a BOOLEAN, "
+            "  b BOOLEAN DEFAULT TRUE "
+            "  ]] "
+            "} "
             "END",
             'uper')
 
         datas = [
             ('A',                                {}, b''),
+            ('O',                                {}, b'\x00'),
             ('B',                          {'a': 0}, b'\x00'),
             ('B',                          {'a': 1}, b'\x80\x80\x80'),
             ('C',                       {'a': True}, b'\x40'),
@@ -1226,6 +1241,13 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('K',                       {'a': True}, b'\x40'),
             ('L',                       {'a': True}, b'\x40'),
             ('M',                       {'a': True}, b'\x40'),
+            ('N',                       {'a': True}, b'\x00'),
+            ('N',                      {'a': False}, b'\x80'),
+            ('P',                                {}, b'\x00'),
+            ('O',                       {'a': True}, b'\x80\x80\xc0\x00'),
+            ('O',                      {'a': False}, b'\x80\x80\x80\x00'),
+            ('P',            {'a': True, 'b': True}, b'\x80\x80\xa0\x00'),
+            ('P',           {'a': True, 'b': False}, b'\x80\x80\xe0\x00'),
             ('D',            {'a': True, 'b': True}, b'\xc0\x40\x60\x00'),
             ('E',            {'a': True, 'b': True}, b'\xc0\x40\x60\x00'),
             ('F',            {'a': True, 'c': True}, b'\x60'),
@@ -1247,6 +1269,15 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Non-symmetrical encoding and decoding because default values
+        # are not encoded, but part of the decoded (given that the
+        # root and addition is present).
+        self.assertEqual(foo.encode('N', {}), b'\x00')
+        self.assertEqual(foo.decode('N', b'\x00'), {'a': True})
+        self.assertEqual(foo.encode('P', {'a': True}), b'\x80\x80\xa0\x00')
+        self.assertEqual(foo.decode('P', b'\x80\x80\xa0\x00'),
+                         {'a': True, 'b': True})
 
     def test_choice(self):
         foo = asn1tools.compile_string(

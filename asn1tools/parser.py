@@ -534,7 +534,7 @@ def convert_value(tokens, type_=None):
             else:
                 value.append(convert_number(value_tokens[0]))
     elif type_ == 'BOOLEAN':
-        value = tokens[0]
+        value = (tokens[0] == 'TRUE')
     elif tokens[0] == 'BitStringValue':
         value = convert_bit_string_value(tokens[0])
     elif isinstance(tokens[0], str):
