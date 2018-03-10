@@ -417,38 +417,6 @@ class Boolean(Type):
         return 'Boolean({})'.format(self.name)
 
 
-class IA5String(KnownMultiplierStringType):
-
-    PERMITTED_ALPHABET = ''
-
-    def encode(self, data, encoder):
-        encoded = data.encode('ascii')
-        self.encode_length(encoder, len(encoded))
-
-        for byte in bytearray(encoded):
-            encoder.append_bits(bytearray([(byte << 1) & 0xff]), 7)
-
-    def decode(self, decoder):
-        length = self.decode_length(decoder)
-        data = []
-
-        for _ in range(length):
-            data.append(decoder.read_integer(7))
-
-        return bytearray(data).decode('ascii')
-
-    def __repr__(self):
-        return 'IA5String({})'.format(self.name)
-
-
-class NumericString(KnownMultiplierStringType):
-
-    ENCODE_MAP = {v: i for i, v in enumerate(bytearray(b' 0123456789'))}
-    DECODE_MAP = {i: v for i, v in enumerate(bytearray(b' 0123456789'))}
-    PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_MAP,
-                                           DECODE_MAP)
-
-
 class Sequence(Type):
 
     def __init__(self,
@@ -821,6 +789,38 @@ class OctetString(Type):
         return 'OctetString({})'.format(self.name)
 
 
+class IA5String(KnownMultiplierStringType):
+
+    PERMITTED_ALPHABET = ''
+
+    def encode(self, data, encoder):
+        encoded = data.encode('ascii')
+        self.encode_length(encoder, len(encoded))
+
+        for byte in bytearray(encoded):
+            encoder.append_bits(bytearray([(byte << 1) & 0xff]), 7)
+
+    def decode(self, decoder):
+        length = self.decode_length(decoder)
+        data = []
+
+        for _ in range(length):
+            data.append(decoder.read_integer(7))
+
+        return bytearray(data).decode('ascii')
+
+    def __repr__(self):
+        return 'IA5String({})'.format(self.name)
+
+
+class NumericString(KnownMultiplierStringType):
+
+    ENCODE_MAP = {v: i for i, v in enumerate(bytearray(b' 0123456789'))}
+    DECODE_MAP = {i: v for i, v in enumerate(bytearray(b' 0123456789'))}
+    PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_MAP,
+                                           DECODE_MAP)
+
+
 class PrintableString(Type):
 
     def __init__(self, name):
@@ -908,14 +908,6 @@ class BMPString(Type):
         return 'BMPString({})'.format(self.name)
 
 
-class UTCTime(VisibleString):
-    pass
-
-
-class GeneralizedTime(VisibleString):
-    pass
-
-
 class TeletexString(Type):
 
     def __init__(self, name):
@@ -929,6 +921,14 @@ class TeletexString(Type):
 
     def __repr__(self):
         return 'TeletexString({})'.format(self.name)
+
+
+class UTCTime(VisibleString):
+    pass
+
+
+class GeneralizedTime(VisibleString):
+    pass
 
 
 class ObjectIdentifier(Type):
