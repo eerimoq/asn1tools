@@ -89,6 +89,26 @@ See the `examples`_ folder for additional examples.
 Command line tool
 -----------------
 
+The shell subcommand
+^^^^^^^^^^^^^^^^^^^^
+
+Use the command line shell to decode encoded data.
+
+.. code-block:: text
+
+   > asn1tools shell
+
+   Welcome to the cantools shell.
+
+   $ compile ber tests/files/foo.asn
+   $ decode Question 300e0201011609497320312b313d333f
+   question Question ::= {
+       id 1,
+       question "Is 1+1=3?"
+   }
+   $ exit
+   >
+
 The decode subcommand
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -136,26 +156,6 @@ dates.
        id 2,
        question "Is 2+2=5?"
    }
-   >
-
-The shell subcommand
-^^^^^^^^^^^^^^^^^^^^
-
-Use the command line shell to decode encoded data.
-
-.. code-block:: text
-
-   > asn1tools shell
-
-   Welcome to the cantools shell.
-
-   $ compile ber tests/files/foo.asn
-   $ decode Question 300e0201011609497320312b313d333f
-   question Question ::= {
-       id 1,
-       question "Is 1+1=3?"
-   }
-   $ exit
    >
 
 Contributing
