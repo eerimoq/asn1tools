@@ -80,7 +80,7 @@ def _do_decode(args):
 
 
 def _handle_command_compile(line):
-    mo = re.match(r'compile\s+(\w+)\s+(\w+.*)', line)
+    mo = re.match(r'compile\s+(\w+)\s+(.+)', line)
 
     if mo:
         try:
@@ -96,7 +96,7 @@ def _handle_command_compile(line):
 
 def _handle_command_decode(line, codec_spec, asn1_spec):
     if codec_spec:
-        mo = re.match(r'decode\s+([^\s]+)\s+(\w+)', line)
+        mo = re.match(r'decode\s+([^\s]+)\s+(.+)', line)
 
         if mo:
             hexstring = mo.group(2)
