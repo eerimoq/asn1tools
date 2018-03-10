@@ -89,6 +89,9 @@ See the `examples`_ folder for additional examples.
 Command line tool
 -----------------
 
+The decode subcommand
+^^^^^^^^^^^^^^^^^^^^^
+
 Decode given encoded Question using the default codec (BER).
 
 .. code-block:: text
@@ -135,6 +138,9 @@ dates.
    }
    >
 
+The shell subcommand
+^^^^^^^^^^^^^^^^^^^^
+
 Use the command line shell to decode encoded data.
 
 .. code-block:: text
@@ -149,7 +155,8 @@ Use the command line shell to decode encoded data.
        id 1,
        question "Is 1+1=3?"
    }
-   $
+   $ exit
+   >
 
 Contributing
 ============
