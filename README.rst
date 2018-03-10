@@ -98,7 +98,7 @@ Use the command line shell to decode encoded data.
 
    > asn1tools shell
 
-   Welcome to the cantools shell.
+   Welcome to the asn1tools shell.
 
    $ compile ber tests/files/foo.asn
    $ decode Question 300e0201011609497320312b313d333f
