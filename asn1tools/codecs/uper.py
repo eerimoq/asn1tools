@@ -395,16 +395,37 @@ class IA5String(KnownMultiplierStringType):
         return 'IA5String({})'.format(self.name)
 
 
-class NumericString(Type):
+class NumericString(KnownMultiplierStringType):
 
-    def __init__(self, name):
-        super(NumericString, self).__init__(name, 'NumericString')
+    def __init__(self, name, minimum, maximum):
+        super(NumericString, self).__init__(name,
+                                            'NumericString',
+                                            minimum,
+                                            maximum)
 
     def encode(self, data, encoder):
-        raise NotImplementedError()
+        encoded = data.encode('ascii')
+        self.encode_length(encoder, len(encoded))
+
+        for value in bytearray(encoded):
+            if value == 32:
+                value = 47
+
+            encoder.append_integer(value - 47, 4)
 
     def decode(self, decoder):
-        raise NotImplementedError()
+        length = self.decode_length(decoder)
+        data = []
+
+        for _ in range(length):
+            value = (decoder.read_integer(4) + 47)
+
+            if value == 47:
+                value = 32
+
+            data.append(value)
+
+        return bytearray(data).decode('ascii')
 
     def __repr__(self):
         return 'NumericString({})'.format(self.name)
@@ -1291,7 +1312,9 @@ class Compiler(compiler.Compiler):
         elif type_name == 'TeletexString':
             compiled = TeletexString(name)
         elif type_name == 'NumericString':
-            compiled = NumericString(name)
+            minimum, maximum = self.get_size_range(type_descriptor,
+                                                   module_name)
+            compiled = NumericString(name, minimum, maximum)
         elif type_name == 'PrintableString':
             compiled = PrintableString(name)
         elif type_name == 'IA5String':

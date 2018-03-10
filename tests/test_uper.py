@@ -220,9 +220,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             b'\x9e\x00\x06\x00\x04\x0a\x46\x90'
         )
 
-        # Numeric string not yet implemented.
-        with self.assertRaises(NotImplementedError):
-            self.assert_encode_decode(a4, 'Ax', decoded, encoded)
+        self.assert_encode_decode(a4, 'Ax', decoded, encoded)
 
     def test_rrc_8_6_0(self):
         rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0), 'uper')
@@ -782,12 +780,6 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             all_types.encode('Sequence12', {'a': [{'a': []}]})
 
         with self.assertRaises(NotImplementedError):
-            all_types.encode('Numericstring', '')
-
-        with self.assertRaises(NotImplementedError):
-            all_types.decode('Numericstring', b'\x00')
-
-        with self.assertRaises(NotImplementedError):
             all_types.encode('SetOf', [])
 
         with self.assertRaises(NotImplementedError):
@@ -978,6 +970,27 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
              b'\x23\x4f\x0e\x10\x71\x63\xc9\x96\x46\x5d\x52\x37\xf0\xe1\x23\x0f'
              b'\x0e\x12\x34\xf0\xe1\x07\x16\x3c\x99\x64\x65\xd5\x23\x7f\x0e\x12'
              b'\x30\xf0\xe1\x23\x4f\x0e\x10\x71\x63\xc9\x94')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_numeric_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= NumericString "
+            "B ::= NumericString (SIZE (5)) "
+            "C ::= NumericString (SIZE (19..133)) "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',        ' 0123456789', b'\x0b\x01\x23\x45\x67\x89\xa0'),
+            ('B',              '1 9 5', b'\x20\xa0\x60'),
+            ('C',
+             '0123456789 9876543210',
+             b'\x04\x24\x68\xac\xf1\x34\x15\x30\xec\xa8\x64\x20')
         ]
 
         for type_name, decoded, encoded in datas:
