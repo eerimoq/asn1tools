@@ -6,6 +6,7 @@ import logging
 from operator import attrgetter
 from operator import itemgetter
 import binascii
+import string
 
 from . import EncodeError
 from . import DecodeError
@@ -42,10 +43,24 @@ class PermittedAlphabet(object):
         return len(self.encode_map)
 
     def encode(self, value):
-        return self.encode_map[value]
+        try:
+            return self.encode_map[value]
+        except KeyError:
+            raise EncodeError(
+                "expected a character in '{}', but got '{}' (0x{:02x})'".format(
+                    ''.join([chr(v) for v in self.encode_map]),
+                    chr(value) if chr(value) in string.printable else '.',
+                    value))
+
 
     def decode(self, value):
-        return self.decode_map[value]
+        try:
+            return self.decode_map[value]
+        except KeyError:
+            raise DecodeError(
+                "expected a value in {}, but got {:d}".format(
+                    list(self.decode_map),
+                    value))
 
 
 class Encoder(object):
@@ -267,9 +282,22 @@ class Type(object):
 
 class KnownMultiplierStringType(Type):
 
-    def __init__(self, name, string_type, minimum, maximum):
-        super(KnownMultiplierStringType, self).__init__(name, string_type)
+    PERMITTED_ALPHABET = ''
+
+    def __init__(self,
+                 name,
+                 minimum=None,
+                 maximum=None,
+                 permitted_alphabet=None):
+        super(KnownMultiplierStringType, self).__init__(name,
+                                                        self.__class__.__name__)
         self.set_size_range(minimum, maximum)
+
+        if permitted_alphabet is None:
+            permitted_alphabet = self.PERMITTED_ALPHABET
+
+        self.permitted_alphabet = permitted_alphabet
+        self.bits_per_character = size_as_number_of_bits(len(permitted_alphabet))
 
     def set_size_range(self, minimum, maximum):
         self.minimum = minimum
@@ -280,6 +308,24 @@ class KnownMultiplierStringType(Type):
         else:
             size = maximum - minimum
             self.number_of_bits = size_as_number_of_bits(size)
+
+    def encode(self, data, encoder):
+        encoded = data.encode('ascii')
+        self.encode_length(encoder, len(encoded))
+
+        for value in bytearray(encoded):
+            encoder.append_integer(self.permitted_alphabet.encode(value),
+                                   self.bits_per_character)
+
+    def decode(self, decoder):
+        length = self.decode_length(decoder)
+        data = []
+
+        for _ in range(length):
+            value = decoder.read_integer(self.bits_per_character)
+            data.append(self.permitted_alphabet.decode(value))
+
+        return bytearray(data).decode('ascii')
 
     def encode_length(self, encoder, length):
         if self.number_of_bits is None:
@@ -298,6 +344,10 @@ class KnownMultiplierStringType(Type):
             length = self.minimum
 
         return length
+
+    def __repr__(self):
+        return '{}({})'.format(self.__class__.__name__,
+                               self.name)
 
 
 class Integer(Type):
@@ -369,11 +419,7 @@ class Boolean(Type):
 
 class IA5String(KnownMultiplierStringType):
 
-    def __init__(self, name, minimum, maximum):
-        super(IA5String, self).__init__(name,
-                                        'IA5String',
-                                        minimum,
-                                        maximum)
+    PERMITTED_ALPHABET = ''
 
     def encode(self, data, encoder):
         encoded = data.encode('ascii')
@@ -397,38 +443,10 @@ class IA5String(KnownMultiplierStringType):
 
 class NumericString(KnownMultiplierStringType):
 
-    def __init__(self, name, minimum, maximum):
-        super(NumericString, self).__init__(name,
-                                            'NumericString',
-                                            minimum,
-                                            maximum)
-
-    def encode(self, data, encoder):
-        encoded = data.encode('ascii')
-        self.encode_length(encoder, len(encoded))
-
-        for value in bytearray(encoded):
-            if value == 32:
-                value = 47
-
-            encoder.append_integer(value - 47, 4)
-
-    def decode(self, decoder):
-        length = self.decode_length(decoder)
-        data = []
-
-        for _ in range(length):
-            value = (decoder.read_integer(4) + 47)
-
-            if value == 47:
-                value = 32
-
-            data.append(value)
-
-        return bytearray(data).decode('ascii')
-
-    def __repr__(self):
-        return 'NumericString({})'.format(self.name)
+    ENCODE_MAP = {v: i for i, v in enumerate(bytearray(b' 0123456789'))}
+    DECODE_MAP = {i: v for i, v in enumerate(bytearray(b' 0123456789'))}
+    PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_MAP,
+                                           DECODE_MAP)
 
 
 class Sequence(Type):
@@ -835,51 +853,9 @@ class UniversalString(Type):
 
 class VisibleString(KnownMultiplierStringType):
 
-    def __init__(self,
-                 name,
-                 minimum=None,
-                 maximum=None,
-                 permitted_alphabet=None):
-        super(VisibleString, self).__init__(name,
-                                            'VisibleString',
-                                            minimum,
-                                            maximum)
-        self.permitted_alphabet = permitted_alphabet
-
-        if permitted_alphabet is None:
-            self.bits_per_character = 7
-        else:
-            self.bits_per_character = size_as_number_of_bits(
-                len(permitted_alphabet))
-
-    def encode(self, data, encoder):
-        encoded = data.encode('ascii')
-        self.encode_length(encoder, len(encoded))
-
-        for value in bytearray(encoded):
-            if self.permitted_alphabet is not None:
-                value = self.permitted_alphabet.encode(value)
-
-            encoder.append_bits(
-                bytearray([(value << (8 - self.bits_per_character)) & 0xff]),
-                self.bits_per_character)
-
-    def decode(self, decoder):
-        length = self.decode_length(decoder)
-        data = []
-
-        for _ in range(length):
-            value = decoder.read_integer(self.bits_per_character)
-
-            if self.permitted_alphabet is not None:
-                value = self.permitted_alphabet.decode(value)
-
-            data.append(value)
-
-        return bytearray(data).decode('ascii')
-
-    def __repr__(self):
-        return 'VisibleString({})'.format(self.name)
+    ENCODE_DECODE_MAP = {v: v for v in range(32, 127)}
+    PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_DECODE_MAP,
+                                           ENCODE_DECODE_MAP)
 
 
 class GeneralString(Type):
@@ -933,21 +909,11 @@ class BMPString(Type):
 
 
 class UTCTime(VisibleString):
-
-    def __init__(self, name):
-        super(UTCTime, self).__init__(name, 'UTCTime')
-
-    def __repr__(self):
-        return 'UTCTime({})'.format(self.name)
+    pass
 
 
 class GeneralizedTime(VisibleString):
-
-    def __init__(self, name):
-        super(GeneralizedTime, self).__init__(name, 'GeneralizedTime')
-
-    def __repr__(self):
-        return 'GeneralizedTime({})'.format(self.name)
+    pass
 
 
 class TeletexString(Type):

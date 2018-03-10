@@ -977,6 +977,16 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+        # Bad character 0x19 should raise an exception.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('A', '\x19')
+
+        self.assertEqual(
+            str(cm.exception),
+            "expected a character in ' !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEF"
+            "GHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~', but got"
+            " '.' (0x19)'")
+
     def test_numeric_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
@@ -997,6 +1007,23 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Bad character 'a' should raise an exception.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('A', 'a')
+
+        self.assertEqual(
+            str(cm.exception),
+            "expected a character in ' 0123456789', but got 'a' (0x61)'")
+
+        # Bad value 11 should raise an exception.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', b'\x01\xb0')
+
+        self.assertEqual(
+            str(cm.exception),
+            ": expected a value in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "
+            "but got 11")
 
     def test_sequence_of(self):
         foo = asn1tools.compile_string(
