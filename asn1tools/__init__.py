@@ -125,11 +125,11 @@ def _do_shell(_args):
     commands = ['compile', 'decode', 'help', 'exit']
     completer = WordCompleter(commands, WORD=True)
     user_home = os.path.expanduser('~')
-    history = FileHistory(os.path.join(user_home, '.cantools-history.txt'))
+    history = FileHistory(os.path.join(user_home, '.asn1tools-history.txt'))
     codec_spec = None
     asn1_spec = None
 
-    print("\nWelcome to the cantools shell.\n")
+    print("\nWelcome to the asn1tools shell.\n")
 
     while True:
         try:
