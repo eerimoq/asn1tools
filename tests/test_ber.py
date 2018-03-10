@@ -1415,10 +1415,10 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         all_types = asn1tools.compile_files('tests/files/module_tags_explicit.asn')
 
         datas = [
-            ('CBA', 1, b'\xa5\x07\xa4\x05\xa3\x03\x02\x01\x01'),
-            ('CBIAI', 1, b'\xa5\x03\x84\x01\x01'),
-            ('CIBIA', 1, b'\xa5\x03\x02\x01\x01'),
-            ('CIBIAI', 1, b'\x85\x01\x01'),
+            ('CBA',      1, b'\xa5\x07\xa4\x05\xa3\x03\x02\x01\x01'),
+            ('CBIAI',    1, b'\xa5\x03\x84\x01\x01'),
+            ('CIBIA',    1, b'\xa5\x03\x02\x01\x01'),
+            ('CIBIAI',   1, b'\x85\x01\x01'),
             ('S2',
              {'a': 1, 'b': {'a': 3}, 'c': ('a', True)},
              b'\x30\x0d\x02\x01\x01\xa2\x05\x30\x03\x02\x01\x03\x01\x01\xff'),
@@ -1439,10 +1439,10 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         all_types = asn1tools.compile_files('tests/files/module_tags_implicit.asn')
 
         datas = [
-            ('CBA', 1, b'\x85\x01\x01'),
-            ('CBIAI', 1, b'\x85\x01\x01'),
-            ('CIBIA', 1, b'\x85\x01\x01'),
-            ('CIBIAI', 1, b'\x85\x01\x01'),
+            ('CBA',      1, b'\x85\x01\x01'),
+            ('CBIAI',    1, b'\x85\x01\x01'),
+            ('CIBIA',    1, b'\x85\x01\x01'),
+            ('CIBIAI',   1, b'\x85\x01\x01'),
             ('S2',
              {'a': 1, 'b': {'a': 3}, 'c': ('a', True)},
              b'\x30\x0b\x02\x01\x01\xa2\x03\x02\x01\x03\x01\x01\xff'),
@@ -1462,10 +1462,10 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         all_types = asn1tools.compile_files('tests/files/module_tags_automatic.asn')
 
         datas = [
-            ('CBA', 1, b'\x85\x01\x01'),
-            ('CBIAI', 1, b'\x85\x01\x01'),
-            ('CIBIA', 1, b'\x85\x01\x01'),
-            ('CIBIAI', 1, b'\x85\x01\x01'),
+            ('CBA',      1, b'\x85\x01\x01'),
+            ('CBIAI',    1, b'\x85\x01\x01'),
+            ('CIBIA',    1, b'\x85\x01\x01'),
+            ('CIBIAI',   1, b'\x85\x01\x01'),
             ('S2',
              {'a': 1, 'b': {'a': 3}, 'c': ('a', True)},
              b'\x30\x0b\x02\x01\x01\xa2\x03\x80\x01\x03\x80\x01\xff'),

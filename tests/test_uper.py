@@ -742,31 +742,31 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
                                             'uper')
 
         datas = [
-            ('Boolean', True, b'\x80'),
-            ('Boolean', False, b'\x00'),
-            ('Integer', 32768, b'\x03\x00\x80\x00'),
-            ('Integer', 32767, b'\x02\x7f\xff'),
-            ('Integer', 256, b'\x02\x01\x00'),
-            ('Integer', 255, b'\x02\x00\xff'),
-            ('Integer', 128, b'\x02\x00\x80'),
-            ('Integer', 127, b'\x01\x7f'),
-            ('Integer', 1, b'\x01\x01'),
-            ('Integer', 0, b'\x01\x00'),
-            ('Integer', -1, b'\x01\xff'),
-            ('Integer', -128, b'\x01\x80'),
-            ('Integer', -129, b'\x02\xff\x7f'),
-            ('Integer', -256, b'\x02\xff\x00'),
-            ('Integer', -32768, b'\x02\x80\x00'),
-            ('Integer', -32769, b'\x03\xff\x7f\xff'),
-            ('Bitstring', (b'\x40', 4), b'\x04\x40'),
-            ('Bitstring2', (b'\x12\x80', 9), b'\x12\x80'),
-            ('Bitstring3', (b'\x34', 6), b'\x4d'),
-            ('Octetstring', b'\x00', b'\x01\x00'),
-            ('Octetstring', 500 * b'\x00', b'\x81\xf4' + 500 * b'\x00'),
-            ('Octetstring2', b'\xab\xcd', b'\xab\xcd'),
-            ('Octetstring3', b'\xab\xcd\xef', b'\xab\xcd\xef'),
+            ('Boolean',                     True, b'\x80'),
+            ('Boolean',                    False, b'\x00'),
+            ('Integer',                    32768, b'\x03\x00\x80\x00'),
+            ('Integer',                    32767, b'\x02\x7f\xff'),
+            ('Integer',                      256, b'\x02\x01\x00'),
+            ('Integer',                      255, b'\x02\x00\xff'),
+            ('Integer',                      128, b'\x02\x00\x80'),
+            ('Integer',                      127, b'\x01\x7f'),
+            ('Integer',                        1, b'\x01\x01'),
+            ('Integer',                        0, b'\x01\x00'),
+            ('Integer',                       -1, b'\x01\xff'),
+            ('Integer',                     -128, b'\x01\x80'),
+            ('Integer',                     -129, b'\x02\xff\x7f'),
+            ('Integer',                     -256, b'\x02\xff\x00'),
+            ('Integer',                   -32768, b'\x02\x80\x00'),
+            ('Integer',                   -32769, b'\x03\xff\x7f\xff'),
+            ('Bitstring',           (b'\x40', 4), b'\x04\x40'),
+            ('Bitstring2',      (b'\x12\x80', 9), b'\x12\x80'),
+            ('Bitstring3',          (b'\x34', 6), b'\x4d'),
+            ('Octetstring',              b'\x00', b'\x01\x00'),
+            ('Octetstring',        500 * b'\x00', b'\x81\xf4' + 500 * b'\x00'),
+            ('Octetstring2',         b'\xab\xcd', b'\xab\xcd'),
+            ('Octetstring3',     b'\xab\xcd\xef', b'\xab\xcd\xef'),
             ('Octetstring4', b'\x89\xab\xcd\xef', b'\x31\x35\x79\xbd\xe0'),
-            ('Ia5string', 'bar', b'\x03\xc5\x87\x90')
+            ('Ia5string',                  'bar', b'\x03\xc5\x87\x90')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -871,12 +871,14 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('A',
              {'a': True, 'b': 300 * u'1'},
              b'\x60\x4b\x0c' + 299 * b'\x4c' + b'\x40'),
-            ('B', u'1234567890', b'\x0a\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'),
-            ('C',           u'', b'\x00'),
-            ('C',          u'P', b'\x01\x50'),
-            ('D',        u'agg', b'\x03\x61\x67\x67'),
-            ('E',        u'bar', b'\x03\x62\x61\x72'),
-            ('E',   u'a\u1010c', b'\x05\x61\xe1\x80\x90\x63')
+            ('B',
+             u'1234567890',
+             b'\x0a\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'),
+            ('C',           u'',         b'\x00'),
+            ('C',          u'P',         b'\x01\x50'),
+            ('D',        u'agg',         b'\x03\x61\x67\x67'),
+            ('E',        u'bar',         b'\x03\x62\x61\x72'),
+            ('E',   u'a\u1010c',         b'\x05\x61\xe1\x80\x90\x63')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -1007,14 +1009,14 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             'uper')
 
         datas = [
-            ('A', [], b'\x00'),
-            ('A', [1], b'\x01\x01\x01'),
-            ('A', [1, 2], b'\x02\x01\x01\x01\x02'),
-            ('A', 1000 * [1, 2], b'\x87\xd0' + 1000 * b'\x01\x01\x01\x02'),
-            ('B', [1, 2], b'\x01\x01\x01\x02'),
+            ('A',                [], b'\x00'),
+            ('A',               [1], b'\x01\x01\x01'),
+            ('A',            [1, 2], b'\x02\x01\x01\x01\x02'),
+            ('A',     1000 * [1, 2], b'\x87\xd0' + 1000 * b'\x01\x01\x01\x02'),
+            ('B',            [1, 2], b'\x01\x01\x01\x02'),
             ('B', [4663, 222322233], b'\x02\x12\x37\x04\x0d\x40\x5e\x39'),
-            ('C', [1], b'\x00\x20\x20'),
-            ('C', [1, 2], b'\x20\x20\x20\x20\x40')
+            ('C',               [1], b'\x00\x20\x20'),
+            ('C',            [1, 2], b'\x20\x20\x20\x20\x40')
         ]
 
         for type_name, decoded, encoded in datas:

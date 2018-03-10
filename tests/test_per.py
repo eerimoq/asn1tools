@@ -409,9 +409,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             'tests/files/all_types_automatic_tags.asn', 'per')
 
         datas = [
-            ('Sequence3',
-             {'a': 1, 'c': 2,'d': True},
-             b'\x00\x01\x01\x01\x02\x80')
+            ('Sequence3', {'a': 1, 'c': 2,'d': True}, b'\x00\x01\x01\x01\x02\x80')
         ]
 
         for type_name, decoded, encoded in datas:

@@ -496,9 +496,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
             'tests/files/all_types_automatic_tags.asn', 'jer')
 
         datas = [
-            ('Sequence3',
-             {'a': 1, 'c': 2,'d': True},
-             b'{"a":1,"c":2,"d":true}')
+            ('Sequence3', {'a': 1, 'c': 2,'d': True}, b'{"a":1,"c":2,"d":true}')
         ]
 
         for type_name, decoded, encoded in datas:
