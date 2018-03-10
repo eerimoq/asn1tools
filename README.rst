@@ -93,23 +93,23 @@ Decode given encoded Question using the default codec (BER).
 
 .. code-block:: text
 
-   $ asn1tools decode tests/files/foo.asn Question 300e0201011609497320312b313d333f
+   > asn1tools decode tests/files/foo.asn Question 300e0201011609497320312b313d333f
    question Question ::= {
        id 1,
        question "Is 1+1=3?"
    }
-   $
+   >
 
 Decode given encoded Question using the UPER codec.
 
 .. code-block:: text
 
-   $ asn1tools decode --codec uper tests/files/foo.asn Question 01010993cd03156c5eb37e
+   > asn1tools decode --codec uper tests/files/foo.asn Question 01010993cd03156c5eb37e
    question Question ::= {
        id 1,
        question "Is 1+1=3?"
    }
-   $
+   >
 
 Continuously decode encoded Questions read from standard input. Any
 line that cannot be decoded is printed as is, in this example the
@@ -117,12 +117,12 @@ dates.
 
 .. code-block:: text
 
-   $ cat encoded.txt
+   > cat encoded.txt
    2018-02-24 11:22:09
    300e0201011609497320312b313d333f
    2018-02-24 11:24:15
    300e0201021609497320322b323d353f
-   $ cat encoded.txt | asn1tools decode tests/files/foo.asn Question -
+   > cat encoded.txt | asn1tools decode tests/files/foo.asn Question -
    2018-02-24 11:22:09
    question Question ::= {
        id 1,
@@ -132,6 +132,22 @@ dates.
    question Question ::= {
        id 2,
        question "Is 2+2=5?"
+   }
+   >
+
+Use the command line shell to decode encoded data.
+
+.. code-block:: text
+
+   > asn1tools shell
+
+   Welcome to the cantools shell.
+
+   $ compile ber tests/files/foo.asn
+   $ decode Question 300e0201011609497320312b313d333f
+   question Question ::= {
+       id 1,
+       question "Is 1+1=3?"
    }
    $
 

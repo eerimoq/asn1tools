@@ -18,7 +18,10 @@ setup(name='asn1tools',
       keywords=['ASN.1', 'asn1'],
       url='https://github.com/eerimoq/asn1tools',
       packages=find_packages(exclude=['tests']),
-      install_requires=['pyparsing>=2.2.0'],
+      install_requires=[
+          'pyparsing>=2.2.0',
+          'prompt_toolkit'
+      ],
       test_suite="tests",
       entry_points = {
           'console_scripts': ['asn1tools=asn1tools.__init__:_main']

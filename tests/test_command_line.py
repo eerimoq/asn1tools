@@ -29,7 +29,7 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
                     asn1tools._main()
 
         expected_output = [
-            "usage: asn1tools [-h] [-d] [-v {0,1,2}] [--version] {decode} ...",
+            "usage: asn1tools [-h] [-d] [-v {0,1,2}] [--version] {decode,shell} ...",
             "",
             "Various ASN.1 utilities.",
             "",
@@ -46,7 +46,7 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
             "  --version             Print version information and exit.",
             "",
             "subcommands:",
-            "  {decode}"
+            "  {decode,shell}"
         ]
 
         print(stdout.getvalue())

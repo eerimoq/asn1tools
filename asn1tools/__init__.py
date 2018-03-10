@@ -4,9 +4,17 @@ functions and classes, and the command line interface.
 """
 
 import sys
+import os
 import argparse
 import binascii
 import logging
+import re
+
+from prompt_toolkit.contrib.completers import WordCompleter
+from prompt_toolkit import prompt
+from prompt_toolkit.history import FileHistory
+from prompt_toolkit.interface import AbortAction
+from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 
 from .compiler import compile_dict
 from .compiler import compile_string
@@ -31,14 +39,21 @@ def _decode_hexstring(codec_spec, asn1_spec, type_name, hexstring):
         raise TypeError("'{}': {}".format(hexstring, str(e)))
 
     decoded = codec_spec.decode(type_name, encoded)
-    
+
     print(asn1_spec.encode(type_name, decoded, indent=4).decode('utf-8'))
 
 
-def _do_decode(args):
-    parsed = parse_files(args.specification)
-    codec_spec = compile_dict(parsed, args.codec)
+def _compile_files(specifications, codec):
+    parsed = parse_files(specifications)
+    codec_spec = compile_dict(parsed, codec)
     asn1_spec = compile_dict(parsed, 'asn1')
+
+    return codec_spec, asn1_spec
+
+
+def _do_decode(args):
+    codec_spec, asn1_spec = _compile_files(args.specification,
+                                           args.codec)
 
     if args.hexstring == '-':
         for hexstring in sys.stdin:
@@ -62,6 +77,85 @@ def _do_decode(args):
                           asn1_spec,
                           args.type,
                           args.hexstring)
+
+
+def _handle_command_compile(line):
+    mo = re.match(r'compile\s+(\w+)\s+(\w+.*)', line)
+
+    if mo:
+        try:
+            return _compile_files(mo.group(2).split(),
+                                  mo.group(1))
+        except Exception as e:
+            print('error: {}'.format(str(e)))
+    else:
+        print('Usage: compile <codec> <specification> [<specification> ...]')
+
+    return None, None
+
+
+def _handle_command_decode(line, codec_spec, asn1_spec):
+    if codec_spec:
+        mo = re.match(r'decode\s+([^\s]+)\s+(\w+)', line)
+
+        if mo:
+            hexstring = mo.group(2)
+
+            try:
+                _decode_hexstring(codec_spec,
+                                  asn1_spec,
+                                  mo.group(1),
+                                  hexstring)
+            except Exception as e:
+                print('error: {}'.format(str(e)))
+        else:
+            print('Usage: decode <type> <hexstring>')
+    else:
+        print("No compiled specification found. Please use the "
+              "'compile' command to compile one.")
+
+
+def _handle_command_help():
+    print('Commands:')
+    print('  compile <codec> <specification>')
+    print('  decode <type> <hexstring>')
+
+
+def _do_shell(_args):
+    commands = ['compile', 'decode', 'help', 'exit']
+    completer = WordCompleter(commands, WORD=True)
+    user_home = os.path.expanduser('~')
+    history = FileHistory(os.path.join(user_home, '.cantools-history.txt'))
+    codec_spec = None
+    asn1_spec = None
+
+    print("\nWelcome to the cantools shell.\n")
+
+    while True:
+        try:
+            line = prompt(u'$ ',
+                          completer=completer,
+                          complete_while_typing=True,
+                          auto_suggest=AutoSuggestFromHistory(),
+                          enable_history_search=True,
+                          history=history,
+                          on_abort=AbortAction.RETRY)
+        except EOFError:
+            return
+
+        line = line.strip()
+
+        if line:
+            if line.startswith('compile'):
+                codec_spec, asn1_spec = _handle_command_compile(line)
+            elif line.startswith('decode'):
+                _handle_command_decode(line, codec_spec, asn1_spec)
+            elif line == 'help':
+                _handle_command_help()
+            elif line == 'exit':
+                return
+            else:
+                print('{}: command not found'.format(line))
 
 
 def _main():
@@ -101,6 +195,11 @@ def _main():
         'hexstring',
         help='Hexstring to decode, or - to read hexstrings from standard input.')
     decode_parser.set_defaults(func=_do_decode)
+
+    # The 'shell' subparser.
+    shell_parser = subparsers.add_parser('shell',
+                                         description='An interactive shell.')
+    shell_parser.set_defaults(func=_do_shell)
 
     args = parser.parse_args()
 

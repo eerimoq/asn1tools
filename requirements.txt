@@ -6,3 +6,4 @@ libsnmp
 pyparsing
 pysnmp
 protobuf
+prompt_toolkit

@@ -25,6 +25,15 @@ class DecodeChoiceError(Exception):
     pass
 
 
+class OutOfDataError(DecodeError):
+
+    def __init__(self, offset):
+        super(OutOfDataError, self).__init__(
+            'out of data at bit offset {} ({}.{} bytes)'.format(
+                offset,
+                *divmod(offset, 8)))
+
+
 CLASS_PRIO = {
     'UNIVERSAL': 0,
     'APPLICATION': 1,
@@ -151,7 +160,8 @@ class Encoder(object):
         elif length < 16384:
             encoded = bytearray([(0x80 | (length >> 8)), (length & 0xff)])
         else:
-            raise NotImplementedError()
+            raise NotImplementedError(
+                'Length determinant >=16384 is not yet supported.')
 
         self.append_bytes(encoded)
 
@@ -168,7 +178,8 @@ class Encoder(object):
         if value <= 64:
             self.append_integer(value - 1, 7)
         else:
-            raise NotImplementedError()
+            raise NotImplementedError(
+                'Normally small length number >64 is not yet supported.')
 
     def __repr__(self):
         return binascii.hexlify(self.as_bytearray()).decode('ascii')
@@ -178,19 +189,29 @@ class Decoder(object):
 
     def __init__(self, encoded):
         self.number_of_bits = (8 * len(encoded))
+        self.total_number_of_bits = self.number_of_bits
 
         if len(encoded) > 0:
             self.value = int(binascii.hexlify(encoded), 16)
         else:
             self.value = 0
 
+    def number_of_read_bits(self):
+        return self.total_number_of_bits - self.number_of_bits
+
     def skip_bits(self, number_of_bits):
+        if self.number_of_bits == 0:
+            raise OutOfDataError(self.number_of_read_bits())
+
         self.number_of_bits -= number_of_bits
 
     def read_bit(self):
         """Read a bit.
 
         """
+
+        if self.number_of_bits == 0:
+            raise OutOfDataError(self.number_of_read_bits())
 
         self.number_of_bits -= 1
 
@@ -200,6 +221,9 @@ class Decoder(object):
         """Read given number of bits.
 
         """
+
+        if number_of_bits > self.number_of_bits:
+            raise OutOfDataError(self.number_of_read_bits())
 
         self.number_of_bits -= number_of_bits
         mask = ((1 << number_of_bits) - 1)
@@ -217,6 +241,9 @@ class Decoder(object):
         """Read an integer value of given number of bits.
 
         """
+
+        if number_of_bits > self.number_of_bits:
+            raise OutOfDataError(self.number_of_read_bits())
 
         self.number_of_bits -= number_of_bits
         mask = ((1 << number_of_bits) - 1)
@@ -240,7 +267,7 @@ class Decoder(object):
         elif (value & 0xc0) == 0x80:
             return (((value & 0x7f) << 8) | (self.read_integer(8)))
         else:
-            raise NotImplementedError()
+            raise NotImplementedError('Length determinant type not yet supported.')
 
     def read_normally_small_non_negative_whole_number(self):
         if not self.read_bit():
@@ -255,7 +282,8 @@ class Decoder(object):
         if not self.read_bit():
             return self.read_integer(6) + 1
         else:
-            raise NotImplementedError()
+            raise NotImplementedError(
+                'Normally small length number >64 is not yet supported.')
 
 
 def size_as_number_of_bits(size):
@@ -541,11 +569,15 @@ class Sequence(Type):
         }
 
         for member in self.root_members:
-            if optionals.get(member, True):
-                value = member.decode(decoder)
-                values[member.name] = value
-            elif member.default is not None:
-                values[member.name] = member.default
+            try:
+                if optionals.get(member, True):
+                    value = member.decode(decoder)
+                    values[member.name] = value
+                elif member.default is not None:
+                    values[member.name] = member.default
+            except DecodeError as e:
+                e.location.append(member.name)
+                raise
 
         return values
 
@@ -566,7 +598,11 @@ class Sequence(Type):
                 if isinstance(addition, Sequence):
                     decoded.update(addition.decode(decoder))
                 else:
-                    decoded[addition.name] = addition.decode(decoder)
+                    try:
+                        decoded[addition.name] = addition.decode(decoder)
+                    except DecodeError as e:
+                        e.location.append(addition.name)
+                        raise
 
                 alignment_bits = (offset - decoder.number_of_bits) % 8
 
@@ -698,11 +734,11 @@ class SetOf(Type):
         super(SetOf, self).__init__(name, 'SET OF')
         self.element_type = element_type
 
-    def encode(self, data, encoder):
-        raise NotImplementedError()
+    def encode(self, _data, _encoder):
+        raise NotImplementedError('SET OF not yet implemented.')
 
-    def decode(self, decoder):
-        raise NotImplementedError()
+    def decode(self, _decoder):
+        raise NotImplementedError('SET OF not yet implemented.')
 
     def __repr__(self):
         return 'SetOf({}, {})'.format(self.name,
@@ -826,11 +862,11 @@ class PrintableString(Type):
     def __init__(self, name):
         super(PrintableString, self).__init__(name, 'PrintableString')
 
-    def encode(self, data, encoder):
-        raise NotImplementedError()
+    def encode(self, _data, _encoder):
+        raise NotImplementedError('PrintableString not yet implemented.')
 
-    def decode(self, decoder):
-        raise NotImplementedError()
+    def decode(self, _decoder):
+        raise NotImplementedError('PrintableString not yet implemented.')
 
     def __repr__(self):
         return 'PrintableString({})'.format(self.name)
@@ -841,11 +877,11 @@ class UniversalString(Type):
     def __init__(self, name):
         super(UniversalString, self).__init__(name, 'UniversalString')
 
-    def encode(self, data, encoder):
-        raise NotImplementedError()
+    def encode(self, _data, _encoder):
+        raise NotImplementedError('UniversalString not yet implemented.')
 
-    def decode(self, decoder):
-        raise NotImplementedError()
+    def decode(self, _decoder):
+        raise NotImplementedError('UniversalString not yet implemented.')
 
     def __repr__(self):
         return 'UniversalString({})'.format(self.name)
@@ -863,11 +899,11 @@ class GeneralString(Type):
     def __init__(self, name):
         super(GeneralString, self).__init__(name, 'GeneralString')
 
-    def encode(self, data, encoder):
-        raise NotImplementedError()
+    def encode(self, _data, _encoder):
+        raise NotImplementedError('GeneralString not yet implemented.')
 
-    def decode(self, decoder):
-        raise NotImplementedError()
+    def decode(self, _decoder):
+        raise NotImplementedError('GeneralString not yet implemented.')
 
     def __repr__(self):
         return 'GeneralString({})'.format(self.name)
@@ -898,11 +934,11 @@ class BMPString(Type):
     def __init__(self, name):
         super(BMPString, self).__init__(name, 'BMPString')
 
-    def encode(self, data, encoder):
-        raise NotImplementedError()
+    def encode(self, _data, _encoder):
+        raise NotImplementedError('BMPString not yet implemented.')
 
-    def decode(self, decoder):
-        raise NotImplementedError()
+    def decode(self, _decoder):
+        raise NotImplementedError('BMPString not yet implemented.')
 
     def __repr__(self):
         return 'BMPString({})'.format(self.name)
@@ -913,11 +949,11 @@ class TeletexString(Type):
     def __init__(self, name):
         super(TeletexString, self).__init__(name, 'TeletexString')
 
-    def encode(self, data, encoder):
-        raise NotImplementedError()
+    def encode(self, _data, _encoder):
+        raise NotImplementedError('TeletexString not yet implemented.')
 
-    def decode(self, decoder):
-        raise NotImplementedError()
+    def decode(self, _decoder):
+        raise NotImplementedError('TeletexString not yet implemented.')
 
     def __repr__(self):
         return 'TeletexString({})'.format(self.name)
@@ -936,11 +972,11 @@ class ObjectIdentifier(Type):
     def __init__(self, name):
         super(ObjectIdentifier, self).__init__(name, 'OBJECT IDENTIFIER')
 
-    def encode(self, data, encoder):
-        raise NotImplementedError()
+    def encode(self, _data, _encoder):
+        raise NotImplementedError('OBJECT IDENTIFIER not yet implemented.')
 
-    def decode(self, decoder):
-        raise NotImplementedError()
+    def decode(self, _decoder):
+        raise NotImplementedError('OBJECT IDENTIFIER not yet implemented.')
 
     def __repr__(self):
         return 'ObjectIdentifier({})'.format(self.name)
@@ -1093,11 +1129,11 @@ class Any(Type):
     def __init__(self, name):
         super(Any, self).__init__(name, 'ANY')
 
-    def encode(self, _, encoder):
-        raise NotImplementedError()
+    def encode(self, _, _encoder):
+        raise NotImplementedError('ANY not yet implemented.')
 
-    def decode(self, decoder):
-        raise NotImplementedError()
+    def decode(self, _decoder):
+        raise NotImplementedError('ANY not yet implemented.')
 
     def __repr__(self):
         return 'Any({})'.format(self.name)
@@ -1155,17 +1191,33 @@ class Enumerated(Type):
 
     def decode(self, decoder):
         if self.additions_index_to_name is None:
-            index = decoder.read_integer(self.root_number_of_bits)
-            name = self.root_index_to_name[index]
+            return self.decode_root(decoder)
         else:
             additions = decoder.read_bit()
 
             if additions == 0:
-                index = decoder.read_integer(self.root_number_of_bits)
-                name = self.root_index_to_name[index]
+                return self.decode_root(decoder)
             else:
                 index = decoder.read_normally_small_non_negative_whole_number()
-                name = self.additions_index_to_name[index]
+
+                try:
+                    return self.additions_index_to_name[index]
+                except KeyError:
+                    raise DecodeError(
+                        'expected enumeration index in {}, but got {}'.format(
+                            list(self.additions_index_to_name),
+                            index))
+
+    def decode_root(self, decoder):
+        index = decoder.read_integer(self.root_number_of_bits)
+
+        try:
+            name = self.root_index_to_name[index]
+        except KeyError:
+            raise DecodeError(
+                'expected enumeration index in {}, but got {}'.format(
+                    list(self.root_index_to_name),
+                    index))
 
         return name
 
