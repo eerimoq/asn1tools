@@ -513,6 +513,7 @@ decode Question 01010993cd03156c5eb37e
 compile ber /x/y/missing
 compile ber
 compile foo tests/files/foo.asn
+missing-command
 exit
 ''')
 
@@ -539,6 +540,7 @@ exit
             'error: [Errno 2] No such file or directory: \'/x/y/missing\'\n'
             'Usage: compile <codec> <specification> [<specification> ...]\n'
             'error: unsupported codec \'foo\'\n'
+            'missing-command: command not found\n'
         )
 
         stdout = StringIO()
