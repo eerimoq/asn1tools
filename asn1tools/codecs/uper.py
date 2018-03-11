@@ -61,7 +61,6 @@ class PermittedAlphabet(object):
                     chr(value) if chr(value) in string.printable else '.',
                     value))
 
-
     def decode(self, value):
         try:
             return self.decode_map[value]
