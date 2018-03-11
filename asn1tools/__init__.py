@@ -117,7 +117,7 @@ def _handle_command_decode(line, codec_spec, asn1_spec):
 
 def _handle_command_help():
     print('Commands:')
-    print('  compile <codec> <specification>')
+    print('  compile <codec> <specification> [<specification> ...]')
     print('  decode <type> <hexstring>')
 
 

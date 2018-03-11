@@ -100,6 +100,10 @@ Use the command line shell to decode encoded data.
 
    Welcome to the asn1tools shell.
 
+   $ help
+   Commands:
+     compile <codec> <specification> [<specification> ...]
+     decode <type> <hexstring>
    $ compile ber tests/files/foo.asn
    $ decode Question 300e0201011609497320312b313d333f
    question Question ::= {

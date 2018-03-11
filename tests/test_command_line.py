@@ -525,7 +525,7 @@ exit
             'Welcome to the asn1tools shell.\n'
             '\n'
             "Commands:\n"
-            "  compile <codec> <specification>\n"
+            "  compile <codec> <specification> [<specification> ...]\n"
             "  decode <type> <hexstring>\n"
             'question Question ::= {\n'
             '    id 1,\n'
