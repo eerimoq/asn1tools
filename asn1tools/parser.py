@@ -462,7 +462,8 @@ def convert_type(tokens):
         'IA5String',
         'VisibleString',
         'UTF8String',
-        'NumericString'
+        'NumericString',
+        'PrintableString'
     ]
 
     if converted_type['type'] in types:
@@ -489,7 +490,8 @@ def convert_type(tokens):
         'IA5String',
         'VisibleString',
         'UTF8String',
-        'NumericString'
+        'NumericString',
+        'PrintableString'
     ]
 
     if converted_type['type'] in types:

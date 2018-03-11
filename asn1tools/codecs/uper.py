@@ -57,7 +57,7 @@ class PermittedAlphabet(object):
         except KeyError:
             raise EncodeError(
                 "expected a character in '{}', but got '{}' (0x{:02x})'".format(
-                    ''.join([chr(v) for v in self.encode_map]),
+                    ''.join(sorted([chr(v) for v in self.encode_map])),
                     chr(value) if chr(value) in string.printable else '.',
                     value))
 
@@ -831,25 +831,23 @@ class IA5String(KnownMultiplierStringType):
 
 class NumericString(KnownMultiplierStringType):
 
-    ENCODE_MAP = {v: i for i, v in enumerate(bytearray(b' 0123456789'))}
-    DECODE_MAP = {i: v for i, v in enumerate(bytearray(b' 0123456789'))}
+    ALPHABET = bytearray(b' 0123456789')
+    ENCODE_MAP = {v: i for i, v in enumerate(ALPHABET)}
+    DECODE_MAP = {i: v for i, v in enumerate(ALPHABET)}
     PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_MAP,
                                            DECODE_MAP)
 
 
-class PrintableString(Type):
+class PrintableString(KnownMultiplierStringType):
 
-    def __init__(self, name):
-        super(PrintableString, self).__init__(name, 'PrintableString')
-
-    def encode(self, _data, _encoder):
-        raise NotImplementedError('PrintableString not yet implemented.')
-
-    def decode(self, _decoder):
-        raise NotImplementedError('PrintableString not yet implemented.')
-
-    def __repr__(self):
-        return 'PrintableString({})'.format(self.name)
+    ALPHABET = bytearray((string.ascii_uppercase
+                          + string.ascii_lowercase
+                          + string.digits
+                          + " '()+,-./:=?").encode('ascii'))
+    ENCODE_MAP = {v: v for v in ALPHABET}
+    DECODE_MAP = {v: v for v in ALPHABET}
+    PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_MAP,
+                                           DECODE_MAP)
 
 
 class UniversalString(Type):
@@ -1313,7 +1311,9 @@ class Compiler(compiler.Compiler):
                                                    module_name)
             compiled = NumericString(name, minimum, maximum)
         elif type_name == 'PrintableString':
-            compiled = PrintableString(name)
+            minimum, maximum = self.get_size_range(type_descriptor,
+                                                   module_name)
+            compiled = PrintableString(name, minimum, maximum)
         elif type_name == 'IA5String':
             minimum, maximum = self.get_size_range(type_descriptor,
                                                    module_name)

@@ -3,6 +3,7 @@ from .utils import Asn1ToolsBaseTest
 import asn1tools
 import sys
 from copy import deepcopy
+import string
 
 sys.path.append('tests/files')
 sys.path.append('tests/files/3gpp')
@@ -1056,6 +1057,46 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             str(cm.exception),
             ": expected a value in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "
             "but got 11")
+
+    def test_printable_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= PrintableString "
+            "B ::= PrintableString (SIZE (16)) "
+            "C ::= PrintableString (SIZE (0..31)) "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',
+             (string.ascii_uppercase
+              + string.ascii_lowercase
+              + string.digits
+              + " '()+,-./:=?"),
+             b'\x4a\x83\x0a\x1c\x48\xb1\xa3\xc8\x93\x2a\x5c\xc9\xb3\xa7\xd0\xa3'
+             b'\x4a\x9d\x4a\xb5\xab\xd8\xb3\x6b\x0e\x2c\x79\x32\xe6\xcf\xa3\x4e'
+             b'\xad\x7b\x36\xee\xdf\xc3\x8f\x2e\x7d\x3a\xf6\xef\xe3\xcf\xa6\x0c'
+             b'\x59\x33\x68\xd5\xb3\x77\x0e\x50\x27\x50\xa5\x5a\xc5\xab\x97\xba'
+             b'\x7a\xfc'),
+            ('B',
+             '0123456789abcdef',
+             b'\x60\xc5\x93\x36\x8d\x5b\x37\x70\xe7\x0e\x2c\x79\x32\xe6'),
+            ('C',                 '', b'\x00'),
+            ('C',                '2', b'\x0b\x20')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Bad character '[' should raise an exception.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('A', '[')
+
+        self.assertEqual(
+            str(cm.exception),
+            "expected a character in ' '()+,-./0123456789:=?ABCDEFGHIJKLMNO"
+            "PQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', but got '[' (0x5b)'")
 
     def test_sequence_of(self):
         foo = asn1tools.compile_string(
