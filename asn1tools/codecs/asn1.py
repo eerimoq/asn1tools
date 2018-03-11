@@ -636,4 +636,4 @@ def compile_dict(specification):
 
 
 def decode_length(_data):
-    raise DecodeError('Decode length not supported for this codec.')
+    raise DecodeError('Decode length is not supported for this codec.')

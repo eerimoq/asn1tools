@@ -57,7 +57,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             foo.decode_length(b'')
 
         self.assertEqual(str(cm.exception),
-                         ': Decode length not supported for this codec.')
+                         ': Decode length is not supported for this codec.')
 
     def test_x691_a1(self):
         a1 = asn1tools.compile_files('tests/files/x691_a1.asn', 'per')

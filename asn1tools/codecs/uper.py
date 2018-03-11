@@ -200,7 +200,7 @@ class Decoder(object):
         return self.total_number_of_bits - self.number_of_bits
 
     def skip_bits(self, number_of_bits):
-        if self.number_of_bits == 0:
+        if number_of_bits > self.number_of_bits:
             raise OutOfDataError(self.number_of_read_bits())
 
         self.number_of_bits -= number_of_bits
@@ -267,7 +267,9 @@ class Decoder(object):
         elif (value & 0xc0) == 0x80:
             return (((value & 0x7f) << 8) | (self.read_integer(8)))
         else:
-            raise NotImplementedError('Length determinant type not yet supported.')
+            raise NotImplementedError(
+                'Length determinant type 0x{:02x} not yet supported.'.format(
+                    value))
 
     def read_normally_small_non_negative_whole_number(self):
         if not self.read_bit():
@@ -325,7 +327,8 @@ class KnownMultiplierStringType(Type):
             permitted_alphabet = self.PERMITTED_ALPHABET
 
         self.permitted_alphabet = permitted_alphabet
-        self.bits_per_character = size_as_number_of_bits(len(permitted_alphabet))
+        self.bits_per_character = size_as_number_of_bits(
+            len(permitted_alphabet) - 1)
 
     def set_size_range(self, minimum, maximum):
         self.minimum = minimum
@@ -339,30 +342,18 @@ class KnownMultiplierStringType(Type):
 
     def encode(self, data, encoder):
         encoded = data.encode('ascii')
-        self.encode_length(encoder, len(encoded))
+
+        if self.number_of_bits is None:
+            encoder.append_length_determinant(len(encoded))
+        elif self.minimum != self.maximum:
+            encoder.append_integer(len(encoded) - self.minimum,
+                                   self.number_of_bits)
 
         for value in bytearray(encoded):
             encoder.append_integer(self.permitted_alphabet.encode(value),
                                    self.bits_per_character)
 
     def decode(self, decoder):
-        length = self.decode_length(decoder)
-        data = []
-
-        for _ in range(length):
-            value = decoder.read_integer(self.bits_per_character)
-            data.append(self.permitted_alphabet.decode(value))
-
-        return bytearray(data).decode('ascii')
-
-    def encode_length(self, encoder, length):
-        if self.number_of_bits is None:
-            encoder.append_length_determinant(length)
-        elif self.minimum != self.maximum:
-            encoder.append_integer(length - self.minimum,
-                                   self.number_of_bits)
-
-    def decode_length(self, decoder):
         if self.number_of_bits is None:
             length = decoder.read_length_determinant()
         elif self.minimum != self.maximum:
@@ -371,7 +362,13 @@ class KnownMultiplierStringType(Type):
         else:
             length = self.minimum
 
-        return length
+        data = []
+
+        for _ in range(length):
+            value = decoder.read_integer(self.bits_per_character)
+            data.append(self.permitted_alphabet.decode(value))
+
+        return bytearray(data).decode('ascii')
 
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__,
@@ -827,26 +824,9 @@ class OctetString(Type):
 
 class IA5String(KnownMultiplierStringType):
 
-    PERMITTED_ALPHABET = ''
-
-    def encode(self, data, encoder):
-        encoded = data.encode('ascii')
-        self.encode_length(encoder, len(encoded))
-
-        for byte in bytearray(encoded):
-            encoder.append_bits(bytearray([(byte << 1) & 0xff]), 7)
-
-    def decode(self, decoder):
-        length = self.decode_length(decoder)
-        data = []
-
-        for _ in range(length):
-            data.append(decoder.read_integer(7))
-
-        return bytearray(data).decode('ascii')
-
-    def __repr__(self):
-        return 'IA5String({})'.format(self.name)
+    ENCODE_DECODE_MAP = {v: v for v in range(128)}
+    PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_DECODE_MAP,
+                                           ENCODE_DECODE_MAP)
 
 
 class NumericString(KnownMultiplierStringType):
@@ -1150,8 +1130,7 @@ class Enumerated(Type):
         index_to_name, name_to_index = self.create_maps(root)
         self.root_index_to_name = index_to_name
         self.root_name_to_index = name_to_index
-        self.root_number_of_bits = size_as_number_of_bits(
-            len(index_to_name) - 1)
+        self.root_number_of_bits = size_as_number_of_bits(len(index_to_name) - 1)
 
         # Optional additions.
         if additions is None:
@@ -1483,4 +1462,4 @@ def compile_dict(specification):
 
 
 def decode_length(_data):
-    raise DecodeError('Decode length not supported for this codec.')
+    raise DecodeError('Decode length is not supported for this codec.')

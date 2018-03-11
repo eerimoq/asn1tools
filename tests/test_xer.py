@@ -59,7 +59,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             foo.decode_length(b'')
 
         self.assertEqual(str(cm.exception),
-                         ': Decode length not supported for this codec.')
+                         ': Decode length is not supported for this codec.')
 
     def test_rrc_8_6_0(self):
         rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0), 'xer')

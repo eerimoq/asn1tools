@@ -53,7 +53,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             foo.decode_length(b'')
 
         self.assertEqual(str(cm.exception),
-                         ': Decode length not supported for this codec.')
+                         ': Decode length is not supported for this codec.')
 
     def test_x691_a1(self):
         a1 = asn1tools.compile_files('tests/files/x691_a1.asn', 'uper')
@@ -765,8 +765,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('Octetstring',        500 * b'\x00', b'\x81\xf4' + 500 * b'\x00'),
             ('Octetstring2',         b'\xab\xcd', b'\xab\xcd'),
             ('Octetstring3',     b'\xab\xcd\xef', b'\xab\xcd\xef'),
-            ('Octetstring4', b'\x89\xab\xcd\xef', b'\x31\x35\x79\xbd\xe0'),
-            ('Ia5string',                  'bar', b'\x03\xc5\x87\x90')
+            ('Octetstring4', b'\x89\xab\xcd\xef', b'\x31\x35\x79\xbd\xe0')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -847,6 +846,38 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(all_types, type_name, decoded, encoded)
 
+    def test_integer(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= INTEGER "
+            "B ::= INTEGER (5..99) "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',                    32768, b'\x03\x00\x80\x00'),
+            ('A',                    32767, b'\x02\x7f\xff'),
+            ('A',                      256, b'\x02\x01\x00'),
+            ('A',                      255, b'\x02\x00\xff'),
+            ('A',                      128, b'\x02\x00\x80'),
+            ('A',                      127, b'\x01\x7f'),
+            ('A',                        1, b'\x01\x01'),
+            ('A',                        0, b'\x01\x00'),
+            ('A',                       -1, b'\x01\xff'),
+            ('A',                     -128, b'\x01\x80'),
+            ('A',                     -129, b'\x02\xff\x7f'),
+            ('A',                     -256, b'\x02\xff\x00'),
+            ('A',                   -32768, b'\x02\x80\x00'),
+            ('A',                   -32769, b'\x03\xff\x7f\xff'),
+            ('B',                        5, b'\x00'),
+            ('B',                        6, b'\x02'),
+            ('B',                       99, b'\xbc')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_utf8_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
@@ -856,9 +887,9 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "    b UTF8String, "
             "    c UTF8String OPTIONAL"
             "} "
-            "B ::= UTF8String (SIZE(10)) "
-            "C ::= UTF8String (SIZE(0..1)) "
-            "D ::= UTF8String (SIZE(2..3) ^ (FROM (\"a\"..\"g\"))) "
+            "B ::= UTF8String (SIZE (10)) "
+            "C ::= UTF8String (SIZE (0..1)) "
+            "D ::= UTF8String (SIZE (2..3) ^ (FROM (\"a\"..\"g\"))) "
             "E ::= UTF8String "
             "END",
             'uper')
@@ -874,11 +905,11 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('B',
              u'1234567890',
              b'\x0a\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'),
-            ('C',           u'',         b'\x00'),
-            ('C',          u'P',         b'\x01\x50'),
-            ('D',        u'agg',         b'\x03\x61\x67\x67'),
-            ('E',        u'bar',         b'\x03\x62\x61\x72'),
-            ('E',   u'a\u1010c',         b'\x05\x61\xe1\x80\x90\x63')
+            ('C',                   u'', b'\x00'),
+            ('C',                  u'P', b'\x01\x50'),
+            ('D',                u'agg', b'\x03\x61\x67\x67'),
+            ('E',                u'bar', b'\x03\x62\x61\x72'),
+            ('E',           u'a\u1010c', b'\x05\x61\xe1\x80\x90\x63')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -894,21 +925,16 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
-            "A ::= IA5String (SIZE (1..256)) "
-            "B ::= IA5String (SIZE (2)) "
-            "C ::= IA5String (SIZE (19..133)) "
-            "D ::= IA5String "
+            "A ::= IA5String "
+            "B ::= IA5String (SIZE (1..256)) "
+            "C ::= IA5String (SIZE (2)) "
+            "D ::= IA5String (SIZE (19..133)) "
             "END",
             'uper')
 
         datas = [
-            ('A', 'Hej', b'\x02\x91\x97\x50'),
-            ('B',  'He', b'\x91\x94'),
-            ('C',
-             'HejHoppHappHippAbcde',
-             b'\x03\x23\x2e\xa9\x1b\xf8\x70\x91\x87\x87\x09\x1a\x78\x70\x83\x8b'
-             b'\x1e\x4c\xa0'),
-            ('D',
+            ('A', 'bar', b'\x03\xc5\x87\x90'),
+            ('A',
              17 * 'HejHoppHappHippAbcde',
              b'\x81\x54\x91\x97\x54\x8d\xfc\x38\x48\xc3\xc3\x84\x8d\x3c\x38'
              b'\x41\xc5\x8f\x26\x59\x19\x75\x48\xdf\xc3\x84\x8c\x3c\x38\x48'
@@ -929,7 +955,13 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
              b'\xd3\xc3\x84\x1c\x58\xf2\x65\x91\x97\x54\x8d\xfc\x38\x48\xc3'
              b'\xc3\x84\x8d\x3c\x38\x41\xc5\x8f\x26\x59\x19\x75\x48\xdf\xc3'
              b'\x84\x8c\x3c\x38\x48\xd3\xc3\x84\x1c\x58\xf2\x65\x91\x97\x54'
-             b'\x8d\xfc\x38\x48\xc3\xc3\x84\x8d\x3c\x38\x41\xc5\x8f\x26\x50')
+             b'\x8d\xfc\x38\x48\xc3\xc3\x84\x8d\x3c\x38\x41\xc5\x8f\x26\x50'),
+            ('B', 'Hej', b'\x02\x91\x97\x50'),
+            ('C',  'He', b'\x91\x94'),
+            ('D',
+             'HejHoppHappHippAbcde',
+             b'\x03\x23\x2e\xa9\x1b\xf8\x70\x91\x87\x87\x09\x1a\x78\x70\x83\x8b'
+             b'\x1e\x4c\xa0')
         ]
 
         for type_name, decoded, encoded in datas:
