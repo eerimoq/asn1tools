@@ -507,8 +507,12 @@ help
 compile ber tests/files/foo.asn
 decode Question 300e0201011609497320312b313d333f
 decode Foo 30
+decode
 compile uper tests/files/foo.asn
 decode Question 01010993cd03156c5eb37e
+compile ber /x/y/missing
+compile ber
+compile foo tests/files/foo.asn
 exit
 ''')
 
@@ -527,10 +531,14 @@ exit
             '    question "Is 1+1=3?"\n'
             '}\n'
             'error: type \'Foo\' not found in types dictionary\n'
+            'Usage: decode <type> <hexstring>\n'
             'question Question ::= {\n'
             '    id 1,\n'
             '    question "Is 1+1=3?"\n'
             '}\n'
+            'error: [Errno 2] No such file or directory: \'/x/y/missing\'\n'
+            'Usage: compile <codec> <specification> [<specification> ...]\n'
+            'error: unsupported codec \'foo\'\n'
         )
 
         stdout = StringIO()
