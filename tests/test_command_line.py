@@ -109,7 +109,7 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
                 asn1tools._main()
 
         print(stdout.getvalue())
-        
+
         self.assertEqual(expected_output, stdout.getvalue())
 
     def test_command_line_decode_uper_foo_question(self):
@@ -136,7 +136,7 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
                 asn1tools._main()
 
         print(stdout.getvalue())
-        
+
         self.assertEqual(expected_output, stdout.getvalue())
 
     def test_command_line_decode_ber_foo_question_stdin(self):
@@ -499,6 +499,50 @@ ff0e0201011609497320312b313d333f
 
                 self.assertEqual(str(cm.exception),
                                  "error: '012': Odd-length string")
+
+    def test_command_line_shell(self):
+        argv = ['asn1tools', 'shell']
+        commands = StringIO('''\
+help
+compile ber tests/files/foo.asn
+decode Question 300e0201011609497320312b313d333f
+decode Foo 30
+compile uper tests/files/foo.asn
+decode Question 01010993cd03156c5eb37e
+exit
+''')
+
+        def prompt(*_args, **_kwargs):
+            return commands.readline()
+
+        expected_output = (
+            '\n'
+            'Welcome to the asn1tools shell.\n'
+            '\n'
+            "Commands:\n"
+            "  compile <codec> <specification>\n"
+            "  decode <type> <hexstring>\n"
+            'question Question ::= {\n'
+            '    id 1,\n'
+            '    question "Is 1+1=3?"\n'
+            '}\n'
+            'error: type \'Foo\' not found in types dictionary\n'
+            'question Question ::= {\n'
+            '    id 1,\n'
+            '    question "Is 1+1=3?"\n'
+            '}\n'
+        )
+
+        stdout = StringIO()
+
+        with patch('asn1tools.prompt', prompt):
+            with patch('sys.stdout', stdout):
+                with patch('sys.argv', argv):
+                    asn1tools._main()
+
+        print(stdout.getvalue())
+
+        self.assertEqual(expected_output, stdout.getvalue())
 
 
 if __name__ == '__main__':
