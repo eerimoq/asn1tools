@@ -29,7 +29,6 @@ from pyparsing import ParseResults
 from pyparsing import lineno
 
 
-
 LOGGER = logging.getLogger(__name__)
 
 
@@ -85,7 +84,7 @@ def merge_dicts(dicts):
 def convert_integer(_s, _l, tokens):
     try:
         return int(tokens[0])
-    except:
+    except Exception:
         return tokens
 
 
@@ -720,7 +719,7 @@ def convert_module_body(_s, _l, tokens):
 
 def convert_module_definition(_s, _l, tokens):
     tokens = tokens.asList()
-    module =  tokens[1][0]
+    module = tokens[1][0]
     module['extensibility-implied'] = (tokens[0][3] != [])
 
     if tokens[0][2]:
@@ -770,7 +769,8 @@ def create_grammar():
     SET = Keyword('SET').setName('SET')
     SET_OF = Keyword('SET OF').setName('SET OF')
     ANY_DEFINED_BY = Keyword('ANY DEFINED BY').setName('ANY DEFINED BY')
-    EXTENSIBILITY_IMPLIED = Keyword('EXTENSIBILITY IMPLIED').setName('EXTENSIBILITY IMPLIED')
+    EXTENSIBILITY_IMPLIED = Keyword('EXTENSIBILITY IMPLIED').setName(
+        'EXTENSIBILITY IMPLIED')
     BOOLEAN = Keyword('BOOLEAN').setName('BOOLEAN')
     TRUE = Keyword('TRUE').setName('TRUE')
     FALSE = Keyword('FALSE').setName('FALSE')
@@ -985,7 +985,8 @@ def create_grammar():
                                          | defined_object_class)
     user_defined_constraint = (CONSTRAINED_BY
                                - left_brace
-                               - Optional(delimitedList(user_defined_constraint_parameter))
+                               - Optional(delimitedList(
+                                   user_defined_constraint_parameter))
                                - right_brace)
     user_defined_constraint.setName('CONSTRAINED_BY')
 
@@ -996,15 +997,19 @@ def create_grammar():
 
     # X.681: 7. ASN.1 lexical items
     object_set_reference = type_reference
-    value_set_field_reference = NoMatch().setName('"valueSetFieldReference" not implemented')
-    object_field_reference = NoMatch().setName('"objectFieldReference" not implemented')
-    object_set_field_reference = NoMatch().setName('"objectSetFieldReference" not implemented')
+    value_set_field_reference = NoMatch().setName(
+        '"valueSetFieldReference" not implemented')
+    object_field_reference = NoMatch().setName(
+        '"objectFieldReference" not implemented')
+    object_set_field_reference = NoMatch().setName(
+        '"objectSetFieldReference" not implemented')
     object_class_reference = (NotAny(reserved_words)
                               + Regex(r'[A-Z][A-Z0-9-]*'))
     object_reference = value_reference
 
     # X.681: 8. Referencing definitions
-    external_object_set_reference = NoMatch().setName('"externalObjectSetReference" not implemented')
+    external_object_set_reference = NoMatch().setName(
+        '"externalObjectSetReference" not implemented')
     defined_object_set <<= (external_object_set_reference
                             | object_set_reference)
     defined_object <<= NoMatch().setName('"definedObject" not implemented')
@@ -1021,8 +1026,10 @@ def create_grammar():
     object_field_spec = NoMatch().setName('"objectFieldSpec" not implemented')
     variable_type_value_set_field_spec = NoMatch().setName(
         '"variableTypeValueSetFieldSpec" not implemented')
-    fixed_type_value_set_field_spec = NoMatch().setName('"fixedTypeValueSetFieldSpec" not implemented')
-    variable_type_value_field_spec = NoMatch().setName('"variableTypeValueFieldSpec" not implemented')
+    fixed_type_value_set_field_spec = NoMatch().setName(
+        '"fixedTypeValueSetFieldSpec" not implemented')
+    variable_type_value_field_spec = NoMatch().setName(
+        '"variableTypeValueFieldSpec" not implemented')
     fixed_type_value_field_spec = (value_field_reference
                                    + type_
                                    + Optional(UNIQUE)
@@ -1065,7 +1072,7 @@ def create_grammar():
 
     # X.681: 11. Information object definition and assignment
     setting = (type_ | value | value_set | object_ | object_set | QuotedString('"'))
-    field_setting =  Group(primitive_field_name + setting)
+    field_setting = Group(primitive_field_name + setting)
     default_syntax = (Suppress(left_brace)
                       + delimitedList(field_setting)
                       + Suppress(right_brace))
@@ -1113,7 +1120,8 @@ def create_grammar():
     object_class_field_type.setName('ObjectClassFieldType')
 
     # X.681: 15. Information from objects
-    object_set_from_objects <<= NoMatch().setName('"objectSetFromObjects" not implemented')
+    object_set_from_objects <<= NoMatch().setName(
+        '"objectSetFromObjects" not implemented')
     object_from_object <<= NoMatch().setName('"objectFromObject" not implemented')
 
     # X.680: 49. The exception identifier
@@ -1130,7 +1138,11 @@ def create_grammar():
     named_constraint = (identifier + component_constraint)
     type_constraints = delimitedList(named_constraint)
     full_specification = (left_brace + type_constraints + right_brace)
-    partial_specification = (left_brace + ellipsis + comma + type_constraints + right_brace)
+    partial_specification = (left_brace
+                             + ellipsis
+                             + comma
+                             + type_constraints
+                             + right_brace)
     single_type_constraint = constraint
     multiple_type_constraints = (full_specification | partial_specification)
     inner_type_constraints = ((WITH_COMPONENT - single_type_constraint)
@@ -1477,8 +1489,8 @@ def create_grammar():
                        # | set_of_value
                        | tagged_value)
     value <<= Group(object_class_field_value)
-                    # | referenced_value
-                    # | builtin_value)
+    # | referenced_value
+    # | builtin_value)
     named_type <<= Group(identifier
                          - tag
                          - type_)

@@ -7,6 +7,7 @@ test:
 	env PYTHONPATH=. python3 examples/benchmarks/question/question.py
 	env PYTHONPATH=. python3 examples/hello_world.py
 	codespell -d $$(git ls-files | grep -v ietf | grep -v 3gpp)
+	python3 -m pycodestyle $$(git ls-files "asn1tools/*.py")
 
 release-to-pypi:
 	python setup.py sdist

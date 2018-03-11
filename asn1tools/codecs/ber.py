@@ -1086,7 +1086,8 @@ class AnyDefinedBy(Type):
             try:
                 self.choices[values[self.type_member]].encode(data, encoded)
             except KeyError:
-                raise EncodeError('bad AnyDefinedBy choice {}'.format(values[self.type_member]))
+                raise EncodeError('bad AnyDefinedBy choice {}'.format(
+                    values[self.type_member]))
         else:
             encoded.extend(data)
 
@@ -1096,7 +1097,8 @@ class AnyDefinedBy(Type):
                 return self.choices[values[self.type_member]].decode(data,
                                                                      offset)
             except KeyError:
-                raise DecodeError('bad AnyDefinedBy choice {}'.format(values[self.type_member]))
+                raise DecodeError('bad AnyDefinedBy choice {}'.format(
+                    values[self.type_member]))
         else:
             start = offset
             _, _, offset = decode_tag(data, offset)

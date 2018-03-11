@@ -525,8 +525,8 @@ class Sequence(Type):
     def encode_addition_group(self, data, encoder):
         self.encode_root(data, encoder)
 
-        if (encoder.value == 0
-            and encoder.number_of_bits == len(self.optionals)):
+        if ((encoder.value == 0)
+            and (encoder.number_of_bits == len(self.optionals))):
             encoder.number_of_bits = 0
 
     def encode_member(self, member, data, encoder, encode_default=False):
@@ -763,7 +763,6 @@ class BitString(Type):
                                        self.number_of_bits)
 
             encoder.append_bits(data[0], data[1])
-
 
     def decode(self, decoder):
         if self.number_of_bits is None:

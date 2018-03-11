@@ -629,8 +629,8 @@ class Compiler(compiler.Compiler):
         elif type_name == 'OBJECT IDENTIFIER':
             compiled = ObjectIdentifier(name)
         elif type_name == 'OCTET STRING':
-            minimum, maximum =self.get_size_range(type_descriptor,
-                                                  module_name)
+            minimum, maximum = self.get_size_range(type_descriptor,
+                                                   module_name)
             compiled = OctetString(name)
         elif type_name == 'TeletexString':
             compiled = TeletexString(name)
@@ -655,8 +655,8 @@ class Compiler(compiler.Compiler):
         elif type_name == 'GeneralizedTime':
             compiled = GeneralizedTime(name)
         elif type_name == 'BIT STRING':
-            minimum, maximum =self.get_size_range(type_descriptor,
-                                                  module_name)
+            minimum, maximum = self.get_size_range(type_descriptor,
+                                                   module_name)
             compiled = BitString(name, minimum, maximum)
         elif type_name == 'ANY':
             compiled = Any(name)
