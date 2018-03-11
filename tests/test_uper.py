@@ -1497,6 +1497,32 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+    def test_error_out_of_data(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= INTEGER "
+            "B ::= SEQUENCE { "
+            "  a SEQUENCE { "
+            "    b BOOLEAN, "
+            "    c INTEGER "
+            "  } "
+            "} "
+            "END",
+            'uper')
+
+        datas = [
+            ('A', b'',         ': out of data at bit offset 0 (0.0 bytes)'),
+            ('B', b'\x00',     'a: c: out of data at bit offset 1 (0.1 bytes)'),
+            ('B', b'\x80\x80', 'a: c: out of data at bit offset 9 (1.1 bytes)')
+        ]
+
+        for type_name, encoded, message in datas:
+            with self.assertRaises(asn1tools.codecs.uper.OutOfDataError) as cm:
+                foo.decode(type_name, encoded)
+
+            self.assertEqual(str(cm.exception), message)
+
 
 if __name__ == '__main__':
     unittest.main()
