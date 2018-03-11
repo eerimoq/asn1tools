@@ -4,9 +4,9 @@
 About
 =====
 
-A Python package for ASN.1 parsing, encoding and decoding.
+A Python package for `ASN.1`_ parsing, encoding and decoding.
 
-This project is *under* *development* and does only support a subset
+This project is *under development* and does only support a subset
 of the ASN.1 specification syntax.
 
 Codecs under development:
@@ -224,6 +224,8 @@ Encodings
 
 .. |coverage| image:: https://coveralls.io/repos/github/eerimoq/asn1tools/badge.svg?branch=master
 .. _coverage: https://coveralls.io/github/eerimoq/asn1tools
+
+.. _ASN.1: https://en.wikipedia.org/wiki/Abstract_Syntax_Notation_One
 
 .. _Compile: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compile_files
 .. _encode: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compiler.Specification.encode
