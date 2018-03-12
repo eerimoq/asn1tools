@@ -355,11 +355,11 @@ class KnownMultiplierStringType(Type):
     def decode(self, decoder):
         if self.number_of_bits is None:
             length = decoder.read_length_determinant()
-        elif self.minimum != self.maximum:
-            length = decoder.read_integer(self.number_of_bits)
-            length += self.minimum
         else:
             length = self.minimum
+
+            if self.minimum != self.maximum:
+                length += decoder.read_integer(self.number_of_bits)
 
         data = []
 
@@ -705,11 +705,11 @@ class SequenceOf(Type):
     def decode(self, decoder):
         if self.number_of_bits is None:
             length = decoder.read_length_determinant()
-        elif self.minimum != self.maximum:
-            length = decoder.read_integer(self.number_of_bits)
-            length += self.minimum
         else:
             length = self.minimum
+
+            if self.minimum != self.maximum:
+                length += decoder.read_integer(self.number_of_bits)
 
         decoded = []
 
@@ -756,25 +756,23 @@ class BitString(Type):
 
     def encode(self, data, encoder):
         if self.number_of_bits is None:
-            encoder.append_bytes(bytearray([data[1]]) + data[0])
-        else:
-            if self.minimum != self.maximum:
-                encoder.append_integer(data[1] - self.minimum,
-                                       self.number_of_bits)
+            encoder.append_length_determinant(data[1])
+        elif self.minimum != self.maximum:
+            encoder.append_integer(data[1] - self.minimum,
+                                   self.number_of_bits)
 
-            encoder.append_bits(data[0], data[1])
+        encoder.append_bits(data[0], data[1])
 
     def decode(self, decoder):
         if self.number_of_bits is None:
-            number_of_bits = decoder.read_bytes(1)[0]
-            value = decoder.read_bytes((number_of_bits + 7) // 8)
+            number_of_bits = decoder.read_length_determinant()
         else:
             number_of_bits = self.minimum
 
             if self.minimum != self.maximum:
                 number_of_bits += decoder.read_integer(self.number_of_bits)
 
-            value = decoder.read_bits(number_of_bits)
+        value = decoder.read_bits(number_of_bits)
 
         return (value, number_of_bits)
 
@@ -798,10 +796,9 @@ class OctetString(Type):
     def encode(self, data, encoder):
         if self.number_of_bits is None:
             encoder.append_length_determinant(len(data))
-        else:
-            if self.minimum != self.maximum:
-                encoder.append_integer(len(data) - self.minimum,
-                                       self.number_of_bits)
+        elif self.minimum != self.maximum:
+            encoder.append_integer(len(data) - self.minimum,
+                                   self.number_of_bits)
 
         encoder.append_bytes(data)
 

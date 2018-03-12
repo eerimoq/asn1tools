@@ -758,15 +758,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('Integer',                     -129, b'\x02\xff\x7f'),
             ('Integer',                     -256, b'\x02\xff\x00'),
             ('Integer',                   -32768, b'\x02\x80\x00'),
-            ('Integer',                   -32769, b'\x03\xff\x7f\xff'),
-            ('Bitstring',           (b'\x40', 4), b'\x04\x40'),
-            ('Bitstring2',      (b'\x12\x80', 9), b'\x12\x80'),
-            ('Bitstring3',          (b'\x34', 6), b'\x4d'),
-            ('Octetstring',              b'\x00', b'\x01\x00'),
-            ('Octetstring',        500 * b'\x00', b'\x81\xf4' + 500 * b'\x00'),
-            ('Octetstring2',         b'\xab\xcd', b'\xab\xcd'),
-            ('Octetstring3',     b'\xab\xcd\xef', b'\xab\xcd\xef'),
-            ('Octetstring4', b'\x89\xab\xcd\xef', b'\x31\x35\x79\xbd\xe0')
+            ('Integer',                   -32769, b'\x03\xff\x7f\xff')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -1492,6 +1484,62 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('J',            ('a', True), b'\x40'),
             ('J',        ('b', ('a', 1)), b'\x80\x02\x01\x01'),
             ('J',            ('c', True), b'\x81\x01\x80')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_bit_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= BIT STRING "
+            "B ::= BIT STRING (SIZE (9)) "
+            "C ::= BIT STRING (SIZE (5..7)) "
+            "D ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b BIT STRING "
+            "} "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',          (b'\x40', 4), b'\x04\x40'),
+            ('A',
+             (299 * b'\x55' + b'\x54', 2399),
+             b'\x89\x5f' + 299 * b'\x55' + b'\x54'),
+            ('B',      (b'\x12\x80', 9), b'\x12\x80'),
+            ('C',          (b'\x34', 6), b'\x4d'),
+            ('D',
+             {'a': True, 'b': (b'\x40', 4)},
+             b'\x82\x20')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_octet_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= OCTET STRING "
+            "B ::= OCTET STRING (SIZE (2)) "
+            "C ::= OCTET STRING (SIZE (3)) "
+            "D ::= OCTET STRING (SIZE (3..7)) "
+            "E ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b OCTET STRING "
+            "} "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',                   b'\x00', b'\x01\x00'),
+            ('A',             500 * b'\x00', b'\x81\xf4' + 500 * b'\x00'),
+            ('B',               b'\xab\xcd', b'\xab\xcd'),
+            ('C',           b'\xab\xcd\xef', b'\xab\xcd\xef'),
+            ('D',       b'\x89\xab\xcd\xef', b'\x31\x35\x79\xbd\xe0'),
+            ('E', {'a': True, 'b': b'\x00'}, b'\x80\x80\x00')
         ]
 
         for type_name, decoded, encoded in datas:
