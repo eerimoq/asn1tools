@@ -738,32 +738,6 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assert_encode_decode(lpp, 'LPP-Message', decoded, encoded)
 
-    def test_all_types(self):
-        all_types = asn1tools.compile_files('tests/files/all_types.asn',
-                                            'uper')
-
-        datas = [
-            ('Boolean',                     True, b'\x80'),
-            ('Boolean',                    False, b'\x00'),
-            ('Integer',                    32768, b'\x03\x00\x80\x00'),
-            ('Integer',                    32767, b'\x02\x7f\xff'),
-            ('Integer',                      256, b'\x02\x01\x00'),
-            ('Integer',                      255, b'\x02\x00\xff'),
-            ('Integer',                      128, b'\x02\x00\x80'),
-            ('Integer',                      127, b'\x01\x7f'),
-            ('Integer',                        1, b'\x01\x01'),
-            ('Integer',                        0, b'\x01\x00'),
-            ('Integer',                       -1, b'\x01\xff'),
-            ('Integer',                     -128, b'\x01\x80'),
-            ('Integer',                     -129, b'\x02\xff\x7f'),
-            ('Integer',                     -256, b'\x02\xff\x00'),
-            ('Integer',                   -32768, b'\x02\x80\x00'),
-            ('Integer',                   -32769, b'\x03\xff\x7f\xff')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(all_types, type_name, decoded, encoded)
-
     def test_encode_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
                                             'uper')
@@ -838,6 +812,22 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(all_types, type_name, decoded, encoded)
+
+    def test_boolean(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= BOOLEAN "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',                     True, b'\x80'),
+            ('A',                    False, b'\x00')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
 
     def test_integer(self):
         foo = asn1tools.compile_string(
