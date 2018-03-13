@@ -285,22 +285,6 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
                                             'per')
 
-        self.assertEqual(all_types.encode('Boolean', True), b'\x80')
-        self.assertEqual(all_types.encode('Boolean', False), b'\x00')
-        self.assertEqual(all_types.encode('Integer', 32768), b'\x03\x00\x80\x00')
-        self.assertEqual(all_types.encode('Integer', 32767), b'\x02\x7f\xff')
-        self.assertEqual(all_types.encode('Integer', 256), b'\x02\x01\x00')
-        self.assertEqual(all_types.encode('Integer', 255), b'\x02\x00\xff')
-        self.assertEqual(all_types.encode('Integer', 128), b'\x02\x00\x80')
-        self.assertEqual(all_types.encode('Integer', 127), b'\x01\x7f')
-        self.assertEqual(all_types.encode('Integer', 1), b'\x01\x01')
-        self.assertEqual(all_types.encode('Integer', 0), b'\x01\x00')
-        self.assertEqual(all_types.encode('Integer', -1), b'\x01\xff')
-        self.assertEqual(all_types.encode('Integer', -128), b'\x01\x80')
-        self.assertEqual(all_types.encode('Integer', -129), b'\x02\xff\x7f')
-        self.assertEqual(all_types.encode('Integer', -256), b'\x02\xff\x00')
-        self.assertEqual(all_types.encode('Integer', -32768), b'\x02\x80\x00')
-        self.assertEqual(all_types.encode('Integer', -32769), b'\x03\xff\x7f\xff')
         self.assertEqual(all_types.encode('Bitstring', (b'\x40', 4)),
                          b'\x04\x40')
         self.assertEqual(all_types.encode('Octetstring', b'\x00'),
@@ -353,9 +337,6 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
                                             'per')
 
-        self.assertEqual(all_types.decode('Boolean', b'\x80'), True)
-        self.assertEqual(all_types.decode('Boolean', b'\x00'), False)
-        self.assertEqual(all_types.decode('Integer', b'\x01\x02'), 2)
         self.assertEqual(all_types.decode('Bitstring', b'\x04\x40'),
                          (b'\x40', 4))
         self.assertEqual(all_types.decode('Octetstring', b'\x01\x00'),
@@ -617,6 +598,55 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         with self.assertRaises(NotImplementedError):
             encoded = information_object.encode('ErrorReturn', decoded_message)
             self.assertEqual(encoded, encoded_message)
+
+    def test_boolean(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= BOOLEAN "
+            "END",
+            'per')
+
+        datas = [
+            ('A',                     True, b'\x80'),
+            ('A',                    False, b'\x00')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_integer(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= INTEGER "
+            "B ::= INTEGER (5..99) "
+            "END",
+            'per')
+
+        datas = [
+            ('A',                    32768, b'\x03\x00\x80\x00'),
+            ('A',                    32767, b'\x02\x7f\xff'),
+            ('A',                      256, b'\x02\x01\x00'),
+            ('A',                      255, b'\x02\x00\xff'),
+            ('A',                      128, b'\x02\x00\x80'),
+            ('A',                      127, b'\x01\x7f'),
+            ('A',                        2, b'\x01\x02'),
+            ('A',                        1, b'\x01\x01'),
+            ('A',                        0, b'\x01\x00'),
+            ('A',                       -1, b'\x01\xff'),
+            ('A',                     -128, b'\x01\x80'),
+            ('A',                     -129, b'\x02\xff\x7f'),
+            ('A',                     -256, b'\x02\xff\x00'),
+            ('A',                   -32768, b'\x02\x80\x00'),
+            ('A',                   -32769, b'\x03\xff\x7f\xff'),
+            ('B',                        5, b'\x00'),
+            ('B',                        6, b'\x02'),
+            ('B',                       99, b'\xbc')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
 
 
 if __name__ == '__main__':

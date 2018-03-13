@@ -835,6 +835,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "BEGIN "
             "A ::= INTEGER "
             "B ::= INTEGER (5..99) "
+            "C ::= INTEGER (-10..10) "
             "END",
             'uper')
 
@@ -855,7 +856,12 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('A',                   -32769, b'\x03\xff\x7f\xff'),
             ('B',                        5, b'\x00'),
             ('B',                        6, b'\x02'),
-            ('B',                       99, b'\xbc')
+            ('B',                       99, b'\xbc'),
+            ('C',                      -10, b'\x00'),
+            ('C',                       -1, b'\x48'),
+            ('C',                        0, b'\x50'),
+            ('C',                        1, b'\x58'),
+            ('C',                       10, b'\xa0')
         ]
 
         for type_name, decoded, encoded in datas:

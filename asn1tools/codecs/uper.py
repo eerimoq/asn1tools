@@ -12,8 +12,7 @@ from . import EncodeError
 from . import DecodeError
 from . import compiler
 from .compiler import enum_values_split
-from .per import encode_signed_integer
-from .per import decode_signed_integer
+from .per import Integer
 from .ber import encode_real
 from .ber import decode_real
 
@@ -180,6 +179,27 @@ class Encoder(object):
             raise NotImplementedError(
                 'Normally small length number >64 is not yet supported.')
 
+    def append_unconstrained_whole_number(self, value):
+        number_of_bits = value.bit_length()
+
+        if value < 0:
+            number_of_bytes = ((number_of_bits + 7) // 8)
+            value = ((1 << (8 * number_of_bytes)) + value)
+
+            if (value & (1 << (8 * number_of_bytes - 1))) == 0:
+                value |= (0xff << (8 * number_of_bytes))
+                number_of_bytes += 1
+        elif value > 0:
+            number_of_bytes = ((number_of_bits + 7) // 8)
+
+            if number_of_bits == (8 * number_of_bytes):
+                number_of_bytes += 1
+        else:
+            number_of_bytes = 1
+
+        self.append_length_determinant(number_of_bytes)
+        self.append_integer(value, 8 * number_of_bytes)
+
     def __repr__(self):
         return binascii.hexlify(self.as_bytearray()).decode('ascii')
 
@@ -250,6 +270,13 @@ class Decoder(object):
         return ((self.value >> self.number_of_bits) & mask)
 
     def read_bytes(self, number_of_bytes):
+        """Read given number of bytes.
+
+        """
+
+        return bytearray(self.read_bits(8 * number_of_bytes))
+
+    def read_bytes_aligned(self, number_of_bytes):
         """Read given number of aligned bytes.
 
         """
@@ -285,6 +312,17 @@ class Decoder(object):
         else:
             raise NotImplementedError(
                 'Normally small length number >64 is not yet supported.')
+
+    def read_unconstrained_whole_number(self, number_of_bytes):
+        decoded = self.read_integer(8 * number_of_bytes)
+        number_of_bits = (8 * number_of_bytes)
+
+        if decoded & (1 << (number_of_bits - 1)):
+            mask = ((1 << number_of_bits) - 1)
+            decoded = (decoded - mask)
+            decoded -= 1
+
+        return decoded
 
 
 def size_as_number_of_bits(size):
@@ -374,39 +412,6 @@ class KnownMultiplierStringType(Type):
                                self.name)
 
 
-class Integer(Type):
-
-    def __init__(self, name, minimum, maximum):
-        super(Integer, self).__init__(name, 'INTEGER')
-        self.minimum = minimum
-        self.maximum = maximum
-
-        if minimum is None or maximum is None:
-            self.number_of_bits = None
-        else:
-            size = self.maximum - self.minimum
-            self.number_of_bits = size_as_number_of_bits(size)
-
-    def encode(self, data, encoder):
-        if self.number_of_bits is None:
-            encoder.append_bytes(encode_signed_integer(data))
-        else:
-            encoder.append_integer(data - self.minimum, self.number_of_bits)
-
-    def decode(self, decoder):
-        if self.number_of_bits is None:
-            length = decoder.read_integer(8)
-            value = decode_signed_integer(bytearray(decoder.read_bits(8 * length)))
-        else:
-            value = decoder.read_integer(self.number_of_bits)
-            value += self.minimum
-
-        return value
-
-    def __repr__(self):
-        return 'Integer({})'.format(self.name)
-
-
 class Real(Type):
 
     def __init__(self, name):
@@ -420,7 +425,7 @@ class Real(Type):
     def decode(self, decoder):
         length = decoder.read_length_determinant()
 
-        return decode_real(decoder.read_bytes(length))
+        return decode_real(decoder.read_bytes_aligned(length))
 
     def __repr__(self):
         return 'Real({})'.format(self.name)

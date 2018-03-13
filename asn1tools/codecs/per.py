@@ -70,6 +70,38 @@ class Encoder(object):
         else:
             return self.buf
 
+    def append_length_determinant(self, length):
+        if length < 128:
+            encoded = bytearray([length])
+        elif length < 16384:
+            encoded = bytearray([(0x80 | (length >> 8)), (length & 0xff)])
+        else:
+            raise NotImplementedError(
+                'Length determinant >=16384 is not yet supported.')
+
+        self.append_bytes(encoded)
+
+    def append_unconstrained_whole_number(self, value):
+        number_of_bits = value.bit_length()
+
+        if value < 0:
+            number_of_bytes = ((number_of_bits + 7) // 8)
+            value = ((1 << (8 * number_of_bytes)) + value)
+
+            if (value & (1 << (8 * number_of_bytes - 1))) == 0:
+                value |= (0xff << (8 * number_of_bytes))
+                number_of_bytes += 1
+        elif value > 0:
+            number_of_bytes = ((number_of_bits + 7) // 8)
+
+            if number_of_bits == (8 * number_of_bytes):
+                number_of_bytes += 1
+        else:
+            number_of_bytes = 1
+
+        self.append_length_determinant(number_of_bytes)
+        self.append_integer(value, 8 * number_of_bytes)
+
     def __repr__(self):
         return str(self.as_bytearray())
 
@@ -78,7 +110,7 @@ class Decoder(object):
 
     def __init__(self, encoded):
         self.byte = None
-        self.index = 0
+        self.index = -1
         self.offset = 0
         self.buf = encoded
 
@@ -87,7 +119,7 @@ class Decoder(object):
 
         """
 
-        if self.index == 0:
+        if self.index == -1:
             self.byte = self.buf[self.offset]
             self.index = 7
             self.offset += 1
@@ -115,64 +147,43 @@ class Decoder(object):
 
         """
 
-        self.index = 0
+        self.index = -1
         data = self.buf[self.offset:self.offset + number_of_bytes]
         self.offset += number_of_bytes
 
         return data
 
+    def read_length_determinant(self):
+        value = self.read_bytes(1)[0]
 
-def encode_signed_integer(data):
-    """Encode given integer value into a bytearray and return it.
+        if (value & 0x80) == 0x00:
+            return value
+        elif (value & 0xc0) == 0x80:
+            return (((value & 0x7f) << 8) | (self.read_integer(8)))
+        else:
+            raise NotImplementedError(
+                'Length determinant type 0x{:02x} not yet supported.'.format(
+                    value))
 
-    """
+    def read_unconstrained_whole_number(self, number_of_bytes):
+        decoded = self.read_integer(8 * number_of_bytes)
+        number_of_bits = (8 * number_of_bytes)
 
-    encoded = bytearray()
+        if decoded & (1 << (number_of_bits - 1)):
+            mask = ((1 << number_of_bits) - 1)
+            decoded = (decoded - mask)
+            decoded -= 1
 
-    if data < 0:
-        data *= -1
-        data -= 1
-        carry = not data
-
-        while data > 0:
-            encoded.append((data & 0xff) ^ 0xff)
-            carry = (data & 0x80)
-            data >>= 8
-
-        if carry:
-            encoded.append(0xff)
-    elif data > 0:
-        while data > 0:
-            encoded.append(data & 0xff)
-            data >>= 8
-
-        if encoded[-1] & 0x80:
-            encoded.append(0)
-    else:
-        encoded.append(0)
-
-    encoded.append(len(encoded))
-    encoded.reverse()
-
-    return encoded
+        return decoded
 
 
-def decode_signed_integer(data):
-    """Decode given data bytes as a signed integer and return it.
+def size_as_number_of_bits(size):
+    """Returns the minimum number of bits needed to fit given positive
+    integer.
 
     """
 
-    value = 0
-    is_negative = (data[0] & 0x80)
-
-    for byte in data:
-        value <<= 8
-        value += byte
-
-    if is_negative:
-        value -= (1 << (8 * len(data)))
-
-    return value
+    return len('{:b}'.format(size))
 
 
 class Type(object):
@@ -182,20 +193,40 @@ class Type(object):
         self.type_name = type_name
         self.optional = False
         self.default = None
+        self.tag = None
+
+    def set_size_range(self, minimum, maximum):
+        pass
 
 
 class Integer(Type):
 
-    def __init__(self, name):
+    def __init__(self, name, minimum, maximum):
         super(Integer, self).__init__(name, 'INTEGER')
+        self.minimum = minimum
+        self.maximum = maximum
+
+        if minimum is None or maximum is None:
+            self.number_of_bits = None
+        else:
+            size = self.maximum - self.minimum
+            self.number_of_bits = size_as_number_of_bits(size)
 
     def encode(self, data, encoder):
-        encoder.append_bytes(encode_signed_integer(data))
+        if self.number_of_bits is None:
+            encoder.append_unconstrained_whole_number(data)
+        else:
+            encoder.append_integer(data - self.minimum, self.number_of_bits)
 
     def decode(self, decoder):
-        length = decoder.read_bytes(1)[0]
+        if self.number_of_bits is None:
+            length = decoder.read_length_determinant()
+            value = decoder.read_unconstrained_whole_number(length)
+        else:
+            value = decoder.read_integer(self.number_of_bits)
+            value += self.minimum
 
-        return decode_signed_integer(decoder.read_bytes(length))
+        return value
 
     def __repr__(self):
         return 'Integer({})'.format(self.name)
@@ -817,7 +848,9 @@ class Compiler(compiler.Compiler):
                 self.compile_members(type_descriptor['members'],
                                      module_name))
         elif type_name == 'INTEGER':
-            compiled = Integer(name)
+            minimum, maximum = self.get_restricted_to_range(type_descriptor,
+                                                            module_name)
+            compiled = Integer(name, minimum, maximum)
         elif type_name == 'REAL':
             compiled = Real(name)
         elif type_name == 'ENUMERATED':
