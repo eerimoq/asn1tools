@@ -147,11 +147,7 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
         ]
 
         for encoded in datas:
-            with self.assertRaises(asn1tools.DecodeError) as cm:
-                foo.decode_length(encoded)
-
-            self.assertEqual(str(cm.exception),
-                             ': not enough data to decode the length')
+            self.assertIsNone(foo.decode_length(encoded))
 
     def test_long_tag(self):
         foo = asn1tools.compile_string(

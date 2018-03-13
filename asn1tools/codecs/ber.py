@@ -1371,4 +1371,4 @@ def decode_length(data):
     except DecodeContentsLengthError as e:
         return (e.length + e.offset)
     except IndexError:
-        raise DecodeError('not enough data to decode the length')
+        return None

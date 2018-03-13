@@ -7,7 +7,6 @@ from . import DecodeError
 from . import DecodeTagError
 from . import DecodeContentsLengthError
 from . import compiler
-from .compiler import enum_values_as_dict
 from .ber import Class
 from .ber import Encoding
 from .ber import Tag
@@ -871,4 +870,4 @@ def decode_length(data):
     except DecodeContentsLengthError as e:
         return (e.length + e.offset)
     except IndexError:
-        raise DecodeError('not enough data to decode the length')
+        return None

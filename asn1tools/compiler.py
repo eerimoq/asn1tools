@@ -115,7 +115,8 @@ class Specification(object):
         return self._types[name].decode(data)
 
     def decode_length(self, data):
-        """Decode the length of given data `data`.
+        """Decode the length of given data `data`. Returns None if not enough
+        data was given to decode the length.
 
         This method only works for BER and DER codecs with definite
         length in the first data encoding. Other codecs and
