@@ -481,6 +481,29 @@ class BMPString(Type):
         return 'BMPString({})'.format(self.name)
 
 
+class GraphicString(Type):
+
+    def __init__(self, name):
+        super(GraphicString, self).__init__(name,
+                                            'GraphicString',
+                                            Tag.GRAPHIC_STRING)
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(data.encode('latin-1'))
+
+    def decode(self, data, offset):
+        offset = self.decode_tag(data, offset)
+        length, offset = decode_length_definite(data, offset)
+        end_offset = offset + length
+
+        return data[offset:end_offset].decode('latin-1'), end_offset
+
+    def __repr__(self):
+        return 'GraphicString({})'.format(self.name)
+
+
 class UTCTime(Type):
 
     def __init__(self, name):
@@ -770,6 +793,8 @@ class Compiler(compiler.Compiler):
             compiled = UTF8String(name)
         elif type_name == 'BMPString':
             compiled = BMPString(name)
+        elif type_name == 'GraphicString':
+            compiled = GraphicString(name)
         elif type_name == 'UTCTime':
             compiled = UTCTime(name)
         elif type_name == 'UniversalString':
