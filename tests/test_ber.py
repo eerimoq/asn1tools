@@ -2245,7 +2245,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             "END")
 
         datas = [
-            ('A', 'ü', b'\x19\x01\xfc')
+            ('A', 'f', b'\x19\x01\x66')
         ]
 
         for type_name, decoded, encoded in datas:
