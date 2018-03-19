@@ -390,8 +390,9 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
                          'TeletexString(Teletexstring)')
         self.assertEqual(repr(all_types.types['Utctime']), 'UTCTime(Utctime)')
         self.assertEqual(repr(all_types.types['SequenceOf']),
-                         'SequenceOf(SequenceOf, Integer())')
-        self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
+                         'SequenceOf(SequenceOf, Integer(INTEGER))')
+        self.assertEqual(repr(all_types.types['SetOf']),
+                         'SetOf(SetOf, Integer(INTEGER))')
 
     def test_all_types_automatic_tags(self):
         all_types = asn1tools.compile_files(
@@ -405,6 +406,71 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(all_types, type_name, decoded, encoded)
+
+    def test_choice(self):
+        all_types = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  b INTEGER, "
+            "  c CHOICE { "
+            "    a INTEGER "
+            "  } "
+            "} "
+            "END",
+            'xer')
+
+        datas = [
+            ('A', ('a', True), b'<A><a><true /></a></A>'),
+            ('A', ('b', 1), b'<A><b>1</b></A>'),
+            ('A', ('c', ('a', 534)), b'<A><c><a>534</a></c></A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(all_types, type_name, decoded, encoded)
+
+    def test_sequence_of(self):
+        all_types = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE OF INTEGER "
+            "B ::= SEQUENCE OF A "
+            "C ::= SEQUENCE OF BOOLEAN "
+            "D ::= SEQUENCE OF E "
+            "E ::= BOOLEAN "
+            "F ::= SEQUENCE OF CHOICE { a BOOLEAN } "
+            "G ::= SEQUENCE OF ENUMERATED { one } "
+            "END",
+            'xer')
+
+        datas = [
+            ('A',        [1, 4], b'<A><INTEGER>1</INTEGER><INTEGER>4</INTEGER></A>'),
+            ('B',         [[5]], b'<B><A><INTEGER>5</INTEGER></A></B>'),
+            ('C', [True, False], b'<C><true /><false /></C>'),
+            ('D',        [True], b'<D><true /></D>'),
+            ('F', [('a', True)], b'<F><a><true /></a></F>'),
+            ('G',       ['one'], b'<G><one /></G>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(all_types, type_name, decoded, encoded)
+
+    def test_utf8_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UTF8String "
+            "END",
+            'xer')
+
+        datas = [
+            ('A',      u'bar', b'<A>bar</A>'),
+            ('A', u'a\u1010c', b'<A>a&#4112;c</A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
 
 
 if __name__ == '__main__':

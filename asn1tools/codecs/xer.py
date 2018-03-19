@@ -4,6 +4,7 @@
 
 import logging
 from xml.etree import ElementTree
+import binascii
 
 from . import EncodeError
 from . import DecodeError
@@ -21,6 +22,34 @@ class Type(object):
         self.type_name = type_name
         self.optional = False
         self.default = None
+
+    def encode(self, data):
+        raise NotImplementedError()
+
+    def encode_of(self, data):
+        return self.encode(data)
+
+    def decode(self, element):
+        raise NotImplementedError()
+
+    def decode_of(self, element):
+        return self.decode(element)
+
+
+class StringType(Type):
+
+    def encode(self, data):
+        element = ElementTree.Element(self.name)
+        element.text = data
+
+        return element
+
+    def decode(self, element):
+        return element.text
+
+    def __repr__(self):
+        return '{}({})'.format(self.__class__.__name__,
+                               self.name)
 
 
 class Integer(Type):
@@ -49,7 +78,7 @@ class Real(Type):
     def encode(self, data):
         raise NotImplementedError()
 
-    def decode(self, data):
+    def decode(self, element):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -70,41 +99,14 @@ class Boolean(Type):
     def decode(self, element):
         return element.find('true') is not None
 
+    def encode_of(self, data):
+        return ElementTree.Element('true' if data else 'false')
+
+    def decode_of(self, element):
+        return element.tag == 'true'
+
     def __repr__(self):
         return 'Boolean({})'.format(self.name)
-
-
-class IA5String(Type):
-
-    def __init__(self, name):
-        super(IA5String, self).__init__(name, 'IA5String')
-
-    def encode(self, data):
-        element = ElementTree.Element(self.name)
-        element.text = data
-
-        return element
-
-    def decode(self, element):
-        return element.text
-
-    def __repr__(self):
-        return 'IA5String({})'.format(self.name)
-
-
-class NumericString(Type):
-
-    def __init__(self, name):
-        super(NumericString, self).__init__(name, 'NumericString')
-
-    def encode(self, data):
-        raise NotImplementedError()
-
-    def decode(self, data):
-        raise NotImplementedError()
-
-    def __repr__(self):
-        return 'NumericString({})'.format(self.name)
 
 
 class Sequence(Type):
@@ -215,7 +217,7 @@ class SequenceOf(Type):
         element = ElementTree.Element(self.name)
 
         for entry in data:
-            element.append(self.element_type.encode(entry))
+            element.append(self.element_type.encode_of(entry))
 
         return element
 
@@ -223,7 +225,7 @@ class SequenceOf(Type):
         values = []
 
         for member_element in list(element):
-            value = self.element_type.decode(member_element)
+            value = self.element_type.decode_of(member_element)
             values.append(value)
 
         return values
@@ -243,7 +245,7 @@ class SetOf(Type):
         element = ElementTree.Element(self.name)
 
         for entry in data:
-            element.append(self.element_type.encode(entry))
+            element.append(self.element_type.encode_of(entry))
 
         return element
 
@@ -251,7 +253,7 @@ class SetOf(Type):
         values = []
 
         for member_element in list(element):
-            value = self.element_type.decode(member_element)
+            value = self.element_type.decode_of(member_element)
             values.append(value)
 
         return values
@@ -267,10 +269,13 @@ class BitString(Type):
         super(BitString, self).__init__(name, 'BIT STRING')
 
     def encode(self, data):
-        raise NotImplementedError()
+        element = ElementTree.Element(self.name)
+        element.text = binascii.hexlify(data[0]).decode('ascii')
 
-    def decode(self, data):
-        raise NotImplementedError()
+        return element
+
+    def decode(self, element):
+        return element.text
 
     def __repr__(self):
         return 'BitString({})'.format(self.name)
@@ -282,103 +287,70 @@ class OctetString(Type):
         super(OctetString, self).__init__(name, 'OCTET STRING')
 
     def encode(self, data):
-        raise NotImplementedError()
+        element = ElementTree.Element(self.name)
+        element.text = binascii.hexlify(data).decode('ascii')
 
-    def decode(self, data):
-        raise NotImplementedError()
+        return element
+
+    def decode(self, element):
+        return element.text
 
     def __repr__(self):
         return 'OctetString({})'.format(self.name)
 
 
-class PrintableString(Type):
+class IA5String(StringType):
+
+    def __init__(self, name):
+        super(IA5String, self).__init__(name, 'IA5String')
+
+
+class NumericString(StringType):
+
+    def __init__(self, name):
+        super(NumericString, self).__init__(name, 'NumericString')
+
+
+class PrintableString(StringType):
 
     def __init__(self, name):
         super(PrintableString, self).__init__(name, 'PrintableString')
 
-    def encode(self, data):
-        raise NotImplementedError()
 
-    def decode(self, data):
-        raise NotImplementedError()
-
-    def __repr__(self):
-        return 'PrintableString({})'.format(self.name)
-
-
-class UniversalString(Type):
+class UniversalString(StringType):
 
     def __init__(self, name):
         super(UniversalString, self).__init__(name, 'UniversalString')
 
-    def encode(self, data):
-        raise NotImplementedError()
 
-    def decode(self, data):
-        raise NotImplementedError()
-
-    def __repr__(self):
-        return 'UniversalString({})'.format(self.name)
-
-
-class VisibleString(Type):
+class VisibleString(StringType):
 
     def __init__(self, name):
         super(VisibleString, self).__init__(name, 'VisibleString')
 
-    def encode(self, data):
-        raise NotImplementedError()
 
-    def decode(self, data):
-        raise NotImplementedError()
-
-    def __repr__(self):
-        return 'VisibleString({})'.format(self.name)
-
-
-class GeneralString(Type):
+class GeneralString(StringType):
 
     def __init__(self, name):
         super(GeneralString, self).__init__(name, 'GeneralString')
 
-    def encode(self, data):
-        raise NotImplementedError()
 
-    def decode(self, data):
-        raise NotImplementedError()
-
-    def __repr__(self):
-        return 'GeneralString({})'.format(self.name)
-
-
-class UTF8String(Type):
+class UTF8String(StringType):
 
     def __init__(self, name):
         super(UTF8String, self).__init__(name, 'UTF8String')
 
-    def encode(self, data):
-        raise NotImplementedError()
 
-    def decode(self, data):
-        raise NotImplementedError()
-
-    def __repr__(self):
-        return 'UTF8String({})'.format(self.name)
-
-
-class BMPString(Type):
+class BMPString(StringType):
 
     def __init__(self, name):
         super(BMPString, self).__init__(name, 'BMPString')
 
-    def encode(self, data):
-        raise NotImplementedError()
 
-    def decode(self, data):
-        raise NotImplementedError()
+class GraphicString(StringType):
 
-    def __repr__(self):
-        return 'BMPString({})'.format(self.name)
+    def __init__(self, name):
+        super(GraphicString, self).__init__(name, 'GraphicString')
 
 
 class UTCTime(Type):
@@ -389,7 +361,7 @@ class UTCTime(Type):
     def encode(self, data):
         raise NotImplementedError()
 
-    def decode(self, data):
+    def decode(self, element):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -404,26 +376,17 @@ class GeneralizedTime(Type):
     def encode(self, data):
         raise NotImplementedError()
 
-    def decode(self, data):
+    def decode(self, element):
         raise NotImplementedError()
 
     def __repr__(self):
         return 'GeneralizedTime({})'.format(self.name)
 
 
-class TeletexString(Type):
+class TeletexString(StringType):
 
     def __init__(self, name):
         super(TeletexString, self).__init__(name, 'TeletexString')
-
-    def encode(self, data):
-        raise NotImplementedError()
-
-    def decode(self, data):
-        raise NotImplementedError()
-
-    def __repr__(self):
-        return 'TeletexString({})'.format(self.name)
 
 
 class ObjectIdentifier(Type):
@@ -434,7 +397,7 @@ class ObjectIdentifier(Type):
     def encode(self, data):
         raise NotImplementedError()
 
-    def decode(self, data):
+    def decode(self, element):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -473,6 +436,25 @@ class Choice(Type):
 
         raise DecodeError('')
 
+    def encode_of(self, data):
+        if not isinstance(data, tuple):
+            raise EncodeError("expected tuple, but got '{}'".format(data))
+
+        for member in self.members:
+            if member.name == data[0]:
+                return member.encode(data[1])
+
+        raise EncodeError(
+            "Expected choices are {}, but got '{}'.".format(
+                [member.name for member in self.members],
+                data[0]))
+
+    def decode_of(self, element):
+        for member in self.members:
+            return (member.name, member.decode(element))
+
+        raise DecodeError('')
+
     def __repr__(self):
         return 'Choice({}, [{}])'.format(
             self.name,
@@ -487,7 +469,7 @@ class Null(Type):
     def encode(self, data):
         return data
 
-    def decode(self, data):
+    def decode(self, element):
         return data
 
     def __repr__(self):
@@ -499,10 +481,10 @@ class Any(Type):
     def __init__(self, name):
         super(Any, self).__init__(name, 'ANY')
 
-    def encode(self, _, encoder):
+    def encode(self, data):
         raise NotImplementedError()
 
-    def decode(self, data):
+    def decode(self, element):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -536,7 +518,28 @@ class Enumerated(Type):
 
         raise DecodeError(
             "Enumeration value '{}' not found in {}.".format(
+                element,
+                [value for value in self.values.values()]))
+
+    def encode_of(self, data):
+        for name in self.values.values():
+            if data == name:
+                return ElementTree.Element(data)
+
+        raise EncodeError(
+            "Enumeration value '{}' not found in {}.".format(
                 data,
+                [value for value in self.values.values()]))
+
+    def decode_of(self, element):
+        value = element.tag
+
+        if value in self.values.values():
+            return value
+
+        raise DecodeError(
+            "Enumeration value '{}' not found in {}.".format(
+                element,
                 [value for value in self.values.values()]))
 
     def __repr__(self):
@@ -550,12 +553,12 @@ class Recursive(Type):
         self.type_name = type_name
         self.module_name = module_name
 
-    def encode(self, _data):
+    def encode(self, data):
         raise NotImplementedError(
             "Recursive types are not yet implemented (type '{}').".format(
                 self.type_name))
 
-    def decode(self, _data):
+    def decode(self, element):
         raise NotImplementedError(
             "Recursive types are not yet implemented (type '{}').".format(
                 self.type_name))
@@ -599,9 +602,10 @@ class Compiler(compiler.Compiler):
         elif type_name == 'SEQUENCE OF':
             minimum, maximum = self.get_size_range(type_descriptor,
                                                    module_name)
+            element = type_descriptor['element']
             compiled = SequenceOf(name,
-                                  self.compile_type('',
-                                                    type_descriptor['element'],
+                                  self.compile_type(element['type'],
+                                                    element,
                                                     module_name))
         elif type_name == 'SET':
             members = self.compile_members(
@@ -609,9 +613,10 @@ class Compiler(compiler.Compiler):
                 module_name)
             compiled = Set(name, members)
         elif type_name == 'SET OF':
+            element = type_descriptor['element']
             compiled = SetOf(name,
-                             self.compile_type('',
-                                               type_descriptor['element'],
+                             self.compile_type(element['type'],
+                                               element,
                                                module_name))
         elif type_name == 'CHOICE':
             members = self.compile_members(
@@ -648,6 +653,8 @@ class Compiler(compiler.Compiler):
             compiled = UTF8String(name)
         elif type_name == 'BMPString':
             compiled = BMPString(name)
+        elif type_name == 'GraphicString':
+            compiled = GraphicString(name)
         elif type_name == 'UTCTime':
             compiled = UTCTime(name)
         elif type_name == 'UniversalString':
