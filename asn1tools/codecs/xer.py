@@ -265,17 +265,29 @@ class SetOf(Type):
 
 class BitString(Type):
 
-    def __init__(self, name, minimum, maximum):
+    def __init__(self, name):
         super(BitString, self).__init__(name, 'BIT STRING')
 
     def encode(self, data):
         element = ElementTree.Element(self.name)
-        element.text = binascii.hexlify(data[0]).decode('ascii')
+        encoded = int(binascii.hexlify(data[0]), 16)
+        encoded |= (0x80 << (8 * len(data[0])))
+        element.text = bin(encoded)[10:10 + data[1]].upper()
 
         return element
 
     def decode(self, element):
-        return element.text
+        encoded = element.text
+        number_of_bits = len(encoded)
+        decoded = int(encoded, 2)
+        rest = (number_of_bits % 8)
+
+        if rest != 0:
+            decoded <<= (8 - rest)
+
+        decoded = binascii.unhexlify(hex(decoded)[2:])
+
+        return (decoded, number_of_bits)
 
     def __repr__(self):
         return 'BitString({})'.format(self.name)
@@ -288,7 +300,7 @@ class OctetString(Type):
 
     def encode(self, data):
         element = ElementTree.Element(self.name)
-        element.text = binascii.hexlify(data).decode('ascii')
+        element.text = binascii.hexlify(data).decode('ascii').upper()
 
         return element
 
@@ -662,9 +674,7 @@ class Compiler(compiler.Compiler):
         elif type_name == 'GeneralizedTime':
             compiled = GeneralizedTime(name)
         elif type_name == 'BIT STRING':
-            minimum, maximum = self.get_size_range(type_descriptor,
-                                                   module_name)
-            compiled = BitString(name, minimum, maximum)
+            compiled = BitString(name)
         elif type_name == 'ANY':
             compiled = Any(name)
         elif type_name == 'ANY DEFINED BY':

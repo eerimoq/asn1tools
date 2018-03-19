@@ -472,6 +472,22 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+    def test_bit_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= BIT STRING "
+            "END",
+            'xer')
+
+        datas = [
+            ('A',     (b'\x40', 4), b'<A>0100</A>'),
+            ('A', (b'\x40\x80', 9), b'<A>010000001</A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
 
 if __name__ == '__main__':
     unittest.main()
