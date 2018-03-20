@@ -157,14 +157,8 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             self.assert_encode_decode(a2, 'PersonnelRecord', decoded, encoded)
 
     def test_x691_a3(self):
-        with self.assertRaises(asn1tools.ParseError) as cm:
-            a3 = asn1tools.compile_files('tests/files/x691_a3.asn', 'per')
-
-        self.assertEqual(
-            str(cm.exception),
-            "Invalid ASN.1 syntax at line 10, column 22: 'SEQUENCE >!<"
-            "(SIZE(2, ...)) OF ChildInformation OPTIONAL,': Expected \"{\".")
-
+        a3 = asn1tools.compile_files('tests/files/x691_a3.asn', 'per')
+        
         return
 
         decoded = {

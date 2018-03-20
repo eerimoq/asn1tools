@@ -151,13 +151,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         self.assert_encode_decode(a2, 'PersonnelRecord', decoded, encoded)
 
     def test_x691_a3(self):
-        with self.assertRaises(asn1tools.ParseError) as cm:
-            a3 = asn1tools.compile_files('tests/files/x691_a3.asn', 'uper')
-
-        self.assertEqual(
-            str(cm.exception),
-            "Invalid ASN.1 syntax at line 10, column 22: 'SEQUENCE >!<"
-            "(SIZE(2, ...)) OF ChildInformation OPTIONAL,': Expected \"{\".")
+        a3 = asn1tools.compile_files('tests/files/x691_a3.asn', 'uper')
 
         return
 
@@ -1087,6 +1081,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "A ::= SEQUENCE OF INTEGER "
             "B ::= SEQUENCE SIZE (2) OF INTEGER "
             "C ::= SEQUENCE SIZE (1..5) OF INTEGER "
+            "D ::= SEQUENCE SIZE (1..2, ...) OF INTEGER "
             "END",
             'uper')
 
@@ -1098,7 +1093,8 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('B',            [1, 2], b'\x01\x01\x01\x02'),
             ('B', [4663, 222322233], b'\x02\x12\x37\x04\x0d\x40\x5e\x39'),
             ('C',               [1], b'\x00\x20\x20'),
-            ('C',            [1, 2], b'\x20\x20\x20\x20\x40')
+            ('C',            [1, 2], b'\x20\x20\x20\x20\x40'),
+            ('D',            [2, 1], b'\x40\x40\x80\x40\x40')
         ]
 
         for type_name, decoded, encoded in datas:

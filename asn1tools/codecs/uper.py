@@ -647,11 +647,18 @@ class Set(MembersType):
 
 class ArrayType(Type):
 
-    def __init__(self, name, element_type, minimum, maximum, type_name):
+    def __init__(self,
+                 name,
+                 element_type,
+                 minimum,
+                 maximum,
+                 has_extension,
+                 type_name):
         super(ArrayType, self).__init__(name, type_name)
         self.element_type = element_type
         self.minimum = minimum
         self.maximum = maximum
+        self.has_extension = has_extension
 
         if minimum is None or maximum is None:
             self.number_of_bits = None
@@ -660,6 +667,9 @@ class ArrayType(Type):
             self.number_of_bits = size_as_number_of_bits(size)
 
     def encode(self, data, encoder):
+        if self.has_extension:
+            encoder.append_bit(0)
+
         if self.number_of_bits is None:
             encoder.append_length_determinant(len(data))
         elif self.minimum != self.maximum:
@@ -670,6 +680,12 @@ class ArrayType(Type):
             self.element_type.encode(entry, encoder)
 
     def decode(self, decoder):
+        if self.has_extension:
+            bit = decoder.read_bit()
+
+            if bit:
+                raise NotImplementedError('Extension is not implemented.')
+
         if self.number_of_bits is None:
             length = decoder.read_length_determinant()
         else:
@@ -694,21 +710,23 @@ class ArrayType(Type):
 
 class SequenceOf(ArrayType):
 
-    def __init__(self, name, element_type, minimum, maximum):
+    def __init__(self, name, element_type, minimum, maximum, has_extension):
         super(SequenceOf, self).__init__(name,
                                          element_type,
                                          minimum,
                                          maximum,
+                                         has_extension,
                                          'SEQUENCE OF')
 
 
 class SetOf(ArrayType):
 
-    def __init__(self, name, element_type, minimum, maximum):
+    def __init__(self, name, element_type, minimum, maximum, has_extension):
         super(SetOf, self).__init__(name,
                                     element_type,
                                     minimum,
                                     maximum,
+                                    has_extension,
                                     'SET OF')
 
 
@@ -1245,14 +1263,16 @@ class Compiler(compiler.Compiler):
                                 root_members,
                                 additions)
         elif type_name == 'SEQUENCE OF':
-            minimum, maximum = self.get_size_range(type_descriptor,
-                                                   module_name)
+            minimum, maximum, has_extension = self.get_size_range(
+                type_descriptor,
+                module_name)
             compiled = SequenceOf(name,
                                   self.compile_type('',
                                                     type_descriptor['element'],
                                                     module_name),
                                   minimum,
-                                  maximum)
+                                  maximum,
+                                  has_extension)
         elif type_name == 'SET':
             members, additions = self.compile_members(
                 type_descriptor['members'],
@@ -1262,14 +1282,16 @@ class Compiler(compiler.Compiler):
                            members,
                            additions)
         elif type_name == 'SET OF':
-            minimum, maximum = self.get_size_range(type_descriptor,
-                                                   module_name)
+            minimum, maximum, has_extension = self.get_size_range(
+                type_descriptor,
+                module_name)
             compiled = SetOf(name,
                              self.compile_type('',
                                                type_descriptor['element'],
                                                module_name),
                              minimum,
-                             maximum)
+                             maximum,
+                             has_extension)
         elif type_name == 'CHOICE':
             members, additions = self.compile_members(
                 type_descriptor['members'],
@@ -1291,26 +1313,26 @@ class Compiler(compiler.Compiler):
         elif type_name == 'OBJECT IDENTIFIER':
             compiled = ObjectIdentifier(name)
         elif type_name == 'OCTET STRING':
-            minimum, maximum = self.get_size_range(type_descriptor,
-                                                   module_name)
+            minimum, maximum, _ = self.get_size_range(type_descriptor,
+                                                      module_name)
             compiled = OctetString(name, minimum, maximum)
         elif type_name == 'TeletexString':
             compiled = TeletexString(name)
         elif type_name == 'NumericString':
-            minimum, maximum = self.get_size_range(type_descriptor,
-                                                   module_name)
+            minimum, maximum, _ = self.get_size_range(type_descriptor,
+                                                      module_name)
             compiled = NumericString(name, minimum, maximum)
         elif type_name == 'PrintableString':
-            minimum, maximum = self.get_size_range(type_descriptor,
-                                                   module_name)
+            minimum, maximum, _ = self.get_size_range(type_descriptor,
+                                                      module_name)
             compiled = PrintableString(name, minimum, maximum)
         elif type_name == 'IA5String':
-            minimum, maximum = self.get_size_range(type_descriptor,
-                                                   module_name)
+            minimum, maximum, _ = self.get_size_range(type_descriptor,
+                                                      module_name)
             compiled = IA5String(name, minimum, maximum)
         elif type_name == 'VisibleString':
-            minimum, maximum = self.get_size_range(type_descriptor,
-                                                   module_name)
+            minimum, maximum, _ = self.get_size_range(type_descriptor,
+                                                      module_name)
             permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
             compiled = VisibleString(name,
                                      minimum,
@@ -1331,8 +1353,8 @@ class Compiler(compiler.Compiler):
         elif type_name == 'GeneralizedTime':
             compiled = GeneralizedTime(name)
         elif type_name == 'BIT STRING':
-            minimum, maximum = self.get_size_range(type_descriptor,
-                                                   module_name)
+            minimum, maximum, _ = self.get_size_range(type_descriptor,
+                                                      module_name)
             compiled = BitString(name, minimum, maximum)
         elif type_name == 'ANY':
             compiled = Any(name)
@@ -1421,8 +1443,8 @@ class Compiler(compiler.Compiler):
             compiled_member.default = member['default']
 
         if 'size' in member:
-            minimum, maximum = self.get_size_range(member,
-                                                   module_name)
+            minimum, maximum, _ = self.get_size_range(member,
+                                                      module_name)
             compiled_member.set_size_range(minimum, maximum)
 
         return compiled_member

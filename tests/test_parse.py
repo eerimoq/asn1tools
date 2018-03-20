@@ -65,13 +65,7 @@ class Asn1ToolsParseTest(unittest.TestCase):
             self.parse_and_verify('x691_a2')
 
     def test_parse_x691_a3(self):
-        with self.assertRaises(asn1tools.ParseError) as cm:
-            self.parse_and_verify('x691_a3')
-
-        self.assertEqual(
-            str(cm.exception),
-            "Invalid ASN.1 syntax at line 10, column 22: 'SEQUENCE >!<"
-            "(SIZE(2, ...)) OF ChildInformation OPTIONAL,': Expected \"{\".")
+        self.parse_and_verify('x691_a3')
 
     def test_parse_x691_a4(self):
         self.parse_and_verify('x691_a4')

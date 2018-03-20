@@ -248,7 +248,9 @@ def convert_size_constraint(_s, _l, tokens):
     values = []
 
     for item_tokens in tokens:
-        if '..' in item_tokens:
+        if item_tokens == '...':
+            value = '...'
+        elif '..' in item_tokens:
             value = (convert_number(item_tokens[0]),
                      convert_number(item_tokens[2]))
         else:
@@ -331,10 +333,8 @@ def convert_sequence_of_type(_s, _l, tokens):
         'element': convert_type(tokens[4]),
     }
 
-    size = convert_size(tokens[1])
-
-    if size:
-        converted_type['size'] = size
+    if len(tokens[1]) > 0:
+        converted_type['size'] = tokens[1][0]['size']
 
     tag = convert_tag(tokens[3])
 
@@ -357,10 +357,8 @@ def convert_set_of_type(_s, _l, tokens):
         'element': convert_type(tokens[4])
     }
 
-    size = convert_size(tokens[1])
-
-    if size:
-        converted_type['size'] = size
+    if len(tokens[1]) > 0:
+        converted_type['size'] = tokens[1][0]['size']
 
     tag = convert_tag(tokens[3])
 
@@ -886,21 +884,17 @@ def create_grammar():
     version_number = Forward()
     union_mark = Forward()
     named_number = Forward()
+    size_constraint = Forward()
 
     value_field_reference = Combine(ampersand + value_reference)
     type_field_reference = Combine(ampersand + type_reference)
 
     range_ = (word + range_separator + word)
 
-    # ToDo: Remove size and size_paren as they are a workaround for
-    # SEQUENCE/SET OF.
-    size = Group(SIZE
-                 + Group(Suppress(left_parenthesis)
-                         + Group(delimitedList(range_ | word, delim=union_mark))
-                         + Suppress(right_parenthesis)))
-
+    # ToDo: Remove size_paren as they are a workaround for
+    #       SEQUENCE/SET OF.
     size_paren = (Suppress(Optional(left_parenthesis))
-                  + size
+                  + size_constraint
                   + Suppress(Optional(right_parenthesis)))
 
     class_number = (number | defined_value).setName('ClassNumber')
@@ -1149,7 +1143,7 @@ def create_grammar():
                               | (WITH_COMPONENTS - multiple_type_constraints))
     permitted_alphabet = (FROM - constraint)
     type_constraint = type_
-    size_constraint = (SIZE - Group(constraint))
+    size_constraint <<= (SIZE - Group(constraint))
     upper_end_value = (value | MAX)
     lower_end_value = (value | MIN)
     upper_endpoint = (Optional(less_than) + upper_end_value)
@@ -1180,7 +1174,7 @@ def create_grammar():
     root_element_set_spec <<= element_set_spec
     additional_element_set_spec <<= element_set_spec
     element_set_specs = (root_element_set_spec
-                         + Optional(Suppress(comma - ellipsis)
+                         + Optional(Suppress(comma) - ellipsis
                                     + Optional(Suppress(comma)
                                                - additional_element_set_spec)))
 
@@ -1320,7 +1314,7 @@ def create_grammar():
     # X.680: 27. Notation for the set-of types
     set_of_value = NoMatch()
     set_of_type = (SET
-                   + Group(Optional(size))
+                   + Group(Optional(size_paren))
                    + OF
                    + Optional(Suppress(identifier))
                    - tag

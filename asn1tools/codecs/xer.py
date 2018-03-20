@@ -585,8 +585,6 @@ class Compiler(compiler.Compiler):
                 module_name)
             compiled = Sequence(name, members)
         elif type_name == 'SEQUENCE OF':
-            minimum, maximum = self.get_size_range(type_descriptor,
-                                                   module_name)
             element = type_descriptor['element']
             compiled = SequenceOf(name,
                                   self.compile_type(element['type'],
@@ -619,8 +617,6 @@ class Compiler(compiler.Compiler):
         elif type_name == 'OBJECT IDENTIFIER':
             compiled = ObjectIdentifier(name)
         elif type_name == 'OCTET STRING':
-            minimum, maximum = self.get_size_range(type_descriptor,
-                                                   module_name)
             compiled = OctetString(name)
         elif type_name == 'TeletexString':
             compiled = TeletexString(name)

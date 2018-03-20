@@ -1,6 +1,16 @@
 import unittest
 from binascii import hexlify
 
+
+def format_encoded(encoded):
+    hexstring = hexlify(encoded).decode('ascii')
+    binstring = bin(int('80' + hexstring, 16))[10:]
+    binstring = ' '.join([binstring[i:i + 8]
+                          for i in range(0, len(binstring), 8)])
+
+    return '{} ({})'.format(hexstring, binstring)
+
+
 class Asn1ToolsBaseTest(unittest.TestCase):
 
     def assert_encode_decode(self,
@@ -18,8 +28,8 @@ class Asn1ToolsBaseTest(unittest.TestCase):
             self.assertEqual(encoded, encoded_message)
         except:
             print('Wrong encoding of type with name {}.'.format(type_name))
-            print('Actual:', hexlify(encoded))
-            print('Expected:', hexlify(encoded_message))
+            print('Actual:', format_encoded(encoded))
+            print('Expected:', format_encoded(encoded_message))
             raise
 
         try:

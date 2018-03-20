@@ -213,7 +213,7 @@ class Compiler(object):
     def get_size_range(self, type_descriptor, module_name):
         """Returns a tuple of the minimum and maximum values allowed according
         the the ASN.1 specification SIZE parameter. Returns (None,
-        None) if the type does not have a SIZE parameter.
+        None, None) if the type does not have a SIZE parameter.
 
         """
 
@@ -222,17 +222,15 @@ class Compiler(object):
         if size is None:
             minimum = None
             maximum = None
-        elif isinstance(size, int):
-            minimum = size
-            maximum = size
-        elif isinstance(size, list):
+            has_extension = None
+        else:
             if isinstance(size[0], tuple):
                 minimum, maximum = size[0]
             else:
                 minimum = size[0]
                 maximum = size[0]
-        else:
-            raise NotImplementedError()
+
+            has_extension = (size[-1] == '...')
 
         if isinstance(minimum, str):
             minimum = self.lookup_value(minimum, module_name)[0]['value']
@@ -240,7 +238,7 @@ class Compiler(object):
         if isinstance(maximum, str):
             maximum = self.lookup_value(maximum, module_name)[0]['value']
 
-        return minimum, maximum
+        return minimum, maximum, has_extension
 
     def get_restricted_to_range(self, type_descriptor, module_name):
         restricted_to = type_descriptor.get('restricted-to', None)
