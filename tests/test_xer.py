@@ -80,14 +80,12 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         }
 
         encoded = (
-            b'<PCCH-Message><message><c1><paging><systemInfoModification><tr'
-            b'ue /></systemInfoModification><nonCriticalExtension /></paging><'
-            b'/c1></message></PCCH-Message>'
+            b'<PCCH-Message><message><c1><paging><systemInfoModification><'
+            b'true /></systemInfoModification><nonCriticalExtension /></pa'
+            b'ging></c1></message></PCCH-Message>'
         )
 
         self.assert_encode_decode(rrc, 'PCCH-Message', decoded, encoded)
-
-        return
 
         # Message 2.
         decoded = {
@@ -103,21 +101,29 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         }
 
         encoded = (
-            b''
+            b'<BCCH-BCH-Message><message><dl-Bandwidth><n6 /></dl-Bandwidt'
+            b'h><phich-Config><phich-Duration><normal /></phich-Duration><'
+            b'phich-Resource><half /></phich-Resource></phich-Config><syst'
+            b'emFrameNumber>00010010</systemFrameNumber><spare>0011010001<'
+            b'/spare></message></BCCH-BCH-Message>'
         )
 
         self.assert_encode_decode(rrc, 'BCCH-BCH-Message', decoded, encoded)
 
         # Message 3.
         decoded = {
-            'message': {
-                'c1': {
-                    'systemInformation': {
-                        'criticalExtensions': {
-                            'systemInformation-r8': {
+            'message': (
+                'c1',
+                (
+                    'systemInformation',
+                    {
+                        'criticalExtensions': (
+                            'systemInformation-r8',
+                            {
                                 'sib-TypeAndInfo': [
-                                    {
-                                        'sib2': {
+                                    (
+                                        'sib2',
+                                        {
                                             'ac-BarringInfo': {
                                                 'ac-BarringForEmergency': True,
                                                 'ac-BarringForMO-Data': {
@@ -187,13 +193,13 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
                                                     'nCS-AN': 4,
                                                     'n1PUCCH-AN': 2047
                                                 },
-                                                'soundingRS-UL-ConfigCommon': {
-                                                    'setup': {
+                                                'soundingRS-UL-ConfigCommon': (
+                                                    'setup',
+                                                    {
                                                         'srs-BandwidthConfig': 'bw0',
                                                         'srs-SubframeConfig': 'sc4',
                                                         'ackNackSRS-SimultaneousTransmission': True
-                                                    }
-                                                },
+                                                    }),
                                                 'uplinkPowerControlCommon': {
                                                     'p0-NominalPUSCH': -126,
                                                     'alpha': 'al0',
@@ -222,9 +228,10 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
                                             },
                                             'timeAlignmentTimerCommon': 'sf500'
                                         }
-                                    },
-                                    {
-                                        'sib3': {
+                                    ),
+                                    (
+                                        'sib3',
+                                        {
                                             'cellReselectionInfoCommon': {
                                                 'q-Hyst': 'dB0',
                                                 'speedStateReselectionPars': {
@@ -252,76 +259,178 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
                                                 't-ReselectionEUTRA': 4
                                             }
                                         }
-                                    },
-                                    {
-                                        'sib4': {
+                                    ),
+                                    (
+                                        'sib4',
+                                        {
                                         }
-                                    },
-                                    {
-                                        'sib5': {
+                                    ),
+                                    (
+                                        'sib5',
+                                        {
                                             'interFreqCarrierFreqList': [
                                                 {
                                                     'dl-CarrierFreq': 1,
                                                     'q-RxLevMin': -45,
                                                     't-ReselectionEUTRA': 0,
                                                     'threshX-High': 31,
-                                                    'threshX-Low': 29 ,
+                                                    'threshX-Low': 29,
                                                     'allowedMeasBandwidth': 'mbw6',
                                                     'presenceAntennaPort1': True,
-                                                    'q-OffsetFreq': 'dB0',
-                                                    'neighCellConfig': (b'\x00', 2)
+                                                    'neighCellConfig': (b'\x00', 2),
+                                                    'q-OffsetFreq': 'dB0'
                                                 }
                                             ]
                                         }
-                                    },
-                                    {
-                                        'sib6': {
+                                    ),
+                                    (
+                                        'sib6',
+                                        {
                                             't-ReselectionUTRA': 3
                                         }
-                                    },
-                                    {
-                                        'sib7': {
+                                    ),
+                                    (
+                                        'sib7',
+                                        {
                                             't-ReselectionGERAN': 3
                                         }
-                                    },
-                                    {
-                                        'sib8': {
+                                    ),
+                                    (
+                                        'sib8',
+                                        {
                                             'parameters1XRTT': {
-                                                'longCodeState1XRTT': (b'\x01\x23\x45\x67\x89\x00', 42)
+                                                'longCodeState1XRTT': (b'\x01#Eg\x89\x00', 42)
                                             }
                                         }
-                                    },
-                                    {
-                                        'sib9': {
-                                            'hnb-Name': b'\x34'
+                                    ),
+                                    (
+                                        'sib9',
+                                        {
+                                            'hnb-Name': b'4'
                                         }
-                                    },
-                                    {
-                                        'sib10': {
-                                            'messageIdentifier': (b'\x23\x34', 16),
-                                            'serialNumber': (b'\x12\x34', 16),
-                                            'warningType': b'\x32\x12'
+                                    ),
+                                    (
+                                        'sib10',
+                                        {
+                                            'messageIdentifier': (b'#4', 16),
+                                            'serialNumber': (b'\x124', 16),
+                                            'warningType': b'2\x12'
                                         }
-                                    },
-                                    {
-                                        'sib11': {
-                                            'messageIdentifier': (b'\x67\x88', 16),
-                                            'serialNumber': (b'\x54\x35', 16),
+                                    ),
+                                    (
+                                        'sib11',
+                                        {
+                                            'messageIdentifier': (b'g\x88', 16),
+                                            'serialNumber': (b'T5', 16),
                                             'warningMessageSegmentType': 'notLastSegment',
                                             'warningMessageSegmentNumber': 19,
                                             'warningMessageSegment': b'\x12'
                                         }
-                                    }
+                                    )
                                 ]
                             }
-                        }
+                        )
                     }
-                }
-            }
+                )
+            )
         }
 
         encoded = (
-            b''
+            b'<BCCH-DL-SCH-Message><message><c1><systemInformation><critic'
+            b'alExtensions><systemInformation-r8><sib-TypeAndInfo><sib2><a'
+            b'c-BarringInfo><ac-BarringForEmergency><true /></ac-BarringFo'
+            b'rEmergency><ac-BarringForMO-Data><ac-BarringFactor><p95 /></'
+            b'ac-BarringFactor><ac-BarringTime><s128 /></ac-BarringTime><a'
+            b'c-BarringForSpecialAC>11110</ac-BarringForSpecialAC></ac-Bar'
+            b'ringForMO-Data></ac-BarringInfo><radioResourceConfigCommon><'
+            b'rach-ConfigCommon><preambleInfo><numberOfRA-Preambles><n24 /'
+            b'></numberOfRA-Preambles><preamblesGroupAConfig><sizeOfRA-Pre'
+            b'amblesGroupA><n28 /></sizeOfRA-PreamblesGroupA><messageSizeG'
+            b'roupA><b144 /></messageSizeGroupA><messagePowerOffsetGroupB>'
+            b'<minusinfinity /></messagePowerOffsetGroupB></preamblesGroup'
+            b'AConfig></preambleInfo><powerRampingParameters><powerRamping'
+            b'Step><dB0 /></powerRampingStep><preambleInitialReceivedTarge'
+            b'tPower><dBm-102 /></preambleInitialReceivedTargetPower></pow'
+            b'erRampingParameters><ra-SupervisionInfo><preambleTransMax><n'
+            b'8 /></preambleTransMax><ra-ResponseWindowSize><sf6 /></ra-Re'
+            b'sponseWindowSize><mac-ContentionResolutionTimer><sf48 /></ma'
+            b'c-ContentionResolutionTimer></ra-SupervisionInfo><maxHARQ-Ms'
+            b'g3Tx>8</maxHARQ-Msg3Tx></rach-ConfigCommon><bcch-Config><mod'
+            b'ificationPeriodCoeff><n2 /></modificationPeriodCoeff></bcch-'
+            b'Config><pcch-Config><defaultPagingCycle><rf256 /></defaultPa'
+            b'gingCycle><nB><twoT /></nB></pcch-Config><prach-Config><root'
+            b'SequenceIndex>836</rootSequenceIndex><prach-ConfigInfo><prac'
+            b'h-ConfigIndex>33</prach-ConfigIndex><highSpeedFlag><false />'
+            b'</highSpeedFlag><zeroCorrelationZoneConfig>10</zeroCorrelati'
+            b'onZoneConfig><prach-FreqOffset>64</prach-FreqOffset></prach-'
+            b'ConfigInfo></prach-Config><pdsch-ConfigCommon><referenceSign'
+            b'alPower>-60</referenceSignalPower><p-b>2</p-b></pdsch-Config'
+            b'Common><pusch-ConfigCommon><pusch-ConfigBasic><n-SB>1</n-SB>'
+            b'<hoppingMode><interSubFrame /></hoppingMode><pusch-HoppingOf'
+            b'fset>10</pusch-HoppingOffset><enable64QAM><false /></enable6'
+            b'4QAM></pusch-ConfigBasic><ul-ReferenceSignalsPUSCH><groupHop'
+            b'pingEnabled><true /></groupHoppingEnabled><groupAssignmentPU'
+            b'SCH>22</groupAssignmentPUSCH><sequenceHoppingEnabled><false '
+            b'/></sequenceHoppingEnabled><cyclicShift>5</cyclicShift></ul-'
+            b'ReferenceSignalsPUSCH></pusch-ConfigCommon><pucch-ConfigComm'
+            b'on><deltaPUCCH-Shift><ds1 /></deltaPUCCH-Shift><nRB-CQI>98</'
+            b'nRB-CQI><nCS-AN>4</nCS-AN><n1PUCCH-AN>2047</n1PUCCH-AN></puc'
+            b'ch-ConfigCommon><soundingRS-UL-ConfigCommon><setup><srs-Band'
+            b'widthConfig><bw0 /></srs-BandwidthConfig><srs-SubframeConfig'
+            b'><sc4 /></srs-SubframeConfig><ackNackSRS-SimultaneousTransmi'
+            b'ssion><true /></ackNackSRS-SimultaneousTransmission></setup>'
+            b'</soundingRS-UL-ConfigCommon><uplinkPowerControlCommon><p0-N'
+            b'ominalPUSCH>-126</p0-NominalPUSCH><alpha><al0 /></alpha><p0-'
+            b'NominalPUCCH>-127</p0-NominalPUCCH><deltaFList-PUCCH><deltaF'
+            b'-PUCCH-Format1><deltaF-2 /></deltaF-PUCCH-Format1><deltaF-PU'
+            b'CCH-Format1b><deltaF1 /></deltaF-PUCCH-Format1b><deltaF-PUCC'
+            b'H-Format2><deltaF0 /></deltaF-PUCCH-Format2><deltaF-PUCCH-Fo'
+            b'rmat2a><deltaF-2 /></deltaF-PUCCH-Format2a><deltaF-PUCCH-For'
+            b'mat2b><deltaF0 /></deltaF-PUCCH-Format2b></deltaFList-PUCCH>'
+            b'<deltaPreambleMsg3>-1</deltaPreambleMsg3></uplinkPowerContro'
+            b'lCommon><ul-CyclicPrefixLength><len1 /></ul-CyclicPrefixLeng'
+            b'th></radioResourceConfigCommon><ue-TimersAndConstants><t300>'
+            b'<ms100 /></t300><t301><ms200 /></t301><t310><ms50 /></t310><'
+            b'n310><n2 /></n310><t311><ms30000 /></t311><n311><n2 /></n311'
+            b'></ue-TimersAndConstants><freqInfo><additionalSpectrumEmissi'
+            b'on>3</additionalSpectrumEmission></freqInfo><timeAlignmentTi'
+            b'merCommon><sf500 /></timeAlignmentTimerCommon></sib2><sib3><'
+            b'cellReselectionInfoCommon><q-Hyst><dB0 /></q-Hyst><speedStat'
+            b'eReselectionPars><mobilityStateParameters><t-Evaluation><s18'
+            b'0 /></t-Evaluation><t-HystNormal><s180 /></t-HystNormal><n-C'
+            b'ellChangeMedium>1</n-CellChangeMedium><n-CellChangeHigh>16</'
+            b'n-CellChangeHigh></mobilityStateParameters><q-HystSF><sf-Med'
+            b'ium><dB-6 /></sf-Medium><sf-High><dB-4 /></sf-High></q-HystS'
+            b'F></speedStateReselectionPars></cellReselectionInfoCommon><c'
+            b'ellReselectionServingFreqInfo><threshServingLow>7</threshSer'
+            b'vingLow><cellReselectionPriority>3</cellReselectionPriority>'
+            b'</cellReselectionServingFreqInfo><intraFreqCellReselectionIn'
+            b'fo><q-RxLevMin>-33</q-RxLevMin><s-IntraSearch>0</s-IntraSear'
+            b'ch><presenceAntennaPort1><false /></presenceAntennaPort1><ne'
+            b'ighCellConfig>10</neighCellConfig><t-ReselectionEUTRA>4</t-R'
+            b'eselectionEUTRA></intraFreqCellReselectionInfo></sib3><sib4 '
+            b'/><sib5><interFreqCarrierFreqList><InterFreqCarrierFreqInfo>'
+            b'<dl-CarrierFreq>1</dl-CarrierFreq><q-RxLevMin>-45</q-RxLevMi'
+            b'n><t-ReselectionEUTRA>0</t-ReselectionEUTRA><threshX-High>31'
+            b'</threshX-High><threshX-Low>29</threshX-Low><allowedMeasBand'
+            b'width><mbw6 /></allowedMeasBandwidth><presenceAntennaPort1><'
+            b'true /></presenceAntennaPort1><neighCellConfig>00</neighCell'
+            b'Config><q-OffsetFreq><dB0 /></q-OffsetFreq></InterFreqCarrie'
+            b'rFreqInfo></interFreqCarrierFreqList></sib5><sib6><t-Reselec'
+            b'tionUTRA>3</t-ReselectionUTRA></sib6><sib7><t-ReselectionGER'
+            b'AN>3</t-ReselectionGERAN></sib7><sib8><parameters1XRTT><long'
+            b'CodeState1XRTT>000000010010001101000101011001111000100100</l'
+            b'ongCodeState1XRTT></parameters1XRTT></sib8><sib9><hnb-Name>3'
+            b'4</hnb-Name></sib9><sib10><messageIdentifier>001000110011010'
+            b'0</messageIdentifier><serialNumber>0001001000110100</serialN'
+            b'umber><warningType>3212</warningType></sib10><sib11><message'
+            b'Identifier>0110011110001000</messageIdentifier><serialNumber'
+            b'>0101010000110101</serialNumber><warningMessageSegmentType><'
+            b'notLastSegment /></warningMessageSegmentType><warningMessage'
+            b'SegmentNumber>19</warningMessageSegmentNumber><warningMessag'
+            b'eSegment>12</warningMessageSegment></sib11></sib-TypeAndInfo'
+            b'></systemInformation-r8></criticalExtensions></systemInforma'
+            b'tion></c1></message></BCCH-DL-SCH-Message>'
         )
 
         self.assert_encode_decode(rrc, 'BCCH-DL-SCH-Message', decoded, encoded)
@@ -340,7 +449,6 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             ('Sequence2',  {'a': 1}, b'<Sequence2><a>1</a></Sequence2>'),
             ('Set2',       {'a': 2}, b'<Set2><a>2</a></Set2>'),
             ('Ia5string',     'bar', b'<Ia5string>bar</Ia5string>'),
-            ('SequenceOf',       [], b'<SequenceOf />'),
             ('SetOf',            [], b'<SetOf />')
         ]
 
@@ -362,12 +470,15 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         self.assertEqual(repr(all_types.types['Integer']), 'Integer(Integer)')
         self.assertEqual(repr(all_types.types['Real']), 'Real(Real)')
         self.assertEqual(repr(all_types.types['Bitstring']), 'BitString(Bitstring)')
-        self.assertEqual(repr(all_types.types['Octetstring']), 'OctetString(Octetstring)')
+        self.assertEqual(repr(all_types.types['Octetstring']),
+                         'OctetString(Octetstring)')
         self.assertEqual(repr(all_types.types['Null']), 'Null(Null)')
         self.assertEqual(repr(all_types.types['Objectidentifier']),
                          'ObjectIdentifier(Objectidentifier)')
-        self.assertEqual(repr(all_types.types['Enumerated']), 'Enumerated(Enumerated)')
-        self.assertEqual(repr(all_types.types['Utf8string']), 'UTF8String(Utf8string)')
+        self.assertEqual(repr(all_types.types['Enumerated']),
+                         'Enumerated(Enumerated)')
+        self.assertEqual(repr(all_types.types['Utf8string']),
+                         'UTF8String(Utf8string)')
         self.assertEqual(repr(all_types.types['Sequence']), 'Sequence(Sequence, [])')
         self.assertEqual(repr(all_types.types['Set']), 'Set(Set, [])')
         self.assertEqual(repr(all_types.types['Sequence2']),
@@ -439,18 +550,23 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             "C ::= SEQUENCE OF BOOLEAN "
             "D ::= SEQUENCE OF E "
             "E ::= BOOLEAN "
-            "F ::= SEQUENCE OF CHOICE { a BOOLEAN } "
+            "F ::= SEQUENCE OF CHOICE { a BOOLEAN, b INTEGER } "
             "G ::= SEQUENCE OF ENUMERATED { one } "
+            "H ::= SEQUENCE OF SEQUENCE { a INTEGER } "
             "END",
             'xer')
 
         datas = [
+            ('A',            [], b'<A />'),
             ('A',        [1, 4], b'<A><INTEGER>1</INTEGER><INTEGER>4</INTEGER></A>'),
             ('B',         [[5]], b'<B><A><INTEGER>5</INTEGER></A></B>'),
             ('C', [True, False], b'<C><true /><false /></C>'),
             ('D',        [True], b'<D><true /></D>'),
-            ('F', [('a', True)], b'<F><a><true /></a></F>'),
-            ('G',       ['one'], b'<G><one /></G>')
+            ('F',
+             [('a', True), ('b', 1)],
+             b'<F><a><true /></a><b>1</b></F>'),
+            ('G',       ['one'], b'<G><one /></G>'),
+            ('H',       [{'a': 1}], b'<H><SEQUENCE><a>1</a></SEQUENCE></H>')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -465,6 +581,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             'xer')
 
         datas = [
+            ('A',         u'', b'<A />'),
             ('A',      u'bar', b'<A>bar</A>'),
             ('A', u'a\u1010c', b'<A>a&#4112;c</A>')
         ]
@@ -481,8 +598,26 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             'xer')
 
         datas = [
+            ('A',         (b'', 0), b'<A />'),
+            ('A', (b'\x00', 2), b'<A>00</A>'),
             ('A',     (b'\x40', 4), b'<A>0100</A>'),
             ('A', (b'\x40\x80', 9), b'<A>010000001</A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_octet_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= OCTET STRING "
+            "END",
+            'xer')
+
+        datas = [
+            ('A',         b'', b'<A />'),
+            ('A', b'\x40\x80', b'<A>4080</A>')
         ]
 
         for type_name, decoded, encoded in datas:

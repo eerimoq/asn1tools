@@ -40,12 +40,17 @@ class StringType(Type):
 
     def encode(self, data):
         element = ElementTree.Element(self.name)
-        element.text = data
+
+        if len(data) > 0:
+            element.text = data
 
         return element
 
     def decode(self, element):
-        return element.text
+        if element.text is None:
+            return u''
+        else:
+            return element.text
 
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__,
@@ -270,22 +275,30 @@ class BitString(Type):
 
     def encode(self, data):
         element = ElementTree.Element(self.name)
-        encoded = int(binascii.hexlify(data[0]), 16)
-        encoded |= (0x80 << (8 * len(data[0])))
-        element.text = bin(encoded)[10:10 + data[1]].upper()
+
+        if data[1] > 0:
+            encoded = int(binascii.hexlify(data[0]), 16)
+            encoded |= (0x80 << (8 * len(data[0])))
+            element.text = bin(encoded)[10:10 + data[1]].upper()
 
         return element
 
     def decode(self, element):
         encoded = element.text
-        number_of_bits = len(encoded)
-        decoded = int(encoded, 2)
-        rest = (number_of_bits % 8)
 
-        if rest != 0:
-            decoded <<= (8 - rest)
+        if encoded is None:
+            number_of_bits = 0
+            decoded = b''
+        else:
+            number_of_bits = len(encoded)
+            decoded = int(encoded, 2)
+            decoded |= (0x80 << number_of_bits)
+            rest = (number_of_bits % 8)
 
-        decoded = binascii.unhexlify(hex(decoded)[2:])
+            if rest != 0:
+                decoded <<= (8 - rest)
+
+            decoded = binascii.unhexlify(hex(decoded)[4:])
 
         return (decoded, number_of_bits)
 
@@ -300,12 +313,17 @@ class OctetString(Type):
 
     def encode(self, data):
         element = ElementTree.Element(self.name)
-        element.text = binascii.hexlify(data).decode('ascii').upper()
+
+        if len(data) > 0:
+            element.text = binascii.hexlify(data).decode('ascii').upper()
 
         return element
 
     def decode(self, element):
-        return element.text
+        if element.text is None:
+            return b''
+        else:
+            return binascii.unhexlify(element.text)
 
     def __repr__(self):
         return 'OctetString({})'.format(self.name)
@@ -463,7 +481,8 @@ class Choice(Type):
 
     def decode_of(self, element):
         for member in self.members:
-            return (member.name, member.decode(element))
+            if member.name == element.tag:
+                return (member.name, member.decode(element))
 
         raise DecodeError('')
 
