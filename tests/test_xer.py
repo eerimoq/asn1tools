@@ -623,6 +623,25 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+    def test_null(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= NULL "
+            "B ::= SEQUENCE OF NULL "
+            "C ::= SEQUENCE { a NULL } "
+            "END",
+            'xer')
+
+        datas = [
+            ('A',         None, b'<A />'),
+            ('B', [None, None], b'<B><NULL /><NULL /></B>'),
+            ('C',  {'a': None}, b'<C><a /></C>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
 
 if __name__ == '__main__':
     unittest.main()

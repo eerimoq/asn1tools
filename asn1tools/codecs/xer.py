@@ -114,10 +114,10 @@ class Boolean(Type):
         return 'Boolean({})'.format(self.name)
 
 
-class Sequence(Type):
+class MembersType(Type):
 
-    def __init__(self, name, members):
-        super(Sequence, self).__init__(name, 'SEQUENCE')
+    def __init__(self, name, members, type_name):
+        super(MembersType, self).__init__(name, type_name)
         self.members = members
 
     def encode(self, data):
@@ -132,7 +132,8 @@ class Sequence(Type):
                 continue
             else:
                 raise EncodeError(
-                    "Sequence member '{}' not found in {}.".format(
+                    "{} member '{}' not found in {}.".format(
+                        self.__class__.__name__,
                         name,
                         data))
 
@@ -158,64 +159,28 @@ class Sequence(Type):
         return values
 
     def __repr__(self):
-        return 'Sequence({}, [{}])'.format(
+        return '{}({}, [{}])'.format(
+            self.__class__.__name__,
             self.name,
             ', '.join([repr(member) for member in self.members]))
 
 
-class Set(Type):
+class Sequence(MembersType):
 
     def __init__(self, name, members):
-        super(Set, self).__init__(name, 'SET')
-        self.members = members
-
-    def encode(self, data):
-        element = ElementTree.Element(self.name)
-
-        for member in self.members:
-            name = member.name
-
-            if name in data:
-                member_element = member.encode(data[name])
-            elif member.optional or member.default is not None:
-                continue
-            else:
-                raise EncodeError(
-                    "Set member '{}' not found in {}.".format(
-                        name,
-                        data))
-
-            element.append(member_element)
-
-        return element
-
-    def decode(self, element):
-        values = {}
-
-        for member in self.members:
-            name = member.name
-            member_element = element.find(name)
-
-            if member_element is not None:
-                value = member.decode(member_element)
-                values[name] = value
-            elif member.optional:
-                pass
-            elif member.default is not None:
-                values[name] = member.default
-
-        return values
-
-    def __repr__(self):
-        return 'Set({}, [{}])'.format(
-            self.name,
-            ', '.join([repr(member) for member in self.members]))
+        super(Sequence, self).__init__(name, members, 'SEQUENCE')
 
 
-class SequenceOf(Type):
+class Set(MembersType):
 
-    def __init__(self, name, element_type):
-        super(SequenceOf, self).__init__(name, 'SEQUENCE OF')
+    def __init__(self, name, members):
+        super(Set, self).__init__(name, members, 'SET')
+
+
+class ArrayType(Type):
+
+    def __init__(self, name, element_type, type_name):
+        super(ArrayType, self).__init__(name, type_name)
         self.element_type = element_type
 
     def encode(self, data):
@@ -236,36 +201,25 @@ class SequenceOf(Type):
         return values
 
     def __repr__(self):
-        return 'SequenceOf({}, {})'.format(self.name,
-                                           self.element_type)
+        return '{}({}, {})'.format(self.__class__.__name__,
+                                   self.name,
+                                   self.element_type)
 
 
-class SetOf(Type):
+class SequenceOf(ArrayType):
 
     def __init__(self, name, element_type):
-        super(SetOf, self).__init__(name, 'SET OF')
-        self.element_type = element_type
+        super(SequenceOf, self).__init__(name,
+                                         element_type,
+                                         'SEQUENCE OF')
 
-    def encode(self, data):
-        element = ElementTree.Element(self.name)
 
-        for entry in data:
-            element.append(self.element_type.encode_of(entry))
+class SetOf(ArrayType):
 
-        return element
-
-    def decode(self, element):
-        values = []
-
-        for member_element in list(element):
-            value = self.element_type.decode_of(member_element)
-            values.append(value)
-
-        return values
-
-    def __repr__(self):
-        return 'SetOf({}, {})'.format(self.name,
-                                      self.element_type)
+    def __init__(self, name, element_type):
+        super(SetOf, self).__init__(name,
+                                    element_type,
+                                    'SET OF')
 
 
 class BitString(Type):
@@ -498,10 +452,10 @@ class Null(Type):
         super(Null, self).__init__(name, 'NULL')
 
     def encode(self, data):
-        return data
+        return ElementTree.Element(self.name)
 
     def decode(self, element):
-        return data
+        return None
 
     def __repr__(self):
         return 'Null({})'.format(self.name)
