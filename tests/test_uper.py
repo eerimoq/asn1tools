@@ -745,12 +745,6 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         with self.assertRaises(NotImplementedError):
             all_types.encode('Sequence12', {'a': [{'a': []}]})
 
-        with self.assertRaises(NotImplementedError):
-            all_types.encode('SetOf', [])
-
-        with self.assertRaises(NotImplementedError):
-            all_types.decode('SetOf', b'\x00')
-
     def test_decode_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
                                             'uper')

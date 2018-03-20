@@ -446,13 +446,14 @@ class Boolean(Type):
         return 'Boolean({})'.format(self.name)
 
 
-class Sequence(Type):
+class MembersType(Type):
 
     def __init__(self,
                  name,
                  root_members,
-                 additions):
-        super(Sequence, self).__init__(name, 'SEQUENCE')
+                 additions,
+                 type_name):
+        super(MembersType, self).__init__(name, type_name)
         self.root_members = root_members
         self.additions = additions
         self.optionals = [
@@ -546,7 +547,8 @@ class Sequence(Type):
             pass
         else:
             raise EncodeError(
-                "Sequence member '{}' not found in {}.".format(
+                "{} member '{}' not found in {}.".format(
+                    self.__class__.__name__,
                     name,
                     data))
 
@@ -613,80 +615,40 @@ class Sequence(Type):
         return decoded
 
     def __repr__(self):
-        return 'Sequence({}, [{}])'.format(
+        return '{}({}, [{}])'.format(
+            self.__class__.__name__,
             self.name,
             ', '.join([repr(member) for member in self.root_members]))
 
 
-class Set(Type):
+class Sequence(MembersType):
 
-    def __init__(self, name, members, additions):
-        super(Set, self).__init__(name, 'SET')
-        self.members = members
-        self.additions = additions
-        self.optionals = [
-            member
-            for member in members
-            if member.optional or member.default is not None
-        ]
-
-    def encode(self, data, encoder):
-        if self.additions is not None:
-            encoder.append_bit(0)
-
-        for optional in self.optionals:
-            if optional.optional:
-                encoder.append_bit(optional.name in data)
-            elif optional.name in data:
-                encoder.append_bit(data[optional.name] != optional.default)
-            else:
-                encoder.append_bit(0)
-
-        for member in self.members:
-            name = member.name
-
-            if name in data:
-                if member.default is None:
-                    member.encode(data[name], encoder)
-                elif data[name] != member.default:
-                    member.encode(data[name], encoder)
-            elif member.optional or member.default is not None:
-                pass
-            else:
-                raise EncodeError(
-                    "Set member '{}' not found in {}.".format(
-                        name,
-                        data))
-
-    def decode(self, decoder):
-        if self.additions is not None:
-            decoder.read_bit()
-
-        values = {}
-        optionals = {
-            optional: decoder.read_bit()
-            for optional in self.optionals
-        }
-
-        for member in self.members:
-            if optionals.get(member, True):
-                value = member.decode(decoder)
-                values[member.name] = value
-            elif member.default is not None:
-                values[member.name] = member.default
-
-        return values
-
-    def __repr__(self):
-        return 'Set({}, [{}])'.format(
-            self.name,
-            ', '.join([repr(member) for member in self.members]))
+    def __init__(self,
+                 name,
+                 root_members,
+                 additions):
+        super(Sequence, self).__init__(name,
+                                       root_members,
+                                       additions,
+                                       'SEQUENCE')
 
 
-class SequenceOf(Type):
+class Set(MembersType):
 
-    def __init__(self, name, element_type, minimum, maximum):
-        super(SequenceOf, self).__init__(name, 'SEQUENCE OF')
+    def __init__(self,
+                 name,
+                 root_members,
+                 additions):
+        super(Set, self).__init__(name,
+                                  root_members,
+                                  additions,
+                                  'SET')
+
+
+class ArrayType(Type):
+
+    def __init__(self, name, element_type, minimum, maximum, type_name):
+        super(ArrayType, self).__init__(name, type_name)
         self.element_type = element_type
         self.minimum = minimum
         self.maximum = maximum
@@ -725,25 +687,29 @@ class SequenceOf(Type):
         return decoded
 
     def __repr__(self):
-        return 'SequenceOf({}, {})'.format(self.name,
-                                           self.element_type)
+        return '{}({}, {})'.format(self.__class__.__name__,
+                                   self.name,
+                                   self.element_type)
 
 
-class SetOf(Type):
+class SequenceOf(ArrayType):
 
-    def __init__(self, name, element_type):
-        super(SetOf, self).__init__(name, 'SET OF')
-        self.element_type = element_type
+    def __init__(self, name, element_type, minimum, maximum):
+        super(SequenceOf, self).__init__(name,
+                                         element_type,
+                                         minimum,
+                                         maximum,
+                                         'SEQUENCE OF')
 
-    def encode(self, _data, _encoder):
-        raise NotImplementedError('SET OF not yet implemented.')
 
-    def decode(self, _decoder):
-        raise NotImplementedError('SET OF not yet implemented.')
+class SetOf(ArrayType):
 
-    def __repr__(self):
-        return 'SetOf({}, {})'.format(self.name,
-                                      self.element_type)
+    def __init__(self, name, element_type, minimum, maximum):
+        super(SetOf, self).__init__(name,
+                                    element_type,
+                                    minimum,
+                                    maximum,
+                                    'SET OF')
 
 
 class BitString(Type):
@@ -905,6 +871,26 @@ class UTF8String(Type):
 
     def __repr__(self):
         return 'UTF8String({})'.format(self.name)
+
+
+class GraphicString(Type):
+
+    def __init__(self, name):
+        super(GraphicString, self).__init__(name, 'GraphicString')
+
+    def encode(self, data, encoder):
+        encoded = data.encode('latin-1')
+        encoder.append_length_determinant(len(encoded))
+        encoder.append_bytes(bytearray(encoded))
+
+    def decode(self, decoder):
+        length = decoder.read_length_determinant()
+        encoded = decoder.read_bits(8 * length)
+
+        return encoded.decode('latin-1')
+
+    def __repr__(self):
+        return 'GraphicString({})'.format(self.name)
 
 
 class BMPString(Type):
@@ -1276,10 +1262,14 @@ class Compiler(compiler.Compiler):
                            members,
                            additions)
         elif type_name == 'SET OF':
+            minimum, maximum = self.get_size_range(type_descriptor,
+                                                   module_name)
             compiled = SetOf(name,
                              self.compile_type('',
                                                type_descriptor['element'],
-                                               module_name))
+                                               module_name),
+                             minimum,
+                             maximum)
         elif type_name == 'CHOICE':
             members, additions = self.compile_members(
                 type_descriptor['members'],
@@ -1330,6 +1320,8 @@ class Compiler(compiler.Compiler):
             compiled = GeneralString(name)
         elif type_name == 'UTF8String':
             compiled = UTF8String(name)
+        elif type_name == 'GraphicString':
+            compiled = GraphicString(name)
         elif type_name == 'BMPString':
             compiled = BMPString(name)
         elif type_name == 'UTCTime':
