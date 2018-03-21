@@ -1386,10 +1386,10 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         self.assertEqual(foo.decode('P', b'\x80\x80\xa0\x00'),
                          {'a': True, 'b': True})
 
-        # Decode D as C. Extension additions should be skipped.
+        # Decode D as C. Extension addition "a.b" should be skipped.
         self.assertEqual(foo.decode('C', b'\xc0\x40\x60\x00'), {'a': True})
 
-        # Decode R as Q. Extension additions should be skipped.
+        # Decode R as Q. Extension addition "a.b" should be skipped.
         self.assertEqual(foo.decode('Q', b'\xc0\x40\x60\x00\x59\x00'),
                          {'a': {'a': True}, 'b': 100})
 
