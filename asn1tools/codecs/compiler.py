@@ -222,7 +222,7 @@ class Compiler(object):
         if size is None:
             minimum = None
             maximum = None
-            has_extension = None
+            has_extension_marker = None
         else:
             if isinstance(size[0], tuple):
                 minimum, maximum = size[0]
@@ -230,7 +230,7 @@ class Compiler(object):
                 minimum = size[0]
                 maximum = size[0]
 
-            has_extension = (size[-1] == '...')
+            has_extension_marker = (size[-1] == '...')
 
         if isinstance(minimum, str):
             minimum = self.lookup_value(minimum, module_name)[0]['value']
@@ -238,7 +238,7 @@ class Compiler(object):
         if isinstance(maximum, str):
             maximum = self.lookup_value(maximum, module_name)[0]['value']
 
-        return minimum, maximum, has_extension
+        return minimum, maximum, has_extension_marker
 
     def get_restricted_to_range(self, type_descriptor, module_name):
         restricted_to = type_descriptor.get('restricted-to', None)
@@ -246,12 +246,15 @@ class Compiler(object):
         if restricted_to is None:
             minimum = None
             maximum = None
+            has_extension_marker = None
         elif isinstance(restricted_to, list):
             if isinstance(restricted_to[0], tuple):
                 minimum, maximum = restricted_to[0]
             else:
                 minimum = restricted_to[0]
                 maximum = restricted_to[0]
+
+            has_extension_marker = (restricted_to[-1] == '...')
         else:
             raise NotImplementedError()
 
@@ -261,7 +264,7 @@ class Compiler(object):
         if isinstance(maximum, str):
             maximum = self.lookup_value(maximum, module_name)[0]['value']
 
-        return minimum, maximum
+        return minimum, maximum, has_extension_marker
 
     def is_explicit_tag(self, type_descriptor):
         try:

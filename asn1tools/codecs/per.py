@@ -201,10 +201,11 @@ class Type(object):
 
 class Integer(Type):
 
-    def __init__(self, name, minimum, maximum):
+    def __init__(self, name, minimum, maximum, has_extension_marker):
         super(Integer, self).__init__(name, 'INTEGER')
         self.minimum = minimum
         self.maximum = maximum
+        self.has_extension_marker = has_extension_marker
 
         if minimum is None or maximum is None:
             self.number_of_bits = None
@@ -213,12 +214,21 @@ class Integer(Type):
             self.number_of_bits = size_as_number_of_bits(size)
 
     def encode(self, data, encoder):
+        if self.has_extension_marker:
+            encoder.append_bit(0)
+
         if self.number_of_bits is None:
             encoder.append_unconstrained_whole_number(data)
         else:
             encoder.append_integer(data - self.minimum, self.number_of_bits)
 
     def decode(self, decoder):
+        if self.has_extension_marker:
+            bit = decoder.read_bit()
+
+            if bit:
+                raise NotImplementedError('Extension is not implemented.')
+
         if self.number_of_bits is None:
             length = decoder.read_length_determinant()
             value = decoder.read_unconstrained_whole_number(length)
@@ -848,9 +858,9 @@ class Compiler(compiler.Compiler):
                 self.compile_members(type_descriptor['members'],
                                      module_name))
         elif type_name == 'INTEGER':
-            minimum, maximum = self.get_restricted_to_range(type_descriptor,
-                                                            module_name)
-            compiled = Integer(name, minimum, maximum)
+            compiled = Integer(name,
+                               *self.get_restricted_to_range(type_descriptor,
+                                                             module_name))
         elif type_name == 'REAL':
             compiled = Real(name)
         elif type_name == 'ENUMERATED':

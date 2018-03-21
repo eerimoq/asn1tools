@@ -655,13 +655,13 @@ class ArrayType(Type):
                  element_type,
                  minimum,
                  maximum,
-                 has_extension,
+                 has_extension_marker,
                  type_name):
         super(ArrayType, self).__init__(name, type_name)
         self.element_type = element_type
         self.minimum = minimum
         self.maximum = maximum
-        self.has_extension = has_extension
+        self.has_extension_marker = has_extension_marker
 
         if minimum is None or maximum is None:
             self.number_of_bits = None
@@ -670,7 +670,7 @@ class ArrayType(Type):
             self.number_of_bits = size_as_number_of_bits(size)
 
     def encode(self, data, encoder):
-        if self.has_extension:
+        if self.has_extension_marker:
             encoder.append_bit(0)
 
         if self.number_of_bits is None:
@@ -683,7 +683,7 @@ class ArrayType(Type):
             self.element_type.encode(entry, encoder)
 
     def decode(self, decoder):
-        if self.has_extension:
+        if self.has_extension_marker:
             bit = decoder.read_bit()
 
             if bit:
@@ -713,23 +713,23 @@ class ArrayType(Type):
 
 class SequenceOf(ArrayType):
 
-    def __init__(self, name, element_type, minimum, maximum, has_extension):
+    def __init__(self, name, element_type, minimum, maximum, has_extension_marker):
         super(SequenceOf, self).__init__(name,
                                          element_type,
                                          minimum,
                                          maximum,
-                                         has_extension,
+                                         has_extension_marker,
                                          'SEQUENCE OF')
 
 
 class SetOf(ArrayType):
 
-    def __init__(self, name, element_type, minimum, maximum, has_extension):
+    def __init__(self, name, element_type, minimum, maximum, has_extension_marker):
         super(SetOf, self).__init__(name,
                                     element_type,
                                     minimum,
                                     maximum,
-                                    has_extension,
+                                    has_extension_marker,
                                     'SET OF')
 
 
@@ -1259,54 +1259,39 @@ class Compiler(compiler.Compiler):
         type_name = type_descriptor['type']
 
         if type_name == 'SEQUENCE':
-            root_members, additions = self.compile_members(
-                type_descriptor['members'],
-                module_name)
             compiled = Sequence(name,
-                                root_members,
-                                additions)
+                                *self.compile_members(type_descriptor['members'],
+                                                      module_name))
         elif type_name == 'SEQUENCE OF':
-            minimum, maximum, has_extension = self.get_size_range(
-                type_descriptor,
-                module_name)
             compiled = SequenceOf(name,
                                   self.compile_type('',
                                                     type_descriptor['element'],
                                                     module_name),
-                                  minimum,
-                                  maximum,
-                                  has_extension)
+                                  *self.get_size_range(type_descriptor,
+                                                       module_name))
         elif type_name == 'SET':
-            members, additions = self.compile_members(
-                type_descriptor['members'],
-                module_name,
-                sort_by_tag=True)
             compiled = Set(name,
-                           members,
-                           additions)
+                           *self.compile_members(
+                               type_descriptor['members'],
+                               module_name,
+                               sort_by_tag=True))
         elif type_name == 'SET OF':
-            minimum, maximum, has_extension = self.get_size_range(
-                type_descriptor,
-                module_name)
             compiled = SetOf(name,
                              self.compile_type('',
                                                type_descriptor['element'],
                                                module_name),
-                             minimum,
-                             maximum,
-                             has_extension)
+                             *self.get_size_range(type_descriptor,
+                                                  module_name))
         elif type_name == 'CHOICE':
-            members, additions = self.compile_members(
-                type_descriptor['members'],
-                module_name,
-                flat_additions=True)
             compiled = Choice(name,
-                              members,
-                              additions)
+                              *self.compile_members(
+                                  type_descriptor['members'],
+                                  module_name,
+                                  flat_additions=True))
         elif type_name == 'INTEGER':
-            minimum, maximum = self.get_restricted_to_range(type_descriptor,
-                                                            module_name)
-            compiled = Integer(name, minimum, maximum)
+            compiled = Integer(name,
+                               *self.get_restricted_to_range(type_descriptor,
+                                                             module_name))
         elif type_name == 'REAL':
             compiled = Real(name)
         elif type_name == 'ENUMERATED':
