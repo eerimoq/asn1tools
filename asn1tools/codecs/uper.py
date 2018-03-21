@@ -324,7 +324,10 @@ def size_as_number_of_bits(size):
 
     """
 
-    return len('{:b}'.format(size))
+    if size == 0:
+        return 0
+    else:
+        return len('{:b}'.format(size))
 
 
 class Type(object):
@@ -706,7 +709,12 @@ class ArrayType(Type):
 
 class SequenceOf(ArrayType):
 
-    def __init__(self, name, element_type, minimum, maximum, has_extension_marker):
+    def __init__(self,
+                 name,
+                 element_type,
+                 minimum,
+                 maximum,
+                 has_extension_marker):
         super(SequenceOf, self).__init__(name,
                                          element_type,
                                          minimum,
@@ -717,7 +725,12 @@ class SequenceOf(ArrayType):
 
 class SetOf(ArrayType):
 
-    def __init__(self, name, element_type, minimum, maximum, has_extension_marker):
+    def __init__(self,
+                 name,
+                 element_type,
+                 minimum,
+                 maximum,
+                 has_extension_marker):
         super(SetOf, self).__init__(name,
                                     element_type,
                                     minimum,

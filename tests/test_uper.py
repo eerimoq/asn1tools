@@ -732,6 +732,210 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assert_encode_decode(lpp, 'LPP-Message', decoded, encoded)
 
+    def test_etsi_cam_pdu_descriptions_1_3_2(self):
+        files = [
+            'tests/files/etsi/cam_pdu_descriptions_1_3_2.asn',
+            'tests/files/etsi/its_containers_1_2_1.asn'
+        ]
+        cam = asn1tools.compile_files(files, 'uper')
+
+        # Message 1.
+        decoded = {
+            'header': {
+                'protocolVersion': 1,
+                'messageID': 1,
+                'stationID': 4294967295
+            },
+            'cam': {
+                'generationDeltaTime': 65535,
+                'camParameters': {
+                    'basicContainer': {
+                        'stationType': 2,
+                        'referencePosition': {
+                            'latitude': -900000000,
+                            'longitude': 1800000001,
+                            'positionConfidenceEllipse': {
+                                'semiMajorConfidence': 333,
+                                'semiMinorConfidence': 324,
+                                'semiMajorOrientation': 3601
+                            },
+                            'altitude': {
+                                'altitudeValue': -100000,
+                                'altitudeConfidence': 'alt-000-50'
+                            }
+                        }
+                    },
+                    'highFrequencyContainer': (
+                        'basicVehicleContainerHighFrequency',
+                        {
+                            'heading': {
+                                'headingValue': 22,
+                                'headingConfidence': 36
+                            },
+                            'speed': {
+                                'speedValue': 16383,
+                                'speedConfidence': 100
+                            },
+                            'driveDirection': 'backward',
+                            'vehicleLength': {
+                                'vehicleLengthValue': 1000,
+                                'vehicleLengthConfidenceIndication': 'unavailable'
+                            },
+                            'vehicleWidth': 1,
+                            'longitudinalAcceleration': {
+                                'longitudinalAccelerationValue': -140,
+                                'longitudinalAccelerationConfidence': 1
+                            },
+                            'curvature': {
+                                'curvatureValue': 0,
+                                'curvatureConfidence': 'outOfRange'
+                            },
+                            'curvatureCalculationMode': 'yawRateNotUsed',
+                            'yawRate': {
+                                'yawRateValue': 0,
+                                'yawRateConfidence': 'degSec-100-00'
+                            }
+                        }
+                    )
+                }
+            }
+        }
+
+        encoded = (
+            b'\x01\x01\xff\xff\xff\xff\xff\xff\x00\x20\x00\x00\x00\x1a\xd2\x74'
+            b'\x80\x22\x9a\x28\x9c\x22\x00\x00\x0a\x00\x01\x64\x7f\xff\xe3\x7e'
+            b'\x78\x00\x50\x0b\xa9\x86\x2f\xff\xcc'
+        )
+
+        self.assert_encode_decode(cam, 'CAM', decoded, encoded)
+
+        # Message 2.
+        decoded = {
+            'header': {
+                'protocolVersion': 2,
+                'messageID': 3,
+                'stationID': 294967295
+            },
+            'cam': {
+                'generationDeltaTime': 65534,
+                'camParameters': {
+                    'basicContainer': {
+                        'stationType': 2,
+                        'referencePosition': {
+                            'latitude': -900000000,
+                            'longitude': 1800000001,
+                            'positionConfidenceEllipse': {
+                                'semiMajorConfidence': 333,
+                                'semiMinorConfidence': 324,
+                                'semiMajorOrientation': 3601
+                            },
+                            'altitude': {
+                                'altitudeValue': -100000,
+                                'altitudeConfidence': 'alt-000-50'
+                            }
+                        }
+                    },
+                    'highFrequencyContainer': (
+                        'basicVehicleContainerHighFrequency',
+                        {
+                            'heading': {
+                                'headingValue': 22,
+                                'headingConfidence': 36
+                            },
+                            'speed': {
+                                'speedValue': 16383,
+                                'speedConfidence': 100
+                            },
+                            'driveDirection': 'backward',
+                            'vehicleLength': {
+                                'vehicleLengthValue': 1000,
+                                'vehicleLengthConfidenceIndication': 'unavailable'
+                            },
+                            'vehicleWidth': 1,
+                            'longitudinalAcceleration': {
+                                'longitudinalAccelerationValue': -140,
+                                'longitudinalAccelerationConfidence': 1
+                            },
+                            'curvature': {
+                                'curvatureValue': 0,
+                                'curvatureConfidence': 'outOfRange'
+                            },
+                            'curvatureCalculationMode': 'yawRateNotUsed',
+                            'yawRate': {
+                                'yawRateValue': 0,
+                                'yawRateConfidence': 'degSec-100-00'
+                            },
+                            'cenDsrcTollingZone': {
+                                'protectedZoneLatitude': 888,
+                                'protectedZoneLongitude': 92323,
+                                'cenDsrcTollingZoneID': 0
+                            }
+                        }
+                    )
+                }
+            }
+        }
+
+        encoded = (
+            b'\x02\x03\x11\x94\xd7\xff\xff\xfe\x00\x20\x00\x00\x00\x1a\xd2\x74'
+            b'\x80\x22\x9a\x28\x9c\x22\x00\x00\x0a\x01\x01\x64\x7f\xff\xe3\x7e'
+            b'\x78\x00\x50\x0b\xa9\x86\x2f\xff\xcd\x6b\x49\xd8\xf0\xd6\x96\x75'
+            b'\x46\x00\x00\x00\x00'
+        )
+
+        self.assert_encode_decode(cam, 'CAM', decoded, encoded)
+
+        # Message 3.
+        decoded = {
+            'header': {
+                'protocolVersion': 2,
+                'messageID': 4,
+                'stationID': 24967295
+            },
+            'cam': {
+                'generationDeltaTime': 65534,
+                'camParameters': {
+                    'basicContainer': {
+                        'stationType': 2,
+                        'referencePosition': {
+                            'latitude': -900000000,
+                            'longitude': 1800000001,
+                            'positionConfidenceEllipse': {
+                                'semiMajorConfidence': 333,
+                                'semiMinorConfidence': 324,
+                                'semiMajorOrientation': 3601
+                            },
+                            'altitude': {
+                                'altitudeValue': -100000,
+                                'altitudeConfidence': 'alt-000-50'
+                            }
+                        }
+                    },
+                    'highFrequencyContainer': (
+                        'rsuContainerHighFrequency',
+                        {
+                            'protectedCommunicationZonesRSU': [
+                                {
+                                    'protectedZoneType': 'cenDsrcTolling',
+                                    'protectedZoneLatitude': 332,
+                                    'protectedZoneLongitude': 123,
+                                    'protectedZoneRadius': 255
+                                }
+                            ]
+                        }
+                    )
+                }
+            }
+        }
+
+        encoded = (
+            b'\x02\x04\x01\x7c\xf8\x7f\xff\xfe\x00\x20\x00\x00\x00\x1a\xd2\x74'
+            b'\x80\x22\x9a\x28\x9c\x22\x00\x00\x0a\xa0\x8d\x69\x3a\x93\x1a\xd2'
+            b'\x74\x9e\xdf\xc0'
+        )
+
+        self.assert_encode_decode(cam, 'CAM', decoded, encoded)
+
     def test_encode_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
                                             'uper')
@@ -1222,7 +1426,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             'uper')
 
         datas = [
-            ('A',   'one', b'\x00'),
+            ('A',   'one', b''),
             ('B',  'zero', b'\x00'),
             ('B',   'one', b'\x40'),
             ('C',   'one', b'\x00'),

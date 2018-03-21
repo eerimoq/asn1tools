@@ -5,6 +5,7 @@ import importlib
 import asn1tools
 
 sys.path.append('tests/files')
+sys.path.append('tests/files/etsi')
 sys.path.append('tests/files/ietf')
 sys.path.append('tests/files/3gpp')
 
@@ -126,6 +127,12 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
     def test_parse_rfc5280_modified(self):
         self.parse_and_verify('rfc5280_modified', 'ietf')
+
+    def test_parse_etsi_cam_pdu_descriptions_1_3_2(self):
+        self.parse_and_verify('cam_pdu_descriptions_1_3_2', 'etsi')
+
+    def test_parse_etsi_its_containers_1_2_1(self):
+        self.parse_and_verify('its_containers_1_2_1', 'etsi')
 
     def test_parse_enumerated(self):
         self.parse_and_verify('enumerated')
