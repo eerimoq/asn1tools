@@ -29,7 +29,7 @@ from .errors import CompileError
 
 
 __author__ = 'Erik Moqvist'
-__version__ = '0.59.0'
+__version__ = '0.60.0'
 
 
 def _decode_hexstring(codec_spec, asn1_spec, type_name, hexstring):
