@@ -592,20 +592,23 @@ class MembersType(Type):
 
         for i in range(length):
             if presence_bits & (1 << (length - i - 1)):
-                addition = self.additions[i]
-
                 # Open type decoding.
-                decoder.read_length_determinant()
+                open_type_length = decoder.read_length_determinant()
                 offset = decoder.number_of_bits
 
-                if isinstance(addition, Sequence):
-                    decoded.update(addition.decode(decoder))
+                if i < len(self.additions):
+                    addition = self.additions[i]
+
+                    if isinstance(addition, Sequence):
+                        decoded.update(addition.decode(decoder))
+                    else:
+                        try:
+                            decoded[addition.name] = addition.decode(decoder)
+                        except DecodeError as e:
+                            e.location.append(addition.name)
+                            raise
                 else:
-                    try:
-                        decoded[addition.name] = addition.decode(decoder)
-                    except DecodeError as e:
-                        e.location.append(addition.name)
-                        raise
+                    decoder.skip_bits(8 * open_type_length)
 
                 alignment_bits = (offset - decoder.number_of_bits) % 8
 

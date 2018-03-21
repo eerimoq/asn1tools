@@ -1317,6 +1317,14 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "  b BOOLEAN DEFAULT TRUE "
             "  ]] "
             "} "
+            "Q ::= SEQUENCE { "
+            "  a C, "
+            "  b INTEGER "
+            "} "
+            "R ::= SEQUENCE { "
+            "  a D, "
+            "  b INTEGER "
+            "} "
             "END",
             'uper')
 
@@ -1357,7 +1365,11 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
              b'\xe0\x70\x18\x00\x18\x00'),
             ('M',
              {'a': True, 'b': {'a': 5}, 'c': True},
-             b'\xc0\x40\xe0\x20\xb0\x00')
+             b'\xc0\x40\xe0\x20\xb0\x00'),
+            ('Q',      {'a': {'a': True}, 'b': 100}, b'\x40\x59\x00'),
+            ('R',
+             {'a': {'a': True, 'b': True}, 'b': 100},
+             b'\xc0\x40\x60\x00\x59\x00')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -1371,6 +1383,13 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         self.assertEqual(foo.encode('P', {'a': True}), b'\x80\x80\xa0\x00')
         self.assertEqual(foo.decode('P', b'\x80\x80\xa0\x00'),
                          {'a': True, 'b': True})
+
+        # Decode D as C. Extension additions should be skipped.
+        self.assertEqual(foo.decode('C', b'\xc0\x40\x60\x00'), {'a': True})
+
+        # Decode R as Q. Extension additions should be skipped.
+        self.assertEqual(foo.decode('Q', b'\xc0\x40\x60\x00\x59\x00'),
+                         {'a': {'a': True}, 'b': 100})
 
     def test_choice(self):
         foo = asn1tools.compile_string(
