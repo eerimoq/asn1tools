@@ -269,13 +269,6 @@ class Decoder(object):
 
         return ((self.value >> self.number_of_bits) & mask)
 
-    def read_bytes(self, number_of_bytes):
-        """Read given number of bytes.
-
-        """
-
-        return bytearray(self.read_bits(8 * number_of_bytes))
-
     def read_bytes_aligned(self, number_of_bytes):
         """Read given number of aligned bytes.
 
