@@ -1102,6 +1102,13 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+        # Long sequences are not yet supported.
+        with self.assertRaises(NotImplementedError) as cm:
+            foo.encode('A', 16384 * [1])
+
+        self.assertEqual(str(cm.exception),
+                         'Length determinant >=16384 is not yet supported.')
+
     def test_real(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
