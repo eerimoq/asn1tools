@@ -1076,6 +1076,22 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "expected a character in ' '()+,-./0123456789:=?ABCDEFGHIJKLMNO"
             "PQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', but got '[' (0x5b)'")
 
+    def test_graphic_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= GraphicString "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',  '', b'\x00'),
+            ('A',  '2', b'\x01\x32')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_sequence_of(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
