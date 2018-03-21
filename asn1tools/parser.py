@@ -470,13 +470,11 @@ def convert_type(tokens):
             if isinstance(constraint_tokens, ParseResults):
                 constraint_tokens = constraint_tokens.asList()
 
-            if len(constraint_tokens) != 1:
-                continue
-
-            if isinstance(constraint_tokens[0], dict):
-                continue
-
-            restricted_to.append(convert_number(constraint_tokens[0]))
+            if constraint_tokens == '...':
+                restricted_to.append('...')
+            elif ((len(constraint_tokens) == 1)
+                  and not isinstance(constraint_tokens[0], dict)):
+                restricted_to.append(convert_number(constraint_tokens[0]))
 
         if restricted_to:
             converted_type['restricted-to'] = restricted_to
