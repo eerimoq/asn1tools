@@ -503,7 +503,7 @@ VehicleMass ::= INTEGER {
 } (1..1024)
 
 Speed ::= SEQUENCE {
-    speedValue   SpeedValue,
+    speedValue           SpeedValue,
     speedConfidence      SpeedConfidence
 }
 

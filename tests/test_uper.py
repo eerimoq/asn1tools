@@ -735,7 +735,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
     def test_etsi_cam_pdu_descriptions_1_3_2(self):
         files = [
             'tests/files/etsi/cam_pdu_descriptions_1_3_2.asn',
-            'tests/files/etsi/its_containers_1_2_1.asn'
+            'tests/files/etsi/its_container_1_2_1.asn'
         ]
         cam = asn1tools.compile_files(files, 'uper')
 
