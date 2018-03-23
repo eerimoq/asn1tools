@@ -12,6 +12,7 @@ from . import EncodeError
 from . import DecodeError
 from . import compiler
 from .compiler import enum_values_split
+from .per import size_as_number_of_bits
 from .per import Integer
 from .ber import encode_real
 from .ber import decode_real
@@ -316,18 +317,6 @@ class Decoder(object):
             decoded -= 1
 
         return decoded
-
-
-def size_as_number_of_bits(size):
-    """Returns the minimum number of bits needed to fit given positive
-    integer.
-
-    """
-
-    if size == 0:
-        return 0
-    else:
-        return len('{:b}'.format(size))
 
 
 class Type(object):

@@ -183,7 +183,10 @@ def size_as_number_of_bits(size):
 
     """
 
-    return len('{:b}'.format(size))
+    if size == 0:
+        return 0
+    else:
+        return len('{:b}'.format(size))
 
 
 class Type(object):

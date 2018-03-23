@@ -1029,6 +1029,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "B ::= INTEGER (5..99) "
             "C ::= INTEGER (-10..10) "
             "D ::= INTEGER (5..99, ...) "
+            "E ::= INTEGER (1000..1000) "
             "END",
             'uper')
 
@@ -1056,6 +1057,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('C',                        1, b'\x58'),
             ('C',                       10, b'\xa0'),
             ('D',                       99, b'\x5e'),
+            ('E',                     1000, b'')
         ]
 
         for type_name, decoded, encoded in datas:
