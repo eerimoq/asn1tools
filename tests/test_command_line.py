@@ -29,7 +29,7 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
                     asn1tools._main()
 
         expected_output = [
-            "usage: asn1tools [-h] [-d] [-v {0,1,2}] [--version] {decode,shell} ...",
+            "usage: asn1tools [-h] [-d] [-v {0,1,2}] [--version] {convert,shell} ...",
             "",
             "Various ASN.1 utilities.",
             "",
@@ -46,7 +46,7 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
             "  --version             Print version information and exit.",
             "",
             "subcommands:",
-            "  {decode,shell}"
+            "  {convert,shell}"
         ]
 
         print(stdout.getvalue())
@@ -54,42 +54,10 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
         for line in expected_output:
             self.assertIn(line, stdout.getvalue())
 
-    def test_command_line_decode_help(self):
-        argv = ['asn1tools', 'decode', '--help']
-
-        stdout = StringIO()
-
-        with patch('sys.stdout', stdout):
-            with patch('sys.argv', argv):
-                with self.assertRaises(SystemExit):
-                    asn1tools._main()
-
-        expected_output = [
-            "asn1tools decode [-h] [-c {ber,der,jer,per,uper,xer}]",
-            "                        specification [specification ...] type hexstring",
-            "",
-            "Decode given hextring and print it to standard output.",
-            "",
-            "positional arguments:",
-            "  specification         ASN.1 specification as one or more .asn files.",
-            "  type                  Type to decode.",
-            "  hexstring             Hexstring to decode, or - to ",
-            "",
-            "optional arguments:",
-            "  -h, --help            show this help message and exit",
-            "  -c {ber,der,jer,per,uper,xer}, --codec {ber,der,jer,per,uper,xer}",
-            "                        Codec (default: ber)."
-        ]
-
-        print(stdout.getvalue())
-
-        for line in expected_output:
-            self.assertIn(line, stdout.getvalue())
-
-    def test_command_line_decode_ber_foo_question(self):
+    def test_command_line_convert_ber_foo_question(self):
         argv = [
             'asn1tools',
-            'decode',
+            'convert',
             'tests/files/foo.asn',
             'Question',
             '300e0201011609497320312b313d333f'
@@ -112,11 +80,11 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
 
         self.assertEqual(expected_output, stdout.getvalue())
 
-    def test_command_line_decode_uper_foo_question(self):
+    def test_command_line_convert_uper_foo_question(self):
         argv = [
             'asn1tools',
-            'decode',
-            '--codec', 'uper',
+            'convert',
+            '--input-format', 'uper',
             'tests/files/foo.asn',
             'Question',
             '01010993cd03156c5eb37e'
@@ -139,10 +107,10 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
 
         self.assertEqual(expected_output, stdout.getvalue())
 
-    def test_command_line_decode_ber_foo_question_stdin(self):
+    def test_command_line_convert_ber_foo_question_stdin(self):
         argv = [
             'asn1tools',
-            'decode',
+            'convert',
             'tests/files/foo.asn',
             'Question',
             '-'
@@ -188,10 +156,10 @@ ff0e0201011609497320312b313d333f
 
         self.assertEqual(expected_output, stdout.getvalue())
 
-    def test_command_line_decode_rfc1155_1157(self):
+    def test_command_line_convert_rfc1155_1157(self):
         argv = [
             'asn1tools',
-            'decode',
+            'convert',
             'tests/files/ietf/rfc1155.asn',
             'tests/files/ietf/rfc1157.asn',
             'Message',
@@ -243,10 +211,10 @@ ff0e0201011609497320312b313d333f
 
         self.assertEqual(expected_output, stdout.getvalue())
 
-    def test_command_line_decode_rrc_8_6_0_bcch_dl_sch_message(self):
+    def test_command_line_convert_rrc_8_6_0_bcch_dl_sch_message(self):
         argv = [
             'asn1tools',
-            'decode',
+            'convert',
             'tests/files/3gpp/rrc_8_6_0.asn',
             'BCCH-DL-SCH-Message',
             '30820193a082018fa082018ba0820187a0820183a082017fa082017ba081'
@@ -461,10 +429,10 @@ ff0e0201011609497320312b313d333f
         for line in expected_output:
             self.assertIn(line, stdout.getvalue())
 
-    def test_command_line_decode_bad_type_name(self):
+    def test_command_line_convert_bad_type_name(self):
         argv = [
             'asn1tools',
-            'decode',
+            'convert',
             'tests/files/foo.asn',
             'Question2',
             '01010993cd03156c5eb37e'
@@ -481,10 +449,10 @@ ff0e0201011609497320312b313d333f
                     str(cm.exception),
                     "error: type 'Question2' not found in types dictionary")
 
-    def test_command_line_decode_bad_data(self):
+    def test_command_line_convert_bad_data(self):
         argv = [
             'asn1tools',
-            'decode',
+            'convert',
             'tests/files/foo.asn',
             'Question',
             '012'
@@ -504,15 +472,12 @@ ff0e0201011609497320312b313d333f
         argv = ['asn1tools', 'shell']
         commands = StringIO('''\
 help
-compile ber tests/files/foo.asn
-decode Question 300e0201011609497320312b313d333f
-decode Foo 30
-decode
-compile uper tests/files/foo.asn
-decode Question 01010993cd03156c5eb37e
-compile ber /x/y/missing
-compile ber
-compile foo tests/files/foo.asn
+compile tests/files/foo.asn
+convert Question 300e0201011609497320312b313d333f
+convert Foo 30
+compile -i uper tests/files/foo.asn
+convert Question 01010993cd03156c5eb37e
+compile -i ber /x/y/missing
 missing-command
 exit
 ''')
@@ -525,21 +490,18 @@ exit
             'Welcome to the asn1tools shell.\n'
             '\n'
             "Commands:\n"
-            "  compile <codec> <specification> [<specification> ...]\n"
-            "  decode <type> <hexstring>\n"
+            "  compile\n"
+            "  convert\n"
             'question Question ::= {\n'
             '    id 1,\n'
             '    question "Is 1+1=3?"\n'
             '}\n'
             'error: type \'Foo\' not found in types dictionary\n'
-            'Usage: decode <type> <hexstring>\n'
             'question Question ::= {\n'
             '    id 1,\n'
             '    question "Is 1+1=3?"\n'
             '}\n'
             'error: [Errno 2] No such file or directory: \'/x/y/missing\'\n'
-            'Usage: compile <codec> <specification> [<specification> ...]\n'
-            'error: unsupported codec \'foo\'\n'
             'missing-command: command not found\n'
         )
 

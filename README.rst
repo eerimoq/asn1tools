@@ -92,7 +92,8 @@ Command line tool
 The shell subcommand
 ^^^^^^^^^^^^^^^^^^^^
 
-Use the command line shell to decode encoded data.
+Use the command line shell to convert data between given formats. The
+default input format is BER and output format is ASN.1 value notation.
 
 .. code-block:: text
 
@@ -102,44 +103,53 @@ Use the command line shell to decode encoded data.
 
    $ help
    Commands:
-     compile <codec> <specification> [<specification> ...]
-     decode <type> <hexstring>
-   $ compile ber tests/files/foo.asn
-   $ decode Question 300e0201011609497320312b313d333f
+     compile
+     convert
+   $ compile tests/files/foo.asn
+   $ convert Question 300e0201011609497320312b313d333f
    question Question ::= {
        id 1,
        question "Is 1+1=3?"
    }
+   $ compile --output-format xer tests/files/foo.asn
+   $ convert Question 300e0201011609497320312b313d333f
+   <Question>
+       <id>1</id>
+       <question>Is 1+1=3?</question>
+   </Question>
+   $ compile -o uper tests/files/foo.asn
+   $ convert Question 300e0201011609497320312b313d333f
+   01010993cd03156c5eb37e
    $ exit
    >
 
-The decode subcommand
-^^^^^^^^^^^^^^^^^^^^^
+The convert subcommand
+^^^^^^^^^^^^^^^^^^^^^^
 
-Decode given encoded Question using the default codec (BER).
+Convert given encoded Question from BER to ASN.1 value notation.
 
 .. code-block:: text
 
-   > asn1tools decode tests/files/foo.asn Question 300e0201011609497320312b313d333f
+   > asn1tools convert tests/files/foo.asn Question 300e0201011609497320312b313d333f
    question Question ::= {
        id 1,
        question "Is 1+1=3?"
    }
    >
 
-Decode given encoded Question using the UPER codec.
+Convert given encoded Question from UPER to XER (xml).
 
 .. code-block:: text
 
-   > asn1tools decode --codec uper tests/files/foo.asn Question 01010993cd03156c5eb37e
-   question Question ::= {
-       id 1,
-       question "Is 1+1=3?"
-   }
+   > asn1tools convert -i uper -o xer tests/files/foo.asn Question 01010993cd03156c5eb37e
+   <Question>
+       <id>1</id>
+       <question>Is 1+1=3?</question>
+   </Question>
    >
 
-Continuously decode encoded Questions read from standard input. Any
-line that cannot be decoded is printed as is, in this example the
+Continuously convert encoded Questions read from standard input. Any
+line that cannot be converted is printed as is, in this example the
 dates.
 
 .. code-block:: text
@@ -149,7 +159,7 @@ dates.
    300e0201011609497320312b313d333f
    2018-02-24 11:24:15
    300e0201021609497320322b323d353f
-   > cat encoded.txt | asn1tools decode tests/files/foo.asn Question -
+   > cat encoded.txt | asn1tools convert tests/files/foo.asn Question -
    2018-02-24 11:22:09
    question Question ::= {
        id 1,

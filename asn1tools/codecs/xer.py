@@ -15,6 +15,26 @@ from .compiler import enum_values_as_dict
 LOGGER = logging.getLogger(__name__)
 
 
+def indent_xml(element, indent, level=0):
+    i = "\n" + level * indent
+
+    if len(element):
+        if not element.text or not element.text.strip():
+            element.text = i + indent
+
+        if not element.tail or not element.tail.strip():
+            element.tail = i
+
+        for element in element:
+            indent_xml(element, indent, level + 1)
+
+        if not element.tail or not element.tail.strip():
+            element.tail = i
+    else:
+        if level and (not element.tail or not element.tail.strip()):
+            element.tail = i
+
+
 class Type(object):
 
     def __init__(self, name, type_name):
@@ -557,8 +577,13 @@ class CompiledType(object):
     def __init__(self, type_):
         self._type = type_
 
-    def encode(self, data):
-        return ElementTree.tostring(self._type.encode(data))
+    def encode(self, data, indent=None):
+        element = self._type.encode(data)
+
+        if indent is not None:
+            indent_xml(element, indent * " ")
+
+        return ElementTree.tostring(element)
 
     def decode(self, data):
         element = ElementTree.fromstring(data.decode('utf-8'))

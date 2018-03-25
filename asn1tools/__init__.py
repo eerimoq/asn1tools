@@ -8,7 +8,6 @@ import os
 import argparse
 import binascii
 import logging
-import re
 
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit import prompt
@@ -32,28 +31,58 @@ __author__ = 'Erik Moqvist'
 __version__ = '0.62.0'
 
 
-def _decode_hexstring(codec_spec, asn1_spec, type_name, hexstring):
+class ArgumentParserError(Exception):
+    pass
+
+
+class ArgumentParser(argparse.ArgumentParser):
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, sys.stdout)
+
+        raise ArgumentParserError(message)
+
+    def error(self, message):
+        self.print_usage(sys.stdout)
+        message = '{}: error: {}'.format(self.prog, message)
+        print(message)
+
+        raise ArgumentParserError(message)
+
+
+def _convert_hexstring(input_spec,
+                       output_spec,
+                       output_format,
+                       type_name,
+                       hexstring):
     try:
         encoded = binascii.unhexlify(hexstring)
     except Exception as e:
         raise TypeError("'{}': {}".format(hexstring, str(e)))
 
-    decoded = codec_spec.decode(type_name, encoded)
+    decoded = input_spec.decode(type_name, encoded)
 
-    print(asn1_spec.encode(type_name, decoded, indent=4).decode('utf-8'))
+    if output_format in ['asn1', 'xer']:
+        decoded = output_spec.encode(type_name, decoded, indent=4).strip()
+    else:
+        decoded = binascii.hexlify(output_spec.encode(type_name, decoded))
+
+    print(decoded.decode('latin-1'))
 
 
-def _compile_files(specifications, codec):
+def _compile_files(specifications, input_format, output_format):
     parsed = parse_files(specifications)
-    codec_spec = compile_dict(parsed, codec)
-    asn1_spec = compile_dict(parsed, 'asn1')
+    input_spec = compile_dict(parsed, input_format)
+    output_spec = compile_dict(parsed, output_format)
 
-    return codec_spec, asn1_spec
+    return input_spec, output_spec
 
 
-def _do_decode(args):
-    codec_spec, asn1_spec = _compile_files(args.specification,
-                                           args.codec)
+def _do_convert(args):
+    input_spec, output_spec = _compile_files(args.specification,
+                                             args.input_format,
+                                             args.output_format)
 
     if args.hexstring == '-':
         for hexstring in sys.stdin:
@@ -61,10 +90,11 @@ def _do_decode(args):
 
             if hexstring:
                 try:
-                    _decode_hexstring(codec_spec,
-                                      asn1_spec,
-                                      args.type,
-                                      hexstring)
+                    _convert_hexstring(input_spec,
+                                       output_spec,
+                                       args.output_format,
+                                       args.type,
+                                       hexstring)
                 except TypeError:
                     print(hexstring)
                 except DecodeError as e:
@@ -73,61 +103,83 @@ def _do_decode(args):
             else:
                 print(hexstring)
     else:
-        _decode_hexstring(codec_spec,
-                          asn1_spec,
-                          args.type,
-                          args.hexstring)
+        _convert_hexstring(input_spec,
+                           output_spec,
+                           args.output_format,
+                           args.type,
+                           args.hexstring)
 
 
 def _handle_command_compile(line):
-    mo = re.match(r'compile\s+(\w+)\s+(.+)', line)
+    parser = ArgumentParser(prog='compile')
+    parser.add_argument('-i', '--input-format',
+                        choices=('ber', 'der', 'jer', 'per', 'uper', 'xer'),
+                        default='ber',
+                        help='Input format (default: ber).')
+    parser.add_argument('-o', '--output-format',
+                        choices=('ber', 'der', 'jer', 'per', 'uper', 'xer', 'asn1'),
+                        default='asn1',
+                        help='Output format (default: asn1).')
+    parser.add_argument('specification',
+                        nargs='+',
+                        help='ASN.1 specification as one or more .asn files.')
 
-    if mo:
-        try:
-            return _compile_files(mo.group(2).split(),
-                                  mo.group(1))
-        except Exception as e:
-            print('error: {}'.format(str(e)))
-    else:
-        print('Usage: compile <codec> <specification> [<specification> ...]')
+    try:
+        args = parser.parse_args(args=line.split()[1:])
+    except ArgumentParserError:
+        return None, None, None
 
-    return None, None
+    try:
+        input_spec, output_spec = _compile_files(args.specification,
+                                                 args.input_format,
+                                                 args.output_format)
+        return input_spec, output_spec, args.output_format
+    except Exception as e:
+        print('error: {}'.format(str(e)))
+        return None, None, None
 
 
-def _handle_command_decode(line, codec_spec, asn1_spec):
-    if codec_spec:
-        mo = re.match(r'decode\s+([^\s]+)\s+(.+)', line)
-
-        if mo:
-            hexstring = mo.group(2)
-
-            try:
-                _decode_hexstring(codec_spec,
-                                  asn1_spec,
-                                  mo.group(1),
-                                  hexstring)
-            except Exception as e:
-                print('error: {}'.format(str(e)))
-        else:
-            print('Usage: decode <type> <hexstring>')
-    else:
+def _handle_command_convert(line, input_spec, output_spec, output_format):
+    if not input_spec:
         print("No compiled specification found. Please use the "
               "'compile' command to compile one.")
+        return
+
+    parser = ArgumentParser(prog='convert')
+    parser.add_argument('type', help='Type to convert.')
+    parser.add_argument(
+        'hexstring',
+        help='Hexstring to convert.')
+
+    try:
+        args = parser.parse_args(args=line.split()[1:])
+    except ArgumentParserError:
+        return
+
+    try:
+        _convert_hexstring(input_spec,
+                           output_spec,
+                           output_format,
+                           args.type,
+                           args.hexstring)
+    except Exception as e:
+        print('error: {}'.format(str(e)))
 
 
 def _handle_command_help():
     print('Commands:')
-    print('  compile <codec> <specification> [<specification> ...]')
-    print('  decode <type> <hexstring>')
+    print('  compile')
+    print('  convert')
 
 
 def _do_shell(_args):
-    commands = ['compile', 'decode', 'help', 'exit']
+    commands = ['compile', 'convert', 'help', 'exit']
     completer = WordCompleter(commands, WORD=True)
     user_home = os.path.expanduser('~')
     history = FileHistory(os.path.join(user_home, '.asn1tools-history.txt'))
-    codec_spec = None
-    asn1_spec = None
+    input_spec = None
+    output_spec = None
+    output_format = None
 
     print("\nWelcome to the asn1tools shell.\n")
 
@@ -147,9 +199,12 @@ def _do_shell(_args):
 
         if line:
             if line.startswith('compile'):
-                codec_spec, asn1_spec = _handle_command_compile(line)
-            elif line.startswith('decode'):
-                _handle_command_decode(line, codec_spec, asn1_spec)
+                input_spec, output_spec, output_format = _handle_command_compile(line)
+            elif line.startswith('convert'):
+                _handle_command_convert(line,
+                                        input_spec,
+                                        output_spec,
+                                        output_format)
             elif line == 'help':
                 _handle_command_help()
             elif line == 'exit':
@@ -179,22 +234,26 @@ def _main():
                                        dest='subcommand')
     subparsers.required = True
 
-    # The 'decode' subparser.
-    decode_parser = subparsers.add_parser(
-        'decode',
-        description='Decode given hextring and print it to standard output.')
-    decode_parser.add_argument('-c', '--codec',
-                               choices=('ber', 'der', 'jer', 'per', 'uper', 'xer'),
-                               default='ber',
-                               help='Codec (default: ber).')
-    decode_parser.add_argument('specification',
-                               nargs='+',
-                               help='ASN.1 specification as one or more .asn files.')
-    decode_parser.add_argument('type', help='Type to decode.')
-    decode_parser.add_argument(
+    # The 'convert' subparser.
+    subparser = subparsers.add_parser(
+        'convert',
+        description='Convert given hextring and print it to standard output.')
+    subparser.add_argument('-i', '--input-format',
+                           choices=('ber', 'der', 'jer', 'per', 'uper', 'xer'),
+                           default='ber',
+                           help='Input format (default: ber).')
+    subparser.add_argument('-o', '--output-format',
+                           choices=('ber', 'der', 'jer', 'per', 'uper', 'xer', 'asn1'),
+                           default='asn1',
+                           help='Output format (default: asn1).')
+    subparser.add_argument('specification',
+                           nargs='+',
+                           help='ASN.1 specification as one or more .asn files.')
+    subparser.add_argument('type', help='Type to convert.')
+    subparser.add_argument(
         'hexstring',
-        help='Hexstring to decode, or - to read hexstrings from standard input.')
-    decode_parser.set_defaults(func=_do_decode)
+        help='Hexstring to convert, or - to read hexstrings from standard input.')
+    subparser.set_defaults(func=_do_convert)
 
     # The 'shell' subparser.
     shell_parser = subparsers.add_parser('shell',
