@@ -1383,36 +1383,48 @@ class Compiler(compiler.Compiler):
 
                 if in_extension:
                     additions = []
-
-                continue
-
-            if in_extension:
-                if isinstance(member, list):
-                    if flat_additions:
-                        for memb in member:
-                            compiled_member = self.compile_member(memb,
-                                                                  module_name)
-                            additions.append(compiled_member)
-                    else:
-                        compiled_member, _ = self.compile_members(member,
-                                                                  module_name)
-                        compiled_member = Sequence('ExtensionAddition',
-                                                   compiled_member,
-                                                   None)
-                        additions.append(compiled_member)
-                else:
-                    compiled_member = self.compile_member(member,
-                                                          module_name)
-                    additions.append(compiled_member)
+            elif in_extension:
+                self.compile_extension_member(member,
+                                              module_name,
+                                              additions,
+                                              flat_additions)
             else:
-                compiled_member = self.compile_member(member,
-                                                      module_name)
-                compiled_members.append(compiled_member)
+                self.compile_root_member(member,
+                                         module_name,
+                                         compiled_members)
 
         if sort_by_tag:
             compiled_members = sorted(compiled_members, key=attrgetter('tag'))
 
         return compiled_members, additions
+
+    def compile_extension_member(self,
+                                 member,
+                                 module_name,
+                                 additions,
+                                 flat_additions):
+        if isinstance(member, list):
+            if flat_additions:
+                for memb in member:
+                    compiled_member = self.compile_member(memb,
+                                                          module_name)
+                    additions.append(compiled_member)
+            else:
+                compiled_member, _ = self.compile_members(member,
+                                                          module_name)
+                compiled_member = Sequence('ExtensionAddition',
+                                           compiled_member,
+                                           None)
+                additions.append(compiled_member)
+        else:
+            compiled_member = self.compile_member(member,
+                                                  module_name)
+            additions.append(compiled_member)
+
+    def compile_root_member(self, member, module_name, compiled_members):
+        compiled_member = self.compile_member(member,
+                                              module_name)
+        compiled_members.append(compiled_member)
 
     def compile_member(self, member, module_name):
         compiled_member = self.compile_type(member['name'],
@@ -1437,21 +1449,23 @@ class Compiler(compiler.Compiler):
             return ''.join([chr(char)
                             for char in range(ord(begin), ord(end) + 1)])
 
-        if 'permitted-alphabet' in type_descriptor:
-            permitted_alphabet = type_descriptor['permitted-alphabet']
-            value = ''
+        if 'permitted-alphabet' not in type_descriptor:
+            return
 
-            for item in permitted_alphabet:
-                if isinstance(item, tuple):
-                    value += char_range(item[0], item[1])
-                else:
-                    value += item
+        permitted_alphabet = type_descriptor['permitted-alphabet']
+        value = ''
 
-            value = sorted(value)
-            encode_map = {ord(v): i for i, v in enumerate(value)}
-            decode_map = {i: ord(v) for i, v in enumerate(value)}
+        for item in permitted_alphabet:
+            if isinstance(item, tuple):
+                value += char_range(item[0], item[1])
+            else:
+                value += item
 
-            return PermittedAlphabet(encode_map, decode_map)
+        value = sorted(value)
+        encode_map = {ord(v): i for i, v in enumerate(value)}
+        decode_map = {i: ord(v) for i, v in enumerate(value)}
+
+        return PermittedAlphabet(encode_map, decode_map)
 
 
 def compile_dict(specification):
