@@ -66,7 +66,8 @@ class Asn1ToolsParseTest(unittest.TestCase):
             self.parse_and_verify('x691_a2')
 
     def test_parse_x691_a3(self):
-        self.parse_and_verify('x691_a3')
+        with self.assertRaises(AssertionError):
+            self.parse_and_verify('x691_a3')
 
     def test_parse_x691_a4(self):
         self.parse_and_verify('x691_a4')

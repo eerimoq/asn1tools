@@ -230,7 +230,7 @@ class Compiler(object):
                 minimum = size[0]
                 maximum = size[0]
 
-            has_extension_marker = (size[-1] == '...')
+            has_extension_marker = ('...' in size)
 
         if isinstance(minimum, str):
             minimum = self.lookup_value(minimum, module_name)[0]['value']
@@ -254,7 +254,7 @@ class Compiler(object):
                 minimum = restricted_to[0]
                 maximum = restricted_to[0]
 
-            has_extension_marker = (restricted_to[-1] == '...')
+            has_extension_marker = ('...' in restricted_to[-1])
         else:
             raise NotImplementedError()
 

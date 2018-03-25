@@ -263,8 +263,16 @@ def convert_size_constraint(_s, _l, tokens):
 
 def convert_permitted_alphabet(_s, _l, tokens):
     tokens = tokens.asList()
+    values = []
 
-    return {'from': tokens[1]}
+    for token in tokens[1:]:
+        if isinstance(token[0], list):
+            for char in token[0][0]:
+                values.append((char, char))
+        else:
+            values.append(token[0])
+
+    return {'from': values}
 
 
 def convert_constraint(_s, _l, tokens):

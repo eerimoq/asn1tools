@@ -328,7 +328,7 @@ class Type(object):
         self.default = None
         self.tag = None
 
-    def set_size_range(self, minimum, maximum):
+    def set_size_range(self, minimum, maximum, has_extension_marker):
         pass
 
 
@@ -340,10 +340,11 @@ class KnownMultiplierStringType(Type):
                  name,
                  minimum=None,
                  maximum=None,
+                 has_extension_marker=None,
                  permitted_alphabet=None):
         super(KnownMultiplierStringType, self).__init__(name,
                                                         self.__class__.__name__)
-        self.set_size_range(minimum, maximum)
+        self.set_size_range(minimum, maximum, has_extension_marker)
 
         if permitted_alphabet is None:
             permitted_alphabet = self.PERMITTED_ALPHABET
@@ -352,9 +353,10 @@ class KnownMultiplierStringType(Type):
         self.bits_per_character = size_as_number_of_bits(
             len(permitted_alphabet) - 1)
 
-    def set_size_range(self, minimum, maximum):
+    def set_size_range(self, minimum, maximum, has_extension_marker):
         self.minimum = minimum
         self.maximum = maximum
+        self.has_extension_marker = has_extension_marker
 
         if minimum is None or maximum is None:
             self.number_of_bits = None
@@ -364,6 +366,9 @@ class KnownMultiplierStringType(Type):
 
     def encode(self, data, encoder):
         encoded = data.encode('ascii')
+
+        if self.has_extension_marker:
+            encoder.append_bit(0)
 
         if self.number_of_bits is None:
             encoder.append_length_determinant(len(encoded))
@@ -376,6 +381,12 @@ class KnownMultiplierStringType(Type):
                                    self.bits_per_character)
 
     def decode(self, decoder):
+        if self.has_extension_marker:
+            bit = decoder.read_bit()
+
+            if bit:
+                raise NotImplementedError('Extension is not implemented.')
+
         if self.number_of_bits is None:
             length = decoder.read_length_determinant()
         else:
@@ -1302,25 +1313,23 @@ class Compiler(compiler.Compiler):
         elif type_name == 'TeletexString':
             compiled = TeletexString(name)
         elif type_name == 'NumericString':
-            minimum, maximum, _ = self.get_size_range(type_descriptor,
-                                                      module_name)
-            compiled = NumericString(name, minimum, maximum)
+            compiled = NumericString(name,
+                                     *self.get_size_range(type_descriptor,
+                                                          module_name))
         elif type_name == 'PrintableString':
-            minimum, maximum, _ = self.get_size_range(type_descriptor,
-                                                      module_name)
-            compiled = PrintableString(name, minimum, maximum)
+            compiled = PrintableString(name,
+                                       *self.get_size_range(type_descriptor,
+                                                            module_name))
         elif type_name == 'IA5String':
-            minimum, maximum, _ = self.get_size_range(type_descriptor,
-                                                      module_name)
-            compiled = IA5String(name, minimum, maximum)
+            compiled = IA5String(name,
+                                 *self.get_size_range(type_descriptor,
+                                                      module_name))
         elif type_name == 'VisibleString':
-            minimum, maximum, _ = self.get_size_range(type_descriptor,
-                                                      module_name)
             permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
             compiled = VisibleString(name,
-                                     minimum,
-                                     maximum,
-                                     permitted_alphabet)
+                                     *self.get_size_range(type_descriptor,
+                                                          module_name),
+                                     permitted_alphabet=permitted_alphabet)
         elif type_name == 'GeneralString':
             compiled = GeneralString(name)
         elif type_name == 'UTF8String':
@@ -1438,9 +1447,8 @@ class Compiler(compiler.Compiler):
             compiled_member.default = member['default']
 
         if 'size' in member:
-            minimum, maximum, _ = self.get_size_range(member,
-                                                      module_name)
-            compiled_member.set_size_range(minimum, maximum)
+            compiled_member.set_size_range(*self.get_size_range(member,
+                                                                module_name))
 
         return compiled_member
 

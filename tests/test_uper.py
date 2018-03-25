@@ -11,6 +11,7 @@ sys.path.append('tests/files/3gpp')
 from rrc_8_6_0 import EXPECTED as RRC_8_6_0
 from lpp_14_3_0 import EXPECTED as LPP_14_3_0
 from x691_a2 import EXPECTED as X691_A2
+from x691_a3 import EXPECTED as X691_A3
 from x691_a4 import EXPECTED as X691_A4
 
 
@@ -151,9 +152,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         self.assert_encode_decode(a2, 'PersonnelRecord', decoded, encoded)
 
     def test_x691_a3(self):
-        a3 = asn1tools.compile_files('tests/files/x691_a3.asn', 'uper')
-
-        return
+        a3 = asn1tools.compile_dict(deepcopy(X691_A3), 'uper')
 
         decoded = {
             'name': {
