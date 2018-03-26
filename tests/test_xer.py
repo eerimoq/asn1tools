@@ -85,7 +85,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             b'ging></c1></message></PCCH-Message>'
         )
 
-        self.assert_encode_decode(rrc, 'PCCH-Message', decoded, encoded)
+        self.assert_encode_decode_string(rrc, 'PCCH-Message', decoded, encoded)
 
         # Message 2.
         decoded = {
@@ -108,7 +108,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             b'/spare></message></BCCH-BCH-Message>'
         )
 
-        self.assert_encode_decode(rrc, 'BCCH-BCH-Message', decoded, encoded)
+        self.assert_encode_decode_string(rrc, 'BCCH-BCH-Message', decoded, encoded)
 
         # Message 3.
         decoded = {
@@ -433,7 +433,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             b'tion></c1></message></BCCH-DL-SCH-Message>'
         )
 
-        self.assert_encode_decode(rrc, 'BCCH-DL-SCH-Message', decoded, encoded)
+        self.assert_encode_decode_string(rrc, 'BCCH-DL-SCH-Message', decoded, encoded)
 
     def test_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn', 'xer')
@@ -453,7 +453,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(all_types, type_name, decoded, encoded)
+            self.assert_encode_decode_string(all_types, type_name, decoded, encoded)
 
         with self.assertRaises(NotImplementedError):
             all_types.encode('Sequence12', {'a': [{'a': []}]})
@@ -516,7 +516,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(all_types, type_name, decoded, encoded)
+            self.assert_encode_decode_string(all_types, type_name, decoded, encoded)
 
     def test_choice(self):
         all_types = asn1tools.compile_string(
@@ -539,7 +539,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(all_types, type_name, decoded, encoded)
+            self.assert_encode_decode_string(all_types, type_name, decoded, encoded)
 
     def test_sequence_of(self):
         all_types = asn1tools.compile_string(
@@ -570,7 +570,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(all_types, type_name, decoded, encoded)
+            self.assert_encode_decode_string(all_types, type_name, decoded, encoded)
 
     def test_utf8_string(self):
         foo = asn1tools.compile_string(
@@ -587,7 +587,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
     def test_bit_string(self):
         foo = asn1tools.compile_string(
@@ -605,7 +605,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
     def test_octet_string(self):
         foo = asn1tools.compile_string(
@@ -621,7 +621,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
     def test_null(self):
         foo = asn1tools.compile_string(
@@ -640,7 +640,40 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
+    def test_indent(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE { "
+            "  a SEQUENCE { "
+            "    b BOOLEAN, "
+            "    c INTEGER "
+            "  } "
+            "} "
+            "END",
+            'xer')
+
+        datas = [
+            ('A',
+             {'a': {'b': True, 'c': 5}},
+             (b'<A>\n'
+              b'    <a>\n'
+              b'        <b>\n'
+              b'            <true />\n'
+              b'        </b>\n'
+              b'        <c>5</c>\n'
+              b'    </a>\n'
+              b'</A>\n'))
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(foo,
+                                             type_name,
+                                             decoded,
+                                             encoded,
+                                             indent=4)
 
 
 if __name__ == '__main__':

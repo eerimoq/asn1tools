@@ -588,8 +588,13 @@ class CompiledType(object):
     def __init__(self, type_):
         self._type = type_
 
-    def encode(self, data):
-        string = json.dumps(self._type.encode(data), separators=(',', ':'))
+    def encode(self, data, indent=None):
+        dictionary = self._type.encode(data)
+
+        if indent is None:
+            string = json.dumps(dictionary, separators=(',', ':'))
+        else:
+            string = json.dumps(dictionary, indent=indent)
 
         return string.encode('utf-8')
 

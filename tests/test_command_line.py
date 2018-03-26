@@ -487,7 +487,7 @@ exit
 
         expected_output = (
             '\n'
-            'Welcome to the asn1tools shell.\n'
+            'Welcome to the asn1tools shell!\n'
             '\n'
             "Commands:\n"
             "  compile\n"

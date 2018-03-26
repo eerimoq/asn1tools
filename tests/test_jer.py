@@ -504,6 +504,66 @@ class Asn1ToolsJerTest(unittest.TestCase):
                              loadb(encoded))
             self.assertEqual(all_types.decode(type_name, encoded), decoded)
 
+    def test_error_out_of_data(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= INTEGER "
+            "B ::= SEQUENCE { "
+            "  a SEQUENCE { "
+            "    b BOOLEAN, "
+            "    c INTEGER "
+            "  } "
+            "} "
+            "END",
+            'uper')
+
+        datas = [
+            ('A', b'',         ': out of data at bit offset 0 (0.0 bytes)'),
+            ('B', b'\x00',     'a: c: out of data at bit offset 1 (0.1 bytes)'),
+            ('B', b'\x80\x80', 'a: c: out of data at bit offset 9 (1.1 bytes)')
+        ]
+
+        for type_name, encoded, message in datas:
+            with self.assertRaises(asn1tools.codecs.uper.OutOfDataError) as cm:
+                foo.decode(type_name, encoded)
+
+            self.assertEqual(str(cm.exception), message)
+
+    def test_indent(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE { "
+            "  a SEQUENCE { "
+            "    b BOOLEAN, "
+            "    c INTEGER "
+            "  } "
+            "} "
+            "END",
+            'jer')
+
+        datas = [
+            ('A',
+             {'a': {'b': True, 'c': 5}},
+             [
+                 b'{',
+                 b'    "a": {',
+                 b'        "c": 5, ',
+                 b'        "b": true,',
+                 b'        "c": 5',
+                 b'        "b": true',
+                 b'    }',
+                 b'}'
+             ])
+        ]
+
+        for type_name, decoded, encoded_lines in datas:
+            encoded = foo.encode(type_name, decoded, indent=4)
+
+            for line in encoded.splitlines():
+                self.assertIn(line, encoded_lines)
+
 
 if __name__ == '__main__':
     unittest.main()

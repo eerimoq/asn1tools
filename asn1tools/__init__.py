@@ -28,7 +28,7 @@ from .errors import CompileError
 
 
 __author__ = 'Erik Moqvist'
-__version__ = '0.63.0'
+__version__ = '0.64.0'
 
 
 class ArgumentParserError(Exception):
@@ -63,7 +63,7 @@ def _convert_hexstring(input_spec,
 
     decoded = input_spec.decode(type_name, encoded)
 
-    if output_format in ['asn1', 'xer']:
+    if output_format in ['asn1', 'xer', 'jer']:
         decoded = output_spec.encode(type_name, decoded, indent=4).strip()
     else:
         decoded = binascii.hexlify(output_spec.encode(type_name, decoded))
@@ -181,7 +181,7 @@ def _do_shell(_args):
     output_spec = None
     output_format = None
 
-    print("\nWelcome to the asn1tools shell.\n")
+    print("\nWelcome to the asn1tools shell!\n")
 
     while True:
         try:
