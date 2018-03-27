@@ -461,31 +461,23 @@ def convert_boolean_type(_s, _l, _tokens):
 def convert_type(tokens):
     converted_type, constraint = tokens
 
-    types = [
-        'INTEGER',
-        'REAL',
-        'IA5String',
-        'VisibleString',
-        'UTF8String',
-        'NumericString',
-        'PrintableString'
-    ]
+    restricted_to = []
 
-    if converted_type['type'] in types:
+    for constraint_tokens in constraint:
+        if isinstance(constraint_tokens, ParseResults):
+            constraint_tokens = constraint_tokens.asList()
+
+        if constraint_tokens == '...':
+            restricted_to.append('...')
+        elif ((len(constraint_tokens) == 1)
+              and not isinstance(constraint_tokens[0], dict)):
+            restricted_to.append(convert_number(constraint_tokens[0]))
+
+    if '{' in restricted_to:
         restricted_to = []
 
-        for constraint_tokens in constraint:
-            if isinstance(constraint_tokens, ParseResults):
-                constraint_tokens = constraint_tokens.asList()
-
-            if constraint_tokens == '...':
-                restricted_to.append('...')
-            elif ((len(constraint_tokens) == 1)
-                  and not isinstance(constraint_tokens[0], dict)):
-                restricted_to.append(convert_number(constraint_tokens[0]))
-
-        if restricted_to:
-            converted_type['restricted-to'] = restricted_to
+    if restricted_to:
+        converted_type['restricted-to'] = restricted_to
 
     types = [
         'BIT STRING',
