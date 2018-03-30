@@ -53,7 +53,7 @@ class ArgumentParser(argparse.ArgumentParser):
 
 def _convert_hexstring(input_spec,
                        output_spec,
-                       output_format,
+                       output_codec,
                        type_name,
                        hexstring):
     try:
@@ -63,7 +63,7 @@ def _convert_hexstring(input_spec,
 
     decoded = input_spec.decode(type_name, encoded)
 
-    if output_format in ['asn1', 'xer', 'jer']:
+    if output_codec in ['asn1', 'xer', 'jer']:
         decoded = output_spec.encode(type_name, decoded, indent=4).strip()
     else:
         decoded = binascii.hexlify(output_spec.encode(type_name, decoded))
@@ -71,18 +71,18 @@ def _convert_hexstring(input_spec,
     print(decoded.decode('latin-1'))
 
 
-def _compile_files(specifications, input_format, output_format):
+def _compile_files(specifications, input_codec, output_codec):
     parsed = parse_files(specifications)
-    input_spec = compile_dict(parsed, input_format)
-    output_spec = compile_dict(parsed, output_format)
+    input_spec = compile_dict(parsed, input_codec)
+    output_spec = compile_dict(parsed, output_codec)
 
     return input_spec, output_spec
 
 
 def _do_convert(args):
     input_spec, output_spec = _compile_files(args.specification,
-                                             args.input_format,
-                                             args.output_format)
+                                             args.input_codec,
+                                             args.output_codec)
 
     if args.hexstring == '-':
         for hexstring in sys.stdin:
@@ -92,7 +92,7 @@ def _do_convert(args):
                 try:
                     _convert_hexstring(input_spec,
                                        output_spec,
-                                       args.output_format,
+                                       args.output_codec,
                                        args.type,
                                        hexstring)
                 except TypeError:
@@ -105,21 +105,21 @@ def _do_convert(args):
     else:
         _convert_hexstring(input_spec,
                            output_spec,
-                           args.output_format,
+                           args.output_codec,
                            args.type,
                            args.hexstring)
 
 
 def _handle_command_compile(line):
     parser = ArgumentParser(prog='compile')
-    parser.add_argument('-i', '--input-format',
+    parser.add_argument('-i', '--input-codec',
                         choices=('ber', 'der', 'jer', 'per', 'uper', 'xer'),
                         default='ber',
-                        help='Input format (default: ber).')
-    parser.add_argument('-o', '--output-format',
+                        help='Input codec (default: ber).')
+    parser.add_argument('-o', '--output-codec',
                         choices=('ber', 'der', 'jer', 'per', 'uper', 'xer', 'asn1'),
                         default='asn1',
-                        help='Output format (default: asn1).')
+                        help='Output codec (default: asn1).')
     parser.add_argument('specification',
                         nargs='+',
                         help='ASN.1 specification as one or more .asn files.')
@@ -131,15 +131,15 @@ def _handle_command_compile(line):
 
     try:
         input_spec, output_spec = _compile_files(args.specification,
-                                                 args.input_format,
-                                                 args.output_format)
-        return input_spec, output_spec, args.output_format
+                                                 args.input_codec,
+                                                 args.output_codec)
+        return input_spec, output_spec, args.output_codec
     except Exception as e:
         print('error: {}'.format(str(e)))
         return None, None, None
 
 
-def _handle_command_convert(line, input_spec, output_spec, output_format):
+def _handle_command_convert(line, input_spec, output_spec, output_codec):
     if not input_spec:
         print("No compiled specification found. Please use the "
               "'compile' command to compile one.")
@@ -159,7 +159,7 @@ def _handle_command_convert(line, input_spec, output_spec, output_format):
     try:
         _convert_hexstring(input_spec,
                            output_spec,
-                           output_format,
+                           output_codec,
                            args.type,
                            args.hexstring)
     except Exception as e:
@@ -179,7 +179,7 @@ def _do_shell(_args):
     history = FileHistory(os.path.join(user_home, '.asn1tools-history.txt'))
     input_spec = None
     output_spec = None
-    output_format = None
+    output_codec = None
 
     print("\nWelcome to the asn1tools shell!\n")
 
@@ -199,12 +199,12 @@ def _do_shell(_args):
 
         if line:
             if line.startswith('compile'):
-                input_spec, output_spec, output_format = _handle_command_compile(line)
+                input_spec, output_spec, output_codec = _handle_command_compile(line)
             elif line.startswith('convert'):
                 _handle_command_convert(line,
                                         input_spec,
                                         output_spec,
-                                        output_format)
+                                        output_codec)
             elif line == 'help':
                 _handle_command_help()
             elif line == 'exit':
@@ -238,11 +238,11 @@ def _main():
     subparser = subparsers.add_parser(
         'convert',
         description='Convert given hextring and print it to standard output.')
-    subparser.add_argument('-i', '--input-format',
+    subparser.add_argument('-i', '--input-codec',
                            choices=('ber', 'der', 'jer', 'per', 'uper', 'xer'),
                            default='ber',
                            help='Input format (default: ber).')
-    subparser.add_argument('-o', '--output-format',
+    subparser.add_argument('-o', '--output-codec',
                            choices=('ber', 'der', 'jer', 'per', 'uper', 'xer', 'asn1'),
                            default='asn1',
                            help='Output format (default: asn1).')

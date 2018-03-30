@@ -84,7 +84,7 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
         argv = [
             'asn1tools',
             'convert',
-            '--input-format', 'uper',
+            '--input-codec', 'uper',
             'tests/files/foo.asn',
             'Question',
             '01010993cd03156c5eb37e'

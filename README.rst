@@ -93,13 +93,13 @@ The shell subcommand
 ^^^^^^^^^^^^^^^^^^^^
 
 Use the command line shell to convert data between given formats. The
-default input format is BER and output format is ASN.1 value notation.
+default input codec is BER and output codec is ASN.1 value notation.
 
 .. code-block:: text
 
    > asn1tools shell
 
-   Welcome to the asn1tools shell.
+   Welcome to the asn1tools shell!
 
    $ help
    Commands:
@@ -111,7 +111,7 @@ default input format is BER and output format is ASN.1 value notation.
        id 1,
        question "Is 1+1=3?"
    }
-   $ compile --output-format xer tests/files/foo.asn
+   $ compile --output-codec xer tests/files/foo.asn
    $ convert Question 300e0201011609497320312b313d333f
    <Question>
        <id>1</id>
