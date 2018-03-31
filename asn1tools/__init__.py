@@ -28,7 +28,7 @@ from .errors import CompileError
 
 
 __author__ = 'Erik Moqvist'
-__version__ = '0.64.0'
+__version__ = '0.65.0'
 
 
 class ArgumentParserError(Exception):
