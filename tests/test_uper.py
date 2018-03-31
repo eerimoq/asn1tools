@@ -1786,6 +1786,31 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+    def test_containing(self):
+        """CONTAINING is currently not automatically encoded/decoded. Should
+        it? Sometimes the contained data is pre-encoded, prior to this
+        encoding.
+
+        """
+
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= BOOLEAN "
+            "B ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b OCTET STRING (CONTAINING A)"
+            "} "
+            "END",
+            'uper')
+
+        datas = [
+            ('B', {'a': False, 'b': b'\x80'}, b'\x00\xc0\x00')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_error_out_of_data(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
