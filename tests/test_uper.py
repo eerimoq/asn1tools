@@ -1034,6 +1034,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "  b INTEGER (40..40), "
             "  c INTEGER (400..400) "
             "} "
+            "G ::= B (6..7) "
             "END",
             'uper')
 
@@ -1067,6 +1068,16 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Overriding the range is not yet supported, hence the
+        # expected raised assertion error.
+        datas = [
+            ('G',                            7, b'\x80')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            with self.assertRaises(AssertionError):
+                self.assert_encode_decode(foo, type_name, decoded, encoded)
 
     def test_utf8_string(self):
         foo = asn1tools.compile_string(
