@@ -31,6 +31,8 @@ from pyparsing import lineno
 
 LOGGER = logging.getLogger(__name__)
 
+EXTENSION_MARKER = None
+
 
 class ParseError(Exception):
     pass
@@ -187,7 +189,7 @@ def convert_enum_values(string, location, tokens):
 
     # Optional additional enumeration.
     if extension:
-        values.append('...')
+        values.append(EXTENSION_MARKER)
         additional = extension[1:]
         add_used_numbers(additional)
 
@@ -249,7 +251,7 @@ def convert_size_constraint(_s, _l, tokens):
 
     for item_tokens in tokens:
         if item_tokens == '...':
-            value = '...'
+            value = EXTENSION_MARKER
         elif '..' in item_tokens:
             value = (convert_number(item_tokens[0]),
                      convert_number(item_tokens[2]))
@@ -285,7 +287,7 @@ def convert_members(tokens):
 
     for member_tokens in tokens:
         if member_tokens in [['...'], '...']:
-            members.append('...')
+            members.append(EXTENSION_MARKER)
             continue
 
         if member_tokens[0] == 'COMPONENTS OF':
@@ -468,7 +470,7 @@ def convert_type(tokens):
             constraint_tokens = constraint_tokens.asList()
 
         if constraint_tokens == '...':
-            restricted_to.append('...')
+            restricted_to.append(EXTENSION_MARKER)
         elif ((len(constraint_tokens) == 1)
               and not isinstance(constraint_tokens[0], dict)):
             restricted_to.append(convert_number(constraint_tokens[0]))

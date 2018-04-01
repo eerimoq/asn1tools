@@ -4,6 +4,7 @@
 
 from copy import deepcopy
 from ..errors import CompileError
+from ..parser import EXTENSION_MARKER
 
 
 def flatten(dlist):
@@ -86,7 +87,7 @@ class Compiler(object):
         expanded_members = []
 
         for member in members:
-            if 'components-of' in member:
+            if member != EXTENSION_MARKER and 'components-of' in member:
                 type_descriptor, inner_module_name = self.lookup_type_descriptor(
                     member['components-of'],
                     module_name)
@@ -95,7 +96,7 @@ class Compiler(object):
                     inner_module_name)
 
                 for inner_member in inner_members:
-                    if inner_member == '...':
+                    if inner_member == EXTENSION_MARKER:
                         break
 
                     expanded_members.append(deepcopy(inner_member))
@@ -115,13 +116,13 @@ class Compiler(object):
             members = type_descriptor['members']
 
             for member in members:
-                if member == '...' or isinstance(member, list):
+                if member == EXTENSION_MARKER or isinstance(member, list):
                     continue
 
                 self.pre_process_extensibility_implied_type(member)
 
-            if '...' not in members:
-                members.append('...')
+            if EXTENSION_MARKER not in members:
+                members.append(EXTENSION_MARKER)
 
     def pre_process_tags(self, module, module_name):
         module_tags = module.get('tags', 'EXPLICIT')
@@ -164,7 +165,7 @@ class Compiler(object):
                                       module_name):
         def is_any_member_tagged(members):
             for member in members:
-                if member == '...':
+                if member == EXTENSION_MARKER:
                     continue
 
                 if 'tag' in member:
@@ -181,7 +182,7 @@ class Compiler(object):
             number = 0
 
         for member in members:
-            if member == '...':
+            if member == EXTENSION_MARKER:
                 continue
 
             if number is not None:
@@ -230,7 +231,7 @@ class Compiler(object):
                 minimum = size[0]
                 maximum = size[0]
 
-            has_extension_marker = ('...' in size)
+            has_extension_marker = (EXTENSION_MARKER in size)
 
         if isinstance(minimum, str):
             minimum = self.lookup_value(minimum, module_name)[0]['value']
@@ -254,7 +255,7 @@ class Compiler(object):
                 minimum = restricted_to[0]
                 maximum = restricted_to[0]
 
-            has_extension_marker = ('...' in restricted_to[-1])
+            has_extension_marker = (EXTENSION_MARKER in restricted_to)
         else:
             raise NotImplementedError()
 
@@ -384,13 +385,14 @@ def enum_values_as_dict(values):
     return {
         value[1]: value[0]
         for value in values
-        if value != '...'
+        if value != EXTENSION_MARKER
     }
 
 
 def enum_values_split(values):
-    if '...' in values:
-        index = values.index('...')
+    if EXTENSION_MARKER in values:
+        index = values.index(EXTENSION_MARKER)
+
         return values[:index], values[index + 1:]
     else:
         return values, None

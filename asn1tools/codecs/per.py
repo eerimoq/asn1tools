@@ -2,6 +2,7 @@
 
 """
 
+from ..parser import EXTENSION_MARKER
 from . import EncodeError
 from . import DecodeError
 from . import compiler
@@ -927,7 +928,7 @@ class Compiler(compiler.Compiler):
         compiled_members = []
 
         for member in members:
-            if member == '...':
+            if member == EXTENSION_MARKER:
                 continue
 
             if isinstance(member, list):

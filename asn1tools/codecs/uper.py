@@ -8,6 +8,7 @@ from operator import itemgetter
 import binascii
 import string
 
+from ..parser import EXTENSION_MARKER
 from . import EncodeError
 from . import DecodeError
 from . import compiler
@@ -1387,7 +1388,7 @@ class Compiler(compiler.Compiler):
         additions = None
 
         for member in members:
-            if member == '...':
+            if member == EXTENSION_MARKER:
                 in_extension = not in_extension
 
                 if in_extension:

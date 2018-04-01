@@ -6,6 +6,7 @@ import math
 import binascii
 from copy import copy
 
+from ..parser import EXTENSION_MARKER
 from . import EncodeError
 from . import DecodeError
 from . import DecodeTagError
@@ -1363,7 +1364,7 @@ class Compiler(compiler.Compiler):
         compiled_members = []
 
         for member in members:
-            if member == '...':
+            if member == EXTENSION_MARKER:
                 continue
 
             if isinstance(member, list):
