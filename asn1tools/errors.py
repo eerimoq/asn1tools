@@ -19,3 +19,9 @@ class DecodeError(Exception):
     """General ASN.1 decode error.
 
     """
+
+
+class ConstraintsError(Exception):
+    """General ASN.1 constraints.
+
+    """

@@ -484,9 +484,10 @@ class Recursive(Type):
         return 'Recursive({})'.format(self.name)
 
 
-class CompiledType(object):
+class CompiledType(compiler.CompiledType):
 
-    def __init__(self, type_name, type_):
+    def __init__(self, type_name, type_, constraints):
+        super(CompiledType, self).__init__(constraints)
         type_.name = ''
         self._value_name = type_name.lower()
         self._value_type = type_name
@@ -514,10 +515,14 @@ class CompiledType(object):
 class Compiler(compiler.Compiler):
 
     def process_type(self, type_name, type_descriptor, module_name):
-        return CompiledType(type_name,
-                            self.compile_type(type_name,
-                                              type_descriptor,
-                                              module_name))
+        compiled_type = self.compile_type(type_name,
+                                          type_descriptor,
+                                          module_name)
+        constraints = self.compile_constraints(type_name,
+                                               type_descriptor,
+                                               module_name)
+
+        return CompiledType(type_name, compiled_type, constraints)
 
     def compile_type(self, name, type_descriptor, module_name):
         type_name = type_descriptor['type']

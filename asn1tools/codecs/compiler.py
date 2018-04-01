@@ -19,6 +19,21 @@ def flatten(dlist):
     return flist
 
 
+class CompiledType(object):
+
+    def __init__(self, constraints):
+        self._constraints = constraints
+
+    def check_constraints(self, data):
+        self._constraints.check(data)
+
+
+class Constraints(object):
+
+    def check(self, data):
+        raise NotImplementedError('constraints check is not yet implemented')
+
+
 class Compiler(object):
 
     def __init__(self, specification):
@@ -210,6 +225,12 @@ class Compiler(object):
 
     def process_type(self, type_name, type_descriptor, module_name):
         return NotImplementedError()
+
+    def compile_constraints(self,
+                            type_name,
+                            type_descriptor,
+                            module_name):
+        return Constraints()
 
     def get_size_range(self, type_descriptor, module_name):
         """Returns a tuple of the minimum and maximum values allowed according

@@ -25,6 +25,7 @@ from .parser import ParseError
 from .errors import EncodeError
 from .errors import DecodeError
 from .errors import CompileError
+from .errors import ConstraintsError
 
 
 __author__ = 'Erik Moqvist'

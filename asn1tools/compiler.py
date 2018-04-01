@@ -16,6 +16,7 @@ from .codecs import asn1
 from .errors import CompileError
 from .errors import EncodeError
 from .errors import DecodeError
+from .errors import ConstraintsError
 
 
 class Specification(object):
@@ -128,6 +129,23 @@ class Specification(object):
         """
 
         return self._decode_length(data)
+
+    def check_constraints(self, name, data):
+        """Check if `data` fulfills given type `name`'s constraints.
+
+        Raises ConstraintsError if the constraints are not fulfilled,
+        or if given type does not exist.
+
+        >>> foo.check_constraints('Question', {'id': 1, 'question': 'Is 1+1=3?'})
+
+        """
+
+        if name not in self._types:
+            raise ConstraintsError(
+                "type '{}' not found in types dictionary".format(
+                    name))
+
+        return self._types[name].check_constraints(data)
 
 
 def _compile_any_defined_by_type(type_, choices):

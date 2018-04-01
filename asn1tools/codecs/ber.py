@@ -1214,9 +1214,10 @@ class Recursive(Type):
         return 'Recursive({})'.format(self.name)
 
 
-class CompiledType(object):
+class CompiledType(compiler.CompiledType):
 
-    def __init__(self, type_):
+    def __init__(self, type_, constraints):
+        super(CompiledType, self).__init__(constraints)
         self._type = type_
 
     def encode(self, data):
@@ -1235,9 +1236,14 @@ class CompiledType(object):
 class Compiler(compiler.Compiler):
 
     def process_type(self, type_name, type_descriptor, module_name):
-        return CompiledType(self.compile_type(type_name,
-                                              type_descriptor,
-                                              module_name))
+        compiled_type = self.compile_type(type_name,
+                                          type_descriptor,
+                                          module_name)
+        constraints = self.compile_constraints(type_name,
+                                               type_descriptor,
+                                               module_name)
+
+        return CompiledType(compiled_type, constraints)
 
     def compile_implicit_type(self, name, type_descriptor, module_name):
         type_name = type_descriptor['type']
