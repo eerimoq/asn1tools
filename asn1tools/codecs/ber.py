@@ -1462,10 +1462,14 @@ class Compiler(compiler.Compiler):
                                  module_name,
                                  additions):
         if isinstance(member, list):
+            compiled_members = []
+
             for memb in member:
                 compiled_member = self.compile_member(memb,
                                                       module_name)
-                additions.append(compiled_member)
+                compiled_members.append(compiled_member)
+
+            additions.append(compiled_members)
         else:
             compiled_member = self.compile_member(member,
                                                   module_name)
