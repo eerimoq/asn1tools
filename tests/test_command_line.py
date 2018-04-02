@@ -492,6 +492,8 @@ exit
             "Commands:\n"
             "  compile\n"
             "  convert\n"
+            "  exit\n"
+            "  help\n"
             'question Question ::= {\n'
             '    id 1,\n'
             '    question "Is 1+1=3?"\n'

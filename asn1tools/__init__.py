@@ -29,7 +29,7 @@ from .errors import ConstraintsError
 
 
 __author__ = 'Erik Moqvist'
-__version__ = '0.66.0'
+__version__ = '0.67.0'
 
 
 class ArgumentParserError(Exception):
@@ -171,6 +171,8 @@ def _handle_command_help():
     print('Commands:')
     print('  compile')
     print('  convert')
+    print('  exit')
+    print('  help')
 
 
 def _do_shell(_args):
