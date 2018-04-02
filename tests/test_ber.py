@@ -2251,6 +2251,61 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+    def test_versions(self):
+        foo = asn1tools.compile_files('tests/files/versions.asn')
+
+        # Encode as V1, decode as V1, V2 and V3
+        decoded_v1 = {
+            'userName': 'myUserName',
+            'password': 'myPassword',
+            'accountNumber': 54224445
+        }
+
+        encoded_v1 = foo.encode('V1', decoded_v1)
+
+        self.assertEqual(foo.decode('V1', encoded_v1), decoded_v1)
+
+        # ToDo: Fix extension root and additions.
+        with self.assertRaises(asn1tools.DecodeError):
+            self.assertEqual(foo.decode('V2', encoded_v1), decoded_v1)
+
+        # ToDo: Fix extension root and additions.
+        with self.assertRaises(asn1tools.DecodeError):
+            self.assertEqual(foo.decode('V3', encoded_v1), decoded_v1)
+
+        # Encode as V2, decode as V1, V2 and V3
+        decoded_v2 = {
+            'userName': 'myUserName',
+            'password': 'myPassword',
+            'accountNumber': 54224445,
+            'minutesLastLoggedIn': 5
+        }
+
+        encoded_v2 = foo.encode('V2', decoded_v2)
+
+        self.assertEqual(foo.decode('V1', encoded_v2), decoded_v1)
+        self.assertEqual(foo.decode('V2', encoded_v2), decoded_v2)
+
+        # ToDo: Fix extension root and additions.
+        with self.assertRaises(asn1tools.DecodeError):
+            self.assertEqual(foo.decode('V3', encoded_v2), decoded_v2)
+
+        # Encode as V3, decode as V1, V2 and V3
+        decoded_v3 = {
+            'userName': 'myUserName',
+            'password': 'myPassword',
+            'accountNumber': 54224445,
+            'minutesLastLoggedIn': 5,
+            'certificate': None,
+            'thumb': None
+        }
+
+        encoded_v3 = foo.encode('V3', decoded_v3)
+
+        self.assertEqual(foo.decode('V1', encoded_v3), decoded_v1)
+        self.assertEqual(foo.decode('V2', encoded_v3), decoded_v2)
+        self.assertEqual(foo.decode('V3', encoded_v3), decoded_v3)
+
 
 if __name__ == '__main__':
     unittest.main()

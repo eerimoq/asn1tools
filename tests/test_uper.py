@@ -58,44 +58,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
                          ': Decode length is not supported for this codec.')
 
     def test_versions(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "V1 ::= SEQUENCE { "
-            "  userName VisibleString, "
-            "  password VisibleString, "
-            "  accountNumber INTEGER, "
-            "  ..., "
-            "  ... "
-            "} "
-            "V2 ::= SEQUENCE { "
-            "  userName VisibleString, "
-            "  password VisibleString, "
-            "  accountNumber INTEGER, "
-            "  ..., "
-            "  [[ "
-            "  lastLoggedIn GeneralizedTime OPTIONAL, "
-            "  minutesLastLoggedIn INTEGER "
-            "  ]], "
-            "  ... "
-            "} "
-            "V3 ::= SEQUENCE { "
-            "  userName VisibleString, "
-            "  password VisibleString, "
-            "  accountNumber INTEGER, "
-            "  ..., "
-            "  [[ "
-            "  lastLoggedIn GeneralizedTime OPTIONAL, "
-            "  minutesLastLoggedIn INTEGER "
-            "  ]], "
-            "  [[ "
-            "  certificate NULL, "
-            "  thumb NULL OPTIONAL "
-            "  ]], "
-            "  ... "
-            "} "
-            "END",
-            'uper')
+        foo = asn1tools.compile_files('tests/files/versions.asn', 'uper')
 
         # Encode as V1, decode as V1, V2 and V3
         decoded_v1 = {

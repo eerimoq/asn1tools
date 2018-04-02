@@ -1,0 +1,41 @@
+Versions DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+V1 ::= SEQUENCE {
+        userName VisibleString,
+        password VisibleString,
+        accountNumber INTEGER,
+        ...,
+        ...
+}
+
+V2 ::= SEQUENCE {
+        userName VisibleString,
+        password VisibleString,
+        accountNumber INTEGER,
+        ...,
+        [[
+        lastLoggedIn GeneralizedTime OPTIONAL,
+        minutesLastLoggedIn INTEGER
+        ]],
+        ...
+}
+
+V3 ::= SEQUENCE {
+        userName VisibleString,
+        password VisibleString,
+        accountNumber INTEGER,
+        ...,
+        [[
+        lastLoggedIn GeneralizedTime OPTIONAL,
+        minutesLastLoggedIn INTEGER
+        ]],
+        [[
+        certificate NULL,
+        thumb NULL OPTIONAL
+        ]],
+        ...
+}
+
+END
