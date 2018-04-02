@@ -2,12 +2,9 @@
 
 """
 
-from ..parser import EXTENSION_MARKER
-from . import EncodeError
-from . import DecodeError
 from . import DecodeTagError
 from . import DecodeContentsLengthError
-from . import compiler
+from . import ber
 from .ber import Class
 from .ber import Encoding
 from .ber import Tag
@@ -21,6 +18,10 @@ from .ber import Boolean
 from .ber import Enumerated
 from .ber import Null
 from .ber import ObjectIdentifier
+from .ber import Sequence
+from .ber import Set
+from .ber import Choice
+from .ber import Recursive
 
 
 class DecodeChoiceError(Exception):
@@ -140,95 +141,6 @@ class NumericString(Type):
 
     def __repr__(self):
         return 'NumericString({})'.format(self.name)
-
-
-class MembersType(Type):
-
-    def __init__(self, name, tag_name, tag, members):
-        super(MembersType, self).__init__(name,
-                                          tag_name,
-                                          tag,
-                                          Encoding.CONSTRUCTED)
-        self.members = members
-
-    def set_tag(self, number, flags):
-        super(MembersType, self).set_tag(number,
-                                         flags | Encoding.CONSTRUCTED)
-
-    def encode(self, data, encoded):
-        encoded_members = bytearray()
-
-        for member in self.members:
-            name = member.name
-
-            if name in data:
-                value = data[name]
-
-                if isinstance(member, AnyDefinedBy):
-                    member.encode(value, encoded_members, data)
-                elif member.default != value or isinstance(member, Null):
-                    member.encode(value, encoded_members)
-            elif member.optional:
-                pass
-            elif member.default is None:
-                raise EncodeError(
-                    "member '{}' not found in {}".format(
-                        name,
-                        data))
-
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(encoded_members)))
-        encoded.extend(encoded_members)
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
-        values = {}
-
-        for member in self.members:
-            try:
-                if offset < end_offset:
-                    if isinstance(member, AnyDefinedBy):
-                        value, offset = member.decode(data, offset, values)
-                    else:
-                        value, offset = member.decode(data, offset)
-                else:
-                    raise IndexError
-            except (DecodeError, IndexError) as e:
-                if member.optional:
-                    continue
-
-                if member.default is None:
-                    if isinstance(e, IndexError):
-                        e = DecodeError('out of data at offset {}'.format(offset))
-
-                    e.location.append(member.name)
-                    raise e
-
-                value = member.default
-
-            values[member.name] = value
-
-        return values, offset
-
-    def __repr__(self):
-        return '{}({}, [{}])'.format(
-            self.__class__.__name__,
-            self.name,
-            ', '.join([repr(member) for member in self.members]))
-
-
-class Sequence(MembersType):
-
-    def __init__(self, name, members):
-        super(Sequence, self).__init__(name, 'SEQUENCE', Tag.SEQUENCE, members)
-
-
-class Set(MembersType):
-
-    def __init__(self, name, members):
-        super(Set, self).__init__(name, 'SET', Tag.SET, members)
 
 
 class ArrayType(Type):
@@ -574,47 +486,6 @@ class TeletexString(Type):
         return 'TeletexString({})'.format(self.name)
 
 
-class Choice(Type):
-
-    def __init__(self, name, members):
-        super(Choice, self).__init__(name, 'CHOICE', None)
-        self.members = members
-
-    def set_tag(self, number, flags):
-        super(Choice, self).set_tag(number,
-                                    flags | Encoding.CONSTRUCTED)
-
-    def encode(self, data, encoded):
-        for member in self.members:
-            if member.name == data[0]:
-                member.encode(data[1], encoded)
-
-                return
-
-        raise EncodeError(
-            "expected choices are {}, but got '{}'".format(
-                [member.name for member in self.members],
-                data[0]))
-
-    def decode(self, data, offset):
-        for member in self.members:
-            if (isinstance(member, Choice)
-                or member.tag == data[offset:offset + len(member.tag)]):
-                try:
-                    decoded, offset = member.decode(data, offset)
-                except DecodeChoiceError:
-                    pass
-                else:
-                    return (member.name, decoded), offset
-
-        raise DecodeChoiceError()
-
-    def __repr__(self):
-        return 'Choice({}, [{}])'.format(
-            self.name,
-            ', '.join([repr(member) for member in self.members]))
-
-
 class Any(Type):
 
     def __init__(self, name):
@@ -667,82 +538,7 @@ class AnyDefinedBy(Type):
         return 'AnyDefinedBy({})'.format(self.name)
 
 
-class ExplicitTag(Type):
-
-    def __init__(self, name, inner):
-        super(ExplicitTag, self).__init__(name, 'Tag', None)
-        self.inner = inner
-
-    def set_tag(self, number, flags):
-        super(ExplicitTag, self).set_tag(number,
-                                         flags | Encoding.CONSTRUCTED)
-
-    def encode(self, data, encoded):
-        encoded_inner = bytearray()
-        self.inner.encode(data, encoded_inner)
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(encoded_inner)))
-        encoded.extend(encoded_inner)
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        _, offset = decode_length_definite(data, offset)
-        return self.inner.decode(data, offset)
-
-    def __repr__(self):
-        return 'Tag()'
-
-
-class Recursive(Type):
-
-    def __init__(self, name, type_name, module_name):
-        super(Recursive, self).__init__(name, 'RECURSIVE', None)
-        self.type_name = type_name
-        self.module_name = module_name
-
-    def encode(self, _data, _encoded):
-        raise NotImplementedError(
-            "Recursive types are not yet implemented (type '{}').".format(
-                self.type_name))
-
-    def decode(self, _data, _offset):
-        raise NotImplementedError(
-            "Recursive types are not yet implemented (type '{}').".format(
-                self.type_name))
-
-    def __repr__(self):
-        return 'Recursive({})'.format(self.name)
-
-
-class CompiledType(compiler.CompiledType):
-
-    def __init__(self, type_, constraints):
-        super(CompiledType, self).__init__(constraints)
-        self._type = type_
-
-    def encode(self, data):
-        encoded = bytearray()
-        self._type.encode(data, encoded)
-        return encoded
-
-    def decode(self, data):
-        return self._type.decode(bytearray(data), 0)[0]
-
-    def __repr__(self):
-        return repr(self._type)
-
-
-class Compiler(compiler.Compiler):
-
-    def process_type(self, type_name, type_descriptor, module_name):
-        compiled_type = self.compile_type(type_name,
-                                          type_descriptor,
-                                          module_name)
-        constraints = self.compile_constraints(type_name,
-                                               type_descriptor,
-                                               module_name)
-
-        return CompiledType(compiled_type, constraints)
+class Compiler(ber.Compiler):
 
     def compile_implicit_type(self, name, type_descriptor, module_name):
         type_name = type_descriptor['type']
@@ -750,8 +546,8 @@ class Compiler(compiler.Compiler):
         if type_name == 'SEQUENCE':
             compiled = Sequence(
                 name,
-                self.compile_members(type_descriptor['members'],
-                                     module_name))
+                *self.compile_members(type_descriptor['members'],
+                                      module_name))
         elif type_name == 'SEQUENCE OF':
             compiled = SequenceOf(name,
                                   self.compile_type('',
@@ -760,8 +556,8 @@ class Compiler(compiler.Compiler):
         elif type_name == 'SET':
             compiled = Set(
                 name,
-                self.compile_members(type_descriptor['members'],
-                                     module_name))
+                *self.compile_members(type_descriptor['members'],
+                                      module_name))
         elif type_name == 'SET OF':
             compiled = SetOf(name,
                              self.compile_type('',
@@ -770,8 +566,8 @@ class Compiler(compiler.Compiler):
         elif type_name == 'CHOICE':
             compiled = Choice(
                 name,
-                self.compile_members(type_descriptor['members'],
-                                     module_name))
+                *self.compile_members(type_descriptor['members'],
+                                      module_name))
         elif type_name == 'INTEGER':
             compiled = Integer(name)
         elif type_name == 'REAL':
@@ -840,56 +636,6 @@ class Compiler(compiler.Compiler):
                 self.types_backtrace_pop()
 
         return compiled
-
-    def compile_type(self, name, type_descriptor, module_name):
-        compiled = self.compile_implicit_type(name,
-                                              type_descriptor,
-                                              module_name)
-
-        if self.is_explicit_tag(type_descriptor):
-            compiled = ExplicitTag(name, compiled)
-
-        # Set any given tag.
-        if 'tag' in type_descriptor:
-            tag = type_descriptor['tag']
-            class_ = tag.get('class', None)
-
-            if class_ == 'APPLICATION':
-                flags = Class.APPLICATION
-            elif class_ == 'PRIVATE':
-                flags = Class.PRIVATE
-            else:
-                flags = 0
-
-            compiled.set_tag(tag['number'], flags)
-
-        return compiled
-
-    def compile_members(self, members, module_name):
-        compiled_members = []
-
-        for member in members:
-            if member == EXTENSION_MARKER:
-                continue
-
-            if isinstance(member, list):
-                compiled_members.extend(self.compile_members(member,
-                                                             module_name))
-                continue
-
-            compiled_member = self.compile_type(member['name'],
-                                                member,
-                                                module_name)
-
-            if 'optional' in member:
-                compiled_member.optional = member['optional']
-
-            if 'default' in member:
-                compiled_member.default = member['default']
-
-            compiled_members.append(compiled_member)
-
-        return compiled_members
 
 
 def compile_dict(specification):
