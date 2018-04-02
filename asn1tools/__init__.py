@@ -64,7 +64,7 @@ def _convert_hexstring(input_spec,
 
     decoded = input_spec.decode(type_name, encoded)
 
-    if output_codec in ['asn1', 'xer', 'jer']:
+    if output_codec in ['gser', 'xer', 'jer']:
         decoded = output_spec.encode(type_name, decoded, indent=4).strip()
     else:
         decoded = binascii.hexlify(output_spec.encode(type_name, decoded))
@@ -118,9 +118,9 @@ def _handle_command_compile(line):
                         default='ber',
                         help='Input codec (default: ber).')
     parser.add_argument('-o', '--output-codec',
-                        choices=('ber', 'der', 'jer', 'per', 'uper', 'xer', 'asn1'),
-                        default='asn1',
-                        help='Output codec (default: asn1).')
+                        choices=('ber', 'der', 'jer', 'per', 'uper', 'xer', 'gser'),
+                        default='gser',
+                        help='Output codec (default: gser).')
     parser.add_argument('specification',
                         nargs='+',
                         help='ASN.1 specification as one or more .asn files.')
@@ -244,9 +244,9 @@ def _main():
                            default='ber',
                            help='Input format (default: ber).')
     subparser.add_argument('-o', '--output-codec',
-                           choices=('ber', 'der', 'jer', 'per', 'uper', 'xer', 'asn1'),
-                           default='asn1',
-                           help='Output format (default: asn1).')
+                           choices=('ber', 'der', 'jer', 'per', 'uper', 'xer', 'gser'),
+                           default='gser',
+                           help='Output format (default: gser).')
     subparser.add_argument('specification',
                            nargs='+',
                            help='ASN.1 specification as one or more .asn files.')

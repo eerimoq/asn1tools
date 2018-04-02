@@ -3,15 +3,15 @@ from .utils import Asn1ToolsBaseTest
 import asn1tools
 
 
-class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
+class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
 
     maxDiff = None
 
     def test_all_codecs(self):
         codecs = [
-            'asn1',
             'ber',
             'der',
+            'gser',
             'jer',
             'per',
             'uper',

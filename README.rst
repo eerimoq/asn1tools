@@ -13,11 +13,11 @@ Codecs under development:
 
 - Basic Encoding Rules (BER)
 - Distinguished Encoding Rules (DER)
+- Generic String Encoding Rules (GSER)
 - JSON Encoding Rules (JER)
 - Aligned Packed Encoding Rules (PER)
 - Unaligned Packed Encoding Rules (UPER)
 - XML Encoding Rules (XER)
-- Basic ASN.1 value notation
 
 Planned codecs:
 
@@ -93,7 +93,8 @@ The shell subcommand
 ^^^^^^^^^^^^^^^^^^^^
 
 Use the command line shell to convert data between given formats. The
-default input codec is BER and output codec is ASN.1 value notation.
+default input codec is BER and output codec is GSER (produces human
+readable text).
 
 .. code-block:: text
 
@@ -126,7 +127,8 @@ default input codec is BER and output codec is ASN.1 value notation.
 The convert subcommand
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Convert given encoded Question from BER to ASN.1 value notation.
+Convert given encoded Question from BER to GSER (produces human
+readable text).
 
 .. code-block:: text
 

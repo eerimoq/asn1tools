@@ -11,12 +11,12 @@ sys.path.append('tests/files/3gpp')
 from rrc_8_6_0 import EXPECTED as RRC_8_6_0
 
 
-class Asn1ToolsAsn1Asn1Test(Asn1ToolsBaseTest):
+class Asn1ToolsGserTest(Asn1ToolsBaseTest):
 
     maxDiff = None
 
     def test_foo(self):
-        foo = asn1tools.compile_files(['tests/files/foo.asn'], 'asn1')
+        foo = asn1tools.compile_files(['tests/files/foo.asn'], 'gser')
 
         datas = [
             ('Question',
@@ -28,7 +28,7 @@ class Asn1ToolsAsn1Asn1Test(Asn1ToolsBaseTest):
             self.assertEqual(foo.encode(name, decoded), encoded)
 
     def test_foo_indent(self):
-        foo = asn1tools.compile_files(['tests/files/foo.asn'], 'asn1')
+        foo = asn1tools.compile_files(['tests/files/foo.asn'], 'gser')
 
         datas = [
             ('Question',
@@ -44,7 +44,7 @@ class Asn1ToolsAsn1Asn1Test(Asn1ToolsBaseTest):
             self.assertEqual(actual, encoded)
 
     def test_rrc_8_6_0(self):
-        rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0), 'asn1')
+        rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0), 'gser')
 
         decoded = {
             'message': (
@@ -461,7 +461,7 @@ class Asn1ToolsAsn1Asn1Test(Asn1ToolsBaseTest):
             "BEGIN "
             "A ::= NULL "
             "END",
-            'asn1')
+            'gser')
 
         decoded = None
         encoded = b'a A ::= NULL'
@@ -474,7 +474,7 @@ class Asn1ToolsAsn1Asn1Test(Asn1ToolsBaseTest):
             "BEGIN "
             "A ::= UTCTime "
             "END",
-            'asn1')
+            'gser')
 
         decoded = '010203040506Z'
         encoded = b'a A ::= "010203040506Z"'
@@ -487,7 +487,7 @@ class Asn1ToolsAsn1Asn1Test(Asn1ToolsBaseTest):
             "BEGIN "
             "A ::= GeneralizedTime "
             "END",
-            'asn1')
+            'gser')
 
         decoded = '20001231235959.999Z'
         encoded = b'a A ::= "20001231235959.999Z"'
@@ -500,7 +500,7 @@ class Asn1ToolsAsn1Asn1Test(Asn1ToolsBaseTest):
             "BEGIN "
             "A ::= VisibleString "
             "END",
-            'asn1')
+            'gser')
 
         decoded = 'foo'
         encoded = b'a A ::= "foo"'
@@ -513,7 +513,7 @@ class Asn1ToolsAsn1Asn1Test(Asn1ToolsBaseTest):
             "BEGIN "
             "A ::= UniversalString "
             "END",
-            'asn1')
+            'gser')
 
         decoded = 'bar'
         encoded = b'a A ::= "bar"'
@@ -526,7 +526,7 @@ class Asn1ToolsAsn1Asn1Test(Asn1ToolsBaseTest):
             "BEGIN "
             "A ::= PrintableString "
             "END",
-            'asn1')
+            'gser')
 
         decoded = 'foo'
         encoded = b'a A ::= "foo"'

@@ -1,4 +1,4 @@
-"""Basic ASN.1 notation codec.
+"""General String Encoding Rules (GSER).
 
 """
 
