@@ -57,6 +57,89 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         self.assertEqual(str(cm.exception),
                          ': Decode length is not supported for this codec.')
 
+    def test_versions(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "V1 ::= SEQUENCE { "
+            "  userName VisibleString, "
+            "  password VisibleString, "
+            "  accountNumber INTEGER, "
+            "  ..., "
+            "  ... "
+            "} "
+            "V2 ::= SEQUENCE { "
+            "  userName VisibleString, "
+            "  password VisibleString, "
+            "  accountNumber INTEGER, "
+            "  ..., "
+            "  [[ "
+            "  lastLoggedIn GeneralizedTime OPTIONAL, "
+            "  minutesLastLoggedIn INTEGER "
+            "  ]], "
+            "  ... "
+            "} "
+            "V3 ::= SEQUENCE { "
+            "  userName VisibleString, "
+            "  password VisibleString, "
+            "  accountNumber INTEGER, "
+            "  ..., "
+            "  [[ "
+            "  lastLoggedIn GeneralizedTime OPTIONAL, "
+            "  minutesLastLoggedIn INTEGER "
+            "  ]], "
+            "  [[ "
+            "  certificate NULL, "
+            "  thumb NULL OPTIONAL "
+            "  ]], "
+            "  ... "
+            "} "
+            "END",
+            'uper')
+
+        # Encode as V1, decode as V1, V2 and V3
+        decoded_v1 = {
+            'userName': 'myUserName',
+            'password': 'myPassword',
+            'accountNumber': 54224445
+        }
+
+        encoded_v1 = foo.encode('V1', decoded_v1)
+
+        self.assertEqual(foo.decode('V1', encoded_v1), decoded_v1)
+        self.assertEqual(foo.decode('V2', encoded_v1), decoded_v1)
+        self.assertEqual(foo.decode('V3', encoded_v1), decoded_v1)
+
+        # Encode as V2, decode as V1, V2 and V3
+        decoded_v2 = {
+            'userName': 'myUserName',
+            'password': 'myPassword',
+            'accountNumber': 54224445,
+            'minutesLastLoggedIn': 5
+        }
+
+        encoded_v2 = foo.encode('V2', decoded_v2)
+
+        self.assertEqual(foo.decode('V1', encoded_v2), decoded_v1)
+        self.assertEqual(foo.decode('V2', encoded_v2), decoded_v2)
+        self.assertEqual(foo.decode('V3', encoded_v2), decoded_v2)
+
+        # Encode as V3, decode as V1, V2 and V3
+        decoded_v3 = {
+            'userName': 'myUserName',
+            'password': 'myPassword',
+            'accountNumber': 54224445,
+            'minutesLastLoggedIn': 5,
+            'certificate': None,
+            'thumb': None
+        }
+
+        encoded_v3 = foo.encode('V3', decoded_v3)
+
+        self.assertEqual(foo.decode('V1', encoded_v3), decoded_v1)
+        self.assertEqual(foo.decode('V2', encoded_v3), decoded_v2)
+        self.assertEqual(foo.decode('V3', encoded_v3), decoded_v3)
+
     def test_x691_a1(self):
         a1 = asn1tools.compile_files('tests/files/x691_a1.asn', 'uper')
 
