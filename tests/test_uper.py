@@ -935,6 +935,32 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assert_encode_decode(cam, 'CAM', decoded, encoded)
 
+    def test_etsi_its_container_1_2_1(self):
+        its = asn1tools.compile_files('tests/files/etsi/its_container_1_2_1.asn',
+                                      'uper')
+
+        # Message 1.
+        decoded = [
+            [],
+            [],
+            [
+                {
+                    'pathPosition': {
+                        'deltaLatitude': 44,
+                        'deltaLongitude': -1,
+                        'deltaAltitude': 0
+                    },
+                    'pathDeltaTime': 1
+                }
+            ]
+        ]
+
+        encoded = (
+            b'\x40\x00\x0e\x00\x2b\x7f\xff\x98\xce\x00\x00\x00'
+        )
+
+        self.assert_encode_decode(its, 'Traces', decoded, encoded)
+
     def test_encode_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
                                             'uper')
