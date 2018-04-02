@@ -2411,8 +2411,10 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         datas = [
             ('A',                                {}, b'\x30\x00'),
-            # ('O',                                {}, b'\x30\x00'),
             ('B',                          {'a': 0}, b'\x30\x00'),
+            ('N',                       {'a': True}, b'\x30\x00'),
+            ('P',                                {}, b'\x30\x00'),
+            ('O',                       {'a': True}, b'\x30\x00'),
             ('B',                          {'a': 1}, b'\x30\x03\x80\x01\x01'),
             ('C',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
             ('D',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
@@ -2423,10 +2425,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('K',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
             ('L',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
             ('M',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
-            ('N',                       {'a': True}, b'\x30\x00'),
             ('N',                      {'a': False}, b'\x30\x03\x80\x01\x00'),
-            ('P',                                {}, b'\x30\x00'),
-            ('O',                       {'a': True}, b'\x30\x00'),
             ('O',                      {'a': False}, b'\x30\x03\x80\x01\x00'),
             ('P',            {'a': True, 'b': True}, b'\x30\x03\x80\x01\xff'),
             ('P',

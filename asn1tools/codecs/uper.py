@@ -1428,10 +1428,10 @@ class Compiler(compiler.Compiler):
             else:
                 compiled_member, _ = self.compile_members(member,
                                                           module_name)
-                compiled_member = Sequence('ExtensionAddition',
-                                           compiled_member,
-                                           None)
-                additions.append(compiled_member)
+                compiled_group = Sequence('ExtensionAddition',
+                                          compiled_member,
+                                          None)
+                additions.append(compiled_group)
         else:
             compiled_member = self.compile_member(member,
                                                   module_name)
