@@ -501,12 +501,13 @@ class NumericString(PrimitiveOrConstructedType):
 
 class MembersType(Type):
 
-    def __init__(self, name, tag_name, tag, members):
+    def __init__(self, name, tag_name, tag, root_members, additions):
         super(MembersType, self).__init__(name,
                                           tag_name,
                                           tag,
                                           Encoding.CONSTRUCTED)
-        self.members = members
+        self.root_members = root_members
+        self.additions = additions
 
     def set_tag(self, number, flags):
         super(MembersType, self).set_tag(number,
@@ -515,27 +516,49 @@ class MembersType(Type):
     def encode(self, data, encoded):
         encoded_members = bytearray()
 
-        for member in self.members:
-            name = member.name
+        for member in self.root_members:
+            self.encode_member(member, data, encoded_members)
 
-            if name in data:
-                value = data[name]
-
-                if isinstance(member, AnyDefinedBy):
-                    member.encode(value, encoded_members, data)
-                elif member.default != value or isinstance(member, Null):
-                    member.encode(value, encoded_members)
-            elif member.optional:
-                pass
-            elif member.default is None:
-                raise EncodeError(
-                    "member '{}' not found in {}".format(
-                        name,
-                        data))
+        if self.additions:
+            self.encode_additions(data, encoded_members)
 
         encoded.extend(self.tag)
         encoded.extend(encode_length_definite(len(encoded_members)))
         encoded.extend(encoded_members)
+
+    def encode_additions(self, data, encoded_members):
+        try:
+            for addition in self.additions:
+                encoded_addition = bytearray()
+
+                if isinstance(addition, list):
+                    for member in addition:
+                        self.encode_member(member, data, encoded_addition)
+                else:
+                    self.encode_member(addition,
+                                       data,
+                                       encoded_addition)
+
+                encoded_members.extend(encoded_addition)
+        except EncodeError:
+            pass
+
+    def encode_member(self, member, data, encoded_members):
+        name = member.name
+
+        if name in data:
+            value = data[name]
+
+            if isinstance(member, AnyDefinedBy):
+                member.encode(value, encoded_members, data)
+            elif member.default != value or isinstance(member, Null):
+                member.encode(value, encoded_members)
+        elif member.optional:
+            pass
+        elif member.default is None:
+            raise EncodeError("member '{}' not found in {}".format(
+                name,
+                data))
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
@@ -549,49 +572,95 @@ class MembersType(Type):
         end_offset = offset + length
         values = {}
 
-        for member in self.members:
-            try:
-                if offset < end_offset:
-                    if isinstance(member, AnyDefinedBy):
-                        value, offset = member.decode(data, offset, values)
-                    else:
-                        value, offset = member.decode(data, offset)
+        for member in self.root_members:
+            offset = self.decode_member(member,
+                                        data,
+                                        values,
+                                        offset,
+                                        end_offset)
+
+        if self.additions:
+            self.decode_additions(data,
+                                  values,
+                                  offset,
+                                  end_offset)
+
+        return values, end_offset
+
+    def decode_additions(self, data, values, offset, end_offset):
+        try:
+            for addition in self.additions:
+                addition_values = {}
+
+                if isinstance(addition, list):
+                    for member in addition:
+                        offset = self.decode_member(member,
+                                                    data,
+                                                    addition_values,
+                                                    offset,
+                                                    end_offset)
                 else:
-                    raise IndexError
-            except (DecodeError, IndexError) as e:
-                if member.optional:
-                    continue
+                    offset = self.decode_member(addition,
+                                                data,
+                                                addition_values,
+                                                offset,
+                                                end_offset)
 
-                if member.default is None:
-                    if isinstance(e, IndexError):
-                        e = DecodeError('out of data at offset {}'.format(offset))
+                values.update(addition_values)
+        except DecodeError:
+            pass
 
-                    e.location.append(member.name)
-                    raise e
+    def decode_member(self, member, data, values, offset, end_offset):
+        try:
+            if offset < end_offset:
+                if isinstance(member, AnyDefinedBy):
+                    value, offset = member.decode(data, offset, values)
+                else:
+                    value, offset = member.decode(data, offset)
+            else:
+                raise IndexError
+        except (DecodeError, IndexError) as e:
+            if member.optional:
+                return offset
 
-                value = member.default
+            if member.default is None:
+                if isinstance(e, IndexError):
+                    e = DecodeError('out of data at offset {}'.format(offset))
 
-            values[member.name] = value
+                e.location.append(member.name)
+                raise e
 
-        return values, offset
+            value = member.default
+
+        values[member.name] = value
+
+        return offset
 
     def __repr__(self):
         return '{}({}, [{}])'.format(
             self.__class__.__name__,
             self.name,
-            ', '.join([repr(member) for member in self.members]))
+            ', '.join([repr(member) for member in self.root_members]))
 
 
 class Sequence(MembersType):
 
-    def __init__(self, name, members):
-        super(Sequence, self).__init__(name, 'SEQUENCE', Tag.SEQUENCE, members)
+    def __init__(self, name, root_members, additions):
+        super(Sequence, self).__init__(name,
+                                       'SEQUENCE',
+                                       Tag.SEQUENCE,
+                                       root_members,
+                                       additions)
 
 
 class Set(MembersType):
 
-    def __init__(self, name, members):
-        super(Set, self).__init__(name, 'SET', Tag.SET, members)
+    def __init__(self, name, root_members, additions):
+        super(Set, self).__init__(name,
+                                  'SET',
+                                  Tag.SET,
+                                  root_members,
+                                  additions)
 
 
 class ArrayType(Type):
@@ -1015,9 +1084,9 @@ class ObjectIdentifier(Type):
 
 class Choice(Type):
 
-    def __init__(self, name, members):
+    def __init__(self, name, root_members, additions):
         super(Choice, self).__init__(name, 'CHOICE', None)
-        self.members = members
+        self.root_members = root_members
 
     def set_tag(self, number, flags):
         super(Choice, self).set_tag(number,
@@ -1027,7 +1096,7 @@ class Choice(Type):
         if not isinstance(data, tuple):
             raise EncodeError("expected tuple, but got '{}'".format(data))
 
-        for member in self.members:
+        for member in self.root_members:
             if member.name == data[0]:
                 member.encode(data[1], encoded)
 
@@ -1035,11 +1104,11 @@ class Choice(Type):
 
         raise EncodeError(
             "expected choices are {}, but got '{}'".format(
-                [member.name for member in self.members],
+                [member.name for member in self.root_members],
                 data[0]))
 
     def decode(self, data, offset):
-        for member in self.members:
+        for member in self.root_members:
             if (isinstance(member, Choice)
                 or member.tag == data[offset:offset + len(member.tag)]):
                 try:
@@ -1054,7 +1123,7 @@ class Choice(Type):
     def __repr__(self):
         return 'Choice({}, [{}])'.format(
             self.name,
-            ', '.join([repr(member) for member in self.members]))
+            ', '.join([repr(member) for member in self.root_members]))
 
 
 class Null(Type):
@@ -1251,8 +1320,8 @@ class Compiler(compiler.Compiler):
         if type_name == 'SEQUENCE':
             compiled = Sequence(
                 name,
-                self.compile_members(type_descriptor['members'],
-                                     module_name))
+                *self.compile_members(type_descriptor['members'],
+                                      module_name))
         elif type_name == 'SEQUENCE OF':
             compiled = SequenceOf(name,
                                   self.compile_type('',
@@ -1261,8 +1330,8 @@ class Compiler(compiler.Compiler):
         elif type_name == 'SET':
             compiled = Set(
                 name,
-                self.compile_members(type_descriptor['members'],
-                                     module_name))
+                *self.compile_members(type_descriptor['members'],
+                                      module_name))
         elif type_name == 'SET OF':
             compiled = SetOf(name,
                              self.compile_type('',
@@ -1271,8 +1340,8 @@ class Compiler(compiler.Compiler):
         elif type_name == 'CHOICE':
             compiled = Choice(
                 name,
-                self.compile_members(type_descriptor['members'],
-                                     module_name))
+                *self.compile_members(type_descriptor['members'],
+                                      module_name))
         elif type_name == 'INTEGER':
             compiled = Integer(name)
         elif type_name == 'REAL':
@@ -1368,29 +1437,57 @@ class Compiler(compiler.Compiler):
 
     def compile_members(self, members, module_name):
         compiled_members = []
+        in_extension = False
+        additions = None
 
         for member in members:
             if member == EXTENSION_MARKER:
-                continue
+                in_extension = not in_extension
 
-            if isinstance(member, list):
-                compiled_members.extend(self.compile_members(member,
-                                                             module_name))
-                continue
+                if in_extension:
+                    additions = []
+            elif in_extension:
+                self.compile_extension_member(member,
+                                              module_name,
+                                              additions)
+            else:
+                self.compile_root_member(member,
+                                         module_name,
+                                         compiled_members)
 
-            compiled_member = self.compile_type(member['name'],
-                                                member,
-                                                module_name)
+        return compiled_members, additions
 
-            if 'optional' in member:
-                compiled_member.optional = member['optional']
+    def compile_extension_member(self,
+                                 member,
+                                 module_name,
+                                 additions):
+        if isinstance(member, list):
+            for memb in member:
+                compiled_member = self.compile_member(memb,
+                                                      module_name)
+                additions.append(compiled_member)
+        else:
+            compiled_member = self.compile_member(member,
+                                                  module_name)
+            additions.append(compiled_member)
 
-            if 'default' in member:
-                compiled_member.default = member['default']
+    def compile_root_member(self, member, module_name, compiled_members):
+        compiled_member = self.compile_member(member,
+                                              module_name)
+        compiled_members.append(compiled_member)
 
-            compiled_members.append(compiled_member)
+    def compile_member(self, member, module_name):
+        compiled_member = self.compile_type(member['name'],
+                                            member,
+                                            module_name)
 
-        return compiled_members
+        if 'optional' in member:
+            compiled_member.optional = member['optional']
+
+        if 'default' in member:
+            compiled_member.default = member['default']
+
+        return compiled_member
 
 
 def compile_dict(specification):

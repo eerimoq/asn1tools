@@ -2264,14 +2264,8 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         encoded_v1 = foo.encode('V1', decoded_v1)
 
         self.assertEqual(foo.decode('V1', encoded_v1), decoded_v1)
-
-        # ToDo: Fix extension root and additions.
-        with self.assertRaises(asn1tools.DecodeError):
-            self.assertEqual(foo.decode('V2', encoded_v1), decoded_v1)
-
-        # ToDo: Fix extension root and additions.
-        with self.assertRaises(asn1tools.DecodeError):
-            self.assertEqual(foo.decode('V3', encoded_v1), decoded_v1)
+        self.assertEqual(foo.decode('V2', encoded_v1), decoded_v1)
+        self.assertEqual(foo.decode('V3', encoded_v1), decoded_v1)
 
         # Encode as V2, decode as V1, V2 and V3
         decoded_v2 = {
@@ -2285,10 +2279,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(foo.decode('V1', encoded_v2), decoded_v1)
         self.assertEqual(foo.decode('V2', encoded_v2), decoded_v2)
-
-        # ToDo: Fix extension root and additions.
-        with self.assertRaises(asn1tools.DecodeError):
-            self.assertEqual(foo.decode('V3', encoded_v2), decoded_v2)
+        self.assertEqual(foo.decode('V3', encoded_v2), decoded_v2)
 
         # Encode as V3, decode as V1, V2 and V3
         decoded_v3 = {
@@ -2305,6 +2296,210 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         self.assertEqual(foo.decode('V1', encoded_v3), decoded_v1)
         self.assertEqual(foo.decode('V2', encoded_v3), decoded_v2)
         self.assertEqual(foo.decode('V3', encoded_v3), decoded_v3)
+
+    def test_sequence(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE {} "
+            "B ::= SEQUENCE { "
+            "  a INTEGER DEFAULT 0 "
+            "} "
+            "C ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ... "
+            "} "
+            "D ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]] "
+            "} "
+            "E ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]], "
+            "  ... "
+            "} "
+            "F ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]], "
+            "  ..., "
+            "  c BOOLEAN "
+            "} "
+            "G ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]], "
+            "  [[ "
+            "  c BOOLEAN "
+            "  ]], "
+            "  ..., "
+            "  d BOOLEAN "
+            "} "
+            "H ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  ... "
+            "} "
+            "I ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b BOOLEAN "
+            "} "
+            "J ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b BOOLEAN OPTIONAL "
+            "} "
+            "K ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b BOOLEAN, "
+            "  c BOOLEAN "
+            "} "
+            "L ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN, "
+            "  c BOOLEAN "
+            "  ]] "
+            "} "
+            "M ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b SEQUENCE { "
+            "    a INTEGER"
+            "  } OPTIONAL, "
+            "  c BOOLEAN "
+            "  ]] "
+            "} "
+            "N ::= SEQUENCE { "
+            "  a BOOLEAN DEFAULT TRUE "
+            "} "
+            "O ::= SEQUENCE { "
+            "  ..., "
+            "  a BOOLEAN DEFAULT TRUE "
+            "} "
+            "P ::= SEQUENCE { "
+            "  ..., "
+            "  [[ "
+            "  a BOOLEAN, "
+            "  b BOOLEAN DEFAULT TRUE "
+            "  ]] "
+            "} "
+            "Q ::= SEQUENCE { "
+            "  a C, "
+            "  b INTEGER "
+            "} "
+            "R ::= SEQUENCE { "
+            "  a D, "
+            "  b INTEGER "
+            "} "
+            "END",
+            'ber')
+
+        datas = [
+            ('A',                                {}, b'\x30\x00'),
+            # ('O',                                {}, b'\x30\x00'),
+            ('B',                          {'a': 0}, b'\x30\x00'),
+            ('B',                          {'a': 1}, b'\x30\x03\x80\x01\x01'),
+            ('C',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
+            ('D',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
+            ('E',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
+            ('H',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
+            ('I',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
+            ('J',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
+            ('K',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
+            ('L',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
+            ('M',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
+            ('N',                       {'a': True}, b'\x30\x00'),
+            ('N',                      {'a': False}, b'\x30\x03\x80\x01\x00'),
+            ('P',                                {}, b'\x30\x00'),
+            ('O',                       {'a': True}, b'\x30\x00'),
+            ('O',                      {'a': False}, b'\x30\x03\x80\x01\x00'),
+            ('P',            {'a': True, 'b': True}, b'\x30\x03\x80\x01\xff'),
+            ('P',
+             {'a': True, 'b': False},
+             b'\x30\x06\x80\x01\xff\x81\x01\x00'),
+            ('D',
+             {'a': True, 'b': True},
+             b'\x30\x06\x80\x01\xff\x81\x01\xff'),
+            ('E',
+             {'a': True, 'b': True},
+             b'\x30\x06\x80\x01\xff\x81\x01\xff'),
+            ('F',
+             {'a': True, 'c': True},
+             b'\x30\x06\x80\x01\xff\x82\x01\xff'),
+            ('G',
+             {'a': True, 'd': True},
+             b'\x30\x06\x80\x01\xff\x83\x01\xff'),
+            ('I',
+             {'a': True, 'b': True},
+             b'\x30\x06\x80\x01\xff\x81\x01\xff'),
+            ('J',
+             {'a': True, 'b': True},
+             b'\x30\x06\x80\x01\xff\x81\x01\xff'),
+            ('K',
+             {'a': True, 'b': True},
+             b'\x30\x06\x80\x01\xff\x81\x01\xff'),
+            ('F',
+             {'a': True, 'b': True, 'c': True},
+             b'\x30\x09\x80\x01\xff\x82\x01\xff\x81\x01\xff'),
+            ('K',
+             {'a': True, 'b': True, 'c': True},
+             b'\x30\x09\x80\x01\xff\x81\x01\xff\x82\x01\xff'),
+            ('L',
+             {'a': True, 'b': True, 'c': True},
+             b'\x30\x09\x80\x01\xff\x81\x01\xff\x82\x01\xff'),
+            ('G',
+             {'a': True, 'b': True, 'd': True},
+             b'\x30\x09\x80\x01\xff\x83\x01\xff\x81\x01\xff'),
+            ('G',
+             {'a': True, 'b': True, 'c': True, 'd': True},
+             b'\x30\x0c\x80\x01\xff\x83\x01\xff\x81\x01\xff\x82\x01\xff'),
+            ('M',
+             {'a': True, 'b': {'a': 5}, 'c': True},
+             b'\x30\x0b\x80\x01\xff\xa1\x03\x80\x01\x05\x82\x01\xff'),
+            ('Q',
+             {'a': {'a': True}, 'b': 100},
+             b'\x30\x08\xa0\x03\x80\x01\xff\x81\x01\x64'),
+            ('R',
+             {'a': {'a': True, 'b': True}, 'b': 100},
+             b'\x30\x0b\xa0\x06\x80\x01\xff\x81\x01\xff\x81\x01\x64')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Non-symmetrical encoding and decoding because default values
+        # are not encoded, but part of the decoded (given that the
+        # root and addition is present).
+        self.assertEqual(foo.encode('N', {}), b'\x30\x00')
+        self.assertEqual(foo.decode('N', b'\x30\x00'), {'a': True})
+        self.assertEqual(foo.encode('P', {'a': True}), b'\x30\x03\x80\x01\xff')
+        self.assertEqual(foo.decode('P', b'\x30\x03\x80\x01\xff'),
+                         {'a': True, 'b': True})
+
+        # Decode D as C. Extension addition "a.b" should be skipped.
+        self.assertEqual(foo.decode('C', b'\x30\x06\x80\x01\xff\x81\x01\xff'),
+                         {'a': True})
+
+        # Decode R as Q. Extension addition "a.b" should be skipped.
+        self.assertEqual(
+            foo.decode('Q',
+                       b'\x30\x0b\xa0\x06\x80\x01\xff\x81\x01\xff\x81\x01\x64'),
+            {'a': {'a': True}, 'b': 100})
 
 
 if __name__ == '__main__':
