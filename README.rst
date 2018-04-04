@@ -231,6 +231,9 @@ Encodings
 - `X.693: XML Encoding Rules (XER)
   <https://www.itu.int/ITU-T/studygroups/com17/languages/X.693-0112.pdf>`_
 
+- `RFC 3641: Generic String Encoding Rules (GSER) for ASN.1
+  <https://tools.ietf.org/html/rfc3641>`_
+
 .. |buildstatus| image:: https://travis-ci.org/eerimoq/asn1tools.svg?branch=master
 .. _buildstatus: https://travis-ci.org/eerimoq/asn1tools
 
