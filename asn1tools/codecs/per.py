@@ -552,8 +552,10 @@ class Integer(Type):
             encoder.align()
             encoder.append_unconstrained_whole_number(data)
         else:
-            encoder.append_non_negative_binary_integer(data - self.minimum,
-                                                       self.number_of_bits)
+            encoder.append_constrained_whole_number(data,
+                                                    self.minimum,
+                                                    self.maximum,
+                                                    self.number_of_bits)
 
     def decode(self, decoder):
         if self.has_extension_marker:
@@ -567,7 +569,9 @@ class Integer(Type):
             length = decoder.read_length_determinant()
             value = decoder.read_unconstrained_whole_number(length)
         else:
-            value = decoder.read_integer(self.number_of_bits)
+            value = decoder.read_constrained_whole_number(self.minimum,
+                                                          self.maximum,
+                                                          self.number_of_bits)
             value += self.minimum
 
         return value

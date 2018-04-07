@@ -29,7 +29,7 @@ from .errors import ConstraintsError
 
 
 __author__ = 'Erik Moqvist'
-__version__ = '0.68.0'
+__version__ = '0.69.0'
 
 
 class ArgumentParserError(Exception):

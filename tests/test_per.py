@@ -62,6 +62,52 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         self.assertEqual(str(cm.exception),
                          ': Decode length is not supported for this codec.')
 
+    def test_versions(self):
+        foo = asn1tools.compile_files('tests/files/versions.asn', 'per')
+
+        # Encode as V1, decode as V1, V2 and V3
+        decoded_v1 = {
+            'userName': 'myUserName',
+            'password': 'myPassword',
+            'accountNumber': 54224445
+        }
+
+        encoded_v1 = foo.encode('V1', decoded_v1)
+
+        self.assertEqual(foo.decode('V1', encoded_v1), decoded_v1)
+        self.assertEqual(foo.decode('V2', encoded_v1), decoded_v1)
+        self.assertEqual(foo.decode('V3', encoded_v1), decoded_v1)
+
+        # Encode as V2, decode as V1, V2 and V3
+        decoded_v2 = {
+            'userName': 'myUserName',
+            'password': 'myPassword',
+            'accountNumber': 54224445,
+            'minutesLastLoggedIn': 5
+        }
+
+        encoded_v2 = foo.encode('V2', decoded_v2)
+
+        self.assertEqual(foo.decode('V1', encoded_v2), decoded_v1)
+        self.assertEqual(foo.decode('V2', encoded_v2), decoded_v2)
+        self.assertEqual(foo.decode('V3', encoded_v2), decoded_v2)
+
+        # Encode as V3, decode as V1, V2 and V3
+        decoded_v3 = {
+            'userName': 'myUserName',
+            'password': 'myPassword',
+            'accountNumber': 54224445,
+            'minutesLastLoggedIn': 5,
+            'certificate': None,
+            'thumb': None
+        }
+
+        encoded_v3 = foo.encode('V3', decoded_v3)
+
+        self.assertEqual(foo.decode('V1', encoded_v3), decoded_v1)
+        self.assertEqual(foo.decode('V2', encoded_v3), decoded_v2)
+        self.assertEqual(foo.decode('V3', encoded_v3), decoded_v3)
+
     def test_x691_a1(self):
         a1 = asn1tools.compile_files('tests/files/x691_a1.asn', 'per')
 
@@ -528,6 +574,12 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "BEGIN "
             "A ::= INTEGER "
             "B ::= INTEGER (5..99) "
+            "C ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b INTEGER, "
+            "  c BOOLEAN, "
+            "  d INTEGER (-10..400) "
+            "} "
             "END",
             'per')
 
@@ -549,7 +601,10 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('A',                   -32769, b'\x03\xff\x7f\xff'),
             ('B',                        5, b'\x00'),
             ('B',                        6, b'\x02'),
-            ('B',                       99, b'\xbc')
+            ('B',                       99, b'\xbc'),
+            ('C',
+             {'a': True, 'b': 43554344223, 'c': False, 'd': -9},
+             b'\x80\x05\x0a\x24\x0a\x8d\x1f\x00\x00\x01')
         ]
 
         for type_name, decoded, encoded in datas:
