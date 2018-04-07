@@ -14,7 +14,6 @@ from . import DecodeError
 from . import compiler
 from .compiler import enum_values_split
 from .per import size_as_number_of_bits
-from .per import Integer
 from .ber import encode_real
 from .ber import decode_real
 
@@ -441,6 +440,49 @@ class Boolean(Type):
 
     def __repr__(self):
         return 'Boolean({})'.format(self.name)
+
+
+class Integer(Type):
+
+    def __init__(self, name, minimum, maximum, has_extension_marker):
+        super(Integer, self).__init__(name, 'INTEGER')
+        self.minimum = minimum
+        self.maximum = maximum
+        self.has_extension_marker = has_extension_marker
+
+        if minimum is None or maximum is None:
+            self.number_of_bits = None
+        else:
+            size = self.maximum - self.minimum
+            self.number_of_bits = size_as_number_of_bits(size)
+
+    def encode(self, data, encoder):
+        if self.has_extension_marker:
+            encoder.append_bit(0)
+
+        if self.number_of_bits is None:
+            encoder.append_unconstrained_whole_number(data)
+        else:
+            encoder.append_integer(data - self.minimum, self.number_of_bits)
+
+    def decode(self, decoder):
+        if self.has_extension_marker:
+            bit = decoder.read_bit()
+
+            if bit:
+                raise NotImplementedError('Extension is not implemented.')
+
+        if self.number_of_bits is None:
+            length = decoder.read_length_determinant()
+            value = decoder.read_unconstrained_whole_number(length)
+        else:
+            value = decoder.read_integer(self.number_of_bits)
+            value += self.minimum
+
+        return value
+
+    def __repr__(self):
+        return 'Integer({})'.format(self.name)
 
 
 class MembersType(Type):
@@ -1098,7 +1140,7 @@ class Choice(Type):
         return 'Choice({}, [{}])'.format(
             self.name,
             ', '.join([repr(member)
-                       for member in self.root_members]))
+                       for member in self.root_name_to_index]))
 
 
 class Null(Type):
