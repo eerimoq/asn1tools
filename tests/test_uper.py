@@ -313,6 +313,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assert_encode_decode(rrc, 'BCCH-BCH-Message', decoded, encoded)
 
+        # Message #4.
         decoded = {
             'message': (
                 'c1',

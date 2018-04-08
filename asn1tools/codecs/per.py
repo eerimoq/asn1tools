@@ -860,12 +860,11 @@ class ArrayType(Type):
             self.number_of_bits = integer_as_number_of_bits(size)
 
     def encode(self, data, encoder):
-        encoder.align()
-
         if self.has_extension_marker:
             encoder.append_bit(0)
 
         if self.number_of_bits is None:
+            encoder.align()
             encoder.append_length_determinant(len(data))
         elif self.minimum != self.maximum:
             encoder.append_non_negative_binary_integer(len(data) - self.minimum,
@@ -875,8 +874,6 @@ class ArrayType(Type):
             self.element_type.encode(entry, encoder)
 
     def decode(self, decoder):
-        decoder.align()
-
         if self.has_extension_marker:
             bit = decoder.read_bit()
 
@@ -884,6 +881,7 @@ class ArrayType(Type):
                 raise NotImplementedError('Extension is not implemented.')
 
         if self.number_of_bits is None:
+            decoder.align()
             length = decoder.read_length_determinant()
         else:
             length = self.minimum
@@ -956,8 +954,12 @@ class BitString(Type):
             encoder.align()
             encoder.append_length_determinant(data[1])
         elif self.minimum != self.maximum:
+            encoder.align()
             encoder.append_non_negative_binary_integer(data[1] - self.minimum,
                                                        self.number_of_bits)
+            encoder.align()
+        elif self.minimum > 16:
+            encoder.align()
 
         encoder.append_bits(data[0], data[1])
 
@@ -969,8 +971,12 @@ class BitString(Type):
             number_of_bits = self.minimum
 
             if self.minimum != self.maximum:
+                decoder.align()
                 number_of_bits += decoder.read_non_negative_binary_integer(
                     self.number_of_bits)
+                decoder.align()
+            elif self.minimum > 16:
+                decoder.align()
 
         value = decoder.read_bits(number_of_bits)
 
@@ -994,20 +1000,27 @@ class OctetString(Type):
             self.number_of_bits = integer_as_number_of_bits(size)
 
     def encode(self, data, encoder):
-        encoder.align()
+        align = True
 
         if self.number_of_bits is None:
+            encoder.align()
             encoder.append_length_determinant(len(data))
         elif self.minimum != self.maximum:
             encoder.append_non_negative_binary_integer(len(data) - self.minimum,
                                                        self.number_of_bits)
+        else:
+            align = False
+
+        if align:
+            encoder.align()
 
         encoder.append_bytes(data)
 
     def decode(self, decoder):
-        decoder.align()
+        align = True
 
         if self.number_of_bits is None:
+            decoder.align()
             length = decoder.read_length_determinant()
         else:
             length = self.minimum
@@ -1015,6 +1028,11 @@ class OctetString(Type):
             if self.minimum != self.maximum:
                 length += decoder.read_non_negative_binary_integer(
                     self.number_of_bits)
+            else:
+                align = False
+
+        if align:
+            decoder.align()
 
         return decoder.read_bits(8 * length)
 

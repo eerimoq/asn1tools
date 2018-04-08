@@ -297,6 +297,14 @@ ENCODED_MESSAGE_UPER = (
     b'\xcf\x10\xa8\x6a\x4c\x04\x48'
 )
 
+ENCODED_MESSAGE_PER = (
+    b'\x04\x81\x3f\xbe\x2a\x64\x12\xb2\xf3\x20\x03\x44\x85\x50\x00\x40'
+    b'\x53\x65\x31\x40\x07\xff\x82\x40\x00\x01\x10\x02\x4e\x20\x80\x50'
+    b'\x6c\x3c\x47\x69\x28\x14\x10\x0c\x00\x00\x00\x01\x64\x7f\xa2\x10'
+    b'\x19\x43\x30\x50\x01\x23\x45\x67\x89\x0e\x80\x34\x40\x46\x68\x24'
+    b'\x68\x64\x24\x91\x9e\x21\x50\xd4\x98\x01\x12'
+)
+
 ENCODED_MESSAGE_JER = (
     b'{"message":{"c1":{"systemInformation":{"criticalExtensions":{"sy'
     b'stemInformation-r8":{"sib-TypeAndInfo":[{"sib2":{"ac-BarringInfo'
@@ -384,6 +392,21 @@ def encode_decode_uper():
     return encode_time, decode_time
 
 
+def encode_decode_per():
+    rrc_8_6_0 = asn1tools.compile_files(RRC_8_6_0_ASN_PATH, 'per')
+
+    def encode():
+        rrc_8_6_0.encode('BCCH-DL-SCH-Message', DECODED_MESSAGE)
+
+    def decode():
+        rrc_8_6_0.decode('BCCH-DL-SCH-Message', ENCODED_MESSAGE_PER)
+
+    encode_time = timeit.timeit(encode, number=ITERATIONS)
+    decode_time = timeit.timeit(decode, number=ITERATIONS)
+
+    return encode_time, decode_time
+
+
 def encode_decode_jer():
     rrc_8_6_0 = asn1tools.compile_files(RRC_8_6_0_ASN_PATH, 'jer')
 
@@ -404,12 +427,14 @@ print('Starting encoding and decoding of a message {} times. This may '
 
 ber_encode_time, ber_decode_time = encode_decode_ber()
 uper_encode_time, uper_decode_time = encode_decode_uper()
+per_encode_time, per_decode_time = encode_decode_per()
 jer_encode_time, jer_decode_time = encode_decode_jer()
 
 # Encode comparsion output.
 measurements = [
     ('ber', ber_encode_time),
     ('uper', uper_encode_time),
+    ('per', per_encode_time),
     ('jer', jer_encode_time)
 ]
 
@@ -426,6 +451,7 @@ for package, seconds in measurements:
 measurements = [
     ('ber', ber_decode_time),
     ('uper', uper_decode_time),
+    ('per', per_decode_time),
     ('jer', jer_decode_time)
 ]
 

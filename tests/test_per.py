@@ -326,6 +326,241 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
 
         self.assert_encode_decode(rrc, 'BCCH-BCH-Message', decoded, encoded)
 
+        # Message #4.
+        decoded = {
+            'message': (
+                'c1',
+                (
+                    'systemInformation',
+                    {
+                        'criticalExtensions': (
+                            'systemInformation-r8',
+                            {
+                                'sib-TypeAndInfo': [
+                                    (
+                                        'sib2',
+                                        {
+                                            'ac-BarringInfo': {
+                                                'ac-BarringForEmergency': True,
+                                                'ac-BarringForMO-Data': {
+                                                    'ac-BarringFactor': 'p95',
+                                                    'ac-BarringTime': 's128',
+                                                    'ac-BarringForSpecialAC': (b'\xf0', 5)
+                                                }
+                                            },
+                                            'radioResourceConfigCommon': {
+                                                'rach-ConfigCommon': {
+                                                    'preambleInfo': {
+                                                        'numberOfRA-Preambles': 'n24',
+                                                        'preamblesGroupAConfig': {
+                                                            'sizeOfRA-PreamblesGroupA': 'n28',
+                                                            'messageSizeGroupA': 'b144',
+                                                            'messagePowerOffsetGroupB': 'minusinfinity'
+                                                        }
+                                                    },
+                                                    'powerRampingParameters': {
+                                                        'powerRampingStep': 'dB0',
+                                                        'preambleInitialReceivedTargetPower': 'dBm-102'
+                                                    },
+                                                    'ra-SupervisionInfo': {
+                                                        'preambleTransMax': 'n8',
+                                                        'ra-ResponseWindowSize': 'sf6',
+                                                        'mac-ContentionResolutionTimer': 'sf48'
+                                                    },
+                                                    'maxHARQ-Msg3Tx': 8
+                                                },
+                                                'bcch-Config': {
+                                                    'modificationPeriodCoeff': 'n2'
+                                                },
+                                                'pcch-Config': {
+                                                    'defaultPagingCycle': 'rf256',
+                                                    'nB': 'twoT'
+                                                },
+                                                'prach-Config': {
+                                                    'rootSequenceIndex': 836,
+                                                    'prach-ConfigInfo': {
+                                                        'prach-ConfigIndex': 33,
+                                                        'highSpeedFlag': False,
+                                                        'zeroCorrelationZoneConfig': 10,
+                                                        'prach-FreqOffset': 64
+                                                    }
+                                                },
+                                                'pdsch-ConfigCommon': {
+                                                    'referenceSignalPower': -60,
+                                                    'p-b': 2
+                                                },
+                                                'pusch-ConfigCommon': {
+                                                    'pusch-ConfigBasic': {
+                                                        'n-SB': 1,
+                                                        'hoppingMode': 'interSubFrame',
+                                                        'pusch-HoppingOffset': 10,
+                                                        'enable64QAM': False
+                                                    },
+                                                    'ul-ReferenceSignalsPUSCH': {
+                                                        'groupHoppingEnabled': True,
+                                                        'groupAssignmentPUSCH': 22,
+                                                        'sequenceHoppingEnabled': False,
+                                                        'cyclicShift': 5
+                                                    }
+                                                },
+                                                'pucch-ConfigCommon': {
+                                                    'deltaPUCCH-Shift': 'ds1',
+                                                    'nRB-CQI': 98,
+                                                    'nCS-AN': 4,
+                                                    'n1PUCCH-AN': 2047
+                                                },
+                                                'soundingRS-UL-ConfigCommon': (
+                                                    'setup',
+                                                    {
+                                                        'srs-BandwidthConfig': 'bw0',
+                                                        'srs-SubframeConfig': 'sc4',
+                                                        'ackNackSRS-SimultaneousTransmission': True
+                                                    }),
+                                                'uplinkPowerControlCommon': {
+                                                    'p0-NominalPUSCH': -126,
+                                                    'alpha': 'al0',
+                                                    'p0-NominalPUCCH': -127,
+                                                    'deltaFList-PUCCH': {
+                                                        'deltaF-PUCCH-Format1': 'deltaF-2',
+                                                        'deltaF-PUCCH-Format1b': 'deltaF1',
+                                                        'deltaF-PUCCH-Format2': 'deltaF0',
+                                                        'deltaF-PUCCH-Format2a': 'deltaF-2',
+                                                        'deltaF-PUCCH-Format2b': 'deltaF0'
+                                                    },
+                                                    'deltaPreambleMsg3': -1
+                                                },
+                                                'ul-CyclicPrefixLength': 'len1'
+                                            },
+                                            'ue-TimersAndConstants': {
+                                                't300': 'ms100',
+                                                't301': 'ms200',
+                                                't310': 'ms50',
+                                                'n310': 'n2',
+                                                't311': 'ms30000',
+                                                'n311': 'n2'
+                                            },
+                                            'freqInfo': {
+                                                'additionalSpectrumEmission': 3
+                                            },
+                                            'timeAlignmentTimerCommon': 'sf500'
+                                        }
+                                    ),
+                                    (
+                                        'sib3',
+                                        {
+                                            'cellReselectionInfoCommon': {
+                                                'q-Hyst': 'dB0',
+                                                'speedStateReselectionPars': {
+                                                    'mobilityStateParameters': {
+                                                        't-Evaluation': 's180',
+                                                        't-HystNormal': 's180',
+                                                        'n-CellChangeMedium': 1,
+                                                        'n-CellChangeHigh': 16
+                                                    },
+                                                    'q-HystSF': {
+                                                        'sf-Medium': 'dB-6',
+                                                        'sf-High': 'dB-4'
+                                                    }
+                                                }
+                                            },
+                                            'cellReselectionServingFreqInfo': {
+                                                'threshServingLow': 7,
+                                                'cellReselectionPriority': 3
+                                            },
+                                            'intraFreqCellReselectionInfo': {
+                                                'q-RxLevMin': -33,
+                                                's-IntraSearch': 0,
+                                                'presenceAntennaPort1': False,
+                                                'neighCellConfig': (b'\x80', 2),
+                                                't-ReselectionEUTRA': 4
+                                            }
+                                        }
+                                    ),
+                                    (
+                                        'sib4',
+                                        {
+                                        }
+                                    ),
+                                    (
+                                        'sib5',
+                                        {
+                                            'interFreqCarrierFreqList': [
+                                                {
+                                                    'dl-CarrierFreq': 1,
+                                                    'q-RxLevMin': -45,
+                                                    't-ReselectionEUTRA': 0,
+                                                    'threshX-High': 31,
+                                                    'threshX-Low': 29,
+                                                    'allowedMeasBandwidth': 'mbw6',
+                                                    'presenceAntennaPort1': True,
+                                                    'neighCellConfig': (b'\x00', 2),
+                                                    'q-OffsetFreq': 'dB0'
+                                                }
+                                            ]
+                                        }
+                                    ),
+                                    (
+                                        'sib6',
+                                        {
+                                            't-ReselectionUTRA': 3
+                                        }
+                                    ),
+                                    (
+                                        'sib7',
+                                        {
+                                            't-ReselectionGERAN': 3
+                                        }
+                                    ),
+                                    (
+                                        'sib8',
+                                        {
+                                            'parameters1XRTT': {
+                                                'longCodeState1XRTT': (b'\x01\x23\x45\x67\x89\x00', 42)
+                                            }
+                                        }
+                                    ),
+                                    (
+                                        'sib9',
+                                        {
+                                            'hnb-Name': b'4'
+                                        }
+                                    ),
+                                    (
+                                        'sib10',
+                                        {
+                                            'messageIdentifier': (b'#4', 16),
+                                            'serialNumber': (b'\x124', 16),
+                                            'warningType': b'2\x12'
+                                        }
+                                    ),
+                                    (
+                                        'sib11',
+                                        {
+                                            'messageIdentifier': (b'g\x88', 16),
+                                            'serialNumber': (b'T5', 16),
+                                            'warningMessageSegmentType': 'notLastSegment',
+                                            'warningMessageSegmentNumber': 19,
+                                            'warningMessageSegment': b'\x12'
+                                        }
+                                    )
+                                ]
+                            }
+                        )
+                    }
+                )
+            )
+        }
+
+        encoded = (
+            b'\x04\x81\x3f\xbe\x2a\x64\x12\xb2\xf3\x20\x03\x44\x85\x50\x00\x40'
+            b'\x53\x65\x31\x40\x07\xff\x82\x40\x00\x01\x10\x02\x4e\x20\x80\x50'
+            b'\x6c\x3c\x47\x69\x28\x14\x10\x0c\x00\x00\x00\x01\x64\x7f\xa2\x10'
+            b'\x19\x43\x30\x50\x01\x23\x45\x67\x89\x0e\x80\x34\x40\x46\x68\x24'
+            b'\x68\x64\x24\x91\x9e\x21\x50\xd4\x98\x01\x12'
+        )
+
+        self.assert_encode_decode(rrc, 'BCCH-DL-SCH-Message', decoded, encoded)
+
     def test_all_types_automatic_tags(self):
         all_types = asn1tools.compile_files(
             'tests/files/all_types_automatic_tags.asn', 'per')
@@ -967,6 +1202,50 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         self.assertEqual(foo.decode('Q', b'\xc0\x40\x01\x80\x01\x64'),
                          {'a': {'a': True}, 'b': 100})
 
+    def test_sequence_of(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE OF INTEGER "
+            "B ::= SEQUENCE SIZE (2) OF INTEGER "
+            "C ::= SEQUENCE SIZE (1..5) OF INTEGER "
+            "D ::= SEQUENCE SIZE (1..2, ...) OF INTEGER "
+            "E ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b SEQUENCE OF INTEGER "
+            "} "
+            "F ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b SEQUENCE SIZE(1) OF INTEGER "
+            "} "
+            "END",
+            'per')
+
+        datas = [
+            ('A',                [], b'\x00'),
+            ('A',               [1], b'\x01\x01\x01'),
+            ('A',            [1, 2], b'\x02\x01\x01\x01\x02'),
+            ('A',     1000 * [1, 2], b'\x87\xd0' + 1000 * b'\x01\x01\x01\x02'),
+            ('B',            [1, 2], b'\x01\x01\x01\x02'),
+            ('B', [4663, 222322233], b'\x02\x12\x37\x04\x0d\x40\x5e\x39'),
+            ('C',               [1], b'\x00\x01\x01'),
+            ('C',            [1, 2], b'\x20\x01\x01\x01\x02'),
+            ('D',            [2, 1], b'\x40\x01\x02\x01\x01'),
+            ('E',  {'a': False, 'b': []}, b'\x00\x00'),
+            ('E', {'a': False, 'b': [1]}, b'\x00\x01\x01\x01'),
+            ('F', {'a': False, 'b': [1]}, b'\x00\x01\x01')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Long sequences are not yet supported.
+        with self.assertRaises(NotImplementedError) as cm:
+            foo.encode('A', 16384 * [1])
+
+        self.assertEqual(str(cm.exception),
+                         'Length determinant >=16384 is not yet supported.')
+
     def test_choice(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
@@ -1065,6 +1344,79 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('J',            ('a', True), b'\x40'),
             ('J',        ('b', ('a', 1)), b'\x80\x02\x01\x01'),
             ('J',            ('c', True), b'\x81\x01\x80')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_bit_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= BIT STRING "
+            "B ::= BIT STRING (SIZE (9)) "
+            "C ::= BIT STRING (SIZE (5..7)) "
+            "D ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b BIT STRING "
+            "} "
+            "E ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b BIT STRING (SIZE(1)), "
+            "  c BIT STRING (SIZE(16)) "
+            "} "
+            "END",
+            'per')
+
+        datas = [
+            ('A',          (b'\x40', 4), b'\x04\x40'),
+            ('A',
+             (299 * b'\x55' + b'\x54', 2399),
+             b'\x89\x5f' + 299 * b'\x55' + b'\x54'),
+            ('B',      (b'\x12\x80', 9), b'\x12\x80'),
+            ('C',          (b'\x34', 6), b'\x40\x34'),
+            ('D',
+             {'a': True, 'b': (b'\x40', 4)},
+             b'\x80\x04\x40'),
+            ('E',
+             {'a': True, 'b': (b'\x80', 1), 'c': (b'\x7f\x01', 16)},
+             b'\xdf\xc0\x40')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_octet_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= OCTET STRING "
+            "B ::= OCTET STRING (SIZE (2)) "
+            "C ::= OCTET STRING (SIZE (3)) "
+            "D ::= OCTET STRING (SIZE (3..7)) "
+            "E ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b OCTET STRING "
+            "} "
+            "F ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b OCTET STRING (SIZE(1)), "
+            "  c OCTET STRING (SIZE(2)) "
+            "} "
+            "END",
+            'per')
+
+        datas = [
+            ('A',                           b'\x00', b'\x01\x00'),
+            ('A',                     500 * b'\x00', b'\x81\xf4' + 500 * b'\x00'),
+            ('B',                       b'\xab\xcd', b'\xab\xcd'),
+            ('C',                   b'\xab\xcd\xef', b'\xab\xcd\xef'),
+            ('D',               b'\x89\xab\xcd\xef', b'\x20\x89\xab\xcd\xef'),
+            ('E',         {'a': True, 'b': b'\x00'}, b'\x80\x01\x00'),
+            ('E', {'a': True, 'b': b'\x00\x01\x02'}, b'\x80\x03\x00\x01\x02'),
+            ('F',
+             {'a': True, 'b': b'\x12', 'c': b'\x34\x56'},
+             b'\x89\x1a\x2b\x00')
         ]
 
         for type_name, decoded, encoded in datas:
