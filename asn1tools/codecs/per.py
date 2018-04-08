@@ -430,7 +430,7 @@ class Type(object):
 
 class KnownMultiplierStringType(Type):
 
-    PERMITTED_ALPHABET = ''
+    PERMITTED_ALPHABET = PermittedAlphabet({}, {})
 
     def __init__(self,
                  name,
@@ -448,6 +448,9 @@ class KnownMultiplierStringType(Type):
         self.permitted_alphabet = permitted_alphabet
         self.bits_per_character = integer_as_number_of_bits_power_of_two(
             len(permitted_alphabet) - 1)
+
+        if len(self.PERMITTED_ALPHABET) < 2 ** self.bits_per_character:
+            self.permitted_alphabet = self.PERMITTED_ALPHABET
 
     def set_size_range(self, minimum, maximum, has_extension_marker):
         self.minimum = minimum

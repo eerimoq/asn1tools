@@ -201,13 +201,10 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             b'\x10\x4a\x6f\x6e\x65\x73\x19\x59\x07\x17'
         )
 
-        with self.assertRaises(AssertionError):
-            self.assert_encode_decode(a2, 'PersonnelRecord', decoded, encoded)
+        self.assert_encode_decode(a2, 'PersonnelRecord', decoded, encoded)
 
     def test_x691_a3(self):
         a3 = asn1tools.compile_dict(deepcopy(X691_A3), 'per')
-
-        return
 
         decoded = {
             'name': {
