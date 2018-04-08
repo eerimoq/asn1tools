@@ -580,6 +580,19 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "  c BOOLEAN, "
             "  d INTEGER (-10..400) "
             "} "
+            "D ::= INTEGER (0..254) "
+            "E ::= INTEGER (0..255) "
+            "F ::= INTEGER (0..256) "
+            "G ::= INTEGER (0..65535) "
+            "H ::= INTEGER (0..65536) "
+            "I ::= INTEGER (0..10000000000) "
+            "J ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b INTEGER (0..254), "
+            "  c INTEGER (0..255), "
+            "  d BOOLEAN, "
+            "  e INTEGER (0..256) "
+            "} "
             "END",
             'per')
 
@@ -604,7 +617,19 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('B',                       99, b'\xbc'),
             ('C',
              {'a': True, 'b': 43554344223, 'c': False, 'd': -9},
-             b'\x80\x05\x0a\x24\x0a\x8d\x1f\x00\x00\x01')
+             b'\x80\x05\x0a\x24\x0a\x8d\x1f\x00\x00\x01'),
+            ('D',                      253, b'\xfd'),
+            ('E',                      253, b'\xfd'),
+            ('F',                      253, b'\x00\xfd'),
+            ('G',                      253, b'\x00\xfd'),
+            ('H',                      253, b'\x00\xfd'),
+            ('H',                      256, b'\x40\x01\x00'),
+            ('H',                    65536, b'\x80\x01\x00\x00'),
+            ('I',                        1, b'\x00\x01'),
+            ('I',              10000000000, b'\x80\x02\x54\x0b\xe4\x00'),
+            ('J',
+             {'a': False, 'b': 253, 'c': 253, 'd': False, 'e': 253},
+             b'\x7e\x80\xfd\x00\x00\xfd')
         ]
 
         for type_name, decoded, encoded in datas:

@@ -20,7 +20,7 @@ from .ber import decode_real
 LOGGER = logging.getLogger(__name__)
 
 
-def size_as_number_of_bits(size):
+def integer_as_number_of_bits(size):
     """Returns the minimum number of bits needed to fit given positive
     integer.
 
@@ -32,7 +32,7 @@ def size_as_number_of_bits(size):
         return size.bit_length()
 
 
-def size_as_number_of_bits_power_of_two(size):
+def integer_as_number_of_bits_power_of_two(size):
     """Returns the minimum power of two number of bits needed to fit given
     positive integer.
 
@@ -41,13 +41,31 @@ def size_as_number_of_bits_power_of_two(size):
     if size == 0:
         return 0
     else:
-        bit_length = size_as_number_of_bits(size)
+        bit_length = integer_as_number_of_bits(size)
         bit_length_pow_2 = 1
 
         while bit_length > bit_length_pow_2:
             bit_length_pow_2 <<= 1
 
         return bit_length_pow_2
+
+
+def size_as_number_of_bytes(size):
+    """Returns the minimum number of bytes needed to fit given positive
+    integer.
+
+    """
+
+    if size == 0:
+        return 0
+    else:
+        number_of_bits = size.bit_length()
+        rest = (number_of_bits % 8)
+
+        if rest != 0:
+            number_of_bits += (8 - rest)
+
+        return number_of_bits // 8
 
 
 class DecodeChoiceError(Exception):
@@ -221,13 +239,16 @@ class Encoder(object):
             self.append_non_negative_binary_integer(value - minimum,
                                                     number_of_bits)
         elif _range == 256:
-            raise NotImplementedError()
+            self.align()
+            self.append_non_negative_binary_integer(value - minimum, 8)
         elif _range <= 65536:
             self.align()
             self.append_non_negative_binary_integer(value - minimum, 16)
         else:
-            raise NotImplementedError(
-                'Constrained whole number >65536 is not yet supported.')
+            number_of_bits = size_as_number_of_bytes(value) * 8
+            self.align()
+            self.append_non_negative_binary_integer(value - minimum,
+                                                    number_of_bits)
 
     def append_unconstrained_whole_number(self, value):
         number_of_bits = value.bit_length()
@@ -311,7 +332,7 @@ class Decoder(object):
 
         return binascii.unhexlify(hex(value)[4:].rstrip('L'))
 
-    def read_integer(self, number_of_bits):
+    def read_non_negative_binary_integer(self, number_of_bits):
         """Read an integer value of given number of bits.
 
         """
@@ -334,12 +355,13 @@ class Decoder(object):
         return bytearray(self.read_bits(8 * number_of_bytes))
 
     def read_length_determinant(self):
-        value = self.read_integer(8)
+        value = self.read_non_negative_binary_integer(8)
 
         if (value & 0x80) == 0x00:
             return value
         elif (value & 0xc0) == 0x80:
-            return (((value & 0x7f) << 8) | (self.read_integer(8)))
+            return (((value & 0x7f) << 8)
+                    | (self.read_non_negative_binary_integer(8)))
         else:
             raise NotImplementedError(
                 'Length determinant type 0x{:02x} not yet supported.'.format(
@@ -347,16 +369,16 @@ class Decoder(object):
 
     def read_normally_small_non_negative_whole_number(self):
         if not self.read_bit():
-            decoded = self.read_integer(6)
+            decoded = self.read_non_negative_binary_integer(6)
         else:
             length = self.read_length_determinant()
-            decoded = self.read_integer(8 * length)
+            decoded = self.read_non_negative_binary_integer(8 * length)
 
         return decoded
 
     def read_normally_small_length(self):
         if not self.read_bit():
-            return self.read_integer(6) + 1
+            return self.read_non_negative_binary_integer(6) + 1
         else:
             raise NotImplementedError(
                 'Normally small length number >64 is not yet supported.')
@@ -368,18 +390,21 @@ class Decoder(object):
         _range = (maximum - minimum + 1)
 
         if _range <= 255:
-            return self.read_integer(number_of_bits)
+            value = self.read_non_negative_binary_integer(number_of_bits)
         elif _range == 256:
-            raise NotImplementedError()
+            self.align()
+            value = self.read_non_negative_binary_integer(8)
         elif _range <= 65536:
             self.align()
-            return self.read_integer(16)
+            value = self.read_non_negative_binary_integer(16)
         else:
-            raise NotImplementedError(
-                'Constrained whole number >65536 is not yet supported.')
+            self.align()
+            value = self.read_non_negative_binary_integer(number_of_bits)
+
+        return value + minimum
 
     def read_unconstrained_whole_number(self, number_of_bytes):
-        decoded = self.read_integer(8 * number_of_bytes)
+        decoded = self.read_non_negative_binary_integer(8 * number_of_bytes)
         number_of_bits = (8 * number_of_bytes)
 
         if decoded & (1 << (number_of_bits - 1)):
@@ -421,7 +446,7 @@ class KnownMultiplierStringType(Type):
             permitted_alphabet = self.PERMITTED_ALPHABET
 
         self.permitted_alphabet = permitted_alphabet
-        self.bits_per_character = size_as_number_of_bits_power_of_two(
+        self.bits_per_character = integer_as_number_of_bits_power_of_two(
             len(permitted_alphabet) - 1)
 
     def set_size_range(self, minimum, maximum, has_extension_marker):
@@ -433,7 +458,7 @@ class KnownMultiplierStringType(Type):
             self.number_of_bits = None
         else:
             size = maximum - minimum
-            self.number_of_bits = size_as_number_of_bits(size)
+            self.number_of_bits = integer_as_number_of_bits(size)
 
     def encode(self, data, encoder):
         encoded = data.encode('ascii')
@@ -471,22 +496,23 @@ class KnownMultiplierStringType(Type):
             decoder.align()
             length = decoder.read_length_determinant()
         else:
-            length = self.minimum
-
             if self.minimum != self.maximum:
-                length += decoder.read_constrained_whole_number(self.minimum,
-                                                                self.maximum,
-                                                                self.number_of_bits)
+                length = decoder.read_constrained_whole_number(self.minimum,
+                                                               self.maximum,
+                                                               self.number_of_bits)
 
                 if self.maximum > 1:
                     decoder.align()
             elif self.maximum * self.bits_per_character > 16:
                 decoder.align()
+                length = self.minimum
+            else:
+                length = self.minimum
 
         data = []
 
         for _ in range(length):
-            value = decoder.read_integer(self.bits_per_character)
+            value = decoder.read_non_negative_binary_integer(self.bits_per_character)
             data.append(self.permitted_alphabet.decode(value))
 
         return bytearray(data).decode('ascii')
@@ -542,7 +568,13 @@ class Integer(Type):
             self.number_of_bits = None
         else:
             size = self.maximum - self.minimum
-            self.number_of_bits = size_as_number_of_bits(size)
+            self.number_of_bits = integer_as_number_of_bits(size)
+
+            if size <= 65535:
+                self.number_of_indefinite_bits = None
+            else:
+                number_of_bits = ((self.number_of_bits + 7) // 8).bit_length()
+                self.number_of_indefinite_bits = number_of_bits
 
     def encode(self, data, encoder):
         if self.has_extension_marker:
@@ -552,10 +584,21 @@ class Integer(Type):
             encoder.align()
             encoder.append_unconstrained_whole_number(data)
         else:
+            if self.number_of_indefinite_bits is None:
+                number_of_bits = self.number_of_bits
+            else:
+                number_of_bytes = size_as_number_of_bytes(data)
+                number_of_bits = 8 * number_of_bytes
+                encoder.append_constrained_whole_number(
+                    number_of_bytes - 1,
+                    0,
+                    self.number_of_indefinite_bits,
+                    self.number_of_indefinite_bits)
+
             encoder.append_constrained_whole_number(data,
                                                     self.minimum,
                                                     self.maximum,
-                                                    self.number_of_bits)
+                                                    number_of_bits)
 
     def decode(self, decoder):
         if self.has_extension_marker:
@@ -569,10 +612,19 @@ class Integer(Type):
             length = decoder.read_length_determinant()
             value = decoder.read_unconstrained_whole_number(length)
         else:
+            if self.number_of_indefinite_bits is None:
+                number_of_bits = self.number_of_bits
+            else:
+                number_of_bits = decoder.read_constrained_whole_number(
+                    0,
+                    self.number_of_indefinite_bits,
+                    self.number_of_indefinite_bits)
+                number_of_bits += 1
+                number_of_bits *= 8
+
             value = decoder.read_constrained_whole_number(self.minimum,
                                                           self.maximum,
-                                                          self.number_of_bits)
-            value += self.minimum
+                                                          number_of_bits)
 
         return value
 
@@ -724,7 +776,7 @@ class MembersType(Type):
     def decode_additions(self, decoder):
         # Presence bit field.
         length = decoder.read_normally_small_length()
-        presence_bits = decoder.read_integer(length)
+        presence_bits = decoder.read_non_negative_binary_integer(length)
         decoder.align()
         decoded = {}
 
@@ -805,7 +857,7 @@ class ArrayType(Type):
             self.number_of_bits = None
         else:
             size = maximum - minimum
-            self.number_of_bits = size_as_number_of_bits(size)
+            self.number_of_bits = integer_as_number_of_bits(size)
 
     def encode(self, data, encoder):
         encoder.align()
@@ -837,7 +889,8 @@ class ArrayType(Type):
             length = self.minimum
 
             if self.minimum != self.maximum:
-                length += decoder.read_integer(self.number_of_bits)
+                length += decoder.read_non_negative_binary_integer(
+                    self.number_of_bits)
 
         decoded = []
 
@@ -896,7 +949,7 @@ class BitString(Type):
             self.number_of_bits = None
         else:
             size = self.maximum - self.minimum
-            self.number_of_bits = size_as_number_of_bits(size)
+            self.number_of_bits = integer_as_number_of_bits(size)
 
     def encode(self, data, encoder):
         if self.number_of_bits is None:
@@ -916,7 +969,8 @@ class BitString(Type):
             number_of_bits = self.minimum
 
             if self.minimum != self.maximum:
-                number_of_bits += decoder.read_integer(self.number_of_bits)
+                number_of_bits += decoder.read_non_negative_binary_integer(
+                    self.number_of_bits)
 
         value = decoder.read_bits(number_of_bits)
 
@@ -937,7 +991,7 @@ class OctetString(Type):
             self.number_of_bits = None
         else:
             size = self.maximum - self.minimum
-            self.number_of_bits = size_as_number_of_bits(size)
+            self.number_of_bits = integer_as_number_of_bits(size)
 
     def encode(self, data, encoder):
         encoder.align()
@@ -959,7 +1013,8 @@ class OctetString(Type):
             length = self.minimum
 
             if self.minimum != self.maximum:
-                length += decoder.read_integer(self.number_of_bits)
+                length += decoder.read_non_negative_binary_integer(
+                    self.number_of_bits)
 
         return decoder.read_bits(8 * length)
 
@@ -1178,7 +1233,7 @@ class Choice(Type):
         index_to_member, name_to_index = self.create_maps(root_members)
         self.root_index_to_member = index_to_member
         self.root_name_to_index = name_to_index
-        self.root_number_of_bits = size_as_number_of_bits(len(root_members) - 1)
+        self.root_number_of_bits = integer_as_number_of_bits(len(root_members) - 1)
 
         # Optional additions.
         if additions is None:
@@ -1268,7 +1323,8 @@ class Choice(Type):
 
     def decode_root(self, decoder):
         if len(self.root_index_to_member) > 1:
-            index = decoder.read_integer(self.root_number_of_bits)
+            index = decoder.read_non_negative_binary_integer(
+                self.root_number_of_bits)
         else:
             index = 0
 
@@ -1340,7 +1396,7 @@ class Enumerated(Type):
         index_to_name, name_to_index = self.create_maps(root)
         self.root_index_to_name = index_to_name
         self.root_name_to_index = name_to_index
-        self.root_number_of_bits = size_as_number_of_bits(len(index_to_name) - 1)
+        self.root_number_of_bits = integer_as_number_of_bits(len(index_to_name) - 1)
 
         # Optional additions.
         if additions is None:
@@ -1400,7 +1456,7 @@ class Enumerated(Type):
                             index))
 
     def decode_root(self, decoder):
-        index = decoder.read_integer(self.root_number_of_bits)
+        index = decoder.read_non_negative_binary_integer(self.root_number_of_bits)
 
         try:
             name = self.root_index_to_name[index]

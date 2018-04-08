@@ -13,7 +13,7 @@ from . import EncodeError
 from . import DecodeError
 from . import compiler
 from .compiler import enum_values_split
-from .per import size_as_number_of_bits
+from .per import integer_as_number_of_bits
 from .ber import encode_real
 from .ber import decode_real
 
@@ -350,7 +350,7 @@ class KnownMultiplierStringType(Type):
             permitted_alphabet = self.PERMITTED_ALPHABET
 
         self.permitted_alphabet = permitted_alphabet
-        self.bits_per_character = size_as_number_of_bits(
+        self.bits_per_character = integer_as_number_of_bits(
             len(permitted_alphabet) - 1)
 
     def set_size_range(self, minimum, maximum, has_extension_marker):
@@ -362,7 +362,7 @@ class KnownMultiplierStringType(Type):
             self.number_of_bits = None
         else:
             size = maximum - minimum
-            self.number_of_bits = size_as_number_of_bits(size)
+            self.number_of_bits = integer_as_number_of_bits(size)
 
     def encode(self, data, encoder):
         encoded = data.encode('ascii')
@@ -454,7 +454,7 @@ class Integer(Type):
             self.number_of_bits = None
         else:
             size = self.maximum - self.minimum
-            self.number_of_bits = size_as_number_of_bits(size)
+            self.number_of_bits = integer_as_number_of_bits(size)
 
     def encode(self, data, encoder):
         if self.has_extension_marker:
@@ -706,7 +706,7 @@ class ArrayType(Type):
             self.number_of_bits = None
         else:
             size = maximum - minimum
-            self.number_of_bits = size_as_number_of_bits(size)
+            self.number_of_bits = integer_as_number_of_bits(size)
 
     def encode(self, data, encoder):
         if self.has_extension_marker:
@@ -793,7 +793,7 @@ class BitString(Type):
             self.number_of_bits = None
         else:
             size = self.maximum - self.minimum
-            self.number_of_bits = size_as_number_of_bits(size)
+            self.number_of_bits = integer_as_number_of_bits(size)
 
     def encode(self, data, encoder):
         if self.number_of_bits is None:
@@ -832,7 +832,7 @@ class OctetString(Type):
             self.number_of_bits = None
         else:
             size = self.maximum - self.minimum
-            self.number_of_bits = size_as_number_of_bits(size)
+            self.number_of_bits = integer_as_number_of_bits(size)
 
     def encode(self, data, encoder):
         if self.number_of_bits is None:
@@ -1025,7 +1025,7 @@ class Choice(Type):
         index_to_member, name_to_index = self.create_maps(root_members)
         self.root_index_to_member = index_to_member
         self.root_name_to_index = name_to_index
-        self.root_number_of_bits = size_as_number_of_bits(len(root_members) - 1)
+        self.root_number_of_bits = integer_as_number_of_bits(len(root_members) - 1)
 
         # Optional additions.
         if additions is None:
@@ -1184,7 +1184,7 @@ class Enumerated(Type):
         index_to_name, name_to_index = self.create_maps(root)
         self.root_index_to_name = index_to_name
         self.root_name_to_index = name_to_index
-        self.root_number_of_bits = size_as_number_of_bits(len(index_to_name) - 1)
+        self.root_number_of_bits = integer_as_number_of_bits(len(index_to_name) - 1)
 
         # Optional additions.
         if additions is None:
