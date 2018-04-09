@@ -201,7 +201,7 @@ Contributing
 Specifications
 ==============
 
-ASN.1 specifications released by ITU.
+ASN.1 specifications released by ITU and IETF.
 
 General
 -------
