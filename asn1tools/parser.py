@@ -737,7 +737,6 @@ def create_grammar():
 
     # Keywords.
     SEQUENCE = Keyword('SEQUENCE').setName('SEQUENCE')
-    SEQUENCE_OF = Keyword('SEQUENCE OF').setName('SEQUENCE OF')
     CHOICE = Keyword('CHOICE').setName('CHOICE')
     ENUMERATED = Keyword('ENUMERATED').setName('ENUMERATED')
     DEFINITIONS = Keyword('DEFINITIONS').setName('DEFINITIONS')
@@ -765,7 +764,6 @@ def create_grammar():
     APPLICATION = Keyword('APPLICATION').setName('APPLICATION')
     PRIVATE = Keyword('PRIVATE').setName('PRIVATE')
     SET = Keyword('SET').setName('SET')
-    SET_OF = Keyword('SET OF').setName('SET OF')
     ANY_DEFINED_BY = Keyword('ANY DEFINED BY').setName('ANY DEFINED BY')
     EXTENSIBILITY_IMPLIED = Keyword('EXTENSIBILITY IMPLIED').setName(
         'EXTENSIBILITY IMPLIED')
@@ -888,8 +886,6 @@ def create_grammar():
 
     value_field_reference = Combine(ampersand + value_reference)
     type_field_reference = Combine(ampersand + type_reference)
-
-    range_ = (word + range_separator + word)
 
     # ToDo: Remove size_paren as they are a workaround for
     #       SEQUENCE/SET OF.
@@ -1242,10 +1238,10 @@ def create_grammar():
     # X.680: 35. The character string types
 
     # X.680: 34. Notation for the external type
-    external_value = sequence_value
+    # external_value = sequence_value
 
     # X.680: 33. Notation for embedded-pdv type
-    embedded_pdv_value = sequence_value
+    # embedded_pdv_value = sequence_value
 
     # X.680: 32. Notation for relative object identifier type
     relative_oid_components = Group(number_form
@@ -1312,7 +1308,7 @@ def create_grammar():
     choice_value = (identifier + colon + value)
 
     # X.680: 27. Notation for the set-of types
-    set_of_value = NoMatch()
+    # set_of_value = NoMatch()
     set_of_type = (SET
                    + Group(Optional(size_paren))
                    + OF
@@ -1322,7 +1318,7 @@ def create_grammar():
     set_of_type.setName('SET OF')
 
     # X.680: 26. Notation for the set types
-    set_value = NoMatch()
+    # set_value = NoMatch()
     set_type = (SET
                 + left_brace
                 + Group(Optional(component_type_lists
@@ -1390,9 +1386,9 @@ def create_grammar():
     null_type = NULL
 
     # X.680: 22. Notation for the octetstring type
-    octet_string_value = (bstring
-                          | hstring
-                          | (CONTAINING + value))
+    # octet_string_value = (bstring
+    #                       | hstring
+    #                       | (CONTAINING + value))
     octet_string_type = OCTET_STRING
     octet_string_type.setName('OCTET STRING')
 
