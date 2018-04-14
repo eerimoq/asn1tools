@@ -18,8 +18,7 @@ from .per import Null
 from .per import Any
 from .per import Enumerated
 from .per import Recursive
-from .ber import encode_real
-from .ber import decode_real
+from .per import Real
 
 
 LOGGER = logging.getLogger(__name__)
@@ -100,25 +99,6 @@ class KnownMultiplierStringType(Type):
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__,
                                self.name)
-
-
-class Real(Type):
-
-    def __init__(self, name):
-        super(Real, self).__init__(name, 'REAL')
-
-    def encode(self, data, encoder):
-        encoded = encode_real(data)
-        encoder.append_length_determinant(len(encoded))
-        encoder.append_bytes(encoded)
-
-    def decode(self, decoder):
-        length = decoder.read_length_determinant()
-
-        return decode_real(decoder.read_bytes_aligned(length))
-
-    def __repr__(self):
-        return 'Real({})'.format(self.name)
 
 
 class Integer(Type):

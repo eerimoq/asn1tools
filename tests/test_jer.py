@@ -549,7 +549,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
              [
                  b'{',
                  b'    "a": {',
-                 b'        "c": 5, ',
+                 b'        "c": 5,',
                  b'        "b": true,',
                  b'        "c": 5',
                  b'        "b": true',
