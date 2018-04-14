@@ -68,8 +68,12 @@ def size_as_number_of_bytes(size):
         return number_of_bits // 8
 
 
-class DecodeChoiceError(Exception):
-    pass
+CLASS_PRIO = {
+    'UNIVERSAL': 0,
+    'APPLICATION': 1,
+    'CONTEXT_SPECIFIC': 2,
+    'PRIVATE': 3
+}
 
 
 class OutOfDataError(DecodeError):
@@ -79,14 +83,6 @@ class OutOfDataError(DecodeError):
             'out of data at bit offset {} ({}.{} bytes)'.format(
                 offset,
                 *divmod(offset, 8)))
-
-
-CLASS_PRIO = {
-    'UNIVERSAL': 0,
-    'APPLICATION': 1,
-    'CONTEXT_SPECIFIC': 2,
-    'PRIVATE': 3
-}
 
 
 class PermittedAlphabet(object):

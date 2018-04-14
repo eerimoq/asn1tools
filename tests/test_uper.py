@@ -1916,7 +1916,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         ]
 
         for type_name, encoded, message in datas:
-            with self.assertRaises(asn1tools.codecs.uper.OutOfDataError) as cm:
+            with self.assertRaises(asn1tools.codecs.per.OutOfDataError) as cm:
                 foo.decode(type_name, encoded)
 
             self.assertEqual(str(cm.exception), message)
