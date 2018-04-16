@@ -320,13 +320,8 @@ class Decoder(object):
         mask = ((1 << number_of_bits) - 1)
         value = ((self.value >> self.number_of_bits) & mask)
         value &= mask
-        value |= (0x80 << number_of_bits)
-        number_of_alignment_bits = (8 - (number_of_bits % 8))
-
-        if number_of_alignment_bits != 8:
-            value <<= number_of_alignment_bits
-
-        return binascii.unhexlify(hex(value)[4:].rstrip('L'))
+        
+        return bin(value).replace('0b', '').zfill(number_of_bits) + 'b'
 
     def read_non_negative_binary_integer(self, number_of_bits):
         """Read an integer value of given number of bits.

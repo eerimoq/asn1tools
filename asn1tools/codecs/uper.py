@@ -476,9 +476,7 @@ class BitString(Type):
                 number_of_bits += decoder.read_non_negative_binary_integer(
                     self.number_of_bits)
 
-        value = decoder.read_bits(number_of_bits)
-
-        return (value, number_of_bits)
+        return decoder.read_bits(number_of_bits)
 
     def __repr__(self):
         return 'BitString({})'.format(self.name)
