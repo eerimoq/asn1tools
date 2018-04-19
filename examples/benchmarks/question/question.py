@@ -83,7 +83,7 @@ with open(FOO_ASN_PATH) as fin:
 # The question to encode.
 question = {'id': 1, 'question': 'Is 1+1=3?'}
 
-print("Question to encode: {}".format(question))
+print("Question to encode:", question)
 
 # Encode and decode the question once for each codec.
 for codec in ['ber', 'der', 'jer', 'per', 'uper', 'xer']:
@@ -95,7 +95,7 @@ for codec in ['ber', 'der', 'jer', 'per', 'uper', 'xer']:
     print('{}:'.format(codec.upper()))
     print('Encoded: {} ({} bytes)'.format(hexlify(encoded).decode('ascii'),
                                           len(encoded)))
-    print('Decoded: {}'.format(decoded))
+    print('Decoded:', decoded)
 
 
 # Also encode using protocol buffers.

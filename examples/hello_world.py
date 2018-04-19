@@ -4,6 +4,7 @@ from __future__ import print_function
 from binascii import hexlify
 import asn1tools
 
+
 SPECIFICATION = '''
 HelloWorld DEFINITIONS ::= BEGIN
 
@@ -21,6 +22,6 @@ message = {'number': 2, 'text': u'Hi!'}
 encoded = hello_world.encode('Message', message)
 decoded = hello_world.decode('Message', encoded)
 
-print('Message: {}'.format(message))
-print('Encoded: {}'.format(hexlify(encoded).decode('ascii')))
-print('Decoded: {}'.format(decoded))
+print('Message:', message)
+print('Encoded:', hexlify(encoded).decode('ascii'))
+print('Decoded:', decoded)

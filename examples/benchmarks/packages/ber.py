@@ -348,7 +348,7 @@ def pycrate_encode_decode():
     except Exception as e:
         encode_time = float('inf')
         decode_time = float('inf')
-        print('pycrate error: {}'.format(str(e)))
+        print('pycrate error:', str(e))
 
     return encode_time, decode_time
 
