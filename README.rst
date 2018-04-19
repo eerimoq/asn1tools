@@ -150,6 +150,17 @@ Convert given encoded Question from UPER to XER (xml).
    </Question>
    >
 
+Convert given encoded Question from UPER to JER (json).
+
+.. code-block:: text
+
+   > asn1tools convert -i uper -o jer tests/files/foo.asn Question 01010993cd03156c5eb37e
+   {
+       "id": 1,
+       "question": "Is 1+1=3?"
+   }
+   >
+
 Continuously convert encoded Questions read from standard input. Any
 line that cannot be converted is printed as is, in this example the
 dates.
