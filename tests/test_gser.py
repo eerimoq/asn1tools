@@ -455,6 +455,45 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
         self.assertEqual(rrc.encode('BCCH-DL-SCH-Message', decoded, indent=2),
                          encoded)
 
+    def test_repr_all_types(self):
+        all_types = asn1tools.compile_files('tests/files/all_types.asn',
+                                            'gser')
+
+        self.assertEqual(repr(all_types.types['Boolean']), 'Boolean(Boolean)')
+        self.assertEqual(repr(all_types.types['Integer']), 'Integer(Integer)')
+        self.assertEqual(repr(all_types.types['Real']), 'Real(Real)')
+        self.assertEqual(repr(all_types.types['Bitstring']), 'BitString(Bitstring)')
+        self.assertEqual(repr(all_types.types['Octetstring']), 'OctetString(Octetstring)')
+        self.assertEqual(repr(all_types.types['Null']), 'Null(Null)')
+        self.assertEqual(repr(all_types.types['Objectidentifier']),
+                         'ObjectIdentifier(Objectidentifier)')
+        self.assertEqual(repr(all_types.types['Enumerated']), 'Enumerated(Enumerated)')
+        self.assertEqual(repr(all_types.types['Utf8string']), 'UTF8String(Utf8string)')
+        self.assertEqual(repr(all_types.types['Sequence']), 'Sequence(Sequence, [])')
+        self.assertEqual(repr(all_types.types['Set']), 'Set(Set, [])')
+        self.assertEqual(repr(all_types.types['Sequence2']),
+                         'Sequence(Sequence2, [Integer(a)])')
+        self.assertEqual(repr(all_types.types['Set2']), 'Set(Set2, [Integer(a)])')
+        self.assertEqual(repr(all_types.types['Numericstring']),
+                         'NumericString(Numericstring)')
+        self.assertEqual(repr(all_types.types['Printablestring']),
+                         'PrintableString(Printablestring)')
+        self.assertEqual(repr(all_types.types['Ia5string']), 'IA5String(Ia5string)')
+        self.assertEqual(repr(all_types.types['Universalstring']),
+                         'UniversalString(Universalstring)')
+        self.assertEqual(repr(all_types.types['Visiblestring']),
+                         'VisibleString(Visiblestring)')
+        self.assertEqual(repr(all_types.types['Generalstring']),
+                         'GeneralString(Generalstring)')
+        self.assertEqual(repr(all_types.types['Bmpstring']),
+                         'BMPString(Bmpstring)')
+        self.assertEqual(repr(all_types.types['Teletexstring']),
+                         'TeletexString(Teletexstring)')
+        self.assertEqual(repr(all_types.types['Utctime']), 'UTCTime(Utctime)')
+        self.assertEqual(repr(all_types.types['SequenceOf']),
+                         'SequenceOf(SequenceOf, Integer())')
+        self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
+
     def test_null(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "

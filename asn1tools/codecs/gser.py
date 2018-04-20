@@ -53,7 +53,7 @@ class Boolean(Type):
     def __init__(self, name):
         super(Boolean, self).__init__(name, 'BOOLEAN')
 
-    def encode(self, data, separator, indent):
+    def encode(self, data, _separator, _indent):
         return 'TRUE' if data else 'FALSE'
 
     def __repr__(self):
@@ -247,7 +247,7 @@ class GeneralString(Type):
     def __init__(self, name):
         super(GeneralString, self).__init__(name, 'GeneralString')
 
-    def encode(self, data, separator, indent):
+    def encode(self, data, _separator, _indent):
         return '"{}"'.format(data)
 
     def __repr__(self):
@@ -319,7 +319,7 @@ class ObjectIdentifier(Type):
     def __init__(self, name):
         super(ObjectIdentifier, self).__init__(name, 'OBJECT IDENTIFIER')
 
-    def encode(self, data, separator, indent):
+    def encode(self, data, _separator, _indent):
         return data
 
     def __repr__(self):
@@ -383,7 +383,7 @@ class Enumerated(Type):
         super(Enumerated, self).__init__(name, 'ENUMERATED')
         self.values = enum_values_as_dict(values)
 
-    def encode(self, data, separator, indent):
+    def encode(self, data, _separator, _indent):
         return data
 
     def __repr__(self):
@@ -392,7 +392,7 @@ class Enumerated(Type):
 
 class Recursive(Type):
 
-    def __init__(self, name, type_name, module_name):
+    def __init__(self, name, _type_name, _module_name):
         super(Recursive, self).__init__(name, 'RECURSIVE')
 
     def encode(self, data, separator, indent):
@@ -408,7 +408,6 @@ class CompiledType(compiler.CompiledType):
 
     def __init__(self, type_name, type_, constraints):
         super(CompiledType, self).__init__(constraints)
-        type_.name = ''
         self._value_name = type_name.lower()
         self._value_type = type_name
         self._type = type_
