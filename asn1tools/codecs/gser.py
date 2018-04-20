@@ -32,9 +32,6 @@ class Integer(Type):
     def encode(self, data, _separator, _indent):
         return str(data)
 
-    def decode(self, data):
-        raise NotImplementedError
-
     def __repr__(self):
         return 'Integer({})'.format(self.name)
 
@@ -45,9 +42,6 @@ class Real(Type):
         super(Real, self).__init__(name, 'REAL')
 
     def encode(self, data, separator, indent):
-        raise NotImplementedError
-
-    def decode(self, data):
         raise NotImplementedError
 
     def __repr__(self):
@@ -62,9 +56,6 @@ class Boolean(Type):
     def encode(self, data, separator, indent):
         return 'TRUE' if data else 'FALSE'
 
-    def decode(self, data):
-        raise NotImplementedError
-
     def __repr__(self):
         return 'Boolean({})'.format(self.name)
 
@@ -77,9 +68,6 @@ class IA5String(Type):
     def encode(self, data, _separator, _indent):
         return '"{}"'.format(data)
 
-    def decode(self, data):
-        raise NotImplementedError
-
     def __repr__(self):
         return 'IA5String({})'.format(self.name)
 
@@ -91,9 +79,6 @@ class NumericString(Type):
 
     def encode(self, data, _separator, _indent):
         return '"{}"'.format(data)
-
-    def decode(self, data):
-        raise NotImplementedError
 
     def __repr__(self):
         return 'NumericString({})'.format(self.name)
@@ -132,9 +117,6 @@ class Sequence(Type):
 
         return separator.join(['{' + encoded_members, '}'])
 
-    def decode(self, data):
-        raise NotImplementedError
-
     def __repr__(self):
         return 'Sequence({}, [{}])'.format(
             self.name,
@@ -148,9 +130,6 @@ class Set(Type):
         self.members = members
 
     def encode(self, data, separator, indent):
-        raise NotImplementedError
-
-    def decode(self, data):
         raise NotImplementedError
 
     def __repr__(self):
@@ -181,9 +160,6 @@ class SequenceOf(Type):
 
         return separator.join(['{' + encoded_members, '}'])
 
-    def decode(self, data):
-        raise NotImplementedError
-
     def __repr__(self):
         return 'SequenceOf({}, {})'.format(self.name,
                                            self.element_type)
@@ -196,9 +172,6 @@ class SetOf(Type):
         self.element_type = element_type
 
     def encode(self, data, separator, indent):
-        raise NotImplementedError
-
-    def decode(self, data):
         raise NotImplementedError
 
     def __repr__(self):
@@ -217,9 +190,6 @@ class BitString(Type):
 
         return "'{}'B".format(bin(encoded)[10:10 + data[1]]).upper()
 
-    def decode(self, data):
-        raise NotImplementedError
-
     def __repr__(self):
         return 'BitString({})'.format(self.name)
 
@@ -231,9 +201,6 @@ class OctetString(Type):
 
     def encode(self, data, _separator, _indent):
         return "'{}'H".format(binascii.hexlify(data).decode('ascii')).upper()
-
-    def decode(self, data):
-        raise NotImplementedError
 
     def __repr__(self):
         return 'OctetString({})'.format(self.name)
@@ -247,9 +214,6 @@ class PrintableString(Type):
     def encode(self, data, _separator, _indent):
         return '"{}"'.format(data)
 
-    def decode(self, data):
-        raise NotImplementedError
-
     def __repr__(self):
         return 'PrintableString({})'.format(self.name)
 
@@ -261,9 +225,6 @@ class UniversalString(Type):
 
     def encode(self, data, _separator, _indent):
         return '"{}"'.format(data)
-
-    def decode(self, data):
-        raise NotImplementedError
 
     def __repr__(self):
         return 'UniversalString({})'.format(self.name)
@@ -277,9 +238,6 @@ class VisibleString(Type):
     def encode(self, data, _separator, _indent):
         return '"{}"'.format(data)
 
-    def decode(self, data):
-        raise NotImplementedError
-
     def __repr__(self):
         return 'VisibleString({})'.format(self.name)
 
@@ -291,9 +249,6 @@ class GeneralString(Type):
 
     def encode(self, data, separator, indent):
         return '"{}"'.format(data)
-
-    def decode(self, data):
-        raise NotImplementedError
 
     def __repr__(self):
         return 'GeneralString({})'.format(self.name)
@@ -307,9 +262,6 @@ class UTF8String(Type):
     def encode(self, data, _separator, _indent):
         return '"{}"'.format(data)
 
-    def decode(self, data):
-        raise NotImplementedError
-
     def __repr__(self):
         return 'UTF8String({})'.format(self.name)
 
@@ -320,9 +272,6 @@ class BMPString(Type):
         super(BMPString, self).__init__(name, 'BMPString')
 
     def encode(self, data, separator, indent):
-        raise NotImplementedError
-
-    def decode(self, data):
         raise NotImplementedError
 
     def __repr__(self):
@@ -337,9 +286,6 @@ class UTCTime(Type):
     def encode(self, data, _separator, _indent):
         return '"{}"'.format(data)
 
-    def decode(self, data):
-        raise NotImplementedError
-
     def __repr__(self):
         return 'UTCTime({})'.format(self.name)
 
@@ -351,9 +297,6 @@ class GeneralizedTime(Type):
 
     def encode(self, data, _separator, _indent):
         return '"{}"'.format(data)
-
-    def decode(self, data):
-        raise NotImplementedError
 
     def __repr__(self):
         return 'GeneralizedTime({})'.format(self.name)
@@ -367,9 +310,6 @@ class TeletexString(Type):
     def encode(self, data, separator, indent):
         raise NotImplementedError
 
-    def decode(self, data):
-        raise NotImplementedError
-
     def __repr__(self):
         return 'TeletexString({})'.format(self.name)
 
@@ -381,9 +321,6 @@ class ObjectIdentifier(Type):
 
     def encode(self, data, separator, indent):
         return data
-
-    def decode(self, data):
-        raise NotImplementedError
 
     def __repr__(self):
         return 'ObjectIdentifier({})'.format(self.name)
@@ -410,9 +347,6 @@ class Choice(Type):
                 [member.name for member in self.members],
                 data[0]))
 
-    def decode(self, data):
-        raise NotImplementedError
-
     def __repr__(self):
         return 'Choice({}, [{}])'.format(
             self.name,
@@ -427,9 +361,6 @@ class Null(Type):
     def encode(self, _data, _separator, _indent):
         return 'NULL'
 
-    def decode(self, data):
-        raise NotImplementedError
-
     def __repr__(self):
         return 'Null({})'.format(self.name)
 
@@ -440,9 +371,6 @@ class Any(Type):
         super(Any, self).__init__(name, 'ANY')
 
     def encode(self, _, encoder):
-        raise NotImplementedError
-
-    def decode(self, data):
         raise NotImplementedError
 
     def __repr__(self):
@@ -458,9 +386,6 @@ class Enumerated(Type):
     def encode(self, data, separator, indent):
         return data
 
-    def decode(self, data):
-        raise NotImplementedError
-
     def __repr__(self):
         return 'Enumerated({})'.format(self.name)
 
@@ -471,11 +396,6 @@ class Recursive(Type):
         super(Recursive, self).__init__(name, 'RECURSIVE')
 
     def encode(self, data, separator, indent):
-        raise NotImplementedError(
-            "Recursive types are not yet implemented (type '{}').".format(
-                self.type_name))
-
-    def decode(self, data):
         raise NotImplementedError(
             "Recursive types are not yet implemented (type '{}').".format(
                 self.type_name))
@@ -506,7 +426,7 @@ class CompiledType(compiler.CompiledType):
         return encoded.encode('utf-8')
 
     def decode(self, data):
-        return self._type.decode(data)
+        raise NotImplementedError('GSER decoding is not implemented.')
 
     def __repr__(self):
         return repr(self._type)
