@@ -1447,7 +1447,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
              b'\x0a\x81\x00\xe9\x02\x92\xe3\x2a\xc6\x85\x59'),
             ('A',
              0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000001,
-             b'\x0a\x81\xfe\xae\x13\xe4\x97\x06\x5c\xd6\x1f'),
+             b'\x0a\x81\xfe\xae\x13\xe4\x97\x06\x5c\xd6\x1f')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -1464,7 +1464,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         datas = [
             ('A',
              '010203040506Z',
-             b'\x0d\x60\xc5\x83\x26\x0c\xd8\x34\x60\xd5\x83\x6b\x40'),
+             b'\x0d\x60\xc5\x83\x26\x0c\xd8\x34\x60\xd5\x83\x6b\x40')
         ]
 
         for type_name, decoded, encoded in datas:

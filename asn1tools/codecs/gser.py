@@ -4,6 +4,7 @@
 
 import binascii
 import logging
+import math
 
 from ..parser import EXTENSION_MARKER
 from . import EncodeError
@@ -41,8 +42,19 @@ class Real(Type):
     def __init__(self, name):
         super(Real, self).__init__(name, 'REAL')
 
-    def encode(self, data, separator, indent):
-        raise NotImplementedError
+    def encode(self, data, _separator, _indent):
+        if data == float('inf'):
+            data = 'PLUS-INFINITY'
+        elif data == float('-inf'):
+            data = 'MINUS-INFINITY'
+        elif math.isnan(data):
+            raise EncodeError('cannot encode floating point number NaN')
+        elif data == 0.0:
+            data = '0'
+        else:
+            data = '{}E0'.format(data)
+
+        return data
 
     def __repr__(self):
         return 'Real({})'.format(self.name)

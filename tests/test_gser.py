@@ -572,6 +572,28 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
 
         self.assertEqual(foo.encode('A', decoded), encoded)
 
+    def test_real(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= REAL "
+            "END",
+            'gser')
+
+        datas = [
+            ('A',                     0.0, b'a A ::= 0'),
+            ('A',            float('inf'), b'a A ::= PLUS-INFINITY'),
+            ('A',           float('-inf'), b'a A ::= MINUS-INFINITY'),
+            ('A',                     1.0, b'a A ::= 1.0E0'),
+            ('A',                     1.1, b'a A ::= 1.1E0'),
+            ('A',               1234.5678, b'a A ::= 1234.5678E0'),
+            ('A',                       8, b'a A ::= 8E0'),
+            ('A',                   0.625, b'a A ::= 0.625E0')
+        ]
+
+        for name, decoded, encoded in datas:
+            self.assertEqual(foo.encode(name, decoded), encoded)
+
 
 if __name__ == '__main__':
     unittest.main()
