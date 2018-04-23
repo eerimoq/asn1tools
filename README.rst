@@ -27,6 +27,11 @@ Project homepage: https://github.com/eerimoq/asn1tools
 
 Documentation: http://asn1tools.readthedocs.org/en/latest
 
+Known limitations
+=================
+
+- The CLASS keyword and its friends are not supported.
+
 Installation
 ============
 
