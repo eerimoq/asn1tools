@@ -1192,8 +1192,10 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         with self.assertRaises(NotImplementedError):
             foo.encode('A', {'a': False, 'b': 16384 * u'0'})
 
-        with self.assertRaises(NotImplementedError):
+        with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('A', b'\x70\x00\x00\x00')
+
+        self.assertEqual(str(cm.exception), 'b: Bad length determinant type 0xc0.')
 
     def test_ia5_string(self):
         foo = asn1tools.compile_string(
@@ -1235,7 +1237,37 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('D',
              'HejHoppHappHippAbcde',
              b'\x03\x23\x2e\xa9\x1b\xf8\x70\x91\x87\x87\x09\x1a\x78\x70\x83\x8b'
-             b'\x1e\x4c\xa0')
+             b'\x1e\x4c\xa0'),
+            ('A',
+             1638 * '1234567890' + '123',
+             b'\xbf\xff'
+             + 409 * (b'\x62\xc9\x9b\x46\xad\x9b\xb8\x72\xc1\x8b'
+                      b'\x26\x6d\x1a\xb6\x6e\xe1\xcb\x06\x2c\x99'
+                      b'\xb4\x6a\xd9\xbb\x87\x2c\x18\xb2\x66\xd1'
+                      b'\xab\x66\xee\x1c\xb0')
+             + b'\x62\xc9\x9b\x46\xad\x9b\xb8\x72\xc1\x8b\x26\x6d\x1a\xb6\x6e\xe1'
+             + b'\xcb\x06\x2c\x99\x80'),
+            # ('A',
+            #  1638 * '1234567890' + '1234',
+            #  b'\xc1'
+            #  + 409 * (b'\x62\xc9\x9b\x46\xad\x9b\xb8\x72\xc1\x8b'
+            #           b'\x26\x6d\x1a\xb6\x6e\xe1\xcb\x06\x2c\x99'
+            #           b'\xb4\x6a\xd9\xbb\x87\x2c\x18\xb2\x66\xd1'
+            #           b'\xab\x66\xee\x1c\xb0')
+            #  + b'\x62\xc9\x9b\x46\xad\x9b\xb8\x72\xc1\x8b\x26\x6d\x1a\xb6\x6e\xe1'
+            #  + b'\xcb\x06\x2c\x99\xb4'
+            #  + b'\x00'),
+            # ('A',
+            #  1638 * '1234567890' + '12345',
+            #  b'\xc1'
+            #  + 409 * (b'\x62\xc9\x9b\x46\xad\x9b\xb8\x72\xc1\x8b'
+            #           b'\x26\x6d\x1a\xb6\x6e\xe1\xcb\x06\x2c\x99'
+            #           b'\xb4\x6a\xd9\xbb\x87\x2c\x18\xb2\x66\xd1'
+            #           b'\xab\x66\xee\x1c\xb0')
+            #  + b'\x62\xc9\x9b\x46\xad\x9b\xb8\x72\xc1\x8b\x26\x6d\x1a\xb6\x6e\xe1'
+            #  + b'\xcb\x06\x2c\x99\xb4'
+            #  + b'\x01'
+            #  + b'\x6a')
         ]
 
         for type_name, decoded, encoded in datas:
