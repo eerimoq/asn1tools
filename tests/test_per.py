@@ -1411,6 +1411,12 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "  b OCTET STRING (SIZE(1)), "
             "  c OCTET STRING (SIZE(2)) "
             "} "
+            "G ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b OCTET STRING (SIZE(3)) "
+            "} "
+            "H ::= OCTET STRING (SIZE (65535)) "
+            "I ::= OCTET STRING (SIZE (65536)) "
             "END",
             'per')
 
@@ -1424,7 +1430,24 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('E', {'a': True, 'b': b'\x00\x01\x02'}, b'\x80\x03\x00\x01\x02'),
             ('F',
              {'a': True, 'b': b'\x12', 'c': b'\x34\x56'},
-             b'\x89\x1a\x2b\x00')
+             b'\x89\x1a\x2b\x00'),
+            ('G', {'a': True, 'b': b'\x00\x01\x02'}, b'\x80\x00\x01\x02'),
+            ('H',     32767 * b'\x01\x02' + b'\x01', 32767 * b'\x01\x02' + b'\x01'),
+            # ('I',
+            #  32768 * b'\x01\x02',
+            #  b'\xc4' + 32768 * b'\x01\x02'
+            #  + b'\x00'),
+            ('A',
+             4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02',
+             b'\xbf\xff' + 4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02'),
+            # ('A',
+            #  4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03',
+            #  b'\xc1' + 4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03'
+            #  + b'\x00'),
+            # ('A',
+            #  4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03\x00',
+            #  b'\xc1' + 4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03'
+            #  + b'\x01' + b'\x00')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -1444,19 +1467,19 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
              b'\xbf\xff'
              + 1638 * b'\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'
              + b'\x31\x32\x33'),
-            #('A',
-            # 1638 * '1234567890' + '1234',
-            # b'\xc1'
-            # + 1638 * b'\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'
-            # + b'\x31\x32\x33\x34'
-            # + b'\x00'),
-            #('A',
-            # 1638 * '1234567890' + '12345',
-            # b'\xc1'
-            # + 1638 * b'\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'
-            # + b'\x31\x32\x33\x34'
-            # + b'\x01'
-            # + b'\x35')
+            # ('A',
+            #  1638 * '1234567890' + '1234',
+            #  b'\xc1'
+            #  + 1638 * b'\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'
+            #  + b'\x31\x32\x33\x34'
+            #  + b'\x00'),
+            # ('A',
+            #  1638 * '1234567890' + '12345',
+            #  b'\xc1'
+            #  + 1638 * b'\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'
+            #  + b'\x31\x32\x33\x34'
+            #  + b'\x01'
+            #  + b'\x35')
         ]
 
         for type_name, decoded, encoded in datas:

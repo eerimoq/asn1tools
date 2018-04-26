@@ -1007,7 +1007,11 @@ class OctetString(Type):
             self.number_of_bits = None
         else:
             size = self.maximum - self.minimum
-            self.number_of_bits = integer_as_number_of_bits(size)
+
+            if size == 0 and self.maximum >= 65536:
+                self.number_of_bits = None
+            else:
+                self.number_of_bits = integer_as_number_of_bits(size)
 
     def encode(self, data, encoder):
         align = True
@@ -1018,7 +1022,7 @@ class OctetString(Type):
         elif self.minimum != self.maximum:
             encoder.append_non_negative_binary_integer(len(data) - self.minimum,
                                                        self.number_of_bits)
-        else:
+        elif self.maximum <= 2:
             align = False
 
         if align:
@@ -1038,7 +1042,7 @@ class OctetString(Type):
             if self.minimum != self.maximum:
                 length += decoder.read_non_negative_binary_integer(
                     self.number_of_bits)
-            else:
+            elif self.maximum <= 2:
                 align = False
 
         if align:
