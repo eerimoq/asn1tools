@@ -1,10 +1,17 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
-import asn1tools
+import re
+
+
+def find_version():
+    return re.search(r"^__version__ = '(.*)'$",
+                     open('asn1tools/__init__.py', 'r').read(),
+                     re.MULTILINE).group(1)
+
 
 setup(name='asn1tools',
-      version=asn1tools.__version__,
+      version=find_version(),
       description='ASN.1 parsing, encoding and decoding.',
       long_description=open('README.rst', 'r').read(),
       author='Erik Moqvist',
