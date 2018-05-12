@@ -63,8 +63,7 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(all_types, type_name, decoded, encoded)
 
-        with self.assertRaises(NotImplementedError):
-            all_types.encode('Sequence12', {'a': [{'a': []}]})
+        all_types.encode('Sequence12', {'a': [{'a': []}]})
 
         # ToDo: Should return {'a': [{'a': []}]}
         self.assertEqual(

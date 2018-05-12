@@ -1269,16 +1269,25 @@ class Recursive(Type):
         super(Recursive, self).__init__(name, 'RECURSIVE', None)
         self.type_name = type_name
         self.module_name = module_name
+        self._tag_number = None
+        self._tag_flags = None
+        self._inner = None
 
-    def encode(self, _data, _encoded):
-        raise NotImplementedError(
-            "Recursive types are not yet implemented (type '{}').".format(
-                self.type_name))
+    def set_tag(self, number, flags):
+        self._tag_number = number
+        self._tag_flags = flags
 
-    def decode(self, _data, _offset):
-        raise NotImplementedError(
-            "Recursive types are not yet implemented (type '{}').".format(
-                self.type_name))
+    def set_inner_type(self, inner):
+        self._inner = copy(inner)
+
+        if self._tag_number is not None:
+            self._inner.set_tag(self._tag_number, self._tag_flags)
+
+    def encode(self, data, encoded):
+        self._inner.encode(data, encoded)
+
+    def decode(self, data, offset):
+        return self._inner.decode(data, offset)
 
     def __repr__(self):
         return 'Recursive({})'.format(self.name)
@@ -1289,6 +1298,10 @@ class CompiledType(compiler.CompiledType):
     def __init__(self, type_, constraints):
         super(CompiledType, self).__init__(constraints)
         self._type = type_
+
+    @property
+    def type(self):
+        return self._type
 
     def encode(self, data):
         encoded = bytearray()
@@ -1401,6 +1414,7 @@ class Compiler(compiler.Compiler):
                 compiled = Recursive(name,
                                      type_name,
                                      module_name)
+                self.recurvise_types.append(compiled)
             else:
                 self.types_backtrace_push(type_name)
                 compiled = self.compile_type(

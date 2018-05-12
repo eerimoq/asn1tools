@@ -862,24 +862,26 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                     'filter': (
                         'and',
                         [
-                            {
-                                'substrings': {
+                            (
+                                'substrings',
+                                {
                                     'type': b'\x63\x6e',
-                                    'substrings': {
-                                        'any': b'\x66\x72\x65\x64'
-                                    }
+                                    'substrings': [
+                                        ('any', b'\x66\x72\x65\x64')
+                                    ]
                                 }
-                            },
-                            {
-                                'equalityMatch': {
+                            ),
+                            (
+                                'equalityMatch',
+                                {
                                     'attributeDesc': b'\x64\x6e',
                                     'assertionValue': b'\x6a\x6f\x65'
                                 }
-                            }
+                            )
                         ]
                     ),
-                    'attributes': {
-                    }
+                    'attributes': [
+                    ]
                 }
             )
         }
@@ -891,11 +893,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             b'\x6a\x6f\x65\x30\x00'
         )
 
-        with self.assertRaises(NotImplementedError) as cm:
-            self.assert_encode_decode(rfc4511, 'LDAPMessage', decoded, encoded)
-
-        self.assertEqual(str(cm.exception),
-                         "Recursive types are not yet implemented (type 'Filter').")
+        self.assert_encode_decode(rfc4511, 'LDAPMessage', decoded, encoded)
 
         # A search result done message.
         decoded = {
@@ -1386,13 +1384,12 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         self.assertEqual(all_types.encode('Real', float('nan')), encoded)
         self.assertTrue(math.isnan(all_types.decode('Real', encoded)))
 
-        with self.assertRaises(NotImplementedError):
-            all_types.encode('Sequence12', {'a': [{'a': []}]})
+        all_types.encode('Sequence12', {'a': [{'a': []}]})
 
         # ToDo: Should return {'a': [{'a': []}]}
         self.assertEqual(
-            all_types.decode('Sequence12', b'\x30\x04\xa0\x02\x30\x00'),
-            {})
+            all_types.decode('Sequence12', b'\x30\x04\x30\x02\x30\x00'),
+            {'a': [{}]})
 
     def test_all_types_automatic_tags(self):
         all_types = asn1tools.compile_files(
@@ -2406,6 +2403,12 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             "  a D, "
             "  b INTEGER "
             "} "
+            "S ::= SEQUENCE { "
+            "  a INTEGER OPTIONAL "
+            "} "
+            "T ::= SEQUENCE { "
+            "  a T OPTIONAL "
+            "} "
             "END",
             'ber')
 
@@ -2414,7 +2417,10 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('B',                          {'a': 0}, b'\x30\x00'),
             ('N',                       {'a': True}, b'\x30\x00'),
             ('P',                                {}, b'\x30\x00'),
+            ('S',                                {}, b'\x30\x00'),
+            ('T',                                {}, b'\x30\x00'),
             ('O',                       {'a': True}, b'\x30\x00'),
+            ('T',                         {'a': {}}, b'\x30\x02\xa0\x00'),
             ('B',                          {'a': 1}, b'\x30\x03\x80\x01\x01'),
             ('C',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
             ('D',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
@@ -2428,6 +2434,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('N',                      {'a': False}, b'\x30\x03\x80\x01\x00'),
             ('O',                      {'a': False}, b'\x30\x03\x80\x01\x00'),
             ('P',            {'a': True, 'b': True}, b'\x30\x03\x80\x01\xff'),
+            ('S',                          {'a': 1}, b'\x30\x03\x80\x01\x01'),
             ('P',
              {'a': True, 'b': False},
              b'\x30\x06\x80\x01\xff\x81\x01\x00'),

@@ -39,6 +39,7 @@ class Compiler(object):
     def __init__(self, specification):
         self._specification = specification
         self._types_backtrace = []
+        self.recurvise_types = []
 
     def types_backtrace_push(self, type_name):
         self._types_backtrace.append(type_name)
@@ -69,6 +70,11 @@ class Compiler(object):
                     compiled[module_name] = {}
 
                 compiled[module_name][type_name] = compiled_type
+
+        for recursive_type in self.recurvise_types:
+            compiled_module = compiled[recursive_type.module_name]
+            inner_type = compiled_module[recursive_type.type_name].type
+            recursive_type.set_inner_type(inner_type)
 
         return compiled
 

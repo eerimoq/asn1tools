@@ -622,6 +622,7 @@ class Compiler(ber.Compiler):
                 compiled = Recursive(name,
                                      type_name,
                                      module_name)
+                self.recurvise_types.append(compiled)
             else:
                 self.types_backtrace_push(type_name)
                 compiled = self.compile_type(
