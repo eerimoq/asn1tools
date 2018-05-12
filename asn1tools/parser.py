@@ -28,17 +28,19 @@ from pyparsing import Combine
 from pyparsing import ParseResults
 from pyparsing import lineno
 
+from .errors import Error
+
 
 LOGGER = logging.getLogger(__name__)
 
 EXTENSION_MARKER = None
 
 
-class ParseError(Exception):
+class ParseError(Error):
     pass
 
 
-class InternalParserError(Exception):
+class InternalParserError(Error):
     pass
 
 
@@ -86,7 +88,7 @@ def merge_dicts(dicts):
 def convert_integer(_s, _l, tokens):
     try:
         return int(tokens[0])
-    except Exception:
+    except (IndexError, ValueError):
         return tokens
 
 

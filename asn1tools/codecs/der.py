@@ -24,10 +24,6 @@ from .ber import Choice
 from .ber import Recursive
 
 
-class DecodeChoiceError(Exception):
-    pass
-
-
 class Type(object):
 
     def __init__(self, name, type_name, number, flags=0):

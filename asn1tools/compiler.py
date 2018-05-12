@@ -95,8 +95,8 @@ class Specification(object):
         """
 
         if name not in self._types:
-            raise EncodeError("type '{}' not found in types dictionary".format(
-                name))
+            raise EncodeError(
+                "type '{}' not found in types dictionary".format(name))
 
         return self._types[name].encode(data, **kwargs)
 
@@ -110,8 +110,8 @@ class Specification(object):
         """
 
         if name not in self._types:
-            raise DecodeError("type '{}' not found in types dictionary".format(
-                name))
+            raise DecodeError(
+                "type '{}' not found in types dictionary".format(name))
 
         return self._types[name].decode(data)
 
@@ -142,8 +142,7 @@ class Specification(object):
 
         if name not in self._types:
             raise ConstraintsError(
-                "type '{}' not found in types dictionary".format(
-                    name))
+                "type '{}' not found in types dictionary".format(name))
 
         return self._types[name].check_constraints(data)
 

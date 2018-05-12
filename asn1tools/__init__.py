@@ -22,6 +22,7 @@ from .compiler import pre_process_dict
 from .parser import parse_string
 from .parser import parse_files
 from .parser import ParseError
+from .errors import Error
 from .errors import EncodeError
 from .errors import DecodeError
 from .errors import CompileError
@@ -32,7 +33,7 @@ __author__ = 'Erik Moqvist'
 __version__ = '0.79.0'
 
 
-class ArgumentParserError(Exception):
+class ArgumentParserError(Error):
     pass
 
 

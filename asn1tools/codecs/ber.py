@@ -6,6 +6,7 @@ import math
 import binascii
 from copy import copy
 
+from ..errors import Error
 from ..parser import EXTENSION_MARKER
 from . import EncodeError
 from . import DecodeError
@@ -59,7 +60,7 @@ class Tag(object):
     BMP_STRING        = 0x1e
 
 
-class DecodeChoiceError(Exception):
+class DecodeChoiceError(Error):
     pass
 
 

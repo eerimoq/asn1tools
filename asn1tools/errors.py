@@ -3,25 +3,31 @@
 """
 
 
-class CompileError(Exception):
+class Error(Exception):
+    """Base exception of all asn1tools exceptions.
+
+    """
+
+
+class CompileError(Error):
     """General ASN.1 compile error.
 
     """
 
 
-class EncodeError(Exception):
+class EncodeError(Error):
     """General ASN.1 encode error.
 
     """
 
 
-class DecodeError(Exception):
+class DecodeError(Error):
     """General ASN.1 decode error.
 
     """
 
 
-class ConstraintsError(Exception):
+class ConstraintsError(Error):
     """General ASN.1 constraints.
 
     """
