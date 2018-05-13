@@ -4,6 +4,7 @@
 
 import logging
 import re
+import sys
 
 from pyparsing import Literal
 from pyparsing import Keyword
@@ -1684,7 +1685,7 @@ def parse_string(string):
     return tokens[0]
 
 
-def parse_files(filenames):
+def parse_files(filenames, encoding='utf-8'):
     """Parse given ASN.1 specification file(s) and return a dictionary of
     its/their contents.
 
@@ -1698,8 +1699,13 @@ def parse_files(filenames):
     string = ''
 
     for filename in filenames:
-        with open(filename, 'r') as fin:
-            string += fin.read()
-            string += '\n'
+        if sys.version_info[0] < 3:
+            with open(filename, 'r') as fin:
+                string += fin.read()
+                string += '\n'
+        else:
+            with open(filename, 'r', encoding=encoding, errors='replace') as fin:
+                string += fin.read()
+                string += '\n'
 
     return parse_string(string)
