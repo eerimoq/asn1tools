@@ -1144,6 +1144,15 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "  a D, "
             "  b INTEGER "
             "} "
+            "S ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b SEQUENCE { "
+            "    a BOOLEAN, "
+            "    b BOOLEAN OPTIONAL, "
+            "    ... "
+            "  } "
+            "} "
             "END",
             'per')
 
@@ -1188,7 +1197,10 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('Q',      {'a': {'a': True}, 'b': 100}, b'\x40\x01\x64'),
             ('R',
              {'a': {'a': True, 'b': True}, 'b': 100},
-             b'\xc0\x40\x01\x80\x01\x64')
+             b'\xc0\x40\x01\x80\x01\x64'),
+            ('S',
+             {'a': True, 'b': {'a': True, 'b': True}},
+             b'\xc0\x40\x01\x70')
         ]
 
         for type_name, decoded, encoded in datas:

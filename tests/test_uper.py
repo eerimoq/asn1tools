@@ -1677,6 +1677,15 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "  a D, "
             "  b INTEGER "
             "} "
+            "S ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b SEQUENCE { "
+            "    a BOOLEAN, "
+            "    b BOOLEAN OPTIONAL, "
+            "    ... "
+            "  } "
+            "} "
             "END",
             'uper')
 
@@ -1721,7 +1730,10 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('Q',      {'a': {'a': True}, 'b': 100}, b'\x40\x59\x00'),
             ('R',
              {'a': {'a': True, 'b': True}, 'b': 100},
-             b'\xc0\x40\x60\x00\x59\x00')
+             b'\xc0\x40\x60\x00\x59\x00'),
+            ('S',
+             {'a': True, 'b': {'a': True, 'b': True}},
+             b'\xc0\x40\x5c\x00')
         ]
 
         for type_name, decoded, encoded in datas:

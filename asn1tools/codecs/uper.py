@@ -195,7 +195,7 @@ class MembersType(Type):
                 presence_bits <<= 1
                 addition_encoder = Encoder()
 
-                if isinstance(addition, Sequence):
+                if isinstance(addition, AdditionGroup):
                     addition.encode_addition_group(data, addition_encoder)
                 else:
                     self.encode_member(addition,
@@ -299,7 +299,7 @@ class MembersType(Type):
                 if i < len(self.additions):
                     addition = self.additions[i]
 
-                    if isinstance(addition, Sequence):
+                    if isinstance(addition, AdditionGroup):
                         decoded.update(addition.decode(decoder))
                     else:
                         try:
@@ -346,6 +346,10 @@ class Set(MembersType):
                                   root_members,
                                   additions,
                                   'SET')
+
+
+class AdditionGroup(Sequence):
+    pass
 
 
 class ArrayType(Type):
@@ -850,9 +854,9 @@ class Compiler(per.Compiler):
             else:
                 compiled_member, _ = self.compile_members(member,
                                                           module_name)
-                compiled_group = Sequence('ExtensionAddition',
-                                          compiled_member,
-                                          None)
+                compiled_group = AdditionGroup('ExtensionAddition',
+                                               compiled_member,
+                                               None)
                 additions.append(compiled_group)
         else:
             compiled_member = self.compile_member(member,
