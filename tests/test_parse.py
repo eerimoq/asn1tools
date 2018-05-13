@@ -443,6 +443,9 @@ class Asn1ToolsParseTest(unittest.TestCase):
         self.assertEqual(str(cm.exception),
                          "Duplicated ENUMERATED number 0 at line 1.")
 
+    def test_parse_encoding(self):
+        asn1tools.parse_files('tests/files/foo.asn', encoding='ascii')
+
 
 if __name__ == '__main__':
     unittest.main()

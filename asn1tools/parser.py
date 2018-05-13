@@ -1689,6 +1689,9 @@ def parse_files(filenames, encoding='utf-8'):
     """Parse given ASN.1 specification file(s) and return a dictionary of
     its/their contents.
 
+    `encoding` is the text encoding. This argument is passed to the
+    built-in function `open()`.
+
     >>> foo = asn1tools.parse_files('foo.asn')
 
     """

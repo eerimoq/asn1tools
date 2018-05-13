@@ -228,18 +228,24 @@ def compile_string(string, codec='ber', any_defined_by_choices=None):
                         any_defined_by_choices)
 
 
-def compile_files(filenames, codec='ber', any_defined_by_choices=None):
+def compile_files(filenames,
+                  codec='ber',
+                  any_defined_by_choices=None,
+                  encoding='utf-8'):
     """Compile given ASN.1 specification file(s) and return a
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec
     `codec`. `codec` may be one of ``'ber'``, ``'der'``, ``'gser'``,
     ``'jer'``, ``'per'``, ``'uper'`` and ``'xer'``.
 
+    `encoding` is the text encoding. This argument is passed to the
+    built-in function `open()`.
+
     >>> foo = asn1tools.compile_files('foo.asn')
 
     """
 
-    return compile_dict(parse_files(filenames),
+    return compile_dict(parse_files(filenames, encoding),
                         codec,
                         any_defined_by_choices)
 

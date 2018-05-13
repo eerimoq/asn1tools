@@ -68,6 +68,9 @@ class Asn1ToolsCompileTest(unittest.TestCase):
             str(cm.exception),
             "type 'BadTypeName' not found in types dictionary")
 
+    def test_encoding(self):
+        asn1tools.compile_files('tests/files/foo.asn', encoding='ascii')
+
     def test_missing_type(self):
         with self.assertRaises(asn1tools.CompileError) as cm:
             asn1tools.compile_string('A DEFINITIONS ::= BEGIN A ::= B END')
