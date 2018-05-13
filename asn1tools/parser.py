@@ -1704,7 +1704,7 @@ def parse_files(filenames, encoding='utf-8'):
                 string += fin.read()
                 string += '\n'
         else:
-            with open(filename, 'r', encoding=encoding) as fin:
+            with open(filename, 'r', encoding=encoding, errors='replace') as fin:
                 string += fin.read()
                 string += '\n'
 
