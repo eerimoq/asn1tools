@@ -111,6 +111,8 @@ readable text).
    Commands:
      compile
      convert
+     exit
+     help
    $ compile tests/files/foo.asn
    $ convert Question 300e0201011609497320312b313d333f
    question Question ::= {
