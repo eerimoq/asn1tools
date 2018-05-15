@@ -1008,20 +1008,6 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assert_encode_decode(its, 'Traces', decoded, encoded)
 
-    def test_encode_all_types(self):
-        all_types = asn1tools.compile_files('tests/files/all_types.asn',
-                                            'uper')
-
-        with self.assertRaises(NotImplementedError):
-            all_types.encode('Sequence12', {'a': [{'a': []}]})
-
-    def test_decode_all_types(self):
-        all_types = asn1tools.compile_files('tests/files/all_types.asn',
-                                            'uper')
-
-        with self.assertRaises(NotImplementedError):
-            all_types.decode('Sequence12', b'\x80\x80')
-
     def test_repr_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
                                             'uper')
@@ -1686,6 +1672,9 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "    ... "
             "  } "
             "} "
+            "T ::= SEQUENCE { "
+            "  a SEQUENCE OF T OPTIONAL "
+            "} "
             "END",
             'uper')
 
@@ -1733,7 +1722,9 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
              b'\xc0\x40\x60\x00\x59\x00'),
             ('S',
              {'a': True, 'b': {'a': True, 'b': True}},
-             b'\xc0\x40\x5c\x00')
+             b'\xc0\x40\x5c\x00'),
+            ('T',                       {'a': [{}]}, b'\x80\x80'),
+            ('T',                {'a': [{'a': []}]}, b'\x80\xc0\x00')
         ]
 
         for type_name, decoded, encoded in datas:

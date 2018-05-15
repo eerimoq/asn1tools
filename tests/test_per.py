@@ -1153,6 +1153,9 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "    ... "
             "  } "
             "} "
+            "T ::= SEQUENCE { "
+            "  a SEQUENCE OF T OPTIONAL "
+            "} "
             "END",
             'per')
 
@@ -1200,7 +1203,9 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
              b'\xc0\x40\x01\x80\x01\x64'),
             ('S',
              {'a': True, 'b': {'a': True, 'b': True}},
-             b'\xc0\x40\x01\x70')
+             b'\xc0\x40\x01\x70'),
+            ('T',                       {'a': [{}]}, b'\x80\x01\x00'),
+            ('T',                {'a': [{'a': []}]}, b'\x80\x01\x80\x00')
         ]
 
         for type_name, decoded, encoded in datas:

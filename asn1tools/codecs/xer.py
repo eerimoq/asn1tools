@@ -558,16 +558,16 @@ class Recursive(Type):
         super(Recursive, self).__init__(name, 'RECURSIVE')
         self.type_name = type_name
         self.module_name = module_name
+        self._inner = None
+
+    def set_inner_type(self, inner):
+        self._inner = inner
 
     def encode(self, data):
-        raise NotImplementedError(
-            "Recursive types are not yet implemented (type '{}').".format(
-                self.type_name))
+        return self._inner.encode(data)
 
     def decode(self, element):
-        raise NotImplementedError(
-            "Recursive types are not yet implemented (type '{}').".format(
-                self.type_name))
+        return self._inner.decode(element)
 
     def __repr__(self):
         return 'Recursive({})'.format(self.name)
@@ -578,6 +578,10 @@ class CompiledType(compiler.CompiledType):
     def __init__(self, type_, constraints):
         super(CompiledType, self).__init__(constraints)
         self._type = type_
+
+    @property
+    def type(self):
+        return self._type
 
     def encode(self, data, indent=None):
         element = self._type.encode(data)
@@ -687,6 +691,7 @@ class Compiler(compiler.Compiler):
                 compiled = Recursive(name,
                                      type_name,
                                      module_name)
+                self.recurvise_types.append(compiled)
             else:
                 self.types_backtrace_push(type_name)
                 compiled = self.compile_type(

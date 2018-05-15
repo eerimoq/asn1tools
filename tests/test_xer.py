@@ -455,13 +455,6 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode_string(all_types, type_name, decoded, encoded)
 
-        with self.assertRaises(NotImplementedError):
-            all_types.encode('Sequence12', {'a': [{'a': []}]})
-
-        with self.assertRaises(NotImplementedError):
-            all_types.decode('Sequence12',
-                             b'<Sequence12><a><Sequence12/></a></Sequence12>')
-
     def test_repr_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
                                             'xer')
@@ -541,8 +534,26 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode_string(all_types, type_name, decoded, encoded)
 
+    def test_sequence(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE { "
+            "  a SEQUENCE OF A OPTIONAL "
+            "} "
+            "END",
+            'xer')
+
+        datas = [
+            ('A',           {'a': [{}]}, b'<A><a><A /></a></A>'),
+            ('A',    {'a': [{'a': []}]}, b'<A><a><A><a /></A></a></A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
     def test_sequence_of(self):
-        all_types = asn1tools.compile_string(
+        foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
             "A ::= SEQUENCE OF INTEGER "
@@ -570,7 +581,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assert_encode_decode_string(all_types, type_name, decoded, encoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
     def test_utf8_string(self):
         foo = asn1tools.compile_string(

@@ -2409,6 +2409,9 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             "T ::= SEQUENCE { "
             "  a T OPTIONAL "
             "} "
+            "U ::= SEQUENCE { "
+            "  a SEQUENCE OF U OPTIONAL "
+            "} "
             "END",
             'ber')
 
@@ -2435,6 +2438,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('O',                      {'a': False}, b'\x30\x03\x80\x01\x00'),
             ('P',            {'a': True, 'b': True}, b'\x30\x03\x80\x01\xff'),
             ('S',                          {'a': 1}, b'\x30\x03\x80\x01\x01'),
+            ('U',                       {'a': [{}]}, b'\x30\x04\xa0\x02\x30\x00'),
             ('P',
              {'a': True, 'b': False},
              b'\x30\x06\x80\x01\xff\x81\x01\x00'),
@@ -2482,7 +2486,10 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
              b'\x30\x08\xa0\x03\x80\x01\xff\x81\x01\x64'),
             ('R',
              {'a': {'a': True, 'b': True}, 'b': 100},
-             b'\x30\x0b\xa0\x06\x80\x01\xff\x81\x01\xff\x81\x01\x64')
+             b'\x30\x0b\xa0\x06\x80\x01\xff\x81\x01\xff\x81\x01\x64'),
+            ('U',
+             {'a': [{'a': []}]},
+             b'\x30\x06\xa0\x04\x30\x02\xa0\x00')
         ]
 
         for type_name, decoded, encoded in datas:
