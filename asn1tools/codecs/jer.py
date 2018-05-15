@@ -418,10 +418,10 @@ class UTCTime(Type):
         super(UTCTime, self).__init__(name, 'UTCTime')
 
     def encode(self, data):
-        raise NotImplementedError()
+        raise NotImplementedError('UTCTime is not yet implemented.')
 
     def decode(self, data):
-        raise NotImplementedError()
+        raise NotImplementedError('UTCTime is not yet implemented.')
 
     def __repr__(self):
         return 'UTCTime({})'.format(self.name)
@@ -433,10 +433,10 @@ class GeneralizedTime(Type):
         super(GeneralizedTime, self).__init__(name, 'GeneralizedTime')
 
     def encode(self, data):
-        raise NotImplementedError()
+        raise NotImplementedError('GeneralizedTime is not yet implemented.')
 
     def decode(self, data):
-        raise NotImplementedError()
+        raise NotImplementedError('GeneralizedTime is not yet implemented.')
 
     def __repr__(self):
         return 'GeneralizedTime({})'.format(self.name)
@@ -463,10 +463,10 @@ class ObjectIdentifier(Type):
         super(ObjectIdentifier, self).__init__(name, 'OBJECT IDENTIFIER')
 
     def encode(self, data):
-        raise NotImplementedError()
+        raise NotImplementedError('OBJECT IDENTIFIER is not yet implemented.')
 
     def decode(self, data):
-        raise NotImplementedError()
+        raise NotImplementedError('OBJECT IDENTIFIER is not yet implemented.')
 
     def __repr__(self):
         return 'ObjectIdentifier({})'.format(self.name)
@@ -525,10 +525,10 @@ class Any(Type):
         super(Any, self).__init__(name, 'ANY')
 
     def encode(self, _, encoder):
-        raise NotImplementedError()
+        raise NotImplementedError('ANY is not yet implemented.')
 
     def decode(self, data):
-        raise NotImplementedError()
+        raise NotImplementedError('ANY is not yet implemented.')
 
     def __repr__(self):
         return 'Any({})'.format(self.name)

@@ -142,7 +142,7 @@ class Set(Type):
         self.members = members
 
     def encode(self, data, separator, indent):
-        raise NotImplementedError
+        raise NotImplementedError('SET is not yet implemented.')
 
     def __repr__(self):
         return 'Set({}, [{}])'.format(
@@ -184,7 +184,7 @@ class SetOf(Type):
         self.element_type = element_type
 
     def encode(self, data, separator, indent):
-        raise NotImplementedError
+        raise NotImplementedError('SET OF is not yet implemented.')
 
     def __repr__(self):
         return 'SetOf({}, {})'.format(self.name,
@@ -284,7 +284,7 @@ class BMPString(Type):
         super(BMPString, self).__init__(name, 'BMPString')
 
     def encode(self, data, separator, indent):
-        raise NotImplementedError
+        raise NotImplementedError('BMPString is not yet implemented.')
 
     def __repr__(self):
         return 'BMPString({})'.format(self.name)
@@ -320,7 +320,7 @@ class TeletexString(Type):
         super(TeletexString, self).__init__(name, 'TeletexString')
 
     def encode(self, data, separator, indent):
-        raise NotImplementedError
+        raise NotImplementedError('TeletexString is not yet implemented.')
 
     def __repr__(self):
         return 'TeletexString({})'.format(self.name)
@@ -383,7 +383,7 @@ class Any(Type):
         super(Any, self).__init__(name, 'ANY')
 
     def encode(self, _, encoder):
-        raise NotImplementedError
+        raise NotImplementedError('ANY is not yet implemented.')
 
     def __repr__(self):
         return 'Any({})'.format(self.name)

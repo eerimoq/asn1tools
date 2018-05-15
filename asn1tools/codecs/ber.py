@@ -375,10 +375,10 @@ class PrimitiveOrConstructedType(object):
             return self.decode_constructed_segments(segments), end_offset
 
     def decode_primitive_contents(self, data, offset, length):
-        raise NotImplementedError()
+        raise NotImplementedError('To be implemented by subclasses.')
 
     def decode_constructed_segments(self, segments):
-        raise NotImplementedError()
+        raise NotImplementedError('To be implemented by subclasses.')
 
 
 class Integer(Type):
@@ -566,7 +566,7 @@ class MembersType(Type):
 
         if data[offset] == 0x80:
             raise NotImplementedError(
-                'decode until an end-of-contents tag is found')
+                'Decode until an end-of-contents tag is not yet implemented.')
         else:
             length, offset = decode_length_definite(data, offset)
 
@@ -692,7 +692,7 @@ class ArrayType(Type):
 
         if data[offset] == 0x80:
             raise NotImplementedError(
-                'decode until an end-of-contents tag is found')
+                'Decode until an end-of-contents tag is not yet implemented.')
         else:
             length, offset = decode_length_definite(data, offset)
 

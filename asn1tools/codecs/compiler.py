@@ -230,7 +230,7 @@ class Compiler(object):
         return type_name
 
     def process_type(self, type_name, type_descriptor, module_name):
-        return NotImplementedError()
+        return NotImplementedError('To be implemented by subclasses.')
 
     def compile_constraints(self,
                             type_name,

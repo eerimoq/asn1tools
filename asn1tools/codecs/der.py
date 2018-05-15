@@ -84,10 +84,10 @@ class Real(Type):
         super(Real, self).__init__(name, 'REAL', Tag.REAL)
 
     def encode(self, data, encoded):
-        raise NotImplementedError()
+        raise NotImplementedError('REAL is not yet implemented.')
 
     def decode(self, data, offset):
-        raise NotImplementedError()
+        raise NotImplementedError('REAL is not yet implemented.')
 
     def __repr__(self):
         return 'Real({})'.format(self.name)
