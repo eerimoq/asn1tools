@@ -446,12 +446,6 @@ class Asn1ToolsJerTest(unittest.TestCase):
         self.assertEqual(all_types.decode('Bitstring', encoded_message),
                          decoded_message)
 
-        with self.assertRaises(NotImplementedError):
-            all_types.encode('Sequence12', {'a': [{'a': []}]})
-
-        with self.assertRaises(NotImplementedError):
-            all_types.decode('Sequence12', b'{"a": [{"a": []}]}')
-
     def test_repr_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
                                             'jer')
@@ -503,6 +497,26 @@ class Asn1ToolsJerTest(unittest.TestCase):
             self.assertEqual(loadb(all_types.encode(type_name, decoded)),
                              loadb(encoded))
             self.assertEqual(all_types.decode(type_name, encoded), decoded)
+
+    def test_sequence(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE { "
+            "  a SEQUENCE OF A OPTIONAL "
+            "} "
+            "END",
+            'jer')
+
+        datas = [
+            ('A',           {'a': [{}]}, b'{"a": [{}]}'),
+            ('A',    {'a': [{'a': []}]}, b'{"a": [{"a": []}]}')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(loadb(foo.encode(type_name, decoded)),
+                             loadb(encoded))
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
 
     def test_error_out_of_data(self):
         foo = asn1tools.compile_string(
