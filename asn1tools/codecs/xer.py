@@ -102,10 +102,20 @@ class Real(Type):
         super(Real, self).__init__(name, 'REAL')
 
     def encode(self, data):
-        raise NotImplementedError('REAL is not yet implemented.')
+        data = float(data)
+        exponent = 0
+
+        while abs(data) >= 10:
+            data /= 10
+            exponent += 1
+
+        element = ElementTree.Element(self.name)
+        element.text = '{}E{}'.format(data, exponent)
+
+        return element
 
     def decode(self, element):
-        raise NotImplementedError('REAL is not yet implemented.')
+        return float(element.text)
 
     def __repr__(self):
         return 'Real({})'.format(self.name)
@@ -364,10 +374,13 @@ class UTCTime(Type):
         super(UTCTime, self).__init__(name, 'UTCTime')
 
     def encode(self, data):
-        raise NotImplementedError('UTCTime is not yet implemented.')
+        element = ElementTree.Element(self.name)
+        element.text = data
+
+        return element
 
     def decode(self, element):
-        raise NotImplementedError('UTCTime is not yet implemented.')
+        return element.text
 
     def __repr__(self):
         return 'UTCTime({})'.format(self.name)
@@ -379,10 +392,13 @@ class GeneralizedTime(Type):
         super(GeneralizedTime, self).__init__(name, 'GeneralizedTime')
 
     def encode(self, data):
-        raise NotImplementedError('GeneralizedTime is not yet implemented.')
+        element = ElementTree.Element(self.name)
+        element.text = data
+
+        return element
 
     def decode(self, element):
-        raise NotImplementedError('GeneralizedTime is not yet implemented.')
+        return element.text
 
     def __repr__(self):
         return 'GeneralizedTime({})'.format(self.name)

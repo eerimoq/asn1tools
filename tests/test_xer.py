@@ -653,6 +653,62 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
+    def test_real(self):
+        all_types = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= REAL "
+            "END",
+            'xer')
+
+        datas = [
+            ('A', 1.0, b'<A>1.0E0</A>'),
+            ('A', 10.0, b'<A>1.0E1</A>'),
+            ('A', -1.0, b'<A>-1.0E0</A>'),
+            ('A', -2, b'<A>-2.0E0</A>'),
+            ('A', -9.99, b'<A>-9.99E0</A>'),
+            ('A', -10.0, b'<A>-1.0E1</A>'),
+            ('A', 0.31, b'<A>0.31E0</A>'),
+            ('A', 2000.0, b'<A>2.0E3</A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(all_types, type_name, decoded, encoded)
+
+    def test_utc_time(self):
+        all_types = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UTCTime "
+            "END",
+            'xer')
+
+        datas = [
+            ('A', '920521000000Z', b'<A>920521000000Z</A>'),
+            ('A', '920622123421Z', b'<A>920622123421Z</A>'),
+            ('A', '920722132100Z', b'<A>920722132100Z</A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(all_types, type_name, decoded, encoded)
+
+    def test_generalized_time(self):
+        all_types = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= GeneralizedTime "
+            "END",
+            'xer')
+
+        datas = [
+            ('A', '19920521000000Z', b'<A>19920521000000Z</A>'),
+            ('A', '19920622123421Z', b'<A>19920622123421Z</A>'),
+            ('A', '19920722132100.3Z', b'<A>19920722132100.3Z</A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(all_types, type_name, decoded, encoded)
+
     def test_indent(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
