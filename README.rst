@@ -252,6 +252,9 @@ Encodings
 - `RFC 3641: Generic String Encoding Rules (GSER) for ASN.1
   <https://tools.ietf.org/html/rfc3641>`_
 
+- `Overview of the JSON Encoding Rules (JER)
+  <http://www.oss.com/asn1/resources/asn1-papers/Overview_of_JER.pdf>`_
+
 .. |buildstatus| image:: https://travis-ci.org/eerimoq/asn1tools.svg?branch=master
 .. _buildstatus: https://travis-ci.org/eerimoq/asn1tools
 
