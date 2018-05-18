@@ -1088,6 +1088,7 @@ class Choice(Type):
     def __init__(self, name, root_members, additions):
         super(Choice, self).__init__(name, 'CHOICE', None)
         self.root_members = root_members
+        self.additions = additions
 
     def set_tag(self, number, flags):
         super(Choice, self).set_tag(number,
@@ -1269,25 +1270,25 @@ class Recursive(Type):
         super(Recursive, self).__init__(name, 'RECURSIVE', None)
         self.type_name = type_name
         self.module_name = module_name
-        self._tag_number = None
-        self._tag_flags = None
-        self._inner = None
+        self.tag_number = None
+        self.tag_flags = None
+        self.inner = None
 
     def set_tag(self, number, flags):
-        self._tag_number = number
-        self._tag_flags = flags
+        self.tag_number = number
+        self.tag_flags = flags
 
     def set_inner_type(self, inner):
-        self._inner = copy(inner)
+        self.inner = copy(inner)
 
-        if self._tag_number is not None:
-            self._inner.set_tag(self._tag_number, self._tag_flags)
+        if self.tag_number is not None:
+            self.inner.set_tag(self.tag_number, self.tag_flags)
 
     def encode(self, data, encoded):
-        self._inner.encode(data, encoded)
+        self.inner.encode(data, encoded)
 
     def decode(self, data, offset):
-        return self._inner.decode(data, offset)
+        return self.inner.decode(data, offset)
 
     def __repr__(self):
         return 'Recursive({})'.format(self.name)
