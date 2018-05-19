@@ -1087,8 +1087,16 @@ class Choice(Type):
 
     def __init__(self, name, root_members, additions):
         super(Choice, self).__init__(name, 'CHOICE', None)
-        self.root_members = root_members
-        self.additions = additions
+        members = root_members
+
+        if additions is not None:
+            for addition in additions:
+                if isinstance(addition, list):
+                    members += addition
+                else:
+                    members.append(addition)
+
+        self.members = members
 
     def set_tag(self, number, flags):
         super(Choice, self).set_tag(number,
@@ -1098,7 +1106,7 @@ class Choice(Type):
         if not isinstance(data, tuple):
             raise EncodeError("expected tuple, but got '{}'".format(data))
 
-        for member in self.root_members:
+        for member in self.members:
             if member.name == data[0]:
                 member.encode(data[1], encoded)
 
@@ -1106,11 +1114,11 @@ class Choice(Type):
 
         raise EncodeError(
             "expected choices are {}, but got '{}'".format(
-                [member.name for member in self.root_members],
+                [member.name for member in self.members],
                 data[0]))
 
     def decode(self, data, offset):
-        for member in self.root_members:
+        for member in self.members:
             if (isinstance(member, Choice)
                 or member.tag == data[offset:offset + len(member.tag)]):
                 try:
@@ -1125,7 +1133,7 @@ class Choice(Type):
     def __repr__(self):
         return 'Choice({}, [{}])'.format(
             self.name,
-            ', '.join([repr(member) for member in self.root_members]))
+            ', '.join([repr(member) for member in self.members]))
 
 
 class Null(Type):

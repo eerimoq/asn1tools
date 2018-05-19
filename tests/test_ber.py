@@ -2514,6 +2514,108 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                        b'\x30\x0b\xa0\x06\x80\x01\xff\x81\x01\xff\x81\x01\x64'),
             {'a': {'a': True}, 'b': 100})
 
+    def test_choice(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= CHOICE { "
+            "  a BOOLEAN "
+            "} "
+            "B ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ... "
+            "} "
+            "C ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  b INTEGER, "
+            "  ..., "
+            "  [[ "
+            "  c BOOLEAN "
+            "  ]] "
+            "} "
+            "D ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]], "
+            "  ... "
+            "} "
+            "E ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]], "
+            "  [[ "
+            "  c BOOLEAN "
+            "  ]], "
+            "  ... "
+            "} "
+            "F ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  ... "
+            "} "
+            "G ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b BOOLEAN "
+            "} "
+            "H ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b BOOLEAN, "
+            "  c BOOLEAN "
+            "} "
+            "I ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN, "
+            "  c BOOLEAN "
+            "  ]] "
+            "} "
+            "J ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b CHOICE { "
+            "    a INTEGER"
+            "  }, "
+            "  c BOOLEAN "
+            "  ]] "
+            "} "
+            "END")
+
+        datas = [
+            ('A',            ('a', True), b'\x80\x01\xff'),
+            ('B',            ('a', True), b'\x80\x01\xff'),
+            ('C',            ('a', True), b'\x80\x01\xff'),
+            ('C',               ('b', 1), b'\x81\x01\x01'),
+            ('C',            ('c', True), b'\x82\x01\xff'),
+            ('D',            ('a', True), b'\x80\x01\xff'),
+            ('D',            ('b', True), b'\x81\x01\xff'),
+            ('E',            ('a', True), b'\x80\x01\xff'),
+            ('E',            ('b', True), b'\x81\x01\xff'),
+            ('E',            ('c', True), b'\x82\x01\xff'),
+            ('F',            ('a', True), b'\x80\x01\xff'),
+            ('G',            ('a', True), b'\x80\x01\xff'),
+            ('G',            ('b', True), b'\x81\x01\xff'),
+            ('H',            ('a', True), b'\x80\x01\xff'),
+            ('H',            ('b', True), b'\x81\x01\xff'),
+            ('H',            ('c', True), b'\x82\x01\xff'),
+            ('I',            ('a', True), b'\x80\x01\xff'),
+            ('I',            ('b', True), b'\x81\x01\xff'),
+            ('I',            ('c', True), b'\x82\x01\xff'),
+            ('J',            ('a', True), b'\x80\x01\xff'),
+            ('J',        ('b', ('a', 1)), b'\xa1\x03\x80\x01\x01'),
+            ('J',            ('c', True), b'\x82\x01\xff')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
 
 if __name__ == '__main__':
     unittest.main()
