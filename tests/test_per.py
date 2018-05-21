@@ -9,8 +9,6 @@ sys.path.append('tests/files/3gpp')
 
 from rrc_8_6_0 import EXPECTED as RRC_8_6_0
 from s1ap_14_4_0 import EXPECTED as S1AP_14_4_0
-from x691_a2 import EXPECTED as X691_A2
-from x691_a3 import EXPECTED as X691_A3
 from x691_a4 import EXPECTED as X691_A4
 
 
@@ -157,7 +155,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         self.assert_encode_decode(a1, 'PersonnelRecord', decoded, encoded)
 
     def test_x691_a2(self):
-        a2 = asn1tools.compile_dict(deepcopy(X691_A2), 'per')
+        a2 = asn1tools.compile_files('tests/files/x691_a2.asn', 'per')
 
         decoded = {
             'name': {
@@ -204,7 +202,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         self.assert_encode_decode(a2, 'PersonnelRecord', decoded, encoded)
 
     def test_x691_a3(self):
-        a3 = asn1tools.compile_dict(deepcopy(X691_A3), 'per')
+        a3 = asn1tools.compile_files('tests/files/x691_a3.asn', 'per')
 
         decoded = {
             'name': {
@@ -948,6 +946,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "  a BOOLEAN, "
             "  b VisibleString (SIZE (0..2)) "
             "} "
+            "I ::= VisibleString (FROM (\"a\"..\"z\")) (SIZE (1..255)) "
             "END",
             'per')
 
@@ -965,7 +964,8 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('E',  {'a': True, 'b': '12'}, b'\x98\x99\x00'),
             ('F', {'a': True, 'b': '123'}, b'\x80\x31\x32\x33'),
             ('G',   {'a': True, 'b': '1'}, b'\xcc\x40'),
-            ('H',   {'a': True, 'b': '1'}, b'\xa0\x31')
+            ('H',   {'a': True, 'b': '1'}, b'\xa0\x31'),
+            ('I',                   'hej', b'\x02\x68\x65\x6a')
         ]
 
         for type_name, decoded, encoded in datas:

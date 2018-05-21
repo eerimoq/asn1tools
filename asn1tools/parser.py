@@ -464,19 +464,23 @@ def convert_boolean_type(_s, _l, _tokens):
 
 
 def convert_type(tokens):
-    converted_type, constraint = tokens
+    converted_type, constraints = tokens
 
     restricted_to = []
 
-    for constraint_tokens in constraint:
+    for constraint_tokens in constraints:
         if isinstance(constraint_tokens, ParseResults):
             constraint_tokens = constraint_tokens.asList()
 
         if constraint_tokens == '...':
             restricted_to.append(EXTENSION_MARKER)
-        elif ((len(constraint_tokens) == 1)
-              and not isinstance(constraint_tokens[0], dict)):
-            restricted_to.append(convert_number(constraint_tokens[0]))
+        elif len(constraint_tokens) == 1:
+            if not isinstance(constraint_tokens[0], dict):
+                restricted_to.append(convert_number(constraint_tokens[0]))
+            elif 'size' in constraint_tokens[0]:
+                converted_type.update(constraint_tokens[0])
+            elif 'from' in constraint_tokens[0]:
+                converted_type.update(constraint_tokens[0])
 
     if '{' in restricted_to:
         restricted_to = []
@@ -495,7 +499,7 @@ def convert_type(tokens):
     ]
 
     if converted_type['type'] in types:
-        size = convert_size(constraint)
+        size = convert_size(constraints)
 
         if size:
             converted_type['size'] = size

@@ -1761,10 +1761,10 @@ class Compiler(compiler.Compiler):
             return ''.join([chr(char)
                             for char in range(ord(begin), ord(end) + 1)])
 
-        if 'permitted-alphabet' not in type_descriptor:
+        if 'from' not in type_descriptor:
             return
 
-        permitted_alphabet = type_descriptor['permitted-alphabet']
+        permitted_alphabet = type_descriptor['from']
         value = ''
 
         for item in permitted_alphabet:

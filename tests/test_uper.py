@@ -10,8 +10,6 @@ sys.path.append('tests/files/3gpp')
 
 from rrc_8_6_0 import EXPECTED as RRC_8_6_0
 from lpp_14_3_0 import EXPECTED as LPP_14_3_0
-from x691_a2 import EXPECTED as X691_A2
-from x691_a3 import EXPECTED as X691_A3
 from x691_a4 import EXPECTED as X691_A4
 
 
@@ -152,7 +150,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         self.assert_encode_decode(a1, 'PersonnelRecord', decoded, encoded)
 
     def test_x691_a2(self):
-        a2 = asn1tools.compile_dict(deepcopy(X691_A2), 'uper')
+        a2 = asn1tools.compile_files('tests/files/x691_a2.asn', 'uper')
 
         decoded = {
             'name': {
@@ -198,7 +196,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         self.assert_encode_decode(a2, 'PersonnelRecord', decoded, encoded)
 
     def test_x691_a3(self):
-        a3 = asn1tools.compile_dict(deepcopy(X691_A3), 'uper')
+        a3 = asn1tools.compile_files('tests/files/x691_a3.asn', 'uper')
 
         decoded = {
             'name': {
@@ -1266,6 +1264,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "A ::= VisibleString (SIZE (19..133)) "
             "B ::= VisibleString (SIZE (5)) "
             "C ::= VisibleString (SIZE (19..1000)) "
+            "D ::= VisibleString (FROM (\"a\"..\"z\")) (SIZE (1..255)) "
             "END",
             'uper')
 
@@ -1295,7 +1294,8 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
              b'\xf0\xe1\x07\x16\x3c\x99\x64\x65\xd5\x23\x7f\x0e\x12\x30\xf0\xe1'
              b'\x23\x4f\x0e\x10\x71\x63\xc9\x96\x46\x5d\x52\x37\xf0\xe1\x23\x0f'
              b'\x0e\x12\x34\xf0\xe1\x07\x16\x3c\x99\x64\x65\xd5\x23\x7f\x0e\x12'
-             b'\x30\xf0\xe1\x23\x4f\x0e\x10\x71\x63\xc9\x94')
+             b'\x30\xf0\xe1\x23\x4f\x0e\x10\x71\x63\xc9\x94'),
+            ('D', 'hej', b'\x02\x39\x12')
         ]
 
         for type_name, decoded, encoded in datas:
