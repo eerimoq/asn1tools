@@ -1,9 +1,9 @@
 import math
 import unittest
-from .utils import Asn1ToolsBaseTest
 import timeit
 import sys
 from copy import deepcopy
+from .utils import Asn1ToolsBaseTest
 
 import asn1tools
 

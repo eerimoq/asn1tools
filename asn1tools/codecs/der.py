@@ -13,7 +13,6 @@ from .ber import decode_length_definite
 from .ber import encode_signed_integer
 from .ber import decode_signed_integer
 from .ber import encode_tag
-from .ber import decode_tag
 from .ber import Boolean
 from .ber import Enumerated
 from .ber import Null
@@ -21,6 +20,8 @@ from .ber import ObjectIdentifier
 from .ber import Sequence
 from .ber import Set
 from .ber import Choice
+from .ber import Any
+from .ber import AnyDefinedBy
 from .ber import Recursive
 
 
@@ -480,58 +481,6 @@ class TeletexString(Type):
 
     def __repr__(self):
         return 'TeletexString({})'.format(self.name)
-
-
-class Any(Type):
-
-    def __init__(self, name):
-        super(Any, self).__init__(name, 'ANY', None)
-
-    def encode(self, data, encoded):
-        encoded.extend(data)
-
-    def decode(self, data, offset):
-        start = offset
-        _, _, offset = decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
-
-        return data[start:end_offset], end_offset
-
-    def __repr__(self):
-        return 'Any({})'.format(self.name)
-
-
-class AnyDefinedBy(Type):
-
-    def __init__(self, name, type_member, choices):
-        super(AnyDefinedBy, self).__init__(name,
-                                           'ANY DEFINED BY',
-                                           None,
-                                           None)
-        self.type_member = type_member
-        self.choices = choices
-
-    def encode(self, data, encoded, values):
-        if self.choices:
-            self.choices[values[self.type_member]].encode(data, encoded)
-        else:
-            encoded.extend(data)
-
-    def decode(self, data, offset, values):
-        if self.choices:
-            return self.choices[values[self.type_member]].decode(data,
-                                                                 offset)
-        else:
-            start = offset
-            _, _, offset = decode_tag(data, offset)
-            length, offset = decode_length_definite(data, offset)
-            end_offset = offset + length
-
-            return data[start:end_offset], end_offset
-
-    def __repr__(self):
-        return 'AnyDefinedBy({})'.format(self.name)
 
 
 class Compiler(ber.Compiler):
