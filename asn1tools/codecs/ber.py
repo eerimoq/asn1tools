@@ -963,7 +963,7 @@ class UTCTime(Type):
     def encode(self, data, encoded):
         encoded.extend(self.tag)
         encoded.append(13)
-        encoded.extend(bytearray((data).encode('ascii')))
+        encoded.extend(bytearray(data.encode('ascii')))
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)

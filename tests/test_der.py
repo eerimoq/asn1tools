@@ -51,7 +51,7 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
             ('Generalstring',          'bar', b'\x1b\x03bar'),
             ('Bmpstring',             b'bar', b'\x1e\x03bar'),
             ('Teletexstring',         b'fum', b'\x14\x03fum'),
-            ('Utctime',       '010203040506', b'\x17\x0d010203040506Z'),
+            ('Utctime',       '010203040506Z', b'\x17\x0d010203040506Z'),
             ('GeneralizedTime1',
              '20001231235959Z',
              b'\x18\x0f\x32\x30\x30\x30\x31\x32\x33\x31\x32\x33\x35\x39'
