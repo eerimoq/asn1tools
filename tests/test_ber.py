@@ -895,6 +895,104 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assert_encode_decode(rfc4511, 'LDAPMessage', decoded, encoded)
 
+        # A search request message with nested filters and controls
+        # (copied from https://github.com/etingof/pyasn1/issues/116).
+        decoded = {
+            'controls': [
+                {
+                    'controlType': b'1.2.840.113556.1.4.319',
+                    'controlValue': b'0\x06\x02\x02\x03\xe7\x04\x00',
+                    'criticality': True
+                },
+                {
+                    'controlType': b'2.16.840.1.113730.3.4.2',
+                    'criticality': False
+                }
+            ],
+            'messageID': 5,
+            'protocolOp': (
+                'searchRequest',
+                {
+                    'attributes': [
+                        b'postOfficeBox',
+                        b'givenName',
+                        b'sn',
+                        b'mail',
+                        b'homeDirectory',
+                        b'memberOf',
+                        b'objectGUID',
+                        b'postOfficeBox',
+                        b'extensionAttribute1',
+                        b'mail',
+                        b'sAMAccountName'
+                    ],
+                    'baseObject': b'dc=arl,dc=local',
+                    'derefAliases': 'derefAlways',
+                    'filter': (
+                        'and',
+                        [
+                            (
+                                'equalityMatch',
+                                {
+                                    'assertionValue': b'user',
+                                    'attributeDesc': b'objectClass'
+                                }
+                            ),
+                            (
+                                'or',
+                                [
+                                    (
+                                        'equalityMatch',
+                                        {
+                                            'assertionValue': b'01107ECBA2',
+                                            'attributeDesc': b'postOfficeBox'
+                                        }
+                                    ),
+                                    (
+                                        'equalityMatch',
+                                        {
+                                            'assertionValue': b'01107ECBA2',
+                                            'attributeDesc': b'extensionAttribute1'
+                                        }
+                                    )
+                                ]
+                            )
+                        ]
+                    ),
+                    'scope': 'wholeSubtree',
+                    'sizeLimit': 0,
+                    'timeLimit': 0,
+                    'typesOnly': False
+                }
+            )
+        }
+
+        encoded = (
+            b'\x30\x82\x01\x49\x02\x01\x05\x63\x81\xff\x04\x0f\x64\x63\x3d\x61'
+            b'\x72\x6c\x2c\x64\x63\x3d\x6c\x6f\x63\x61\x6c\x0a\x01\x02\x0a\x01'
+            b'\x03\x02\x01\x00\x02\x01\x00\x01\x01\x00\xa0\x57\xa3\x13\x04\x0b'
+            b'\x6f\x62\x6a\x65\x63\x74\x43\x6c\x61\x73\x73\x04\x04\x75\x73\x65'
+            b'\x72\xa1\x40\xa3\x1b\x04\x0d\x70\x6f\x73\x74\x4f\x66\x66\x69\x63'
+            b'\x65\x42\x6f\x78\x04\x0a\x30\x31\x31\x30\x37\x45\x43\x42\x41\x32'
+            b'\xa3\x21\x04\x13\x65\x78\x74\x65\x6e\x73\x69\x6f\x6e\x41\x74\x74'
+            b'\x72\x69\x62\x75\x74\x65\x31\x04\x0a\x30\x31\x31\x30\x37\x45\x43'
+            b'\x42\x41\x32\x30\x81\x83\x04\x0d\x70\x6f\x73\x74\x4f\x66\x66\x69'
+            b'\x63\x65\x42\x6f\x78\x04\x09\x67\x69\x76\x65\x6e\x4e\x61\x6d\x65'
+            b'\x04\x02\x73\x6e\x04\x04\x6d\x61\x69\x6c\x04\x0d\x68\x6f\x6d\x65'
+            b'\x44\x69\x72\x65\x63\x74\x6f\x72\x79\x04\x08\x6d\x65\x6d\x62\x65'
+            b'\x72\x4f\x66\x04\x0a\x6f\x62\x6a\x65\x63\x74\x47\x55\x49\x44\x04'
+            b'\x0d\x70\x6f\x73\x74\x4f\x66\x66\x69\x63\x65\x42\x6f\x78\x04\x13'
+            b'\x65\x78\x74\x65\x6e\x73\x69\x6f\x6e\x41\x74\x74\x72\x69\x62\x75'
+            b'\x74\x65\x31\x04\x04\x6d\x61\x69\x6c\x04\x0e\x73\x41\x4d\x41\x63'
+            b'\x63\x6f\x75\x6e\x74\x4e\x61\x6d\x65\xa0\x42\x30\x25\x04\x16\x31'
+            b'\x2e\x32\x2e\x38\x34\x30\x2e\x31\x31\x33\x35\x35\x36\x2e\x31\x2e'
+            b'\x34\x2e\x33\x31\x39\x01\x01\xff\x04\x08\x30\x06\x02\x02\x03\xe7'
+            b'\x04\x00\x30\x19\x04\x17\x32\x2e\x31\x36\x2e\x38\x34\x30\x2e\x31'
+            b'\x2e\x31\x31\x33\x37\x33\x30\x2e\x33\x2e\x34\x2e\x32'
+        )
+
+        self.assert_encode_decode(rfc4511, 'LDAPMessage', decoded, encoded)
+
         # A search result done message.
         decoded = {
             'messageID': 2,
