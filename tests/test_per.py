@@ -643,9 +643,14 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
                          'SequenceOf(SequenceOf, Integer())')
         self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
 
-    @unittest.skip('')
     def test_s1ap_14_4_0(self):
-        s1ap = asn1tools.compile_dict(deepcopy(S1AP_14_4_0), 'per')
+        with self.assertRaises(NotImplementedError) as cm:
+            s1ap = asn1tools.compile_dict(deepcopy(S1AP_14_4_0), 'per')
+
+        self.assertEqual(str(cm.exception),
+                         'The CLASS keyword is not yet implemented.')
+
+        return
 
         # Message 1.
         decoded_message = (
@@ -679,17 +684,22 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         )
 
         encoded_message = (
-            b'\x20\x11\x00\x15\x00\x00\x01\x00\x69\x00\x0e\x00\x40\xab\xcd\xef\x12'
-            b'\x34\x56\x00\x00\x22\x22\x00\x11'
+            b'\x20\x11\x00\x15\x00\x00\x01\x00\x69\x00\x0e\x00\x40\xab\xcd\xef'
+            b'\x12\x34\x56\x00\x00\x22\x22\x00\x11'
         )
 
         encoded = s1ap.encode('S1AP-PDU', decoded_message)
         self.assertEqual(encoded, encoded_message)
 
-    @unittest.skip('')
     def test_information_object(self):
-        information_object = asn1tools.compile_files(
-            'tests/files/information_object.asn', 'per')
+        with self.assertRaises(NotImplementedError) as cm:
+            information_object = asn1tools.compile_files(
+                'tests/files/information_object.asn', 'per')
+
+        self.assertEqual(str(cm.exception),
+                         'The CLASS keyword is not yet implemented.')
+
+        return
 
         # Message 1 - without constraints.
         decoded_message = {
@@ -739,7 +749,8 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         }
 
         encoded_message = (
-            b'\x01\x01\x05\x02\x01\x07\x01\x00\x06\x69\x74\x65\x6d\x20\x31\x01\x05'
+            b'\x01\x01\x05\x02\x01\x07\x01\x00\x06\x69\x74\x65\x6d\x20\x31\x01'
+            b'\x05'
         )
 
         # ToDo: Constraints are not yet implemented.

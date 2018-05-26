@@ -306,6 +306,9 @@ class Compiler(object):
         module = self._specification[module_name]
         type_descriptor = None
 
+        if '&' in type_name:
+            raise NotImplementedError('The CLASS keyword is not yet implemented.')
+
         if type_name in module['types']:
             type_descriptor = module['types'][type_name]
         else:
