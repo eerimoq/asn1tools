@@ -176,6 +176,8 @@ Choice ::= CHOICE {
 
 choice CHOICE { foo A } ::= foo : bar
 
+foo INTEGER ::= 1
+
 Numericstring ::= NumericString
 
 Printablestring ::= PrintableString

@@ -828,6 +828,10 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "  d BOOLEAN, "
             "  e INTEGER (0..256) "
             "} "
+            "K ::= B (6..7) "
+            "L ::= SEQUENCE { "
+            "  a K (7..7) "
+            "} "
             "END",
             'per')
 
@@ -864,7 +868,9 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('I',              10000000000, b'\x80\x02\x54\x0b\xe4\x00'),
             ('J',
              {'a': False, 'b': 253, 'c': 253, 'd': False, 'e': 253},
-             b'\x7e\x80\xfd\x00\x00\xfd')
+             b'\x7e\x80\xfd\x00\x00\xfd'),
+            ('K',                        7, b'\x80'),
+            ('L',                 {'a': 7}, b'')
         ]
 
         for type_name, decoded, encoded in datas:

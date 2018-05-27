@@ -1092,6 +1092,9 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "  c INTEGER (400..400) "
             "} "
             "G ::= B (6..7) "
+            "H ::= SEQUENCE { "
+            "  a G (7..7) "
+            "} "
             "END",
             'uper')
 
@@ -1120,21 +1123,13 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('C',                          10, b'\xa0'),
             ('D',                          99, b'\x5e'),
             ('E',                        1000, b''),
-            ('F', {'a': 4, 'b': 40, 'c': 400}, b'')
+            ('F', {'a': 4, 'b': 40, 'c': 400}, b''),
+            ('G',                           7, b'\x80'),
+            ('H',                    {'a': 7}, b'')
         ]
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-        # Overriding the range is not yet supported, hence the
-        # expected raised assertion error.
-        datas = [
-            ('G',                            7, b'\x80')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            with self.assertRaises(AssertionError):
-                self.assert_encode_decode(foo, type_name, decoded, encoded)
 
     def test_utf8_string(self):
         foo = asn1tools.compile_string(

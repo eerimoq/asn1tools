@@ -570,8 +570,14 @@ class Boolean(Type):
 
 class Integer(Type):
 
-    def __init__(self, name, minimum, maximum, has_extension_marker):
+    def __init__(self, name):
         super(Integer, self).__init__(name, 'INTEGER')
+        self.minimum = None
+        self.maximum = None
+        self.has_extension_marker = None
+        self.number_of_bits = None
+
+    def set_restricted_to_range(self, minimum, maximum, has_extension_marker):
         self.minimum = minimum
         self.maximum = maximum
         self.has_extension_marker = has_extension_marker
@@ -1620,9 +1626,7 @@ class Compiler(compiler.Compiler):
                                   module_name,
                                   flat_additions=True))
         elif type_name == 'INTEGER':
-            compiled = Integer(name,
-                               *self.get_restricted_to_range(type_descriptor,
-                                                             module_name))
+            compiled = Integer(name)
         elif type_name == 'REAL':
             compiled = Real(name)
         elif type_name == 'ENUMERATED':
@@ -1702,6 +1706,13 @@ class Compiler(compiler.Compiler):
             class_prio = CLASS_PRIO[tag.get('class', 'CONTEXT_SPECIFIC')]
             class_number = tag['number']
             compiled.tag = (class_prio, class_number)
+
+        # Set any given restricted to range.
+        if 'restricted-to' in type_descriptor:
+            if isinstance(compiled, Integer):
+                compiled.set_restricted_to_range(
+                    *self.get_restricted_to_range(type_descriptor,
+                                                  module_name))
 
         return compiled
 

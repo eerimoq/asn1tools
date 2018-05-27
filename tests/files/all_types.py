@@ -182,5 +182,6 @@ EXPECTED = {'AllTypes': {'extensibility-implied': False,
                          'boolean': {'type': 'BOOLEAN', 'value': True},
                          'boolean2': {'type': 'BOOLEAN', 'value': False},
                          'choice': {'type': 'CHOICE', 'value': 'foo'},
+                         'foo': {'type': 'INTEGER', 'value': 1},
                          'ia5string': {'type': 'IA5String', 'value': '{'},
                          'ia5string2': {'type': 'IA5String', 'value': '{'}}}}
