@@ -644,11 +644,12 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
 
     def test_s1ap_14_4_0(self):
-        with self.assertRaises(NotImplementedError) as cm:
+        with self.assertRaises(asn1tools.CompileError) as cm:
             s1ap = asn1tools.compile_dict(deepcopy(S1AP_14_4_0), 'per')
 
-        self.assertEqual(str(cm.exception),
-                         'The CLASS keyword is not yet implemented.')
+        self.assertEqual(
+            str(cm.exception),
+            "Value 'lowerBound' not found in module 'S1AP-Containers'.")
 
         return
 
@@ -692,14 +693,8 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         self.assertEqual(encoded, encoded_message)
 
     def test_information_object(self):
-        with self.assertRaises(NotImplementedError) as cm:
-            information_object = asn1tools.compile_files(
-                'tests/files/information_object.asn', 'per')
-
-        self.assertEqual(str(cm.exception),
-                         'The CLASS keyword is not yet implemented.')
-
-        return
+        information_object = asn1tools.compile_files(
+            'tests/files/information_object.asn', 'per')
 
         # Message 1 - without constraints.
         decoded_message = {
@@ -713,9 +708,10 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             b'\x01\x00\x01\x05\x06\x69\x74\x65\x6d\x20\x30\x01\x02'
         )
 
-        encoded = information_object.encode('ItemWithoutConstraints',
-                                            decoded_message)
-        self.assertEqual(encoded, encoded_message)
+        self.assert_encode_decode(information_object,
+                                  'ItemWithoutConstraints',
+                                  decoded_message,
+                                  encoded_message)
 
         # Message 1 - with constraints.
         decoded_message = {
@@ -754,12 +750,10 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         )
 
         # ToDo: Constraints are not yet implemented.
-        with self.assertRaises(TypeError) as cm:
+        with self.assertRaises(TypeError):
             encoded = information_object.encode('ItemWithConstraints',
                                                 decoded_message)
             self.assertEqual(encoded, encoded_message)
-
-        self.assertTrue("can't concat" in str(cm.exception))
 
         # Message 3 - error class.
         decoded_message = {
@@ -781,7 +775,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         )
 
         # ToDo: Constraints are not yet implemented.
-        with self.assertRaises(NotImplementedError):
+        with self.assertRaises(TypeError):
             encoded = information_object.encode('ErrorReturn', decoded_message)
             self.assertEqual(encoded, encoded_message)
 

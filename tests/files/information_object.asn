@@ -1,4 +1,4 @@
-InformationObject DEFINITIONS AUTOMATIC TAGS ::=
+InformationObjectClass DEFINITIONS AUTOMATIC TAGS ::=
 
 BEGIN
 
@@ -6,8 +6,24 @@ BEGIN
 ITEM ::= CLASS {
     &id          INTEGER UNIQUE,
     &Value,                       -- An OpenType member.
-    &comment     IA5String
+    &comment     String
 }
+
+String ::= IA5String
+
+END
+
+
+InformationObject DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+IMPORTS
+    ITEM
+FROM InformationObjectClass;
+
+-- Should not be used.
+String ::= NULL
 
 -- The object set containing two objects, 0 and 1.
 Items ITEM ::= {

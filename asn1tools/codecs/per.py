@@ -7,12 +7,14 @@ from operator import attrgetter
 from operator import itemgetter
 import binascii
 import string
+from copy import deepcopy
 
 from ..parser import EXTENSION_MARKER
 from . import EncodeError
 from . import DecodeError
 from . import compiler
 from .compiler import enum_values_split
+from .compiler import is_object_class_type_name
 from .ber import encode_real
 from .ber import decode_real
 
@@ -1406,6 +1408,26 @@ class Null(Type):
         return 'Null({})'.format(self.name)
 
 
+class OpenType(Type):
+
+    def __init__(self, name):
+        super(OpenType, self).__init__(name, 'OpenType')
+
+    def encode(self, data, encoder):
+        encoder.align()
+        encoder.append_length_determinant(len(data))
+        encoder.append_bytes(data)
+
+    def decode(self, decoder):
+        decoder.align()
+        length = decoder.read_length_determinant()
+
+        return decoder.read_bits(8 * length)
+
+    def __repr__(self):
+        return 'OpenType({})'.format(self.name)
+
+
 class Any(Type):
 
     def __init__(self, name):
@@ -1657,6 +1679,8 @@ class Compiler(compiler.Compiler):
             compiled = Any(name)
         elif type_name == 'NULL':
             compiled = Null(name)
+        elif type_name == 'OpenType':
+            compiled = OpenType(name)
         else:
             if type_name in self.types_backtrace:
                 compiled = Recursive(name,
@@ -1740,9 +1764,17 @@ class Compiler(compiler.Compiler):
         compiled_members.append(compiled_member)
 
     def compile_member(self, member, module_name):
-        compiled_member = self.compile_type(member['name'],
-                                            member,
-                                            module_name)
+        if is_object_class_type_name(member['type']):
+            member, class_module_name = self.convert_object_class_type_descriptor(
+                member,
+                module_name)
+            compiled_member = self.compile_type(member['name'],
+                                                member,
+                                                class_module_name)
+        else:
+            compiled_member = self.compile_type(member['name'],
+                                                member,
+                                                module_name)
 
         if 'optional' in member:
             compiled_member.optional = member['optional']
@@ -1753,6 +1785,10 @@ class Compiler(compiler.Compiler):
         if 'size' in member:
             compiled_member.set_size_range(*self.get_size_range(member,
                                                                 module_name))
+
+        if 'table' in member:
+            # print('table:', member['table'])
+            pass
 
         return compiled_member
 
