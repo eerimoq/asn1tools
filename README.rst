@@ -30,7 +30,9 @@ Documentation: http://asn1tools.readthedocs.org/en/latest
 Known limitations
 =================
 
-- The CLASS keyword and its friends are not supported.
+- The CLASS keyword (X.681) and its friends are not yet supported.
+
+- Paramterization (X.683) is not yet supported.
 
 Installation
 ============

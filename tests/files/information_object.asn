@@ -22,7 +22,8 @@ IMPORTS
     ITEM
 FROM InformationObjectClass;
 
--- Should not be used.
+-- Should not be used. String in module InformationObjectClass should
+-- be used instead.
 String ::= NULL
 
 -- The object set containing two objects, 0 and 1.
