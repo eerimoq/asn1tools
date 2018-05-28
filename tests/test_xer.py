@@ -497,6 +497,10 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
                          'SequenceOf(SequenceOf, Integer(INTEGER))')
         self.assertEqual(repr(all_types.types['SetOf']),
                          'SetOf(SetOf, Integer(INTEGER))')
+        self.assertEqual(repr(all_types.types['GeneralizedTime1']),
+                         'GeneralizedTime(GeneralizedTime1)')
+        self.assertEqual(repr(all_types.types['Choice']),
+                         'Choice(Choice, [Integer(a)])')
 
     def test_all_types_automatic_tags(self):
         all_types = asn1tools.compile_files(
