@@ -423,6 +423,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
             ('Visiblestring',      'bar', b'"bar"'),
             ('Generalstring',      'bar', b'"bar"'),
             ('Bmpstring',         b'bar', b'"bar"'),
+            ('Graphicstring',      'bar', b'"bar"'),
             ('Teletexstring',     b'fum', b'"fum"'),
             ('SequenceOf',            [], b'[]'),
             ('SetOf',                 [], b'[]'),
@@ -478,6 +479,8 @@ class Asn1ToolsJerTest(unittest.TestCase):
                          'GeneralString(Generalstring)')
         self.assertEqual(repr(all_types.types['Bmpstring']),
                          'BMPString(Bmpstring)')
+        self.assertEqual(repr(all_types.types['Graphicstring']),
+                         'GraphicString(Graphicstring)')
         self.assertEqual(repr(all_types.types['Teletexstring']),
                          'TeletexString(Teletexstring)')
         self.assertEqual(repr(all_types.types['Utctime']), 'UTCTime(Utctime)')

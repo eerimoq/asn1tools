@@ -487,6 +487,8 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
                          'GeneralString(Generalstring)')
         self.assertEqual(repr(all_types.types['Bmpstring']),
                          'BMPString(Bmpstring)')
+        self.assertEqual(repr(all_types.types['Graphicstring']),
+                         'GraphicString(Graphicstring)')
         self.assertEqual(repr(all_types.types['Teletexstring']),
                          'TeletexString(Teletexstring)')
         self.assertEqual(repr(all_types.types['Utctime']), 'UTCTime(Utctime)')
@@ -545,6 +547,47 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
         encoded = b'a A ::= "foo"'
 
         self.assertEqual(foo.encode('A', decoded), encoded)
+
+    def test_general_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= GeneralString "
+            "END",
+            'gser')
+
+        decoded = 'foo'
+        encoded = b'a A ::= "foo"'
+
+        self.assertEqual(foo.encode('A', decoded), encoded)
+
+    def test_bmp_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= BMPString "
+            "END",
+            'gser')
+
+        decoded = 'foo'
+        encoded = b'a A ::= "foo"'
+
+        with self.assertRaises(NotImplementedError):
+            self.assertEqual(foo.encode('A', decoded), encoded)
+
+    def test_graphic_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= GraphicString "
+            "END",
+            'gser')
+
+        decoded = 'foo'
+        encoded = b'a A ::= "foo"'
+
+        with self.assertRaises(NotImplementedError):
+            self.assertEqual(foo.encode('A', decoded), encoded)
 
     def test_universal_string(self):
         foo = asn1tools.compile_string(

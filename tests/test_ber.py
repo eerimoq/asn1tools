@@ -1756,6 +1756,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(repr(all_types.types['Boolean']), 'Boolean(Boolean)')
         self.assertEqual(repr(all_types.types['Integer']), 'Integer(Integer)')
+        self.assertEqual(repr(all_types.types['Real']), 'Real(Real)')
         self.assertEqual(repr(all_types.types['Bitstring']), 'BitString(Bitstring)')
         self.assertEqual(repr(all_types.types['Octetstring']), 'OctetString(Octetstring)')
         self.assertEqual(repr(all_types.types['Null']), 'Null(Null)')
@@ -1783,6 +1784,8 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                          'BMPString(Bmpstring)')
         self.assertEqual(repr(all_types.types['Teletexstring']),
                          'TeletexString(Teletexstring)')
+        self.assertEqual(repr(all_types.types['Graphicstring']),
+                         'GraphicString(Graphicstring)')
         self.assertEqual(repr(all_types.types['Utctime']), 'UTCTime(Utctime)')
         self.assertEqual(repr(all_types.types['SequenceOf']),
                          'SequenceOf(SequenceOf, Integer())')
@@ -2611,6 +2614,36 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             foo.decode('Q',
                        b'\x30\x0b\xa0\x06\x80\x01\xff\x81\x01\xff\x81\x01\x64'),
             {'a': {'a': True}, 'b': 100})
+
+        # Decode S with end-of-contentes octet , which is not yet
+        # supported.
+        with self.assertRaises(NotImplementedError) as cm:
+            foo.decode('S', b'\x30\x80\x02\x01\x01\x00\x00')
+
+        self.assertEqual(
+            str(cm.exception),
+            'Decode until an end-of-contents tag is not yet implemented.')
+
+    def test_sequence_of(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE OF INTEGER "
+            "END",
+            'ber')
+
+        datas = [
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        with self.assertRaises(NotImplementedError) as cm:
+            foo.decode('A', b'\x30\x80\x00\x00')
+
+        self.assertEqual(
+            str(cm.exception),
+            'Decode until an end-of-contents tag is not yet implemented.')
 
     def test_choice(self):
         foo = asn1tools.compile_string(

@@ -204,6 +204,8 @@ Bmpstring ::= BMPString
 
 Teletexstring ::= TeletexString
 
+Graphicstring ::= GraphicString
+
 Utctime ::= UTCTime
 
 GeneralizedTime1 ::= GeneralizedTime
