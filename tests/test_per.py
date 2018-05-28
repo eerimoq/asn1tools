@@ -958,6 +958,8 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "  b VisibleString (SIZE (0..2)) "
             "} "
             "I ::= VisibleString (FROM (\"a\"..\"z\")) (SIZE (1..255)) "
+            "J ::= VisibleString (FROM (\"a\")) "
+            "K ::= VisibleString (FROM (\"a\"..\"a\")) "
             "END",
             'per')
 
@@ -976,7 +978,9 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('F', {'a': True, 'b': '123'}, b'\x80\x31\x32\x33'),
             ('G',   {'a': True, 'b': '1'}, b'\xcc\x40'),
             ('H',   {'a': True, 'b': '1'}, b'\xa0\x31'),
-            ('I',                   'hej', b'\x02\x68\x65\x6a')
+            ('I',                   'hej', b'\x02\x68\x65\x6a'),
+            ('J',                     'a', b'\x01'),
+            ('K',                     'a', b'\x01')
         ]
 
         for type_name, decoded, encoded in datas:
