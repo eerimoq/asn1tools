@@ -313,15 +313,9 @@ class PrimitiveOrConstructedType(object):
         self.name = name
         self.type_name = type_name
         self.segment = segment
-
-        if number is None:
-            self.tag = None
-            self.constructed_tag = None
-        else:
-            self.tag = encode_tag(number, flags)
-            self.constructed_tag = copy(self.tag)
-            self.constructed_tag[0] |= Encoding.CONSTRUCTED
-
+        self.tag = encode_tag(number, flags)
+        self.constructed_tag = copy(self.tag)
+        self.constructed_tag[0] |= Encoding.CONSTRUCTED
         self.optional = False
         self.default = None
 
