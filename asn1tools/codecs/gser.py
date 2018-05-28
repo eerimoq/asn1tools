@@ -290,6 +290,18 @@ class BMPString(Type):
         return 'BMPString({})'.format(self.name)
 
 
+class GraphicString(Type):
+
+    def __init__(self, name):
+        super(GraphicString, self).__init__(name, 'GraphicString')
+
+    def encode(self, data, separator, indent):
+        raise NotImplementedError('GraphicString is not yet implemented.')
+
+    def __repr__(self):
+        return 'GraphicString({})'.format(self.name)
+
+
 class UTCTime(Type):
 
     def __init__(self, name):
@@ -511,6 +523,8 @@ class Compiler(compiler.Compiler):
             compiled = UTF8String(name)
         elif type_name == 'BMPString':
             compiled = BMPString(name)
+        elif type_name == 'GraphicString':
+            compiled = GraphicString(name)
         elif type_name == 'UTCTime':
             compiled = UTCTime(name)
         elif type_name == 'UniversalString':
