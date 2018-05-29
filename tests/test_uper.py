@@ -1872,6 +1872,11 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "H ::= BIT STRING { "
             "  a (3) "
             "} "
+            "I ::= BIT STRING { "
+            "  a (0), "
+            "  b (1), "
+            "  c (2) "
+            "} (SIZE (8..9))"
             "END",
             'uper')
 
@@ -1905,20 +1910,18 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
-        # NamedBitList not yet implemented. Trailing zero bits should
-        # be stripped when encoding.
+        # Trailing zero bits should be stripped when encoding.
         datas = [
             ('E',          (b'\x80', 2), b'\x01\x80', (b'\x80', 1)),
             ('E',          (b'\x00', 3), b'\x00',     (b'', 0)),
             ('E',          (b'\x00', 8), b'\x00',     (b'', 0)),
             ('G',          (b'\x40', 3), b'\x20',     (b'\x40', 2)),
-            ('H',          (b'\x00', 1), b'\x00',     (b'', 0))
+            ('H',          (b'\x00', 1), b'\x00',     (b'', 0)),
+            ('I',      (b'\x00\x00', 9), b'\x00\x00', (b'\x00', 8)),
         ]
 
         for type_name, decoded_1, encoded, decoded_2 in datas:
-            with self.assertRaises(AssertionError):
-                self.assertEqual(foo.encode(type_name, decoded_1), encoded)
-
+            self.assertEqual(foo.encode(type_name, decoded_1), encoded)
             self.assertEqual(foo.decode(type_name, encoded), decoded_2)
 
     def test_octet_string(self):

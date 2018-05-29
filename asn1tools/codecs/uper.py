@@ -456,10 +456,11 @@ class SetOf(ArrayType):
 
 class BitString(Type):
 
-    def __init__(self, name, minimum, maximum):
+    def __init__(self, name, minimum, maximum, has_named_bits):
         super(BitString, self).__init__(name, 'BIT STRING')
         self.minimum = minimum
         self.maximum = maximum
+        self.has_named_bits = has_named_bits
 
         if minimum is None or maximum is None:
             self.number_of_bits = None
@@ -468,13 +469,31 @@ class BitString(Type):
             self.number_of_bits = integer_as_number_of_bits(size)
 
     def encode(self, data, encoder):
-        if self.number_of_bits is None:
-            encoder.append_length_determinant(data[1])
-        elif self.minimum != self.maximum:
-            encoder.append_non_negative_binary_integer(data[1] - self.minimum,
-                                                       self.number_of_bits)
+        data, number_of_bits = data
 
-        encoder.append_bits(data[0], data[1])
+        if self.has_named_bits:
+            data = bytearray(data.rstrip(b'\x00'))
+
+            if len(data) == 0:
+                number_of_bits = 0
+            else:
+                value = data[-1]
+                number_of_bits = 8 * len(data) - (value & -value).bit_length() + 1
+
+            if self.minimum is not None:
+                if number_of_bits < self.minimum:
+                    number_of_bits = self.minimum
+                    number_of_bytes = ((number_of_bits + 7) // 8)
+                    data += (number_of_bytes - len(data)) * b'\x00'
+
+        if self.number_of_bits is None:
+            encoder.append_length_determinant(number_of_bits)
+        elif self.minimum != self.maximum:
+            encoder.append_non_negative_binary_integer(
+                number_of_bits - self.minimum,
+                self.number_of_bits)
+
+        encoder.append_bits(data, number_of_bits)
 
     def decode(self, decoder):
         if self.number_of_bits is None:
@@ -814,7 +833,11 @@ class Compiler(per.Compiler):
         elif type_name == 'BIT STRING':
             minimum, maximum, _ = self.get_size_range(type_descriptor,
                                                       module_name)
-            compiled = BitString(name, minimum, maximum)
+            has_named_bits = ('named-bits' in type_descriptor)
+            compiled = BitString(name,
+                                 minimum,
+                                 maximum,
+                                 has_named_bits)
         elif type_name == 'ANY':
             compiled = Any(name)
         elif type_name == 'ANY DEFINED BY':
