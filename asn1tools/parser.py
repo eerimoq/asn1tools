@@ -425,10 +425,19 @@ def convert_object_identifier_type(_s, _l, _tokens):
     }
 
 
-def convert_bit_string_type(_s, _l, _tokens):
-    return {
+def convert_bit_string_type(_s, _l, tokens):
+    converted_type = {
         'type': 'BIT STRING'
     }
+
+    named_bit_list = tokens.asList()[1]
+
+    if named_bit_list:
+        converted_type['named-bits'] = [
+            tuple(named_bit) for named_bit in named_bit_list
+        ]
+
+    return converted_type
 
 
 def convert_octet_string_type(_s, _l, _tokens):
@@ -1401,12 +1410,13 @@ def create_grammar():
 
     # X.680: 21. Notation for the bitstring type
     bit_string_type = (BIT_STRING
-                       + Group(Optional(left_brace
-                                        + Group(delimitedList(word
-                                                              + left_parenthesis
-                                                              + word
-                                                              + right_parenthesis))
-                                        + right_brace)))
+                       + Group(Optional(
+                           Suppress(left_brace)
+                           + delimitedList(Group(word
+                                                 + Suppress(left_parenthesis)
+                                                 + word
+                                                 + Suppress(right_parenthesis)))
+                           + Suppress(right_brace))))
     bit_string_type.setName('BIT STRING')
     bit_string_value = Tag('BitStringValue',
                            bstring
