@@ -153,6 +153,9 @@ class Encoder(object):
 
         """
 
+        if number_of_bits == 0:
+            return
+
         value = int(binascii.hexlify(data), 16)
         number_of_alignment_bits = (8 - (number_of_bits % 8))
 
@@ -175,8 +178,7 @@ class Encoder(object):
 
         """
 
-        if len(data) > 0:
-            self.append_bits(data, 8 * len(data))
+        self.append_bits(data, 8 * len(data))
 
     def as_bytearray(self):
         """Return the bits as a bytearray.

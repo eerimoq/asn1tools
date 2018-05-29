@@ -46,6 +46,10 @@ Bitstring2 ::= BIT STRING (SIZE (9))
 
 Bitstring3 ::= BIT STRING (SIZE (5..7))
 
+Bitstring4 ::= BIT STRING { a(0), b(1), c(2) }
+
+Bitstring5 ::= BIT STRING { a(0), b(1), c(2) } (SIZE (2..3))
+
 bitstring BIT STRING ::= '10001000 1001'B
 
 bitstring2 BIT STRING ::= '01234567 89ABCD EF'H
