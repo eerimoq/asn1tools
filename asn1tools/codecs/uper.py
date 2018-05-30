@@ -468,23 +468,28 @@ class BitString(Type):
             size = self.maximum - self.minimum
             self.number_of_bits = integer_as_number_of_bits(size)
 
+    def rstrip_zeros(self, data, number_of_bits):
+        data = bytearray(data.rstrip(b'\x00'))
+
+        if len(data) == 0:
+            number_of_bits = 0
+        else:
+            value = data[-1]
+            number_of_bits = 8 * len(data) - (value & -value).bit_length() + 1
+
+        if self.minimum is not None:
+            if number_of_bits < self.minimum:
+                number_of_bits = self.minimum
+                number_of_bytes = ((number_of_bits + 7) // 8)
+                data += (number_of_bytes - len(data)) * b'\x00'
+
+        return data, number_of_bits
+
     def encode(self, data, encoder):
         data, number_of_bits = data
 
         if self.has_named_bits:
-            data = bytearray(data.rstrip(b'\x00'))
-
-            if len(data) == 0:
-                number_of_bits = 0
-            else:
-                value = data[-1]
-                number_of_bits = 8 * len(data) - (value & -value).bit_length() + 1
-
-            if self.minimum is not None:
-                if number_of_bits < self.minimum:
-                    number_of_bits = self.minimum
-                    number_of_bytes = ((number_of_bits + 7) // 8)
-                    data += (number_of_bytes - len(data)) * b'\x00'
+            data, number_of_bits = self.rstrip_zeros(data, number_of_bits)
 
         if self.number_of_bits is None:
             encoder.append_length_determinant(number_of_bits)

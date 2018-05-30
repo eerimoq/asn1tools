@@ -1881,7 +1881,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             'uper')
 
         datas = [
-            ('A',          (b'', 0), b'\x00'),
+            ('A',              (b'', 0), b'\x00'),
             ('A',          (b'\x00', 1), b'\x01\x00'),
             ('A',          (b'\x40', 4), b'\x04\x40'),
             ('A',
@@ -1910,7 +1910,8 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
-        # Trailing zero bits should be stripped when encoding.
+        # Trailing zero bits should be stripped when encoding named
+        # bit list.
         datas = [
             ('E',          (b'\x80', 2), b'\x01\x80', (b'\x80', 1)),
             ('E',          (b'\x00', 3), b'\x00',     (b'', 0)),

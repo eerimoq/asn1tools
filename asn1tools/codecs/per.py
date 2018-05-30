@@ -157,10 +157,7 @@ class Encoder(object):
             return
 
         value = int(binascii.hexlify(data), 16)
-        number_of_alignment_bits = (8 - (number_of_bits % 8))
-
-        if number_of_alignment_bits != 8:
-            value >>= number_of_alignment_bits
+        value >>= (8 * len(data) - number_of_bits)
 
         self.append_non_negative_binary_integer(value, number_of_bits)
 
