@@ -194,6 +194,45 @@ dates.
    }
    >
 
+The parse subcommand
+^^^^^^^^^^^^^^^^^^^^
+
+Parse given ASN.1 specification and write it as a Python dictionary to
+given file. Use the created file to convert given encoded Question
+from BER to GSER (produces human readable text). The conversion is
+significantly faster than passing .asn-file(s) to the convert
+subcommand, especially for larger ASN.1 specifications.
+
+.. code-block:: text
+
+   > asn1tools parse tests/files/foo.asn foo.py
+   > asn1tools convert foo.py Question 300e0201011609497320312b313d333f
+   question Question ::= {
+       id 1,
+       question "Is 1+1=3?"
+   }
+   >
+
+The pickle subcommand
+^^^^^^^^^^^^^^^^^^^^^
+
+Compile and pickle given ASN.1 specification with BER and XER
+codecs. Use the created files to convert given encoded Question from
+BER to XER (produces human readable text). The conversion is
+significantly faster than passing .asn-file(s) to the convert
+subcommand, especially for larger ASN.1 specifications.
+
+.. code-block:: text
+
+   > asn1tools pickle --codec ber tests/files/foo.asn foo-ber.pkl
+   > asn1tools pickle --codec xer tests/files/foo.asn foo-xer.pkl
+   > asn1tools convert -o xer foo-ber.pkl foo-xer.pkl Question 300e0201011609497320312b313d333f
+   <Question>
+       <id>1</id>
+       <question>Is 1+1=3?</question>
+   </Question>
+   >
+
 Contributing
 ============
 

@@ -18,42 +18,6 @@ class Asn1ToolsCommandLineTest(unittest.TestCase):
 
     maxDiff = None
 
-    def test_command_line_help(self):
-        argv = ['asn1tools', '--help']
-
-        stdout = StringIO()
-
-        with patch('sys.stdout', stdout):
-            with patch('sys.argv', argv):
-                with self.assertRaises(SystemExit):
-                    asn1tools._main()
-
-        expected_output = [
-            "usage: asn1tools [-h] [-d] [-v {0,1,2}] [--version] {convert,shell} ...",
-            "",
-            "Various ASN.1 utilities.",
-            "",
-            "optional arguments:",
-            "  -h, --help            show this help message and exit",
-            "  -d, --debug",
-            "  -v {0,1,2}, --verbose {0,1,2}",
-            "                        Control the verbosity; ",
-            "disable(0),",
-            "warning(1)",
-            "and",
-            "debug(2).",
-            "(default: 1).",
-            "  --version             Print version information and exit.",
-            "",
-            "subcommands:",
-            "  {convert,shell}"
-        ]
-
-        print(stdout.getvalue())
-
-        for line in expected_output:
-            self.assertIn(line, stdout.getvalue())
-
     def test_command_line_convert_ber_foo_question(self):
         argv = [
             'asn1tools',
