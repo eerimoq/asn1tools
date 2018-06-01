@@ -62,11 +62,12 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         # The length can be decoded.
         datas = [
-            (b'0\x0e\x02\x01\x01\x16\x09Is 1+1=3?', 16),
-            (b'0\x10\x02\x02\x01\x16\x09Is 1+10=14?', 18),
-            (b'0\x0d', 15),
-            (b'0\x84\x00\x00\x00\xb8', 190)
-        ]
+            (b'\x30\x0e\x02\x01\x01\x16\x09Is 1+1=3?', 16),
+            (b'\x30\x10\x02\x02\x01\x16\x09Is 1+10=14?', 18),
+            (b'\x30\x0d', 15),
+            (b'\x30\x84\x00\x00\x00\xb8', 190),
+            (b'\x9f\x1f\x00', 3)
+       ]
 
         for encoded, decoded_length in datas:
             length = foo.decode_length(encoded)
@@ -74,9 +75,9 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         # The length cannot be decoded.
         datas = [
-            b'0',
+            b'\x30',
             b'',
-            b'0\x84\x00\x00\x00'
+            b'\x30\x84\x00\x00\x00'
         ]
 
         for encoded in datas:
@@ -2717,6 +2718,47 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             "  c BOOLEAN "
             "  ]] "
             "} "
+            "K ::= CHOICE { "
+            "  m1 NULL, "
+            "  m2 NULL, "
+            "  m3 NULL, "
+            "  m4 NULL, "
+            "  m5 NULL, "
+            "  m6 NULL, "
+            "  m7 NULL, "
+            "  m8 NULL, "
+            "  m9 NULL, "
+            "  m10 NULL, "
+            "  m11 NULL, "
+            "  m12 NULL, "
+            "  m13 NULL, "
+            "  m14 NULL, "
+            "  m15 NULL, "
+            "  m16 NULL, "
+            "  m17 NULL, "
+            "  m18 NULL, "
+            "  m19 NULL, "
+            "  m20 NULL, "
+            "  m21 NULL, "
+            "  m22 NULL, "
+            "  m23 NULL, "
+            "  m24 NULL, "
+            "  m25 NULL, "
+            "  m26 NULL, "
+            "  m27 NULL, "
+            "  m28 NULL, "
+            "  m29 NULL, "
+            "  m30 NULL, "
+            "  m31 NULL, "
+            "  m32 NULL, "
+            "  m33 NULL, "
+            "  m34 NULL, "
+            "  m35 NULL, "
+            "  m36 NULL, "
+            "  m37 NULL, "
+            "  m38 NULL, "
+            "  m39 NULL "
+            "} "
             "END")
 
         datas = [
@@ -2741,7 +2783,10 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('I',            ('c', True), b'\x82\x01\xff'),
             ('J',            ('a', True), b'\x80\x01\xff'),
             ('J',        ('b', ('a', 1)), b'\xa1\x03\x80\x01\x01'),
-            ('J',            ('c', True), b'\x82\x01\xff')
+            ('J',            ('c', True), b'\x82\x01\xff'),
+            ('K',          ('m31', None), b'\x9e\x00'),
+            ('K',          ('m32', None), b'\x9f\x1f\x00'),
+            ('K',          ('m33', None), b'\x9f\x20\x00')
         ]
 
         for type_name, decoded, encoded in datas:

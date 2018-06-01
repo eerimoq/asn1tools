@@ -3,7 +3,6 @@
 """
 
 from . import DecodeTagError
-from . import DecodeContentsLengthError
 from . import ber
 from .ber import Class
 from .ber import Encoding
@@ -23,6 +22,7 @@ from .ber import Choice
 from .ber import Any
 from .ber import AnyDefinedBy
 from .ber import Recursive
+from .ber import decode_length
 
 
 class Type(object):
@@ -586,12 +586,3 @@ class Compiler(ber.Compiler):
 
 def compile_dict(specification):
     return Compiler(specification).process()
-
-
-def decode_length(data):
-    try:
-        return sum(decode_length_definite(bytearray(data), 1))
-    except DecodeContentsLengthError as e:
-        return (e.length + e.offset)
-    except IndexError:
-        return None

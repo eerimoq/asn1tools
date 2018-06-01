@@ -135,10 +135,11 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
 
         # The length can be decoded.
         datas = [
-            (b'0\x0e\x02\x01\x01\x16\x09Is 1+1=3?',   16),
-            (b'0\x10\x02\x02\x01\x16\x09Is 1+10=14?', 18),
-            (b'0\x0d',                                15),
-            (b'0\x84\x00\x00\x00\xb8',                190)
+            (b'\x30\x0e\x02\x01\x01\x16\x09Is 1+1=3?',   16),
+            (b'\x30\x10\x02\x02\x01\x16\x09Is 1+10=14?', 18),
+            (b'\x30\x0d',                                15),
+            (b'\x30\x84\x00\x00\x00\xb8',                190),
+            (b'\x9f\x1f\x00', 3)
         ]
 
         for encoded_message, decoded_length in datas:

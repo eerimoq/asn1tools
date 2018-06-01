@@ -191,8 +191,17 @@ def encode_tag(number, flags):
     return tag
 
 
-def decode_tag(_, offset):
-    return 0, 0, offset + 1
+def decode_tag(data, offset):
+    byte = data[offset]
+    offset += 1
+
+    if byte & 0x1f == 0x1f:
+        while data[offset] & 0x80:
+            offset += 1
+
+        offset += 1
+
+    return 0, 0, offset
 
 
 def encode_real(data):
@@ -1518,7 +1527,10 @@ def compile_dict(specification):
 
 def decode_length(data):
     try:
-        return sum(decode_length_definite(bytearray(data), 1))
+        data = bytearray(data)
+        _, _, offset = decode_tag(data, 0)
+
+        return sum(decode_length_definite(data, offset))
     except DecodeContentsLengthError as e:
         return (e.length + e.offset)
     except IndexError:
