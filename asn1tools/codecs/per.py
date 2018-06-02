@@ -7,7 +7,6 @@ from operator import attrgetter
 from operator import itemgetter
 import binascii
 import string
-from copy import deepcopy
 
 from ..parser import EXTENSION_MARKER
 from . import EncodeError
@@ -1535,7 +1534,7 @@ class Enumerated(Type):
         return 'Enumerated({})'.format(self.name)
 
 
-class Recursive(Type):
+class Recursive(Type, compiler.Recursive):
 
     def __init__(self, name, type_name, module_name):
         super(Recursive, self).__init__(name, 'RECURSIVE')
@@ -1689,18 +1688,28 @@ class Compiler(compiler.Compiler):
                 compiled = Recursive(name,
                                      type_name,
                                      module_name)
-                self.recurvise_types.append(compiled)
+                self.recursive_types.append(compiled)
             else:
-                self.types_backtrace_push(type_name)
-                compiled = self.compile_type(
-                    name,
-                    *self.lookup_type_descriptor(
-                        type_name,
-                        module_name))
-                self.types_backtrace_pop()
+                compiled = self.get_compiled_type(name,
+                                                  type_name,
+                                                  module_name)
+
+                if compiled is None:
+                    self.types_backtrace_push(type_name)
+                    compiled = self.compile_type(
+                        name,
+                        *self.lookup_type_descriptor(
+                            type_name,
+                            module_name))
+                    self.types_backtrace_pop()
+                    self.set_compiled_type(name,
+                                           type_name,
+                                           module_name,
+                                           compiled)
 
         # Set any given tag.
         if 'tag' in type_descriptor:
+            compiled = self.copy(compiled)
             tag = type_descriptor['tag']
             class_prio = CLASS_PRIO[tag.get('class', 'CONTEXT_SPECIFIC')]
             class_number = tag['number']
@@ -1709,6 +1718,7 @@ class Compiler(compiler.Compiler):
         # Set any given restricted to range.
         if 'restricted-to' in type_descriptor:
             if isinstance(compiled, Integer):
+                compiled = self.copy(compiled)
                 compiled.set_restricted_to_range(
                     *self.get_restricted_to_range(type_descriptor,
                                                   module_name))
@@ -1787,12 +1797,15 @@ class Compiler(compiler.Compiler):
                                                 module_name)
 
         if 'optional' in member:
+            compiled_member = self.copy(compiled_member)
             compiled_member.optional = member['optional']
 
         if 'default' in member:
+            compiled_member = self.copy(compiled_member)
             compiled_member.default = member['default']
 
         if 'size' in member:
+            compiled_member = self.copy(compiled_member)
             compiled_member.set_size_range(*self.get_size_range(member,
                                                                 module_name))
 

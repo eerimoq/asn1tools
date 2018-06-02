@@ -2,6 +2,7 @@
 
 """
 
+from copy import copy
 from copy import deepcopy
 from ..errors import CompileError
 from ..parser import EXTENSION_MARKER
@@ -32,6 +33,10 @@ class CompiledType(object):
         self._constraints.check(data)
 
 
+class Recursive(object):
+    pass
+
+
 class Constraints(object):
 
     def check(self, data):
@@ -43,7 +48,8 @@ class Compiler(object):
     def __init__(self, specification):
         self._specification = specification
         self._types_backtrace = []
-        self.recurvise_types = []
+        self.recursive_types = []
+        self.compiled = {}
 
     def types_backtrace_push(self, type_name):
         self._types_backtrace.append(type_name)
@@ -75,7 +81,7 @@ class Compiler(object):
 
                 compiled[module_name][type_name] = compiled_type
 
-        for recursive_type in self.recurvise_types:
+        for recursive_type in self.recursive_types:
             compiled_module = compiled[recursive_type.module_name]
             inner_type = compiled_module[recursive_type.type_name].type
             recursive_type.set_inner_type(inner_type)
@@ -374,6 +380,21 @@ class Compiler(object):
             if member['name'] == member_name:
                 return member['type'], module_name
 
+    def get_compiled_type(self, name, type_name, module_name):
+        try:
+            return self.compiled[module_name][type_name][name]
+        except KeyError:
+            return None
+
+    def set_compiled_type(self, name, type_name, module_name, compiled):
+        if module_name not in self.compiled:
+            self.compiled[module_name] = {}
+
+        if type_name not in self.compiled[module_name]:
+            self.compiled[module_name][type_name] = {}
+
+        self.compiled[module_name][type_name][name] = compiled
+
     def convert_object_class_type_descriptor(self, type_descriptor, module_name):
         type_name, module_name = self.lookup_object_class_type_name(
             type_descriptor['type'],
@@ -382,6 +403,12 @@ class Compiler(object):
         type_descriptor['type'] = type_name
 
         return type_descriptor, module_name
+
+    def copy(self, compiled_type):
+        if not isinstance(compiled_type, Recursive):
+            compiled_type = copy(compiled_type)
+
+        return compiled_type
 
 
 def enum_values_as_dict(values):

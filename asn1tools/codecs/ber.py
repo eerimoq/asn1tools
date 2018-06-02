@@ -1275,7 +1275,7 @@ class ExplicitTag(Type):
         return 'Tag()'
 
 
-class Recursive(Type):
+class Recursive(Type, compiler.Recursive):
 
     def __init__(self, name, type_name, module_name):
         super(Recursive, self).__init__(name, 'RECURSIVE', None)
@@ -1426,15 +1426,24 @@ class Compiler(compiler.Compiler):
                 compiled = Recursive(name,
                                      type_name,
                                      module_name)
-                self.recurvise_types.append(compiled)
+                self.recursive_types.append(compiled)
             else:
-                self.types_backtrace_push(type_name)
-                compiled = self.compile_type(
-                    name,
-                    *self.lookup_type_descriptor(
-                        type_name,
-                        module_name))
-                self.types_backtrace_pop()
+                compiled = self.get_compiled_type(name,
+                                                  type_name,
+                                                  module_name)
+
+                if compiled is None:
+                    self.types_backtrace_push(type_name)
+                    compiled = self.compile_type(
+                        name,
+                        *self.lookup_type_descriptor(
+                            type_name,
+                            module_name))
+                    self.types_backtrace_pop()
+                    self.set_compiled_type(name,
+                                           type_name,
+                                           module_name,
+                                           compiled)
 
         return compiled
 
@@ -1448,6 +1457,7 @@ class Compiler(compiler.Compiler):
 
         # Set any given tag.
         if 'tag' in type_descriptor:
+            compiled = self.copy(compiled)
             tag = type_descriptor['tag']
             class_ = tag.get('class', None)
 
@@ -1513,9 +1523,11 @@ class Compiler(compiler.Compiler):
                                             module_name)
 
         if 'optional' in member:
+            compiled_member = self.copy(compiled_member)
             compiled_member.optional = member['optional']
 
         if 'default' in member:
+            compiled_member = self.copy(compiled_member)
             compiled_member.default = member['default']
 
         return compiled_member

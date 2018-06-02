@@ -417,7 +417,7 @@ class Enumerated(Type):
         return 'Enumerated({})'.format(self.name)
 
 
-class Recursive(Type):
+class Recursive(Type, compiler.Recursive):
 
     def __init__(self, name, _type_name, _module_name):
         super(Recursive, self).__init__(name, 'RECURSIVE')
@@ -433,11 +433,11 @@ class Recursive(Type):
 
 class CompiledType(compiler.CompiledType):
 
-    def __init__(self, type_name, type_, constraints):
+    def __init__(self, type_name, compiled_type, constraints):
         super(CompiledType, self).__init__(constraints)
         self._value_name = type_name.lower()
         self._value_type = type_name
-        self._type = type_
+        self._type = compiled_type
 
     def encode(self, data, indent=None):
         if indent is None:
@@ -548,13 +548,22 @@ class Compiler(compiler.Compiler):
                                      type_name,
                                      module_name)
             else:
-                self.types_backtrace_push(type_name)
-                compiled = self.compile_type(
-                    name,
-                    *self.lookup_type_descriptor(
-                        type_name,
-                        module_name))
-                self.types_backtrace_pop()
+                compiled = self.get_compiled_type(name,
+                                                  type_name,
+                                                  module_name)
+
+                if compiled is None:
+                    self.types_backtrace_push(type_name)
+                    compiled = self.compile_type(
+                        name,
+                        *self.lookup_type_descriptor(
+                            type_name,
+                            module_name))
+                    self.types_backtrace_pop()
+                    self.set_compiled_type(name,
+                                           type_name,
+                                           module_name,
+                                           compiled)
 
         return compiled
 
@@ -575,9 +584,11 @@ class Compiler(compiler.Compiler):
                                                 module_name)
 
             if 'optional' in member:
+                compiled_member = self.copy(compiled_member)
                 compiled_member.optional = member['optional']
 
             if 'default' in member:
+                compiled_member = self.copy(compiled_member)
                 compiled_member.default = member['default']
 
             compiled_members.append(compiled_member)

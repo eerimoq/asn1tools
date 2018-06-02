@@ -571,15 +571,24 @@ class Compiler(ber.Compiler):
                 compiled = Recursive(name,
                                      type_name,
                                      module_name)
-                self.recurvise_types.append(compiled)
+                self.recursive_types.append(compiled)
             else:
-                self.types_backtrace_push(type_name)
-                compiled = self.compile_type(
-                    name,
-                    *self.lookup_type_descriptor(
-                        type_name,
-                        module_name))
-                self.types_backtrace_pop()
+                compiled = self.get_compiled_type(name,
+                                                  type_name,
+                                                  module_name)
+
+                if compiled is None:
+                    self.types_backtrace_push(type_name)
+                    compiled = self.compile_type(
+                        name,
+                        *self.lookup_type_descriptor(
+                            type_name,
+                            module_name))
+                    self.types_backtrace_pop()
+                    self.set_compiled_type(name,
+                                           type_name,
+                                           module_name,
+                                           compiled)
 
         return compiled
 
