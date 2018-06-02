@@ -637,6 +637,56 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
         for name, decoded, encoded in datas:
             self.assertEqual(foo.encode(name, decoded), encoded)
 
+    def test_sequence_of(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE OF INTEGER "
+            "END",
+            'gser')
+
+        datas = [
+            ('A',                   [], b'a A ::= { }'),
+            ('A',                  [1], b'a A ::= { 1 }'),
+            ('A',               [1, 3], b'a A ::= { 1, 3 }')
+        ]
+
+        for name, decoded, encoded in datas:
+            self.assertEqual(foo.encode(name, decoded), encoded)
+
+    def test_set_of(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SET OF INTEGER "
+            "END",
+            'gser')
+
+        datas = [
+            ('A',                   [], b'a A ::= { }'),
+            ('A',                  [1], b'a A ::= { 1 }'),
+            ('A',               [1, 3], b'a A ::= { 1, 3 }')
+        ]
+
+        for name, decoded, encoded in datas:
+            self.assertEqual(foo.encode(name, decoded), encoded)
+
+    def test_any(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= ANY "
+            "END",
+            'gser')
+
+        datas = [
+            ('A',                   b'', b"a A ::= ''H"),
+            ('A',               b'\x20', b"a A ::= '20'H")
+        ]
+
+        for name, decoded, encoded in datas:
+            self.assertEqual(foo.encode(name, decoded), encoded)
+
 
 if __name__ == '__main__':
     unittest.main()

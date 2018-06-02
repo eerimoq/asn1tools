@@ -150,45 +150,48 @@ class Set(Type):
             ', '.join([repr(member) for member in self.members]))
 
 
-class SequenceOf(Type):
+class ArrayType(Type):
 
-    def __init__(self, name, element_type):
-        super(SequenceOf, self).__init__(name, 'SEQUENCE OF')
+    def __init__(self, name, type_name, element_type):
+        super(ArrayType, self).__init__(name, type_name)
         self.element_type = element_type
 
     def encode(self, data, separator, indent):
-        encoded_members = []
-        member_separator = separator + ' ' * indent
+        encoded_elements = []
+        element_separator = separator + ' ' * indent
 
         for entry in data:
-            encoded_member = self.element_type.encode(entry,
-                                                      member_separator,
-                                                      indent)
-            encoded_member = '{}{}'.format(member_separator,
-                                           encoded_member)
-            encoded_members.append(encoded_member)
+            encoded_element = self.element_type.encode(entry,
+                                                       element_separator,
+                                                       indent)
+            encoded_element = '{}{}'.format(element_separator,
+                                            encoded_element)
+            encoded_elements.append(encoded_element)
 
-        encoded_members = ','.join(encoded_members)
+        encoded_elements = ','.join(encoded_elements)
 
-        return separator.join(['{' + encoded_members, '}'])
+        return separator.join(['{' + encoded_elements, '}'])
 
     def __repr__(self):
-        return 'SequenceOf({}, {})'.format(self.name,
-                                           self.element_type)
+        return '{}({}, {})'.format(self.__class__.__name__,
+                                   self.name,
+                                   self.element_type)
 
 
-class SetOf(Type):
+class SequenceOf(ArrayType):
 
     def __init__(self, name, element_type):
-        super(SetOf, self).__init__(name, 'SET OF')
-        self.element_type = element_type
+        super(SequenceOf, self).__init__(name,
+                                         'SEQUENCE OF',
+                                         element_type)
 
-    def encode(self, data, separator, indent):
-        raise NotImplementedError('SET OF is not yet implemented.')
 
-    def __repr__(self):
-        return 'SetOf({}, {})'.format(self.name,
-                                      self.element_type)
+class SetOf(ArrayType):
+
+    def __init__(self, name, element_type):
+        super(SetOf, self).__init__(name,
+                                    'SET OF',
+                                    element_type)
 
 
 class BitString(Type):
@@ -394,8 +397,8 @@ class Any(Type):
     def __init__(self, name):
         super(Any, self).__init__(name, 'ANY')
 
-    def encode(self, _, encoder):
-        raise NotImplementedError('ANY is not yet implemented.')
+    def encode(self, data, _separator, _indent):
+        return "'{}'H".format(binascii.hexlify(data).decode('ascii'))
 
     def __repr__(self):
         return 'Any({})'.format(self.name)
