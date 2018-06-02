@@ -11,11 +11,14 @@ import logging
 from pprint import pformat
 import pickle
 
-from prompt_toolkit.contrib.completers import WordCompleter
-from prompt_toolkit import prompt
-from prompt_toolkit.history import FileHistory
-from prompt_toolkit.interface import AbortAction
-from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+try:
+    from prompt_toolkit.contrib.completers import WordCompleter
+    from prompt_toolkit import prompt
+    from prompt_toolkit.history import FileHistory
+    from prompt_toolkit.interface import AbortAction
+    from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+except ImportError:
+    pass
 
 from .compiler import compile_dict
 from .compiler import compile_string
@@ -32,7 +35,7 @@ from .errors import ConstraintsError
 
 
 __author__ = 'Erik Moqvist'
-__version__ = '0.94.0'
+__version__ = '0.95.0'
 
 
 class ArgumentParserError(Error):
