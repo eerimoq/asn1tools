@@ -13,5 +13,6 @@ script:
   - env PYTHONPATH=. python examples/benchmarks/codecs.py
   - env PYTHONPATH=. python examples/benchmarks/question/question.py
   - env PYTHONPATH=. python examples/hello_world.py
+  - env PYTHONPATH=. python examples/x509_pem.py
 after_success:
   coveralls
