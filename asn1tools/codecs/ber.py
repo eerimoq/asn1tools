@@ -1528,7 +1528,7 @@ def compile_dict(specification):
 def decode_length(data):
     try:
         data = bytearray(data)
-        _, _, offset = decode_tag(data, 0)
+        offset = decode_tag(data, 0)[2]
 
         return sum(decode_length_definite(data, offset))
     except DecodeContentsLengthError as e:
