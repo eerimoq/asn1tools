@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 
-"""Perform an LDAP bind with an LDAP server.
+"""Decode a X509 certificate.
 
 """
 
 from __future__ import print_function
 import os
-from pprint import pprint
 import base64
 import asn1tools
 
@@ -41,12 +40,12 @@ oaFZ8e1HofYUy+65pws=
 -----END CERTIFICATE-----\
 '''
 
-rfc5280_der = asn1tools.compile_files(RFC5280_ASN_PATH, codec='der')
-rfc5280_gser = asn1tools.compile_files(RFC5280_ASN_PATH, codec='gser')
-
 certificate = CERTIFICATE_PEM.splitlines()[1:-1]
 certificate = ''.join(certificate)
 certificate = base64.b64decode(certificate)
+
+rfc5280_der = asn1tools.compile_files(RFC5280_ASN_PATH, codec='der')
+rfc5280_gser = asn1tools.compile_files(RFC5280_ASN_PATH, codec='gser')
 
 decoded = rfc5280_der.decode('Certificate', certificate)
 encoded = rfc5280_gser.encode('Certificate', decoded, indent=4)
