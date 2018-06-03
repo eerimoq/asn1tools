@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Decode a X509 certificate.
+"""Decode an X509 certificate.
 
 """
 
