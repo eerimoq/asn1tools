@@ -11,14 +11,10 @@ import logging
 from pprint import pformat
 import pickle
 
-try:
-    from prompt_toolkit.contrib.completers import WordCompleter
-    from prompt_toolkit import prompt
-    from prompt_toolkit.history import FileHistory
-    from prompt_toolkit.interface import AbortAction
-    from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
-except ImportError:
-    pass
+from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit import PromptSession
+from prompt_toolkit.history import FileHistory
+from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 
 from .compiler import compile_dict
 from .compiler import compile_string
@@ -35,7 +31,7 @@ from .errors import ConstraintsError
 
 
 __author__ = 'Erik Moqvist'
-__version__ = '0.95.0'
+__version__ = '0.96.0'
 
 
 class ArgumentParserError(Error):
@@ -223,6 +219,11 @@ def _do_shell(_args):
     completer = WordCompleter(commands, WORD=True)
     user_home = os.path.expanduser('~')
     history = FileHistory(os.path.join(user_home, '.asn1tools-history.txt'))
+    session = PromptSession(completer=completer,
+                            complete_while_typing=True,
+                            auto_suggest=AutoSuggestFromHistory(),
+                            enable_history_search=True,
+                            history=history)
     input_spec = None
     output_spec = None
     output_codec = None
@@ -231,13 +232,7 @@ def _do_shell(_args):
 
     while True:
         try:
-            line = prompt(u'$ ',
-                          completer=completer,
-                          complete_while_typing=True,
-                          auto_suggest=AutoSuggestFromHistory(),
-                          enable_history_search=True,
-                          history=history,
-                          on_abort=AbortAction.RETRY)
+            line = session.prompt(u'$ ')
         except EOFError:
             return
 

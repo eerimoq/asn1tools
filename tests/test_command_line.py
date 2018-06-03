@@ -432,7 +432,6 @@ ff0e0201011609497320312b313d333f
                 self.assertEqual(str(cm.exception),
                                  "error: '012': Odd-length string")
 
-    @unittest.skip('prompt-toolkit 2.0')
     def test_command_line_shell(self):
         argv = ['asn1tools', 'shell']
         commands = StringIO('''\
@@ -447,8 +446,13 @@ missing-command
 exit
 ''')
 
-        def prompt(*_args, **_kwargs):
-            return commands.readline()
+        class PromptSession(object):
+
+            def __init__(self, *_args, **_kwargs):
+                pass
+            
+            def prompt(*_args, **_kwargs):
+                return commands.readline()
 
         expected_output = (
             '\n'
@@ -474,7 +478,7 @@ exit
 
         stdout = StringIO()
 
-        with patch('asn1tools.prompt', prompt):
+        with patch('asn1tools.PromptSession', PromptSession):
             with patch('sys.stdout', stdout):
                 with patch('sys.argv', argv):
                     asn1tools._main()
