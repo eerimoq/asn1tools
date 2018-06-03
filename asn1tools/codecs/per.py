@@ -13,7 +13,6 @@ from . import EncodeError
 from . import DecodeError
 from . import compiler
 from .compiler import enum_values_split
-from .compiler import is_object_class_type_name
 from .ber import encode_real
 from .ber import decode_real
 
@@ -1690,22 +1689,9 @@ class Compiler(compiler.Compiler):
                                      module_name)
                 self.recursive_types.append(compiled)
             else:
-                compiled = self.get_compiled_type(name,
+                compiled = self.compile_user_type(name,
                                                   type_name,
                                                   module_name)
-
-                if compiled is None:
-                    self.types_backtrace_push(type_name)
-                    compiled = self.compile_type(
-                        name,
-                        *self.lookup_type_descriptor(
-                            type_name,
-                            module_name))
-                    self.types_backtrace_pop()
-                    self.set_compiled_type(name,
-                                           type_name,
-                                           module_name,
-                                           compiled)
 
         # Set any given tag.
         if 'tag' in type_descriptor:
@@ -1777,43 +1763,6 @@ class Compiler(compiler.Compiler):
             compiled_member = self.compile_member(member,
                                                   module_name)
             additions.append(compiled_member)
-
-    def compile_root_member(self, member, module_name, compiled_members):
-        compiled_member = self.compile_member(member,
-                                              module_name)
-        compiled_members.append(compiled_member)
-
-    def compile_member(self, member, module_name):
-        if is_object_class_type_name(member['type']):
-            member, class_module_name = self.convert_object_class_type_descriptor(
-                member,
-                module_name)
-            compiled_member = self.compile_type(member['name'],
-                                                member,
-                                                class_module_name)
-        else:
-            compiled_member = self.compile_type(member['name'],
-                                                member,
-                                                module_name)
-
-        if 'optional' in member:
-            compiled_member = self.copy(compiled_member)
-            compiled_member.optional = member['optional']
-
-        if 'default' in member:
-            compiled_member = self.copy(compiled_member)
-            compiled_member.default = member['default']
-
-        if 'size' in member:
-            compiled_member = self.copy(compiled_member)
-            compiled_member.set_size_range(*self.get_size_range(member,
-                                                                module_name))
-
-        if 'table' in member:
-            # print('table:', member['table'])
-            pass
-
-        return compiled_member
 
     def get_permitted_alphabet(self, type_descriptor):
         def char_range(begin, end):

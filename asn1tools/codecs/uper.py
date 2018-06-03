@@ -856,22 +856,9 @@ class Compiler(per.Compiler):
                                      module_name)
                 self.recursive_types.append(compiled)
             else:
-                compiled = self.get_compiled_type(name,
+                compiled = self.compile_user_type(name,
                                                   type_name,
                                                   module_name)
-
-                if compiled is None:
-                    self.types_backtrace_push(type_name)
-                    compiled = self.compile_type(
-                        name,
-                        *self.lookup_type_descriptor(
-                            type_name,
-                            module_name))
-                    self.types_backtrace_pop()
-                    self.set_compiled_type(name,
-                                           type_name,
-                                           module_name,
-                                           compiled)
 
         # Set any given tag.
         if 'tag' in type_descriptor:

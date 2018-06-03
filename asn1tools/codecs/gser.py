@@ -6,7 +6,6 @@ import binascii
 import logging
 import math
 
-from ..parser import EXTENSION_MARKER
 from . import EncodeError
 from . import DecodeError
 from . import compiler
@@ -23,6 +22,9 @@ class Type(object):
         self.type_name = type_name
         self.optional = False
         self.default = None
+
+    def set_size_range(self, minimum, maximum, has_extension_marker):
+        pass
 
 
 class Integer(Type):
@@ -548,52 +550,11 @@ class Compiler(compiler.Compiler):
                                      type_name,
                                      module_name)
             else:
-                compiled = self.get_compiled_type(name,
+                compiled = self.compile_user_type(name,
                                                   type_name,
                                                   module_name)
 
-                if compiled is None:
-                    self.types_backtrace_push(type_name)
-                    compiled = self.compile_type(
-                        name,
-                        *self.lookup_type_descriptor(
-                            type_name,
-                            module_name))
-                    self.types_backtrace_pop()
-                    self.set_compiled_type(name,
-                                           type_name,
-                                           module_name,
-                                           compiled)
-
         return compiled
-
-    def compile_members(self, members, module_name):
-        compiled_members = []
-
-        for member in members:
-            if member == EXTENSION_MARKER:
-                continue
-
-            if isinstance(member, list):
-                compiled_members.extend(self.compile_members(member,
-                                                             module_name))
-                continue
-
-            compiled_member = self.compile_type(member['name'],
-                                                member,
-                                                module_name)
-
-            if 'optional' in member:
-                compiled_member = self.copy(compiled_member)
-                compiled_member.optional = member['optional']
-
-            if 'default' in member:
-                compiled_member = self.copy(compiled_member)
-                compiled_member.default = member['default']
-
-            compiled_members.append(compiled_member)
-
-        return compiled_members
 
 
 def compile_dict(specification):

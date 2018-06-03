@@ -247,11 +247,88 @@ class Compiler(object):
     def process_type(self, type_name, type_descriptor, module_name):
         return NotImplementedError('To be implemented by subclasses.')
 
+    def compile_type(self, name, type_descriptor, module_name):
+        return NotImplementedError('To be implemented by subclasses.')
+
+    def compile_user_type(self, name, type_name, module_name):
+        compiled = self.get_compiled_type(name,
+                                          type_name,
+                                          module_name)
+
+        if compiled is None:
+            self.types_backtrace_push(type_name)
+            compiled = self.compile_type(
+                name,
+                *self.lookup_type_descriptor(
+                    type_name,
+                    module_name))
+            self.types_backtrace_pop()
+            self.set_compiled_type(name,
+                                   type_name,
+                                   module_name,
+                                   compiled)
+
+        return compiled
+
     def compile_constraints(self,
                             type_name,
                             type_descriptor,
                             module_name):
         return Constraints()
+
+    def compile_members(self, members, module_name):
+        compiled_members = []
+
+        for member in members:
+            if member == EXTENSION_MARKER:
+                continue
+
+            if isinstance(member, list):
+                compiled_members.extend(self.compile_members(member,
+                                                             module_name))
+                continue
+
+            compiled_member = self.compile_member(member, module_name)
+            compiled_members.append(compiled_member)
+
+        return compiled_members
+
+    def compile_root_member(self, member, module_name, compiled_members):
+        compiled_member = self.compile_member(member,
+                                              module_name)
+        compiled_members.append(compiled_member)
+
+    def compile_member(self, member, module_name):
+        if is_object_class_type_name(member['type']):
+            member, class_module_name = self.convert_object_class_type_descriptor(
+                member,
+                module_name)
+            compiled_member = self.compile_type(member['name'],
+                                                member,
+                                                class_module_name)
+        else:
+            compiled_member = self.compile_type(member['name'],
+                                                member,
+                                                module_name)
+
+        if 'optional' in member:
+            compiled_member = self.copy(compiled_member)
+            compiled_member.optional = member['optional']
+
+        if 'default' in member:
+            compiled_member = self.copy(compiled_member)
+            compiled_member.default = member['default']
+
+        if 'size' in member:
+            compiled_member = self.copy(compiled_member)
+            compiled_member.set_size_range(*self.get_size_range(member,
+                                                                module_name))
+
+        if 'table' in member:
+            # print('table:', member['table'])
+            pass
+
+        return compiled_member
 
     def get_size_range(self, type_descriptor, module_name):
         """Returns a tuple of the minimum and maximum values allowed according
@@ -276,10 +353,12 @@ class Compiler(object):
             has_extension_marker = (EXTENSION_MARKER in size)
 
         if isinstance(minimum, str):
-            minimum = self.lookup_value(minimum, module_name)[0]['value']
+            if minimum != 'MIN':
+                minimum = self.lookup_value(minimum, module_name)[0]['value']
 
         if isinstance(maximum, str):
-            maximum = self.lookup_value(maximum, module_name)[0]['value']
+            if maximum != 'MAX':
+                maximum = self.lookup_value(maximum, module_name)[0]['value']
 
         return minimum, maximum, has_extension_marker
 

@@ -45,6 +45,9 @@ class Type(object):
 
         self.tag = encode_tag(number, flags)
 
+    def set_size_range(self, minimum, maximum, has_extension_marker):
+        pass
+
     def decode_tag(self, data, offset):
         end_offset = offset + len(self.tag)
 
@@ -573,22 +576,9 @@ class Compiler(ber.Compiler):
                                      module_name)
                 self.recursive_types.append(compiled)
             else:
-                compiled = self.get_compiled_type(name,
+                compiled = self.compile_user_type(name,
                                                   type_name,
                                                   module_name)
-
-                if compiled is None:
-                    self.types_backtrace_push(type_name)
-                    compiled = self.compile_type(
-                        name,
-                        *self.lookup_type_descriptor(
-                            type_name,
-                            module_name))
-                    self.types_backtrace_pop()
-                    self.set_compiled_type(name,
-                                           type_name,
-                                           module_name,
-                                           compiled)
 
         return compiled
 

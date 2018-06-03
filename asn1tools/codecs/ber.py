@@ -304,6 +304,9 @@ class Type(object):
 
         self.tag = encode_tag(number, flags)
 
+    def set_size_range(self, minimum, maximum, has_extension_marker):
+        pass
+
     def decode_tag(self, data, offset):
         end_offset = offset + len(self.tag)
 
@@ -316,17 +319,16 @@ class Type(object):
         return end_offset
 
 
-class PrimitiveOrConstructedType(object):
+class PrimitiveOrConstructedType(Type):
 
     def __init__(self, name, type_name, number, segment, flags=0):
-        self.name = name
-        self.type_name = type_name
+        super(PrimitiveOrConstructedType, self).__init__(name,
+                                                         type_name,
+                                                         number,
+                                                         flags)
         self.segment = segment
-        self.tag = encode_tag(number, flags)
         self.constructed_tag = copy(self.tag)
         self.constructed_tag[0] |= Encoding.CONSTRUCTED
-        self.optional = False
-        self.default = None
 
     def set_tag(self, number, flags):
         if not Class.APPLICATION & flags:
@@ -1428,22 +1430,9 @@ class Compiler(compiler.Compiler):
                                      module_name)
                 self.recursive_types.append(compiled)
             else:
-                compiled = self.get_compiled_type(name,
+                compiled = self.compile_user_type(name,
                                                   type_name,
                                                   module_name)
-
-                if compiled is None:
-                    self.types_backtrace_push(type_name)
-                    compiled = self.compile_type(
-                        name,
-                        *self.lookup_type_descriptor(
-                            type_name,
-                            module_name))
-                    self.types_backtrace_pop()
-                    self.set_compiled_type(name,
-                                           type_name,
-                                           module_name,
-                                           compiled)
 
         return compiled
 
@@ -1511,26 +1500,6 @@ class Compiler(compiler.Compiler):
             compiled_member = self.compile_member(member,
                                                   module_name)
             additions.append(compiled_member)
-
-    def compile_root_member(self, member, module_name, compiled_members):
-        compiled_member = self.compile_member(member,
-                                              module_name)
-        compiled_members.append(compiled_member)
-
-    def compile_member(self, member, module_name):
-        compiled_member = self.compile_type(member['name'],
-                                            member,
-                                            module_name)
-
-        if 'optional' in member:
-            compiled_member = self.copy(compiled_member)
-            compiled_member.optional = member['optional']
-
-        if 'default' in member:
-            compiled_member = self.copy(compiled_member)
-            compiled_member.default = member['default']
-
-        return compiled_member
 
 
 def compile_dict(specification):
