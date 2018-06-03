@@ -100,7 +100,7 @@ def decode_length_definite(encoded, offset):
                     offset,
                     len(encoded_length)))
 
-        length = decode_integer(encoded_length)
+        length = int(binascii.hexlify(encoded_length), 16)
         offset += number_of_bytes
 
     if offset + length > len(encoded):
@@ -116,16 +116,6 @@ def decode_length_constructed(encoded, offset):
         return None, offset + 1
     else:
         return decode_length_definite(encoded, offset)
-
-
-def decode_integer(data):
-    value = 0
-
-    for byte in data:
-        value <<= 8
-        value += byte
-
-    return value
 
 
 def encode_signed_integer(data):
