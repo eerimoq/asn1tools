@@ -1458,12 +1458,6 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(all_types, type_name, decoded, encoded)
 
-        # NaN cannot be compared.
-        encoded = b'\x09\x01\x42'
-
-        self.assertEqual(all_types.encode('Real', float('nan')), encoded)
-        self.assertTrue(math.isnan(all_types.decode('Real', encoded)))
-
         all_types.encode('Sequence12', {'a': [{'a': []}]})
 
         # ToDo: Should return {'a': [{'a': []}]}
@@ -2327,6 +2321,28 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                                       type_name,
                                       decoded,
                                       encoded)
+
+        # NaN cannot be compared.
+        encoded = b'\x09\x01\x42'
+
+        self.assertEqual(foo.encode('A', float('nan')), encoded)
+        self.assertTrue(math.isnan(foo.decode('A', encoded)))
+
+        # Minus zero.
+        self.assertEqual(foo.decode('A', b'\x09\x01\x43'), -0.0)
+
+        # Invalid control words.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', b'\x09\x01\x44')
+
+        self.assertEqual(str(cm.exception),
+                         ': Unsupported REAL control word 0x44.')
+
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', b'\x09\x01\x82')
+
+        self.assertEqual(str(cm.exception),
+                         ': Unsupported REAL control word 0x82.')
 
     def test_enumerated(self):
         enumerated = asn1tools.compile_dict(deepcopy(ENUMERATED))

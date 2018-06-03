@@ -249,11 +249,12 @@ def decode_real(data):
                 decoded = {
                     0x40: float('inf'),
                     0x41: float('-inf'),
-                    0x42: float('nan')
+                    0x42: float('nan'),
+                    0x43: -0.0
                 }[control]
             except KeyError:
-                raise NotImplementedError(
-                    'Unsupported REAL control word {}.'.format(control))
+                raise DecodeError(
+                    'Unsupported REAL control word 0x{:02x}.'.format(control))
         else:
             if control == 0x80:
                 exponent = data[offset + 1]
@@ -270,15 +271,10 @@ def decode_real(data):
 
                 offset += 3
             else:
-                raise NotImplementedError(
-                    'Unsupported REAL control word {}.'.format(control))
+                raise DecodeError(
+                    'Unsupported REAL control word 0x{:02x}.'.format(control))
 
-            mantissa = 0
-
-            for value in data[offset:]:
-                mantissa <<= 8
-                mantissa += value
-
+            mantissa = int(binascii.hexlify(data[offset:]), 16)
             decoded = float(mantissa * 2 ** exponent)
 
     return decoded
