@@ -2339,7 +2339,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                          ': Unsupported REAL control word 0x44.')
 
         with self.assertRaises(asn1tools.DecodeError) as cm:
-            foo.decode('A', b'\x09\x01\x82')
+            foo.decode('A', b'\x09\x01\x82\x00')
 
         self.assertEqual(str(cm.exception),
                          ': Unsupported REAL control word 0x82.')
