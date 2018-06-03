@@ -1422,25 +1422,6 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('Integer',                 -256, b'\x02\x02\xff\x00'),
             ('Integer',               -32768, b'\x02\x02\x80\x00'),
             ('Integer',               -32769, b'\x02\x03\xff\x7f\xff'),
-            ('Real',                     0.0, b'\x09\x00'),
-            ('Real',                    -0.0, b'\x09\x00'),
-            ('Real',            float('inf'), b'\x09\x01\x40'),
-            ('Real',           float('-inf'), b'\x09\x01\x41'),
-            ('Real',                     1.0, b'\x09\x03\x80\x00\x01'),
-            ('Real',
-             1.1,
-             b'\x09\x09\x80\xcd\x08\xcc\xcc\xcc\xcc\xcc\xcd'),
-            ('Real',
-             1234.5678,
-             b'\x09\x09\x80\xd6\x13\x4a\x45\x6d\x5c\xfa\xad'),
-            ('Real',                       8, b'\x09\x03\x80\x03\x01'),
-            ('Real',                   0.625, b'\x09\x03\x80\xfd\x05'),
-            ('Real',
-             10000000000000000146306952306748730309700429878646550592786107871697963642511482159104,
-             b'\x09\x0a\x81\x00\xe9\x02\x92\xe3\x2a\xc6\x85\x59'),
-            ('Real',
-             0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000001,
-             b'\x09\x0a\x81\xfe\xae\x13\xe4\x97\x06\x5c\xd6\x1f'),
             ('Bitstring',       (b'\x80', 1), b'\x03\x02\x07\x80'),
             ('Octetstring',          b'\x00', b'\x04\x01\x00'),
             ('Octetstring',    127 * b'\x55', b'\x04\x7f' + 127 * b'\x55'),
@@ -2302,6 +2283,50 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_real(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= REAL "
+            "END")
+
+        datas = [
+            ('A',                 0.0, b'\x09\x00'),
+            ('A',                -0.0, b'\x09\x00'),
+            ('A',        float('inf'), b'\x09\x01\x40'),
+            ('A',       float('-inf'), b'\x09\x01\x41'),
+            ('A',                 1.0, b'\x09\x03\x80\x00\x01'),
+            ('A',           2 ** 1023, b'\x09\x04\x81\x03\xff\x01'),
+            ('A',          2 ** -1022, b'\x09\x04\x81\xfc\x02\x01'),
+            ('A',
+             (2 ** 1023) * (1 + (1 - (2 ** -52))),
+             b'\x09\x0a\x81\x03\xcb\x1f\xff\xff\xff\xff\xff\xff'),
+            ('A',
+             (2 ** -1022) * (1 - (2 ** -52)),
+             b'\x09\x0a\x81\xfb\xce\x0f\xff\xff\xff\xff\xff\xff'),
+            ('A',          2 ** -1074, b'\x09\x04\x81\xfb\xce\x01'),
+            ('A',
+             1.1,
+             b'\x09\x09\x80\xcd\x08\xcc\xcc\xcc\xcc\xcc\xcd'),
+            ('A',
+             1234.5678,
+             b'\x09\x09\x80\xd6\x13\x4a\x45\x6d\x5c\xfa\xad'),
+            ('A',                   8, b'\x09\x03\x80\x03\x01'),
+            ('A',               0.625, b'\x09\x03\x80\xfd\x05'),
+            ('A',
+             10000000000000000146306952306748730309700429878646550592786107871697963642511482159104,
+             b'\x09\x0a\x81\x00\xe9\x02\x92\xe3\x2a\xc6\x85\x59'),
+            ('A',
+             0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000001,
+             b'\x09\x0a\x81\xfe\xae\x13\xe4\x97\x06\x5c\xd6\x1f'),
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo,
+                                      type_name,
+                                      decoded,
+                                      encoded)
 
     def test_enumerated(self):
         enumerated = asn1tools.compile_dict(deepcopy(ENUMERATED))
