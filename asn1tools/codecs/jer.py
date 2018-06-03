@@ -496,9 +496,6 @@ class Choice(Type):
         self.members = members
 
     def encode(self, data):
-        if not isinstance(data, tuple):
-            raise EncodeError("expected tuple, but got '{}'".format(data))
-
         for member in self.members:
             if member.name == data[0]:
                 return {member.name: member.encode(data[1])}

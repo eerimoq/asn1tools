@@ -434,9 +434,6 @@ class Choice(Type):
         self.members = members
 
     def encode(self, data):
-        if not isinstance(data, tuple):
-            raise EncodeError("expected tuple, but got '{}'".format(data))
-
         for member in self.members:
             if member.name == data[0]:
                 element = ElementTree.Element(self.name)

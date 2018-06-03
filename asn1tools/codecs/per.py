@@ -1303,9 +1303,6 @@ class Choice(Type):
                 + list(self.additions_index_to_member.values()))
 
     def encode(self, data, encoder):
-        if not isinstance(data, tuple):
-            raise EncodeError("expected tuple, but got '{}'".format(data))
-
         if self.additions_index_to_member is not None:
             if data[0] in self.root_name_to_index:
                 encoder.append_bit(0)
