@@ -66,7 +66,8 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             (b'\x30\x10\x02\x02\x01\x16\x09Is 1+10=14?', 18),
             (b'\x30\x0d', 15),
             (b'\x30\x84\x00\x00\x00\xb8', 190),
-            (b'\x9f\x1f\x00', 3)
+            (b'\x9f\x1f\x00', 3),
+            (b'\x9f\x80\x80\x01\x02\xff', 7)
        ]
 
         for encoded, decoded_length in datas:
@@ -2339,7 +2340,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                          ': Unsupported REAL control word 0x44.')
 
         with self.assertRaises(asn1tools.DecodeError) as cm:
-            foo.decode('A', b'\x09\x01\x82\x00')
+            foo.decode('A', b'\x09\x02\x82\x00')
 
         self.assertEqual(str(cm.exception),
                          ': Unsupported REAL control word 0x82.')
