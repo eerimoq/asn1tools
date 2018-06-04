@@ -363,28 +363,29 @@ class Compiler(object):
         return minimum, maximum, has_extension_marker
 
     def get_restricted_to_range(self, type_descriptor, module_name):
-        restricted_to = type_descriptor.get('restricted-to', None)
+        restricted_to = type_descriptor['restricted-to']
 
-        if restricted_to is None:
-            minimum = None
-            maximum = None
-            has_extension_marker = None
-        elif isinstance(restricted_to, list):
-            if isinstance(restricted_to[0], tuple):
-                minimum, maximum = restricted_to[0]
-            else:
-                minimum = restricted_to[0]
-                maximum = restricted_to[0]
-
-            has_extension_marker = (EXTENSION_MARKER in restricted_to)
+        if isinstance(restricted_to[0], tuple):
+            minimum, maximum = restricted_to[0]
         else:
-            raise NotImplementedError()
+            minimum = restricted_to[0]
+            maximum = restricted_to[0]
 
         if isinstance(minimum, str):
-            minimum = self.lookup_value(minimum, module_name)[0]['value']
+            try:
+                minimum = float(minimum)
+            except ValueError:
+                if minimum not in ['TRUE', 'FALSE']:
+                    minimum = self.lookup_value(minimum, module_name)[0]['value']
 
         if isinstance(maximum, str):
-            maximum = self.lookup_value(maximum, module_name)[0]['value']
+            try:
+                maximum = float(maximum)
+            except ValueError:
+                if maximum not in ['TRUE', 'FALSE']:
+                    maximum = self.lookup_value(maximum, module_name)[0]['value']
+
+        has_extension_marker = (EXTENSION_MARKER in restricted_to)
 
         return minimum, maximum, has_extension_marker
 

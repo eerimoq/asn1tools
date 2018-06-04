@@ -433,6 +433,9 @@ class Type(object):
     def set_size_range(self, minimum, maximum, has_extension_marker):
         pass
 
+    def set_restricted_to_range(self, minimum, maximum, has_extension_marker):
+        pass
+
 
 class KnownMultiplierStringType(Type):
 
@@ -573,6 +576,7 @@ class Integer(Type):
         self.maximum = None
         self.has_extension_marker = None
         self.number_of_bits = None
+        self.number_of_indefinite_bits = None
 
     def set_restricted_to_range(self, minimum, maximum, has_extension_marker):
         self.minimum = minimum
@@ -1690,21 +1694,30 @@ class Compiler(compiler.Compiler):
                                                   type_name,
                                                   module_name)
 
-        # Set any given tag.
         if 'tag' in type_descriptor:
-            compiled = self.copy(compiled)
-            tag = type_descriptor['tag']
-            class_prio = CLASS_PRIO[tag.get('class', 'CONTEXT_SPECIFIC')]
-            class_number = tag['number']
-            compiled.tag = (class_prio, class_number)
+            compiled = self.set_compiled_tag(compiled, type_descriptor)
 
-        # Set any given restricted to range.
         if 'restricted-to' in type_descriptor:
-            if isinstance(compiled, Integer):
-                compiled = self.copy(compiled)
-                compiled.set_restricted_to_range(
-                    *self.get_restricted_to_range(type_descriptor,
-                                                  module_name))
+            compiled = self.set_compiled_restricted_to(compiled,
+                                                       type_descriptor,
+                                                       module_name)
+
+        return compiled
+
+    def set_compiled_tag(self, compiled, type_descriptor):
+        compiled = self.copy(compiled)
+        tag = type_descriptor['tag']
+        class_prio = CLASS_PRIO[tag.get('class', 'CONTEXT_SPECIFIC')]
+        class_number = tag['number']
+        compiled.tag = (class_prio, class_number)
+
+        return compiled
+
+    def set_compiled_restricted_to(self, compiled, type_descriptor, module_name):
+        compiled = self.copy(compiled)
+        compiled.set_restricted_to_range(
+            *self.get_restricted_to_range(type_descriptor,
+                                          module_name))
 
         return compiled
 

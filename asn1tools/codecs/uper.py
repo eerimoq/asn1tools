@@ -860,21 +860,13 @@ class Compiler(per.Compiler):
                                                   type_name,
                                                   module_name)
 
-        # Set any given tag.
         if 'tag' in type_descriptor:
-            compiled = self.copy(compiled)
-            tag = type_descriptor['tag']
-            class_prio = CLASS_PRIO[tag.get('class', 'CONTEXT_SPECIFIC')]
-            class_number = tag['number']
-            compiled.tag = (class_prio, class_number)
+            compiled = self.set_compiled_tag(compiled, type_descriptor)
 
-        # Set any given restricted to range.
         if 'restricted-to' in type_descriptor:
-            if isinstance(compiled, Integer):
-                compiled = self.copy(compiled)
-                compiled.set_restricted_to_range(
-                    *self.get_restricted_to_range(type_descriptor,
-                                                  module_name))
+            compiled = self.set_compiled_restricted_to(compiled,
+                                                       type_descriptor,
+                                                       module_name)
 
         return compiled
 
