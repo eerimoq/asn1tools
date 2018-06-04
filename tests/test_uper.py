@@ -2003,6 +2003,27 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
             self.assertEqual(str(cm.exception), message)
 
+    def test_object_identifier(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= OBJECT IDENTIFIER "
+            "B ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b OBJECT IDENTIFIER "
+            "} "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',                   '1.2', b'\x01\x2a'),
+            ('A',              '1.2.3321', b'\x03\x2a\x99\x79'),
+            ('B', {'a': True, 'b': '1.2'}, b'\x80\x95\x00')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
 
 if __name__ == '__main__':
     unittest.main()

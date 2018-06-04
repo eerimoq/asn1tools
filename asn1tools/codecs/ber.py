@@ -270,6 +270,57 @@ def decode_real(data):
     return decoded
 
 
+def encode_object_identifier(data):
+    identifiers = [int(identifier) for identifier in data.split('.')]
+
+    first_subidentifier = (40 * identifiers[0] + identifiers[1])
+    encoded_subidentifiers = encode_object_identifier_subidentifier(
+        first_subidentifier)
+
+    for identifier in identifiers[2:]:
+        encoded_subidentifiers += encode_object_identifier_subidentifier(
+            identifier)
+
+    return encoded_subidentifiers
+
+
+def encode_object_identifier_subidentifier(subidentifier):
+    encoded = [subidentifier & 0x7f]
+    subidentifier >>= 7
+
+    while subidentifier > 0:
+        encoded.append(0x80 | (subidentifier & 0x7f))
+        subidentifier >>= 7
+
+    return encoded[::-1]
+
+
+def decode_object_identifier(data, offset, end_offset):
+    subidentifier, offset = decode_object_identifier_subidentifier(data,
+                                                                   offset)
+    decoded = [subidentifier // 40, subidentifier % 40]
+
+    while offset < end_offset:
+        subidentifier, offset = decode_object_identifier_subidentifier(data,
+                                                                       offset)
+        decoded.append(subidentifier)
+
+    return '.'.join([str(v) for v in decoded])
+
+
+def decode_object_identifier_subidentifier(data, offset):
+    decoded = 0
+
+    while data[offset] & 0x80:
+        decoded += (data[offset] & 0x7f)
+        decoded <<= 7
+        offset += 1
+
+    decoded += data[offset]
+
+    return decoded, offset + 1
+
+
 class Type(object):
 
     def __init__(self, name, type_name, number, flags=0):
@@ -1021,15 +1072,7 @@ class ObjectIdentifier(Type):
                                                Tag.OBJECT_IDENTIFIER)
 
     def encode(self, data, encoded):
-        identifiers = [int(identifier) for identifier in data.split('.')]
-
-        first_subidentifier = (40 * identifiers[0] + identifiers[1])
-        encoded_subidentifiers = self.encode_subidentifier(
-            first_subidentifier)
-
-        for identifier in identifiers[2:]:
-            encoded_subidentifiers += self.encode_subidentifier(identifier)
-
+        encoded_subidentifiers = encode_object_identifier(data)
         encoded.extend(self.tag)
         encoded.append(len(encoded_subidentifiers))
         encoded.extend(encoded_subidentifiers)
@@ -1038,37 +1081,9 @@ class ObjectIdentifier(Type):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
+        decoded = decode_object_identifier(data, offset, end_offset)
 
-        subidentifier, offset = self.decode_subidentifier(data, offset)
-        decoded = [subidentifier // 40, subidentifier % 40]
-
-        while offset < end_offset:
-            subidentifier, offset = self.decode_subidentifier(data, offset)
-            decoded.append(subidentifier)
-
-        return '.'.join([str(v) for v in decoded]), end_offset
-
-    def encode_subidentifier(self, subidentifier):
-        encoded = [subidentifier & 0x7f]
-        subidentifier >>= 7
-
-        while subidentifier > 0:
-            encoded.append(0x80 | (subidentifier & 0x7f))
-            subidentifier >>= 7
-
-        return encoded[::-1]
-
-    def decode_subidentifier(self, data, offset):
-        decoded = 0
-
-        while data[offset] & 0x80:
-            decoded += (data[offset] & 0x7f)
-            decoded <<= 7
-            offset += 1
-
-        decoded += data[offset]
-
-        return decoded, offset + 1
+        return decoded, end_offset
 
     def __repr__(self):
         return 'ObjectIdentifier({})'.format(self.name)

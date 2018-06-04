@@ -15,7 +15,8 @@ from . import compiler
 from .compiler import enum_values_split
 from .ber import encode_real
 from .ber import decode_real
-
+from .ber import encode_object_identifier
+from .ber import decode_object_identifier
 
 LOGGER = logging.getLogger(__name__)
 
@@ -1138,7 +1139,7 @@ class UTF8String(Type):
         encoded = data.encode('utf-8')
         encoder.align()
         encoder.append_length_determinant(len(encoded))
-        encoder.append_bytes(bytearray(encoded))
+        encoder.append_bytes(encoded)
 
     def decode(self, decoder):
         decoder.align()
@@ -1159,7 +1160,7 @@ class GraphicString(Type):
     def encode(self, data, encoder):
         encoded = data.encode('latin-1')
         encoder.append_length_determinant(len(encoded))
-        encoder.append_bytes(bytearray(encoded))
+        encoder.append_bytes(encoded)
 
     def decode(self, decoder):
         length = decoder.read_length_determinant()
@@ -1215,52 +1216,17 @@ class ObjectIdentifier(Type):
         super(ObjectIdentifier, self).__init__(name, 'OBJECT IDENTIFIER')
 
     def encode(self, data, encoder):
-        identifiers = [int(identifier) for identifier in data.split('.')]
-
-        first_subidentifier = (40 * identifiers[0] + identifiers[1])
-        encoded_subidentifiers = self.encode_subidentifier(
-            first_subidentifier)
-
-        for identifier in identifiers[2:]:
-            encoded_subidentifiers += self.encode_subidentifier(identifier)
-
-        encoder.append_bytes(bytearray([len(encoded_subidentifiers)]))
+        encoded_subidentifiers = encode_object_identifier(data)
+        encoder.align()
+        encoder.append_length_determinant(len(encoded_subidentifiers))
         encoder.append_bytes(bytearray(encoded_subidentifiers))
 
     def decode(self, decoder):
-        length = decoder.read_bytes(1)[0]
-        data = decoder.read_bytes(length)
-        offset = 0
-        subidentifier, offset = self.decode_subidentifier(data, offset)
-        decoded = [subidentifier // 40, subidentifier % 40]
+        decoder.align()
+        length = decoder.read_length_determinant()
+        data = decoder.read_bits(8 * length)
 
-        while offset < length:
-            subidentifier, offset = self.decode_subidentifier(data, offset)
-            decoded.append(subidentifier)
-
-        return '.'.join([str(v) for v in decoded])
-
-    def encode_subidentifier(self, subidentifier):
-        encoder = [subidentifier & 0x7f]
-        subidentifier >>= 7
-
-        while subidentifier > 0:
-            encoder.append(0x80 | (subidentifier & 0x7f))
-            subidentifier >>= 7
-
-        return encoder[::-1]
-
-    def decode_subidentifier(self, data, offset):
-        decoded = 0
-
-        while data[offset] & 0x80:
-            decoded += (data[offset] & 0x7f)
-            decoded <<= 7
-            offset += 1
-
-        decoded += data[offset]
-
-        return decoded, offset + 1
+        return decode_object_identifier(bytearray(data), 0, len(data))
 
     def __repr__(self):
         return 'ObjectIdentifier({})'.format(self.name)

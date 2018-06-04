@@ -8,8 +8,9 @@ import string
 from . import EncodeError
 from . import DecodeError
 from . import per
+from .ber import encode_object_identifier
+from .ber import decode_object_identifier
 from .per import integer_as_number_of_bits
-from .per import CLASS_PRIO
 from .per import PermittedAlphabet
 from .per import Encoder
 from .per import Type
@@ -699,19 +700,18 @@ class GeneralizedTime(VisibleString):
     pass
 
 
-class ObjectIdentifier(Type):
+class ObjectIdentifier(per.ObjectIdentifier):
 
-    def __init__(self, name):
-        super(ObjectIdentifier, self).__init__(name, 'OBJECT IDENTIFIER')
+    def encode(self, data, encoder):
+        encoded_subidentifiers = encode_object_identifier(data)
+        encoder.append_length_determinant(len(encoded_subidentifiers))
+        encoder.append_bytes(bytearray(encoded_subidentifiers))
 
-    def encode(self, _data, _encoder):
-        raise NotImplementedError('OBJECT IDENTIFIER not yet implemented.')
+    def decode(self, decoder):
+        length = decoder.read_length_determinant()
+        data = decoder.read_bits(8 * length)
 
-    def decode(self, _decoder):
-        raise NotImplementedError('OBJECT IDENTIFIER not yet implemented.')
-
-    def __repr__(self):
-        return 'ObjectIdentifier({})'.format(self.name)
+        return decode_object_identifier(bytearray(data), 0, len(data))
 
 
 class Choice(per.Choice):
