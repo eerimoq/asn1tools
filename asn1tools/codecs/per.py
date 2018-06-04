@@ -583,17 +583,14 @@ class Integer(Type):
         self.maximum = maximum
         self.has_extension_marker = has_extension_marker
 
-        if minimum is None or maximum is None:
-            self.number_of_bits = None
-        else:
-            size = self.maximum - self.minimum
-            self.number_of_bits = integer_as_number_of_bits(size)
+        size = self.maximum - self.minimum
+        self.number_of_bits = integer_as_number_of_bits(size)
 
-            if size <= 65535:
-                self.number_of_indefinite_bits = None
-            else:
-                number_of_bits = ((self.number_of_bits + 7) // 8).bit_length()
-                self.number_of_indefinite_bits = number_of_bits
+        if size <= 65535:
+            self.number_of_indefinite_bits = None
+        else:
+            number_of_bits = ((self.number_of_bits + 7) // 8).bit_length()
+            self.number_of_indefinite_bits = number_of_bits
 
     def encode(self, data, encoder):
         if self.has_extension_marker:
