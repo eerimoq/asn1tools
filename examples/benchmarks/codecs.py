@@ -10,16 +10,22 @@ Starting encoding and decoding of a message 1000 times. This may take a few seco
 Encoding the message 1000 times took:
 
 CODEC      SECONDS
-jer        0.222054
-ber        0.341499
-uper       0.620804
+jer        0.163904
+uper       0.283357
+der        0.311143
+per        0.317201
+ber        0.341393
+xer        0.892750
 
 Decoding the message 1000 times took:
 
 CODEC      SECONDS
-jer        0.352046
-uper       0.538043
-ber        0.650008
+jer        0.147299
+uper       0.259876
+per        0.287594
+xer        0.412996
+der        0.429471
+ber        0.432863
 $
 
 """
@@ -289,6 +295,35 @@ ENCODED_MESSAGE_BER = (
     b'\x35\x82\x01\x00\x83\x01\x13\x84\x01\x12'
 )
 
+ENCODED_MESSAGE_DER = (
+    b'\x30\x82\x01\x96\xa0\x82\x01\x92\xa0\x82\x01\x8e\xa0\x82\x01\x8a'
+    b'\xa0\x82\x01\x86\xa0\x82\x01\x82\xa0\x82\x01\x7e\xa0\x81\xdd\xa0'
+    b'\x0f\x80\x01\x01\xa2\x0a\x80\x01\x0f\x81\x01\x05\x82\x02\x03\xf0'
+    b'\xa1\x81\xad\xa0\x26\xa0\x0e\x80\x01\x05\xa1\x09\x80\x01\x06\x81'
+    b'\x01\x01\x82\x01\x00\xa1\x06\x80\x01\x00\x81\x01\x09\xa2\x09\x80'
+    b'\x01\x05\x81\x01\x04\x82\x01\x05\x83\x01\x08\xa1\x03\x80\x01\x00'
+    b'\xa2\x06\x80\x01\x03\x81\x01\x01\xa3\x12\x80\x02\x03\x44\xa1\x0c'
+    b'\x80\x01\x21\x81\x01\x00\x82\x01\x0a\x83\x01\x40\xa4\x06\x80\x01'
+    b'\xc4\x81\x01\x02\xa5\x1c\xa0\x0c\x80\x01\x01\x81\x01\x00\x82\x01'
+    b'\x0a\x83\x01\x00\xa1\x0c\x80\x01\x01\x81\x01\x16\x82\x01\x00\x83'
+    b'\x01\x05\xa6\x0d\x80\x01\x00\x81\x01\x62\x82\x01\x04\x83\x02\x07'
+    b'\xff\xa7\x0b\xa1\x09\x80\x01\x00\x81\x01\x04\x82\x01\x01\xa8\x1d'
+    b'\x80\x01\x82\x81\x01\x00\x82\x01\x81\xa3\x0f\x80\x01\x00\x81\x01'
+    b'\x00\x82\x01\x01\x83\x01\x00\x84\x01\x01\x84\x01\xff\x89\x01\x00'
+    b'\xa2\x12\x80\x01\x00\x81\x01\x01\x82\x01\x01\x83\x01\x01\x84\x01'
+    b'\x06\x85\x01\x01\xa3\x03\x82\x01\x03\x85\x01\x00\xa1\x37\xa0\x1b'
+    b'\x80\x01\x00\xa1\x16\xa0\x0c\x80\x01\x03\x81\x01\x03\x82\x01\x01'
+    b'\x83\x01\x10\xa1\x06\x80\x01\x00\x81\x01\x01\xa1\x06\x81\x01\x07'
+    b'\x82\x01\x03\xa2\x10\x80\x01\xdf\x82\x01\x00\x84\x01\x00\x85\x02'
+    b'\x06\x80\x86\x01\x04\xa2\x00\xa3\x20\xa0\x1e\x30\x1c\x80\x01\x01'
+    b'\x81\x01\xd3\x83\x01\x00\x85\x01\x1f\x86\x01\x1d\x87\x01\x00\x88'
+    b'\x01\x01\x8a\x02\x06\x00\x8b\x01\x0f\xa4\x03\x82\x01\x03\xa5\x03'
+    b'\x80\x01\x03\xa6\x0b\xa3\x09\x81\x07\x06\x01\x23\x45\x67\x89\x00'
+    b'\xa7\x03\x80\x01\x34\xa8\x0e\x80\x03\x00\x23\x34\x81\x03\x00\x12'
+    b'\x34\x82\x02\x32\x12\xa9\x13\x80\x03\x00\x67\x88\x81\x03\x00\x54'
+    b'\x35\x82\x01\x00\x83\x01\x13\x84\x01\x12'
+)
+
 ENCODED_MESSAGE_UPER = (
     b'\x04\x81\x3f\xbe\x2a\x64\x12\xb2\xf3\x3a\x24\x2a\x80\x02\x02\x9b'
     b'\x29\x8a\x7f\xf8\x24\x00\x00\x11\x00\x24\xe2\x08\x05\x06\xc3\xc4'
@@ -359,6 +394,98 @@ ENCODED_MESSAGE_JER = (
     b'}]}}}}}}'
 )
 
+ENCODED_MESSAGE_XER = (
+    b'<BCCH-DL-SCH-Message><message><c1><systemInformation><criticalEx'
+    b'tensions><systemInformation-r8><sib-TypeAndInfo><sib2><ac-Barrin'
+    b'gInfo><ac-BarringForEmergency><true /></ac-BarringForEmergency><'
+    b'ac-BarringForMO-Data><ac-BarringFactor><p95 /></ac-BarringFactor'
+    b'><ac-BarringTime><s128 /></ac-BarringTime><ac-BarringForSpecialA'
+    b'C>11110</ac-BarringForSpecialAC></ac-BarringForMO-Data></ac-Barr'
+    b'ingInfo><radioResourceConfigCommon><rach-ConfigCommon><preambleI'
+    b'nfo><numberOfRA-Preambles><n24 /></numberOfRA-Preambles><preambl'
+    b'esGroupAConfig><sizeOfRA-PreamblesGroupA><n28 /></sizeOfRA-Pream'
+    b'blesGroupA><messageSizeGroupA><b144 /></messageSizeGroupA><messa'
+    b'gePowerOffsetGroupB><minusinfinity /></messagePowerOffsetGroupB>'
+    b'</preamblesGroupAConfig></preambleInfo><powerRampingParameters><'
+    b'powerRampingStep><dB0 /></powerRampingStep><preambleInitialRecei'
+    b'vedTargetPower><dBm-102 /></preambleInitialReceivedTargetPower><'
+    b'/powerRampingParameters><ra-SupervisionInfo><preambleTransMax><n'
+    b'8 /></preambleTransMax><ra-ResponseWindowSize><sf6 /></ra-Respon'
+    b'seWindowSize><mac-ContentionResolutionTimer><sf48 /></mac-Conten'
+    b'tionResolutionTimer></ra-SupervisionInfo><maxHARQ-Msg3Tx>8</maxH'
+    b'ARQ-Msg3Tx></rach-ConfigCommon><bcch-Config><modificationPeriodC'
+    b'oeff><n2 /></modificationPeriodCoeff></bcch-Config><pcch-Config>'
+    b'<defaultPagingCycle><rf256 /></defaultPagingCycle><nB><twoT /></'
+    b'nB></pcch-Config><prach-Config><rootSequenceIndex>836</rootSeque'
+    b'nceIndex><prach-ConfigInfo><prach-ConfigIndex>33</prach-ConfigIn'
+    b'dex><highSpeedFlag><false /></highSpeedFlag><zeroCorrelationZone'
+    b'Config>10</zeroCorrelationZoneConfig><prach-FreqOffset>64</prach'
+    b'-FreqOffset></prach-ConfigInfo></prach-Config><pdsch-ConfigCommo'
+    b'n><referenceSignalPower>-60</referenceSignalPower><p-b>2</p-b></'
+    b'pdsch-ConfigCommon><pusch-ConfigCommon><pusch-ConfigBasic><n-SB>'
+    b'1</n-SB><hoppingMode><interSubFrame /></hoppingMode><pusch-Hoppi'
+    b'ngOffset>10</pusch-HoppingOffset><enable64QAM><false /></enable6'
+    b'4QAM></pusch-ConfigBasic><ul-ReferenceSignalsPUSCH><groupHopping'
+    b'Enabled><true /></groupHoppingEnabled><groupAssignmentPUSCH>22</'
+    b'groupAssignmentPUSCH><sequenceHoppingEnabled><false /></sequence'
+    b'HoppingEnabled><cyclicShift>5</cyclicShift></ul-ReferenceSignals'
+    b'PUSCH></pusch-ConfigCommon><pucch-ConfigCommon><deltaPUCCH-Shift'
+    b'><ds1 /></deltaPUCCH-Shift><nRB-CQI>98</nRB-CQI><nCS-AN>4</nCS-A'
+    b'N><n1PUCCH-AN>2047</n1PUCCH-AN></pucch-ConfigCommon><soundingRS-'
+    b'UL-ConfigCommon><setup><srs-BandwidthConfig><bw0 /></srs-Bandwid'
+    b'thConfig><srs-SubframeConfig><sc4 /></srs-SubframeConfig><ackNac'
+    b'kSRS-SimultaneousTransmission><true /></ackNackSRS-SimultaneousT'
+    b'ransmission></setup></soundingRS-UL-ConfigCommon><uplinkPowerCon'
+    b'trolCommon><p0-NominalPUSCH>-126</p0-NominalPUSCH><alpha><al0 />'
+    b'</alpha><p0-NominalPUCCH>-127</p0-NominalPUCCH><deltaFList-PUCCH'
+    b'><deltaF-PUCCH-Format1><deltaF-2 /></deltaF-PUCCH-Format1><delta'
+    b'F-PUCCH-Format1b><deltaF1 /></deltaF-PUCCH-Format1b><deltaF-PUCC'
+    b'H-Format2><deltaF0 /></deltaF-PUCCH-Format2><deltaF-PUCCH-Format'
+    b'2a><deltaF-2 /></deltaF-PUCCH-Format2a><deltaF-PUCCH-Format2b><d'
+    b'eltaF0 /></deltaF-PUCCH-Format2b></deltaFList-PUCCH><deltaPreamb'
+    b'leMsg3>-1</deltaPreambleMsg3></uplinkPowerControlCommon><ul-Cycl'
+    b'icPrefixLength><len1 /></ul-CyclicPrefixLength></radioResourceCo'
+    b'nfigCommon><ue-TimersAndConstants><t300><ms100 /></t300><t301><m'
+    b's200 /></t301><t310><ms50 /></t310><n310><n2 /></n310><t311><ms3'
+    b'0000 /></t311><n311><n2 /></n311></ue-TimersAndConstants><freqIn'
+    b'fo><additionalSpectrumEmission>3</additionalSpectrumEmission></f'
+    b'reqInfo><timeAlignmentTimerCommon><sf500 /></timeAlignmentTimerC'
+    b'ommon></sib2><sib3><cellReselectionInfoCommon><q-Hyst><dB0 /></q'
+    b'-Hyst><speedStateReselectionPars><mobilityStateParameters><t-Eva'
+    b'luation><s180 /></t-Evaluation><t-HystNormal><s180 /></t-HystNor'
+    b'mal><n-CellChangeMedium>1</n-CellChangeMedium><n-CellChangeHigh>'
+    b'16</n-CellChangeHigh></mobilityStateParameters><q-HystSF><sf-Med'
+    b'ium><dB-6 /></sf-Medium><sf-High><dB-4 /></sf-High></q-HystSF></'
+    b'speedStateReselectionPars></cellReselectionInfoCommon><cellResel'
+    b'ectionServingFreqInfo><threshServingLow>7</threshServingLow><cel'
+    b'lReselectionPriority>3</cellReselectionPriority></cellReselectio'
+    b'nServingFreqInfo><intraFreqCellReselectionInfo><q-RxLevMin>-33</'
+    b'q-RxLevMin><s-IntraSearch>0</s-IntraSearch><presenceAntennaPort1'
+    b'><false /></presenceAntennaPort1><neighCellConfig>10</neighCellC'
+    b'onfig><t-ReselectionEUTRA>4</t-ReselectionEUTRA></intraFreqCellR'
+    b'eselectionInfo></sib3><sib4 /><sib5><interFreqCarrierFreqList><I'
+    b'nterFreqCarrierFreqInfo><dl-CarrierFreq>1</dl-CarrierFreq><q-RxL'
+    b'evMin>-45</q-RxLevMin><t-ReselectionEUTRA>0</t-ReselectionEUTRA>'
+    b'<threshX-High>31</threshX-High><threshX-Low>29</threshX-Low><all'
+    b'owedMeasBandwidth><mbw6 /></allowedMeasBandwidth><presenceAntenn'
+    b'aPort1><true /></presenceAntennaPort1><neighCellConfig>00</neigh'
+    b'CellConfig><q-OffsetFreq><dB0 /></q-OffsetFreq></InterFreqCarrie'
+    b'rFreqInfo></interFreqCarrierFreqList></sib5><sib6><t-Reselection'
+    b'UTRA>3</t-ReselectionUTRA></sib6><sib7><t-ReselectionGERAN>3</t-'
+    b'ReselectionGERAN></sib7><sib8><parameters1XRTT><longCodeState1XR'
+    b'TT>000000010010001101000101011001111000100100</longCodeState1XRT'
+    b'T></parameters1XRTT></sib8><sib9><hnb-Name>34</hnb-Name></sib9><'
+    b'sib10><messageIdentifier>0010001100110100</messageIdentifier><se'
+    b'rialNumber>0001001000110100</serialNumber><warningType>3212</war'
+    b'ningType></sib10><sib11><messageIdentifier>0110011110001000</mes'
+    b'sageIdentifier><serialNumber>0101010000110101</serialNumber><war'
+    b'ningMessageSegmentType><notLastSegment /></warningMessageSegment'
+    b'Type><warningMessageSegmentNumber>19</warningMessageSegmentNumbe'
+    b'r><warningMessageSegment>12</warningMessageSegment></sib11></sib'
+    b'-TypeAndInfo></systemInformation-r8></criticalExtensions></syste'
+    b'mInformation></c1></message></BCCH-DL-SCH-Message>'
+)
+
 ITERATIONS = 1000
 
 
@@ -370,6 +497,21 @@ def encode_decode_ber():
 
     def decode():
         rrc_8_6_0.decode('BCCH-DL-SCH-Message', ENCODED_MESSAGE_BER)
+
+    encode_time = timeit.timeit(encode, number=ITERATIONS)
+    decode_time = timeit.timeit(decode, number=ITERATIONS)
+
+    return encode_time, decode_time
+
+
+def encode_decode_der():
+    rrc_8_6_0 = asn1tools.compile_files(RRC_8_6_0_ASN_PATH)
+
+    def encode():
+        rrc_8_6_0.encode('BCCH-DL-SCH-Message', DECODED_MESSAGE)
+
+    def decode():
+        rrc_8_6_0.decode('BCCH-DL-SCH-Message', ENCODED_MESSAGE_DER)
 
     encode_time = timeit.timeit(encode, number=ITERATIONS)
     decode_time = timeit.timeit(decode, number=ITERATIONS)
@@ -422,20 +564,39 @@ def encode_decode_jer():
     return encode_time, decode_time
 
 
+def encode_decode_xer():
+    rrc_8_6_0 = asn1tools.compile_files(RRC_8_6_0_ASN_PATH, 'xer')
+
+    def encode():
+        rrc_8_6_0.encode('BCCH-DL-SCH-Message', DECODED_MESSAGE)
+
+    def decode():
+        rrc_8_6_0.decode('BCCH-DL-SCH-Message', ENCODED_MESSAGE_XER)
+
+    encode_time = timeit.timeit(encode, number=ITERATIONS)
+    decode_time = timeit.timeit(decode, number=ITERATIONS)
+
+    return encode_time, decode_time
+
+
 print('Starting encoding and decoding of a message {} times. This may '
       'take a few seconds.'.format(ITERATIONS))
 
 ber_encode_time, ber_decode_time = encode_decode_ber()
+der_encode_time, der_decode_time = encode_decode_der()
 uper_encode_time, uper_decode_time = encode_decode_uper()
 per_encode_time, per_decode_time = encode_decode_per()
 jer_encode_time, jer_decode_time = encode_decode_jer()
+xer_encode_time, xer_decode_time = encode_decode_xer()
 
 # Encode comparsion output.
 measurements = [
     ('ber', ber_encode_time),
+    ('der', der_encode_time),
     ('uper', uper_encode_time),
     ('per', per_encode_time),
-    ('jer', jer_encode_time)
+    ('jer', jer_encode_time),
+    ('xer', xer_encode_time)
 ]
 
 measurements = sorted(measurements, key=lambda m: m[1])
@@ -450,9 +611,11 @@ for package, seconds in measurements:
 # Decode comparsion output.
 measurements = [
     ('ber', ber_decode_time),
+    ('der', der_decode_time),
     ('uper', uper_decode_time),
     ('per', per_decode_time),
-    ('jer', jer_decode_time)
+    ('jer', jer_decode_time),
+    ('xer', xer_decode_time)
 ]
 
 measurements = sorted(measurements, key=lambda m: m[1])
