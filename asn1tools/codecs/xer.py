@@ -440,7 +440,7 @@ class Choice(Type):
         except KeyError:
             raise EncodeError(
                 "Expected choices are {}, but got '{}'.".format(
-                    [member.name for member in self.members],
+                    sorted([member.name for member in self.members]),
                     data[0]))
 
         element = ElementTree.Element(self.name)
@@ -461,7 +461,7 @@ class Choice(Type):
         except KeyError:
             raise EncodeError(
                 "Expected choices are {}, but got '{}'.".format(
-                    [member.name for member in self.members],
+                    sorted([member.name for member in self.members]),
                     data[0]))
 
         return member.encode(data[1])
@@ -519,7 +519,7 @@ class Enumerated(Type):
             raise EncodeError(
                 "Enumeration value '{}' not found in {}.".format(
                     data[0],
-                    list(self.values)))
+                    sorted(list(self.values))))
 
         element = ElementTree.Element(self.name)
         element.append(ElementTree.Element(data))
@@ -533,7 +533,7 @@ class Enumerated(Type):
             raise DecodeError(
                 "Enumeration value '{}' not found in {}.".format(
                     value,
-                    list(self.values)))
+                    sorted(list(self.values))))
 
         return value
 
@@ -542,7 +542,7 @@ class Enumerated(Type):
             raise EncodeError(
                 "Enumeration value '{}' not found in {}.".format(
                     data[0],
-                    list(self.values)))
+                    sorted(list(self.values))))
 
         return ElementTree.Element(data)
 
@@ -553,7 +553,7 @@ class Enumerated(Type):
             raise DecodeError(
                 "Enumeration value '{}' not found in {}.".format(
                     element,
-                    list(self.values)))
+                    sorted(list(self.values))))
 
         return value
 

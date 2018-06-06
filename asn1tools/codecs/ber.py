@@ -1145,7 +1145,7 @@ class Choice(Type):
         except KeyError:
             raise EncodeError(
                 "Expected choices are {}, but got '{}'.".format(
-                    [member.name for member in self.members],
+                    sorted([member.name for member in self.members]),
                     data[0]))
 
         member.encode(data[1], encoded)
@@ -1257,7 +1257,7 @@ class Enumerated(Type):
             raise EncodeError(
                 "Enumeration value '{}' not found in {}.".format(
                     data,
-                    list(self.value_to_name.values())))
+                    sorted(list(self.value_to_name.values()))))
 
         encoded.extend(self.tag)
         encoded.extend(encode_signed_integer(value))

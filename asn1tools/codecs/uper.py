@@ -722,7 +722,7 @@ class Choice(per.Choice):
         except KeyError:
             raise EncodeError(
                 "Expected choices are {}, but got '{}'.".format(
-                    [member.name for member in self.all_members()],
+                    sorted([member.name for member in self.all_members()]),
                     data[0]))
 
         addition_encoder = Encoder()

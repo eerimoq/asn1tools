@@ -807,7 +807,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Expected choices are ['simple', 'application-wide'], "
+            "Expected choices are ['application-wide', 'simple'], "
             "but got ''.")
 
     def test_performance(self):

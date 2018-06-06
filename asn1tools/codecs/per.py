@@ -1286,7 +1286,7 @@ class Choice(Type):
         except KeyError:
             raise EncodeError(
                 "Expected choices are {}, but got '{}'.".format(
-                    [member.name for member in self.all_members()],
+                    sorted([member.name for member in self.all_members()]),
                     data[0]))
 
         if len(self.root_index_to_member) > 1:
@@ -1302,7 +1302,7 @@ class Choice(Type):
         except KeyError:
             raise EncodeError(
                 "Expected choices are {}, but got '{}'.".format(
-                    [member.name for member in self.all_members()],
+                    sorted([member.name for member in self.all_members()]),
                     data[0]))
 
         addition_encoder = Encoder()
@@ -1477,7 +1477,7 @@ class Enumerated(Type):
                 except KeyError:
                     raise DecodeError(
                         'Expected enumeration index in {}, but got {}.'.format(
-                            list(self.additions_index_to_name),
+                            sorted(list(self.additions_index_to_name)),
                             index))
 
     def decode_root(self, decoder):
@@ -1488,7 +1488,7 @@ class Enumerated(Type):
         except KeyError:
             raise DecodeError(
                 'Expected enumeration index in {}, but got {}.'.format(
-                    list(self.root_index_to_name),
+                    sorted(list(self.root_index_to_name)),
                     index))
 
         return name

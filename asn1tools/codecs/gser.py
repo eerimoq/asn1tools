@@ -368,7 +368,7 @@ class Choice(Type):
         except KeyError:
             raise EncodeError(
                 "Expected choices are {}, but got '{}'.".format(
-                    [member.name for member in self.members],
+                    sorted([member.name for member in self.members]),
                     data[0]))
 
         return '{} : {}'.format(data[0],

@@ -502,7 +502,7 @@ class Choice(Type):
         except KeyError:
             raise EncodeError(
                 "Expected choices are {}, but got '{}'.".format(
-                    [member.name for member in self.members],
+                    sorted([member.name for member in self.members]),
                     data[0]))
 
         return {member.name: member.encode(data[1])}
@@ -515,7 +515,7 @@ class Choice(Type):
         except KeyError:
             raise DecodeError(
                 "Expected choices are {}, but got '{}'.".format(
-                    [member.name for member in self.members],
+                    sorted([member.name for member in self.members]),
                     name))
 
         return (name, member.decode(value))
@@ -567,7 +567,7 @@ class Enumerated(Type):
             raise EncodeError(
                 "Enumeration value '{}' not found in {}.".format(
                     data[0],
-                    list(self.values)))
+                    sorted(list(self.values))))
 
         return data
 
@@ -576,7 +576,7 @@ class Enumerated(Type):
             raise DecodeError(
                 "Enumeration value '{}' not found in {}.".format(
                     data,
-                    list(self.values)))
+                    sorted(list(self.values))))
 
         return data
 
