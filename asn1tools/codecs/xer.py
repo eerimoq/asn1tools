@@ -71,7 +71,7 @@ class StringType(Type):
 
     def decode(self, element):
         if element.text is None:
-            return u''
+            return ''
         else:
             return element.text
 
@@ -412,19 +412,10 @@ class TeletexString(StringType):
         super(TeletexString, self).__init__(name, 'TeletexString')
 
 
-class ObjectIdentifier(Type):
+class ObjectIdentifier(StringType):
 
     def __init__(self, name):
         super(ObjectIdentifier, self).__init__(name, 'OBJECT IDENTIFIER')
-
-    def encode(self, data):
-        raise NotImplementedError('OBJECT IDENTIFIER is not yet implemented.')
-
-    def decode(self, element):
-        raise NotImplementedError('OBJECT IDENTIFIER is not yet implemented.')
-
-    def __repr__(self):
-        return 'ObjectIdentifier({})'.format(self.name)
 
 
 class Choice(Type):

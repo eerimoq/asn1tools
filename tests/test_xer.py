@@ -436,7 +436,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         self.assert_encode_decode_string(rrc, 'BCCH-DL-SCH-Message', decoded, encoded)
 
     def test_all_types(self):
-        all_types = asn1tools.compile_files('tests/files/all_types.asn', 'xer')
+        foo = asn1tools.compile_files('tests/files/all_types.asn', 'xer')
 
         datas = [
             ('Boolean',        True, b'<Boolean><true /></Boolean>'),
@@ -453,57 +453,57 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assert_encode_decode_string(all_types, type_name, decoded, encoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
     def test_repr_all_types(self):
-        all_types = asn1tools.compile_files('tests/files/all_types.asn',
-                                            'xer')
+        foo = asn1tools.compile_files('tests/files/all_types.asn',
+                                      'xer')
 
-        self.assertEqual(repr(all_types.types['Boolean']), 'Boolean(Boolean)')
-        self.assertEqual(repr(all_types.types['Integer']), 'Integer(Integer)')
-        self.assertEqual(repr(all_types.types['Real']), 'Real(Real)')
-        self.assertEqual(repr(all_types.types['Bitstring']), 'BitString(Bitstring)')
-        self.assertEqual(repr(all_types.types['Octetstring']),
+        self.assertEqual(repr(foo.types['Boolean']), 'Boolean(Boolean)')
+        self.assertEqual(repr(foo.types['Integer']), 'Integer(Integer)')
+        self.assertEqual(repr(foo.types['Real']), 'Real(Real)')
+        self.assertEqual(repr(foo.types['Bitstring']), 'BitString(Bitstring)')
+        self.assertEqual(repr(foo.types['Octetstring']),
                          'OctetString(Octetstring)')
-        self.assertEqual(repr(all_types.types['Null']), 'Null(Null)')
-        self.assertEqual(repr(all_types.types['Objectidentifier']),
+        self.assertEqual(repr(foo.types['Null']), 'Null(Null)')
+        self.assertEqual(repr(foo.types['Objectidentifier']),
                          'ObjectIdentifier(Objectidentifier)')
-        self.assertEqual(repr(all_types.types['Enumerated']),
+        self.assertEqual(repr(foo.types['Enumerated']),
                          'Enumerated(Enumerated)')
-        self.assertEqual(repr(all_types.types['Utf8string']),
+        self.assertEqual(repr(foo.types['Utf8string']),
                          'UTF8String(Utf8string)')
-        self.assertEqual(repr(all_types.types['Sequence']), 'Sequence(Sequence, [])')
-        self.assertEqual(repr(all_types.types['Set']), 'Set(Set, [])')
-        self.assertEqual(repr(all_types.types['Sequence2']),
+        self.assertEqual(repr(foo.types['Sequence']), 'Sequence(Sequence, [])')
+        self.assertEqual(repr(foo.types['Set']), 'Set(Set, [])')
+        self.assertEqual(repr(foo.types['Sequence2']),
                          'Sequence(Sequence2, [Integer(a)])')
-        self.assertEqual(repr(all_types.types['Set2']), 'Set(Set2, [Integer(a)])')
-        self.assertEqual(repr(all_types.types['Numericstring']),
+        self.assertEqual(repr(foo.types['Set2']), 'Set(Set2, [Integer(a)])')
+        self.assertEqual(repr(foo.types['Numericstring']),
                          'NumericString(Numericstring)')
-        self.assertEqual(repr(all_types.types['Printablestring']),
+        self.assertEqual(repr(foo.types['Printablestring']),
                          'PrintableString(Printablestring)')
-        self.assertEqual(repr(all_types.types['Ia5string']), 'IA5String(Ia5string)')
-        self.assertEqual(repr(all_types.types['Universalstring']),
+        self.assertEqual(repr(foo.types['Ia5string']), 'IA5String(Ia5string)')
+        self.assertEqual(repr(foo.types['Universalstring']),
                          'UniversalString(Universalstring)')
-        self.assertEqual(repr(all_types.types['Visiblestring']),
+        self.assertEqual(repr(foo.types['Visiblestring']),
                          'VisibleString(Visiblestring)')
-        self.assertEqual(repr(all_types.types['Generalstring']),
+        self.assertEqual(repr(foo.types['Generalstring']),
                          'GeneralString(Generalstring)')
-        self.assertEqual(repr(all_types.types['Bmpstring']),
+        self.assertEqual(repr(foo.types['Bmpstring']),
                          'BMPString(Bmpstring)')
-        self.assertEqual(repr(all_types.types['Teletexstring']),
+        self.assertEqual(repr(foo.types['Teletexstring']),
                          'TeletexString(Teletexstring)')
-        self.assertEqual(repr(all_types.types['Utctime']), 'UTCTime(Utctime)')
-        self.assertEqual(repr(all_types.types['SequenceOf']),
+        self.assertEqual(repr(foo.types['Utctime']), 'UTCTime(Utctime)')
+        self.assertEqual(repr(foo.types['SequenceOf']),
                          'SequenceOf(SequenceOf, Integer(INTEGER))')
-        self.assertEqual(repr(all_types.types['SetOf']),
+        self.assertEqual(repr(foo.types['SetOf']),
                          'SetOf(SetOf, Integer(INTEGER))')
-        self.assertEqual(repr(all_types.types['GeneralizedTime1']),
+        self.assertEqual(repr(foo.types['GeneralizedTime1']),
                          'GeneralizedTime(GeneralizedTime1)')
-        self.assertEqual(repr(all_types.types['Choice']),
+        self.assertEqual(repr(foo.types['Choice']),
                          'Choice(Choice, [Integer(a)])')
 
     def test_all_types_automatic_tags(self):
-        all_types = asn1tools.compile_files(
+        foo = asn1tools.compile_files(
             'tests/files/all_types_automatic_tags.asn', 'xer')
 
         datas = [
@@ -513,10 +513,10 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assert_encode_decode_string(all_types, type_name, decoded, encoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
     def test_choice(self):
-        all_types = asn1tools.compile_string(
+        foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
             "A ::= CHOICE { "
@@ -536,7 +536,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assert_encode_decode_string(all_types, type_name, decoded, encoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
     def test_sequence(self):
         foo = asn1tools.compile_string(
@@ -658,7 +658,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
     def test_real(self):
-        all_types = asn1tools.compile_string(
+        foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
             "A ::= REAL "
@@ -677,10 +677,10 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assert_encode_decode_string(all_types, type_name, decoded, encoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
     def test_utc_time(self):
-        all_types = asn1tools.compile_string(
+        foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
             "A ::= UTCTime "
@@ -694,10 +694,10 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assert_encode_decode_string(all_types, type_name, decoded, encoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
     def test_generalized_time(self):
-        all_types = asn1tools.compile_string(
+        foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
             "A ::= GeneralizedTime "
@@ -711,7 +711,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assert_encode_decode_string(all_types, type_name, decoded, encoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
     def test_indent(self):
         foo = asn1tools.compile_string(
@@ -745,6 +745,21 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
                                              decoded,
                                              encoded,
                                              indent=4)
+
+    def test_object_identifier(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= OBJECT IDENTIFIER "
+            "END",
+            'xer')
+
+        datas = [
+            ('A',    '1.2.3', b'<A>1.2.3</A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
 
 if __name__ == '__main__':
