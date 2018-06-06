@@ -180,8 +180,6 @@ class Compiler(object):
                     tag['kind'] = module_tags
                 else:
                     tag['kind'] = 'IMPLICIT'
-            elif resolved_type_name == 'CHOICE':
-                tag['kind'] = 'EXPLICIT'
 
         if type_name in ['SEQUENCE', 'SET', 'CHOICE']:
             self.pre_process_tags_type_members(type_descriptor,

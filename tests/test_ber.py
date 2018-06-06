@@ -2881,9 +2881,6 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             "D ::= [5] CHOICE { "
             "  a BOOLEAN "
             "} "
-            "E ::= [5] IMPLICIT CHOICE { "
-            "  a BOOLEAN "
-            "} "
             "F ::= [5] EXPLICIT CHOICE { "
             "  a BOOLEAN "
             "} "
@@ -2893,6 +2890,14 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             "H ::= [6] IMPLICIT G "
             "I ::= [APPLICATION 6] IMPLICIT F "
             "J ::= [6] IMPLICIT F "
+            "K ::= [3] CHOICE { "
+            "  a [4] CHOICE { "
+            "    a BOOLEAN "
+            "  }, "
+            "  b [5] CHOICE { "
+            "    b INTEGER "
+            "  } "
+            "} "
             "END")
 
         datas = [
@@ -2900,11 +2905,13 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('C',     ('a', ('b', True)), b'\x01\x01\xff'),
             ('C',        ('a', ('c', 3)), b'\x02\x01\x03'),
             ('D',            ('a', True), b'\xa5\x03\x01\x01\xff'),
-            ('E',            ('a', True), b'\xa5\x03\x01\x01\xff'),
             ('F',            ('a', True), b'\xa5\x03\x01\x01\xff'),
-            #('H',            ('a', True), b'\xa6\x03\x01\x01\xff'),
-            #('I',            ('a', True), b'\x66\x03\x01\x01\xff'),
-            #('J',            ('a', True), b'\xa6\x03\x01\x01\xff')
+            ('G',            ('a', True), b'\x65\x03\x01\x01\xff'),
+            ('H',            ('a', True), b'\xa6\x03\x01\x01\xff'),
+            ('I',            ('a', True), b'\x66\x03\x01\x01\xff'),
+            ('J',            ('a', True), b'\xa6\x03\x01\x01\xff'),
+            ('K',     ('a', ('a', True)), b'\xa3\x05\xa4\x03\x01\x01\xff'),
+            ('K',        ('b', ('b', 2)), b'\xa3\x05\xa5\x03\x02\x01\x02')
         ]
 
         for type_name, decoded, encoded in datas:
