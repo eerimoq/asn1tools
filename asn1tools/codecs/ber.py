@@ -87,7 +87,7 @@ def decode_length_definite(encoded, offset):
     if length > 127:
         if length == 128:
             raise DecodeError(
-                'expected definite length at offset {}, but got indefinite'.format(
+                'Expected definite length at offset {}, but got indefinite.'.format(
                     offset - 1))
 
         number_of_bytes = (length & 0x7f)
@@ -95,7 +95,7 @@ def decode_length_definite(encoded, offset):
 
         if len(encoded_length) != number_of_bytes:
             raise IndexError(
-                'expected {} length byte(s) at offset {}, but got {}'.format(
+                'Expected {} length byte(s) at offset {}, but got {}.'.format(
                     number_of_bytes,
                     offset,
                     len(encoded_length)))
@@ -486,9 +486,9 @@ class Boolean(Type):
 
         if length != 1:
             raise DecodeError(
-                'expected BOOLEAN contents length 1 at offset {}, but '
-                'got {}'.format(offset,
-                                length))
+                'Expected BOOLEAN contents length 1 at offset {}, but '
+                'got {}.'.format(offset,
+                                 length))
 
         return bool(data[contents_offset]), contents_offset + length
 
@@ -599,7 +599,7 @@ class MembersType(Type):
         elif member.optional:
             pass
         elif member.default is None:
-            raise EncodeError("member '{}' not found in {}".format(
+            raise EncodeError("Member '{}' not found in {}.".format(
                 name,
                 data))
 
@@ -1116,7 +1116,7 @@ class Choice(Type):
                 return
 
         raise EncodeError(
-            "expected choices are {}, but got '{}'".format(
+            "Expected choices are {}, but got '{}'.".format(
                 [member.name for member in self.members],
                 data[0]))
 
@@ -1192,7 +1192,7 @@ class AnyDefinedBy(Type):
             try:
                 self.choices[values[self.type_member]].encode(data, encoded)
             except KeyError:
-                raise EncodeError('bad AnyDefinedBy choice {}'.format(
+                raise EncodeError('Bad AnyDefinedBy choice {}.'.format(
                     values[self.type_member]))
         else:
             encoded.extend(data)
@@ -1203,7 +1203,7 @@ class AnyDefinedBy(Type):
                 return self.choices[values[self.type_member]].decode(data,
                                                                      offset)
             except KeyError:
-                raise DecodeError('bad AnyDefinedBy choice {}'.format(
+                raise DecodeError('Bad AnyDefinedBy choice {}.'.format(
                     values[self.type_member]))
         else:
             start = offset
@@ -1233,7 +1233,7 @@ class Enumerated(Type):
                 return
 
         raise EncodeError(
-            "enumeration value '{}' not found in {}".format(
+            "Enumeration value '{}' not found in {}.".format(
                 data,
                 [value for value in self.values.values()]))
 

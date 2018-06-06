@@ -50,7 +50,7 @@ class Real(Type):
         elif data == float('-inf'):
             data = 'MINUS-INFINITY'
         elif math.isnan(data):
-            raise EncodeError('cannot encode floating point number NaN')
+            raise EncodeError('Cannot encode floating point number NaN.')
         elif data == 0.0:
             data = '0'
         else:
@@ -123,7 +123,7 @@ class Sequence(Type):
                 pass
             elif member.default is None:
                 raise EncodeError(
-                    "member '{}' not found in {}".format(
+                    "Member '{}' not found in {}.".format(
                         name,
                         data))
 
@@ -372,7 +372,7 @@ class Choice(Type):
                 return encoded
 
         raise EncodeError(
-            "expected choices are {}, but got '{}'".format(
+            "Expected choices are {}, but got '{}'.".format(
                 [member.name for member in self.members],
                 data[0]))
 

@@ -100,7 +100,7 @@ class PermittedAlphabet(object):
             return self.encode_map[value]
         except KeyError:
             raise EncodeError(
-                "expected a character in '{}', but got '{}' (0x{:02x})'".format(
+                "Expected a character in '{}', but got '{}' (0x{:02x})'.".format(
                     ''.join(sorted([chr(v) for v in self.encode_map])),
                     chr(value) if chr(value) in string.printable else '.',
                     value))
@@ -110,7 +110,7 @@ class PermittedAlphabet(object):
             return self.decode_map[value]
         except KeyError:
             raise DecodeError(
-                "expected a value in {}, but got {:d}".format(
+                "Expected a value in {}, but got {:d}.".format(
                     list(self.decode_map),
                     value))
 
@@ -1476,7 +1476,7 @@ class Enumerated(Type):
                     return self.additions_index_to_name[index]
                 except KeyError:
                     raise DecodeError(
-                        'expected enumeration index in {}, but got {}'.format(
+                        'Expected enumeration index in {}, but got {}.'.format(
                             list(self.additions_index_to_name),
                             index))
 
@@ -1487,7 +1487,7 @@ class Enumerated(Type):
             name = self.root_index_to_name[index]
         except KeyError:
             raise DecodeError(
-                'expected enumeration index in {}, but got {}'.format(
+                'Expected enumeration index in {}, but got {}.'.format(
                     list(self.root_index_to_name),
                     index))
 

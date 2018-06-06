@@ -1302,9 +1302,9 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "expected a character in ' !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEF"
+            "Expected a character in ' !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEF"
             "GHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~', but got"
-            " '.' (0x19)'")
+            " '.' (0x19)'.")
 
     def test_numeric_string(self):
         foo = asn1tools.compile_string(
@@ -1333,7 +1333,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "expected a character in ' 0123456789', but got 'a' (0x61)'")
+            "Expected a character in ' 0123456789', but got 'a' (0x61)'.")
 
         # Bad value 11 should raise an exception.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -1341,8 +1341,8 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            ": expected a value in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "
-            "but got 11")
+            ": Expected a value in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "
+            "but got 11.")
 
     def test_printable_string(self):
         foo = asn1tools.compile_string(
@@ -1381,8 +1381,8 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "expected a character in ' '()+,-./0123456789:=?ABCDEFGHIJKLMNO"
-            "PQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', but got '[' (0x5b)'")
+            "Expected a character in ' '()+,-./0123456789:=?ABCDEFGHIJKLMNO"
+            "PQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', but got '[' (0x5b)'.")
 
     def test_graphic_string(self):
         foo = asn1tools.compile_string(

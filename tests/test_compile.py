@@ -47,7 +47,7 @@ class Asn1ToolsCompileTest(unittest.TestCase):
         with self.assertRaises(asn1tools.CompileError) as cm:
             asn1tools.compile_files('tests/files/foo.asn', 'bad_codec')
 
-        self.assertEqual(str(cm.exception), "unsupported codec 'bad_codec'")
+        self.assertEqual(str(cm.exception), "Unsupported codec 'bad_codec'.")
 
     def test_encode_decode_bad_type_name(self):
         foo = asn1tools.compile_files('tests/files/foo.asn')
@@ -58,7 +58,7 @@ class Asn1ToolsCompileTest(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "type 'BadTypeName' not found in types dictionary")
+            "Type 'BadTypeName' not found in types dictionary.")
 
         # Decode.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -66,7 +66,7 @@ class Asn1ToolsCompileTest(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "type 'BadTypeName' not found in types dictionary")
+            "Type 'BadTypeName' not found in types dictionary.")
 
     def test_encoding(self):
         asn1tools.compile_files('tests/files/foo.asn', encoding='ascii')

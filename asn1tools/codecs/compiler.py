@@ -40,7 +40,7 @@ class Recursive(object):
 class Constraints(object):
 
     def check(self, data):
-        raise NotImplementedError('constraints check is not yet implemented')
+        raise NotImplementedError('Constraints check is not yet implemented.')
 
 
 class Compiler(object):

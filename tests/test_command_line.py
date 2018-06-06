@@ -104,7 +104,7 @@ ff0e0201011609497320312b313d333f
             "\n"
             "2018-02-24 11:24:16\n"
             "ff0e0201011609497320312b313d333f\n"
-            ": expected SEQUENCE with tag '30' at offset 0, but got 'ff'\n"
+            ": Expected SEQUENCE with tag '30' at offset 0, but got 'ff'.\n"
             "2018-02-24 13:24:16\n"
             "300e0201011609497320312b313d333\n"
         )
@@ -411,7 +411,7 @@ ff0e0201011609497320312b313d333f
 
                 self.assertEqual(
                     str(cm.exception),
-                    "error: type 'Question2' not found in types dictionary")
+                    "error: Type 'Question2' not found in types dictionary.")
 
     def test_command_line_convert_bad_data(self):
         argv = [
@@ -467,7 +467,7 @@ exit
             '    id 1,\n'
             '    question "Is 1+1=3?"\n'
             '}\n'
-            'error: type \'Foo\' not found in types dictionary\n'
+            'error: Type \'Foo\' not found in types dictionary.\n'
             'question Question ::= {\n'
             '    id 1,\n'
             '    question "Is 1+1=3?"\n'

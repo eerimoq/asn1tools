@@ -96,7 +96,7 @@ class Specification(object):
 
         if name not in self._types:
             raise EncodeError(
-                "type '{}' not found in types dictionary".format(name))
+                "Type '{}' not found in types dictionary.".format(name))
 
         return self._types[name].encode(data, **kwargs)
 
@@ -111,7 +111,7 @@ class Specification(object):
 
         if name not in self._types:
             raise DecodeError(
-                "type '{}' not found in types dictionary".format(name))
+                "Type '{}' not found in types dictionary.".format(name))
 
         return self._types[name].decode(data)
 
@@ -142,7 +142,7 @@ class Specification(object):
 
         if name not in self._types:
             raise ConstraintsError(
-                "type '{}' not found in types dictionary".format(name))
+                "Type '{}' not found in types dictionary.".format(name))
 
         return self._types[name].check_constraints(data)
 
@@ -201,7 +201,7 @@ def compile_dict(specification, codec='ber', any_defined_by_choices=None):
     try:
         codec = codecs[codec]
     except KeyError:
-        raise CompileError("unsupported codec '{}'".format(codec))
+        raise CompileError("Unsupported codec '{}'.".format(codec))
 
     if any_defined_by_choices:
         _compile_any_defined_by_choices(specification,

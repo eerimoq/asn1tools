@@ -992,9 +992,9 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "expected a character in ' !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEF"
+            "Expected a character in ' !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEF"
             "GHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~', but got"
-            " '.' (0x19)'")
+            " '.' (0x19)'.")
 
     def test_enumerated(self):
         foo = asn1tools.compile_string(
