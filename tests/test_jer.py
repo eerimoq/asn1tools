@@ -397,17 +397,13 @@ class Asn1ToolsJerTest(unittest.TestCase):
         self.assertEqual(decoded, decoded_message)
 
     def test_all_types(self):
-        all_types = asn1tools.compile_files('tests/files/all_types.asn', 'jer')
+        foo = asn1tools.compile_files('tests/files/all_types.asn', 'jer')
 
         datas = [
             ('Boolean',             True, b'true'),
             ('Integer',              127, b'127'),
             ('Integer',                0, b'0'),
             ('Integer',             -128, b'-128'),
-            ('Real',                 1.0, b'1.0'),
-            ('Real',                -2.0, b'-2.0'),
-            ('Real',        float('inf'), b'"INF"'),
-            ('Real',       float('-inf'), b'"-INF"'),
             ('Octetstring',      b'\x00', b'"00"'),
             ('Null',                None, b'null'),
             ('Utf8string',         'foo', b'"foo"'),
@@ -423,72 +419,64 @@ class Asn1ToolsJerTest(unittest.TestCase):
             ('Generalstring',      'bar', b'"bar"'),
             ('Bmpstring',         b'bar', b'"bar"'),
             ('Graphicstring',      'bar', b'"bar"'),
-            ('Teletexstring',     b'fum', b'"fum"'),
-            ('SequenceOf',            [], b'[]'),
-            ('SetOf',                 [], b'[]'),
+            ('Teletexstring',     b'fum', b'"fum"')
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(all_types.encode(type_name, decoded), encoded)
-            self.assertEqual(all_types.decode(type_name, encoded), decoded)
-
-        self.assertEqual(all_types.encode('Real', float('nan')), b'"NaN"')
-        self.assertTrue(math.isnan(all_types.decode('Real', b'"NaN"')))
-
-        self.assertEqual(all_types.decode('Real', b'"0"'), 0.0)
-        self.assertEqual(all_types.decode('Real', b'"-0"'), 0.0)
+            self.assertEqual(foo.encode(type_name, decoded), encoded)
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
 
         decoded_message = (b'\x80', 1)
         encoded_message = b'{"value":"80","length":1}'
 
-        self.assertEqual(loadb(all_types.encode('Bitstring', decoded_message)),
+        self.assertEqual(loadb(foo.encode('Bitstring', decoded_message)),
                          loadb(encoded_message))
-        self.assertEqual(all_types.decode('Bitstring', encoded_message),
+        self.assertEqual(foo.decode('Bitstring', encoded_message),
                          decoded_message)
 
     def test_repr_all_types(self):
-        all_types = asn1tools.compile_files('tests/files/all_types.asn',
-                                            'jer')
+        foo = asn1tools.compile_files('tests/files/all_types.asn',
+                                      'jer')
 
-        self.assertEqual(repr(all_types.types['Boolean']), 'Boolean(Boolean)')
-        self.assertEqual(repr(all_types.types['Integer']), 'Integer(Integer)')
-        self.assertEqual(repr(all_types.types['Real']), 'Real(Real)')
-        self.assertEqual(repr(all_types.types['Bitstring']), 'BitString(Bitstring)')
-        self.assertEqual(repr(all_types.types['Octetstring']), 'OctetString(Octetstring)')
-        self.assertEqual(repr(all_types.types['Null']), 'Null(Null)')
-        self.assertEqual(repr(all_types.types['Objectidentifier']),
+        self.assertEqual(repr(foo.types['Boolean']), 'Boolean(Boolean)')
+        self.assertEqual(repr(foo.types['Integer']), 'Integer(Integer)')
+        self.assertEqual(repr(foo.types['Real']), 'Real(Real)')
+        self.assertEqual(repr(foo.types['Bitstring']), 'BitString(Bitstring)')
+        self.assertEqual(repr(foo.types['Octetstring']), 'OctetString(Octetstring)')
+        self.assertEqual(repr(foo.types['Null']), 'Null(Null)')
+        self.assertEqual(repr(foo.types['Objectidentifier']),
                          'ObjectIdentifier(Objectidentifier)')
-        self.assertEqual(repr(all_types.types['Enumerated']), 'Enumerated(Enumerated)')
-        self.assertEqual(repr(all_types.types['Utf8string']), 'UTF8String(Utf8string)')
-        self.assertEqual(repr(all_types.types['Sequence']), 'Sequence(Sequence, [])')
-        self.assertEqual(repr(all_types.types['Set']), 'Set(Set, [])')
-        self.assertEqual(repr(all_types.types['Sequence2']),
+        self.assertEqual(repr(foo.types['Enumerated']), 'Enumerated(Enumerated)')
+        self.assertEqual(repr(foo.types['Utf8string']), 'UTF8String(Utf8string)')
+        self.assertEqual(repr(foo.types['Sequence']), 'Sequence(Sequence, [])')
+        self.assertEqual(repr(foo.types['Set']), 'Set(Set, [])')
+        self.assertEqual(repr(foo.types['Sequence2']),
                          'Sequence(Sequence2, [Integer(a)])')
-        self.assertEqual(repr(all_types.types['Set2']), 'Set(Set2, [Integer(a)])')
-        self.assertEqual(repr(all_types.types['Numericstring']),
+        self.assertEqual(repr(foo.types['Set2']), 'Set(Set2, [Integer(a)])')
+        self.assertEqual(repr(foo.types['Numericstring']),
                          'NumericString(Numericstring)')
-        self.assertEqual(repr(all_types.types['Printablestring']),
+        self.assertEqual(repr(foo.types['Printablestring']),
                          'PrintableString(Printablestring)')
-        self.assertEqual(repr(all_types.types['Ia5string']), 'IA5String(Ia5string)')
-        self.assertEqual(repr(all_types.types['Universalstring']),
+        self.assertEqual(repr(foo.types['Ia5string']), 'IA5String(Ia5string)')
+        self.assertEqual(repr(foo.types['Universalstring']),
                          'UniversalString(Universalstring)')
-        self.assertEqual(repr(all_types.types['Visiblestring']),
+        self.assertEqual(repr(foo.types['Visiblestring']),
                          'VisibleString(Visiblestring)')
-        self.assertEqual(repr(all_types.types['Generalstring']),
+        self.assertEqual(repr(foo.types['Generalstring']),
                          'GeneralString(Generalstring)')
-        self.assertEqual(repr(all_types.types['Bmpstring']),
+        self.assertEqual(repr(foo.types['Bmpstring']),
                          'BMPString(Bmpstring)')
-        self.assertEqual(repr(all_types.types['Graphicstring']),
+        self.assertEqual(repr(foo.types['Graphicstring']),
                          'GraphicString(Graphicstring)')
-        self.assertEqual(repr(all_types.types['Teletexstring']),
+        self.assertEqual(repr(foo.types['Teletexstring']),
                          'TeletexString(Teletexstring)')
-        self.assertEqual(repr(all_types.types['Utctime']), 'UTCTime(Utctime)')
-        self.assertEqual(repr(all_types.types['SequenceOf']),
+        self.assertEqual(repr(foo.types['Utctime']), 'UTCTime(Utctime)')
+        self.assertEqual(repr(foo.types['SequenceOf']),
                          'SequenceOf(SequenceOf, Integer())')
-        self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
+        self.assertEqual(repr(foo.types['SetOf']), 'SetOf(SetOf, Integer())')
 
     def test_all_types_automatic_tags(self):
-        all_types = asn1tools.compile_files(
+        foo = asn1tools.compile_files(
             'tests/files/all_types_automatic_tags.asn', 'jer')
 
         datas = [
@@ -496,9 +484,9 @@ class Asn1ToolsJerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(all_types.encode(type_name, decoded)),
+            self.assertEqual(loadb(foo.encode(type_name, decoded)),
                              loadb(encoded))
-            self.assertEqual(all_types.decode(type_name, encoded), decoded)
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
 
     def test_sequence(self):
         foo = asn1tools.compile_string(
@@ -702,6 +690,68 @@ class Asn1ToolsJerTest(unittest.TestCase):
             self.assertEqual(loadb(foo.encode(type_name, decoded)),
                              loadb(encoded))
             self.assertEqual(foo.decode(type_name, encoded), decoded)
+
+    def test_sequence_of(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE OF INTEGER "
+            "END",
+            'jer')
+
+        datas = [
+            ('A',     [], b'[]'),
+            ('A', [1, 3], b'[1, 3]')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(loadb(foo.encode(type_name, decoded)),
+                             loadb(encoded))
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
+
+    def test_set_of(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= "
+            "BEGIN "
+            "A ::= SET OF INTEGER "
+            "END",
+            'jer')
+
+        datas = [
+            ('A',     [], b'[]'),
+            ('A', [1, 3], b'[1, 3]')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(loadb(foo.encode(type_name, decoded)),
+                             loadb(encoded))
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
+
+    def test_real(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= "
+            "BEGIN "
+            "A ::= REAL "
+            "END",
+            'jer')
+
+        datas = [
+            ('A',                 1.0, b'1.0'),
+            ('A',                -2.0, b'-2.0'),
+            ('A',        float('inf'), b'"INF"'),
+            ('A',       float('-inf'), b'"-INF"')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(loadb(foo.encode(type_name, decoded)),
+                             loadb(encoded))
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
+
+        self.assertEqual(foo.encode('A', float('nan')), b'"NaN"')
+        self.assertTrue(math.isnan(foo.decode('A', b'"NaN"')))
+
+        self.assertEqual(foo.decode('A', b'"0"'), 0.0)
+        self.assertEqual(foo.decode('A', b'"-0"'), 0.0)
 
 
 if __name__ == '__main__':
