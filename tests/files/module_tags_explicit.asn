@@ -90,4 +90,14 @@ C1 ::= CHOICE {
     }
 }
 
+Type1 ::= VisibleString
+
+Type2 ::= [APPLICATION 3] IMPLICIT Type1
+
+Type3 ::= [2] Type2
+
+Type4 ::= [APPLICATION 7] IMPLICIT Type3
+
+Type5 ::= [2] IMPLICIT Type2
+
 END

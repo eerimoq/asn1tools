@@ -171,14 +171,17 @@ class Compiler(object):
 
         if 'tag' in type_descriptor:
             tag = type_descriptor['tag']
+            resolved_type_name = self.resolve_type_name(type_name, module_name)
 
             if 'kind' not in tag:
-                if self.resolve_type_name(type_name, module_name) == 'CHOICE':
+                if resolved_type_name == 'CHOICE':
                     tag['kind'] = 'EXPLICIT'
                 elif module_tags in ['IMPLICIT', 'EXPLICIT']:
                     tag['kind'] = module_tags
                 else:
                     tag['kind'] = 'IMPLICIT'
+            elif resolved_type_name == 'CHOICE':
+                tag['kind'] = 'EXPLICIT'
 
         if type_name in ['SEQUENCE', 'SET', 'CHOICE']:
             self.pre_process_tags_type_members(type_descriptor,

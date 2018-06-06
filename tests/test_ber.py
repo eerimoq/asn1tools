@@ -1497,7 +1497,12 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('S4',
              {'a': 1, 'b': ('a', ('a', 2)), 'c': {'a': 3}, 'd': ('a', True)},
              b'\x30\x16\x02\x01\x01\xa1\x07\xa0\x05\xa0\x03\x02\x01\x02\xa2'
-             b'\x05\x30\x03\x02\x01\x03\x01\x01\xff')
+             b'\x05\x30\x03\x02\x01\x03\x01\x01\xff'),
+            ('Type1', 'Jones', b'\x1a\x05\x4a\x6f\x6e\x65\x73'),
+            ('Type2', 'Jones', b'\x43\x05\x4a\x6f\x6e\x65\x73'),
+            ('Type3', 'Jones', b'\xa2\x07\x43\x05\x4a\x6f\x6e\x65\x73'),
+            ('Type4', 'Jones', b'\x67\x07\x43\x05\x4a\x6f\x6e\x65\x73'),
+            ('Type5', 'Jones', b'\x82\x05\x4a\x6f\x6e\x65\x73')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -2812,6 +2817,14 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             "  m38 NULL, "
             "  m39 NULL "
             "} "
+            "L ::= CHOICE { "
+            "  a OCTET STRING "
+            "} "
+            "M ::= CHOICE { "
+            "  a CHOICE { "
+            "    b BOOLEAN "
+            "  } "
+            "} "
             "END")
 
         datas = [
@@ -2839,12 +2852,66 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('J',            ('c', True), b'\x82\x01\xff'),
             ('K',          ('m31', None), b'\x9e\x00'),
             ('K',          ('m32', None), b'\x9f\x1f\x00'),
-            ('K',          ('m33', None), b'\x9f\x20\x00')
+            ('K',          ('m33', None), b'\x9f\x20\x00'),
+            ('M',     ('a', ('b', True)), b'\xa0\x03\x80\x01\xff')
         ]
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+        self.assertEqual(foo.decode('L', b'\xa0\x03\x04\x01\x12'), ('a', b'\x12'))
+        self.assertEqual(foo.decode('L', b'\x80\x01\x12'), ('a', b'\x12'))
+
+    def test_choice_implicit_tags(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS IMPLICIT TAGS ::= "
+            "BEGIN "
+            "A ::= CHOICE { "
+            "  a BOOLEAN "
+            "} "
+            "B ::= CHOICE { "
+            "  a OCTET STRING "
+            "} "
+            "C ::= CHOICE { "
+            "  a CHOICE { "
+            "    b BOOLEAN, "
+            "    c INTEGER "
+            "  } "
+            "} "
+            "D ::= [5] CHOICE { "
+            "  a BOOLEAN "
+            "} "
+            "E ::= [5] IMPLICIT CHOICE { "
+            "  a BOOLEAN "
+            "} "
+            "F ::= [5] EXPLICIT CHOICE { "
+            "  a BOOLEAN "
+            "} "
+            "G ::= [APPLICATION 5] EXPLICIT CHOICE { "
+            "  a BOOLEAN "
+            "} "
+            "H ::= [6] IMPLICIT G "
+            "I ::= [APPLICATION 6] IMPLICIT F "
+            "J ::= [6] IMPLICIT F "
+            "END")
+
+        datas = [
+            ('A',            ('a', True), b'\x01\x01\xff'),
+            ('C',     ('a', ('b', True)), b'\x01\x01\xff'),
+            ('C',        ('a', ('c', 3)), b'\x02\x01\x03'),
+            ('D',            ('a', True), b'\xa5\x03\x01\x01\xff'),
+            ('E',            ('a', True), b'\xa5\x03\x01\x01\xff'),
+            ('F',            ('a', True), b'\xa5\x03\x01\x01\xff'),
+            #('H',            ('a', True), b'\xa6\x03\x01\x01\xff'),
+            #('I',            ('a', True), b'\x66\x03\x01\x01\xff'),
+            #('J',            ('a', True), b'\xa6\x03\x01\x01\xff')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        self.assertEqual(foo.decode('B', b'\x24\x03\x04\x01\x12'), ('a', b'\x12'))
+        self.assertEqual(foo.decode('B', b'\x04\x01\x12'), ('a', b'\x12'))
 
 if __name__ == '__main__':
     unittest.main()

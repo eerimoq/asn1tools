@@ -181,7 +181,7 @@ def encode_tag(number, flags):
     return tag
 
 
-def decode_tag(data, offset):
+def skip_tag(data, offset):
     byte = data[offset]
     offset += 1
 
@@ -191,7 +191,11 @@ def decode_tag(data, offset):
 
         offset += 1
 
-    return 0, 0, offset
+    return offset
+
+
+def read_tag(data, offset):
+    return data[offset:skip_tag(data, offset)]
 
 
 def encode_real(data):
@@ -1103,35 +1107,55 @@ class Choice(Type):
                     members.append(addition)
 
         self.members = members
+        self.name_to_member = {member.name: member for member in self.members}
+        self.tag_to_member = {}
+        self.add_tags(self.members)
 
-    def set_tag(self, number, flags):
-        super(Choice, self).set_tag(number,
-                                    flags | Encoding.CONSTRUCTED)
+    def add_tags(self, members):
+        for member in members:
+            tags = self.get_member_tags(member)
+
+            for tag in tags:
+                self.tag_to_member[tag] = member
+
+    def get_member_tags(self, member):
+        tags = []
+
+        if isinstance(member, Choice):
+            tags = self.get_choice_tags(member)
+        else:
+            tags.append(bytes(member.tag))
+
+            if hasattr(member, 'constructed_tag'):
+                tags.append(bytes(member.constructed_tag))
+
+        return tags
+
+    def get_choice_tags(self, choice):
+        tags = []
+
+        for member in choice.members:
+            tags.extend(self.get_member_tags(member))
+
+        return tags
 
     def encode(self, data, encoded):
-        for member in self.members:
-            if member.name == data[0]:
-                member.encode(data[1], encoded)
+        try:
+            member = self.name_to_member[data[0]]
+        except KeyError:
+            raise EncodeError(
+                "Expected choices are {}, but got '{}'.".format(
+                    [member.name for member in self.members],
+                    data[0]))
 
-                return
-
-        raise EncodeError(
-            "Expected choices are {}, but got '{}'.".format(
-                [member.name for member in self.members],
-                data[0]))
+        member.encode(data[1], encoded)
 
     def decode(self, data, offset):
-        for member in self.members:
-            if (isinstance(member, Choice)
-                or member.tag == data[offset:offset + len(member.tag)]):
-                try:
-                    decoded, offset = member.decode(data, offset)
-                except DecodeChoiceError:
-                    pass
-                else:
-                    return (member.name, decoded), offset
+        tag = bytes(read_tag(data, offset))
+        member = self.tag_to_member[tag]
+        decoded, offset = member.decode(data, offset)
 
-        raise DecodeChoiceError()
+        return (member.name, decoded), offset
 
     def __repr__(self):
         return 'Choice({}, [{}])'.format(
@@ -1167,7 +1191,7 @@ class Any(Type):
 
     def decode(self, data, offset):
         start = offset
-        _, _, offset = decode_tag(data, offset)
+        offset = skip_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
 
@@ -1207,7 +1231,7 @@ class AnyDefinedBy(Type):
                     values[self.type_member]))
         else:
             start = offset
-            _, _, offset = decode_tag(data, offset)
+            offset = skip_tag(data, offset)
             length, offset = decode_length_definite(data, offset)
             end_offset = offset + length
 
@@ -1507,7 +1531,7 @@ def compile_dict(specification):
 def decode_length(data):
     try:
         data = bytearray(data)
-        offset = decode_tag(data, 0)[2]
+        offset = skip_tag(data, 0)
 
         return sum(decode_length_definite(data, offset))
     except DecodeContentsLengthError as e:
