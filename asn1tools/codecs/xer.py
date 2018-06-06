@@ -432,49 +432,45 @@ class Choice(Type):
     def __init__(self, name, members):
         super(Choice, self).__init__(name, 'CHOICE')
         self.members = members
+        self.name_to_member = {member.name: member for member in self.members}
 
     def encode(self, data):
-        for member in self.members:
-            if member.name == data[0]:
-                element = ElementTree.Element(self.name)
-                element.append(member.encode(data[1]))
+        try:
+            member = self.name_to_member[data[0]]
+        except KeyError:
+            raise EncodeError(
+                "Expected choices are {}, but got '{}'.".format(
+                    [member.name for member in self.members],
+                    data[0]))
 
-                return element
+        element = ElementTree.Element(self.name)
+        element.append(member.encode(data[1]))
 
-        raise EncodeError(
-            "Expected choices are {}, but got '{}'.".format(
-                [member.name for member in self.members],
-                data[0]))
+        return element
 
     def decode(self, element):
-        for member in self.members:
-            name = member.name
-            member_element = element.find(name)
+        member_element = element[0]
+        name = member_element.tag
+        member = self.name_to_member[name]
 
-            if member_element is not None:
-                return (name, member.decode(member_element))
-
-        raise DecodeError('')
+        return (name, member.decode(member_element))
 
     def encode_of(self, data):
-        if not isinstance(data, tuple):
-            raise EncodeError("Expected tuple, but got '{}'.".format(data))
+        try:
+            member = self.name_to_member[data[0]]
+        except KeyError:
+            raise EncodeError(
+                "Expected choices are {}, but got '{}'.".format(
+                    [member.name for member in self.members],
+                    data[0]))
 
-        for member in self.members:
-            if member.name == data[0]:
-                return member.encode(data[1])
-
-        raise EncodeError(
-            "Expected choices are {}, but got '{}'.".format(
-                [member.name for member in self.members],
-                data[0]))
+        return member.encode(data[1])
 
     def decode_of(self, element):
-        for member in self.members:
-            if member.name == element.tag:
-                return (member.name, member.decode(element))
+        name = element.tag
+        member = self.name_to_member[name]
 
-        raise DecodeError('')
+        return (name, member.decode(element))
 
     def __repr__(self):
         return 'Choice({}, [{}])'.format(
@@ -516,52 +512,50 @@ class Enumerated(Type):
 
     def __init__(self, name, values):
         super(Enumerated, self).__init__(name, 'ENUMERATED')
-        self.values = enum_values_as_dict(values)
+        self.values = set(enum_values_as_dict(values).values())
 
     def encode(self, data):
-        for name in self.values.values():
-            if data == name:
-                element = ElementTree.Element(self.name)
-                element.append(ElementTree.Element(data))
+        if data not in self.values:
+            raise EncodeError(
+                "Enumeration value '{}' not found in {}.".format(
+                    data[0],
+                    list(self.values)))
 
-                return element
+        element = ElementTree.Element(self.name)
+        element.append(ElementTree.Element(data))
 
-        raise EncodeError(
-            "Enumeration value '{}' not found in {}.".format(
-                data,
-                [value for value in self.values.values()]))
+        return element
 
     def decode(self, element):
         value = element[0].tag
 
-        if value in self.values.values():
-            return value
+        if value not in self.values:
+            raise DecodeError(
+                "Enumeration value '{}' not found in {}.".format(
+                    value,
+                    list(self.values)))
 
-        raise DecodeError(
-            "Enumeration value '{}' not found in {}.".format(
-                element,
-                [value for value in self.values.values()]))
+        return value
 
     def encode_of(self, data):
-        for name in self.values.values():
-            if data == name:
-                return ElementTree.Element(data)
+        if data not in self.values:
+            raise EncodeError(
+                "Enumeration value '{}' not found in {}.".format(
+                    data[0],
+                    list(self.values)))
 
-        raise EncodeError(
-            "Enumeration value '{}' not found in {}.".format(
-                data,
-                [value for value in self.values.values()]))
+        return ElementTree.Element(data)
 
     def decode_of(self, element):
         value = element.tag
 
-        if value in self.values.values():
-            return value
+        if value not in self.values:
+            raise DecodeError(
+                "Enumeration value '{}' not found in {}.".format(
+                    element,
+                    list(self.values)))
 
-        raise DecodeError(
-            "Enumeration value '{}' not found in {}.".format(
-                element,
-                [value for value in self.values.values()]))
+        return value
 
     def __repr__(self):
         return 'Enumerated({})'.format(self.name)

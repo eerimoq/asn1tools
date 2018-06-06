@@ -410,7 +410,6 @@ class Asn1ToolsJerTest(unittest.TestCase):
             ('Real',       float('-inf'), b'"-INF"'),
             ('Octetstring',      b'\x00', b'"00"'),
             ('Null',                None, b'null'),
-            ('Enumerated',         'one', b'"one"'),
             ('Utf8string',         'foo', b'"foo"'),
             ('Sequence',              {}, b'{}'),
             ('Sequence2',       {'a': 1}, b'{"a":1}'),
@@ -520,6 +519,76 @@ class Asn1ToolsJerTest(unittest.TestCase):
             self.assertEqual(loadb(foo.encode(type_name, decoded)),
                              loadb(encoded))
             self.assertEqual(foo.decode(type_name, encoded), decoded)
+
+    def test_choice(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  b INTEGER "
+            "} "
+            "END",
+            'jer')
+
+        datas = [
+            ('A',           ('a', True), b'{"a": true}'),
+            ('A',              ('b', 3), b'{"b": 3}')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(loadb(foo.encode(type_name, decoded)),
+                             loadb(encoded))
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
+
+        # Encode error.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('A', ('c', None))
+
+        self.assertEqual(str(cm.exception),
+                         "Expected choices are ['a', 'b'], but got 'c'.")
+
+        # Decode error.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', b'{"c": null}')
+
+        self.assertEqual(str(cm.exception),
+                         ": Expected choices are ['a', 'b'], but got 'c'.")
+
+    def test_enumerated(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= ENUMERATED { "
+            "  a(1), "
+            "  b(3) "
+            "} "
+            "END",
+            'jer')
+
+        datas = [
+            ('A',           'a', b'"a"'),
+            ('A',           'b', b'"b"')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(loadb(foo.encode(type_name, decoded)),
+                             loadb(encoded))
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
+
+        # Encode error.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('A', ('c', None))
+
+        self.assertEqual(str(cm.exception),
+                         "Enumeration value 'c' not found in ['a', 'b'].")
+
+        # Decode error.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', b'"c"')
+
+        self.assertEqual(str(cm.exception),
+                         ": Enumeration value 'c' not found in ['a', 'b'].")
 
     def test_error_out_of_data(self):
         foo = asn1tools.compile_string(

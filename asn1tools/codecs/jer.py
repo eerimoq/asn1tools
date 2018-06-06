@@ -494,23 +494,31 @@ class Choice(Type):
     def __init__(self, name, members):
         super(Choice, self).__init__(name, 'CHOICE')
         self.members = members
+        self.name_to_member = {member.name: member for member in self.members}
 
     def encode(self, data):
-        for member in self.members:
-            if member.name == data[0]:
-                return {member.name: member.encode(data[1])}
+        try:
+            member = self.name_to_member[data[0]]
+        except KeyError:
+            raise EncodeError(
+                "Expected choices are {}, but got '{}'.".format(
+                    [member.name for member in self.members],
+                    data[0]))
 
-        raise EncodeError(
-            "Expected choices are {}, but got '{}'.".format(
-                [member.name for member in self.members],
-                data[0]))
+        return {member.name: member.encode(data[1])}
 
     def decode(self, data):
-        for member in self.members:
-            if member.name in data:
-                return (member.name, member.decode(data[member.name]))
+        name, value = list(data.items())[0]
 
-        raise DecodeError('')
+        try:
+            member = self.name_to_member[name]
+        except KeyError:
+            raise DecodeError(
+                "Expected choices are {}, but got '{}'.".format(
+                    [member.name for member in self.members],
+                    name))
+
+        return (name, member.decode(value))
 
     def __repr__(self):
         return 'Choice({}, [{}])'.format(
@@ -552,26 +560,25 @@ class Enumerated(Type):
 
     def __init__(self, name, values):
         super(Enumerated, self).__init__(name, 'ENUMERATED')
-        self.values = enum_values_as_dict(values)
+        self.values = set(enum_values_as_dict(values).values())
 
     def encode(self, data):
-        for name in self.values.values():
-            if data == name:
-                return data
+        if data not in self.values:
+            raise EncodeError(
+                "Enumeration value '{}' not found in {}.".format(
+                    data[0],
+                    list(self.values)))
 
-        raise EncodeError(
-            "Enumeration value '{}' not found in {}.".format(
-                data,
-                [value for value in self.values.values()]))
+        return data
 
     def decode(self, data):
-        if data in self.values.values():
-            return data
+        if data not in self.values:
+            raise DecodeError(
+                "Enumeration value '{}' not found in {}.".format(
+                    data,
+                    list(self.values)))
 
-        raise DecodeError(
-            "Enumeration value '{}' not found in {}.".format(
-                data,
-                [value for value in self.values.values()]))
+        return data
 
     def __repr__(self):
         return 'Enumerated({})'.format(self.name)

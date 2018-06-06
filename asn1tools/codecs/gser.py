@@ -360,21 +360,21 @@ class Choice(Type):
     def __init__(self, name, members):
         super(Choice, self).__init__(name, 'CHOICE')
         self.members = members
+        self.name_to_member = {member.name: member for member in self.members}
 
     def encode(self, data, separator, indent):
-        for member in self.members:
-            if member.name == data[0]:
-                encoded = '{} : {}'.format(data[0],
-                                           member.encode(data[1],
-                                                         separator,
-                                                         indent))
+        try:
+            member = self.name_to_member[data[0]]
+        except KeyError:
+            raise EncodeError(
+                "Expected choices are {}, but got '{}'.".format(
+                    [member.name for member in self.members],
+                    data[0]))
 
-                return encoded
-
-        raise EncodeError(
-            "Expected choices are {}, but got '{}'.".format(
-                [member.name for member in self.members],
-                data[0]))
+        return '{} : {}'.format(data[0],
+                                member.encode(data[1],
+                                              separator,
+                                              indent))
 
     def __repr__(self):
         return 'Choice({}, [{}])'.format(
