@@ -1247,19 +1247,20 @@ class Enumerated(Type):
         super(Enumerated, self).__init__(name,
                                          'ENUMERATED',
                                          Tag.ENUMERATED)
-        self.values = enum_values_as_dict(values)
+        self.value_to_name = enum_values_as_dict(values)
+        self.name_to_value = {v: k for k, v in self.value_to_name.items()}
 
     def encode(self, data, encoded):
-        for value, name in self.values.items():
-            if data == name:
-                encoded.extend(self.tag)
-                encoded.extend(encode_signed_integer(value))
-                return
+        try:
+            value = self.name_to_value[data]
+        except KeyError:
+            raise EncodeError(
+                "Enumeration value '{}' not found in {}.".format(
+                    data,
+                    list(self.value_to_name.values())))
 
-        raise EncodeError(
-            "Enumeration value '{}' not found in {}.".format(
-                data,
-                [value for value in self.values.values()]))
+        encoded.extend(self.tag)
+        encoded.extend(encode_signed_integer(value))
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
@@ -1267,7 +1268,7 @@ class Enumerated(Type):
         end_offset = offset + length
         value = decode_signed_integer(data[offset:end_offset])
 
-        return self.values[value], end_offset
+        return self.value_to_name[value], end_offset
 
     def __repr__(self):
         return 'Enumerated({})'.format(self.name)
