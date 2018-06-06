@@ -652,6 +652,57 @@ class Asn1ToolsJerTest(unittest.TestCase):
             for line in encoded.splitlines():
                 self.assertIn(line, encoded_lines)
 
+    def test_utc_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= "
+            "BEGIN "
+            "A ::= UTCTime "
+            "END",
+            'jer')
+
+        datas = [
+            ('A', '121001230001Z', b'"121001230001Z"')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(loadb(foo.encode(type_name, decoded)),
+                             loadb(encoded))
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
+
+    def test_generalized_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= "
+            "BEGIN "
+            "A ::= GeneralizedTime "
+            "END",
+            'jer')
+
+        datas = [
+            ('A', '20001231235959.999', b'"20001231235959.999"')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(loadb(foo.encode(type_name, decoded)),
+                             loadb(encoded))
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
+
+    def test_object_identifier(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= "
+            "BEGIN "
+            "A ::= OBJECT IDENTIFIER "
+            "END",
+            'jer')
+
+        datas = [
+            ('A', '1.2.3', b'"1.2.3"')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(loadb(foo.encode(type_name, decoded)),
+                             loadb(encoded))
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
+
 
 if __name__ == '__main__':
     unittest.main()
