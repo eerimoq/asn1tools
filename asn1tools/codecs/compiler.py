@@ -109,32 +109,34 @@ class Compiler(object):
     def pre_process(self):
         for module_name in self._specification:
             module = self._specification[module_name]
+            type_descriptors = module['types'].values()
 
-            self.pre_process_components_of(module, module_name)
+            self.pre_process_components_of(type_descriptors, module_name)
 
             if module['extensibility-implied']:
-                self.pre_process_extensibility_implied(module)
+                self.pre_process_extensibility_implied(type_descriptors)
 
             self.pre_process_tags(module, module_name)
-            sequences_and_sets = self.get_type_descriptors(module,
-                                                           ['SEQUENCE', 'SET'])
+            sequences_and_sets = self.get_type_descriptors(
+                type_descriptors,
+                ['SEQUENCE', 'SET'])
             self.pre_process_default_value(sequences_and_sets,
                                            module_name)
 
         return self._specification
 
-    def pre_process_components_of(self, module, module_name):
-        for type_descriptor in module['types'].values():
+    def pre_process_components_of(self, type_descriptors, module_name):
+        for type_descriptor in type_descriptors:
             self.pre_process_components_of_type(type_descriptor,
                                                 module_name)
 
     def pre_process_components_of_type(self, type_descriptor, module_name):
-        type_name = type_descriptor['type']
+        if 'members' not in type_descriptor:
+            return
 
-        if type_name in ['SEQUENCE', 'SET', 'CHOICE']:
-            type_descriptor['members'] = self.pre_process_components_of_expand_members(
-                type_descriptor['members'],
-                module_name)
+        type_descriptor['members'] = self.pre_process_components_of_expand_members(
+            type_descriptor['members'],
+            module_name)
 
     def pre_process_components_of_expand_members(self, members, module_name):
         expanded_members = []
@@ -158,24 +160,27 @@ class Compiler(object):
 
         return expanded_members
 
-    def pre_process_extensibility_implied(self, module):
-        for type_descriptor in module['types'].values():
+    def pre_process_extensibility_implied(self, type_descriptors):
+        for type_descriptor in type_descriptors:
             self.pre_process_extensibility_implied_type(type_descriptor)
 
     def pre_process_extensibility_implied_type(self, type_descriptor):
-        type_name = type_descriptor['type']
+        if 'members' not in type_descriptor:
+            return
 
-        if type_name in ['SEQUENCE', 'SET', 'CHOICE']:
-            members = type_descriptor['members']
+        members = type_descriptor['members']
 
-            for member in members:
-                if member == EXTENSION_MARKER or isinstance(member, list):
-                    continue
+        for member in members:
+            if member == EXTENSION_MARKER:
+                continue
 
+            if isinstance(member, list):
+                self.pre_process_extensibility_implied(member)
+            else:
                 self.pre_process_extensibility_implied_type(member)
 
-            if EXTENSION_MARKER not in members:
-                members.append(EXTENSION_MARKER)
+        if EXTENSION_MARKER not in members:
+            members.append(EXTENSION_MARKER)
 
     def pre_process_tags(self, module, module_name):
         module_tags = module.get('tags', 'EXPLICIT')
@@ -203,12 +208,14 @@ class Compiler(object):
                 else:
                     tag['kind'] = 'IMPLICIT'
 
-        if type_name in ['SEQUENCE', 'SET', 'CHOICE']:
+        # SEQUENCE, SET and CHOICE.
+        if 'members' in type_descriptor:
             self.pre_process_tags_type_members(type_descriptor,
                                                module_tags,
                                                module_name)
 
-        if type_name in ['SEQUENCE OF', 'SET OF']:
+        # SEQUENCE OF and SET OF.
+        if 'element' in type_descriptor:
             self.pre_process_tags_type(type_descriptor['element'],
                                        module_tags,
                                        module_name)
@@ -330,14 +337,14 @@ class Compiler(object):
 
         return type_descriptor
 
-    def get_type_descriptors(self, module, type_names):
-        type_descriptors = []
+    def get_type_descriptors(self, type_descriptors, type_names):
+        result = []
 
-        for type_descriptor in module['types'].values():
-            type_descriptors += self.get_type_descriptors_type(type_descriptor,
-                                                               type_names)
+        for type_descriptor in type_descriptors:
+            result += self.get_type_descriptors_type(type_descriptor,
+                                                     type_names)
 
-        return type_descriptors
+        return result
 
     def get_type_descriptors_type(self, type_descriptor, type_names):
         type_descriptors = []
@@ -346,12 +353,19 @@ class Compiler(object):
         if type_name in type_names:
             type_descriptors.append(type_descriptor)
 
-        if hasattr(type_descriptor, 'members'):
+        if 'members' in type_descriptor:
             for member in type_descriptor['members']:
-                type_descriptors += self.get_type_descriptors_type(member,
-                                                                   type_names)
+                if member == EXTENSION_MARKER:
+                    continue
 
-        if hasattr(type_descriptor, 'element'):
+                if isinstance(member, list):
+                    type_descriptors.extend(self.get_type_descriptors(member,
+                                                                      type_names))
+                else:
+                    type_descriptors += self.get_type_descriptors_type(member,
+                                                                       type_names)
+
+        if 'element' in type_descriptor:
             type_descriptors += self.get_type_descriptors_type(
                 type_descriptor['element'],
                 type_names)

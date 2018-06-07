@@ -1894,6 +1894,11 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "N ::= SEQUENCE { "
             "  a BIT STRING { a(8) } DEFAULT { a } "
             "} "
+            "O ::= SEQUENCE { "
+            "  a SEQUENCE { "
+            "    a E DEFAULT { a } "
+            "  } "
+            "} "
             "END",
             'uper')
 
@@ -1933,7 +1938,9 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
              b'\x00'),
             ('L',   {'a': (b'', 0)}, b'\x00'),
             ('M',   {'a': (b'\x01', 8)}, b'\x00'),
-            ('N',   {'a': (b'\x00\x80', 9)}, b'\x00')
+            ('N',   {'a': (b'\x00\x80', 9)}, b'\x00'),
+            ('O',   {'a': {'a': (b'\x80', 1)}}, b'\x00'),
+            ('O',   {'a': {'a': (b'\x40', 2)}}, b'\x81\x20')
         ]
 
         for type_name, decoded, encoded in datas:
