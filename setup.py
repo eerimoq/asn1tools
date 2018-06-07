@@ -28,7 +28,8 @@ setup(name='asn1tools',
       packages=find_packages(exclude=['tests']),
       install_requires=[
           'pyparsing>=2.2.0',
-          'prompt_toolkit'
+          'prompt_toolkit',
+          'bitstruct'
       ],
       test_suite="tests",
       entry_points = {

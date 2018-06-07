@@ -2,6 +2,8 @@
 
 """
 
+import bitstruct
+
 from copy import copy
 from copy import deepcopy
 from ..errors import CompileError
@@ -22,6 +24,22 @@ def flatten(dlist):
 
 def is_object_class_type_name(type_name):
     return '&' in type_name
+
+
+def lowest_set_bit(value):
+    return (value & -value).bit_length() - 1
+
+
+def clean_bit_string_data(data, number_of_bits):
+    number_of_bytes, number_of_rest_bits = divmod(number_of_bits, 8)
+
+    if number_of_rest_bits == 0:
+        data = data[:number_of_bytes]
+    else:
+        data = bytearray(data[:number_of_bytes + 1])
+        data[number_of_bytes] &= ((0xff >> number_of_rest_bits) ^ 0xff)
+
+    return data.rstrip(b'\x00')
 
 
 class CompiledType(object):
@@ -98,6 +116,10 @@ class Compiler(object):
                 self.pre_process_extensibility_implied(module)
 
             self.pre_process_tags(module, module_name)
+            sequences_and_sets = self.get_type_descriptors(module,
+                                                           ['SEQUENCE', 'SET'])
+            self.pre_process_default_value(sequences_and_sets,
+                                           module_name)
 
         return self._specification
 
@@ -228,6 +250,50 @@ class Compiler(object):
                                        module_tags,
                                        module_name)
 
+    def pre_process_default_value(self, sequences_and_sets, module_name):
+        for type_descriptor in sequences_and_sets:
+            for member in type_descriptor['members']:
+                if member == EXTENSION_MARKER:
+                    continue
+
+                if 'default' not in member:
+                    continue
+
+                resolved_member = self.resolve_type_descriptor(member,
+                                                               module_name)
+
+                if resolved_member['type'] == 'BIT STRING':
+                    default = member['default']
+
+                    if isinstance(default, tuple):
+                        # Already pre-processed.
+                        continue
+                    elif isinstance(default, list):
+                        named_bits = dict(resolved_member['named-bits'])
+                        reversed_mask = 0
+
+                        for name in default:
+                            reversed_mask |= (1 << int(named_bits[name]))
+
+                        mask = int(bin(reversed_mask)[2:][::-1], 2)
+                        number_of_bits = reversed_mask.bit_length()
+                    elif default.startswith('0x'):
+                        if len(default) % 2 == 1:
+                            default += '0'
+
+                        default = '01' + default[2:]
+                        mask = int(default, 16)
+                        mask >>= lowest_set_bit(mask)
+                        number_of_bits = mask.bit_length() - 1
+                        mask ^= (1 << number_of_bits)
+                    else:
+                        mask = int(default, 2)
+                        mask >>= lowest_set_bit(mask)
+                        number_of_bits = len(default) - 2
+
+                    mask = bitstruct.pack('u{}'.format(number_of_bits), mask)
+                    member['default'] = (mask, number_of_bits)
+
     def resolve_type_name(self, type_name, module_name):
         try:
             while True:
@@ -244,6 +310,53 @@ class Compiler(object):
             pass
 
         return type_name
+
+    def resolve_type_descriptor(self, type_descriptor, module_name):
+        type_name = type_descriptor['type']
+
+        try:
+            while True:
+                if is_object_class_type_name(type_name):
+                    type_name, module_name = self.lookup_object_class_type_name(
+                        type_name,
+                        module_name)
+                else:
+                    type_descriptor, module_name = self.lookup_type_descriptor(
+                        type_name,
+                        module_name)
+                    type_name = type_descriptor['type']
+        except CompileError:
+            pass
+
+        return type_descriptor
+
+    def get_type_descriptors(self, module, type_names):
+        type_descriptors = []
+
+        for type_descriptor in module['types'].values():
+            type_descriptors += self.get_type_descriptors_type(type_descriptor,
+                                                               type_names)
+
+        return type_descriptors
+
+    def get_type_descriptors_type(self, type_descriptor, type_names):
+        type_descriptors = []
+        type_name = type_descriptor['type']
+
+        if type_name in type_names:
+            type_descriptors.append(type_descriptor)
+
+        if hasattr(type_descriptor, 'members'):
+            for member in type_descriptor['members']:
+                type_descriptors += self.get_type_descriptors_type(member,
+                                                                   type_names)
+
+        if hasattr(type_descriptor, 'element'):
+            type_descriptors += self.get_type_descriptors_type(
+                type_descriptor['element'],
+                type_names)
+
+        return type_descriptors
 
     def process_type(self, type_name, type_descriptor, module_name):
         return NotImplementedError('To be implemented by subclasses.')

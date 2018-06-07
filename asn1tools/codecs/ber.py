@@ -210,7 +210,7 @@ def encode_real(data):
     else:
         mantissa, exponent = math.frexp(data)
         mantissa = int(mantissa * 2 ** 53)
-        lowest_set_bit = (mantissa & -mantissa).bit_length() - 1
+        lowest_set_bit = compiler.lowest_set_bit(mantissa)
         mantissa >>= lowest_set_bit
         mantissa |= (0x80 << (8 * ((mantissa.bit_length() // 8) + 1)))
         mantissa = binascii.unhexlify(hex(mantissa)[4:].rstrip('L'))

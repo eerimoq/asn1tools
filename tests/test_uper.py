@@ -1877,6 +1877,23 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "  b (1), "
             "  c (2) "
             "} (SIZE (8..9))"
+            "J ::= SEQUENCE { "
+            "  a E DEFAULT { b } "
+            "} "
+            "K ::= SEQUENCE { "
+            "  a E DEFAULT {b, c}, "
+            "  b E DEFAULT '011'B, "
+            "  c E DEFAULT '60'H "
+            "} "
+            "L ::= SEQUENCE { "
+            "  a E DEFAULT { } "
+            "} "
+            "M ::= SEQUENCE { "
+            "  a BIT STRING { a(7) } DEFAULT { a } "
+            "} "
+            "N ::= SEQUENCE { "
+            "  a BIT STRING { a(8) } DEFAULT { a } "
+            "} "
             "END",
             'uper')
 
@@ -1904,14 +1921,27 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('G',          (b'\x80', 2), b'\x40'),
             ('G',          (b'\x40', 2), b'\x20'),
             ('G',          (b'\x20', 3), b'\x90'),
-            ('G',          (b'\x00', 2), b'\x00')
+            ('G',          (b'\x00', 2), b'\x00'),
+            ('J',       {'a': (b'', 0)}, b'\x80\x00'),
+            ('J',   {'a': (b'\x20', 3)}, b'\x81\x90'),
+            ('J',   {'a': (b'\x40', 2)}, b'\x00'),
+            ('K',
+             {'a': (b'\x40', 2), 'b': (b'\x40', 2), 'c': (b'\x40', 2)},
+             b'\xe0\x48\x12\x04\x80'),
+            ('K',
+             {'a': (b'\x60', 3), 'b': (b'\x60', 3), 'c': (b'\x60', 3)},
+             b'\x00'),
+            ('L',   {'a': (b'', 0)}, b'\x00'),
+            ('M',   {'a': (b'\x01', 8)}, b'\x00'),
+            ('N',   {'a': (b'\x00\x80', 9)}, b'\x00')
         ]
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
         # Trailing zero bits should be stripped when encoding named
-        # bit list.
+        # bit list. Default value is not encoded, but part of
+        # decoded. Also ignore dangling bits.
         datas = [
             ('E',          (b'\x80', 2), b'\x01\x80', (b'\x80', 1)),
             ('E',          (b'\x00', 3), b'\x00',     (b'', 0)),
@@ -1919,6 +1949,14 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('G',          (b'\x40', 3), b'\x20',     (b'\x40', 2)),
             ('H',          (b'\x00', 1), b'\x00',     (b'', 0)),
             ('I',      (b'\x00\x00', 9), b'\x00\x00', (b'\x00', 8)),
+            ('J',                    {}, b'\x00',     {'a': (b'\x40', 2)}),
+            ('J',   {'a': (b'\x40', 3)}, b'\x00',     {'a': (b'\x40', 2)}),
+            ('J',   {'a': (b'\x60', 2)}, b'\x00',     {'a': (b'\x40', 2)}),
+            ('K',
+             {},
+             b'\x00',
+             {'a': (b'\x60', 3), 'b': (b'\x60', 3), 'c': (b'\x60', 3)}),
+            ('A',      (b'\x7f\xff', 1), b'\x01\x00', (b'\x00', 1)),
         ]
 
         for type_name, decoded_1, encoded, decoded_2 in datas:

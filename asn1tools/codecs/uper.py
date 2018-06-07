@@ -20,6 +20,8 @@ from .per import Any
 from .per import Enumerated
 from .per import Recursive
 from .per import Real
+from .compiler import clean_bit_string_data
+from .compiler import lowest_set_bit
 
 
 LOGGER = logging.getLogger(__name__)
@@ -185,7 +187,7 @@ class MembersType(Type):
             if optional.optional:
                 encoder.append_bit(optional.name in data)
             elif optional.name in data:
-                encoder.append_bit(data[optional.name] != optional.default)
+                encoder.append_bit(not optional.is_default(data[optional.name]))
             else:
                 encoder.append_bit(0)
 
@@ -248,7 +250,7 @@ class MembersType(Type):
         if name in data:
             if member.default is None:
                 member.encode(data[name], encoder)
-            elif data[name] != member.default or encode_default:
+            elif not member.is_default(data[name]) or encode_default:
                 member.encode(data[name], encoder)
         elif member.optional or member.default is not None:
             pass
@@ -469,6 +471,12 @@ class BitString(Type):
             size = self.maximum - self.minimum
             self.number_of_bits = integer_as_number_of_bits(size)
 
+    def is_default(self, value):
+        clean_value = clean_bit_string_data(*value)
+        clean_default = clean_bit_string_data(*self.default)
+
+        return clean_value == clean_default
+
     def rstrip_zeros(self, data, number_of_bits):
         data = bytearray(data.rstrip(b'\x00'))
 
@@ -476,7 +484,7 @@ class BitString(Type):
             number_of_bits = 0
         else:
             value = data[-1]
-            number_of_bits = 8 * len(data) - (value & -value).bit_length() + 1
+            number_of_bits = 8 * len(data) - lowest_set_bit(value)
 
         if self.minimum is not None:
             if number_of_bits < self.minimum:

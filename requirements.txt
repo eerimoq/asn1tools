@@ -8,3 +8,4 @@ pysnmp
 protobuf
 prompt_toolkit
 pycodestyle
+bitstruct

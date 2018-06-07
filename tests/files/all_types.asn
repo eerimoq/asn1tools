@@ -168,6 +168,12 @@ Sequence14 ::= SEQUENCE {
     }
 }
 
+Sequence15 ::= SEQUENCE {
+    a Bitstring4 DEFAULT {a, b},
+    b Bitstring4 DEFAULT '110'B,
+    c Bitstring4 DEFAULT 'C'H
+}
+
 Set ::= SET {}
 
 Set2 ::= SET {

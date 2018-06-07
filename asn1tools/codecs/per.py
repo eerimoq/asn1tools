@@ -437,6 +437,9 @@ class Type(object):
     def set_restricted_to_range(self, minimum, maximum, has_extension_marker):
         pass
 
+    def is_default(self, value):
+        return value == self.default
+
 
 class KnownMultiplierStringType(Type):
 
@@ -682,7 +685,7 @@ class MembersType(Type):
             if optional.optional:
                 encoder.append_bit(optional.name in data)
             elif optional.name in data:
-                encoder.append_bit(data[optional.name] != optional.default)
+                encoder.append_bit(not optional.is_default(data[optional.name]))
             else:
                 encoder.append_bit(0)
 
@@ -747,7 +750,7 @@ class MembersType(Type):
         if name in data:
             if member.default is None:
                 member.encode(data[name], encoder)
-            elif data[name] != member.default or encode_default:
+            elif not member.is_default(data[name]) or encode_default:
                 member.encode(data[name], encoder)
         elif member.optional or member.default is not None:
             pass

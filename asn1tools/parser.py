@@ -524,7 +524,7 @@ def convert_bstring(_s, _l, tokens):
 
 
 def convert_hstring(_s, _l, tokens):
-    return '0x' + re.sub(r"[\sH']", '', tokens[0])
+    return '0x' + re.sub(r"[\sH']", '', tokens[0]).lower()
 
 
 def convert_bit_string_value(tokens):
