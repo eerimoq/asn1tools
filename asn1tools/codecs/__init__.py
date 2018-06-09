@@ -12,7 +12,7 @@ class EncodeError(_EncodeError):
 
 
 class DecodeError(_DecodeError):
-    """General ASN.1 decode error.
+    """General ASN.1 decode error with error location in the message.
 
     """
 
@@ -58,6 +58,13 @@ class DecodeContentsLengthError(DecodeError):
 
 
 def format_or(items):
+    """Return a string of comma separated items, with the last to items
+    separated by "or".
+
+    [1, 2, 3] -> "1, 2 or 3"
+
+    """
+
     formatted_items = []
 
     for item in items:

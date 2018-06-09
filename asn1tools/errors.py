@@ -1,4 +1,4 @@
-"""Exceptions.
+"""Various exceptions/errors.
 
 """
 
@@ -28,6 +28,6 @@ class DecodeError(Error):
 
 
 class ConstraintsError(Error):
-    """General ASN.1 constraints.
+    """General ASN.1 constraints error.
 
     """
