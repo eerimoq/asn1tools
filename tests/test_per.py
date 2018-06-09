@@ -642,6 +642,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         self.assertEqual(repr(all_types.types['SequenceOf']),
                          'SequenceOf(SequenceOf, Integer())')
         self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
+        self.assertEqual(repr(all_types.types['Choice']), "Choice(Choice, ['a'])")
 
     def test_s1ap_14_4_0(self):
         with self.assertRaises(asn1tools.CompileError) as cm:
@@ -1050,6 +1051,20 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+        # Bad root index.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('C', b'\x70')
+
+        self.assertEqual(str(cm.exception),
+                         ": Expected enumeration index 0, 1 or 2, but got 3.")
+
+        # Bad additions index.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('C', b'\x8f')
+
+        self.assertEqual(str(cm.exception),
+                         ": Expected enumeration index 0 or 1, but got 15.")
+
     def test_sequence(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
@@ -1358,6 +1373,17 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "  c BOOLEAN "
             "  ]] "
             "} "
+            "K ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  b BOOLEAN, "
+            "  c BOOLEAN, "
+            "  ..., "
+            "  d BOOLEAN, "
+            "  e BOOLEAN, "
+            "  f BOOLEAN, "
+            "  g BOOLEAN, "
+            "  h BOOLEAN "
+            "} "
             "END",
             'per')
 
@@ -1388,6 +1414,35 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Bad root index.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('K', b'\x70')
+
+        self.assertEqual(str(cm.exception),
+                         ": Expected choice index 0, 1 or 2, but got 3.")
+
+        # Bad additions index.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('K', b'\x8f')
+
+        self.assertEqual(str(cm.exception),
+                         ": Expected choice index 0, 1, 2, 3 or 4, but got 15.")
+
+        # Bad value.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('K', ('i', True))
+
+        self.assertEqual(
+            str(cm.exception),
+            "Expected choice 'a', 'b', 'c', 'd', 'e', 'f', 'g' or 'h', but "
+            "got 'i'.")
+
+        # Bad value.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('A', ('b', True))
+
+        self.assertEqual(str(cm.exception), "Expected choice 'a', but got 'b'.")
 
     def test_bit_string(self):
         foo = asn1tools.compile_string(

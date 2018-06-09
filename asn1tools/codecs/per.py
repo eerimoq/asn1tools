@@ -12,6 +12,7 @@ from ..parser import EXTENSION_MARKER
 from . import EncodeError
 from . import DecodeError
 from . import compiler
+from . import format_or
 from .compiler import enum_values_split
 from .ber import encode_real
 from .ber import decode_real
@@ -1268,20 +1269,18 @@ class Choice(Type):
 
         return index_to_member, name_to_index
 
-    def all_indexes(self):
-        indexes = list(self.root_index_to_member)
+    def format_root_indexes(self):
+        return format_or(sorted(list(self.root_index_to_member)))
 
-        if self.additions_index_to_member is not None:
-            indexes += list(self.additions_index_to_member)
-            
-        return format_or(sorted(indexes))
+    def format_addition_indexes(self):
+        return format_or(sorted(list(self.additions_index_to_member)))
 
     def all_names(self):
         members = list(self.root_index_to_member.values())
 
         if self.additions_index_to_member is not None:
             members += list(self.additions_index_to_member.values())
-            
+
         return format_or(sorted([member.name for member in members]))
 
     def encode(self, data, encoder):
@@ -1316,7 +1315,7 @@ class Choice(Type):
             index = self.additions_name_to_index[data[0]]
         except KeyError:
             raise EncodeError(
-                "Expected choice {}, but got {}.".format(
+                "Expected choice {}, but got '{}'.".format(
                     self.all_names(),
                     data[0]))
 
@@ -1353,7 +1352,7 @@ class Choice(Type):
         except KeyError:
             raise DecodeError(
                 'Expected choice index {}, but got {}.'.format(
-                    self.all_indexes(),
+                    self.format_root_indexes(),
                     index))
 
         return (member.name, member.decode(decoder))
@@ -1366,7 +1365,7 @@ class Choice(Type):
         except KeyError:
             raise DecodeError(
                 'Expected choice index {}, but got {}.'.format(
-                    self.all_indexes(),
+                    self.format_addition_indexes(),
                     index))
 
         # Open type decoding.
@@ -1473,13 +1472,11 @@ class Enumerated(Type):
 
         return index_to_name, name_to_index
 
-    def all_indexes(self):
-        indexes = list(self.root_index_to_name)
+    def format_root_indexes(self):
+        return format_or(sorted(list(self.root_index_to_name)))
 
-        if self.additions_index_to_name is not None:
-            indexes += list(self.additions_index_to_name)
-            
-        return format_or(sorted(indexes))
+    def format_addition_indexes(self):
+        return format_or(sorted(list(self.additions_index_to_name)))
 
     def encode(self, data, encoder):
         if self.additions_index_to_name is None:
@@ -1513,7 +1510,7 @@ class Enumerated(Type):
                 except KeyError:
                     raise DecodeError(
                         'Expected enumeration index {}, but got {}.'.format(
-                            self.all_indexes(),
+                            self.format_addition_indexes(),
                             index))
 
     def decode_root(self, decoder):
@@ -1524,7 +1521,7 @@ class Enumerated(Type):
         except KeyError:
             raise DecodeError(
                 'Expected enumeration index {}, but got {}.'.format(
-                    self.all_indexes(),
+                    self.format_root_indexes(),
                     index))
 
         return name

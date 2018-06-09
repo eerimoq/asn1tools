@@ -2351,7 +2351,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                          ': Unsupported REAL control word 0x82.')
 
     def test_enumerated(self):
-        enumerated = asn1tools.compile_dict(deepcopy(ENUMERATED))
+        foo = asn1tools.compile_dict(deepcopy(ENUMERATED))
 
         datas = [
             ('A', 'a', b'\x0a\x01\x00'),
@@ -2378,10 +2378,13 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(enumerated,
-                                      type_name,
-                                      decoded,
-                                      encoded)
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('F', b'\x0a\x01\xff')
+
+        self.assertEqual(str(cm.exception),
+                         ": Expected enumeration value 0, but got -1.")
 
     def test_graphic_string(self):
         foo = asn1tools.compile_string(
