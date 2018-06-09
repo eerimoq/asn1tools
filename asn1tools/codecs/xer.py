@@ -2,6 +2,7 @@
 
 """
 
+import sys
 import logging
 from xml.etree import ElementTree
 import binascii
@@ -71,9 +72,12 @@ class StringType(Type):
 
     def decode(self, element):
         if element.text is None:
-            return ''
+            return u''
         else:
-            return element.text
+            if sys.version_info[0] > 2:
+                return element.text
+            else:
+                return unicode(element.text)
 
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__,
@@ -416,6 +420,12 @@ class ObjectIdentifier(StringType):
 
     def __init__(self, name):
         super(ObjectIdentifier, self).__init__(name, 'OBJECT IDENTIFIER')
+
+    def decode(self, element):
+        if element.text is None:
+            return ''
+        else:
+            return element.text
 
 
 class Choice(Type):

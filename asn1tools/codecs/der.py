@@ -251,7 +251,7 @@ class BitString(Type):
         number_of_bits = 8 * (length - 1) - data[offset]
         offset += 1
 
-        return (bytearray(data[offset:end_offset]), number_of_bits), end_offset
+        return (bytes(data[offset:end_offset]), number_of_bits), end_offset
 
     def __repr__(self):
         return 'BitString({})'.format(self.name)
@@ -274,7 +274,7 @@ class OctetString(Type):
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
 
-        return bytearray(data[offset:end_offset]), end_offset
+        return bytes(data[offset:end_offset]), end_offset
 
     def __repr__(self):
         return 'OctetString({})'.format(self.name)

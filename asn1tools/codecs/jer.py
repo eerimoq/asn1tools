@@ -483,7 +483,7 @@ class ObjectIdentifier(Type):
         return data
 
     def decode(self, data):
-        return data
+        return str(data)
 
     def __repr__(self):
         return 'ObjectIdentifier({})'.format(self.name)
@@ -578,7 +578,7 @@ class Enumerated(Type):
                     data,
                     sorted(list(self.values))))
 
-        return data
+        return str(data)
 
     def __repr__(self):
         return 'Enumerated({})'.format(self.name)

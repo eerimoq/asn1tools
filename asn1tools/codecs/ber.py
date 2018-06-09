@@ -824,7 +824,7 @@ class BitString(PrimitiveOrConstructedType):
         number_of_bits = 8 * length - data[offset]
         offset += 1
 
-        return (bytearray(data[offset:offset + length]), number_of_bits)
+        return (data[offset:offset + length], number_of_bits)
 
     def decode_constructed_segments(self, segments):
         decoded = bytearray()
@@ -834,7 +834,7 @@ class BitString(PrimitiveOrConstructedType):
             decoded.extend(data)
             number_of_bits += length
 
-        return (decoded, number_of_bits)
+        return (bytes(decoded), number_of_bits)
 
     def __repr__(self):
         return 'BitString({})'.format(self.name)
@@ -854,10 +854,10 @@ class OctetString(PrimitiveOrConstructedType):
         encoded.extend(data)
 
     def decode_primitive_contents(self, data, offset, length):
-        return bytearray(data[offset:offset + length])
+        return bytes(data[offset:offset + length])
 
     def decode_constructed_segments(self, segments):
-        return bytearray().join(segments)
+        return bytes().join(segments)
 
     def __repr__(self):
         return 'OctetString({})'.format(self.name)
