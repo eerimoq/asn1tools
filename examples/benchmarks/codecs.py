@@ -505,7 +505,7 @@ def encode_decode_ber():
 
 
 def encode_decode_der():
-    rrc_8_6_0 = asn1tools.compile_files(RRC_8_6_0_ASN_PATH)
+    rrc_8_6_0 = asn1tools.compile_files(RRC_8_6_0_ASN_PATH, 'der')
 
     def encode():
         rrc_8_6_0.encode('BCCH-DL-SCH-Message', DECODED_MESSAGE)

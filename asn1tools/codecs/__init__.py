@@ -55,3 +55,21 @@ class DecodeContentsLengthError(DecodeError):
         self.length = length
         self.offset = offset
         self.contents_max = contents_max
+
+
+def format_or(items):
+    formatted_items = []
+
+    for item in items:
+        try:
+            item = "'" + item + "'"
+        except TypeError:
+            item = str(item)
+
+        formatted_items.append(item)
+        
+    if len(items) == 1:
+        return formatted_items[0]
+    else:
+        return '{} or {}'.format(', '.join(formatted_items[:-1]),
+                                 formatted_items[-1])

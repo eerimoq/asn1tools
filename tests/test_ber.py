@@ -124,7 +124,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Enumeration value 'three' not found in ['one', 'two'].")
+            "Expected enumeration value 'one' or 'two', but got 'three'.")
 
     def test_rrc_8_6_0(self):
         rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0))
@@ -1828,8 +1828,9 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('Foo', b'\xa3\x03\x01\x01\x01')
 
-        self.assertEqual(str(cm.exception),
-                         ": Expected Tag with tag 'a2' at offset 0, but got 'a3'.")
+        self.assertEqual(
+            str(cm.exception),
+            ": Expected ExplicitTag with tag 'a2' at offset 0, but got 'a3'.")
 
         # Bad tag.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -2861,6 +2862,14 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         self.assertEqual(foo.decode('L', b'\xa0\x03\x04\x01\x12'), ('a', b'\x12'))
         self.assertEqual(foo.decode('L', b'\x80\x01\x12'), ('a', b'\x12'))
 
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('C', b'\x88\x01\x12')
+
+        self.assertEqual(
+            str(cm.exception),
+            ": Expected choice member tag '80', '81' or '82', but got '88'.")
+        
+        
     def test_choice_implicit_tags(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS IMPLICIT TAGS ::= "

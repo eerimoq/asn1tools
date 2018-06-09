@@ -1268,9 +1268,21 @@ class Choice(Type):
 
         return index_to_member, name_to_index
 
-    def all_members(self):
-        return (list(self.root_index_to_member.values())
-                + list(self.additions_index_to_member.values()))
+    def all_indexes(self):
+        indexes = list(self.root_index_to_member)
+
+        if self.additions_index_to_member is not None:
+            indexes += list(self.additions_index_to_member)
+            
+        return format_or(sorted(indexes))
+
+    def all_names(self):
+        members = list(self.root_index_to_member.values())
+
+        if self.additions_index_to_member is not None:
+            members += list(self.additions_index_to_member.values())
+            
+        return format_or(sorted([member.name for member in members]))
 
     def encode(self, data, encoder):
         if self.additions_index_to_member is not None:
@@ -1288,8 +1300,8 @@ class Choice(Type):
             index = self.root_name_to_index[data[0]]
         except KeyError:
             raise EncodeError(
-                "Expected choices are {}, but got '{}'.".format(
-                    sorted([member.name for member in self.all_members()]),
+                "Expected choice {}, but got '{}'.".format(
+                    self.all_names(),
                     data[0]))
 
         if len(self.root_index_to_member) > 1:
@@ -1304,8 +1316,8 @@ class Choice(Type):
             index = self.additions_name_to_index[data[0]]
         except KeyError:
             raise EncodeError(
-                "Expected choices are {}, but got '{}'.".format(
-                    sorted([member.name for member in self.all_members()]),
+                "Expected choice {}, but got {}.".format(
+                    self.all_names(),
                     data[0]))
 
         addition_encoder = Encoder()
@@ -1336,13 +1348,26 @@ class Choice(Type):
         else:
             index = 0
 
-        member = self.root_index_to_member[index]
+        try:
+            member = self.root_index_to_member[index]
+        except KeyError:
+            raise DecodeError(
+                'Expected choice index {}, but got {}.'.format(
+                    self.all_indexes(),
+                    index))
 
         return (member.name, member.decode(decoder))
 
     def decode_additions(self, decoder):
         index = decoder.read_normally_small_non_negative_whole_number()
-        addition = self.additions_index_to_member[index]
+
+        try:
+            addition = self.additions_index_to_member[index]
+        except KeyError:
+            raise DecodeError(
+                'Expected choice index {}, but got {}.'.format(
+                    self.all_indexes(),
+                    index))
 
         # Open type decoding.
         decoder.align()
@@ -1448,6 +1473,14 @@ class Enumerated(Type):
 
         return index_to_name, name_to_index
 
+    def all_indexes(self):
+        indexes = list(self.root_index_to_name)
+
+        if self.additions_index_to_name is not None:
+            indexes += list(self.additions_index_to_name)
+            
+        return format_or(sorted(indexes))
+
     def encode(self, data, encoder):
         if self.additions_index_to_name is None:
             index = self.root_name_to_index[data]
@@ -1479,8 +1512,8 @@ class Enumerated(Type):
                     return self.additions_index_to_name[index]
                 except KeyError:
                     raise DecodeError(
-                        'Expected enumeration index in {}, but got {}.'.format(
-                            sorted(list(self.additions_index_to_name)),
+                        'Expected enumeration index {}, but got {}.'.format(
+                            self.all_indexes(),
                             index))
 
     def decode_root(self, decoder):
@@ -1490,8 +1523,8 @@ class Enumerated(Type):
             name = self.root_index_to_name[index]
         except KeyError:
             raise DecodeError(
-                'Expected enumeration index in {}, but got {}.'.format(
-                    sorted(list(self.root_index_to_name)),
+                'Expected enumeration index {}, but got {}.'.format(
+                    self.all_indexes(),
                     index))
 
         return name

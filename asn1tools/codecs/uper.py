@@ -726,7 +726,7 @@ class Choice(per.Choice):
         except KeyError:
             raise EncodeError(
                 "Expected choices are {}, but got '{}'.".format(
-                    sorted([member.name for member in self.all_members()]),
+                    self.all_names(),
                     data[0]))
 
         addition_encoder = Encoder()
@@ -742,7 +742,14 @@ class Choice(per.Choice):
 
     def decode_additions(self, decoder):
         index = decoder.read_normally_small_non_negative_whole_number()
-        addition = self.additions_index_to_member[index]
+
+        try:
+            addition = self.additions_index_to_member[index]
+        except KeyError:
+            raise DecodeError(
+                'Expected choice index {}, but got {}.'.format(
+                    self.all_indexes(),
+                    index))
 
         # Open type decoding.
         decoder.read_length_determinant()

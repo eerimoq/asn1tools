@@ -12,10 +12,10 @@ from . import EncodeError
 from . import DecodeError
 from . import DecodeTagError
 from . import DecodeContentsLengthError
+from . import format_or
 from . import compiler
 from .compiler import enum_values_as_dict
 from .compiler import clean_bit_string_value
-
 
 class Class(object):
     UNIVERSAL        = 0x00
@@ -1163,6 +1163,13 @@ class Choice(Type):
 
         return tags
 
+    def format_tag(self, tag):
+        return binascii.hexlify(tag).decode('ascii')
+    
+    def format_tags(self):
+        return format_or(sorted([self.format_tag(tag)
+                                 for tag in self.tag_to_member]))
+
     def encode(self, data, encoded):
         try:
             member = self.name_to_member[data[0]]
@@ -1176,7 +1183,15 @@ class Choice(Type):
 
     def decode(self, data, offset):
         tag = bytes(read_tag(data, offset))
-        member = self.tag_to_member[tag]
+
+        try:
+            member = self.tag_to_member[tag]
+        except KeyError:
+            raise DecodeError(
+                "Expected choice member tag {}, but got '{}'.".format(
+                    self.format_tags(),
+                    self.format_tag(tag)))
+
         decoded, offset = member.decode(data, offset)
 
         return (member.name, decoded), offset
@@ -1277,14 +1292,20 @@ class Enumerated(Type):
         self.value_to_name = enum_values_as_dict(values)
         self.name_to_value = {v: k for k, v in self.value_to_name.items()}
 
+    def format_names(self):
+        return format_or(list(self.value_to_name.values()))
+
+    def format_values(self):
+        return format_or(list(self.value_to_name))
+
     def encode(self, data, encoded):
         try:
             value = self.name_to_value[data]
         except KeyError:
             raise EncodeError(
-                "Enumeration value '{}' not found in {}.".format(
-                    data,
-                    sorted(list(self.value_to_name.values()))))
+                "Expected enumeration value {}, but got '{}'.".format(
+                    self.format_names(),
+                    data))
 
         encoded.extend(self.tag)
         encoded.extend(encode_signed_integer(value))
@@ -1295,7 +1316,13 @@ class Enumerated(Type):
         end_offset = offset + length
         value = decode_signed_integer(data[offset:end_offset])
 
-        return self.value_to_name[value], end_offset
+        try:
+            return self.value_to_name[value], end_offset
+        except KeyError:
+            raise DecodeError(
+                'Expected enumeration value {}, but got {}.'.format(
+                    self.format_values(),
+                    value))
 
     def __repr__(self):
         return 'Enumerated({})'.format(self.name)
@@ -1304,7 +1331,7 @@ class Enumerated(Type):
 class ExplicitTag(Type):
 
     def __init__(self, name, inner):
-        super(ExplicitTag, self).__init__(name, 'Tag', None)
+        super(ExplicitTag, self).__init__(name, 'ExplicitTag', None)
         self.inner = inner
 
     def set_tag(self, number, flags):
@@ -1324,7 +1351,7 @@ class ExplicitTag(Type):
         return self.inner.decode(data, offset)
 
     def __repr__(self):
-        return 'Tag()'
+        return 'ExplicitTag()'
 
 
 class Recursive(Type, compiler.Recursive):
