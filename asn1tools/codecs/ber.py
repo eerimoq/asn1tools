@@ -14,6 +14,7 @@ from . import DecodeTagError
 from . import DecodeContentsLengthError
 from . import compiler
 from .compiler import enum_values_as_dict
+from .compiler import clean_bit_string_value
 
 
 class Class(object):
@@ -359,6 +360,9 @@ class Type(object):
 
         return end_offset
 
+    def is_default(self, value):
+        return value == self.default
+
 
 class PrimitiveOrConstructedType(Type):
 
@@ -598,7 +602,7 @@ class MembersType(Type):
 
             if isinstance(member, AnyDefinedBy):
                 member.encode(value, encoded_members, data)
-            elif member.default != value or isinstance(member, Null):
+            elif not member.is_default(value):
                 member.encode(value, encoded_members)
         elif member.optional:
             pass
@@ -777,22 +781,42 @@ class SetOf(ArrayType):
 
 class BitString(PrimitiveOrConstructedType):
 
-    def __init__(self, name):
+    def __init__(self, name, has_named_bits):
         super(BitString, self).__init__(name,
                                         'BIT STRING',
                                         Tag.BIT_STRING,
                                         self)
+        self.has_named_bits = has_named_bits
+
+    def is_default(self, value):
+        if self.default is None:
+            return False
+
+        clean_value = clean_bit_string_value(value,
+                                             self.has_named_bits)
+        clean_default = clean_bit_string_value(self.default,
+                                               self.has_named_bits)
+
+        return clean_value == clean_default
 
     def encode(self, data, encoded):
-        number_of_unused_bits = (8 - (data[1] % 8))
+        number_of_bytes, number_of_rest_bits = divmod(data[1], 8)
+        data = bytearray(data[0])
 
-        if number_of_unused_bits == 8:
+        if number_of_rest_bits == 0:
+            data = data[:number_of_bytes]
             number_of_unused_bits = 0
+        else:
+            last_byte = data[number_of_bytes]
+            last_byte &= ((0xff >> number_of_rest_bits) ^ 0xff)
+            data = data[:number_of_bytes]
+            data.append(last_byte)
+            number_of_unused_bits = (8 - number_of_rest_bits)
 
         encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data[0]) + 1))
+        encoded.extend(encode_length_definite(len(data) + 1))
         encoded.append(number_of_unused_bits)
-        encoded.extend(data[0])
+        encoded.extend(data)
 
     def decode_primitive_contents(self, data, offset, length):
         length -= 1
@@ -1168,6 +1192,9 @@ class Null(Type):
     def __init__(self, name):
         super(Null, self).__init__(name, 'NULL', Tag.NULL)
 
+    def is_default(self, value):
+        return False
+
     def encode(self, _, encoded):
         encoded.extend(self.tag)
         encoded.append(0)
@@ -1430,7 +1457,8 @@ class Compiler(compiler.Compiler):
         elif type_name == 'GeneralizedTime':
             compiled = GeneralizedTime(name)
         elif type_name == 'BIT STRING':
-            compiled = BitString(name)
+            has_named_bits = ('named-bits' in type_descriptor)
+            compiled = BitString(name, has_named_bits)
         elif type_name == 'ANY':
             compiled = Any(name)
         elif type_name == 'ANY DEFINED BY':

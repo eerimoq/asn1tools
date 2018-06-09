@@ -27,19 +27,40 @@ def is_object_class_type_name(type_name):
 
 
 def lowest_set_bit(value):
-    return (value & -value).bit_length() - 1
+    offset = (value & -value).bit_length() - 1
+
+    if offset < 0:
+        offset = 0
+
+    return offset
 
 
-def clean_bit_string_data(data, number_of_bits):
+def rstrip_bit_string_zeros(data):
+    data = data.rstrip(b'\x00')
+
+    if len(data) == 0:
+        number_of_bits = 0
+    else:
+        number_of_bits = 8 * len(data) - lowest_set_bit(data[-1])
+
+    return (data, number_of_bits)
+
+
+def clean_bit_string_value(value, has_named_bits):
+    data = bytearray(value[0])
+    number_of_bits = value[1]
     number_of_bytes, number_of_rest_bits = divmod(number_of_bits, 8)
 
     if number_of_rest_bits == 0:
         data = data[:number_of_bytes]
     else:
-        data = bytearray(data[:number_of_bytes + 1])
+        data = data[:number_of_bytes + 1]
         data[number_of_bytes] &= ((0xff >> number_of_rest_bits) ^ 0xff)
 
-    return data.rstrip(b'\x00')
+    if has_named_bits:
+        return rstrip_bit_string_zeros(data)
+    else:
+        return (data, number_of_bits)
 
 
 class CompiledType(object):

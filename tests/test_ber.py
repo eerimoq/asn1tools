@@ -169,13 +169,13 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                     'phich-Resource': 'half'
                 },
                 'systemFrameNumber': (b'\x12', 8),
-                'spare': (b'\x34\x56', 10)
+                'spare': (b'\x34\x40', 10)
             }
         }
 
         encoded = (
             b'0\x16\xa0\x14\x80\x01\x00\xa1\x06\x80\x01\x00\x81\x01\x01\x82'
-            b'\x02\x00\x12\x83\x03\x064V'
+            b'\x02\x00\x12\x83\x03\x06\x34\x40'
         )
 
         self.assert_encode_decode(rrc, 'BCCH-BCH-Message', decoded, encoded)
@@ -1423,7 +1423,6 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('Integer',                 -256, b'\x02\x02\xff\x00'),
             ('Integer',               -32768, b'\x02\x02\x80\x00'),
             ('Integer',               -32769, b'\x02\x03\xff\x7f\xff'),
-            ('Bitstring',       (b'\x80', 1), b'\x03\x02\x07\x80'),
             ('Octetstring',          b'\x00', b'\x04\x01\x00'),
             ('Octetstring',    127 * b'\x55', b'\x04\x7f' + 127 * b'\x55'),
             ('Octetstring',    128 * b'\xaa', b'\x04\x81\x80' + 128 * b'\xaa'),
@@ -2207,7 +2206,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         all_types = asn1tools.compile_files('tests/files/all_types.asn')
 
         datas = [
-            #('Bitstring',       (b'\x80', 1), b'\x03\x02\x07\x80'),
+            ('Bitstring',       (b'\x80', 1), b'\x03\x02\x07\x80'),
             ('Octetstring',      b'\x00\x01', b'\x24\x06\x04\x01\x00\x04\x01\x01'),
             ('Utf8string',             'foo', b'\x2c\x07\x04\x02fo\x04\x01o'),
             ('Numericstring',          '123', b'\x32\x07\x04\x0212\x04\x013'),
@@ -2919,6 +2918,72 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(foo.decode('B', b'\x24\x03\x04\x01\x12'), ('a', b'\x12'))
         self.assertEqual(foo.decode('B', b'\x04\x01\x12'), ('a', b'\x12'))
+
+    def test_bit_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= BIT STRING "
+            "B ::= BIT STRING { "
+            "  a (0), "
+            "  b (1), "
+            "  c (2) "
+            "} "
+            "C ::= SEQUENCE { "
+            "  a B DEFAULT {b, c}, "
+            "  b B DEFAULT '011'B, "
+            "  c B DEFAULT '60'H "
+            "} "
+            "D ::= SEQUENCE { "
+            "  a A DEFAULT '00'B, "
+            "  b B DEFAULT '00'B "
+            "} "
+            "END")
+
+        datas = [
+            ('A',              (b'', 0), b'\x03\x01\x00'),
+            ('A',          (b'\x40', 4), b'\x03\x02\x04\x40'),
+            ('A',          (b'\x80', 1), b'\x03\x02\x07\x80'),
+            ('A',      (b'\x00\x00', 9), b'\x03\x03\x07\x00\x00'),
+            ('B',          (b'\x80', 1), b'\x03\x02\x07\x80'),
+            ('B',          (b'\xe0', 3), b'\x03\x02\x05\xe0'),
+            ('B',          (b'\x01', 8), b'\x03\x02\x00\x01'),
+            ('C',
+             {'a': (b'\x40', 2), 'b': (b'\x40', 2), 'c': (b'\x40', 2)},
+             b'\x30\x0c\x80\x02\x06\x40\x81\x02\x06\x40\x82\x02\x06\x40'),
+            ('C',
+             {'a': (b'\x60', 3), 'b': (b'\x60', 3), 'c': (b'\x60', 3)},
+             b'\x30\x00'),
+            ('D',
+             {'a': (b'\x00', 2), 'b': (b'\x00', 2)},
+             b'\x30\x00')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Default value is not encoded, but part of decoded. Also
+        # ignore dangling bits.
+        datas = [
+            ('C',
+             {},
+             b'\x30\x00',
+             {'a': (b'\x60', 3), 'b': (b'\x60', 3), 'c': (b'\x60', 3)}),
+            ('C',
+             {'a': (b'\x60', 4), 'b': (b'\x60', 5), 'c': (b'\x60', 6)},
+             b'\x30\x00',
+             {'a': (b'\x60', 3), 'b': (b'\x60', 3), 'c': (b'\x60', 3)}),
+            ('A',     (b'\xff', 1), b'\x03\x02\x07\x80', (b'\x80', 1)),
+            ('D',
+             {'a': (b'\x00', 3), 'b': (b'\x00', 3)},
+             b'\x30\x04\x80\x02\x05\x00',
+             {'a': (b'\x00', 3), 'b': (b'\x00', 2)})
+        ]
+
+        for type_name, decoded_1, encoded, decoded_2 in datas:
+            self.assertEqual(foo.encode(type_name, decoded_1), encoded)
+            self.assertEqual(foo.decode(type_name, encoded), decoded_2)
+
 
 if __name__ == '__main__':
     unittest.main()

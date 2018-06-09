@@ -1899,6 +1899,10 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "    a E DEFAULT { a } "
             "  } "
             "} "
+            "P ::= SEQUENCE { "
+            "  a A DEFAULT '00'B, "
+            "  b E DEFAULT '00'B "
+            "} "
             "END",
             'uper')
 
@@ -1906,6 +1910,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('A',              (b'', 0), b'\x00'),
             ('A',          (b'\x00', 1), b'\x01\x00'),
             ('A',          (b'\x40', 4), b'\x04\x40'),
+            ('A',      (b'\x00\x00', 9), b'\x09\x00\x00'),
             ('A',
              (299 * b'\x55' + b'\x54', 2399),
              b'\x89\x5f' + 299 * b'\x55' + b'\x54'),
@@ -1940,7 +1945,10 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('M',   {'a': (b'\x01', 8)}, b'\x00'),
             ('N',   {'a': (b'\x00\x80', 9)}, b'\x00'),
             ('O',   {'a': {'a': (b'\x80', 1)}}, b'\x00'),
-            ('O',   {'a': {'a': (b'\x40', 2)}}, b'\x81\x20')
+            ('O',   {'a': {'a': (b'\x40', 2)}}, b'\x81\x20'),
+            ('P',
+             {'a': (b'\x00', 2), 'b': (b'\x00', 2)},
+             b'\x00')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -1964,6 +1972,10 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
              b'\x00',
              {'a': (b'\x60', 3), 'b': (b'\x60', 3), 'c': (b'\x60', 3)}),
             ('A',      (b'\x7f\xff', 1), b'\x01\x00', (b'\x00', 1)),
+            ('P',
+             {'a': (b'\x00', 3), 'b': (b'\x00', 3)},
+             b'\x80\xc0',
+             {'a': (b'\x00', 3), 'b': (b'\x00', 2)})
         ]
 
         for type_name, decoded_1, encoded, decoded_2 in datas:

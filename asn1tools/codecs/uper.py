@@ -20,8 +20,8 @@ from .per import Any
 from .per import Enumerated
 from .per import Recursive
 from .per import Real
-from .compiler import clean_bit_string_data
-from .compiler import lowest_set_bit
+from .compiler import clean_bit_string_value
+from .compiler import rstrip_bit_string_zeros
 
 
 LOGGER = logging.getLogger(__name__)
@@ -472,19 +472,15 @@ class BitString(Type):
             self.number_of_bits = integer_as_number_of_bits(size)
 
     def is_default(self, value):
-        clean_value = clean_bit_string_data(*value)
-        clean_default = clean_bit_string_data(*self.default)
+        clean_value = clean_bit_string_value(value,
+                                             self.has_named_bits)
+        clean_default = clean_bit_string_value(self.default,
+                                               self.has_named_bits)
 
         return clean_value == clean_default
 
     def rstrip_zeros(self, data, number_of_bits):
-        data = bytearray(data.rstrip(b'\x00'))
-
-        if len(data) == 0:
-            number_of_bits = 0
-        else:
-            value = data[-1]
-            number_of_bits = 8 * len(data) - lowest_set_bit(value)
+        data, number_of_bits = rstrip_bit_string_zeros(bytearray(data))
 
         if self.minimum is not None:
             if number_of_bits < self.minimum:
@@ -492,7 +488,7 @@ class BitString(Type):
                 number_of_bytes = ((number_of_bits + 7) // 8)
                 data += (number_of_bytes - len(data)) * b'\x00'
 
-        return data, number_of_bits
+        return (data, number_of_bits)
 
     def encode(self, data, encoder):
         data, number_of_bits = data
