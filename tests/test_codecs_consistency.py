@@ -11,7 +11,14 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
 
     maxDiff = None
 
-    def encode_decode_all_codecs(self, spec, values):
+    def encode_decode_all_codecs(self, type_spec, values):
+        spec = (
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= " + type_spec
+            + "END"
+        )
+
         foos = []
 
         for codec in CODECS:
@@ -27,101 +34,71 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
                 self.assertEqual(decoded, value)
 
     def test_boolean(self):
-        self.encode_decode_all_codecs(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= BOOLEAN "
-            "END",
-            [True, False])
+        self.encode_decode_all_codecs("BOOLEAN ", [True, False])
 
     def test_integer(self):
-        self.encode_decode_all_codecs(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= INTEGER "
-            "END",
-            [1, 123456789, -2, 0])
+        self.encode_decode_all_codecs("INTEGER ", [1, 123456789, -2, 0])
 
     def test_real(self):
         with self.assertRaises(NotImplementedError):
-            self.encode_decode_all_codecs(
-                "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-                "BEGIN "
-                "A ::= REAL "
-                "END",
-                [0.0, 1.0])
+            self.encode_decode_all_codecs("REAL ", [0.0, 1.0])
 
     def test_null(self):
-        self.encode_decode_all_codecs(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= NULL "
-            "END",
-            [None])
+        self.encode_decode_all_codecs("NULL ", [None])
 
     def test_bit_string(self):
-        self.encode_decode_all_codecs(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= BIT STRING "
-            "END",
-            [(b'\x58', 5), (b'\x58\x80', 9)])
+        self.encode_decode_all_codecs("BIT STRING ",
+                                      [(b'\x58', 5), (b'\x58\x80', 9)])
 
     def test_octet_string(self):
-        self.encode_decode_all_codecs(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= OCTET STRING "
-            "END",
-            [b'', b'\x12\x34'])
+        self.encode_decode_all_codecs("OCTET STRING ", [b'', b'\x12\x34'])
 
     def test_object_identifier(self):
-        self.encode_decode_all_codecs(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= OBJECT IDENTIFIER "
-            "END",
-            ['1.2.33'])
+        self.encode_decode_all_codecs("OBJECT IDENTIFIER ", ['1.2.33'])
 
     def test_enumerated(self):
-        self.encode_decode_all_codecs(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= ENUMERATED { a(0), b(5) } "
-            "END",
-            ['a', 'b'])
+        self.encode_decode_all_codecs("ENUMERATED { a(0), b(5) } ", ['a', 'b'])
 
     def test_sequence(self):
-        self.encode_decode_all_codecs(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= SEQUENCE { a NULL } "
-            "END",
-            [{'a': None}])
+        self.encode_decode_all_codecs("SEQUENCE { a NULL } ", [{'a': None}])
 
     def test_sequence_of(self):
-        self.encode_decode_all_codecs(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= SEQUENCE OF NULL "
-            "END",
-            [[], [None, None]])
+        self.encode_decode_all_codecs("SEQUENCE OF NULL ", [[], [None, None]])
+
+    def test_set(self):
+        self.encode_decode_all_codecs("SET { a NULL } ", [{'a': None}])
+
+    def test_set_of(self):
+        self.encode_decode_all_codecs("SET OF NULL ", [[], [None, None]])
 
     def test_choice(self):
-        self.encode_decode_all_codecs(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= CHOICE { a NULL } "
-            "END",
-            [('a', None)])
+        self.encode_decode_all_codecs("CHOICE { a NULL } ", [('a', None)])
 
     def test_utf8_string(self):
-        self.encode_decode_all_codecs(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= UTF8String "
-            "END",
-            [u'hi'])
+        self.encode_decode_all_codecs("UTF8String ", [u'hi'])
+
+    def test_numeric_string(self):
+        self.encode_decode_all_codecs("NumericString ", [u'123'])
+
+    def test_printable_string(self):
+        self.encode_decode_all_codecs("PrintableString ", [u'hi'])
+
+    def test_ia5_string(self):
+        self.encode_decode_all_codecs("IA5String ", [u'hi'])
+
+    def test_visible_string(self):
+        self.encode_decode_all_codecs("VisibleString ", [u'hi'])
+
+    def test_general_string(self):
+        with self.assertRaises(NotImplementedError):
+            self.encode_decode_all_codecs("GeneralString ", [u'hi'])
+
+    def test_bmp_string(self):
+        with self.assertRaises(TypeError):
+            self.encode_decode_all_codecs("BMPString ", [u'hi'])
+
+    def test_graphic_string(self):
+        self.encode_decode_all_codecs("GraphicString ", [u'hi'])
 
 
 if __name__ == '__main__':
