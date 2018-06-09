@@ -17,6 +17,7 @@ from . import compiler
 from .compiler import enum_values_as_dict
 from .compiler import clean_bit_string_value
 
+
 class Class(object):
     UNIVERSAL        = 0x00
     APPLICATION      = 0x40
@@ -1165,7 +1166,7 @@ class Choice(Type):
 
     def format_tag(self, tag):
         return binascii.hexlify(tag).decode('ascii')
-    
+
     def format_tags(self):
         return format_or(sorted([self.format_tag(tag)
                                  for tag in self.tag_to_member]))

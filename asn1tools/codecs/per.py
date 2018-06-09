@@ -1275,7 +1275,7 @@ class Choice(Type):
     def format_addition_indexes(self):
         return format_or(sorted(list(self.additions_index_to_member)))
 
-    def all_names(self):
+    def format_names(self):
         members = list(self.root_index_to_member.values())
 
         if self.additions_index_to_member is not None:
@@ -1300,7 +1300,7 @@ class Choice(Type):
         except KeyError:
             raise EncodeError(
                 "Expected choice {}, but got '{}'.".format(
-                    self.all_names(),
+                    self.format_names(),
                     data[0]))
 
         if len(self.root_index_to_member) > 1:
@@ -1316,7 +1316,7 @@ class Choice(Type):
         except KeyError:
             raise EncodeError(
                 "Expected choice {}, but got '{}'.".format(
-                    self.all_names(),
+                    self.format_names(),
                     data[0]))
 
         addition_encoder = Encoder()

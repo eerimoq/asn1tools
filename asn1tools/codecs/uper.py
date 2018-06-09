@@ -725,8 +725,8 @@ class Choice(per.Choice):
             index = self.additions_name_to_index[data[0]]
         except KeyError:
             raise EncodeError(
-                "Expected choices are {}, but got '{}'.".format(
-                    self.all_names(),
+                "Expected choice {}, but got '{}'.".format(
+                    self.format_names(),
                     data[0]))
 
         addition_encoder = Encoder()
@@ -748,7 +748,7 @@ class Choice(per.Choice):
         except KeyError:
             raise DecodeError(
                 'Expected choice index {}, but got {}.'.format(
-                    self.all_indexes(),
+                    self.format_addition_indexes(),
                     index))
 
         # Open type decoding.

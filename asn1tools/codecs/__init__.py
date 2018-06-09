@@ -67,7 +67,7 @@ def format_or(items):
             item = str(item)
 
         formatted_items.append(item)
-        
+
     if len(items) == 1:
         return formatted_items[0]
     else:
