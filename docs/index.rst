@@ -23,8 +23,7 @@ Types
 =====
 
 ASN.1 types are mapped to Python 3 types as shown in the table
-below. In Python 2, INTEGER may be ``long`` and all string types are
-``unicode``.
+below. In Python 2, INTEGER may be ``long``.
 
 +-------------------+-------------+-----------------------+
 | ASN.1 type        | Python type | Example               |
@@ -37,7 +36,7 @@ below. In Python 2, INTEGER may be ``long`` and all string types are
 +-------------------+-------------+-----------------------+
 | NULL              | --          | ``None``              |
 +-------------------+-------------+-----------------------+
-| BIT STRING        | ``tuple``   | ``(b'\x4b', 7)``      |
+| BIT STRING        | ``tuple``   | ``(b'\x50', 4)``      |
 +-------------------+-------------+-----------------------+
 | OCTET STRING      | ``bytes``   | ``b'\x44\x1e\xff'``   |
 +-------------------+-------------+-----------------------+
