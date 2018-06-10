@@ -1484,11 +1484,15 @@ class TeletexString(Type):
 
 
 class UTCTime(VisibleString):
-    pass
+
+    def decode(self, decoder):
+        return str(super(UTCTime, self).decode(decoder))
 
 
 class GeneralizedTime(VisibleString):
-    pass
+
+    def decode(self, decoder):
+        return str(super(GeneralizedTime, self).decode(decoder))
 
 
 class OpenType(Type):

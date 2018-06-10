@@ -548,7 +548,7 @@ class UTCTime(Type):
         return data
 
     def decode(self, data):
-        return data
+        return str(data)
 
     def __repr__(self):
         return 'UTCTime({})'.format(self.name)
@@ -563,7 +563,7 @@ class GeneralizedTime(Type):
         return data
 
     def decode(self, data):
-        return data
+        return str(data)
 
     def __repr__(self):
         return 'GeneralizedTime({})'.format(self.name)

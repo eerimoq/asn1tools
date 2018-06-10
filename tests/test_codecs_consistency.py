@@ -100,6 +100,12 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
     def test_graphic_string(self):
         self.encode_decode_all_codecs("GraphicString", [u'hi'])
 
+    def test_utc_time(self):
+        self.encode_decode_all_codecs("UTCTime", ['121001230001Z'])
+
+    def test_generalized_time(self):
+        self.encode_decode_all_codecs("GeneralizedTime", ['20001231235959.999'])
+
 
 if __name__ == '__main__':
     unittest.main()
