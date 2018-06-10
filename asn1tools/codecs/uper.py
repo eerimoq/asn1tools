@@ -595,10 +595,10 @@ class UniversalString(Type):
         super(UniversalString, self).__init__(name, 'UniversalString')
 
     def encode(self, _data, _encoder):
-        raise NotImplementedError('UniversalString not yet implemented.')
+        raise NotImplementedError('UniversalString is not yet implemented.')
 
     def decode(self, _decoder):
-        raise NotImplementedError('UniversalString not yet implemented.')
+        raise NotImplementedError('UniversalString is not yet implemented.')
 
     def __repr__(self):
         return 'UniversalString({})'.format(self.name)
@@ -617,10 +617,10 @@ class GeneralString(Type):
         super(GeneralString, self).__init__(name, 'GeneralString')
 
     def encode(self, _data, _encoder):
-        raise NotImplementedError('GeneralString not yet implemented.')
+        raise NotImplementedError('GeneralString is not yet implemented.')
 
     def decode(self, _decoder):
-        raise NotImplementedError('GeneralString not yet implemented.')
+        raise NotImplementedError('GeneralString is not yet implemented.')
 
     def __repr__(self):
         return 'GeneralString({})'.format(self.name)
@@ -672,10 +672,10 @@ class BMPString(Type):
         super(BMPString, self).__init__(name, 'BMPString')
 
     def encode(self, _data, _encoder):
-        raise NotImplementedError('BMPString not yet implemented.')
+        raise NotImplementedError('BMPString is not yet implemented.')
 
     def decode(self, _decoder):
-        raise NotImplementedError('BMPString not yet implemented.')
+        raise NotImplementedError('BMPString is not yet implemented.')
 
     def __repr__(self):
         return 'BMPString({})'.format(self.name)
@@ -687,10 +687,10 @@ class TeletexString(Type):
         super(TeletexString, self).__init__(name, 'TeletexString')
 
     def encode(self, _data, _encoder):
-        raise NotImplementedError('TeletexString not yet implemented.')
+        raise NotImplementedError('TeletexString is not yet implemented.')
 
     def decode(self, _decoder):
-        raise NotImplementedError('TeletexString not yet implemented.')
+        raise NotImplementedError('TeletexString is not yet implemented.')
 
     def __repr__(self):
         return 'TeletexString({})'.format(self.name)
