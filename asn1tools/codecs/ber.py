@@ -432,125 +432,6 @@ class PrimitiveOrConstructedType(Type):
         raise NotImplementedError('To be implemented by subclasses.')
 
 
-class Integer(Type):
-
-    def __init__(self, name):
-        super(Integer, self).__init__(name,
-                                      'INTEGER',
-                                      Tag.INTEGER)
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_signed_integer(data))
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
-
-        return decode_signed_integer(data[offset:end_offset]), end_offset
-
-    def __repr__(self):
-        return 'Integer({})'.format(self.name)
-
-
-class Real(Type):
-
-    def __init__(self, name):
-        super(Real, self).__init__(name, 'REAL', Tag.REAL)
-
-    def encode(self, data, encoded):
-        data = encode_real(data)
-        encoded.extend(self.tag)
-        encoded.append(len(data))
-        encoded.extend(data)
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
-        decoded = decode_real(data[offset:end_offset])
-
-        return decoded, end_offset
-
-    def __repr__(self):
-        return 'Real({})'.format(self.name)
-
-
-class Boolean(Type):
-
-    def __init__(self, name):
-        super(Boolean, self).__init__(name,
-                                      'BOOLEAN',
-                                      Tag.BOOLEAN)
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.append(1)
-        encoded.append(0xff * data)
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, contents_offset = decode_length_definite(data, offset)
-
-        if length != 1:
-            raise DecodeError(
-                'Expected BOOLEAN contents length 1 at offset {}, but '
-                'got {}.'.format(offset,
-                                 length))
-
-        return bool(data[contents_offset]), contents_offset + length
-
-    def __repr__(self):
-        return 'Boolean({})'.format(self.name)
-
-
-class IA5String(PrimitiveOrConstructedType):
-
-    def __init__(self, name):
-        super(IA5String, self).__init__(name,
-                                        'IA5String',
-                                        Tag.IA5_STRING,
-                                        OctetString(name))
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('ascii'))
-
-    def decode_primitive_contents(self, data, offset, length):
-        return data[offset:offset + length].decode('ascii')
-
-    def decode_constructed_segments(self, segments):
-        return bytearray().join(segments).decode('ascii')
-
-    def __repr__(self):
-        return 'IA5String({})'.format(self.name)
-
-
-class NumericString(PrimitiveOrConstructedType):
-
-    def __init__(self, name):
-        super(NumericString, self).__init__(name,
-                                            'NumericString',
-                                            Tag.NUMERIC_STRING,
-                                            OctetString(name))
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('ascii'))
-
-    def decode_primitive_contents(self, data, offset, length):
-        return data[offset:offset + length].decode('ascii')
-
-    def decode_constructed_segments(self, segments):
-        return bytearray().join(segments).decode('ascii')
-
-    def __repr__(self):
-        return 'NumericString({})'.format(self.name)
-
-
 class MembersType(Type):
 
     def __init__(self, name, tag_name, tag, root_members, additions):
@@ -695,26 +576,6 @@ class MembersType(Type):
             ', '.join([repr(member) for member in self.root_members]))
 
 
-class Sequence(MembersType):
-
-    def __init__(self, name, root_members, additions):
-        super(Sequence, self).__init__(name,
-                                       'SEQUENCE',
-                                       Tag.SEQUENCE,
-                                       root_members,
-                                       additions)
-
-
-class Set(MembersType):
-
-    def __init__(self, name, root_members, additions):
-        super(Set, self).__init__(name,
-                                  'SET',
-                                  Tag.SET,
-                                  root_members,
-                                  additions)
-
-
 class ArrayType(Type):
 
     def __init__(self, name, tag_name, tag, element_type):
@@ -762,22 +623,98 @@ class ArrayType(Type):
                                    self.element_type)
 
 
-class SequenceOf(ArrayType):
+class Boolean(Type):
 
-    def __init__(self, name, element_type):
-        super(SequenceOf, self).__init__(name,
-                                         'SEQUENCE OF',
-                                         Tag.SEQUENCE,
-                                         element_type)
+    def __init__(self, name):
+        super(Boolean, self).__init__(name,
+                                      'BOOLEAN',
+                                      Tag.BOOLEAN)
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.append(1)
+        encoded.append(0xff * data)
+
+    def decode(self, data, offset):
+        offset = self.decode_tag(data, offset)
+        length, contents_offset = decode_length_definite(data, offset)
+
+        if length != 1:
+            raise DecodeError(
+                'Expected BOOLEAN contents length 1 at offset {}, but '
+                'got {}.'.format(offset,
+                                 length))
+
+        return bool(data[contents_offset]), contents_offset + length
+
+    def __repr__(self):
+        return 'Boolean({})'.format(self.name)
 
 
-class SetOf(ArrayType):
+class Integer(Type):
 
-    def __init__(self, name, element_type):
-        super(SetOf, self).__init__(name,
-                                    'SET OF',
-                                    Tag.SET,
-                                    element_type)
+    def __init__(self, name):
+        super(Integer, self).__init__(name,
+                                      'INTEGER',
+                                      Tag.INTEGER)
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.extend(encode_signed_integer(data))
+
+    def decode(self, data, offset):
+        offset = self.decode_tag(data, offset)
+        length, offset = decode_length_definite(data, offset)
+        end_offset = offset + length
+
+        return decode_signed_integer(data[offset:end_offset]), end_offset
+
+    def __repr__(self):
+        return 'Integer({})'.format(self.name)
+
+
+class Real(Type):
+
+    def __init__(self, name):
+        super(Real, self).__init__(name, 'REAL', Tag.REAL)
+
+    def encode(self, data, encoded):
+        data = encode_real(data)
+        encoded.extend(self.tag)
+        encoded.append(len(data))
+        encoded.extend(data)
+
+    def decode(self, data, offset):
+        offset = self.decode_tag(data, offset)
+        length, offset = decode_length_definite(data, offset)
+        end_offset = offset + length
+        decoded = decode_real(data[offset:end_offset])
+
+        return decoded, end_offset
+
+    def __repr__(self):
+        return 'Real({})'.format(self.name)
+
+
+class Null(Type):
+
+    def __init__(self, name):
+        super(Null, self).__init__(name, 'NULL', Tag.NULL)
+
+    def is_default(self, value):
+        return False
+
+    def encode(self, _, encoded):
+        encoded.extend(self.tag)
+        encoded.append(0)
+
+    def decode(self, data, offset):
+        offset = self.decode_tag(data, offset)
+
+        return None, offset + 1
+
+    def __repr__(self):
+        return 'Null({})'.format(self.name)
 
 
 class BitString(PrimitiveOrConstructedType):
@@ -863,236 +800,6 @@ class OctetString(PrimitiveOrConstructedType):
         return 'OctetString({})'.format(self.name)
 
 
-class PrintableString(PrimitiveOrConstructedType):
-
-    def __init__(self, name):
-        super(PrintableString, self).__init__(name,
-                                              'PrintableString',
-                                              Tag.PRINTABLE_STRING,
-                                              OctetString(name))
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('ascii'))
-
-    def decode_primitive_contents(self, data, offset, length):
-        return data[offset:offset + length].decode('ascii')
-
-    def decode_constructed_segments(self, segments):
-        return bytearray().join(segments).decode('ascii')
-
-    def __repr__(self):
-        return 'PrintableString({})'.format(self.name)
-
-
-class UniversalString(PrimitiveOrConstructedType):
-
-    def __init__(self, name):
-        super(UniversalString, self).__init__(name,
-                                              'UniversalString',
-                                              Tag.UNIVERSAL_STRING,
-                                              OctetString(name))
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('ascii'))
-
-    def decode_primitive_contents(self, data, offset, length):
-        return data[offset:offset + length].decode('ascii')
-
-    def decode_constructed_segments(self, segments):
-        return bytearray().join(segments).decode('ascii')
-
-    def __repr__(self):
-        return 'UniversalString({})'.format(self.name)
-
-
-class VisibleString(PrimitiveOrConstructedType):
-
-    def __init__(self, name):
-        super(VisibleString, self).__init__(name,
-                                            'VisibleString',
-                                            Tag.VISIBLE_STRING,
-                                            OctetString(name))
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('ascii'))
-
-    def decode_primitive_contents(self, data, offset, length):
-        return data[offset:offset + length].decode('ascii')
-
-    def decode_constructed_segments(self, segments):
-        return bytearray().join(segments).decode('ascii')
-
-    def __repr__(self):
-        return 'VisibleString({})'.format(self.name)
-
-
-class GeneralString(PrimitiveOrConstructedType):
-
-    def __init__(self, name):
-        super(GeneralString, self).__init__(name,
-                                            'GeneralString',
-                                            Tag.GENERAL_STRING,
-                                            OctetString(name))
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('ascii'))
-
-    def decode_primitive_contents(self, data, offset, length):
-        return data[offset:offset + length].decode('ascii')
-
-    def decode_constructed_segments(self, segments):
-        return bytearray().join(segments).decode('ascii')
-
-    def __repr__(self):
-        return 'GeneralString({})'.format(self.name)
-
-
-class UTF8String(PrimitiveOrConstructedType):
-
-    def __init__(self, name):
-        super(UTF8String, self).__init__(name,
-                                         'UTF8String',
-                                         Tag.UTF8_STRING,
-                                         OctetString(name))
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('utf-8'))
-
-    def decode_primitive_contents(self, data, offset, length):
-        return data[offset:offset + length].decode('utf-8')
-
-    def decode_constructed_segments(self, segments):
-        return bytearray().join(segments).decode('utf-8')
-
-    def __repr__(self):
-        return 'UTF8String({})'.format(self.name)
-
-
-class BMPString(PrimitiveOrConstructedType):
-
-    def __init__(self, name):
-        super(BMPString, self).__init__(name,
-                                        'BMPString',
-                                        Tag.BMP_STRING,
-                                        OctetString(name))
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data)
-
-    def decode_primitive_contents(self, data, offset, length):
-        return bytearray(data[offset:offset + length])
-
-    def decode_constructed_segments(self, segments):
-        return bytearray().join(segments)
-
-    def __repr__(self):
-        return 'BMPString({})'.format(self.name)
-
-
-class GraphicString(PrimitiveOrConstructedType):
-
-    def __init__(self, name):
-        super(GraphicString, self).__init__(name,
-                                            'GraphicString',
-                                            Tag.GRAPHIC_STRING,
-                                            OctetString(name))
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('latin-1'))
-
-    def decode_primitive_contents(self, data, offset, length):
-        return data[offset:offset + length].decode('latin-1')
-
-    def decode_constructed_segments(self, segments):
-        return bytearray().join(segments).decode('latin-1')
-
-    def __repr__(self):
-        return 'GraphicString({})'.format(self.name)
-
-
-class UTCTime(Type):
-
-    def __init__(self, name):
-        super(UTCTime, self).__init__(name,
-                                      'UTCTime',
-                                      Tag.UTC_TIME)
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.append(13)
-        encoded.extend(bytearray(data.encode('ascii')))
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
-
-        return data[offset:end_offset].decode('ascii'), end_offset
-
-    def __repr__(self):
-        return 'UTCTime({})'.format(self.name)
-
-
-class GeneralizedTime(Type):
-
-    def __init__(self, name):
-        super(GeneralizedTime, self).__init__(name,
-                                              'GeneralizedTime',
-                                              Tag.GENERALIZED_TIME)
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.append(len(data))
-        encoded.extend(data.encode('ascii'))
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
-
-        return data[offset:end_offset].decode('ascii'), end_offset
-
-    def __repr__(self):
-        return 'GeneralizedTime({})'.format(self.name)
-
-
-class TeletexString(PrimitiveOrConstructedType):
-
-    def __init__(self, name):
-        super(TeletexString, self).__init__(name,
-                                            'TeletexString',
-                                            Tag.T61_STRING,
-                                            OctetString(name))
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data)
-
-    def decode_primitive_contents(self, data, offset, length):
-        return bytearray(data[offset:offset + length])
-
-    def decode_constructed_segments(self, segments):
-        return bytearray().join(segments)
-
-    def __repr__(self):
-        return 'TeletexString({})'.format(self.name)
-
-
 class ObjectIdentifier(Type):
 
     def __init__(self, name):
@@ -1116,6 +823,89 @@ class ObjectIdentifier(Type):
 
     def __repr__(self):
         return 'ObjectIdentifier({})'.format(self.name)
+
+
+class Enumerated(Type):
+
+    def __init__(self, name, values):
+        super(Enumerated, self).__init__(name,
+                                         'ENUMERATED',
+                                         Tag.ENUMERATED)
+        self.value_to_name = enum_values_as_dict(values)
+        self.name_to_value = {v: k for k, v in self.value_to_name.items()}
+
+    def format_names(self):
+        return format_or(list(self.value_to_name.values()))
+
+    def format_values(self):
+        return format_or(list(self.value_to_name))
+
+    def encode(self, data, encoded):
+        try:
+            value = self.name_to_value[data]
+        except KeyError:
+            raise EncodeError(
+                "Expected enumeration value {}, but got '{}'.".format(
+                    self.format_names(),
+                    data))
+
+        encoded.extend(self.tag)
+        encoded.extend(encode_signed_integer(value))
+
+    def decode(self, data, offset):
+        offset = self.decode_tag(data, offset)
+        length, offset = decode_length_definite(data, offset)
+        end_offset = offset + length
+        value = decode_signed_integer(data[offset:end_offset])
+
+        try:
+            return self.value_to_name[value], end_offset
+        except KeyError:
+            raise DecodeError(
+                'Expected enumeration value {}, but got {}.'.format(
+                    self.format_values(),
+                    value))
+
+    def __repr__(self):
+        return 'Enumerated({})'.format(self.name)
+
+
+class Sequence(MembersType):
+
+    def __init__(self, name, root_members, additions):
+        super(Sequence, self).__init__(name,
+                                       'SEQUENCE',
+                                       Tag.SEQUENCE,
+                                       root_members,
+                                       additions)
+
+
+class SequenceOf(ArrayType):
+
+    def __init__(self, name, element_type):
+        super(SequenceOf, self).__init__(name,
+                                         'SEQUENCE OF',
+                                         Tag.SEQUENCE,
+                                         element_type)
+
+
+class Set(MembersType):
+
+    def __init__(self, name, root_members, additions):
+        super(Set, self).__init__(name,
+                                  'SET',
+                                  Tag.SET,
+                                  root_members,
+                                  additions)
+
+
+class SetOf(ArrayType):
+
+    def __init__(self, name, element_type):
+        super(SetOf, self).__init__(name,
+                                    'SET OF',
+                                    Tag.SET,
+                                    element_type)
 
 
 class Choice(Type):
@@ -1203,25 +993,280 @@ class Choice(Type):
             ', '.join([repr(member) for member in self.members]))
 
 
-class Null(Type):
+class UTF8String(PrimitiveOrConstructedType):
 
     def __init__(self, name):
-        super(Null, self).__init__(name, 'NULL', Tag.NULL)
+        super(UTF8String, self).__init__(name,
+                                         'UTF8String',
+                                         Tag.UTF8_STRING,
+                                         OctetString(name))
 
-    def is_default(self, value):
-        return False
-
-    def encode(self, _, encoded):
+    def encode(self, data, encoded):
         encoded.extend(self.tag)
-        encoded.append(0)
+        encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(data.encode('utf-8'))
+
+    def decode_primitive_contents(self, data, offset, length):
+        return data[offset:offset + length].decode('utf-8')
+
+    def decode_constructed_segments(self, segments):
+        return bytearray().join(segments).decode('utf-8')
+
+    def __repr__(self):
+        return 'UTF8String({})'.format(self.name)
+
+
+class NumericString(PrimitiveOrConstructedType):
+
+    def __init__(self, name):
+        super(NumericString, self).__init__(name,
+                                            'NumericString',
+                                            Tag.NUMERIC_STRING,
+                                            OctetString(name))
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(data.encode('ascii'))
+
+    def decode_primitive_contents(self, data, offset, length):
+        return data[offset:offset + length].decode('ascii')
+
+    def decode_constructed_segments(self, segments):
+        return bytearray().join(segments).decode('ascii')
+
+    def __repr__(self):
+        return 'NumericString({})'.format(self.name)
+
+
+class PrintableString(PrimitiveOrConstructedType):
+
+    def __init__(self, name):
+        super(PrintableString, self).__init__(name,
+                                              'PrintableString',
+                                              Tag.PRINTABLE_STRING,
+                                              OctetString(name))
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(data.encode('ascii'))
+
+    def decode_primitive_contents(self, data, offset, length):
+        return data[offset:offset + length].decode('ascii')
+
+    def decode_constructed_segments(self, segments):
+        return bytearray().join(segments).decode('ascii')
+
+    def __repr__(self):
+        return 'PrintableString({})'.format(self.name)
+
+
+class IA5String(PrimitiveOrConstructedType):
+
+    def __init__(self, name):
+        super(IA5String, self).__init__(name,
+                                        'IA5String',
+                                        Tag.IA5_STRING,
+                                        OctetString(name))
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(data.encode('ascii'))
+
+    def decode_primitive_contents(self, data, offset, length):
+        return data[offset:offset + length].decode('ascii')
+
+    def decode_constructed_segments(self, segments):
+        return bytearray().join(segments).decode('ascii')
+
+    def __repr__(self):
+        return 'IA5String({})'.format(self.name)
+
+
+class VisibleString(PrimitiveOrConstructedType):
+
+    def __init__(self, name):
+        super(VisibleString, self).__init__(name,
+                                            'VisibleString',
+                                            Tag.VISIBLE_STRING,
+                                            OctetString(name))
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(data.encode('ascii'))
+
+    def decode_primitive_contents(self, data, offset, length):
+        return data[offset:offset + length].decode('ascii')
+
+    def decode_constructed_segments(self, segments):
+        return bytearray().join(segments).decode('ascii')
+
+    def __repr__(self):
+        return 'VisibleString({})'.format(self.name)
+
+
+class GeneralString(PrimitiveOrConstructedType):
+
+    def __init__(self, name):
+        super(GeneralString, self).__init__(name,
+                                            'GeneralString',
+                                            Tag.GENERAL_STRING,
+                                            OctetString(name))
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(data.encode('ascii'))
+
+    def decode_primitive_contents(self, data, offset, length):
+        return data[offset:offset + length].decode('ascii')
+
+    def decode_constructed_segments(self, segments):
+        return bytearray().join(segments).decode('ascii')
+
+    def __repr__(self):
+        return 'GeneralString({})'.format(self.name)
+
+
+class BMPString(PrimitiveOrConstructedType):
+
+    def __init__(self, name):
+        super(BMPString, self).__init__(name,
+                                        'BMPString',
+                                        Tag.BMP_STRING,
+                                        OctetString(name))
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(data)
+
+    def decode_primitive_contents(self, data, offset, length):
+        return bytearray(data[offset:offset + length])
+
+    def decode_constructed_segments(self, segments):
+        return bytearray().join(segments)
+
+    def __repr__(self):
+        return 'BMPString({})'.format(self.name)
+
+
+class GraphicString(PrimitiveOrConstructedType):
+
+    def __init__(self, name):
+        super(GraphicString, self).__init__(name,
+                                            'GraphicString',
+                                            Tag.GRAPHIC_STRING,
+                                            OctetString(name))
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(data.encode('latin-1'))
+
+    def decode_primitive_contents(self, data, offset, length):
+        return data[offset:offset + length].decode('latin-1')
+
+    def decode_constructed_segments(self, segments):
+        return bytearray().join(segments).decode('latin-1')
+
+    def __repr__(self):
+        return 'GraphicString({})'.format(self.name)
+
+
+class UniversalString(PrimitiveOrConstructedType):
+
+    def __init__(self, name):
+        super(UniversalString, self).__init__(name,
+                                              'UniversalString',
+                                              Tag.UNIVERSAL_STRING,
+                                              OctetString(name))
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(data.encode('ascii'))
+
+    def decode_primitive_contents(self, data, offset, length):
+        return data[offset:offset + length].decode('ascii')
+
+    def decode_constructed_segments(self, segments):
+        return bytearray().join(segments).decode('ascii')
+
+    def __repr__(self):
+        return 'UniversalString({})'.format(self.name)
+
+
+class TeletexString(PrimitiveOrConstructedType):
+
+    def __init__(self, name):
+        super(TeletexString, self).__init__(name,
+                                            'TeletexString',
+                                            Tag.T61_STRING,
+                                            OctetString(name))
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(data)
+
+    def decode_primitive_contents(self, data, offset, length):
+        return bytearray(data[offset:offset + length])
+
+    def decode_constructed_segments(self, segments):
+        return bytearray().join(segments)
+
+    def __repr__(self):
+        return 'TeletexString({})'.format(self.name)
+
+
+class UTCTime(Type):
+
+    def __init__(self, name):
+        super(UTCTime, self).__init__(name,
+                                      'UTCTime',
+                                      Tag.UTC_TIME)
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.append(13)
+        encoded.extend(bytearray(data.encode('ascii')))
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
+        length, offset = decode_length_definite(data, offset)
+        end_offset = offset + length
 
-        return None, offset + 1
+        return data[offset:end_offset].decode('ascii'), end_offset
 
     def __repr__(self):
-        return 'Null({})'.format(self.name)
+        return 'UTCTime({})'.format(self.name)
+
+
+class GeneralizedTime(Type):
+
+    def __init__(self, name):
+        super(GeneralizedTime, self).__init__(name,
+                                              'GeneralizedTime',
+                                              Tag.GENERALIZED_TIME)
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.append(len(data))
+        encoded.extend(data.encode('ascii'))
+
+    def decode(self, data, offset):
+        offset = self.decode_tag(data, offset)
+        length, offset = decode_length_definite(data, offset)
+        end_offset = offset + length
+
+        return data[offset:end_offset].decode('ascii'), end_offset
+
+    def __repr__(self):
+        return 'GeneralizedTime({})'.format(self.name)
 
 
 class Any(Type):
@@ -1282,51 +1327,6 @@ class AnyDefinedBy(Type):
 
     def __repr__(self):
         return 'AnyDefinedBy({})'.format(self.name)
-
-
-class Enumerated(Type):
-
-    def __init__(self, name, values):
-        super(Enumerated, self).__init__(name,
-                                         'ENUMERATED',
-                                         Tag.ENUMERATED)
-        self.value_to_name = enum_values_as_dict(values)
-        self.name_to_value = {v: k for k, v in self.value_to_name.items()}
-
-    def format_names(self):
-        return format_or(list(self.value_to_name.values()))
-
-    def format_values(self):
-        return format_or(list(self.value_to_name))
-
-    def encode(self, data, encoded):
-        try:
-            value = self.name_to_value[data]
-        except KeyError:
-            raise EncodeError(
-                "Expected enumeration value {}, but got '{}'.".format(
-                    self.format_names(),
-                    data))
-
-        encoded.extend(self.tag)
-        encoded.extend(encode_signed_integer(value))
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
-        value = decode_signed_integer(data[offset:end_offset])
-
-        try:
-            return self.value_to_name[value], end_offset
-        except KeyError:
-            raise DecodeError(
-                'Expected enumeration value {}, but got {}.'.format(
-                    self.format_values(),
-                    value))
-
-    def __repr__(self):
-        return 'Enumerated({})'.format(self.name)
 
 
 class ExplicitTag(Type):

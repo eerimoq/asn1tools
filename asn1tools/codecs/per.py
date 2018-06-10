@@ -539,120 +539,6 @@ class KnownMultiplierStringType(Type):
                                self.name)
 
 
-class Real(Type):
-
-    def __init__(self, name):
-        super(Real, self).__init__(name, 'REAL')
-
-    def encode(self, data, encoder):
-        encoded = encode_real(data)
-        encoder.append_length_determinant(len(encoded))
-        encoder.append_bytes(encoded)
-
-    def decode(self, decoder):
-        length = decoder.read_length_determinant()
-
-        return decode_real(decoder.read_bytes_aligned(length))
-
-    def __repr__(self):
-        return 'Real({})'.format(self.name)
-
-
-class Boolean(Type):
-
-    def __init__(self, name):
-        super(Boolean, self).__init__(name, 'BOOLEAN')
-
-    def encode(self, data, encoder):
-        encoder.append_bit(bool(data))
-
-    def decode(self, decoder):
-        return bool(decoder.read_bit())
-
-    def __repr__(self):
-        return 'Boolean({})'.format(self.name)
-
-
-class Integer(Type):
-
-    def __init__(self, name):
-        super(Integer, self).__init__(name, 'INTEGER')
-        self.minimum = None
-        self.maximum = None
-        self.has_extension_marker = None
-        self.number_of_bits = None
-        self.number_of_indefinite_bits = None
-
-    def set_restricted_to_range(self, minimum, maximum, has_extension_marker):
-        self.minimum = minimum
-        self.maximum = maximum
-        self.has_extension_marker = has_extension_marker
-
-        size = self.maximum - self.minimum
-        self.number_of_bits = integer_as_number_of_bits(size)
-
-        if size <= 65535:
-            self.number_of_indefinite_bits = None
-        else:
-            number_of_bits = ((self.number_of_bits + 7) // 8).bit_length()
-            self.number_of_indefinite_bits = number_of_bits
-
-    def encode(self, data, encoder):
-        if self.has_extension_marker:
-            encoder.append_bit(0)
-
-        if self.number_of_bits is None:
-            encoder.align()
-            encoder.append_unconstrained_whole_number(data)
-        else:
-            if self.number_of_indefinite_bits is None:
-                number_of_bits = self.number_of_bits
-            else:
-                number_of_bytes = size_as_number_of_bytes(data)
-                number_of_bits = 8 * number_of_bytes
-                encoder.append_constrained_whole_number(
-                    number_of_bytes - 1,
-                    0,
-                    self.number_of_indefinite_bits,
-                    self.number_of_indefinite_bits)
-
-            encoder.append_constrained_whole_number(data,
-                                                    self.minimum,
-                                                    self.maximum,
-                                                    number_of_bits)
-
-    def decode(self, decoder):
-        if self.has_extension_marker:
-            bit = decoder.read_bit()
-
-            if bit:
-                raise NotImplementedError('Extension is not implemented.')
-
-        if self.number_of_bits is None:
-            decoder.align()
-            length = decoder.read_length_determinant()
-            value = decoder.read_unconstrained_whole_number(length)
-        else:
-            if self.number_of_indefinite_bits is None:
-                number_of_bits = self.number_of_bits
-            else:
-                number_of_bits = decoder.read_constrained_whole_number(
-                    0,
-                    self.number_of_indefinite_bits,
-                    self.number_of_indefinite_bits)
-                number_of_bits += 1
-                number_of_bits *= 8
-
-            value = decoder.read_constrained_whole_number(self.minimum,
-                                                          self.maximum,
-                                                          number_of_bits)
-
-        return value
-
-    def __repr__(self):
-        return 'Integer({})'.format(self.name)
-
-
 class MembersType(Type):
 
     def __init__(self,
@@ -835,34 +721,6 @@ class MembersType(Type):
             ', '.join([repr(member) for member in self.root_members]))
 
 
-class Sequence(MembersType):
-
-    def __init__(self,
-                 name,
-                 root_members,
-                 additions):
-        super(Sequence, self).__init__(name,
-                                       root_members,
-                                       additions,
-                                       'SEQUENCE')
-
-
-class Set(MembersType):
-
-    def __init__(self,
-                 name,
-                 root_members,
-                 additions):
-        super(Set, self).__init__(name,
-                                  root_members,
-                                  additions,
-                                  'SET')
-
-
-class AdditionGroup(Sequence):
-    pass
-
-
 class ArrayType(Type):
 
     def __init__(self,
@@ -929,36 +787,133 @@ class ArrayType(Type):
                                    self.element_type)
 
 
-class SequenceOf(ArrayType):
+class Boolean(Type):
 
-    def __init__(self,
-                 name,
-                 element_type,
-                 minimum,
-                 maximum,
-                 has_extension_marker):
-        super(SequenceOf, self).__init__(name,
-                                         element_type,
-                                         minimum,
-                                         maximum,
-                                         has_extension_marker,
-                                         'SEQUENCE OF')
+    def __init__(self, name):
+        super(Boolean, self).__init__(name, 'BOOLEAN')
+
+    def encode(self, data, encoder):
+        encoder.append_bit(bool(data))
+
+    def decode(self, decoder):
+        return bool(decoder.read_bit())
+
+    def __repr__(self):
+        return 'Boolean({})'.format(self.name)
 
 
-class SetOf(ArrayType):
+class Integer(Type):
 
-    def __init__(self,
-                 name,
-                 element_type,
-                 minimum,
-                 maximum,
-                 has_extension_marker):
-        super(SetOf, self).__init__(name,
-                                    element_type,
-                                    minimum,
-                                    maximum,
-                                    has_extension_marker,
-                                    'SET OF')
+    def __init__(self, name):
+        super(Integer, self).__init__(name, 'INTEGER')
+        self.minimum = None
+        self.maximum = None
+        self.has_extension_marker = None
+        self.number_of_bits = None
+        self.number_of_indefinite_bits = None
+
+    def set_restricted_to_range(self, minimum, maximum, has_extension_marker):
+        self.minimum = minimum
+        self.maximum = maximum
+        self.has_extension_marker = has_extension_marker
+
+        size = self.maximum - self.minimum
+        self.number_of_bits = integer_as_number_of_bits(size)
+
+        if size <= 65535:
+            self.number_of_indefinite_bits = None
+        else:
+            number_of_bits = ((self.number_of_bits + 7) // 8).bit_length()
+            self.number_of_indefinite_bits = number_of_bits
+
+    def encode(self, data, encoder):
+        if self.has_extension_marker:
+            encoder.append_bit(0)
+
+        if self.number_of_bits is None:
+            encoder.align()
+            encoder.append_unconstrained_whole_number(data)
+        else:
+            if self.number_of_indefinite_bits is None:
+                number_of_bits = self.number_of_bits
+            else:
+                number_of_bytes = size_as_number_of_bytes(data)
+                number_of_bits = 8 * number_of_bytes
+                encoder.append_constrained_whole_number(
+                    number_of_bytes - 1,
+                    0,
+                    self.number_of_indefinite_bits,
+                    self.number_of_indefinite_bits)
+
+            encoder.append_constrained_whole_number(data,
+                                                    self.minimum,
+                                                    self.maximum,
+                                                    number_of_bits)
+
+    def decode(self, decoder):
+        if self.has_extension_marker:
+            bit = decoder.read_bit()
+
+            if bit:
+                raise NotImplementedError('Extension is not implemented.')
+
+        if self.number_of_bits is None:
+            decoder.align()
+            length = decoder.read_length_determinant()
+            value = decoder.read_unconstrained_whole_number(length)
+        else:
+            if self.number_of_indefinite_bits is None:
+                number_of_bits = self.number_of_bits
+            else:
+                number_of_bits = decoder.read_constrained_whole_number(
+                    0,
+                    self.number_of_indefinite_bits,
+                    self.number_of_indefinite_bits)
+                number_of_bits += 1
+                number_of_bits *= 8
+
+            value = decoder.read_constrained_whole_number(self.minimum,
+                                                          self.maximum,
+                                                          number_of_bits)
+
+        return value
+
+    def __repr__(self):
+        return 'Integer({})'.format(self.name)
+
+
+class Real(Type):
+
+    def __init__(self, name):
+        super(Real, self).__init__(name, 'REAL')
+
+    def encode(self, data, encoder):
+        encoded = encode_real(data)
+        encoder.append_length_determinant(len(encoded))
+        encoder.append_bytes(encoded)
+
+    def decode(self, decoder):
+        length = decoder.read_length_determinant()
+
+        return decode_real(decoder.read_bytes_aligned(length))
+
+    def __repr__(self):
+        return 'Real({})'.format(self.name)
+
+
+class Null(Type):
+
+    def __init__(self, name):
+        super(Null, self).__init__(name, 'NULL')
+
+    def encode(self, _, _encoder):
+        pass
+
+    def decode(self, _):
+        return None
+
+    def __repr__(self):
+        return 'Null({})'.format(self.name)
 
 
 class BitString(Type):
@@ -1069,151 +1024,6 @@ class OctetString(Type):
         return 'OctetString({})'.format(self.name)
 
 
-class IA5String(KnownMultiplierStringType):
-
-    ENCODE_DECODE_MAP = {v: v for v in range(128)}
-    PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_DECODE_MAP,
-                                           ENCODE_DECODE_MAP)
-
-
-class NumericString(KnownMultiplierStringType):
-
-    ALPHABET = bytearray(b' 0123456789')
-    ENCODE_MAP = {v: i for i, v in enumerate(ALPHABET)}
-    DECODE_MAP = {i: v for i, v in enumerate(ALPHABET)}
-    PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_MAP,
-                                           DECODE_MAP)
-
-
-class PrintableString(KnownMultiplierStringType):
-
-    ALPHABET = bytearray((string.ascii_uppercase
-                          + string.ascii_lowercase
-                          + string.digits
-                          + " '()+,-./:=?").encode('ascii'))
-    ENCODE_MAP = {v: v for v in ALPHABET}
-    DECODE_MAP = {v: v for v in ALPHABET}
-    PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_MAP,
-                                           DECODE_MAP)
-
-
-class UniversalString(Type):
-
-    def __init__(self, name):
-        super(UniversalString, self).__init__(name, 'UniversalString')
-
-    def encode(self, _data, _encoder):
-        raise NotImplementedError('UniversalString is not yet implemented.')
-
-    def decode(self, _decoder):
-        raise NotImplementedError('UniversalString is not yet implemented.')
-
-    def __repr__(self):
-        return 'UniversalString({})'.format(self.name)
-
-
-class VisibleString(KnownMultiplierStringType):
-
-    ENCODE_DECODE_MAP = {v: v for v in range(32, 127)}
-    PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_DECODE_MAP,
-                                           ENCODE_DECODE_MAP)
-
-
-class GeneralString(Type):
-
-    def __init__(self, name):
-        super(GeneralString, self).__init__(name, 'GeneralString')
-
-    def encode(self, _data, _encoder):
-        raise NotImplementedError('GeneralString is not yet implemented.')
-
-    def decode(self, _decoder):
-        raise NotImplementedError('GeneralString is not yet implemented.')
-
-    def __repr__(self):
-        return 'GeneralString({})'.format(self.name)
-
-
-class UTF8String(Type):
-
-    def __init__(self, name):
-        super(UTF8String, self).__init__(name, 'UTF8String')
-
-    def encode(self, data, encoder):
-        encoded = data.encode('utf-8')
-        encoder.align()
-        encoder.append_length_determinant(len(encoded))
-        encoder.append_bytes(encoded)
-
-    def decode(self, decoder):
-        decoder.align()
-        length = decoder.read_length_determinant()
-        encoded = decoder.read_bits(8 * length)
-
-        return encoded.decode('utf-8')
-
-    def __repr__(self):
-        return 'UTF8String({})'.format(self.name)
-
-
-class GraphicString(Type):
-
-    def __init__(self, name):
-        super(GraphicString, self).__init__(name, 'GraphicString')
-
-    def encode(self, data, encoder):
-        encoded = data.encode('latin-1')
-        encoder.append_length_determinant(len(encoded))
-        encoder.append_bytes(encoded)
-
-    def decode(self, decoder):
-        length = decoder.read_length_determinant()
-        encoded = decoder.read_bits(8 * length)
-
-        return encoded.decode('latin-1')
-
-    def __repr__(self):
-        return 'GraphicString({})'.format(self.name)
-
-
-class BMPString(Type):
-
-    def __init__(self, name):
-        super(BMPString, self).__init__(name, 'BMPString')
-
-    def encode(self, _data, _encoder):
-        raise NotImplementedError('BMPString is not yet implemented.')
-
-    def decode(self, _decoder):
-        raise NotImplementedError('BMPString is not yet implemented.')
-
-    def __repr__(self):
-        return 'BMPString({})'.format(self.name)
-
-
-class TeletexString(Type):
-
-    def __init__(self, name):
-        super(TeletexString, self).__init__(name, 'TeletexString')
-
-    def encode(self, _data, _encoder):
-        raise NotImplementedError('TeletexString is not yet implemented.')
-
-    def decode(self, _decoder):
-        raise NotImplementedError('TeletexString is not yet implemented.')
-
-    def __repr__(self):
-        return 'TeletexString({})'.format(self.name)
-
-
-class UTCTime(VisibleString):
-    pass
-
-
-class GeneralizedTime(VisibleString):
-    pass
-
-
 class ObjectIdentifier(Type):
 
     def __init__(self, name):
@@ -1234,6 +1044,155 @@ class ObjectIdentifier(Type):
 
     def __repr__(self):
         return 'ObjectIdentifier({})'.format(self.name)
+
+
+class Enumerated(Type):
+
+    def __init__(self, name, values):
+        super(Enumerated, self).__init__(name, 'ENUMERATED')
+        root, additions = enum_values_split(values)
+        root = sorted(root, key=itemgetter(1))
+
+        # Root.
+        index_to_name, name_to_index = self.create_maps(root)
+        self.root_index_to_name = index_to_name
+        self.root_name_to_index = name_to_index
+        self.root_number_of_bits = integer_as_number_of_bits(len(index_to_name) - 1)
+
+        # Optional additions.
+        if additions is None:
+            index_to_name = None
+            name_to_index = None
+        else:
+            index_to_name, name_to_index = self.create_maps(additions)
+
+        self.additions_index_to_name = index_to_name
+        self.additions_name_to_index = name_to_index
+
+    def create_maps(self, items):
+        index_to_name = {
+            index: value[0]
+            for index, value in enumerate(items)
+        }
+        name_to_index = {
+            name: index
+            for index, name in index_to_name.items()
+        }
+
+        return index_to_name, name_to_index
+
+    def format_root_indexes(self):
+        return format_or(sorted(list(self.root_index_to_name)))
+
+    def format_addition_indexes(self):
+        return format_or(sorted(list(self.additions_index_to_name)))
+
+    def encode(self, data, encoder):
+        if self.additions_index_to_name is None:
+            index = self.root_name_to_index[data]
+            encoder.append_non_negative_binary_integer(index,
+                                                       self.root_number_of_bits)
+        else:
+            if data in self.root_name_to_index:
+                encoder.append_bit(0)
+                index = self.root_name_to_index[data]
+                encoder.append_non_negative_binary_integer(index,
+                                                           self.root_number_of_bits)
+            else:
+                encoder.append_bit(1)
+                index = self.additions_name_to_index[data]
+                encoder.append_normally_small_non_negative_whole_number(index)
+
+    def decode(self, decoder):
+        if self.additions_index_to_name is None:
+            return self.decode_root(decoder)
+        else:
+            additions = decoder.read_bit()
+
+            if additions == 0:
+                return self.decode_root(decoder)
+            else:
+                index = decoder.read_normally_small_non_negative_whole_number()
+
+                try:
+                    return self.additions_index_to_name[index]
+                except KeyError:
+                    raise DecodeError(
+                        'Expected enumeration index {}, but got {}.'.format(
+                            self.format_addition_indexes(),
+                            index))
+
+    def decode_root(self, decoder):
+        index = decoder.read_non_negative_binary_integer(self.root_number_of_bits)
+
+        try:
+            name = self.root_index_to_name[index]
+        except KeyError:
+            raise DecodeError(
+                'Expected enumeration index {}, but got {}.'.format(
+                    self.format_root_indexes(),
+                    index))
+
+        return name
+
+    def __repr__(self):
+        return 'Enumerated({})'.format(self.name)
+
+
+class Sequence(MembersType):
+
+    def __init__(self,
+                 name,
+                 root_members,
+                 additions):
+        super(Sequence, self).__init__(name,
+                                       root_members,
+                                       additions,
+                                       'SEQUENCE')
+
+
+class SequenceOf(ArrayType):
+
+    def __init__(self,
+                 name,
+                 element_type,
+                 minimum,
+                 maximum,
+                 has_extension_marker):
+        super(SequenceOf, self).__init__(name,
+                                         element_type,
+                                         minimum,
+                                         maximum,
+                                         has_extension_marker,
+                                         'SEQUENCE OF')
+
+
+class Set(MembersType):
+
+    def __init__(self,
+                 name,
+                 root_members,
+                 additions):
+        super(Set, self).__init__(name,
+                                  root_members,
+                                  additions,
+                                  'SET')
+
+
+class SetOf(ArrayType):
+
+    def __init__(self,
+                 name,
+                 element_type,
+                 minimum,
+                 maximum,
+                 has_extension_marker):
+        super(SetOf, self).__init__(name,
+                                    element_type,
+                                    minimum,
+                                    maximum,
+                                    has_extension_marker,
+                                    'SET OF')
 
 
 class Choice(Type):
@@ -1387,19 +1346,149 @@ class Choice(Type):
                        for member in self.root_name_to_index]))
 
 
-class Null(Type):
+class UTF8String(Type):
 
     def __init__(self, name):
-        super(Null, self).__init__(name, 'NULL')
+        super(UTF8String, self).__init__(name, 'UTF8String')
 
-    def encode(self, _, _encoder):
-        pass
+    def encode(self, data, encoder):
+        encoded = data.encode('utf-8')
+        encoder.align()
+        encoder.append_length_determinant(len(encoded))
+        encoder.append_bytes(encoded)
 
-    def decode(self, _):
-        return None
+    def decode(self, decoder):
+        decoder.align()
+        length = decoder.read_length_determinant()
+        encoded = decoder.read_bits(8 * length)
+
+        return encoded.decode('utf-8')
 
     def __repr__(self):
-        return 'Null({})'.format(self.name)
+        return 'UTF8String({})'.format(self.name)
+
+
+class NumericString(KnownMultiplierStringType):
+
+    ALPHABET = bytearray(b' 0123456789')
+    ENCODE_MAP = {v: i for i, v in enumerate(ALPHABET)}
+    DECODE_MAP = {i: v for i, v in enumerate(ALPHABET)}
+    PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_MAP,
+                                           DECODE_MAP)
+
+
+class PrintableString(KnownMultiplierStringType):
+
+    ALPHABET = bytearray((string.ascii_uppercase
+                          + string.ascii_lowercase
+                          + string.digits
+                          + " '()+,-./:=?").encode('ascii'))
+    ENCODE_MAP = {v: v for v in ALPHABET}
+    DECODE_MAP = {v: v for v in ALPHABET}
+    PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_MAP,
+                                           DECODE_MAP)
+
+
+class IA5String(KnownMultiplierStringType):
+
+    ENCODE_DECODE_MAP = {v: v for v in range(128)}
+    PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_DECODE_MAP,
+                                           ENCODE_DECODE_MAP)
+
+
+class VisibleString(KnownMultiplierStringType):
+
+    ENCODE_DECODE_MAP = {v: v for v in range(32, 127)}
+    PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_DECODE_MAP,
+                                           ENCODE_DECODE_MAP)
+
+
+class GeneralString(Type):
+
+    def __init__(self, name):
+        super(GeneralString, self).__init__(name, 'GeneralString')
+
+    def encode(self, _data, _encoder):
+        raise NotImplementedError('GeneralString is not yet implemented.')
+
+    def decode(self, _decoder):
+        raise NotImplementedError('GeneralString is not yet implemented.')
+
+    def __repr__(self):
+        return 'GeneralString({})'.format(self.name)
+
+
+class BMPString(Type):
+
+    def __init__(self, name):
+        super(BMPString, self).__init__(name, 'BMPString')
+
+    def encode(self, _data, _encoder):
+        raise NotImplementedError('BMPString is not yet implemented.')
+
+    def decode(self, _decoder):
+        raise NotImplementedError('BMPString is not yet implemented.')
+
+    def __repr__(self):
+        return 'BMPString({})'.format(self.name)
+
+
+class GraphicString(Type):
+
+    def __init__(self, name):
+        super(GraphicString, self).__init__(name, 'GraphicString')
+
+    def encode(self, data, encoder):
+        encoded = data.encode('latin-1')
+        encoder.append_length_determinant(len(encoded))
+        encoder.append_bytes(encoded)
+
+    def decode(self, decoder):
+        length = decoder.read_length_determinant()
+        encoded = decoder.read_bits(8 * length)
+
+        return encoded.decode('latin-1')
+
+    def __repr__(self):
+        return 'GraphicString({})'.format(self.name)
+
+
+class UniversalString(Type):
+
+    def __init__(self, name):
+        super(UniversalString, self).__init__(name, 'UniversalString')
+
+    def encode(self, _data, _encoder):
+        raise NotImplementedError('UniversalString is not yet implemented.')
+
+    def decode(self, _decoder):
+        raise NotImplementedError('UniversalString is not yet implemented.')
+
+    def __repr__(self):
+        return 'UniversalString({})'.format(self.name)
+
+
+class TeletexString(Type):
+
+    def __init__(self, name):
+        super(TeletexString, self).__init__(name, 'TeletexString')
+
+    def encode(self, _data, _encoder):
+        raise NotImplementedError('TeletexString is not yet implemented.')
+
+    def decode(self, _decoder):
+        raise NotImplementedError('TeletexString is not yet implemented.')
+
+    def __repr__(self):
+        return 'TeletexString({})'.format(self.name)
+
+
+class UTCTime(VisibleString):
+    pass
+
+
+class GeneralizedTime(VisibleString):
+    pass
 
 
 class OpenType(Type):
@@ -1437,99 +1526,6 @@ class Any(Type):
         return 'Any({})'.format(self.name)
 
 
-class Enumerated(Type):
-
-    def __init__(self, name, values):
-        super(Enumerated, self).__init__(name, 'ENUMERATED')
-        root, additions = enum_values_split(values)
-        root = sorted(root, key=itemgetter(1))
-
-        # Root.
-        index_to_name, name_to_index = self.create_maps(root)
-        self.root_index_to_name = index_to_name
-        self.root_name_to_index = name_to_index
-        self.root_number_of_bits = integer_as_number_of_bits(len(index_to_name) - 1)
-
-        # Optional additions.
-        if additions is None:
-            index_to_name = None
-            name_to_index = None
-        else:
-            index_to_name, name_to_index = self.create_maps(additions)
-
-        self.additions_index_to_name = index_to_name
-        self.additions_name_to_index = name_to_index
-
-    def create_maps(self, items):
-        index_to_name = {
-            index: value[0]
-            for index, value in enumerate(items)
-        }
-        name_to_index = {
-            name: index
-            for index, name in index_to_name.items()
-        }
-
-        return index_to_name, name_to_index
-
-    def format_root_indexes(self):
-        return format_or(sorted(list(self.root_index_to_name)))
-
-    def format_addition_indexes(self):
-        return format_or(sorted(list(self.additions_index_to_name)))
-
-    def encode(self, data, encoder):
-        if self.additions_index_to_name is None:
-            index = self.root_name_to_index[data]
-            encoder.append_non_negative_binary_integer(index,
-                                                       self.root_number_of_bits)
-        else:
-            if data in self.root_name_to_index:
-                encoder.append_bit(0)
-                index = self.root_name_to_index[data]
-                encoder.append_non_negative_binary_integer(index,
-                                                           self.root_number_of_bits)
-            else:
-                encoder.append_bit(1)
-                index = self.additions_name_to_index[data]
-                encoder.append_normally_small_non_negative_whole_number(index)
-
-    def decode(self, decoder):
-        if self.additions_index_to_name is None:
-            return self.decode_root(decoder)
-        else:
-            additions = decoder.read_bit()
-
-            if additions == 0:
-                return self.decode_root(decoder)
-            else:
-                index = decoder.read_normally_small_non_negative_whole_number()
-
-                try:
-                    return self.additions_index_to_name[index]
-                except KeyError:
-                    raise DecodeError(
-                        'Expected enumeration index {}, but got {}.'.format(
-                            self.format_addition_indexes(),
-                            index))
-
-    def decode_root(self, decoder):
-        index = decoder.read_non_negative_binary_integer(self.root_number_of_bits)
-
-        try:
-            name = self.root_index_to_name[index]
-        except KeyError:
-            raise DecodeError(
-                'Expected enumeration index {}, but got {}.'.format(
-                    self.format_root_indexes(),
-                    index))
-
-        return name
-
-    def __repr__(self):
-        return 'Enumerated({})'.format(self.name)
-
-
 class Recursive(Type, compiler.Recursive):
 
     def __init__(self, name, type_name, module_name):
@@ -1549,6 +1545,10 @@ class Recursive(Type, compiler.Recursive):
 
     def __repr__(self):
         return 'Recursive({})'.format(self.name)
+
+
+class AdditionGroup(Sequence):
+    pass
 
 
 class CompiledType(compiler.CompiledType):

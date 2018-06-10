@@ -14,9 +14,9 @@ from .ber import encode_signed_integer
 from .ber import decode_signed_integer
 from .ber import encode_tag
 from .ber import Boolean
-from .ber import Enumerated
 from .ber import Null
 from .ber import ObjectIdentifier
+from .ber import Enumerated
 from .ber import Sequence
 from .ber import Set
 from .ber import Choice
@@ -64,89 +64,6 @@ class Type(object):
         return value == self.default
 
 
-class Integer(Type):
-
-    def __init__(self, name):
-        super(Integer, self).__init__(name,
-                                      'INTEGER',
-                                      Tag.INTEGER)
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_signed_integer(data))
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
-
-        return decode_signed_integer(data[offset:end_offset]), end_offset
-
-    def __repr__(self):
-        return 'Integer({})'.format(self.name)
-
-
-class Real(Type):
-
-    def __init__(self, name):
-        super(Real, self).__init__(name, 'REAL', Tag.REAL)
-
-    def encode(self, data, encoded):
-        raise NotImplementedError('REAL is not yet implemented.')
-
-    def decode(self, data, offset):
-        raise NotImplementedError('REAL is not yet implemented.')
-
-    def __repr__(self):
-        return 'Real({})'.format(self.name)
-
-
-class IA5String(Type):
-
-    def __init__(self, name):
-        super(IA5String, self).__init__(name,
-                                        'IA5String',
-                                        Tag.IA5_STRING)
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('ascii'))
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
-
-        return data[offset:end_offset].decode('ascii'), end_offset
-
-    def __repr__(self):
-        return 'IA5String({})'.format(self.name)
-
-
-class NumericString(Type):
-
-    def __init__(self, name):
-        super(NumericString, self).__init__(name,
-                                            'NumericString',
-                                            Tag.NUMERIC_STRING)
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('ascii'))
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
-
-        return data[offset:end_offset].decode('ascii'), end_offset
-
-    def __repr__(self):
-        return 'NumericString({})'.format(self.name)
-
-
 class ArrayType(Type):
 
     def __init__(self, name, tag_name, tag, element_type):
@@ -188,22 +105,41 @@ class ArrayType(Type):
                                    self.element_type)
 
 
-class SequenceOf(ArrayType):
+class Integer(Type):
 
-    def __init__(self, name, element_type):
-        super(SequenceOf, self).__init__(name,
-                                         'SEQUENCE OF',
-                                         Tag.SEQUENCE,
-                                         element_type)
+    def __init__(self, name):
+        super(Integer, self).__init__(name,
+                                      'INTEGER',
+                                      Tag.INTEGER)
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.extend(encode_signed_integer(data))
+
+    def decode(self, data, offset):
+        offset = self.decode_tag(data, offset)
+        length, offset = decode_length_definite(data, offset)
+        end_offset = offset + length
+
+        return decode_signed_integer(data[offset:end_offset]), end_offset
+
+    def __repr__(self):
+        return 'Integer({})'.format(self.name)
 
 
-class SetOf(ArrayType):
+class Real(Type):
 
-    def __init__(self, name, element_type):
-        super(SetOf, self).__init__(name,
-                                    'SET OF',
-                                    Tag.SET,
-                                    element_type)
+    def __init__(self, name):
+        super(Real, self).__init__(name, 'REAL', Tag.REAL)
+
+    def encode(self, data, encoded):
+        raise NotImplementedError('REAL is not yet implemented.')
+
+    def decode(self, data, offset):
+        raise NotImplementedError('REAL is not yet implemented.')
+
+    def __repr__(self):
+        return 'Real({})'.format(self.name)
 
 
 class BitString(Type):
@@ -280,6 +216,70 @@ class OctetString(Type):
         return 'OctetString({})'.format(self.name)
 
 
+class SequenceOf(ArrayType):
+
+    def __init__(self, name, element_type):
+        super(SequenceOf, self).__init__(name,
+                                         'SEQUENCE OF',
+                                         Tag.SEQUENCE,
+                                         element_type)
+
+
+class SetOf(ArrayType):
+
+    def __init__(self, name, element_type):
+        super(SetOf, self).__init__(name,
+                                    'SET OF',
+                                    Tag.SET,
+                                    element_type)
+
+
+class UTF8String(Type):
+
+    def __init__(self, name):
+        super(UTF8String, self).__init__(name,
+                                         'UTF8String',
+                                         Tag.UTF8_STRING)
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(data.encode('utf-8'))
+
+    def decode(self, data, offset):
+        offset = self.decode_tag(data, offset)
+        length, offset = decode_length_definite(data, offset)
+        end_offset = offset + length
+
+        return data[offset:end_offset].decode('utf-8'), end_offset
+
+    def __repr__(self):
+        return 'UTF8String({})'.format(self.name)
+
+
+class NumericString(Type):
+
+    def __init__(self, name):
+        super(NumericString, self).__init__(name,
+                                            'NumericString',
+                                            Tag.NUMERIC_STRING)
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(data.encode('ascii'))
+
+    def decode(self, data, offset):
+        offset = self.decode_tag(data, offset)
+        length, offset = decode_length_definite(data, offset)
+        end_offset = offset + length
+
+        return data[offset:end_offset].decode('ascii'), end_offset
+
+    def __repr__(self):
+        return 'NumericString({})'.format(self.name)
+
+
 class PrintableString(Type):
 
     def __init__(self, name):
@@ -303,12 +303,12 @@ class PrintableString(Type):
         return 'PrintableString({})'.format(self.name)
 
 
-class UniversalString(Type):
+class IA5String(Type):
 
     def __init__(self, name):
-        super(UniversalString, self).__init__(name,
-                                              'UniversalString',
-                                              Tag.UNIVERSAL_STRING)
+        super(IA5String, self).__init__(name,
+                                        'IA5String',
+                                        Tag.IA5_STRING)
 
     def encode(self, data, encoded):
         encoded.extend(self.tag)
@@ -323,7 +323,7 @@ class UniversalString(Type):
         return data[offset:end_offset].decode('ascii'), end_offset
 
     def __repr__(self):
-        return 'UniversalString({})'.format(self.name)
+        return 'IA5String({})'.format(self.name)
 
 
 class VisibleString(Type):
@@ -372,29 +372,6 @@ class GeneralString(Type):
         return 'GeneralString({})'.format(self.name)
 
 
-class UTF8String(Type):
-
-    def __init__(self, name):
-        super(UTF8String, self).__init__(name,
-                                         'UTF8String',
-                                         Tag.UTF8_STRING)
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('utf-8'))
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
-
-        return data[offset:end_offset].decode('utf-8'), end_offset
-
-    def __repr__(self):
-        return 'UTF8String({})'.format(self.name)
-
-
 class BMPString(Type):
 
     def __init__(self, name):
@@ -418,6 +395,29 @@ class BMPString(Type):
         return 'BMPString({})'.format(self.name)
 
 
+class UniversalString(Type):
+
+    def __init__(self, name):
+        super(UniversalString, self).__init__(name,
+                                              'UniversalString',
+                                              Tag.UNIVERSAL_STRING)
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(data.encode('ascii'))
+
+    def decode(self, data, offset):
+        offset = self.decode_tag(data, offset)
+        length, offset = decode_length_definite(data, offset)
+        end_offset = offset + length
+
+        return data[offset:end_offset].decode('ascii'), end_offset
+
+    def __repr__(self):
+        return 'UniversalString({})'.format(self.name)
+
+
 class GraphicString(Type):
 
     def __init__(self, name):
@@ -439,6 +439,29 @@ class GraphicString(Type):
 
     def __repr__(self):
         return 'GraphicString({})'.format(self.name)
+
+
+class TeletexString(Type):
+
+    def __init__(self, name):
+        super(TeletexString, self).__init__(name,
+                                            'TeletexString',
+                                            Tag.T61_STRING)
+
+    def encode(self, data, encoded):
+        encoded.extend(self.tag)
+        encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(data)
+
+    def decode(self, data, offset):
+        offset = self.decode_tag(data, offset)
+        length, offset = decode_length_definite(data, offset)
+        end_offset = offset + length
+
+        return bytearray(data[offset:end_offset]), end_offset
+
+    def __repr__(self):
+        return 'TeletexString({})'.format(self.name)
 
 
 class UTCTime(Type):
@@ -485,29 +508,6 @@ class GeneralizedTime(Type):
 
     def __repr__(self):
         return 'GeneralizedTime({})'.format(self.name)
-
-
-class TeletexString(Type):
-
-    def __init__(self, name):
-        super(TeletexString, self).__init__(name,
-                                            'TeletexString',
-                                            Tag.T61_STRING)
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data)
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
-
-        return bytearray(data[offset:end_offset]), end_offset
-
-    def __repr__(self):
-        return 'TeletexString({})'.format(self.name)
 
 
 class Compiler(ber.Compiler):

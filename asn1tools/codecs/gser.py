@@ -27,6 +27,46 @@ class Type(object):
         pass
 
 
+class ArrayType(Type):
+
+    def __init__(self, name, type_name, element_type):
+        super(ArrayType, self).__init__(name, type_name)
+        self.element_type = element_type
+
+    def encode(self, data, separator, indent):
+        encoded_elements = []
+        element_separator = separator + ' ' * indent
+
+        for entry in data:
+            encoded_element = self.element_type.encode(entry,
+                                                       element_separator,
+                                                       indent)
+            encoded_element = '{}{}'.format(element_separator,
+                                            encoded_element)
+            encoded_elements.append(encoded_element)
+
+        encoded_elements = ','.join(encoded_elements)
+
+        return separator.join(['{' + encoded_elements, '}'])
+
+    def __repr__(self):
+        return '{}({}, {})'.format(self.__class__.__name__,
+                                   self.name,
+                                   self.element_type)
+
+
+class Boolean(Type):
+
+    def __init__(self, name):
+        super(Boolean, self).__init__(name, 'BOOLEAN')
+
+    def encode(self, data, _separator, _indent):
+        return 'TRUE' if data else 'FALSE'
+
+    def __repr__(self):
+        return 'Boolean({})'.format(self.name)
+
+
 class Integer(Type):
 
     def __init__(self, name):
@@ -62,40 +102,68 @@ class Real(Type):
         return 'Real({})'.format(self.name)
 
 
-class Boolean(Type):
+class Null(Type):
 
     def __init__(self, name):
-        super(Boolean, self).__init__(name, 'BOOLEAN')
+        super(Null, self).__init__(name, 'NULL')
 
-    def encode(self, data, _separator, _indent):
-        return 'TRUE' if data else 'FALSE'
+    def encode(self, _data, _separator, _indent):
+        return 'NULL'
 
     def __repr__(self):
-        return 'Boolean({})'.format(self.name)
+        return 'Null({})'.format(self.name)
 
 
-class IA5String(Type):
+class BitString(Type):
 
     def __init__(self, name):
-        super(IA5String, self).__init__(name, 'IA5String')
+        super(BitString, self).__init__(name, 'BIT STRING')
 
     def encode(self, data, _separator, _indent):
-        return '"{}"'.format(data)
+        encoded = int(binascii.hexlify(data[0]), 16)
+        encoded |= (0x80 << (8 * len(data[0])))
+
+        return "'{}'B".format(bin(encoded)[10:10 + data[1]]).upper()
 
     def __repr__(self):
-        return 'IA5String({})'.format(self.name)
+        return 'BitString({})'.format(self.name)
 
 
-class NumericString(Type):
+class OctetString(Type):
 
     def __init__(self, name):
-        super(NumericString, self).__init__(name, 'NumericString')
+        super(OctetString, self).__init__(name, 'OCTET STRING')
 
     def encode(self, data, _separator, _indent):
-        return '"{}"'.format(data)
+        return "'{}'H".format(binascii.hexlify(data).decode('ascii')).upper()
 
     def __repr__(self):
-        return 'NumericString({})'.format(self.name)
+        return 'OctetString({})'.format(self.name)
+
+
+class ObjectIdentifier(Type):
+
+    def __init__(self, name):
+        super(ObjectIdentifier, self).__init__(name, 'OBJECT IDENTIFIER')
+
+    def encode(self, data, _separator, _indent):
+        return data
+
+    def __repr__(self):
+        return 'ObjectIdentifier({})'.format(self.name)
+
+
+class Enumerated(Type):
+
+    def __init__(self, name, values):
+        super(Enumerated, self).__init__(name, 'ENUMERATED')
+        self.values = enum_values_as_dict(values)
+
+    def encode(self, data, _separator, _indent):
+        return data
+
+    def __repr__(self):
+        return 'Enumerated({})'.format(self.name)
 
 
 class Sequence(Type):
@@ -137,6 +205,14 @@ class Sequence(Type):
             ', '.join([repr(member) for member in self.members]))
 
 
+class SequenceOf(ArrayType):
+
+    def __init__(self, name, element_type):
+        super(SequenceOf, self).__init__(name,
+                                         'SEQUENCE OF',
+                                         element_type)
+
+
 class Set(Type):
 
     def __init__(self, name, members):
@@ -152,207 +228,12 @@ class Set(Type):
             ', '.join([repr(member) for member in self.members]))
 
 
-class ArrayType(Type):
-
-    def __init__(self, name, type_name, element_type):
-        super(ArrayType, self).__init__(name, type_name)
-        self.element_type = element_type
-
-    def encode(self, data, separator, indent):
-        encoded_elements = []
-        element_separator = separator + ' ' * indent
-
-        for entry in data:
-            encoded_element = self.element_type.encode(entry,
-                                                       element_separator,
-                                                       indent)
-            encoded_element = '{}{}'.format(element_separator,
-                                            encoded_element)
-            encoded_elements.append(encoded_element)
-
-        encoded_elements = ','.join(encoded_elements)
-
-        return separator.join(['{' + encoded_elements, '}'])
-
-    def __repr__(self):
-        return '{}({}, {})'.format(self.__class__.__name__,
-                                   self.name,
-                                   self.element_type)
-
-
-class SequenceOf(ArrayType):
-
-    def __init__(self, name, element_type):
-        super(SequenceOf, self).__init__(name,
-                                         'SEQUENCE OF',
-                                         element_type)
-
-
 class SetOf(ArrayType):
 
     def __init__(self, name, element_type):
         super(SetOf, self).__init__(name,
                                     'SET OF',
                                     element_type)
-
-
-class BitString(Type):
-
-    def __init__(self, name):
-        super(BitString, self).__init__(name, 'BIT STRING')
-
-    def encode(self, data, _separator, _indent):
-        encoded = int(binascii.hexlify(data[0]), 16)
-        encoded |= (0x80 << (8 * len(data[0])))
-
-        return "'{}'B".format(bin(encoded)[10:10 + data[1]]).upper()
-
-    def __repr__(self):
-        return 'BitString({})'.format(self.name)
-
-
-class OctetString(Type):
-
-    def __init__(self, name):
-        super(OctetString, self).__init__(name, 'OCTET STRING')
-
-    def encode(self, data, _separator, _indent):
-        return "'{}'H".format(binascii.hexlify(data).decode('ascii')).upper()
-
-    def __repr__(self):
-        return 'OctetString({})'.format(self.name)
-
-
-class PrintableString(Type):
-
-    def __init__(self, name):
-        super(PrintableString, self).__init__(name, 'PrintableString')
-
-    def encode(self, data, _separator, _indent):
-        return '"{}"'.format(data)
-
-    def __repr__(self):
-        return 'PrintableString({})'.format(self.name)
-
-
-class UniversalString(Type):
-
-    def __init__(self, name):
-        super(UniversalString, self).__init__(name, 'UniversalString')
-
-    def encode(self, data, _separator, _indent):
-        return '"{}"'.format(data)
-
-    def __repr__(self):
-        return 'UniversalString({})'.format(self.name)
-
-
-class VisibleString(Type):
-
-    def __init__(self, name):
-        super(VisibleString, self).__init__(name, 'VisibleString')
-
-    def encode(self, data, _separator, _indent):
-        return '"{}"'.format(data)
-
-    def __repr__(self):
-        return 'VisibleString({})'.format(self.name)
-
-
-class GeneralString(Type):
-
-    def __init__(self, name):
-        super(GeneralString, self).__init__(name, 'GeneralString')
-
-    def encode(self, data, _separator, _indent):
-        return '"{}"'.format(data)
-
-    def __repr__(self):
-        return 'GeneralString({})'.format(self.name)
-
-
-class UTF8String(Type):
-
-    def __init__(self, name):
-        super(UTF8String, self).__init__(name, 'UTF8String')
-
-    def encode(self, data, _separator, _indent):
-        return '"{}"'.format(data)
-
-    def __repr__(self):
-        return 'UTF8String({})'.format(self.name)
-
-
-class BMPString(Type):
-
-    def __init__(self, name):
-        super(BMPString, self).__init__(name, 'BMPString')
-
-    def encode(self, data, separator, indent):
-        raise NotImplementedError('BMPString is not yet implemented.')
-
-    def __repr__(self):
-        return 'BMPString({})'.format(self.name)
-
-
-class GraphicString(Type):
-
-    def __init__(self, name):
-        super(GraphicString, self).__init__(name, 'GraphicString')
-
-    def encode(self, data, separator, indent):
-        raise NotImplementedError('GraphicString is not yet implemented.')
-
-    def __repr__(self):
-        return 'GraphicString({})'.format(self.name)
-
-
-class UTCTime(Type):
-
-    def __init__(self, name):
-        super(UTCTime, self).__init__(name, 'UTCTime')
-
-    def encode(self, data, _separator, _indent):
-        return '"{}"'.format(data)
-
-    def __repr__(self):
-        return 'UTCTime({})'.format(self.name)
-
-
-class GeneralizedTime(Type):
-
-    def __init__(self, name):
-        super(GeneralizedTime, self).__init__(name, 'GeneralizedTime')
-
-    def encode(self, data, _separator, _indent):
-        return '"{}"'.format(data)
-
-    def __repr__(self):
-        return 'GeneralizedTime({})'.format(self.name)
-
-
-class TeletexString(Type):
-
-    def __init__(self, name):
-        super(TeletexString, self).__init__(name, 'TeletexString')
-
-    def encode(self, data, separator, indent):
-        raise NotImplementedError('TeletexString is not yet implemented.')
-
-    def __repr__(self):
-        return 'TeletexString({})'.format(self.name)
-
-
-class ObjectIdentifier(Type):
-
-    def __init__(self, name):
-        super(ObjectIdentifier, self).__init__(name, 'OBJECT IDENTIFIER')
-
-    def encode(self, data, _separator, _indent):
-        return data
-
-    def __repr__(self):
-        return 'ObjectIdentifier({})'.format(self.name)
 
 
 class Choice(Type):
@@ -382,16 +263,148 @@ class Choice(Type):
             ', '.join([repr(member) for member in self.members]))
 
 
-class Null(Type):
+class UTF8String(Type):
 
     def __init__(self, name):
-        super(Null, self).__init__(name, 'NULL')
+        super(UTF8String, self).__init__(name, 'UTF8String')
 
-    def encode(self, _data, _separator, _indent):
-        return 'NULL'
+    def encode(self, data, _separator, _indent):
+        return '"{}"'.format(data)
 
     def __repr__(self):
-        return 'Null({})'.format(self.name)
+        return 'UTF8String({})'.format(self.name)
+
+
+class NumericString(Type):
+
+    def __init__(self, name):
+        super(NumericString, self).__init__(name, 'NumericString')
+
+    def encode(self, data, _separator, _indent):
+        return '"{}"'.format(data)
+
+    def __repr__(self):
+        return 'NumericString({})'.format(self.name)
+
+
+class PrintableString(Type):
+
+    def __init__(self, name):
+        super(PrintableString, self).__init__(name, 'PrintableString')
+
+    def encode(self, data, _separator, _indent):
+        return '"{}"'.format(data)
+
+    def __repr__(self):
+        return 'PrintableString({})'.format(self.name)
+
+
+class IA5String(Type):
+
+    def __init__(self, name):
+        super(IA5String, self).__init__(name, 'IA5String')
+
+    def encode(self, data, _separator, _indent):
+        return '"{}"'.format(data)
+
+    def __repr__(self):
+        return 'IA5String({})'.format(self.name)
+
+
+class VisibleString(Type):
+
+    def __init__(self, name):
+        super(VisibleString, self).__init__(name, 'VisibleString')
+
+    def encode(self, data, _separator, _indent):
+        return '"{}"'.format(data)
+
+    def __repr__(self):
+        return 'VisibleString({})'.format(self.name)
+
+
+class GeneralString(Type):
+
+    def __init__(self, name):
+        super(GeneralString, self).__init__(name, 'GeneralString')
+
+    def encode(self, data, _separator, _indent):
+        return '"{}"'.format(data)
+
+    def __repr__(self):
+        return 'GeneralString({})'.format(self.name)
+
+
+class BMPString(Type):
+
+    def __init__(self, name):
+        super(BMPString, self).__init__(name, 'BMPString')
+
+    def encode(self, data, separator, indent):
+        raise NotImplementedError('BMPString is not yet implemented.')
+
+    def __repr__(self):
+        return 'BMPString({})'.format(self.name)
+
+
+class GraphicString(Type):
+
+    def __init__(self, name):
+        super(GraphicString, self).__init__(name, 'GraphicString')
+
+    def encode(self, data, separator, indent):
+        raise NotImplementedError('GraphicString is not yet implemented.')
+
+    def __repr__(self):
+        return 'GraphicString({})'.format(self.name)
+
+
+class UniversalString(Type):
+
+    def __init__(self, name):
+        super(UniversalString, self).__init__(name, 'UniversalString')
+
+    def encode(self, data, _separator, _indent):
+        return '"{}"'.format(data)
+
+    def __repr__(self):
+        return 'UniversalString({})'.format(self.name)
+
+
+class TeletexString(Type):
+
+    def __init__(self, name):
+        super(TeletexString, self).__init__(name, 'TeletexString')
+
+    def encode(self, data, separator, indent):
+        raise NotImplementedError('TeletexString is not yet implemented.')
+
+    def __repr__(self):
+        return 'TeletexString({})'.format(self.name)
+
+
+class UTCTime(Type):
+
+    def __init__(self, name):
+        super(UTCTime, self).__init__(name, 'UTCTime')
+
+    def encode(self, data, _separator, _indent):
+        return '"{}"'.format(data)
+
+    def __repr__(self):
+        return 'UTCTime({})'.format(self.name)
+
+
+class GeneralizedTime(Type):
+
+    def __init__(self, name):
+        super(GeneralizedTime, self).__init__(name, 'GeneralizedTime')
+
+    def encode(self, data, _separator, _indent):
+        return '"{}"'.format(data)
+
+    def __repr__(self):
+        return 'GeneralizedTime({})'.format(self.name)
 
 
 class Any(Type):
@@ -404,19 +417,6 @@ class Any(Type):
 
     def __repr__(self):
         return 'Any({})'.format(self.name)
-
-
-class Enumerated(Type):
-
-    def __init__(self, name, values):
-        super(Enumerated, self).__init__(name, 'ENUMERATED')
-        self.values = enum_values_as_dict(values)
-
-    def encode(self, data, _separator, _indent):
-        return data
-
-    def __repr__(self):
-        return 'Enumerated({})'.format(self.name)
 
 
 class Recursive(Type, compiler.Recursive):

@@ -13,6 +13,219 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
 
     maxDiff = None
 
+    def test_real(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= REAL "
+            "END",
+            'xer')
+
+        datas = [
+            ('A', 1.0, b'<A>1.0E0</A>'),
+            ('A', 10.0, b'<A>1.0E1</A>'),
+            ('A', -1.0, b'<A>-1.0E0</A>'),
+            ('A', -2, b'<A>-2.0E0</A>'),
+            ('A', -9.99, b'<A>-9.99E0</A>'),
+            ('A', -10.0, b'<A>-1.0E1</A>'),
+            ('A', 0.31, b'<A>0.31E0</A>'),
+            ('A', 2000.0, b'<A>2.0E3</A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
+    def test_null(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= NULL "
+            "B ::= SEQUENCE OF NULL "
+            "C ::= SEQUENCE { a NULL } "
+            "END",
+            'xer')
+
+        datas = [
+            ('A',         None, b'<A />'),
+            ('B', [None, None], b'<B><NULL /><NULL /></B>'),
+            ('C',  {'a': None}, b'<C><a /></C>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
+    def test_bit_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= BIT STRING "
+            "END",
+            'xer')
+
+        datas = [
+            ('A',         (b'', 0), b'<A />'),
+            ('A', (b'\x00', 2), b'<A>00</A>'),
+            ('A',     (b'\x40', 4), b'<A>0100</A>'),
+            ('A', (b'\x40\x80', 9), b'<A>010000001</A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
+    def test_octet_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= OCTET STRING "
+            "END",
+            'xer')
+
+        datas = [
+            ('A',         b'', b'<A />'),
+            ('A', b'\x40\x80', b'<A>4080</A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
+    def test_object_identifier(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= OBJECT IDENTIFIER "
+            "END",
+            'xer')
+
+        datas = [
+            ('A',    '1.2.3', b'<A>1.2.3</A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
+    def test_sequence(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE { "
+            "  a SEQUENCE OF A OPTIONAL "
+            "} "
+            "END",
+            'xer')
+
+        datas = [
+            ('A',           {'a': [{}]}, b'<A><a><A /></a></A>'),
+            ('A',    {'a': [{'a': []}]}, b'<A><a><A><a /></A></a></A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
+    def test_sequence_of(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE OF INTEGER "
+            "B ::= SEQUENCE OF A "
+            "C ::= SEQUENCE OF BOOLEAN "
+            "D ::= SEQUENCE OF E "
+            "E ::= BOOLEAN "
+            "F ::= SEQUENCE OF CHOICE { a BOOLEAN, b INTEGER } "
+            "G ::= SEQUENCE OF ENUMERATED { one } "
+            "H ::= SEQUENCE OF SEQUENCE { a INTEGER } "
+            "END",
+            'xer')
+
+        datas = [
+            ('A',            [], b'<A />'),
+            ('A',        [1, 4], b'<A><INTEGER>1</INTEGER><INTEGER>4</INTEGER></A>'),
+            ('B',         [[5]], b'<B><A><INTEGER>5</INTEGER></A></B>'),
+            ('C', [True, False], b'<C><true /><false /></C>'),
+            ('D',        [True], b'<D><true /></D>'),
+            ('F',
+             [('a', True), ('b', 1)],
+             b'<F><a><true /></a><b>1</b></F>'),
+            ('G',       ['one'], b'<G><one /></G>'),
+            ('H',       [{'a': 1}], b'<H><SEQUENCE><a>1</a></SEQUENCE></H>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
+    def test_choice(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  b INTEGER, "
+            "  c CHOICE { "
+            "    a INTEGER "
+            "  } "
+            "} "
+            "END",
+            'xer')
+
+        datas = [
+            ('A', ('a', True), b'<A><a><true /></a></A>'),
+            ('A', ('b', 1), b'<A><b>1</b></A>'),
+            ('A', ('c', ('a', 534)), b'<A><c><a>534</a></c></A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
+    def test_utc_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UTCTime "
+            "END",
+            'xer')
+
+        datas = [
+            ('A', '920521000000Z', b'<A>920521000000Z</A>'),
+            ('A', '920622123421Z', b'<A>920622123421Z</A>'),
+            ('A', '920722132100Z', b'<A>920722132100Z</A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
+    def test_generalized_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= GeneralizedTime "
+            "END",
+            'xer')
+
+        datas = [
+            ('A', '19920521000000Z', b'<A>19920521000000Z</A>'),
+            ('A', '19920622123421Z', b'<A>19920622123421Z</A>'),
+            ('A', '19920722132100.3Z', b'<A>19920722132100.3Z</A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
+    def test_utf8_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UTF8String "
+            "END",
+            'xer')
+
+        datas = [
+            ('A',         u'', b'<A />'),
+            ('A',      u'bar', b'<A>bar</A>'),
+            ('A', u'a\u1010c', b'<A>a&#4112;c</A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
     def test_foo(self):
         foo = asn1tools.compile_files(['tests/files/foo.asn'], 'xer')
 
@@ -515,204 +728,6 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
-    def test_choice(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  b INTEGER, "
-            "  c CHOICE { "
-            "    a INTEGER "
-            "  } "
-            "} "
-            "END",
-            'xer')
-
-        datas = [
-            ('A', ('a', True), b'<A><a><true /></a></A>'),
-            ('A', ('b', 1), b'<A><b>1</b></A>'),
-            ('A', ('c', ('a', 534)), b'<A><c><a>534</a></c></A>')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
-
-    def test_sequence(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= SEQUENCE { "
-            "  a SEQUENCE OF A OPTIONAL "
-            "} "
-            "END",
-            'xer')
-
-        datas = [
-            ('A',           {'a': [{}]}, b'<A><a><A /></a></A>'),
-            ('A',    {'a': [{'a': []}]}, b'<A><a><A><a /></A></a></A>')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
-
-    def test_sequence_of(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= SEQUENCE OF INTEGER "
-            "B ::= SEQUENCE OF A "
-            "C ::= SEQUENCE OF BOOLEAN "
-            "D ::= SEQUENCE OF E "
-            "E ::= BOOLEAN "
-            "F ::= SEQUENCE OF CHOICE { a BOOLEAN, b INTEGER } "
-            "G ::= SEQUENCE OF ENUMERATED { one } "
-            "H ::= SEQUENCE OF SEQUENCE { a INTEGER } "
-            "END",
-            'xer')
-
-        datas = [
-            ('A',            [], b'<A />'),
-            ('A',        [1, 4], b'<A><INTEGER>1</INTEGER><INTEGER>4</INTEGER></A>'),
-            ('B',         [[5]], b'<B><A><INTEGER>5</INTEGER></A></B>'),
-            ('C', [True, False], b'<C><true /><false /></C>'),
-            ('D',        [True], b'<D><true /></D>'),
-            ('F',
-             [('a', True), ('b', 1)],
-             b'<F><a><true /></a><b>1</b></F>'),
-            ('G',       ['one'], b'<G><one /></G>'),
-            ('H',       [{'a': 1}], b'<H><SEQUENCE><a>1</a></SEQUENCE></H>')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
-
-    def test_utf8_string(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= UTF8String "
-            "END",
-            'xer')
-
-        datas = [
-            ('A',         u'', b'<A />'),
-            ('A',      u'bar', b'<A>bar</A>'),
-            ('A', u'a\u1010c', b'<A>a&#4112;c</A>')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
-
-    def test_bit_string(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= BIT STRING "
-            "END",
-            'xer')
-
-        datas = [
-            ('A',         (b'', 0), b'<A />'),
-            ('A', (b'\x00', 2), b'<A>00</A>'),
-            ('A',     (b'\x40', 4), b'<A>0100</A>'),
-            ('A', (b'\x40\x80', 9), b'<A>010000001</A>')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
-
-    def test_octet_string(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= OCTET STRING "
-            "END",
-            'xer')
-
-        datas = [
-            ('A',         b'', b'<A />'),
-            ('A', b'\x40\x80', b'<A>4080</A>')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
-
-    def test_null(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= NULL "
-            "B ::= SEQUENCE OF NULL "
-            "C ::= SEQUENCE { a NULL } "
-            "END",
-            'xer')
-
-        datas = [
-            ('A',         None, b'<A />'),
-            ('B', [None, None], b'<B><NULL /><NULL /></B>'),
-            ('C',  {'a': None}, b'<C><a /></C>')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
-
-    def test_real(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= REAL "
-            "END",
-            'xer')
-
-        datas = [
-            ('A', 1.0, b'<A>1.0E0</A>'),
-            ('A', 10.0, b'<A>1.0E1</A>'),
-            ('A', -1.0, b'<A>-1.0E0</A>'),
-            ('A', -2, b'<A>-2.0E0</A>'),
-            ('A', -9.99, b'<A>-9.99E0</A>'),
-            ('A', -10.0, b'<A>-1.0E1</A>'),
-            ('A', 0.31, b'<A>0.31E0</A>'),
-            ('A', 2000.0, b'<A>2.0E3</A>')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
-
-    def test_utc_time(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= UTCTime "
-            "END",
-            'xer')
-
-        datas = [
-            ('A', '920521000000Z', b'<A>920521000000Z</A>'),
-            ('A', '920622123421Z', b'<A>920622123421Z</A>'),
-            ('A', '920722132100Z', b'<A>920722132100Z</A>')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
-
-    def test_generalized_time(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= GeneralizedTime "
-            "END",
-            'xer')
-
-        datas = [
-            ('A', '19920521000000Z', b'<A>19920521000000Z</A>'),
-            ('A', '19920622123421Z', b'<A>19920622123421Z</A>'),
-            ('A', '19920722132100.3Z', b'<A>19920722132100.3Z</A>')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
-
     def test_indent(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
@@ -745,21 +760,6 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
                                              decoded,
                                              encoded,
                                              indent=4)
-
-    def test_object_identifier(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= OBJECT IDENTIFIER "
-            "END",
-            'xer')
-
-        datas = [
-            ('A',    '1.2.3', b'<A>1.2.3</A>')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
 
 if __name__ == '__main__':

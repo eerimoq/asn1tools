@@ -19,6 +19,209 @@ class Asn1ToolsJerTest(unittest.TestCase):
 
     maxDiff = None
 
+    def test_real(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= "
+            "BEGIN "
+            "A ::= REAL "
+            "END",
+            'jer')
+
+        datas = [
+            ('A',                 1.0, b'1.0'),
+            ('A',                -2.0, b'-2.0'),
+            ('A',        float('inf'), b'"INF"'),
+            ('A',       float('-inf'), b'"-INF"')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(loadb(foo.encode(type_name, decoded)),
+                             loadb(encoded))
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
+
+        self.assertEqual(foo.encode('A', float('nan')), b'"NaN"')
+        self.assertTrue(math.isnan(foo.decode('A', b'"NaN"')))
+
+        self.assertEqual(foo.decode('A', b'"0"'), 0.0)
+        self.assertEqual(foo.decode('A', b'"-0"'), 0.0)
+
+    def test_object_identifier(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= "
+            "BEGIN "
+            "A ::= OBJECT IDENTIFIER "
+            "END",
+            'jer')
+
+        datas = [
+            ('A', '1.2.3', b'"1.2.3"')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(loadb(foo.encode(type_name, decoded)),
+                             loadb(encoded))
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
+
+    def test_enumerated(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= ENUMERATED { "
+            "  a(1), "
+            "  b(3) "
+            "} "
+            "END",
+            'jer')
+
+        datas = [
+            ('A',           'a', b'"a"'),
+            ('A',           'b', b'"b"')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(loadb(foo.encode(type_name, decoded)),
+                             loadb(encoded))
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
+
+        # Encode error.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('A', ('c', None))
+
+        self.assertEqual(str(cm.exception),
+                         "Enumeration value 'c' not found in ['a', 'b'].")
+
+        # Decode error.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', b'"c"')
+
+        self.assertEqual(str(cm.exception),
+                         ": Enumeration value 'c' not found in ['a', 'b'].")
+
+    def test_sequence(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE { "
+            "  a SEQUENCE OF A OPTIONAL "
+            "} "
+            "END",
+            'jer')
+
+        datas = [
+            ('A',           {'a': [{}]}, b'{"a": [{}]}'),
+            ('A',    {'a': [{'a': []}]}, b'{"a": [{"a": []}]}')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(loadb(foo.encode(type_name, decoded)),
+                             loadb(encoded))
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
+
+    def test_sequence_of(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE OF INTEGER "
+            "END",
+            'jer')
+
+        datas = [
+            ('A',     [], b'[]'),
+            ('A', [1, 3], b'[1, 3]')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(loadb(foo.encode(type_name, decoded)),
+                             loadb(encoded))
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
+
+    def test_set_of(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= "
+            "BEGIN "
+            "A ::= SET OF INTEGER "
+            "END",
+            'jer')
+
+        datas = [
+            ('A',     [], b'[]'),
+            ('A', [1, 3], b'[1, 3]')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(loadb(foo.encode(type_name, decoded)),
+                             loadb(encoded))
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
+
+    def test_choice(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  b INTEGER "
+            "} "
+            "END",
+            'jer')
+
+        datas = [
+            ('A',           ('a', True), b'{"a": true}'),
+            ('A',              ('b', 3), b'{"b": 3}')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(loadb(foo.encode(type_name, decoded)),
+                             loadb(encoded))
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
+
+        # Encode error.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('A', ('c', None))
+
+        self.assertEqual(str(cm.exception),
+                         "Expected choices are ['a', 'b'], but got 'c'.")
+
+        # Decode error.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', b'{"c": null}')
+
+        self.assertEqual(str(cm.exception),
+                         ": Expected choices are ['a', 'b'], but got 'c'.")
+
+    def test_utc_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= "
+            "BEGIN "
+            "A ::= UTCTime "
+            "END",
+            'jer')
+
+        datas = [
+            ('A', '121001230001Z', b'"121001230001Z"')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(loadb(foo.encode(type_name, decoded)),
+                             loadb(encoded))
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
+
+    def test_generalized_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= "
+            "BEGIN "
+            "A ::= GeneralizedTime "
+            "END",
+            'jer')
+
+        datas = [
+            ('A', '20001231235959.999', b'"20001231235959.999"')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(loadb(foo.encode(type_name, decoded)),
+                             loadb(encoded))
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
+
     def test_foo(self):
         foo = asn1tools.compile_files(['tests/files/foo.asn'], 'jer')
 
@@ -488,96 +691,6 @@ class Asn1ToolsJerTest(unittest.TestCase):
                              loadb(encoded))
             self.assertEqual(foo.decode(type_name, encoded), decoded)
 
-    def test_sequence(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= SEQUENCE { "
-            "  a SEQUENCE OF A OPTIONAL "
-            "} "
-            "END",
-            'jer')
-
-        datas = [
-            ('A',           {'a': [{}]}, b'{"a": [{}]}'),
-            ('A',    {'a': [{'a': []}]}, b'{"a": [{"a": []}]}')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(foo.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(foo.decode(type_name, encoded), decoded)
-
-    def test_choice(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  b INTEGER "
-            "} "
-            "END",
-            'jer')
-
-        datas = [
-            ('A',           ('a', True), b'{"a": true}'),
-            ('A',              ('b', 3), b'{"b": 3}')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(foo.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(foo.decode(type_name, encoded), decoded)
-
-        # Encode error.
-        with self.assertRaises(asn1tools.EncodeError) as cm:
-            foo.encode('A', ('c', None))
-
-        self.assertEqual(str(cm.exception),
-                         "Expected choices are ['a', 'b'], but got 'c'.")
-
-        # Decode error.
-        with self.assertRaises(asn1tools.DecodeError) as cm:
-            foo.decode('A', b'{"c": null}')
-
-        self.assertEqual(str(cm.exception),
-                         ": Expected choices are ['a', 'b'], but got 'c'.")
-
-    def test_enumerated(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= ENUMERATED { "
-            "  a(1), "
-            "  b(3) "
-            "} "
-            "END",
-            'jer')
-
-        datas = [
-            ('A',           'a', b'"a"'),
-            ('A',           'b', b'"b"')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(foo.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(foo.decode(type_name, encoded), decoded)
-
-        # Encode error.
-        with self.assertRaises(asn1tools.EncodeError) as cm:
-            foo.encode('A', ('c', None))
-
-        self.assertEqual(str(cm.exception),
-                         "Enumeration value 'c' not found in ['a', 'b'].")
-
-        # Decode error.
-        with self.assertRaises(asn1tools.DecodeError) as cm:
-            foo.decode('A', b'"c"')
-
-        self.assertEqual(str(cm.exception),
-                         ": Enumeration value 'c' not found in ['a', 'b'].")
-
     def test_error_out_of_data(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
@@ -639,119 +752,6 @@ class Asn1ToolsJerTest(unittest.TestCase):
 
             for line in encoded.splitlines():
                 self.assertIn(line, encoded_lines)
-
-    def test_utc_time(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS ::= "
-            "BEGIN "
-            "A ::= UTCTime "
-            "END",
-            'jer')
-
-        datas = [
-            ('A', '121001230001Z', b'"121001230001Z"')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(foo.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(foo.decode(type_name, encoded), decoded)
-
-    def test_generalized_time(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS ::= "
-            "BEGIN "
-            "A ::= GeneralizedTime "
-            "END",
-            'jer')
-
-        datas = [
-            ('A', '20001231235959.999', b'"20001231235959.999"')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(foo.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(foo.decode(type_name, encoded), decoded)
-
-    def test_object_identifier(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS ::= "
-            "BEGIN "
-            "A ::= OBJECT IDENTIFIER "
-            "END",
-            'jer')
-
-        datas = [
-            ('A', '1.2.3', b'"1.2.3"')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(foo.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(foo.decode(type_name, encoded), decoded)
-
-    def test_sequence_of(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS ::= "
-            "BEGIN "
-            "A ::= SEQUENCE OF INTEGER "
-            "END",
-            'jer')
-
-        datas = [
-            ('A',     [], b'[]'),
-            ('A', [1, 3], b'[1, 3]')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(foo.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(foo.decode(type_name, encoded), decoded)
-
-    def test_set_of(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS ::= "
-            "BEGIN "
-            "A ::= SET OF INTEGER "
-            "END",
-            'jer')
-
-        datas = [
-            ('A',     [], b'[]'),
-            ('A', [1, 3], b'[1, 3]')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(foo.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(foo.decode(type_name, encoded), decoded)
-
-    def test_real(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS ::= "
-            "BEGIN "
-            "A ::= REAL "
-            "END",
-            'jer')
-
-        datas = [
-            ('A',                 1.0, b'1.0'),
-            ('A',                -2.0, b'-2.0'),
-            ('A',        float('inf'), b'"INF"'),
-            ('A',       float('-inf'), b'"-INF"')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(foo.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(foo.decode(type_name, encoded), decoded)
-
-        self.assertEqual(foo.encode('A', float('nan')), b'"NaN"')
-        self.assertTrue(math.isnan(foo.decode('A', b'"NaN"')))
-
-        self.assertEqual(foo.decode('A', b'"0"'), 0.0)
-        self.assertEqual(foo.decode('A', b'"-0"'), 0.0)
 
 
 if __name__ == '__main__':

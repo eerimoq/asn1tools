@@ -84,73 +84,6 @@ class StringType(Type):
                                self.name)
 
 
-class Integer(Type):
-
-    def __init__(self, name):
-        super(Integer, self).__init__(name, 'INTEGER')
-
-    def encode(self, data):
-        element = ElementTree.Element(self.name)
-        element.text = str(data)
-
-        return element
-
-    def decode(self, element):
-        return int(element.text)
-
-    def __repr__(self):
-        return 'Integer({})'.format(self.name)
-
-
-class Real(Type):
-
-    def __init__(self, name):
-        super(Real, self).__init__(name, 'REAL')
-
-    def encode(self, data):
-        data = float(data)
-        exponent = 0
-
-        while abs(data) >= 10:
-            data /= 10
-            exponent += 1
-
-        element = ElementTree.Element(self.name)
-        element.text = '{}E{}'.format(data, exponent)
-
-        return element
-
-    def decode(self, element):
-        return float(element.text)
-
-    def __repr__(self):
-        return 'Real({})'.format(self.name)
-
-
-class Boolean(Type):
-
-    def __init__(self, name):
-        super(Boolean, self).__init__(name, 'BOOLEAN')
-
-    def encode(self, data):
-        element = ElementTree.Element(self.name)
-        ElementTree.SubElement(element, 'true' if data else 'false')
-
-        return element
-
-    def decode(self, element):
-        return element.find('true') is not None
-
-    def encode_of(self, data):
-        return ElementTree.Element('true' if data else 'false')
-
-    def decode_of(self, element):
-        return element.tag == 'true'
-
-    def __repr__(self):
-        return 'Boolean({})'.format(self.name)
-
-
 class MembersType(Type):
 
     def __init__(self, name, members, type_name):
@@ -202,18 +135,6 @@ class MembersType(Type):
             ', '.join([repr(member) for member in self.members]))
 
 
-class Sequence(MembersType):
-
-    def __init__(self, name, members):
-        super(Sequence, self).__init__(name, members, 'SEQUENCE')
-
-
-class Set(MembersType):
-
-    def __init__(self, name, members):
-        super(Set, self).__init__(name, members, 'SET')
-
-
 class ArrayType(Type):
 
     def __init__(self, name, element_type, type_name):
@@ -243,20 +164,86 @@ class ArrayType(Type):
                                    self.element_type)
 
 
-class SequenceOf(ArrayType):
+class Boolean(Type):
 
-    def __init__(self, name, element_type):
-        super(SequenceOf, self).__init__(name,
-                                         element_type,
-                                         'SEQUENCE OF')
+    def __init__(self, name):
+        super(Boolean, self).__init__(name, 'BOOLEAN')
+
+    def encode(self, data):
+        element = ElementTree.Element(self.name)
+        ElementTree.SubElement(element, 'true' if data else 'false')
+
+        return element
+
+    def decode(self, element):
+        return element.find('true') is not None
+
+    def encode_of(self, data):
+        return ElementTree.Element('true' if data else 'false')
+
+    def decode_of(self, element):
+        return element.tag == 'true'
+
+    def __repr__(self):
+        return 'Boolean({})'.format(self.name)
 
 
-class SetOf(ArrayType):
+class Integer(Type):
 
-    def __init__(self, name, element_type):
-        super(SetOf, self).__init__(name,
-                                    element_type,
-                                    'SET OF')
+    def __init__(self, name):
+        super(Integer, self).__init__(name, 'INTEGER')
+
+    def encode(self, data):
+        element = ElementTree.Element(self.name)
+        element.text = str(data)
+
+        return element
+
+    def decode(self, element):
+        return int(element.text)
+
+    def __repr__(self):
+        return 'Integer({})'.format(self.name)
+
+
+class Real(Type):
+
+    def __init__(self, name):
+        super(Real, self).__init__(name, 'REAL')
+
+    def encode(self, data):
+        data = float(data)
+        exponent = 0
+
+        while abs(data) >= 10:
+            data /= 10
+            exponent += 1
+
+        element = ElementTree.Element(self.name)
+        element.text = '{}E{}'.format(data, exponent)
+
+        return element
+
+    def decode(self, element):
+        return float(element.text)
+
+    def __repr__(self):
+        return 'Real({})'.format(self.name)
+
+
+class Null(Type):
+
+    def __init__(self, name):
+        super(Null, self).__init__(name, 'NULL')
+
+    def encode(self, data):
+        return ElementTree.Element(self.name)
+
+    def decode(self, element):
+        return None
+
+    def __repr__(self):
+        return 'Null({})'.format(self.name)
 
 
 class BitString(Type):
@@ -320,102 +307,6 @@ class OctetString(Type):
         return 'OctetString({})'.format(self.name)
 
 
-class IA5String(StringType):
-
-    def __init__(self, name):
-        super(IA5String, self).__init__(name, 'IA5String')
-
-
-class NumericString(StringType):
-
-    def __init__(self, name):
-        super(NumericString, self).__init__(name, 'NumericString')
-
-
-class PrintableString(StringType):
-
-    def __init__(self, name):
-        super(PrintableString, self).__init__(name, 'PrintableString')
-
-
-class UniversalString(StringType):
-
-    def __init__(self, name):
-        super(UniversalString, self).__init__(name, 'UniversalString')
-
-
-class VisibleString(StringType):
-
-    def __init__(self, name):
-        super(VisibleString, self).__init__(name, 'VisibleString')
-
-
-class GeneralString(StringType):
-
-    def __init__(self, name):
-        super(GeneralString, self).__init__(name, 'GeneralString')
-
-
-class UTF8String(StringType):
-
-    def __init__(self, name):
-        super(UTF8String, self).__init__(name, 'UTF8String')
-
-
-class BMPString(StringType):
-
-    def __init__(self, name):
-        super(BMPString, self).__init__(name, 'BMPString')
-
-
-class GraphicString(StringType):
-
-    def __init__(self, name):
-        super(GraphicString, self).__init__(name, 'GraphicString')
-
-
-class UTCTime(Type):
-
-    def __init__(self, name):
-        super(UTCTime, self).__init__(name, 'UTCTime')
-
-    def encode(self, data):
-        element = ElementTree.Element(self.name)
-        element.text = data
-
-        return element
-
-    def decode(self, element):
-        return element.text
-
-    def __repr__(self):
-        return 'UTCTime({})'.format(self.name)
-
-
-class GeneralizedTime(Type):
-
-    def __init__(self, name):
-        super(GeneralizedTime, self).__init__(name, 'GeneralizedTime')
-
-    def encode(self, data):
-        element = ElementTree.Element(self.name)
-        element.text = data
-
-        return element
-
-    def decode(self, element):
-        return element.text
-
-    def __repr__(self):
-        return 'GeneralizedTime({})'.format(self.name)
-
-
-class TeletexString(StringType):
-
-    def __init__(self, name):
-        super(TeletexString, self).__init__(name, 'TeletexString')
-
-
 class ObjectIdentifier(StringType):
 
     def __init__(self, name):
@@ -426,87 +317,6 @@ class ObjectIdentifier(StringType):
             return ''
         else:
             return element.text
-
-
-class Choice(Type):
-
-    def __init__(self, name, members):
-        super(Choice, self).__init__(name, 'CHOICE')
-        self.members = members
-        self.name_to_member = {member.name: member for member in self.members}
-
-    def encode(self, data):
-        try:
-            member = self.name_to_member[data[0]]
-        except KeyError:
-            raise EncodeError(
-                "Expected choices are {}, but got '{}'.".format(
-                    sorted([member.name for member in self.members]),
-                    data[0]))
-
-        element = ElementTree.Element(self.name)
-        element.append(member.encode(data[1]))
-
-        return element
-
-    def decode(self, element):
-        member_element = element[0]
-        name = member_element.tag
-        member = self.name_to_member[name]
-
-        return (name, member.decode(member_element))
-
-    def encode_of(self, data):
-        try:
-            member = self.name_to_member[data[0]]
-        except KeyError:
-            raise EncodeError(
-                "Expected choices are {}, but got '{}'.".format(
-                    sorted([member.name for member in self.members]),
-                    data[0]))
-
-        return member.encode(data[1])
-
-    def decode_of(self, element):
-        name = element.tag
-        member = self.name_to_member[name]
-
-        return (name, member.decode(element))
-
-    def __repr__(self):
-        return 'Choice({}, [{}])'.format(
-            self.name,
-            ', '.join([repr(member) for member in self.members]))
-
-
-class Null(Type):
-
-    def __init__(self, name):
-        super(Null, self).__init__(name, 'NULL')
-
-    def encode(self, data):
-        return ElementTree.Element(self.name)
-
-    def decode(self, element):
-        return None
-
-    def __repr__(self):
-        return 'Null({})'.format(self.name)
-
-
-class Any(Type):
-
-    def __init__(self, name):
-        super(Any, self).__init__(name, 'ANY')
-
-    def encode(self, data):
-        raise NotImplementedError('ANY is not yet implemented.')
-
-    def decode(self, element):
-        raise NotImplementedError('ANY is not yet implemented.')
-
-    def __repr__(self):
-        return 'Any({})'.format(self.name)
 
 
 class Enumerated(Type):
@@ -560,6 +370,196 @@ class Enumerated(Type):
 
     def __repr__(self):
         return 'Enumerated({})'.format(self.name)
+
+
+class Sequence(MembersType):
+
+    def __init__(self, name, members):
+        super(Sequence, self).__init__(name, members, 'SEQUENCE')
+
+
+class SequenceOf(ArrayType):
+
+    def __init__(self, name, element_type):
+        super(SequenceOf, self).__init__(name,
+                                         element_type,
+                                         'SEQUENCE OF')
+
+
+class Set(MembersType):
+
+    def __init__(self, name, members):
+        super(Set, self).__init__(name, members, 'SET')
+
+
+class SetOf(ArrayType):
+
+    def __init__(self, name, element_type):
+        super(SetOf, self).__init__(name,
+                                    element_type,
+                                    'SET OF')
+
+
+class Choice(Type):
+
+    def __init__(self, name, members):
+        super(Choice, self).__init__(name, 'CHOICE')
+        self.members = members
+        self.name_to_member = {member.name: member for member in self.members}
+
+    def encode(self, data):
+        try:
+            member = self.name_to_member[data[0]]
+        except KeyError:
+            raise EncodeError(
+                "Expected choices are {}, but got '{}'.".format(
+                    sorted([member.name for member in self.members]),
+                    data[0]))
+
+        element = ElementTree.Element(self.name)
+        element.append(member.encode(data[1]))
+
+        return element
+
+    def decode(self, element):
+        member_element = element[0]
+        name = member_element.tag
+        member = self.name_to_member[name]
+
+        return (name, member.decode(member_element))
+
+    def encode_of(self, data):
+        try:
+            member = self.name_to_member[data[0]]
+        except KeyError:
+            raise EncodeError(
+                "Expected choices are {}, but got '{}'.".format(
+                    sorted([member.name for member in self.members]),
+                    data[0]))
+
+        return member.encode(data[1])
+
+    def decode_of(self, element):
+        name = element.tag
+        member = self.name_to_member[name]
+
+        return (name, member.decode(element))
+
+    def __repr__(self):
+        return 'Choice({}, [{}])'.format(
+            self.name,
+            ', '.join([repr(member) for member in self.members]))
+
+
+class UTF8String(StringType):
+
+    def __init__(self, name):
+        super(UTF8String, self).__init__(name, 'UTF8String')
+
+
+class NumericString(StringType):
+
+    def __init__(self, name):
+        super(NumericString, self).__init__(name, 'NumericString')
+
+
+class PrintableString(StringType):
+
+    def __init__(self, name):
+        super(PrintableString, self).__init__(name, 'PrintableString')
+
+
+class IA5String(StringType):
+
+    def __init__(self, name):
+        super(IA5String, self).__init__(name, 'IA5String')
+
+
+class VisibleString(StringType):
+
+    def __init__(self, name):
+        super(VisibleString, self).__init__(name, 'VisibleString')
+
+
+class GeneralString(StringType):
+
+    def __init__(self, name):
+        super(GeneralString, self).__init__(name, 'GeneralString')
+
+
+class BMPString(StringType):
+
+    def __init__(self, name):
+        super(BMPString, self).__init__(name, 'BMPString')
+
+
+class GraphicString(StringType):
+
+    def __init__(self, name):
+        super(GraphicString, self).__init__(name, 'GraphicString')
+
+
+class UniversalString(StringType):
+
+    def __init__(self, name):
+        super(UniversalString, self).__init__(name, 'UniversalString')
+
+
+class TeletexString(StringType):
+
+    def __init__(self, name):
+        super(TeletexString, self).__init__(name, 'TeletexString')
+
+
+class UTCTime(Type):
+
+    def __init__(self, name):
+        super(UTCTime, self).__init__(name, 'UTCTime')
+
+    def encode(self, data):
+        element = ElementTree.Element(self.name)
+        element.text = data
+
+        return element
+
+    def decode(self, element):
+        return element.text
+
+    def __repr__(self):
+        return 'UTCTime({})'.format(self.name)
+
+
+class GeneralizedTime(Type):
+
+    def __init__(self, name):
+        super(GeneralizedTime, self).__init__(name, 'GeneralizedTime')
+
+    def encode(self, data):
+        element = ElementTree.Element(self.name)
+        element.text = data
+
+        return element
+
+    def decode(self, element):
+        return element.text
+
+    def __repr__(self):
+        return 'GeneralizedTime({})'.format(self.name)
+
+
+class Any(Type):
+
+    def __init__(self, name):
+        super(Any, self).__init__(name, 'ANY')
+
+    def encode(self, data):
+        raise NotImplementedError('ANY is not yet implemented.')
+
+    def decode(self, element):
+        raise NotImplementedError('ANY is not yet implemented.')
+
+    def __repr__(self):
+        return 'Any({})'.format(self.name)
 
 
 class Recursive(Type, compiler.Recursive):

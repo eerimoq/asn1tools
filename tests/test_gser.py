@@ -15,6 +15,197 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
 
     maxDiff = None
 
+    def test_real(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= REAL "
+            "END",
+            'gser')
+
+        datas = [
+            ('A',                     0.0, b'a A ::= 0'),
+            ('A',            float('inf'), b'a A ::= PLUS-INFINITY'),
+            ('A',           float('-inf'), b'a A ::= MINUS-INFINITY'),
+            ('A',                     1.0, b'a A ::= 1.0E0'),
+            ('A',                     1.1, b'a A ::= 1.1E0'),
+            ('A',               1234.5678, b'a A ::= 1234.5678E0'),
+            ('A',                       8, b'a A ::= 8E0'),
+            ('A',                   0.625, b'a A ::= 0.625E0')
+        ]
+
+        for name, decoded, encoded in datas:
+            self.assertEqual(foo.encode(name, decoded), encoded)
+
+    def test_null(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= NULL "
+            "END",
+            'gser')
+
+        decoded = None
+        encoded = b'a A ::= NULL'
+
+        self.assertEqual(foo.encode('A', decoded), encoded)
+
+    def test_sequence_of(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE OF INTEGER "
+            "END",
+            'gser')
+
+        datas = [
+            ('A',                   [], b'a A ::= { }'),
+            ('A',                  [1], b'a A ::= { 1 }'),
+            ('A',               [1, 3], b'a A ::= { 1, 3 }')
+        ]
+
+        for name, decoded, encoded in datas:
+            self.assertEqual(foo.encode(name, decoded), encoded)
+
+    def test_set_of(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SET OF INTEGER "
+            "END",
+            'gser')
+
+        datas = [
+            ('A',                   [], b'a A ::= { }'),
+            ('A',                  [1], b'a A ::= { 1 }'),
+            ('A',               [1, 3], b'a A ::= { 1, 3 }')
+        ]
+
+        for name, decoded, encoded in datas:
+            self.assertEqual(foo.encode(name, decoded), encoded)
+
+    def test_utc_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UTCTime "
+            "END",
+            'gser')
+
+        decoded = '010203040506Z'
+        encoded = b'a A ::= "010203040506Z"'
+
+        self.assertEqual(foo.encode('A', decoded), encoded)
+
+    def test_generalized_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= GeneralizedTime "
+            "END",
+            'gser')
+
+        decoded = '20001231235959.999Z'
+        encoded = b'a A ::= "20001231235959.999Z"'
+
+        self.assertEqual(foo.encode('A', decoded), encoded)
+
+    def test_printable_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= PrintableString "
+            "END",
+            'gser')
+
+        decoded = 'foo'
+        encoded = b'a A ::= "foo"'
+
+        self.assertEqual(foo.encode('A', decoded), encoded)
+
+    def test_visible_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= VisibleString "
+            "END",
+            'gser')
+
+        decoded = 'foo'
+        encoded = b'a A ::= "foo"'
+
+        self.assertEqual(foo.encode('A', decoded), encoded)
+
+    def test_general_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= GeneralString "
+            "END",
+            'gser')
+
+        decoded = 'foo'
+        encoded = b'a A ::= "foo"'
+
+        self.assertEqual(foo.encode('A', decoded), encoded)
+
+    def test_bmp_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= BMPString "
+            "END",
+            'gser')
+
+        decoded = 'foo'
+        encoded = b'a A ::= "foo"'
+
+        with self.assertRaises(NotImplementedError):
+            self.assertEqual(foo.encode('A', decoded), encoded)
+
+    def test_graphic_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= GraphicString "
+            "END",
+            'gser')
+
+        decoded = 'foo'
+        encoded = b'a A ::= "foo"'
+
+        with self.assertRaises(NotImplementedError):
+            self.assertEqual(foo.encode('A', decoded), encoded)
+
+    def test_universal_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UniversalString "
+            "END",
+            'gser')
+
+        decoded = 'bar'
+        encoded = b'a A ::= "bar"'
+
+        self.assertEqual(foo.encode('A', decoded), encoded)
+
+    def test_any(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= ANY "
+            "END",
+            'gser')
+
+        datas = [
+            ('A',                   b'', b"a A ::= ''H"),
+            ('A',               b'\x20', b"a A ::= '20'H")
+        ]
+
+        for name, decoded, encoded in datas:
+            self.assertEqual(foo.encode(name, decoded), encoded)
+
     def test_foo(self):
         foo = asn1tools.compile_files(['tests/files/foo.asn'], 'gser')
 
@@ -495,197 +686,6 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
         self.assertEqual(repr(all_types.types['SequenceOf']),
                          'SequenceOf(SequenceOf, Integer())')
         self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
-
-    def test_null(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= NULL "
-            "END",
-            'gser')
-
-        decoded = None
-        encoded = b'a A ::= NULL'
-
-        self.assertEqual(foo.encode('A', decoded), encoded)
-
-    def test_utc_time(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= UTCTime "
-            "END",
-            'gser')
-
-        decoded = '010203040506Z'
-        encoded = b'a A ::= "010203040506Z"'
-
-        self.assertEqual(foo.encode('A', decoded), encoded)
-
-    def test_generalized_time(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= GeneralizedTime "
-            "END",
-            'gser')
-
-        decoded = '20001231235959.999Z'
-        encoded = b'a A ::= "20001231235959.999Z"'
-
-        self.assertEqual(foo.encode('A', decoded), encoded)
-
-    def test_visible_string(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= VisibleString "
-            "END",
-            'gser')
-
-        decoded = 'foo'
-        encoded = b'a A ::= "foo"'
-
-        self.assertEqual(foo.encode('A', decoded), encoded)
-
-    def test_general_string(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= GeneralString "
-            "END",
-            'gser')
-
-        decoded = 'foo'
-        encoded = b'a A ::= "foo"'
-
-        self.assertEqual(foo.encode('A', decoded), encoded)
-
-    def test_bmp_string(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= BMPString "
-            "END",
-            'gser')
-
-        decoded = 'foo'
-        encoded = b'a A ::= "foo"'
-
-        with self.assertRaises(NotImplementedError):
-            self.assertEqual(foo.encode('A', decoded), encoded)
-
-    def test_graphic_string(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= GraphicString "
-            "END",
-            'gser')
-
-        decoded = 'foo'
-        encoded = b'a A ::= "foo"'
-
-        with self.assertRaises(NotImplementedError):
-            self.assertEqual(foo.encode('A', decoded), encoded)
-
-    def test_universal_string(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= UniversalString "
-            "END",
-            'gser')
-
-        decoded = 'bar'
-        encoded = b'a A ::= "bar"'
-
-        self.assertEqual(foo.encode('A', decoded), encoded)
-
-    def test_printable_string(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= PrintableString "
-            "END",
-            'gser')
-
-        decoded = 'foo'
-        encoded = b'a A ::= "foo"'
-
-        self.assertEqual(foo.encode('A', decoded), encoded)
-
-    def test_real(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= REAL "
-            "END",
-            'gser')
-
-        datas = [
-            ('A',                     0.0, b'a A ::= 0'),
-            ('A',            float('inf'), b'a A ::= PLUS-INFINITY'),
-            ('A',           float('-inf'), b'a A ::= MINUS-INFINITY'),
-            ('A',                     1.0, b'a A ::= 1.0E0'),
-            ('A',                     1.1, b'a A ::= 1.1E0'),
-            ('A',               1234.5678, b'a A ::= 1234.5678E0'),
-            ('A',                       8, b'a A ::= 8E0'),
-            ('A',                   0.625, b'a A ::= 0.625E0')
-        ]
-
-        for name, decoded, encoded in datas:
-            self.assertEqual(foo.encode(name, decoded), encoded)
-
-    def test_sequence_of(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= SEQUENCE OF INTEGER "
-            "END",
-            'gser')
-
-        datas = [
-            ('A',                   [], b'a A ::= { }'),
-            ('A',                  [1], b'a A ::= { 1 }'),
-            ('A',               [1, 3], b'a A ::= { 1, 3 }')
-        ]
-
-        for name, decoded, encoded in datas:
-            self.assertEqual(foo.encode(name, decoded), encoded)
-
-    def test_set_of(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= SET OF INTEGER "
-            "END",
-            'gser')
-
-        datas = [
-            ('A',                   [], b'a A ::= { }'),
-            ('A',                  [1], b'a A ::= { 1 }'),
-            ('A',               [1, 3], b'a A ::= { 1, 3 }')
-        ]
-
-        for name, decoded, encoded in datas:
-            self.assertEqual(foo.encode(name, decoded), encoded)
-
-    def test_any(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= ANY "
-            "END",
-            'gser')
-
-        datas = [
-            ('A',                   b'', b"a A ::= ''H"),
-            ('A',               b'\x20', b"a A ::= '20'H")
-        ]
-
-        for name, decoded, encoded in datas:
-            self.assertEqual(foo.encode(name, decoded), encoded)
 
 
 if __name__ == '__main__':

@@ -16,6 +16,819 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
 
     maxDiff = None
 
+    def test_boolean(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= BOOLEAN "
+            "B ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b BOOLEAN "
+            "} "
+            "END",
+            'per')
+
+        datas = [
+            ('A',                     True, b'\x80'),
+            ('A',                    False, b'\x00'),
+            ('B', {'a': False, 'b': False}, b'\x00'),
+            ('B',  {'a': True, 'b': False}, b'\x80'),
+            ('B',  {'a': False, 'b': True}, b'\x40'),
+            ('B',   {'a': True, 'b': True}, b'\xc0')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_integer(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= INTEGER "
+            "B ::= INTEGER (5..99) "
+            "C ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b INTEGER, "
+            "  c BOOLEAN, "
+            "  d INTEGER (-10..400) "
+            "} "
+            "D ::= INTEGER (0..254) "
+            "E ::= INTEGER (0..255) "
+            "F ::= INTEGER (0..256) "
+            "G ::= INTEGER (0..65535) "
+            "H ::= INTEGER (0..65536) "
+            "I ::= INTEGER (0..10000000000) "
+            "J ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b INTEGER (0..254), "
+            "  c INTEGER (0..255), "
+            "  d BOOLEAN, "
+            "  e INTEGER (0..256) "
+            "} "
+            "K ::= B (6..7) "
+            "L ::= SEQUENCE { "
+            "  a K (7..7) "
+            "} "
+            "END",
+            'per')
+
+        datas = [
+            ('A',                    32768, b'\x03\x00\x80\x00'),
+            ('A',                    32767, b'\x02\x7f\xff'),
+            ('A',                      256, b'\x02\x01\x00'),
+            ('A',                      255, b'\x02\x00\xff'),
+            ('A',                      128, b'\x02\x00\x80'),
+            ('A',                      127, b'\x01\x7f'),
+            ('A',                        2, b'\x01\x02'),
+            ('A',                        1, b'\x01\x01'),
+            ('A',                        0, b'\x01\x00'),
+            ('A',                       -1, b'\x01\xff'),
+            ('A',                     -128, b'\x01\x80'),
+            ('A',                     -129, b'\x02\xff\x7f'),
+            ('A',                     -256, b'\x02\xff\x00'),
+            ('A',                   -32768, b'\x02\x80\x00'),
+            ('A',                   -32769, b'\x03\xff\x7f\xff'),
+            ('B',                        5, b'\x00'),
+            ('B',                        6, b'\x02'),
+            ('B',                       99, b'\xbc'),
+            ('C',
+             {'a': True, 'b': 43554344223, 'c': False, 'd': -9},
+             b'\x80\x05\x0a\x24\x0a\x8d\x1f\x00\x00\x01'),
+            ('D',                      253, b'\xfd'),
+            ('E',                      253, b'\xfd'),
+            ('F',                      253, b'\x00\xfd'),
+            ('G',                      253, b'\x00\xfd'),
+            ('H',                      253, b'\x00\xfd'),
+            ('H',                      256, b'\x40\x01\x00'),
+            ('H',                    65536, b'\x80\x01\x00\x00'),
+            ('I',                        1, b'\x00\x01'),
+            ('I',              10000000000, b'\x80\x02\x54\x0b\xe4\x00'),
+            ('J',
+             {'a': False, 'b': 253, 'c': 253, 'd': False, 'e': 253},
+             b'\x7e\x80\xfd\x00\x00\xfd'),
+            ('K',                        7, b'\x80'),
+            ('L',                 {'a': 7}, b'')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_bit_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= BIT STRING "
+            "B ::= BIT STRING (SIZE (9)) "
+            "C ::= BIT STRING (SIZE (5..7)) "
+            "D ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b BIT STRING "
+            "} "
+            "E ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b BIT STRING (SIZE(1)), "
+            "  c BIT STRING (SIZE(16)) "
+            "} "
+            "END",
+            'per')
+
+        datas = [
+            ('A',          (b'\x40', 4), b'\x04\x40'),
+            ('A',
+             (299 * b'\x55' + b'\x54', 2399),
+             b'\x89\x5f' + 299 * b'\x55' + b'\x54'),
+            ('B',      (b'\x12\x80', 9), b'\x12\x80'),
+            ('C',          (b'\x34', 6), b'\x40\x34'),
+            ('D',
+             {'a': True, 'b': (b'\x40', 4)},
+             b'\x80\x04\x40'),
+            ('E',
+             {'a': True, 'b': (b'\x80', 1), 'c': (b'\x7f\x01', 16)},
+             b'\xdf\xc0\x40')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_octet_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= OCTET STRING "
+            "B ::= OCTET STRING (SIZE (2)) "
+            "C ::= OCTET STRING (SIZE (3)) "
+            "D ::= OCTET STRING (SIZE (3..7)) "
+            "E ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b OCTET STRING "
+            "} "
+            "F ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b OCTET STRING (SIZE(1)), "
+            "  c OCTET STRING (SIZE(2)) "
+            "} "
+            "G ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b OCTET STRING (SIZE(3)) "
+            "} "
+            "H ::= OCTET STRING (SIZE (65535)) "
+            "I ::= OCTET STRING (SIZE (65536)) "
+            "END",
+            'per')
+
+        datas = [
+            ('A',                           b'\x00', b'\x01\x00'),
+            ('A',                     500 * b'\x00', b'\x81\xf4' + 500 * b'\x00'),
+            ('B',                       b'\xab\xcd', b'\xab\xcd'),
+            ('C',                   b'\xab\xcd\xef', b'\xab\xcd\xef'),
+            ('D',               b'\x89\xab\xcd\xef', b'\x20\x89\xab\xcd\xef'),
+            ('E',         {'a': True, 'b': b'\x00'}, b'\x80\x01\x00'),
+            ('E', {'a': True, 'b': b'\x00\x01\x02'}, b'\x80\x03\x00\x01\x02'),
+            ('F',
+             {'a': True, 'b': b'\x12', 'c': b'\x34\x56'},
+             b'\x89\x1a\x2b\x00'),
+            ('G', {'a': True, 'b': b'\x00\x01\x02'}, b'\x80\x00\x01\x02'),
+            ('H',     32767 * b'\x01\x02' + b'\x01', 32767 * b'\x01\x02' + b'\x01'),
+            # ('I',
+            #  32768 * b'\x01\x02',
+            #  b'\xc4' + 32768 * b'\x01\x02'
+            #  + b'\x00'),
+            ('A',
+             4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02',
+             b'\xbf\xff' + 4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02'),
+            # ('A',
+            #  4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03',
+            #  b'\xc1' + 4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03'
+            #  + b'\x00'),
+            # ('A',
+            #  4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03\x00',
+            #  b'\xc1' + 4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03'
+            #  + b'\x01' + b'\x00')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_object_identifier(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= OBJECT IDENTIFIER "
+            "B ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b OBJECT IDENTIFIER "
+            "} "
+            "END",
+            'per')
+
+        datas = [
+            ('A',                   '1.2', b'\x01\x2a'),
+            ('A',              '1.2.3321', b'\x03\x2a\x99\x79'),
+            ('B', {'a': True, 'b': '1.2'}, b'\x80\x01\x2a')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_enumerated(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= ENUMERATED { one(1) } "
+            "B ::= ENUMERATED { zero(0), one(1), ... } "
+            "C ::= ENUMERATED { one(1), four(4), two(2), ..., six(6), nine(9) } "
+            "D ::= ENUMERATED { a, ..., "
+            "aa, ab, ac, ad, ae, af, ag, ah, ai, aj, ak, al, am, an, ao, ap, "
+            "aq, ar, as, at, au, av, aw, ax, ay, az, ba, bb, bc, bd, be, bf, "
+            "bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, "
+            "bw, bx, by, bz, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, "
+            "cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, da, db, "
+            "dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, "
+            "ds, dt, du, dv, dw, dx, dy, dz, ea, eb, ec, ed, ee, ef, eg, eh, "
+            "ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, "
+            "ey, ez, fa, fb, fc, fd, fe, ff, fg, fh, fi, fj, fk, fl, fm, fn, "
+            "fo, fp, fq, fr, fs, ft, fu, fv, fw, fx, fy, fz, ga, gb, gc, gd, "
+            "ge, gf, gg, gh, gi, gj, gk, gl, gm, gn, go, gp, gq, gr, gs, gt, "
+            "gu, gv, gw, gx, gy, gz, ha, hb, hc, hd, he, hf, hg, hh, hi, hj, "
+            "hk, hl, hm, hn, ho, hp, hq, hr, hs, ht, hu, hv, hw, hx, hy, hz, "
+            "ia, ib, ic, id, ie, if, ig, ih, ii, ij, ik, il, im, in, io, ip, "
+            "iq, ir, is, it, iu, iv, iw, ix, iy, iz, ja, jb, jc, jd, je, jf, "
+            "jg, jh, ji, jj, jk, jl, jm, jn, jo, jp, jq, jr, js, jt, ju, jv, "
+            "jw, jx, jy, jz } "
+            "E ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b B "
+            "} "
+            "END",
+            'per')
+
+        datas = [
+            ('A',                    'one', b''),
+            ('B',                   'zero', b'\x00'),
+            ('B',                    'one', b'\x40'),
+            ('C',                    'one', b'\x00'),
+            ('C',                    'two', b'\x20'),
+            ('C',                   'four', b'\x40'),
+            ('C',                    'six', b'\x80'),
+            ('C',                   'nine', b'\x81'),
+            ('D',                     'aa', b'\x80'),
+            ('D',                     'cl', b'\xbf'),
+            ('D',                     'cm', b'\xc0\x50\x00'),
+            ('D',                     'jv', b'\xc0\x7f\xc0'),
+            ('D',                     'jw', b'\xc0\x80\x40\x00'),
+            ('D',                     'jz', b'\xc0\x80\x40\xc0'),
+            ('E', {'a': True, 'b': 'zero'}, b'\x80'),
+            ('E',  {'a': True, 'b': 'one'}, b'\xa0')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Bad root index.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('C', b'\x70')
+
+        self.assertEqual(str(cm.exception),
+                         ": Expected enumeration index 0, 1 or 2, but got 3.")
+
+        # Bad additions index.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('C', b'\x8f')
+
+        self.assertEqual(str(cm.exception),
+                         ": Expected enumeration index 0 or 1, but got 15.")
+
+    def test_sequence(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE {} "
+            "B ::= SEQUENCE { "
+            "  a INTEGER DEFAULT 0 "
+            "} "
+            "C ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ... "
+            "} "
+            "D ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]] "
+            "} "
+            "E ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]], "
+            "  ... "
+            "} "
+            "F ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]], "
+            "  ..., "
+            "  c BOOLEAN "
+            "} "
+            "G ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]], "
+            "  [[ "
+            "  c BOOLEAN "
+            "  ]], "
+            "  ..., "
+            "  d BOOLEAN "
+            "} "
+            "H ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  ... "
+            "} "
+            "I ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b BOOLEAN "
+            "} "
+            "J ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b BOOLEAN OPTIONAL "
+            "} "
+            "K ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b BOOLEAN, "
+            "  c BOOLEAN "
+            "} "
+            "L ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN, "
+            "  c BOOLEAN "
+            "  ]] "
+            "} "
+            "M ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b SEQUENCE { "
+            "    a INTEGER"
+            "  } OPTIONAL, "
+            "  c BOOLEAN "
+            "  ]] "
+            "} "
+            "N ::= SEQUENCE { "
+            "  a BOOLEAN DEFAULT TRUE "
+            "} "
+            "O ::= SEQUENCE { "
+            "  ..., "
+            "  a BOOLEAN DEFAULT TRUE "
+            "} "
+            "P ::= SEQUENCE { "
+            "  ..., "
+            "  [[ "
+            "  a BOOLEAN, "
+            "  b BOOLEAN DEFAULT TRUE "
+            "  ]] "
+            "} "
+            "Q ::= SEQUENCE { "
+            "  a C, "
+            "  b INTEGER "
+            "} "
+            "R ::= SEQUENCE { "
+            "  a D, "
+            "  b INTEGER "
+            "} "
+            "S ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b SEQUENCE { "
+            "    a BOOLEAN, "
+            "    b BOOLEAN OPTIONAL, "
+            "    ... "
+            "  } "
+            "} "
+            "T ::= SEQUENCE { "
+            "  a SEQUENCE OF T OPTIONAL "
+            "} "
+            "END",
+            'per')
+
+        datas = [
+            ('A',                                {}, b''),
+            ('O',                                {}, b'\x00'),
+            ('B',                          {'a': 0}, b'\x00'),
+            ('B',                          {'a': 1}, b'\x80\x01\x01'),
+            ('C',                       {'a': True}, b'\x40'),
+            ('D',                       {'a': True}, b'\x40'),
+            ('E',                       {'a': True}, b'\x40'),
+            ('H',                       {'a': True}, b'\x40'),
+            ('I',                       {'a': True}, b'\x40'),
+            ('J',                       {'a': True}, b'\x40'),
+            ('K',                       {'a': True}, b'\x40'),
+            ('L',                       {'a': True}, b'\x40'),
+            ('M',                       {'a': True}, b'\x40'),
+            ('N',                       {'a': True}, b'\x00'),
+            ('N',                      {'a': False}, b'\x80'),
+            ('P',                                {}, b'\x00'),
+            ('O',                       {'a': True}, b'\x80\x80\x01\x80'),
+            ('O',                      {'a': False}, b'\x80\x80\x01\x00'),
+            ('P',            {'a': True, 'b': True}, b'\x80\x80\x01\x40'),
+            ('P',           {'a': True, 'b': False}, b'\x80\x80\x01\xc0'),
+            ('D',            {'a': True, 'b': True}, b'\xc0\x40\x01\x80'),
+            ('E',            {'a': True, 'b': True}, b'\xc0\x40\x01\x80'),
+            ('F',            {'a': True, 'c': True}, b'\x60'),
+            ('G',            {'a': True, 'd': True}, b'\x60'),
+            ('I',            {'a': True, 'b': True}, b'\xc0\x40\x01\x80'),
+            ('J',            {'a': True, 'b': True}, b'\xc0\x40\x01\x80'),
+            ('K',            {'a': True, 'b': True}, b'\xc0\xc0\x01\x80'),
+            ('F', {'a': True, 'b': True, 'c': True}, b'\xe0\x20\x01\x80'),
+            ('K', {'a': True, 'b': True, 'c': True}, b'\xc0\xe0\x01\x80\x01\x80'),
+            ('L', {'a': True, 'b': True, 'c': True}, b'\xc0\x40\x01\xc0'),
+            ('G', {'a': True, 'b': True, 'd': True}, b'\xe0\x60\x01\x80'),
+            ('G',
+             {'a': True, 'b': True, 'c': True, 'd': True},
+             b'\xe0\x70\x01\x80\x01\x80'),
+            ('M',
+             {'a': True, 'b': {'a': 5}, 'c': True},
+             b'\xc0\x40\x04\x80\x01\x05\x80'),
+            ('Q',      {'a': {'a': True}, 'b': 100}, b'\x40\x01\x64'),
+            ('R',
+             {'a': {'a': True, 'b': True}, 'b': 100},
+             b'\xc0\x40\x01\x80\x01\x64'),
+            ('S',
+             {'a': True, 'b': {'a': True, 'b': True}},
+             b'\xc0\x40\x01\x70'),
+            ('T',                       {'a': [{}]}, b'\x80\x01\x00'),
+            ('T',                {'a': [{'a': []}]}, b'\x80\x01\x80\x00')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Non-symmetrical encoding and decoding because default values
+        # are not encoded, but part of the decoded (given that the
+        # root and addition is present).
+        self.assertEqual(foo.encode('N', {}), b'\x00')
+        self.assertEqual(foo.decode('N', b'\x00'), {'a': True})
+        self.assertEqual(foo.encode('P', {'a': True}), b'\x80\x80\x01\x40')
+        self.assertEqual(foo.decode('P', b'\x80\x80\x01\x40'),
+                         {'a': True, 'b': True})
+
+        # Decode D as C. Extension addition "a.b" should be skipped.
+        self.assertEqual(foo.decode('C', b'\xc0\x40\x01\x80'), {'a': True})
+
+        # Decode R as Q. Extension addition "a.b" should be skipped.
+        self.assertEqual(foo.decode('Q', b'\xc0\x40\x01\x80\x01\x64'),
+                         {'a': {'a': True}, 'b': 100})
+
+    def test_sequence_of(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE OF INTEGER "
+            "B ::= SEQUENCE SIZE (2) OF INTEGER "
+            "C ::= SEQUENCE SIZE (1..5) OF INTEGER "
+            "D ::= SEQUENCE SIZE (1..2, ...) OF INTEGER "
+            "E ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b SEQUENCE OF INTEGER "
+            "} "
+            "F ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b SEQUENCE SIZE(1) OF INTEGER "
+            "} "
+            "END",
+            'per')
+
+        datas = [
+            ('A',                [], b'\x00'),
+            ('A',               [1], b'\x01\x01\x01'),
+            ('A',            [1, 2], b'\x02\x01\x01\x01\x02'),
+            ('A',     1000 * [1, 2], b'\x87\xd0' + 1000 * b'\x01\x01\x01\x02'),
+            ('B',            [1, 2], b'\x01\x01\x01\x02'),
+            ('B', [4663, 222322233], b'\x02\x12\x37\x04\x0d\x40\x5e\x39'),
+            ('C',               [1], b'\x00\x01\x01'),
+            ('C',            [1, 2], b'\x20\x01\x01\x01\x02'),
+            ('D',            [2, 1], b'\x40\x01\x02\x01\x01'),
+            ('E',  {'a': False, 'b': []}, b'\x00\x00'),
+            ('E', {'a': False, 'b': [1]}, b'\x00\x01\x01\x01'),
+            ('F', {'a': False, 'b': [1]}, b'\x00\x01\x01')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Long sequences are not yet supported.
+        with self.assertRaises(NotImplementedError) as cm:
+            foo.encode('A', 16384 * [1])
+
+        self.assertEqual(str(cm.exception),
+                         'Length determinant >=16384 is not yet supported.')
+
+    def test_choice(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= CHOICE { "
+            "  a BOOLEAN "
+            "} "
+            "B ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ... "
+            "} "
+            "C ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  b INTEGER, "
+            "  ..., "
+            "  [[ "
+            "  c BOOLEAN "
+            "  ]] "
+            "} "
+            "D ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]], "
+            "  ... "
+            "} "
+            "E ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]], "
+            "  [[ "
+            "  c BOOLEAN "
+            "  ]], "
+            "  ... "
+            "} "
+            "F ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  ... "
+            "} "
+            "G ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b BOOLEAN "
+            "} "
+            "H ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b BOOLEAN, "
+            "  c BOOLEAN "
+            "} "
+            "I ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN, "
+            "  c BOOLEAN "
+            "  ]] "
+            "} "
+            "J ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b CHOICE { "
+            "    a INTEGER"
+            "  }, "
+            "  c BOOLEAN "
+            "  ]] "
+            "} "
+            "K ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  b BOOLEAN, "
+            "  c BOOLEAN, "
+            "  ..., "
+            "  d BOOLEAN, "
+            "  e BOOLEAN, "
+            "  f BOOLEAN, "
+            "  g BOOLEAN, "
+            "  h BOOLEAN "
+            "} "
+            "END",
+            'per')
+
+        datas = [
+            ('A',            ('a', True), b'\x80'),
+            ('B',            ('a', True), b'\x40'),
+            ('C',            ('a', True), b'\x20'),
+            ('C',               ('b', 1), b'\x40\x01\x01'),
+            ('C',            ('c', True), b'\x80\x01\x80'),
+            ('D',            ('a', True), b'\x40'),
+            ('D',            ('b', True), b'\x80\x01\x80'),
+            ('E',            ('a', True), b'\x40'),
+            ('E',            ('b', True), b'\x80\x01\x80'),
+            ('E',            ('c', True), b'\x81\x01\x80'),
+            ('F',            ('a', True), b'\x40'),
+            ('G',            ('a', True), b'\x40'),
+            ('G',            ('b', True), b'\x80\x01\x80'),
+            ('H',            ('a', True), b'\x40'),
+            ('H',            ('b', True), b'\x80\x01\x80'),
+            ('H',            ('c', True), b'\x81\x01\x80'),
+            ('I',            ('a', True), b'\x40'),
+            ('I',            ('b', True), b'\x80\x01\x80'),
+            ('I',            ('c', True), b'\x81\x01\x80'),
+            ('J',            ('a', True), b'\x40'),
+            ('J',        ('b', ('a', 1)), b'\x80\x02\x01\x01'),
+            ('J',            ('c', True), b'\x81\x01\x80')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Bad root index.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('K', b'\x70')
+
+        self.assertEqual(str(cm.exception),
+                         ": Expected choice index 0, 1 or 2, but got 3.")
+
+        # Bad additions index.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('K', b'\x8f')
+
+        self.assertEqual(str(cm.exception),
+                         ": Expected choice index 0, 1, 2, 3 or 4, but got 15.")
+
+        # Bad value.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('K', ('i', True))
+
+        self.assertEqual(
+            str(cm.exception),
+            "Expected choice 'a', 'b', 'c', 'd', 'e', 'f', 'g' or 'h', but "
+            "got 'i'.")
+
+        # Bad value.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('A', ('b', True))
+
+        self.assertEqual(str(cm.exception), "Expected choice 'a', but got 'b'.")
+
+    def test_utf8_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE { "
+            "    a BOOLEAN, "
+            "    b UTF8String, "
+            "    c UTF8String OPTIONAL"
+            "} "
+            "B ::= UTF8String (SIZE (10)) "
+            "C ::= UTF8String (SIZE (0..1)) "
+            "D ::= UTF8String (SIZE (2..3) ^ (FROM (\"a\"..\"g\"))) "
+            "E ::= UTF8String "
+            "END",
+            'per')
+
+        datas = [
+            ('A', {'a': True, 'b': u''}, b'\x40\x00'),
+            ('A',
+             {'a': True, 'b': u'1', 'c': u'foo'},
+             b'\xc0\x01\x31\x03\x66\x6f\x6f'),
+            ('A',
+             {'a': True, 'b': 300 * u'1'},
+             b'\x40\x81\x2c' + 300 * b'\x31'),
+            ('B',
+             u'1234567890',
+             b'\x0a\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'),
+            ('C',                   u'', b'\x00'),
+            ('C',                  u'P', b'\x01\x50'),
+            ('D',                u'agg', b'\x03\x61\x67\x67'),
+            ('E',                u'bar', b'\x03\x62\x61\x72'),
+            ('E',           u'a\u1010c', b'\x05\x61\xe1\x80\x90\x63')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        with self.assertRaises(NotImplementedError) as cm:
+            foo.encode('A', {'a': False, 'b': 16384 * u'0'})
+
+        self.assertEqual(str(cm.exception),
+                         'Length determinant >=16384 is not yet supported.')
+
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', b'\x40\xc5\x00\x00\x00\x00')
+
+        self.assertEqual(str(cm.exception), 'b: Bad length determinant type 0xc5.')
+
+        with self.assertRaises(NotImplementedError) as cm:
+            foo.decode('A', b'\x40\xc1\x00\x00\x00\x00')
+
+        self.assertEqual(str(cm.exception),
+                         'Length determinant 16384 is not yet supported.')
+
+    def test_ia5_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= IA5String "
+            "END",
+            'per')
+
+        datas = [
+            ('A',
+             1638 * '1234567890' + '123',
+             b'\xbf\xff'
+             + 1638 * b'\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'
+             + b'\x31\x32\x33'),
+            # ('A',
+            #  1638 * '1234567890' + '1234',
+            #  b'\xc1'
+            #  + 1638 * b'\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'
+            #  + b'\x31\x32\x33\x34'
+            #  + b'\x00'),
+            # ('A',
+            #  1638 * '1234567890' + '12345',
+            #  b'\xc1'
+            #  + 1638 * b'\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'
+            #  + b'\x31\x32\x33\x34'
+            #  + b'\x01'
+            #  + b'\x35')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_visible_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= VisibleString (SIZE (19..133)) "
+            "B ::= VisibleString (SIZE (5)) "
+            "C ::= VisibleString (SIZE (19..1000)) "
+            "D ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b VisibleString (SIZE (1)) "
+            "} "
+            "E ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b VisibleString (SIZE (2)) "
+            "} "
+            "F ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b VisibleString (SIZE (3)) "
+            "} "
+            "G ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b VisibleString (SIZE (0..1)) "
+            "} "
+            "H ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b VisibleString (SIZE (0..2)) "
+            "} "
+            "I ::= VisibleString (FROM (\"a\"..\"z\")) (SIZE (1..255)) "
+            "J ::= VisibleString (FROM (\"a\")) "
+            "K ::= VisibleString (FROM (\"a\"..\"a\")) "
+            "END",
+            'per')
+
+        datas = [
+            ('A',
+             'HejHoppHappHippAbcde',
+             b'\x02\x48\x65\x6a\x48\x6f\x70\x70\x48\x61\x70\x70\x48\x69\x70\x70'
+             b'\x41\x62\x63\x64\x65'),
+            ('B', 'Hejaa', b'\x48\x65\x6a\x61\x61'),
+            ('C',
+             17 * 'HejHoppHappHippAbcde',
+             b'\x01\x41' + 17 * (b'\x48\x65\x6a\x48\x6f\x70\x70\x48\x61\x70'
+                                 b'\x70\x48\x69\x70\x70\x41\x62\x63\x64\x65')),
+            ('D',   {'a': True, 'b': '1'}, b'\x98\x80'),
+            ('E',  {'a': True, 'b': '12'}, b'\x98\x99\x00'),
+            ('F', {'a': True, 'b': '123'}, b'\x80\x31\x32\x33'),
+            ('G',   {'a': True, 'b': '1'}, b'\xcc\x40'),
+            ('H',   {'a': True, 'b': '1'}, b'\xa0\x31'),
+            ('I',                   'hej', b'\x02\x68\x65\x6a'),
+            ('J',                     'a', b'\x01'),
+            ('K',                     'a', b'\x01')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Bad character 0x19 should raise an exception.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('A', '\x19')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Expected a character in ' !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEF"
+            "GHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~', but got"
+            " '.' (0x19)'.")
+
     def test_foo(self):
         foo = asn1tools.compile_files('tests/files/foo.asn', 'per')
 
@@ -779,819 +1592,6 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         with self.assertRaises(TypeError):
             encoded = information_object.encode('ErrorReturn', decoded_message)
             self.assertEqual(encoded, encoded_message)
-
-    def test_boolean(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= BOOLEAN "
-            "B ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  b BOOLEAN "
-            "} "
-            "END",
-            'per')
-
-        datas = [
-            ('A',                     True, b'\x80'),
-            ('A',                    False, b'\x00'),
-            ('B', {'a': False, 'b': False}, b'\x00'),
-            ('B',  {'a': True, 'b': False}, b'\x80'),
-            ('B',  {'a': False, 'b': True}, b'\x40'),
-            ('B',   {'a': True, 'b': True}, b'\xc0')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-    def test_integer(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= INTEGER "
-            "B ::= INTEGER (5..99) "
-            "C ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  b INTEGER, "
-            "  c BOOLEAN, "
-            "  d INTEGER (-10..400) "
-            "} "
-            "D ::= INTEGER (0..254) "
-            "E ::= INTEGER (0..255) "
-            "F ::= INTEGER (0..256) "
-            "G ::= INTEGER (0..65535) "
-            "H ::= INTEGER (0..65536) "
-            "I ::= INTEGER (0..10000000000) "
-            "J ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  b INTEGER (0..254), "
-            "  c INTEGER (0..255), "
-            "  d BOOLEAN, "
-            "  e INTEGER (0..256) "
-            "} "
-            "K ::= B (6..7) "
-            "L ::= SEQUENCE { "
-            "  a K (7..7) "
-            "} "
-            "END",
-            'per')
-
-        datas = [
-            ('A',                    32768, b'\x03\x00\x80\x00'),
-            ('A',                    32767, b'\x02\x7f\xff'),
-            ('A',                      256, b'\x02\x01\x00'),
-            ('A',                      255, b'\x02\x00\xff'),
-            ('A',                      128, b'\x02\x00\x80'),
-            ('A',                      127, b'\x01\x7f'),
-            ('A',                        2, b'\x01\x02'),
-            ('A',                        1, b'\x01\x01'),
-            ('A',                        0, b'\x01\x00'),
-            ('A',                       -1, b'\x01\xff'),
-            ('A',                     -128, b'\x01\x80'),
-            ('A',                     -129, b'\x02\xff\x7f'),
-            ('A',                     -256, b'\x02\xff\x00'),
-            ('A',                   -32768, b'\x02\x80\x00'),
-            ('A',                   -32769, b'\x03\xff\x7f\xff'),
-            ('B',                        5, b'\x00'),
-            ('B',                        6, b'\x02'),
-            ('B',                       99, b'\xbc'),
-            ('C',
-             {'a': True, 'b': 43554344223, 'c': False, 'd': -9},
-             b'\x80\x05\x0a\x24\x0a\x8d\x1f\x00\x00\x01'),
-            ('D',                      253, b'\xfd'),
-            ('E',                      253, b'\xfd'),
-            ('F',                      253, b'\x00\xfd'),
-            ('G',                      253, b'\x00\xfd'),
-            ('H',                      253, b'\x00\xfd'),
-            ('H',                      256, b'\x40\x01\x00'),
-            ('H',                    65536, b'\x80\x01\x00\x00'),
-            ('I',                        1, b'\x00\x01'),
-            ('I',              10000000000, b'\x80\x02\x54\x0b\xe4\x00'),
-            ('J',
-             {'a': False, 'b': 253, 'c': 253, 'd': False, 'e': 253},
-             b'\x7e\x80\xfd\x00\x00\xfd'),
-            ('K',                        7, b'\x80'),
-            ('L',                 {'a': 7}, b'')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-    def test_utf8_string(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= SEQUENCE { "
-            "    a BOOLEAN, "
-            "    b UTF8String, "
-            "    c UTF8String OPTIONAL"
-            "} "
-            "B ::= UTF8String (SIZE (10)) "
-            "C ::= UTF8String (SIZE (0..1)) "
-            "D ::= UTF8String (SIZE (2..3) ^ (FROM (\"a\"..\"g\"))) "
-            "E ::= UTF8String "
-            "END",
-            'per')
-
-        datas = [
-            ('A', {'a': True, 'b': u''}, b'\x40\x00'),
-            ('A',
-             {'a': True, 'b': u'1', 'c': u'foo'},
-             b'\xc0\x01\x31\x03\x66\x6f\x6f'),
-            ('A',
-             {'a': True, 'b': 300 * u'1'},
-             b'\x40\x81\x2c' + 300 * b'\x31'),
-            ('B',
-             u'1234567890',
-             b'\x0a\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'),
-            ('C',                   u'', b'\x00'),
-            ('C',                  u'P', b'\x01\x50'),
-            ('D',                u'agg', b'\x03\x61\x67\x67'),
-            ('E',                u'bar', b'\x03\x62\x61\x72'),
-            ('E',           u'a\u1010c', b'\x05\x61\xe1\x80\x90\x63')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-        with self.assertRaises(NotImplementedError) as cm:
-            foo.encode('A', {'a': False, 'b': 16384 * u'0'})
-
-        self.assertEqual(str(cm.exception),
-                         'Length determinant >=16384 is not yet supported.')
-
-        with self.assertRaises(asn1tools.DecodeError) as cm:
-            foo.decode('A', b'\x40\xc5\x00\x00\x00\x00')
-
-        self.assertEqual(str(cm.exception), 'b: Bad length determinant type 0xc5.')
-
-        with self.assertRaises(NotImplementedError) as cm:
-            foo.decode('A', b'\x40\xc1\x00\x00\x00\x00')
-
-        self.assertEqual(str(cm.exception),
-                         'Length determinant 16384 is not yet supported.')
-
-    def test_visible_string(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= VisibleString (SIZE (19..133)) "
-            "B ::= VisibleString (SIZE (5)) "
-            "C ::= VisibleString (SIZE (19..1000)) "
-            "D ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  b VisibleString (SIZE (1)) "
-            "} "
-            "E ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  b VisibleString (SIZE (2)) "
-            "} "
-            "F ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  b VisibleString (SIZE (3)) "
-            "} "
-            "G ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  b VisibleString (SIZE (0..1)) "
-            "} "
-            "H ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  b VisibleString (SIZE (0..2)) "
-            "} "
-            "I ::= VisibleString (FROM (\"a\"..\"z\")) (SIZE (1..255)) "
-            "J ::= VisibleString (FROM (\"a\")) "
-            "K ::= VisibleString (FROM (\"a\"..\"a\")) "
-            "END",
-            'per')
-
-        datas = [
-            ('A',
-             'HejHoppHappHippAbcde',
-             b'\x02\x48\x65\x6a\x48\x6f\x70\x70\x48\x61\x70\x70\x48\x69\x70\x70'
-             b'\x41\x62\x63\x64\x65'),
-            ('B', 'Hejaa', b'\x48\x65\x6a\x61\x61'),
-            ('C',
-             17 * 'HejHoppHappHippAbcde',
-             b'\x01\x41' + 17 * (b'\x48\x65\x6a\x48\x6f\x70\x70\x48\x61\x70'
-                                 b'\x70\x48\x69\x70\x70\x41\x62\x63\x64\x65')),
-            ('D',   {'a': True, 'b': '1'}, b'\x98\x80'),
-            ('E',  {'a': True, 'b': '12'}, b'\x98\x99\x00'),
-            ('F', {'a': True, 'b': '123'}, b'\x80\x31\x32\x33'),
-            ('G',   {'a': True, 'b': '1'}, b'\xcc\x40'),
-            ('H',   {'a': True, 'b': '1'}, b'\xa0\x31'),
-            ('I',                   'hej', b'\x02\x68\x65\x6a'),
-            ('J',                     'a', b'\x01'),
-            ('K',                     'a', b'\x01')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-        # Bad character 0x19 should raise an exception.
-        with self.assertRaises(asn1tools.EncodeError) as cm:
-            foo.encode('A', '\x19')
-
-        self.assertEqual(
-            str(cm.exception),
-            "Expected a character in ' !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEF"
-            "GHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~', but got"
-            " '.' (0x19)'.")
-
-    def test_enumerated(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= ENUMERATED { one(1) } "
-            "B ::= ENUMERATED { zero(0), one(1), ... } "
-            "C ::= ENUMERATED { one(1), four(4), two(2), ..., six(6), nine(9) } "
-            "D ::= ENUMERATED { a, ..., "
-            "aa, ab, ac, ad, ae, af, ag, ah, ai, aj, ak, al, am, an, ao, ap, "
-            "aq, ar, as, at, au, av, aw, ax, ay, az, ba, bb, bc, bd, be, bf, "
-            "bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq, br, bs, bt, bu, bv, "
-            "bw, bx, by, bz, ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, "
-            "cm, cn, co, cp, cq, cr, cs, ct, cu, cv, cw, cx, cy, cz, da, db, "
-            "dc, dd, de, df, dg, dh, di, dj, dk, dl, dm, dn, do, dp, dq, dr, "
-            "ds, dt, du, dv, dw, dx, dy, dz, ea, eb, ec, ed, ee, ef, eg, eh, "
-            "ei, ej, ek, el, em, en, eo, ep, eq, er, es, et, eu, ev, ew, ex, "
-            "ey, ez, fa, fb, fc, fd, fe, ff, fg, fh, fi, fj, fk, fl, fm, fn, "
-            "fo, fp, fq, fr, fs, ft, fu, fv, fw, fx, fy, fz, ga, gb, gc, gd, "
-            "ge, gf, gg, gh, gi, gj, gk, gl, gm, gn, go, gp, gq, gr, gs, gt, "
-            "gu, gv, gw, gx, gy, gz, ha, hb, hc, hd, he, hf, hg, hh, hi, hj, "
-            "hk, hl, hm, hn, ho, hp, hq, hr, hs, ht, hu, hv, hw, hx, hy, hz, "
-            "ia, ib, ic, id, ie, if, ig, ih, ii, ij, ik, il, im, in, io, ip, "
-            "iq, ir, is, it, iu, iv, iw, ix, iy, iz, ja, jb, jc, jd, je, jf, "
-            "jg, jh, ji, jj, jk, jl, jm, jn, jo, jp, jq, jr, js, jt, ju, jv, "
-            "jw, jx, jy, jz } "
-            "E ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  b B "
-            "} "
-            "END",
-            'per')
-
-        datas = [
-            ('A',                    'one', b''),
-            ('B',                   'zero', b'\x00'),
-            ('B',                    'one', b'\x40'),
-            ('C',                    'one', b'\x00'),
-            ('C',                    'two', b'\x20'),
-            ('C',                   'four', b'\x40'),
-            ('C',                    'six', b'\x80'),
-            ('C',                   'nine', b'\x81'),
-            ('D',                     'aa', b'\x80'),
-            ('D',                     'cl', b'\xbf'),
-            ('D',                     'cm', b'\xc0\x50\x00'),
-            ('D',                     'jv', b'\xc0\x7f\xc0'),
-            ('D',                     'jw', b'\xc0\x80\x40\x00'),
-            ('D',                     'jz', b'\xc0\x80\x40\xc0'),
-            ('E', {'a': True, 'b': 'zero'}, b'\x80'),
-            ('E',  {'a': True, 'b': 'one'}, b'\xa0')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-        # Bad root index.
-        with self.assertRaises(asn1tools.DecodeError) as cm:
-            foo.decode('C', b'\x70')
-
-        self.assertEqual(str(cm.exception),
-                         ": Expected enumeration index 0, 1 or 2, but got 3.")
-
-        # Bad additions index.
-        with self.assertRaises(asn1tools.DecodeError) as cm:
-            foo.decode('C', b'\x8f')
-
-        self.assertEqual(str(cm.exception),
-                         ": Expected enumeration index 0 or 1, but got 15.")
-
-    def test_sequence(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= SEQUENCE {} "
-            "B ::= SEQUENCE { "
-            "  a INTEGER DEFAULT 0 "
-            "} "
-            "C ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ... "
-            "} "
-            "D ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  [[ "
-            "  b BOOLEAN "
-            "  ]] "
-            "} "
-            "E ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  [[ "
-            "  b BOOLEAN "
-            "  ]], "
-            "  ... "
-            "} "
-            "F ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  [[ "
-            "  b BOOLEAN "
-            "  ]], "
-            "  ..., "
-            "  c BOOLEAN "
-            "} "
-            "G ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  [[ "
-            "  b BOOLEAN "
-            "  ]], "
-            "  [[ "
-            "  c BOOLEAN "
-            "  ]], "
-            "  ..., "
-            "  d BOOLEAN "
-            "} "
-            "H ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  ... "
-            "} "
-            "I ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  b BOOLEAN "
-            "} "
-            "J ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  b BOOLEAN OPTIONAL "
-            "} "
-            "K ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  b BOOLEAN, "
-            "  c BOOLEAN "
-            "} "
-            "L ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  [[ "
-            "  b BOOLEAN, "
-            "  c BOOLEAN "
-            "  ]] "
-            "} "
-            "M ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  [[ "
-            "  b SEQUENCE { "
-            "    a INTEGER"
-            "  } OPTIONAL, "
-            "  c BOOLEAN "
-            "  ]] "
-            "} "
-            "N ::= SEQUENCE { "
-            "  a BOOLEAN DEFAULT TRUE "
-            "} "
-            "O ::= SEQUENCE { "
-            "  ..., "
-            "  a BOOLEAN DEFAULT TRUE "
-            "} "
-            "P ::= SEQUENCE { "
-            "  ..., "
-            "  [[ "
-            "  a BOOLEAN, "
-            "  b BOOLEAN DEFAULT TRUE "
-            "  ]] "
-            "} "
-            "Q ::= SEQUENCE { "
-            "  a C, "
-            "  b INTEGER "
-            "} "
-            "R ::= SEQUENCE { "
-            "  a D, "
-            "  b INTEGER "
-            "} "
-            "S ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  b SEQUENCE { "
-            "    a BOOLEAN, "
-            "    b BOOLEAN OPTIONAL, "
-            "    ... "
-            "  } "
-            "} "
-            "T ::= SEQUENCE { "
-            "  a SEQUENCE OF T OPTIONAL "
-            "} "
-            "END",
-            'per')
-
-        datas = [
-            ('A',                                {}, b''),
-            ('O',                                {}, b'\x00'),
-            ('B',                          {'a': 0}, b'\x00'),
-            ('B',                          {'a': 1}, b'\x80\x01\x01'),
-            ('C',                       {'a': True}, b'\x40'),
-            ('D',                       {'a': True}, b'\x40'),
-            ('E',                       {'a': True}, b'\x40'),
-            ('H',                       {'a': True}, b'\x40'),
-            ('I',                       {'a': True}, b'\x40'),
-            ('J',                       {'a': True}, b'\x40'),
-            ('K',                       {'a': True}, b'\x40'),
-            ('L',                       {'a': True}, b'\x40'),
-            ('M',                       {'a': True}, b'\x40'),
-            ('N',                       {'a': True}, b'\x00'),
-            ('N',                      {'a': False}, b'\x80'),
-            ('P',                                {}, b'\x00'),
-            ('O',                       {'a': True}, b'\x80\x80\x01\x80'),
-            ('O',                      {'a': False}, b'\x80\x80\x01\x00'),
-            ('P',            {'a': True, 'b': True}, b'\x80\x80\x01\x40'),
-            ('P',           {'a': True, 'b': False}, b'\x80\x80\x01\xc0'),
-            ('D',            {'a': True, 'b': True}, b'\xc0\x40\x01\x80'),
-            ('E',            {'a': True, 'b': True}, b'\xc0\x40\x01\x80'),
-            ('F',            {'a': True, 'c': True}, b'\x60'),
-            ('G',            {'a': True, 'd': True}, b'\x60'),
-            ('I',            {'a': True, 'b': True}, b'\xc0\x40\x01\x80'),
-            ('J',            {'a': True, 'b': True}, b'\xc0\x40\x01\x80'),
-            ('K',            {'a': True, 'b': True}, b'\xc0\xc0\x01\x80'),
-            ('F', {'a': True, 'b': True, 'c': True}, b'\xe0\x20\x01\x80'),
-            ('K', {'a': True, 'b': True, 'c': True}, b'\xc0\xe0\x01\x80\x01\x80'),
-            ('L', {'a': True, 'b': True, 'c': True}, b'\xc0\x40\x01\xc0'),
-            ('G', {'a': True, 'b': True, 'd': True}, b'\xe0\x60\x01\x80'),
-            ('G',
-             {'a': True, 'b': True, 'c': True, 'd': True},
-             b'\xe0\x70\x01\x80\x01\x80'),
-            ('M',
-             {'a': True, 'b': {'a': 5}, 'c': True},
-             b'\xc0\x40\x04\x80\x01\x05\x80'),
-            ('Q',      {'a': {'a': True}, 'b': 100}, b'\x40\x01\x64'),
-            ('R',
-             {'a': {'a': True, 'b': True}, 'b': 100},
-             b'\xc0\x40\x01\x80\x01\x64'),
-            ('S',
-             {'a': True, 'b': {'a': True, 'b': True}},
-             b'\xc0\x40\x01\x70'),
-            ('T',                       {'a': [{}]}, b'\x80\x01\x00'),
-            ('T',                {'a': [{'a': []}]}, b'\x80\x01\x80\x00')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-        # Non-symmetrical encoding and decoding because default values
-        # are not encoded, but part of the decoded (given that the
-        # root and addition is present).
-        self.assertEqual(foo.encode('N', {}), b'\x00')
-        self.assertEqual(foo.decode('N', b'\x00'), {'a': True})
-        self.assertEqual(foo.encode('P', {'a': True}), b'\x80\x80\x01\x40')
-        self.assertEqual(foo.decode('P', b'\x80\x80\x01\x40'),
-                         {'a': True, 'b': True})
-
-        # Decode D as C. Extension addition "a.b" should be skipped.
-        self.assertEqual(foo.decode('C', b'\xc0\x40\x01\x80'), {'a': True})
-
-        # Decode R as Q. Extension addition "a.b" should be skipped.
-        self.assertEqual(foo.decode('Q', b'\xc0\x40\x01\x80\x01\x64'),
-                         {'a': {'a': True}, 'b': 100})
-
-    def test_sequence_of(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= SEQUENCE OF INTEGER "
-            "B ::= SEQUENCE SIZE (2) OF INTEGER "
-            "C ::= SEQUENCE SIZE (1..5) OF INTEGER "
-            "D ::= SEQUENCE SIZE (1..2, ...) OF INTEGER "
-            "E ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  b SEQUENCE OF INTEGER "
-            "} "
-            "F ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  b SEQUENCE SIZE(1) OF INTEGER "
-            "} "
-            "END",
-            'per')
-
-        datas = [
-            ('A',                [], b'\x00'),
-            ('A',               [1], b'\x01\x01\x01'),
-            ('A',            [1, 2], b'\x02\x01\x01\x01\x02'),
-            ('A',     1000 * [1, 2], b'\x87\xd0' + 1000 * b'\x01\x01\x01\x02'),
-            ('B',            [1, 2], b'\x01\x01\x01\x02'),
-            ('B', [4663, 222322233], b'\x02\x12\x37\x04\x0d\x40\x5e\x39'),
-            ('C',               [1], b'\x00\x01\x01'),
-            ('C',            [1, 2], b'\x20\x01\x01\x01\x02'),
-            ('D',            [2, 1], b'\x40\x01\x02\x01\x01'),
-            ('E',  {'a': False, 'b': []}, b'\x00\x00'),
-            ('E', {'a': False, 'b': [1]}, b'\x00\x01\x01\x01'),
-            ('F', {'a': False, 'b': [1]}, b'\x00\x01\x01')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-        # Long sequences are not yet supported.
-        with self.assertRaises(NotImplementedError) as cm:
-            foo.encode('A', 16384 * [1])
-
-        self.assertEqual(str(cm.exception),
-                         'Length determinant >=16384 is not yet supported.')
-
-    def test_choice(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= CHOICE { "
-            "  a BOOLEAN "
-            "} "
-            "B ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  ... "
-            "} "
-            "C ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  b INTEGER, "
-            "  ..., "
-            "  [[ "
-            "  c BOOLEAN "
-            "  ]] "
-            "} "
-            "D ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  [[ "
-            "  b BOOLEAN "
-            "  ]], "
-            "  ... "
-            "} "
-            "E ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  [[ "
-            "  b BOOLEAN "
-            "  ]], "
-            "  [[ "
-            "  c BOOLEAN "
-            "  ]], "
-            "  ... "
-            "} "
-            "F ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  ... "
-            "} "
-            "G ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  b BOOLEAN "
-            "} "
-            "H ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  b BOOLEAN, "
-            "  c BOOLEAN "
-            "} "
-            "I ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  [[ "
-            "  b BOOLEAN, "
-            "  c BOOLEAN "
-            "  ]] "
-            "} "
-            "J ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  [[ "
-            "  b CHOICE { "
-            "    a INTEGER"
-            "  }, "
-            "  c BOOLEAN "
-            "  ]] "
-            "} "
-            "K ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  b BOOLEAN, "
-            "  c BOOLEAN, "
-            "  ..., "
-            "  d BOOLEAN, "
-            "  e BOOLEAN, "
-            "  f BOOLEAN, "
-            "  g BOOLEAN, "
-            "  h BOOLEAN "
-            "} "
-            "END",
-            'per')
-
-        datas = [
-            ('A',            ('a', True), b'\x80'),
-            ('B',            ('a', True), b'\x40'),
-            ('C',            ('a', True), b'\x20'),
-            ('C',               ('b', 1), b'\x40\x01\x01'),
-            ('C',            ('c', True), b'\x80\x01\x80'),
-            ('D',            ('a', True), b'\x40'),
-            ('D',            ('b', True), b'\x80\x01\x80'),
-            ('E',            ('a', True), b'\x40'),
-            ('E',            ('b', True), b'\x80\x01\x80'),
-            ('E',            ('c', True), b'\x81\x01\x80'),
-            ('F',            ('a', True), b'\x40'),
-            ('G',            ('a', True), b'\x40'),
-            ('G',            ('b', True), b'\x80\x01\x80'),
-            ('H',            ('a', True), b'\x40'),
-            ('H',            ('b', True), b'\x80\x01\x80'),
-            ('H',            ('c', True), b'\x81\x01\x80'),
-            ('I',            ('a', True), b'\x40'),
-            ('I',            ('b', True), b'\x80\x01\x80'),
-            ('I',            ('c', True), b'\x81\x01\x80'),
-            ('J',            ('a', True), b'\x40'),
-            ('J',        ('b', ('a', 1)), b'\x80\x02\x01\x01'),
-            ('J',            ('c', True), b'\x81\x01\x80')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-        # Bad root index.
-        with self.assertRaises(asn1tools.DecodeError) as cm:
-            foo.decode('K', b'\x70')
-
-        self.assertEqual(str(cm.exception),
-                         ": Expected choice index 0, 1 or 2, but got 3.")
-
-        # Bad additions index.
-        with self.assertRaises(asn1tools.DecodeError) as cm:
-            foo.decode('K', b'\x8f')
-
-        self.assertEqual(str(cm.exception),
-                         ": Expected choice index 0, 1, 2, 3 or 4, but got 15.")
-
-        # Bad value.
-        with self.assertRaises(asn1tools.EncodeError) as cm:
-            foo.encode('K', ('i', True))
-
-        self.assertEqual(
-            str(cm.exception),
-            "Expected choice 'a', 'b', 'c', 'd', 'e', 'f', 'g' or 'h', but "
-            "got 'i'.")
-
-        # Bad value.
-        with self.assertRaises(asn1tools.EncodeError) as cm:
-            foo.encode('A', ('b', True))
-
-        self.assertEqual(str(cm.exception), "Expected choice 'a', but got 'b'.")
-
-    def test_bit_string(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= BIT STRING "
-            "B ::= BIT STRING (SIZE (9)) "
-            "C ::= BIT STRING (SIZE (5..7)) "
-            "D ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  b BIT STRING "
-            "} "
-            "E ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  b BIT STRING (SIZE(1)), "
-            "  c BIT STRING (SIZE(16)) "
-            "} "
-            "END",
-            'per')
-
-        datas = [
-            ('A',          (b'\x40', 4), b'\x04\x40'),
-            ('A',
-             (299 * b'\x55' + b'\x54', 2399),
-             b'\x89\x5f' + 299 * b'\x55' + b'\x54'),
-            ('B',      (b'\x12\x80', 9), b'\x12\x80'),
-            ('C',          (b'\x34', 6), b'\x40\x34'),
-            ('D',
-             {'a': True, 'b': (b'\x40', 4)},
-             b'\x80\x04\x40'),
-            ('E',
-             {'a': True, 'b': (b'\x80', 1), 'c': (b'\x7f\x01', 16)},
-             b'\xdf\xc0\x40')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-    def test_octet_string(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= OCTET STRING "
-            "B ::= OCTET STRING (SIZE (2)) "
-            "C ::= OCTET STRING (SIZE (3)) "
-            "D ::= OCTET STRING (SIZE (3..7)) "
-            "E ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  b OCTET STRING "
-            "} "
-            "F ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  b OCTET STRING (SIZE(1)), "
-            "  c OCTET STRING (SIZE(2)) "
-            "} "
-            "G ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  b OCTET STRING (SIZE(3)) "
-            "} "
-            "H ::= OCTET STRING (SIZE (65535)) "
-            "I ::= OCTET STRING (SIZE (65536)) "
-            "END",
-            'per')
-
-        datas = [
-            ('A',                           b'\x00', b'\x01\x00'),
-            ('A',                     500 * b'\x00', b'\x81\xf4' + 500 * b'\x00'),
-            ('B',                       b'\xab\xcd', b'\xab\xcd'),
-            ('C',                   b'\xab\xcd\xef', b'\xab\xcd\xef'),
-            ('D',               b'\x89\xab\xcd\xef', b'\x20\x89\xab\xcd\xef'),
-            ('E',         {'a': True, 'b': b'\x00'}, b'\x80\x01\x00'),
-            ('E', {'a': True, 'b': b'\x00\x01\x02'}, b'\x80\x03\x00\x01\x02'),
-            ('F',
-             {'a': True, 'b': b'\x12', 'c': b'\x34\x56'},
-             b'\x89\x1a\x2b\x00'),
-            ('G', {'a': True, 'b': b'\x00\x01\x02'}, b'\x80\x00\x01\x02'),
-            ('H',     32767 * b'\x01\x02' + b'\x01', 32767 * b'\x01\x02' + b'\x01'),
-            # ('I',
-            #  32768 * b'\x01\x02',
-            #  b'\xc4' + 32768 * b'\x01\x02'
-            #  + b'\x00'),
-            ('A',
-             4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02',
-             b'\xbf\xff' + 4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02'),
-            # ('A',
-            #  4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03',
-            #  b'\xc1' + 4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03'
-            #  + b'\x00'),
-            # ('A',
-            #  4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03\x00',
-            #  b'\xc1' + 4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03'
-            #  + b'\x01' + b'\x00')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-    def test_ia5_string(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= IA5String "
-            "END",
-            'per')
-
-        datas = [
-            ('A',
-             1638 * '1234567890' + '123',
-             b'\xbf\xff'
-             + 1638 * b'\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'
-             + b'\x31\x32\x33'),
-            # ('A',
-            #  1638 * '1234567890' + '1234',
-            #  b'\xc1'
-            #  + 1638 * b'\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'
-            #  + b'\x31\x32\x33\x34'
-            #  + b'\x00'),
-            # ('A',
-            #  1638 * '1234567890' + '12345',
-            #  b'\xc1'
-            #  + 1638 * b'\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'
-            #  + b'\x31\x32\x33\x34'
-            #  + b'\x01'
-            #  + b'\x35')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-    def test_object_identifier(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= OBJECT IDENTIFIER "
-            "B ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  b OBJECT IDENTIFIER "
-            "} "
-            "END",
-            'per')
-
-        datas = [
-            ('A',                   '1.2', b'\x01\x2a'),
-            ('A',              '1.2.3321', b'\x03\x2a\x99\x79'),
-            ('B', {'a': True, 'b': '1.2'}, b'\x80\x01\x2a')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
 
 
 if __name__ == '__main__':

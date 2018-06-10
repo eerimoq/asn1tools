@@ -23,6 +23,774 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
     maxDiff = None
 
+    def test_boolean_explicit_tags(self):
+        """Test explicit tags on booleans.
+
+        """
+
+        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] BOOLEAN END'
+        foo = asn1tools.compile_string(spec)
+        self.assert_encode_decode(foo, 'Foo', True, b'\xa2\x03\x01\x01\xff')
+
+        # Bad explicit tag.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('Foo', b'\xa3\x03\x01\x01\x01')
+
+        self.assertEqual(
+            str(cm.exception),
+            ": Expected ExplicitTag with tag 'a2' at offset 0, but got 'a3'.")
+
+        # Bad tag.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('Foo', b'\xa2\x03\x02\x01\x01')
+
+        self.assertEqual(
+            str(cm.exception),
+            ": Expected BOOLEAN with tag '01' at offset 2, but got '02'.")
+
+    def test_boolean_implicit_tags(self):
+        """Test implicit tags on booleans.
+
+        """
+
+        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] IMPLICIT BOOLEAN END'
+        foo = asn1tools.compile_string(spec)
+        self.assert_encode_decode(foo, 'Foo', True, b'\x82\x01\xff')
+
+    def test_integer_explicit_tags(self):
+        """Test explicit tags on integers.
+
+        """
+
+        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] INTEGER END'
+        foo = asn1tools.compile_string(spec)
+        self.assert_encode_decode(foo, 'Foo', 1, b'\xa2\x03\x02\x01\x01')
+
+        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] EXPLICIT INTEGER END'
+        foo = asn1tools.compile_string(spec)
+        self.assert_encode_decode(foo, 'Foo', 1, b'\xa2\x03\x02\x01\x01')
+
+        spec = 'Foo DEFINITIONS EXPLICIT TAGS ::= BEGIN Foo ::= INTEGER END'
+        foo = asn1tools.compile_string(spec)
+        self.assert_encode_decode(foo, 'Foo', 1, b'\x02\x01\x01')
+
+        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] BOOLEAN END'
+        foo = asn1tools.compile_string(spec)
+        self.assert_encode_decode(foo, 'Foo', True, b'\xa2\x03\x01\x01\xff')
+
+    def test_integer_implicit_tags(self):
+        """Test implicit tags on integers.
+
+        """
+
+        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] IMPLICIT INTEGER END'
+        foo = asn1tools.compile_string(spec)
+        self.assert_encode_decode(foo, 'Foo', 1, b'\x82\x01\x01')
+
+        spec = 'Foo DEFINITIONS IMPLICIT TAGS ::= BEGIN Foo ::= INTEGER END'
+        foo = asn1tools.compile_string(spec)
+        self.assert_encode_decode(foo, 'Foo', 1, b'\x02\x01\x01')
+
+        spec = ('Foo DEFINITIONS EXPLICIT TAGS ::= BEGIN '
+                'Foo ::= [2] IMPLICIT INTEGER END')
+        foo = asn1tools.compile_string(spec)
+        self.assert_encode_decode(foo, 'Foo', 1, b'\x82\x01\x01')
+
+    def test_real(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= REAL "
+            "END")
+
+        datas = [
+            ('A',                 0.0, b'\x09\x00'),
+            ('A',                -0.0, b'\x09\x00'),
+            ('A',        float('inf'), b'\x09\x01\x40'),
+            ('A',       float('-inf'), b'\x09\x01\x41'),
+            ('A',                 1.0, b'\x09\x03\x80\x00\x01'),
+            ('A',           2 ** 1023, b'\x09\x04\x81\x03\xff\x01'),
+            ('A',          2 ** -1022, b'\x09\x04\x81\xfc\x02\x01'),
+            ('A',
+             (2 ** 1023) * (1 + (1 - (2 ** -52))),
+             b'\x09\x0a\x81\x03\xcb\x1f\xff\xff\xff\xff\xff\xff'),
+            ('A',
+             (2 ** -1022) * (1 - (2 ** -52)),
+             b'\x09\x0a\x81\xfb\xce\x0f\xff\xff\xff\xff\xff\xff'),
+            ('A',          2 ** -1074, b'\x09\x04\x81\xfb\xce\x01'),
+            ('A',
+             1.1,
+             b'\x09\x09\x80\xcd\x08\xcc\xcc\xcc\xcc\xcc\xcd'),
+            ('A',
+             1234.5678,
+             b'\x09\x09\x80\xd6\x13\x4a\x45\x6d\x5c\xfa\xad'),
+            ('A',                   8, b'\x09\x03\x80\x03\x01'),
+            ('A',               0.625, b'\x09\x03\x80\xfd\x05'),
+            ('A',
+             10000000000000000146306952306748730309700429878646550592786107871697963642511482159104,
+             b'\x09\x0a\x81\x00\xe9\x02\x92\xe3\x2a\xc6\x85\x59'),
+            ('A',
+             0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000001,
+             b'\x09\x0a\x81\xfe\xae\x13\xe4\x97\x06\x5c\xd6\x1f'),
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo,
+                                      type_name,
+                                      decoded,
+                                      encoded)
+
+        # NaN cannot be compared.
+        encoded = b'\x09\x01\x42'
+
+        self.assertEqual(foo.encode('A', float('nan')), encoded)
+        self.assertTrue(math.isnan(foo.decode('A', encoded)))
+
+        # Minus zero.
+        self.assertEqual(foo.decode('A', b'\x09\x01\x43'), -0.0)
+
+        # Invalid control words.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', b'\x09\x01\x44')
+
+        self.assertEqual(str(cm.exception),
+                         ': Unsupported REAL control word 0x44.')
+
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', b'\x09\x02\x82\x00')
+
+        self.assertEqual(str(cm.exception),
+                         ': Unsupported REAL control word 0x82.')
+
+    def test_bit_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= BIT STRING "
+            "B ::= BIT STRING { "
+            "  a (0), "
+            "  b (1), "
+            "  c (2) "
+            "} "
+            "C ::= SEQUENCE { "
+            "  a B DEFAULT {b, c}, "
+            "  b B DEFAULT '011'B, "
+            "  c B DEFAULT '60'H "
+            "} "
+            "D ::= SEQUENCE { "
+            "  a A DEFAULT '00'B, "
+            "  b B DEFAULT '00'B "
+            "} "
+            "END")
+
+        datas = [
+            ('A',              (b'', 0), b'\x03\x01\x00'),
+            ('A',          (b'\x40', 4), b'\x03\x02\x04\x40'),
+            ('A',          (b'\x80', 1), b'\x03\x02\x07\x80'),
+            ('A',      (b'\x00\x00', 9), b'\x03\x03\x07\x00\x00'),
+            ('B',          (b'\x80', 1), b'\x03\x02\x07\x80'),
+            ('B',          (b'\xe0', 3), b'\x03\x02\x05\xe0'),
+            ('B',          (b'\x01', 8), b'\x03\x02\x00\x01'),
+            ('C',
+             {'a': (b'\x40', 2), 'b': (b'\x40', 2), 'c': (b'\x40', 2)},
+             b'\x30\x0c\x80\x02\x06\x40\x81\x02\x06\x40\x82\x02\x06\x40'),
+            ('C',
+             {'a': (b'\x60', 3), 'b': (b'\x60', 3), 'c': (b'\x60', 3)},
+             b'\x30\x00'),
+            ('D',
+             {'a': (b'\x00', 2), 'b': (b'\x00', 2)},
+             b'\x30\x00')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Default value is not encoded, but part of decoded. Also
+        # ignore dangling bits.
+        datas = [
+            ('C',
+             {},
+             b'\x30\x00',
+             {'a': (b'\x60', 3), 'b': (b'\x60', 3), 'c': (b'\x60', 3)}),
+            ('C',
+             {'a': (b'\x60', 4), 'b': (b'\x60', 5), 'c': (b'\x60', 6)},
+             b'\x30\x00',
+             {'a': (b'\x60', 3), 'b': (b'\x60', 3), 'c': (b'\x60', 3)}),
+            ('A',     (b'\xff', 1), b'\x03\x02\x07\x80', (b'\x80', 1)),
+            ('D',
+             {'a': (b'\x00', 3), 'b': (b'\x00', 3)},
+             b'\x30\x04\x80\x02\x05\x00',
+             {'a': (b'\x00', 3), 'b': (b'\x00', 2)})
+        ]
+
+        for type_name, decoded_1, encoded, decoded_2 in datas:
+            self.assertEqual(foo.encode(type_name, decoded_1), encoded)
+            self.assertEqual(foo.decode(type_name, encoded), decoded_2)
+
+    def test_bit_string_explicit_tags(self):
+        """Test explicit tags on bit strings.
+
+        """
+
+        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] BIT STRING END'
+        foo = asn1tools.compile_string(spec)
+        self.assert_encode_decode(foo, 'Foo', (b'\x56', 7), b'\xa2\x04\x03\x02\x01\x56')
+
+    def test_octet_string_explicit_tags(self):
+        """Test explicit tags on octet strings.
+
+        """
+
+        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] OCTET STRING END'
+        foo = asn1tools.compile_string(spec)
+        self.assert_encode_decode(foo, 'Foo', b'\x56', b'\xa2\x03\x04\x01\x56')
+
+    def test_enumerated(self):
+        foo = asn1tools.compile_dict(deepcopy(ENUMERATED))
+
+        datas = [
+            ('A', 'a', b'\x0a\x01\x00'),
+            ('A', 'b', b'\x0a\x01\x01'),
+            ('A', 'c', b'\x0a\x01\x02'),
+            ('B', 'c', b'\x0a\x01\x00'),
+            ('B', 'a', b'\x0a\x01\x01'),
+            ('B', 'b', b'\x0a\x01\x02'),
+            ('B', 'd', b'\x0a\x01\x03'),
+            ('C', 'a', b'\x0a\x01\x00'),
+            ('C', 'b', b'\x0a\x01\x01'),
+            ('C', 'c', b'\x0a\x01\x03'),
+            ('C', 'd', b'\x0a\x01\x04'),
+            ('D', 'a', b'\x0a\x01\x00'),
+            ('D', 'd', b'\x0a\x01\x01'),
+            ('D', 'z', b'\x0a\x01\x19'),
+            ('E', 'c', b'\x0a\x01\x00'),
+            ('E', 'a', b'\x0a\x01\x01'),
+            ('E', 'b', b'\x0a\x01\x02'),
+            ('E', 'd', b'\x0a\x01\x03'),
+            ('E', 'f', b'\x0a\x01\x04'),
+            ('E', 'g', b'\x0a\x01\x05'),
+            ('E', 'e', b'\x0a\x01\x19')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('F', b'\x0a\x01\xff')
+
+        self.assertEqual(str(cm.exception),
+                         ": Expected enumeration value 0, but got -1.")
+
+    def test_sequence(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE {} "
+            "B ::= SEQUENCE { "
+            "  a INTEGER DEFAULT 0 "
+            "} "
+            "C ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ... "
+            "} "
+            "D ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]] "
+            "} "
+            "E ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]], "
+            "  ... "
+            "} "
+            "F ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]], "
+            "  ..., "
+            "  c BOOLEAN "
+            "} "
+            "G ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]], "
+            "  [[ "
+            "  c BOOLEAN "
+            "  ]], "
+            "  ..., "
+            "  d BOOLEAN "
+            "} "
+            "H ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  ... "
+            "} "
+            "I ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b BOOLEAN "
+            "} "
+            "J ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b BOOLEAN OPTIONAL "
+            "} "
+            "K ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b BOOLEAN, "
+            "  c BOOLEAN "
+            "} "
+            "L ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN, "
+            "  c BOOLEAN "
+            "  ]] "
+            "} "
+            "M ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b SEQUENCE { "
+            "    a INTEGER"
+            "  } OPTIONAL, "
+            "  c BOOLEAN "
+            "  ]] "
+            "} "
+            "N ::= SEQUENCE { "
+            "  a BOOLEAN DEFAULT TRUE "
+            "} "
+            "O ::= SEQUENCE { "
+            "  ..., "
+            "  a BOOLEAN DEFAULT TRUE "
+            "} "
+            "P ::= SEQUENCE { "
+            "  ..., "
+            "  [[ "
+            "  a BOOLEAN, "
+            "  b BOOLEAN DEFAULT TRUE "
+            "  ]] "
+            "} "
+            "Q ::= SEQUENCE { "
+            "  a C, "
+            "  b INTEGER "
+            "} "
+            "R ::= SEQUENCE { "
+            "  a D, "
+            "  b INTEGER "
+            "} "
+            "S ::= SEQUENCE { "
+            "  a INTEGER OPTIONAL "
+            "} "
+            "T ::= SEQUENCE { "
+            "  a T OPTIONAL "
+            "} "
+            "U ::= SEQUENCE { "
+            "  a SEQUENCE OF U OPTIONAL "
+            "} "
+            "V ::= SEQUENCE { "
+            "  a [1] V OPTIONAL, "
+            "  b [2] V OPTIONAL, "
+            "  c [3] SEQUENCE { "
+            "    a [4] V "
+            "  } OPTIONAL "
+            "} "
+            "END",
+            'ber')
+
+        datas = [
+            ('A',                                {}, b'\x30\x00'),
+            ('B',                          {'a': 0}, b'\x30\x00'),
+            ('N',                       {'a': True}, b'\x30\x00'),
+            ('P',                                {}, b'\x30\x00'),
+            ('S',                                {}, b'\x30\x00'),
+            ('T',                                {}, b'\x30\x00'),
+            ('O',                       {'a': True}, b'\x30\x00'),
+            ('T',                         {'a': {}}, b'\x30\x02\xa0\x00'),
+            ('B',                          {'a': 1}, b'\x30\x03\x80\x01\x01'),
+            ('C',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
+            ('D',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
+            ('E',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
+            ('H',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
+            ('I',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
+            ('J',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
+            ('K',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
+            ('L',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
+            ('M',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
+            ('N',                      {'a': False}, b'\x30\x03\x80\x01\x00'),
+            ('O',                      {'a': False}, b'\x30\x03\x80\x01\x00'),
+            ('P',            {'a': True, 'b': True}, b'\x30\x03\x80\x01\xff'),
+            ('S',                          {'a': 1}, b'\x30\x03\x80\x01\x01'),
+            ('U',                       {'a': [{}]}, b'\x30\x04\xa0\x02\x30\x00'),
+            ('V',                  {'c': {'a': {}}}, b'\x30\x04\xa3\x02\xa4\x00'),
+            ('P',
+             {'a': True, 'b': False},
+             b'\x30\x06\x80\x01\xff\x81\x01\x00'),
+            ('D',
+             {'a': True, 'b': True},
+             b'\x30\x06\x80\x01\xff\x81\x01\xff'),
+            ('E',
+             {'a': True, 'b': True},
+             b'\x30\x06\x80\x01\xff\x81\x01\xff'),
+            ('F',
+             {'a': True, 'c': True},
+             b'\x30\x06\x80\x01\xff\x82\x01\xff'),
+            ('G',
+             {'a': True, 'd': True},
+             b'\x30\x06\x80\x01\xff\x83\x01\xff'),
+            ('I',
+             {'a': True, 'b': True},
+             b'\x30\x06\x80\x01\xff\x81\x01\xff'),
+            ('J',
+             {'a': True, 'b': True},
+             b'\x30\x06\x80\x01\xff\x81\x01\xff'),
+            ('K',
+             {'a': True, 'b': True},
+             b'\x30\x06\x80\x01\xff\x81\x01\xff'),
+            ('F',
+             {'a': True, 'b': True, 'c': True},
+             b'\x30\x09\x80\x01\xff\x82\x01\xff\x81\x01\xff'),
+            ('K',
+             {'a': True, 'b': True, 'c': True},
+             b'\x30\x09\x80\x01\xff\x81\x01\xff\x82\x01\xff'),
+            ('L',
+             {'a': True, 'b': True, 'c': True},
+             b'\x30\x09\x80\x01\xff\x81\x01\xff\x82\x01\xff'),
+            ('G',
+             {'a': True, 'b': True, 'd': True},
+             b'\x30\x09\x80\x01\xff\x83\x01\xff\x81\x01\xff'),
+            ('G',
+             {'a': True, 'b': True, 'c': True, 'd': True},
+             b'\x30\x0c\x80\x01\xff\x83\x01\xff\x81\x01\xff\x82\x01\xff'),
+            ('M',
+             {'a': True, 'b': {'a': 5}, 'c': True},
+             b'\x30\x0b\x80\x01\xff\xa1\x03\x80\x01\x05\x82\x01\xff'),
+            ('Q',
+             {'a': {'a': True}, 'b': 100},
+             b'\x30\x08\xa0\x03\x80\x01\xff\x81\x01\x64'),
+            ('R',
+             {'a': {'a': True, 'b': True}, 'b': 100},
+             b'\x30\x0b\xa0\x06\x80\x01\xff\x81\x01\xff\x81\x01\x64'),
+            ('U',
+             {'a': [{'a': []}]},
+             b'\x30\x06\xa0\x04\x30\x02\xa0\x00'),
+            ('V',
+             {'a': {}, 'b': {}, 'c': {'a': {}}},
+             b'\x30\x08\xa1\x00\xa2\x00\xa3\x02\xa4\x00')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Non-symmetrical encoding and decoding because default values
+        # are not encoded, but part of the decoded (given that the
+        # root and addition is present).
+        self.assertEqual(foo.encode('N', {}), b'\x30\x00')
+        self.assertEqual(foo.decode('N', b'\x30\x00'), {'a': True})
+        self.assertEqual(foo.encode('P', {'a': True}), b'\x30\x03\x80\x01\xff')
+        self.assertEqual(foo.decode('P', b'\x30\x03\x80\x01\xff'),
+                         {'a': True, 'b': True})
+
+        # Decode D as C. Extension addition "a.b" should be skipped.
+        self.assertEqual(foo.decode('C', b'\x30\x06\x80\x01\xff\x81\x01\xff'),
+                         {'a': True})
+
+        # Decode R as Q. Extension addition "a.b" should be skipped.
+        self.assertEqual(
+            foo.decode('Q',
+                       b'\x30\x0b\xa0\x06\x80\x01\xff\x81\x01\xff\x81\x01\x64'),
+            {'a': {'a': True}, 'b': 100})
+
+        # Decode S with end-of-contentes octet , which is not yet
+        # supported.
+        with self.assertRaises(NotImplementedError) as cm:
+            foo.decode('S', b'\x30\x80\x02\x01\x01\x00\x00')
+
+        self.assertEqual(
+            str(cm.exception),
+            'Decode until an end-of-contents tag is not yet implemented.')
+
+    def test_sequence_of(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE OF INTEGER "
+            "END",
+            'ber')
+
+        datas = [
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        with self.assertRaises(NotImplementedError) as cm:
+            foo.decode('A', b'\x30\x80\x00\x00')
+
+        self.assertEqual(
+            str(cm.exception),
+            'Decode until an end-of-contents tag is not yet implemented.')
+
+    def test_choice(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= CHOICE { "
+            "  a BOOLEAN "
+            "} "
+            "B ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ... "
+            "} "
+            "C ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  b INTEGER, "
+            "  ..., "
+            "  [[ "
+            "  c BOOLEAN "
+            "  ]] "
+            "} "
+            "D ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]], "
+            "  ... "
+            "} "
+            "E ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN "
+            "  ]], "
+            "  [[ "
+            "  c BOOLEAN "
+            "  ]], "
+            "  ... "
+            "} "
+            "F ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  ... "
+            "} "
+            "G ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b BOOLEAN "
+            "} "
+            "H ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b BOOLEAN, "
+            "  c BOOLEAN "
+            "} "
+            "I ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b BOOLEAN, "
+            "  c BOOLEAN "
+            "  ]] "
+            "} "
+            "J ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  [[ "
+            "  b CHOICE { "
+            "    a INTEGER"
+            "  }, "
+            "  c BOOLEAN "
+            "  ]] "
+            "} "
+            "K ::= CHOICE { "
+            "  m1 NULL, "
+            "  m2 NULL, "
+            "  m3 NULL, "
+            "  m4 NULL, "
+            "  m5 NULL, "
+            "  m6 NULL, "
+            "  m7 NULL, "
+            "  m8 NULL, "
+            "  m9 NULL, "
+            "  m10 NULL, "
+            "  m11 NULL, "
+            "  m12 NULL, "
+            "  m13 NULL, "
+            "  m14 NULL, "
+            "  m15 NULL, "
+            "  m16 NULL, "
+            "  m17 NULL, "
+            "  m18 NULL, "
+            "  m19 NULL, "
+            "  m20 NULL, "
+            "  m21 NULL, "
+            "  m22 NULL, "
+            "  m23 NULL, "
+            "  m24 NULL, "
+            "  m25 NULL, "
+            "  m26 NULL, "
+            "  m27 NULL, "
+            "  m28 NULL, "
+            "  m29 NULL, "
+            "  m30 NULL, "
+            "  m31 NULL, "
+            "  m32 NULL, "
+            "  m33 NULL, "
+            "  m34 NULL, "
+            "  m35 NULL, "
+            "  m36 NULL, "
+            "  m37 NULL, "
+            "  m38 NULL, "
+            "  m39 NULL "
+            "} "
+            "L ::= CHOICE { "
+            "  a OCTET STRING "
+            "} "
+            "M ::= CHOICE { "
+            "  a CHOICE { "
+            "    b BOOLEAN "
+            "  } "
+            "} "
+            "END")
+
+        datas = [
+            ('A',            ('a', True), b'\x80\x01\xff'),
+            ('B',            ('a', True), b'\x80\x01\xff'),
+            ('C',            ('a', True), b'\x80\x01\xff'),
+            ('C',               ('b', 1), b'\x81\x01\x01'),
+            ('C',            ('c', True), b'\x82\x01\xff'),
+            ('D',            ('a', True), b'\x80\x01\xff'),
+            ('D',            ('b', True), b'\x81\x01\xff'),
+            ('E',            ('a', True), b'\x80\x01\xff'),
+            ('E',            ('b', True), b'\x81\x01\xff'),
+            ('E',            ('c', True), b'\x82\x01\xff'),
+            ('F',            ('a', True), b'\x80\x01\xff'),
+            ('G',            ('a', True), b'\x80\x01\xff'),
+            ('G',            ('b', True), b'\x81\x01\xff'),
+            ('H',            ('a', True), b'\x80\x01\xff'),
+            ('H',            ('b', True), b'\x81\x01\xff'),
+            ('H',            ('c', True), b'\x82\x01\xff'),
+            ('I',            ('a', True), b'\x80\x01\xff'),
+            ('I',            ('b', True), b'\x81\x01\xff'),
+            ('I',            ('c', True), b'\x82\x01\xff'),
+            ('J',            ('a', True), b'\x80\x01\xff'),
+            ('J',        ('b', ('a', 1)), b'\xa1\x03\x80\x01\x01'),
+            ('J',            ('c', True), b'\x82\x01\xff'),
+            ('K',          ('m31', None), b'\x9e\x00'),
+            ('K',          ('m32', None), b'\x9f\x1f\x00'),
+            ('K',          ('m33', None), b'\x9f\x20\x00'),
+            ('M',     ('a', ('b', True)), b'\xa0\x03\x80\x01\xff')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        self.assertEqual(foo.decode('L', b'\xa0\x03\x04\x01\x12'), ('a', b'\x12'))
+        self.assertEqual(foo.decode('L', b'\x80\x01\x12'), ('a', b'\x12'))
+
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('C', b'\x88\x01\x12')
+
+        self.assertEqual(
+            str(cm.exception),
+            ": Expected choice member tag '80', '81' or '82', but got '88'.")
+
+    def test_choice_implicit_tags(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS IMPLICIT TAGS ::= "
+            "BEGIN "
+            "A ::= CHOICE { "
+            "  a BOOLEAN "
+            "} "
+            "B ::= CHOICE { "
+            "  a OCTET STRING "
+            "} "
+            "C ::= CHOICE { "
+            "  a CHOICE { "
+            "    b BOOLEAN, "
+            "    c INTEGER "
+            "  } "
+            "} "
+            "D ::= [5] CHOICE { "
+            "  a BOOLEAN "
+            "} "
+            "F ::= [5] EXPLICIT CHOICE { "
+            "  a BOOLEAN "
+            "} "
+            "G ::= [APPLICATION 5] EXPLICIT CHOICE { "
+            "  a BOOLEAN "
+            "} "
+            "H ::= [6] IMPLICIT G "
+            "I ::= [APPLICATION 6] IMPLICIT F "
+            "J ::= [6] IMPLICIT F "
+            "K ::= [3] CHOICE { "
+            "  a [4] CHOICE { "
+            "    a BOOLEAN "
+            "  }, "
+            "  b [5] CHOICE { "
+            "    b INTEGER "
+            "  } "
+            "} "
+            "END")
+
+        datas = [
+            ('A',            ('a', True), b'\x01\x01\xff'),
+            ('C',     ('a', ('b', True)), b'\x01\x01\xff'),
+            ('C',        ('a', ('c', 3)), b'\x02\x01\x03'),
+            ('D',            ('a', True), b'\xa5\x03\x01\x01\xff'),
+            ('F',            ('a', True), b'\xa5\x03\x01\x01\xff'),
+            ('G',            ('a', True), b'\x65\x03\x01\x01\xff'),
+            ('H',            ('a', True), b'\xa6\x03\x01\x01\xff'),
+            ('I',            ('a', True), b'\x66\x03\x01\x01\xff'),
+            ('J',            ('a', True), b'\xa6\x03\x01\x01\xff'),
+            ('K',     ('a', ('a', True)), b'\xa3\x05\xa4\x03\x01\x01\xff'),
+            ('K',        ('b', ('b', 2)), b'\xa3\x05\xa5\x03\x02\x01\x02')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        self.assertEqual(foo.decode('B', b'\x24\x03\x04\x01\x12'), ('a', b'\x12'))
+        self.assertEqual(foo.decode('B', b'\x04\x01\x12'), ('a', b'\x12'))
+
+    def test_utc_time_explicit_tags(self):
+        """Test explicit tags on UTC time.
+
+        """
+
+        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] UTCTime END'
+        foo = asn1tools.compile_string(spec)
+        self.assert_encode_decode(foo,
+                                  'Foo',
+                                  '121001230001Z',
+                                  b'\xa2\x0f\x17\x0d121001230001Z')
+
+    def test_graphic_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= GraphicString "
+            "END")
+
+        datas = [
+            ('A', 'f', b'\x19\x01\x66')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_foo(self):
         foo = asn1tools.compile_files(['tests/files/foo.asn'])
 
@@ -1776,109 +2544,6 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         self.assertEqual(repr(all_types.types['Choice']),
                          'Choice(Choice, [Integer(a)])')
 
-    def test_integer_explicit_tags(self):
-        """Test explicit tags on integers.
-
-        """
-
-        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] INTEGER END'
-        foo = asn1tools.compile_string(spec)
-        self.assert_encode_decode(foo, 'Foo', 1, b'\xa2\x03\x02\x01\x01')
-
-        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] EXPLICIT INTEGER END'
-        foo = asn1tools.compile_string(spec)
-        self.assert_encode_decode(foo, 'Foo', 1, b'\xa2\x03\x02\x01\x01')
-
-        spec = 'Foo DEFINITIONS EXPLICIT TAGS ::= BEGIN Foo ::= INTEGER END'
-        foo = asn1tools.compile_string(spec)
-        self.assert_encode_decode(foo, 'Foo', 1, b'\x02\x01\x01')
-
-        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] BOOLEAN END'
-        foo = asn1tools.compile_string(spec)
-        self.assert_encode_decode(foo, 'Foo', True, b'\xa2\x03\x01\x01\xff')
-
-    def test_integer_implicit_tags(self):
-        """Test implicit tags on integers.
-
-        """
-
-        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] IMPLICIT INTEGER END'
-        foo = asn1tools.compile_string(spec)
-        self.assert_encode_decode(foo, 'Foo', 1, b'\x82\x01\x01')
-
-        spec = 'Foo DEFINITIONS IMPLICIT TAGS ::= BEGIN Foo ::= INTEGER END'
-        foo = asn1tools.compile_string(spec)
-        self.assert_encode_decode(foo, 'Foo', 1, b'\x02\x01\x01')
-
-        spec = ('Foo DEFINITIONS EXPLICIT TAGS ::= BEGIN '
-                'Foo ::= [2] IMPLICIT INTEGER END')
-        foo = asn1tools.compile_string(spec)
-        self.assert_encode_decode(foo, 'Foo', 1, b'\x82\x01\x01')
-
-    def test_boolean_explicit_tags(self):
-        """Test explicit tags on booleans.
-
-        """
-
-        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] BOOLEAN END'
-        foo = asn1tools.compile_string(spec)
-        self.assert_encode_decode(foo, 'Foo', True, b'\xa2\x03\x01\x01\xff')
-
-        # Bad explicit tag.
-        with self.assertRaises(asn1tools.DecodeError) as cm:
-            foo.decode('Foo', b'\xa3\x03\x01\x01\x01')
-
-        self.assertEqual(
-            str(cm.exception),
-            ": Expected ExplicitTag with tag 'a2' at offset 0, but got 'a3'.")
-
-        # Bad tag.
-        with self.assertRaises(asn1tools.DecodeError) as cm:
-            foo.decode('Foo', b'\xa2\x03\x02\x01\x01')
-
-        self.assertEqual(
-            str(cm.exception),
-            ": Expected BOOLEAN with tag '01' at offset 2, but got '02'.")
-
-    def test_boolean_implicit_tags(self):
-        """Test implicit tags on booleans.
-
-        """
-
-        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] IMPLICIT BOOLEAN END'
-        foo = asn1tools.compile_string(spec)
-        self.assert_encode_decode(foo, 'Foo', True, b'\x82\x01\xff')
-
-    def test_octet_string_explicit_tags(self):
-        """Test explicit tags on octet strings.
-
-        """
-
-        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] OCTET STRING END'
-        foo = asn1tools.compile_string(spec)
-        self.assert_encode_decode(foo, 'Foo', b'\x56', b'\xa2\x03\x04\x01\x56')
-
-    def test_bit_string_explicit_tags(self):
-        """Test explicit tags on bit strings.
-
-        """
-
-        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] BIT STRING END'
-        foo = asn1tools.compile_string(spec)
-        self.assert_encode_decode(foo, 'Foo', (b'\x56', 7), b'\xa2\x04\x03\x02\x01\x56')
-
-    def test_utc_time_explicit_tags(self):
-        """Test explicit tags on UTC time.
-
-        """
-
-        spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] UTCTime END'
-        foo = asn1tools.compile_string(spec)
-        self.assert_encode_decode(foo,
-                                  'Foo',
-                                  '121001230001Z',
-                                  b'\xa2\x0f\x17\x0d121001230001Z')
-
     def test_utf8_string_explicit_tags(self):
         """Test explicit tags on UTC time.
 
@@ -2269,137 +2934,6 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             str(cm.exception),
             ': Expected definite length at offset 1, but got indefinite.')
 
-    def test_long_tag(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS IMPLICIT TAGS ::= BEGIN "
-            "A ::= [31] INTEGER "
-            "B ::= [500] INTEGER "
-            "END")
-
-        datas = [
-            ('A', 1, b'\x9f\x1f\x01\x01'),
-            ('B', 1, b'\x9f\x83\x74\x01\x01')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-    def test_real(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= REAL "
-            "END")
-
-        datas = [
-            ('A',                 0.0, b'\x09\x00'),
-            ('A',                -0.0, b'\x09\x00'),
-            ('A',        float('inf'), b'\x09\x01\x40'),
-            ('A',       float('-inf'), b'\x09\x01\x41'),
-            ('A',                 1.0, b'\x09\x03\x80\x00\x01'),
-            ('A',           2 ** 1023, b'\x09\x04\x81\x03\xff\x01'),
-            ('A',          2 ** -1022, b'\x09\x04\x81\xfc\x02\x01'),
-            ('A',
-             (2 ** 1023) * (1 + (1 - (2 ** -52))),
-             b'\x09\x0a\x81\x03\xcb\x1f\xff\xff\xff\xff\xff\xff'),
-            ('A',
-             (2 ** -1022) * (1 - (2 ** -52)),
-             b'\x09\x0a\x81\xfb\xce\x0f\xff\xff\xff\xff\xff\xff'),
-            ('A',          2 ** -1074, b'\x09\x04\x81\xfb\xce\x01'),
-            ('A',
-             1.1,
-             b'\x09\x09\x80\xcd\x08\xcc\xcc\xcc\xcc\xcc\xcd'),
-            ('A',
-             1234.5678,
-             b'\x09\x09\x80\xd6\x13\x4a\x45\x6d\x5c\xfa\xad'),
-            ('A',                   8, b'\x09\x03\x80\x03\x01'),
-            ('A',               0.625, b'\x09\x03\x80\xfd\x05'),
-            ('A',
-             10000000000000000146306952306748730309700429878646550592786107871697963642511482159104,
-             b'\x09\x0a\x81\x00\xe9\x02\x92\xe3\x2a\xc6\x85\x59'),
-            ('A',
-             0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000001,
-             b'\x09\x0a\x81\xfe\xae\x13\xe4\x97\x06\x5c\xd6\x1f'),
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo,
-                                      type_name,
-                                      decoded,
-                                      encoded)
-
-        # NaN cannot be compared.
-        encoded = b'\x09\x01\x42'
-
-        self.assertEqual(foo.encode('A', float('nan')), encoded)
-        self.assertTrue(math.isnan(foo.decode('A', encoded)))
-
-        # Minus zero.
-        self.assertEqual(foo.decode('A', b'\x09\x01\x43'), -0.0)
-
-        # Invalid control words.
-        with self.assertRaises(asn1tools.DecodeError) as cm:
-            foo.decode('A', b'\x09\x01\x44')
-
-        self.assertEqual(str(cm.exception),
-                         ': Unsupported REAL control word 0x44.')
-
-        with self.assertRaises(asn1tools.DecodeError) as cm:
-            foo.decode('A', b'\x09\x02\x82\x00')
-
-        self.assertEqual(str(cm.exception),
-                         ': Unsupported REAL control word 0x82.')
-
-    def test_enumerated(self):
-        foo = asn1tools.compile_dict(deepcopy(ENUMERATED))
-
-        datas = [
-            ('A', 'a', b'\x0a\x01\x00'),
-            ('A', 'b', b'\x0a\x01\x01'),
-            ('A', 'c', b'\x0a\x01\x02'),
-            ('B', 'c', b'\x0a\x01\x00'),
-            ('B', 'a', b'\x0a\x01\x01'),
-            ('B', 'b', b'\x0a\x01\x02'),
-            ('B', 'd', b'\x0a\x01\x03'),
-            ('C', 'a', b'\x0a\x01\x00'),
-            ('C', 'b', b'\x0a\x01\x01'),
-            ('C', 'c', b'\x0a\x01\x03'),
-            ('C', 'd', b'\x0a\x01\x04'),
-            ('D', 'a', b'\x0a\x01\x00'),
-            ('D', 'd', b'\x0a\x01\x01'),
-            ('D', 'z', b'\x0a\x01\x19'),
-            ('E', 'c', b'\x0a\x01\x00'),
-            ('E', 'a', b'\x0a\x01\x01'),
-            ('E', 'b', b'\x0a\x01\x02'),
-            ('E', 'd', b'\x0a\x01\x03'),
-            ('E', 'f', b'\x0a\x01\x04'),
-            ('E', 'g', b'\x0a\x01\x05'),
-            ('E', 'e', b'\x0a\x01\x19')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-        with self.assertRaises(asn1tools.DecodeError) as cm:
-            foo.decode('F', b'\x0a\x01\xff')
-
-        self.assertEqual(str(cm.exception),
-                         ": Expected enumeration value 0, but got -1.")
-
-    def test_graphic_string(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= GraphicString "
-            "END")
-
-        datas = [
-            ('A', 'f', b'\x19\x01\x66')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
-
     def test_versions(self):
         foo = asn1tools.compile_files('tests/files/versions.asn')
 
@@ -2446,555 +2980,20 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         self.assertEqual(foo.decode('V2', encoded_v3), decoded_v2)
         self.assertEqual(foo.decode('V3', encoded_v3), decoded_v3)
 
-    def test_sequence(self):
+    def test_long_tag(self):
         foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= SEQUENCE {} "
-            "B ::= SEQUENCE { "
-            "  a INTEGER DEFAULT 0 "
-            "} "
-            "C ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ... "
-            "} "
-            "D ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  [[ "
-            "  b BOOLEAN "
-            "  ]] "
-            "} "
-            "E ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  [[ "
-            "  b BOOLEAN "
-            "  ]], "
-            "  ... "
-            "} "
-            "F ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  [[ "
-            "  b BOOLEAN "
-            "  ]], "
-            "  ..., "
-            "  c BOOLEAN "
-            "} "
-            "G ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  [[ "
-            "  b BOOLEAN "
-            "  ]], "
-            "  [[ "
-            "  c BOOLEAN "
-            "  ]], "
-            "  ..., "
-            "  d BOOLEAN "
-            "} "
-            "H ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  ... "
-            "} "
-            "I ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  b BOOLEAN "
-            "} "
-            "J ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  b BOOLEAN OPTIONAL "
-            "} "
-            "K ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  b BOOLEAN, "
-            "  c BOOLEAN "
-            "} "
-            "L ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  [[ "
-            "  b BOOLEAN, "
-            "  c BOOLEAN "
-            "  ]] "
-            "} "
-            "M ::= SEQUENCE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  [[ "
-            "  b SEQUENCE { "
-            "    a INTEGER"
-            "  } OPTIONAL, "
-            "  c BOOLEAN "
-            "  ]] "
-            "} "
-            "N ::= SEQUENCE { "
-            "  a BOOLEAN DEFAULT TRUE "
-            "} "
-            "O ::= SEQUENCE { "
-            "  ..., "
-            "  a BOOLEAN DEFAULT TRUE "
-            "} "
-            "P ::= SEQUENCE { "
-            "  ..., "
-            "  [[ "
-            "  a BOOLEAN, "
-            "  b BOOLEAN DEFAULT TRUE "
-            "  ]] "
-            "} "
-            "Q ::= SEQUENCE { "
-            "  a C, "
-            "  b INTEGER "
-            "} "
-            "R ::= SEQUENCE { "
-            "  a D, "
-            "  b INTEGER "
-            "} "
-            "S ::= SEQUENCE { "
-            "  a INTEGER OPTIONAL "
-            "} "
-            "T ::= SEQUENCE { "
-            "  a T OPTIONAL "
-            "} "
-            "U ::= SEQUENCE { "
-            "  a SEQUENCE OF U OPTIONAL "
-            "} "
-            "V ::= SEQUENCE { "
-            "  a [1] V OPTIONAL, "
-            "  b [2] V OPTIONAL, "
-            "  c [3] SEQUENCE { "
-            "    a [4] V "
-            "  } OPTIONAL "
-            "} "
-            "END",
-            'ber')
-
-        datas = [
-            ('A',                                {}, b'\x30\x00'),
-            ('B',                          {'a': 0}, b'\x30\x00'),
-            ('N',                       {'a': True}, b'\x30\x00'),
-            ('P',                                {}, b'\x30\x00'),
-            ('S',                                {}, b'\x30\x00'),
-            ('T',                                {}, b'\x30\x00'),
-            ('O',                       {'a': True}, b'\x30\x00'),
-            ('T',                         {'a': {}}, b'\x30\x02\xa0\x00'),
-            ('B',                          {'a': 1}, b'\x30\x03\x80\x01\x01'),
-            ('C',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
-            ('D',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
-            ('E',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
-            ('H',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
-            ('I',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
-            ('J',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
-            ('K',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
-            ('L',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
-            ('M',                       {'a': True}, b'\x30\x03\x80\x01\xff'),
-            ('N',                      {'a': False}, b'\x30\x03\x80\x01\x00'),
-            ('O',                      {'a': False}, b'\x30\x03\x80\x01\x00'),
-            ('P',            {'a': True, 'b': True}, b'\x30\x03\x80\x01\xff'),
-            ('S',                          {'a': 1}, b'\x30\x03\x80\x01\x01'),
-            ('U',                       {'a': [{}]}, b'\x30\x04\xa0\x02\x30\x00'),
-            ('V',                  {'c': {'a': {}}}, b'\x30\x04\xa3\x02\xa4\x00'),
-            ('P',
-             {'a': True, 'b': False},
-             b'\x30\x06\x80\x01\xff\x81\x01\x00'),
-            ('D',
-             {'a': True, 'b': True},
-             b'\x30\x06\x80\x01\xff\x81\x01\xff'),
-            ('E',
-             {'a': True, 'b': True},
-             b'\x30\x06\x80\x01\xff\x81\x01\xff'),
-            ('F',
-             {'a': True, 'c': True},
-             b'\x30\x06\x80\x01\xff\x82\x01\xff'),
-            ('G',
-             {'a': True, 'd': True},
-             b'\x30\x06\x80\x01\xff\x83\x01\xff'),
-            ('I',
-             {'a': True, 'b': True},
-             b'\x30\x06\x80\x01\xff\x81\x01\xff'),
-            ('J',
-             {'a': True, 'b': True},
-             b'\x30\x06\x80\x01\xff\x81\x01\xff'),
-            ('K',
-             {'a': True, 'b': True},
-             b'\x30\x06\x80\x01\xff\x81\x01\xff'),
-            ('F',
-             {'a': True, 'b': True, 'c': True},
-             b'\x30\x09\x80\x01\xff\x82\x01\xff\x81\x01\xff'),
-            ('K',
-             {'a': True, 'b': True, 'c': True},
-             b'\x30\x09\x80\x01\xff\x81\x01\xff\x82\x01\xff'),
-            ('L',
-             {'a': True, 'b': True, 'c': True},
-             b'\x30\x09\x80\x01\xff\x81\x01\xff\x82\x01\xff'),
-            ('G',
-             {'a': True, 'b': True, 'd': True},
-             b'\x30\x09\x80\x01\xff\x83\x01\xff\x81\x01\xff'),
-            ('G',
-             {'a': True, 'b': True, 'c': True, 'd': True},
-             b'\x30\x0c\x80\x01\xff\x83\x01\xff\x81\x01\xff\x82\x01\xff'),
-            ('M',
-             {'a': True, 'b': {'a': 5}, 'c': True},
-             b'\x30\x0b\x80\x01\xff\xa1\x03\x80\x01\x05\x82\x01\xff'),
-            ('Q',
-             {'a': {'a': True}, 'b': 100},
-             b'\x30\x08\xa0\x03\x80\x01\xff\x81\x01\x64'),
-            ('R',
-             {'a': {'a': True, 'b': True}, 'b': 100},
-             b'\x30\x0b\xa0\x06\x80\x01\xff\x81\x01\xff\x81\x01\x64'),
-            ('U',
-             {'a': [{'a': []}]},
-             b'\x30\x06\xa0\x04\x30\x02\xa0\x00'),
-            ('V',
-             {'a': {}, 'b': {}, 'c': {'a': {}}},
-             b'\x30\x08\xa1\x00\xa2\x00\xa3\x02\xa4\x00')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-        # Non-symmetrical encoding and decoding because default values
-        # are not encoded, but part of the decoded (given that the
-        # root and addition is present).
-        self.assertEqual(foo.encode('N', {}), b'\x30\x00')
-        self.assertEqual(foo.decode('N', b'\x30\x00'), {'a': True})
-        self.assertEqual(foo.encode('P', {'a': True}), b'\x30\x03\x80\x01\xff')
-        self.assertEqual(foo.decode('P', b'\x30\x03\x80\x01\xff'),
-                         {'a': True, 'b': True})
-
-        # Decode D as C. Extension addition "a.b" should be skipped.
-        self.assertEqual(foo.decode('C', b'\x30\x06\x80\x01\xff\x81\x01\xff'),
-                         {'a': True})
-
-        # Decode R as Q. Extension addition "a.b" should be skipped.
-        self.assertEqual(
-            foo.decode('Q',
-                       b'\x30\x0b\xa0\x06\x80\x01\xff\x81\x01\xff\x81\x01\x64'),
-            {'a': {'a': True}, 'b': 100})
-
-        # Decode S with end-of-contentes octet , which is not yet
-        # supported.
-        with self.assertRaises(NotImplementedError) as cm:
-            foo.decode('S', b'\x30\x80\x02\x01\x01\x00\x00')
-
-        self.assertEqual(
-            str(cm.exception),
-            'Decode until an end-of-contents tag is not yet implemented.')
-
-    def test_sequence_of(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= SEQUENCE OF INTEGER "
-            "END",
-            'ber')
-
-        datas = [
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-        with self.assertRaises(NotImplementedError) as cm:
-            foo.decode('A', b'\x30\x80\x00\x00')
-
-        self.assertEqual(
-            str(cm.exception),
-            'Decode until an end-of-contents tag is not yet implemented.')
-
-    def test_choice(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= CHOICE { "
-            "  a BOOLEAN "
-            "} "
-            "B ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  ... "
-            "} "
-            "C ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  b INTEGER, "
-            "  ..., "
-            "  [[ "
-            "  c BOOLEAN "
-            "  ]] "
-            "} "
-            "D ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  [[ "
-            "  b BOOLEAN "
-            "  ]], "
-            "  ... "
-            "} "
-            "E ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  [[ "
-            "  b BOOLEAN "
-            "  ]], "
-            "  [[ "
-            "  c BOOLEAN "
-            "  ]], "
-            "  ... "
-            "} "
-            "F ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  ... "
-            "} "
-            "G ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  b BOOLEAN "
-            "} "
-            "H ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  b BOOLEAN, "
-            "  c BOOLEAN "
-            "} "
-            "I ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  [[ "
-            "  b BOOLEAN, "
-            "  c BOOLEAN "
-            "  ]] "
-            "} "
-            "J ::= CHOICE { "
-            "  a BOOLEAN, "
-            "  ..., "
-            "  [[ "
-            "  b CHOICE { "
-            "    a INTEGER"
-            "  }, "
-            "  c BOOLEAN "
-            "  ]] "
-            "} "
-            "K ::= CHOICE { "
-            "  m1 NULL, "
-            "  m2 NULL, "
-            "  m3 NULL, "
-            "  m4 NULL, "
-            "  m5 NULL, "
-            "  m6 NULL, "
-            "  m7 NULL, "
-            "  m8 NULL, "
-            "  m9 NULL, "
-            "  m10 NULL, "
-            "  m11 NULL, "
-            "  m12 NULL, "
-            "  m13 NULL, "
-            "  m14 NULL, "
-            "  m15 NULL, "
-            "  m16 NULL, "
-            "  m17 NULL, "
-            "  m18 NULL, "
-            "  m19 NULL, "
-            "  m20 NULL, "
-            "  m21 NULL, "
-            "  m22 NULL, "
-            "  m23 NULL, "
-            "  m24 NULL, "
-            "  m25 NULL, "
-            "  m26 NULL, "
-            "  m27 NULL, "
-            "  m28 NULL, "
-            "  m29 NULL, "
-            "  m30 NULL, "
-            "  m31 NULL, "
-            "  m32 NULL, "
-            "  m33 NULL, "
-            "  m34 NULL, "
-            "  m35 NULL, "
-            "  m36 NULL, "
-            "  m37 NULL, "
-            "  m38 NULL, "
-            "  m39 NULL "
-            "} "
-            "L ::= CHOICE { "
-            "  a OCTET STRING "
-            "} "
-            "M ::= CHOICE { "
-            "  a CHOICE { "
-            "    b BOOLEAN "
-            "  } "
-            "} "
+            "Foo DEFINITIONS IMPLICIT TAGS ::= BEGIN "
+            "A ::= [31] INTEGER "
+            "B ::= [500] INTEGER "
             "END")
 
         datas = [
-            ('A',            ('a', True), b'\x80\x01\xff'),
-            ('B',            ('a', True), b'\x80\x01\xff'),
-            ('C',            ('a', True), b'\x80\x01\xff'),
-            ('C',               ('b', 1), b'\x81\x01\x01'),
-            ('C',            ('c', True), b'\x82\x01\xff'),
-            ('D',            ('a', True), b'\x80\x01\xff'),
-            ('D',            ('b', True), b'\x81\x01\xff'),
-            ('E',            ('a', True), b'\x80\x01\xff'),
-            ('E',            ('b', True), b'\x81\x01\xff'),
-            ('E',            ('c', True), b'\x82\x01\xff'),
-            ('F',            ('a', True), b'\x80\x01\xff'),
-            ('G',            ('a', True), b'\x80\x01\xff'),
-            ('G',            ('b', True), b'\x81\x01\xff'),
-            ('H',            ('a', True), b'\x80\x01\xff'),
-            ('H',            ('b', True), b'\x81\x01\xff'),
-            ('H',            ('c', True), b'\x82\x01\xff'),
-            ('I',            ('a', True), b'\x80\x01\xff'),
-            ('I',            ('b', True), b'\x81\x01\xff'),
-            ('I',            ('c', True), b'\x82\x01\xff'),
-            ('J',            ('a', True), b'\x80\x01\xff'),
-            ('J',        ('b', ('a', 1)), b'\xa1\x03\x80\x01\x01'),
-            ('J',            ('c', True), b'\x82\x01\xff'),
-            ('K',          ('m31', None), b'\x9e\x00'),
-            ('K',          ('m32', None), b'\x9f\x1f\x00'),
-            ('K',          ('m33', None), b'\x9f\x20\x00'),
-            ('M',     ('a', ('b', True)), b'\xa0\x03\x80\x01\xff')
+            ('A', 1, b'\x9f\x1f\x01\x01'),
+            ('B', 1, b'\x9f\x83\x74\x01\x01')
         ]
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-        self.assertEqual(foo.decode('L', b'\xa0\x03\x04\x01\x12'), ('a', b'\x12'))
-        self.assertEqual(foo.decode('L', b'\x80\x01\x12'), ('a', b'\x12'))
-
-        with self.assertRaises(asn1tools.DecodeError) as cm:
-            foo.decode('C', b'\x88\x01\x12')
-
-        self.assertEqual(
-            str(cm.exception),
-            ": Expected choice member tag '80', '81' or '82', but got '88'.")
-        
-        
-    def test_choice_implicit_tags(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS IMPLICIT TAGS ::= "
-            "BEGIN "
-            "A ::= CHOICE { "
-            "  a BOOLEAN "
-            "} "
-            "B ::= CHOICE { "
-            "  a OCTET STRING "
-            "} "
-            "C ::= CHOICE { "
-            "  a CHOICE { "
-            "    b BOOLEAN, "
-            "    c INTEGER "
-            "  } "
-            "} "
-            "D ::= [5] CHOICE { "
-            "  a BOOLEAN "
-            "} "
-            "F ::= [5] EXPLICIT CHOICE { "
-            "  a BOOLEAN "
-            "} "
-            "G ::= [APPLICATION 5] EXPLICIT CHOICE { "
-            "  a BOOLEAN "
-            "} "
-            "H ::= [6] IMPLICIT G "
-            "I ::= [APPLICATION 6] IMPLICIT F "
-            "J ::= [6] IMPLICIT F "
-            "K ::= [3] CHOICE { "
-            "  a [4] CHOICE { "
-            "    a BOOLEAN "
-            "  }, "
-            "  b [5] CHOICE { "
-            "    b INTEGER "
-            "  } "
-            "} "
-            "END")
-
-        datas = [
-            ('A',            ('a', True), b'\x01\x01\xff'),
-            ('C',     ('a', ('b', True)), b'\x01\x01\xff'),
-            ('C',        ('a', ('c', 3)), b'\x02\x01\x03'),
-            ('D',            ('a', True), b'\xa5\x03\x01\x01\xff'),
-            ('F',            ('a', True), b'\xa5\x03\x01\x01\xff'),
-            ('G',            ('a', True), b'\x65\x03\x01\x01\xff'),
-            ('H',            ('a', True), b'\xa6\x03\x01\x01\xff'),
-            ('I',            ('a', True), b'\x66\x03\x01\x01\xff'),
-            ('J',            ('a', True), b'\xa6\x03\x01\x01\xff'),
-            ('K',     ('a', ('a', True)), b'\xa3\x05\xa4\x03\x01\x01\xff'),
-            ('K',        ('b', ('b', 2)), b'\xa3\x05\xa5\x03\x02\x01\x02')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-        self.assertEqual(foo.decode('B', b'\x24\x03\x04\x01\x12'), ('a', b'\x12'))
-        self.assertEqual(foo.decode('B', b'\x04\x01\x12'), ('a', b'\x12'))
-
-    def test_bit_string(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= BIT STRING "
-            "B ::= BIT STRING { "
-            "  a (0), "
-            "  b (1), "
-            "  c (2) "
-            "} "
-            "C ::= SEQUENCE { "
-            "  a B DEFAULT {b, c}, "
-            "  b B DEFAULT '011'B, "
-            "  c B DEFAULT '60'H "
-            "} "
-            "D ::= SEQUENCE { "
-            "  a A DEFAULT '00'B, "
-            "  b B DEFAULT '00'B "
-            "} "
-            "END")
-
-        datas = [
-            ('A',              (b'', 0), b'\x03\x01\x00'),
-            ('A',          (b'\x40', 4), b'\x03\x02\x04\x40'),
-            ('A',          (b'\x80', 1), b'\x03\x02\x07\x80'),
-            ('A',      (b'\x00\x00', 9), b'\x03\x03\x07\x00\x00'),
-            ('B',          (b'\x80', 1), b'\x03\x02\x07\x80'),
-            ('B',          (b'\xe0', 3), b'\x03\x02\x05\xe0'),
-            ('B',          (b'\x01', 8), b'\x03\x02\x00\x01'),
-            ('C',
-             {'a': (b'\x40', 2), 'b': (b'\x40', 2), 'c': (b'\x40', 2)},
-             b'\x30\x0c\x80\x02\x06\x40\x81\x02\x06\x40\x82\x02\x06\x40'),
-            ('C',
-             {'a': (b'\x60', 3), 'b': (b'\x60', 3), 'c': (b'\x60', 3)},
-             b'\x30\x00'),
-            ('D',
-             {'a': (b'\x00', 2), 'b': (b'\x00', 2)},
-             b'\x30\x00')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-        # Default value is not encoded, but part of decoded. Also
-        # ignore dangling bits.
-        datas = [
-            ('C',
-             {},
-             b'\x30\x00',
-             {'a': (b'\x60', 3), 'b': (b'\x60', 3), 'c': (b'\x60', 3)}),
-            ('C',
-             {'a': (b'\x60', 4), 'b': (b'\x60', 5), 'c': (b'\x60', 6)},
-             b'\x30\x00',
-             {'a': (b'\x60', 3), 'b': (b'\x60', 3), 'c': (b'\x60', 3)}),
-            ('A',     (b'\xff', 1), b'\x03\x02\x07\x80', (b'\x80', 1)),
-            ('D',
-             {'a': (b'\x00', 3), 'b': (b'\x00', 3)},
-             b'\x30\x04\x80\x02\x05\x00',
-             {'a': (b'\x00', 3), 'b': (b'\x00', 2)})
-        ]
-
-        for type_name, decoded_1, encoded, decoded_2 in datas:
-            self.assertEqual(foo.encode(type_name, decoded_1), encoded)
-            self.assertEqual(foo.decode(type_name, encoded), decoded_2)
 
 
 if __name__ == '__main__':
