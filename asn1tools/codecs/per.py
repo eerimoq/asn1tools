@@ -13,6 +13,10 @@ from . import EncodeError
 from . import DecodeError
 from . import compiler
 from . import format_or
+from . import restricted_utc_time_to_datetime
+from . import restricted_utc_time_from_datetime
+from . import restricted_generalized_time_to_datetime
+from . import restricted_generalized_time_from_datetime
 from .compiler import enum_values_split
 from .ber import encode_real
 from .ber import decode_real
@@ -1485,14 +1489,28 @@ class TeletexString(Type):
 
 class UTCTime(VisibleString):
 
+    def encode(self, data, encoder):
+        encoded = restricted_utc_time_from_datetime(data)
+
+        return super(UTCTime, self).encode(encoded, encoder)
+
     def decode(self, decoder):
-        return str(super(UTCTime, self).decode(decoder))
+        decoded = super(UTCTime, self).decode(decoder)
+
+        return restricted_utc_time_to_datetime(decoded)
 
 
 class GeneralizedTime(VisibleString):
 
+    def encode(self, data, encoder):
+        enceded = restricted_generalized_time_from_datetime(data)
+
+        return super(GeneralizedTime, self).encode(enceded, encoder)
+
     def decode(self, decoder):
-        return str(super(GeneralizedTime, self).decode(decoder))
+        decoded = super(GeneralizedTime, self).decode(decoder)
+
+        return restricted_generalized_time_to_datetime(decoded)
 
 
 class OpenType(Type):

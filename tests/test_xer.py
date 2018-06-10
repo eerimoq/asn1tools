@@ -3,6 +3,8 @@ from .utils import Asn1ToolsBaseTest
 import asn1tools
 import sys
 from copy import deepcopy
+from asn1tools.codecs import utc_time_to_datetime as ut2dt
+from asn1tools.codecs import generalized_time_to_datetime as gt2dt
 
 sys.path.append('tests/files/3gpp')
 
@@ -184,9 +186,8 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             'xer')
 
         datas = [
-            ('A', '920521000000Z', b'<A>920521000000Z</A>'),
-            ('A', '920622123421Z', b'<A>920622123421Z</A>'),
-            ('A', '920722132100Z', b'<A>920722132100Z</A>')
+            ('A', ut2dt('9205210000Z'), b'<A>9205210000Z</A>'),
+            ('A', ut2dt('920622123421Z'), b'<A>920622123421Z</A>')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -201,9 +202,9 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             'xer')
 
         datas = [
-            ('A', '19920521000000Z', b'<A>19920521000000Z</A>'),
-            ('A', '19920622123421Z', b'<A>19920622123421Z</A>'),
-            ('A', '19920722132100.3Z', b'<A>19920722132100.3Z</A>')
+            ('A', gt2dt('19920521000000Z'), b'<A>19920521000000Z</A>'),
+            ('A', gt2dt('19920622123421Z'), b'<A>19920622123421Z</A>'),
+            ('A', gt2dt('19920722132100.3Z'), b'<A>19920722132100.3Z</A>')
         ]
 
         for type_name, decoded, encoded in datas:

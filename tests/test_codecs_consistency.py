@@ -1,6 +1,6 @@
 import unittest
+from datetime import datetime
 from .utils import Asn1ToolsBaseTest
-
 import asn1tools
 
 
@@ -101,10 +101,11 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         self.encode_decode_all_codecs("GraphicString", [u'hi'])
 
     def test_utc_time(self):
-        self.encode_decode_all_codecs("UTCTime", ['121001230001Z'])
+        self.encode_decode_all_codecs("UTCTime", [datetime(2020, 3, 12)])
 
     def test_generalized_time(self):
-        self.encode_decode_all_codecs("GeneralizedTime", ['20001231235959.999'])
+        self.encode_decode_all_codecs("GeneralizedTime",
+                                      [datetime(2021, 3, 12)])
 
 
 if __name__ == '__main__':

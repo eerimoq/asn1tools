@@ -131,6 +131,39 @@ def utc_time_from_datetime(date):
     return date.strftime(fmt)
 
 
+def restricted_utc_time_to_datetime(string):
+    """Convert given restricted ASN.1 UTC time string `string` to a
+    ``datetime.datetime`` object.
+
+    """
+
+    length = len(string)
+
+    if string[-1] != 'Z':
+        raise Error(
+            "Expected a restricted UTC time string ending with 'Z', "
+            "but got '{}'.".format(string))
+
+    if length != 13:
+        raise Error(
+            "Expected a restricted UTC time string of length 13, "
+            "but got '{}'.".format(string))
+
+    return datetime.strptime(string[:-1], '%y%m%d%H%M%S')
+
+
+def restricted_utc_time_from_datetime(date):
+    """Convert given ``datetime.datetime`` object `date` to an restricted
+    ASN.1 UTC time string.
+
+    """
+
+    if date.tzinfo is not None:
+        date -= date.utcoffset()
+
+    return date.strftime('%y%m%d%H%M%S') + 'Z'
+
+
 def generalized_time_to_datetime(string):
     """Convert given ASN.1 generalized time string `string` to a
     ``datetime.datetime`` object.
@@ -164,15 +197,58 @@ def generalized_time_from_datetime(date):
 
     """
 
-    fmt = '%Y%m%d%H%M%S'
-
     if date.microsecond > 0:
-        fmt += '.%f'
+        string = date.strftime('%Y%m%d%H%M%S.%f').rstrip('0')
+    else:
+        string = date.strftime('%Y%m%d%H%M%S')
 
     if date.tzinfo is not None:
         if date.utcoffset():
-            fmt += '%z'
+            string += date.strftime('%z')
         else:
-            fmt += 'Z'
+            string += 'Z'
 
-    return date.strftime(fmt)
+    return string
+
+
+def restricted_generalized_time_to_datetime(string):
+    """Convert given restricted ASN.1 generalized time string `string` to
+    a ``datetime.datetime`` object.
+
+    """
+
+    if string[-1] != 'Z':
+        raise Error(
+            "Expected a restricted generalized time string ending with 'Z', "
+            "but got '{}'.".format(string))
+
+    if '.' in string:
+        if string[-2] == '0':
+            raise Error(
+                "Expected a restricted generalized time string with no "
+                "trailing zeros, but got '{}'.".format(string))
+
+        return datetime.strptime(string[:-1], '%Y%m%d%H%M%S.%f')
+    elif len(string) == 15:
+        return datetime.strptime(string[:-1], '%Y%m%d%H%M%S')
+    else:
+        raise Error(
+            "Expected a restricted generalized time string, but got '{}'.".format(
+                string))
+
+
+def restricted_generalized_time_from_datetime(date):
+    """Convert given ``datetime.datetime`` object `date` to an restricted
+    ASN.1 generalized time string.
+
+    """
+
+    if date.tzinfo is not None:
+        date -= date.utcoffset()
+
+    if date.microsecond > 0:
+        string = date.strftime('%Y%m%d%H%M%S.%f').rstrip('0')
+    else:
+        string = date.strftime('%Y%m%d%H%M%S')
+
+    return string + 'Z'

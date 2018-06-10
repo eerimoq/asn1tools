@@ -14,6 +14,10 @@ from . import DecodeTagError
 from . import DecodeContentsLengthError
 from . import format_or
 from . import compiler
+from . import utc_time_to_datetime
+from . import utc_time_from_datetime
+from . import generalized_time_to_datetime
+from . import generalized_time_from_datetime
 from .compiler import enum_values_as_dict
 from .compiler import clean_bit_string_value
 
@@ -1231,16 +1235,18 @@ class UTCTime(Type):
                                       Tag.UTC_TIME)
 
     def encode(self, data, encoded):
+        data = utc_time_from_datetime(data).encode('ascii')
         encoded.extend(self.tag)
-        encoded.append(13)
-        encoded.extend(data.encode('ascii'))
+        encoded.append(len(data))
+        encoded.extend(data)
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
+        decoded = data[offset:end_offset].decode('ascii')
 
-        return str(data[offset:end_offset].decode('ascii')), end_offset
+        return utc_time_to_datetime(decoded), end_offset
 
     def __repr__(self):
         return 'UTCTime({})'.format(self.name)
@@ -1254,16 +1260,18 @@ class GeneralizedTime(Type):
                                               Tag.GENERALIZED_TIME)
 
     def encode(self, data, encoded):
+        data = generalized_time_from_datetime(data).encode('ascii')
         encoded.extend(self.tag)
         encoded.append(len(data))
-        encoded.extend(data.encode('ascii'))
+        encoded.extend(data)
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
+        decoded = data[offset:end_offset].decode('ascii')
 
-        return str(data[offset:end_offset].decode('ascii')), end_offset
+        return generalized_time_to_datetime(decoded), end_offset
 
     def __repr__(self):
         return 'GeneralizedTime({})'.format(self.name)

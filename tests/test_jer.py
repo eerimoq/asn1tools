@@ -4,6 +4,8 @@ import asn1tools
 import sys
 import math
 from copy import deepcopy
+from asn1tools.codecs import utc_time_to_datetime as ut2dt
+from asn1tools.codecs import generalized_time_to_datetime as gt2dt
 
 sys.path.append('tests/files')
 sys.path.append('tests/files/3gpp')
@@ -197,7 +199,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
             'jer')
 
         datas = [
-            ('A', '121001230001Z', b'"121001230001Z"')
+            ('A', ut2dt('121001230001Z'), b'"121001230001Z"')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -214,7 +216,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
             'jer')
 
         datas = [
-            ('A', '20001231235959.999', b'"20001231235959.999"')
+            ('A', gt2dt('20001231235959.999'), b'"20001231235959.999"')
         ]
 
         for type_name, decoded, encoded in datas:

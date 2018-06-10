@@ -4,6 +4,10 @@
 
 from . import DecodeTagError
 from . import ber
+from . import restricted_utc_time_to_datetime
+from . import restricted_utc_time_from_datetime
+from . import restricted_generalized_time_to_datetime
+from . import restricted_generalized_time_from_datetime
 from .compiler import clean_bit_string_value
 from .ber import Class
 from .ber import Encoding
@@ -472,16 +476,18 @@ class UTCTime(Type):
                                       Tag.UTC_TIME)
 
     def encode(self, data, encoded):
+        data = restricted_utc_time_from_datetime(data).encode('ascii')
         encoded.extend(self.tag)
-        encoded.append(13)
-        encoded.extend(data.encode('ascii'))
+        encoded.append(len(data))
+        encoded.extend(data)
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
+        decoded = data[offset:end_offset].decode('ascii')
 
-        return str(data[offset:end_offset].decode('ascii')), end_offset
+        return restricted_utc_time_to_datetime(decoded), end_offset
 
     def __repr__(self):
         return 'UTCTime({})'.format(self.name)
@@ -495,16 +501,18 @@ class GeneralizedTime(Type):
                                               Tag.GENERALIZED_TIME)
 
     def encode(self, data, encoded):
+        data = restricted_generalized_time_from_datetime(data).encode('ascii')
         encoded.extend(self.tag)
         encoded.append(len(data))
-        encoded.extend(data.encode('ascii'))
+        encoded.extend(data)
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
+        decoded = data[offset:end_offset].decode('ascii')
 
-        return str(data[offset:end_offset].decode('ascii')), end_offset
+        return restricted_generalized_time_to_datetime(decoded), end_offset
 
     def __repr__(self):
         return 'GeneralizedTime({})'.format(self.name)

@@ -9,6 +9,8 @@ import math
 from . import EncodeError
 from . import DecodeError
 from . import compiler
+from . import utc_time_from_datetime
+from . import generalized_time_from_datetime
 from .compiler import enum_values_as_dict
 
 
@@ -389,7 +391,7 @@ class UTCTime(Type):
         super(UTCTime, self).__init__(name, 'UTCTime')
 
     def encode(self, data, _separator, _indent):
-        return '"{}"'.format(data)
+        return '"{}"'.format(utc_time_from_datetime(data))
 
     def __repr__(self):
         return 'UTCTime({})'.format(self.name)
@@ -401,7 +403,7 @@ class GeneralizedTime(Type):
         super(GeneralizedTime, self).__init__(name, 'GeneralizedTime')
 
     def encode(self, data, _separator, _indent):
-        return '"{}"'.format(data)
+        return '"{}"'.format(generalized_time_from_datetime(data))
 
     def __repr__(self):
         return 'GeneralizedTime({})'.format(self.name)

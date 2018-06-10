@@ -10,6 +10,10 @@ import binascii
 from . import EncodeError
 from . import DecodeError
 from . import compiler
+from . import utc_time_to_datetime
+from . import utc_time_from_datetime
+from . import generalized_time_to_datetime
+from . import generalized_time_from_datetime
 from .compiler import enum_values_as_dict
 
 
@@ -518,12 +522,12 @@ class UTCTime(Type):
 
     def encode(self, data):
         element = ElementTree.Element(self.name)
-        element.text = data
+        element.text = utc_time_from_datetime(data)
 
         return element
 
     def decode(self, element):
-        return element.text
+        return utc_time_to_datetime(element.text)
 
     def __repr__(self):
         return 'UTCTime({})'.format(self.name)
@@ -536,12 +540,12 @@ class GeneralizedTime(Type):
 
     def encode(self, data):
         element = ElementTree.Element(self.name)
-        element.text = data
+        element.text = generalized_time_from_datetime(data)
 
         return element
 
     def decode(self, element):
-        return element.text
+        return generalized_time_to_datetime(element.text)
 
     def __repr__(self):
         return 'GeneralizedTime({})'.format(self.name)

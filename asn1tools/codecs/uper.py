@@ -8,6 +8,10 @@ import string
 from . import EncodeError
 from . import DecodeError
 from . import per
+from . import restricted_utc_time_to_datetime
+from . import restricted_utc_time_from_datetime
+from . import restricted_generalized_time_to_datetime
+from . import restricted_generalized_time_from_datetime
 from .ber import encode_object_identifier
 from .ber import decode_object_identifier
 from .per import integer_as_number_of_bits
@@ -753,14 +757,27 @@ class TeletexString(Type):
 
 class UTCTime(VisibleString):
 
+    def encode(self, data, encoder):
+        encoded = restricted_utc_time_from_datetime(data)
+        return super(UTCTime, self).encode(encoded, encoder)
+
     def decode(self, decoder):
-        return str(super(UTCTime, self).decode(decoder))
+        decoded = super(UTCTime, self).decode(decoder)
+
+        return restricted_utc_time_to_datetime(decoded)
 
 
 class GeneralizedTime(VisibleString):
 
+    def encode(self, data, encoder):
+        enceded = restricted_generalized_time_from_datetime(data)
+
+        return super(GeneralizedTime, self).encode(enceded, encoder)
+
     def decode(self, decoder):
-        return str(super(GeneralizedTime, self).decode(decoder))
+        decoded = super(GeneralizedTime, self).decode(decoder)
+
+        return restricted_generalized_time_to_datetime(decoded)
 
 
 class AdditionGroup(Sequence):

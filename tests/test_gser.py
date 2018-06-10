@@ -2,6 +2,8 @@ import unittest
 from .utils import Asn1ToolsBaseTest
 import sys
 from copy import deepcopy
+from asn1tools.codecs import utc_time_to_datetime as ut2dt
+from asn1tools.codecs import generalized_time_to_datetime as gt2dt
 
 import asn1tools
 
@@ -92,7 +94,7 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
             "END",
             'gser')
 
-        decoded = '010203040506Z'
+        decoded = ut2dt('010203040506Z')
         encoded = b'a A ::= "010203040506Z"'
 
         self.assertEqual(foo.encode('A', decoded), encoded)
@@ -105,7 +107,7 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
             "END",
             'gser')
 
-        decoded = '20001231235959.999Z'
+        decoded = gt2dt('20001231235959.999Z')
         encoded = b'a A ::= "20001231235959.999Z"'
 
         self.assertEqual(foo.encode('A', decoded), encoded)

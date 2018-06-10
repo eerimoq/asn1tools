@@ -4,6 +4,8 @@ import asn1tools
 import sys
 from copy import deepcopy
 import string
+from asn1tools.codecs import restricted_utc_time_to_datetime as ut2dt
+from asn1tools.codecs import restricted_generalized_time_to_datetime as gt2dt
 
 sys.path.append('tests/files')
 sys.path.append('tests/files/3gpp')
@@ -719,7 +721,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         datas = [
             ('A',
-             '010203040506Z',
+             ut2dt('010203040506Z'),
              b'\x0d\x60\xc5\x83\x26\x0c\xd8\x34\x60\xd5\x83\x6b\x40')
         ]
 
@@ -736,7 +738,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         datas = [
             ('A',
-             '20001231235959.999Z',
+             gt2dt('20001231235959.999Z'),
              b'\x13\x64\xc1\x83\x06\x2c\x99\xb1\x64\xcd\xab\x96\xae\x57\x39\x72'
              b'\xe6\xd0')
         ]

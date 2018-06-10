@@ -6,6 +6,8 @@ from copy import deepcopy
 from .utils import Asn1ToolsBaseTest
 
 import asn1tools
+from asn1tools.codecs import utc_time_to_datetime as ut2dt
+from asn1tools.codecs import generalized_time_to_datetime as gt2dt
 
 sys.path.append('tests/files')
 sys.path.append('tests/files/3gpp')
@@ -765,6 +767,22 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         self.assertEqual(foo.decode('B', b'\x24\x03\x04\x01\x12'), ('a', b'\x12'))
         self.assertEqual(foo.decode('B', b'\x04\x01\x12'), ('a', b'\x12'))
 
+    def test_utc_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS IMPLICIT TAGS ::= "
+            "BEGIN "
+            "A ::= UTCTime "
+            "END")
+
+        datas = [
+            ('A',
+             ut2dt('001001000000Z'),
+             b'\x17\x0b\x30\x30\x31\x30\x30\x31\x30\x30\x30\x30\x5a')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_utc_time_explicit_tags(self):
         """Test explicit tags on UTC time.
 
@@ -774,7 +792,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         foo = asn1tools.compile_string(spec)
         self.assert_encode_decode(foo,
                                   'Foo',
-                                  '121001230001Z',
+                                  ut2dt('121001230001Z'),
                                   b'\xa2\x0f\x17\x0d121001230001Z')
 
     def test_graphic_string(self):
@@ -1859,8 +1877,8 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                     ]
                 ),
                 'validity': {
-                    'notAfter': ('utcTime', '170821052654Z'),
-                    'notBefore': ('utcTime', '120822052654Z')
+                    'notAfter': ('utcTime', ut2dt('170821052654Z')),
+                    'notBefore': ('utcTime', ut2dt('120822052654Z'))
                 },
                 'subject': (
                     'rdnSequence',
@@ -1992,8 +2010,8 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                     ]
                 ),
                 'validity': {
-                    'notAfter': ('utcTime', '170821052654Z'),
-                    'notBefore': ('utcTime', '120822052654Z')
+                    'notAfter': ('utcTime', ut2dt('170821052654Z')),
+                    'notBefore': ('utcTime', ut2dt('120822052654Z'))
                 },
                 'subject': (
                     'rdnSequence',
@@ -2214,11 +2232,13 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('Generalstring',          'bar', b'\x1b\x03bar'),
             ('Bmpstring',             b'bar', b'\x1e\x03bar'),
             ('Teletexstring',         b'fum', b'\x14\x03fum'),
-            ('Utctime',      '010203040506Z', b'\x17\x0d010203040506Z'),
+            ('Utctime',
+             ut2dt('010203040506Z'),
+             b'\x17\x0d010203040506Z'),
             ('GeneralizedTime1',
-             '20001231235959.999',
-             b'\x18\x12\x32\x30\x30\x30\x31\x32\x33\x31\x32\x33\x35\x39'
-             b'\x35\x39\x2e\x39\x39\x39'),
+             gt2dt('20001231235959.999Z'),
+             b'\x18\x13\x32\x30\x30\x30\x31\x32\x33\x31\x32\x33\x35\x39'
+             b'\x35\x39\x2e\x39\x39\x39\x5a'),
             ('SequenceOf',                [], b'\x30\x00'),
             ('SetOf',                     [], b'\x31\x00')
         ]
