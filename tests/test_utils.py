@@ -6,7 +6,7 @@ from datetime import timedelta
 try:
     from datetime import timezone
 except ImportError:
-    from asn1tools import timezone
+    from asn1tools.compat import timezone
 
 
 def tzinfo(hours, minutes=0):

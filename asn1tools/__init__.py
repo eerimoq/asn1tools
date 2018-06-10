@@ -12,7 +12,6 @@ from pprint import pformat
 import pickle
 from datetime import datetime
 from datetime import timedelta
-from datetime import tzinfo
 
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit import PromptSession
@@ -31,6 +30,7 @@ from .errors import EncodeError
 from .errors import DecodeError
 from .errors import CompileError
 from .errors import ConstraintsError
+from . import compat
 
 
 __author__ = 'Erik Moqvist'
@@ -363,52 +363,6 @@ def _main():
             sys.exit('error: {}'.format(str(e)))
 
 
-if sys.version_info[0] > 2:
-    from datetime import timezone
-
-    UTC = timezone.utc
-
-    def strptime(data, fmt):
-        return datetime.strptime(data, fmt)
-else:
-    class timezone(tzinfo):
-
-        def __init__(self, offset):
-            self._utcoffset = offset
-
-        def utcoffset(self, dt):
-            return self._utcoffset
-
-        def tzname(self, dt):
-            return "-"
-
-        def dst(self, dt):
-            return timedelta(0)
-
-    UTC = timezone(timedelta(hours=0, minutes=0))
-
-    def strptime(data, fmt):
-        if fmt.endswith('%z'):
-            date = datetime.strptime(data[:-5], fmt[:-2])
-
-            try:
-                sign = {'-': -1, '+': 1}[data[-5]]
-                hours = sign * int(data[-4:-2])
-                minutes = sign * int(data[-2:])
-            except KeyError:
-                raise ValueError(
-                    "time data '{}' does not match format '{}'.".format(
-                        data,
-                        fmt))
-
-            date = date.replace(tzinfo=timezone(timedelta(hours=hours,
-                                                          minutes=minutes)))
-        else:
-            date = datetime.strptime(data, fmt)
-
-        return date
-
-
 def utc_time_to_datetime(string):
     """Convert given ASN.1 UTC time string `string` to a
     ``datetime.datetime`` object.
@@ -426,9 +380,9 @@ def utc_time_to_datetime(string):
             raise Error(
                 "Expected an UTC time string, but got '{}'.".format(string))
     elif length == 15:
-        return strptime(string, '%y%m%d%H%M%z')
+        return compat.strptime(string, '%y%m%d%H%M%z')
     elif length == 17:
-        return strptime(string, '%y%m%d%H%M%S%z')
+        return compat.strptime(string, '%y%m%d%H%M%S%z')
     else:
         raise Error(
             "Expected an UTC time string, but got '{}'.".format(string))
@@ -475,9 +429,9 @@ def generalized_time_to_datetime(string):
             return strptime(string, '%Y%m%d%H%M%S.%f%z')
     else:
         if length == 14:
-            return strptime(string, '%Y%m%d%H%M%S')
+            return compat.strptime(string, '%Y%m%d%H%M%S')
         else:
-            return strptime(string, '%Y%m%d%H%M%S.%f')
+            return compat.strptime(string, '%Y%m%d%H%M%S.%f')
 
 
 def generalized_time_from_datetime(date):
@@ -492,7 +446,7 @@ def generalized_time_from_datetime(date):
         fmt += '.%f'
 
     if date.tzinfo is not None:
-        if date.tzinfo == UTC:
+        if date.tzinfo == compat.UTC:
             fmt += 'Z'
         else:
             fmt += '%z'
