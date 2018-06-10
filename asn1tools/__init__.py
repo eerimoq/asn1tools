@@ -10,8 +10,6 @@ import binascii
 import logging
 from pprint import pformat
 import pickle
-from datetime import datetime
-from datetime import timedelta
 
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit import PromptSession
@@ -30,7 +28,6 @@ from .errors import EncodeError
 from .errors import DecodeError
 from .errors import CompileError
 from .errors import ConstraintsError
-from . import compat
 
 
 __author__ = 'Erik Moqvist'
@@ -361,94 +358,3 @@ def _main():
             args.func(args)
         except BaseException as e:
             sys.exit('error: {}'.format(str(e)))
-
-
-def utc_time_to_datetime(string):
-    """Convert given ASN.1 UTC time string `string` to a
-    ``datetime.datetime`` object.
-
-    """
-
-    length = len(string)
-
-    if string[-1] == 'Z':
-        if length == 11:
-            return datetime.strptime(string[:10], '%y%m%d%H%M')
-        elif length == 13:
-            return datetime.strptime(string[:12], '%y%m%d%H%M%S')
-        else:
-            raise Error(
-                "Expected an UTC time string, but got '{}'.".format(string))
-    elif length == 15:
-        return compat.strptime(string, '%y%m%d%H%M%z')
-    elif length == 17:
-        return compat.strptime(string, '%y%m%d%H%M%S%z')
-    else:
-        raise Error(
-            "Expected an UTC time string, but got '{}'.".format(string))
-
-
-def utc_time_from_datetime(date):
-    """Convert given ``datetime.datetime`` object `date` to an ASN.1 UTC
-    time string.
-
-    """
-
-    fmt = '%y%m%d%H%M'
-
-    if date.second > 0:
-        fmt += '%S'
-
-    if date.tzinfo is None:
-        fmt += 'Z'
-    else:
-        fmt += '%z'
-
-    return date.strftime(fmt)
-
-
-def generalized_time_to_datetime(string):
-    """Convert given ASN.1 generalized time string `string` to a
-    ``datetime.datetime`` object.
-
-    """
-
-    length = len(string)
-
-    if string[-1] == 'Z':
-        if length == 15:
-            date = datetime.strptime(string[:14], '%Y%m%d%H%M%S')
-        else:
-            date = datetime.strptime(string[:-1], '%Y%m%d%H%M%S.%f')
-
-        return date.replace(tzinfo=timezone(timedelta(hours=0)))
-    elif string[-5] in '-+':
-        if length == 19:
-            return strptime(string, '%Y%m%d%H%M%S%z')
-        else:
-            return strptime(string, '%Y%m%d%H%M%S.%f%z')
-    else:
-        if length == 14:
-            return compat.strptime(string, '%Y%m%d%H%M%S')
-        else:
-            return compat.strptime(string, '%Y%m%d%H%M%S.%f')
-
-
-def generalized_time_from_datetime(date):
-    """Convert given ``datetime.datetime`` object `date` to an ASN.1
-    generalized time string.
-
-    """
-
-    fmt = '%Y%m%d%H%M%S'
-
-    if date.microsecond > 0:
-        fmt += '.%f'
-
-    if date.tzinfo is not None:
-        if date.tzinfo == compat.UTC:
-            fmt += 'Z'
-        else:
-            fmt += '%z'
-
-    return date.strftime(fmt)

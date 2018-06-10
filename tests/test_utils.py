@@ -1,7 +1,12 @@
 import unittest
-import asn1tools
 from datetime import datetime
 from datetime import timedelta
+
+import asn1tools
+from asn1tools.codecs import utc_time_to_datetime
+from asn1tools.codecs import utc_time_from_datetime
+from asn1tools.codecs import generalized_time_to_datetime
+from asn1tools.codecs import generalized_time_from_datetime
 
 try:
     from datetime import timezone
@@ -30,30 +35,30 @@ class Asn1ToolsUtilsTest(unittest.TestCase):
         ]
 
         for utc_time, date in datas:
-            actual = asn1tools.utc_time_to_datetime(utc_time)
+            actual = utc_time_to_datetime(utc_time)
             self.assertEqual(actual, date)
-            actual = asn1tools.utc_time_from_datetime(date)
+            actual = utc_time_from_datetime(date)
             self.assertEqual(actual, utc_time)
 
     def test_generalized_time(self):
         datas = [
             ('19820102120022',  datetime(1982, 1, 2, 12, 0, 22)),
-            ('19820102120022.500000',
-             datetime(1982, 1, 2, 12, 0, 22, 500000)),
-            ('19820102120022Z',
-             datetime(1982, 1, 2, 12, 0, 22, tzinfo=tzinfo(0))),
-            ('19820102120022.100000Z',
-             datetime(1982, 1, 2, 12, 0, 22, 100000, tzinfo=tzinfo(0))),
-            ('19820102120022-1000',
-             datetime(1982, 1, 2, 12, 0, 22, tzinfo=tzinfo(-10))),
-            ('19820102120022.100000+0100',
-             datetime(1982, 1, 2, 12, 0, 22, 100000, tzinfo=tzinfo(1)))
+            ('19820102120023.500000',
+             datetime(1982, 1, 2, 12, 0, 23, 500000)),
+            ('19820102120024Z',
+             datetime(1982, 1, 2, 12, 0, 24, tzinfo=tzinfo(0))),
+            ('19820102120025.100000Z',
+             datetime(1982, 1, 2, 12, 0, 25, 100000, tzinfo=tzinfo(0))),
+            ('19820102120026-1000',
+             datetime(1982, 1, 2, 12, 0, 26, tzinfo=tzinfo(-10))),
+            ('19820102120027.100000+0100',
+             datetime(1982, 1, 2, 12, 0, 27, 100000, tzinfo=tzinfo(1)))
         ]
 
         for generalized_time, date in datas:
-            actual = asn1tools.generalized_time_to_datetime(generalized_time)
+            actual = generalized_time_to_datetime(generalized_time)
             self.assertEqual(actual, date)
-            actual = asn1tools.generalized_time_from_datetime(date)
+            actual = generalized_time_from_datetime(date)
             self.assertEqual(actual, generalized_time)
 
     def test_utc_time_to_datetime_errors(self):
@@ -63,7 +68,7 @@ class Asn1ToolsUtilsTest(unittest.TestCase):
 
         for utc_time in datas:
             with self.assertRaises(asn1tools.Error):
-                asn1tools.utc_time_to_datetime(utc_time)
+                utc_time_to_datetime(utc_time)
 
         datas = [
             '820102120060Z',
@@ -73,9 +78,9 @@ class Asn1ToolsUtilsTest(unittest.TestCase):
 
         for utc_time in datas:
             with self.assertRaises(ValueError):
-                asn1tools.utc_time_to_datetime(utc_time)
+                utc_time_to_datetime(utc_time)
 
-    def test_generalized_time(self):
+    def test_generalized_time_to_datetime_errors(self):
         datas = [
             '19820102120022K',
             '19820102120022.100000=0100'
@@ -83,7 +88,7 @@ class Asn1ToolsUtilsTest(unittest.TestCase):
 
         for generalized_time in datas:
             with self.assertRaises(ValueError):
-                asn1tools.generalized_time_to_datetime(generalized_time)
+                generalized_time_to_datetime(generalized_time)
 
 
 if __name__ == '__main__':
