@@ -106,10 +106,14 @@ class Asn1ToolsJerTest(unittest.TestCase):
             "A ::= SEQUENCE { "
             "  a SEQUENCE OF A OPTIONAL "
             "} "
+            "B ::= SEQUENCE { "
+            "  a INTEGER DEFAULT 5 "
+            "} "
             "END",
             'jer')
 
         datas = [
+            ('A',                    {}, b'{}'),
             ('A',           {'a': [{}]}, b'{"a": [{}]}'),
             ('A',    {'a': [{'a': []}]}, b'{"a": [{"a": []}]}')
         ]
@@ -118,6 +122,12 @@ class Asn1ToolsJerTest(unittest.TestCase):
             self.assertEqual(loadb(foo.encode(type_name, decoded)),
                              loadb(encoded))
             self.assertEqual(foo.decode(type_name, encoded), decoded)
+
+        # Non-symmetrical encoding and decoding because default values
+        # are not encoded, but part of the decoded (given that the
+        # root and addition is present).
+        self.assertEqual(foo.encode('B', {}), b'{}')
+        self.assertEqual(foo.decode('B', b'{}'), {'a': 5})
 
     def test_sequence_of(self):
         foo = asn1tools.compile_string(
