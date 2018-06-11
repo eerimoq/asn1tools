@@ -711,41 +711,6 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "Expected choice 'a', 'b', 'c', 'd', 'e', 'f', 'g' or 'h', but "
             "got 'i'.")
 
-    def test_utc_time(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= UTCTime "
-            "END",
-            'uper')
-
-        datas = [
-            ('A',
-             ut2dt('010203040506Z'),
-             b'\x0d\x60\xc5\x83\x26\x0c\xd8\x34\x60\xd5\x83\x6b\x40')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-    def test_generalized_time(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= GeneralizedTime "
-            "END",
-            'uper')
-
-        datas = [
-            ('A',
-             gt2dt('20001231235959.999Z'),
-             b'\x13\x64\xc1\x83\x06\x2c\x99\xb1\x64\xcd\xab\x96\xae\x57\x39\x72'
-             b'\xe6\xd0')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
-
     def test_utf8_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
@@ -1010,6 +975,57 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         datas = [
             ('A',  '', b'\x00'),
             ('A',  '2', b'\x01\x32')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_bmp_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= BMPString "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',     '', b'\x00'),
+            ('A',  '123', b'\x03\x00\x31\x00\x32\x00\x33')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_utc_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UTCTime "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',
+             ut2dt('010203040506Z'),
+             b'\x0d\x60\xc5\x83\x26\x0c\xd8\x34\x60\xd5\x83\x6b\x40')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_generalized_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= GeneralizedTime "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',
+             gt2dt('20001231235959.999Z'),
+             b'\x13\x64\xc1\x83\x06\x2c\x99\xb1\x64\xcd\xab\x96\xae\x57\x39\x72'
+             b'\xe6\xd0')
         ]
 
         for type_name, decoded, encoded in datas:

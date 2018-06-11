@@ -1427,11 +1427,16 @@ class BMPString(Type):
     def __init__(self, name):
         super(BMPString, self).__init__(name, 'BMPString')
 
-    def encode(self, _data, _encoder):
-        raise NotImplementedError('BMPString is not yet implemented.')
+    def encode(self, data, encoder):
+        encoded = data.encode('utf-16-be')
+        encoder.append_length_determinant(len(data))
+        encoder.append_bytes(encoded)
 
-    def decode(self, _decoder):
-        raise NotImplementedError('BMPString is not yet implemented.')
+    def decode(self, decoder):
+        length = decoder.read_length_determinant()
+        encoded = decoder.read_bits(16 * length)
+
+        return encoded.decode('utf-16-be')
 
     def __repr__(self):
         return 'BMPString({})'.format(self.name)

@@ -829,6 +829,22 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "GHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~', but got"
             " '.' (0x19)'.")
 
+    def test_bmp_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= BMPString "
+            "END",
+            'per')
+
+        datas = [
+            ('A',     '', b'\x00'),
+            ('A',  '123', b'\x03\x00\x31\x00\x32\x00\x33')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_foo(self):
         foo = asn1tools.compile_files('tests/files/foo.asn', 'per')
 
