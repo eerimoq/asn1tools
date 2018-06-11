@@ -103,6 +103,23 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
         for name, decoded, encoded in datas:
             self.assertEqual(foo.encode(name, decoded), encoded)
 
+    def test_choice(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= CHOICE { "
+            "  a NULL "
+            "} "
+            "END",
+            'gser')
+
+        # Bad choice.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('A', ('b', None))
+
+        self.assertEqual(str(cm.exception),
+                         "Expected choice 'a', but got 'b'.")
+
     def test_utc_time(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
@@ -705,6 +722,8 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
         self.assertEqual(repr(all_types.types['SequenceOf']),
                          'SequenceOf(SequenceOf, Integer())')
         self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
+        self.assertEqual(repr(all_types.types['Choice']),
+                         'Choice(Choice, [Integer(a)])')
 
 
 if __name__ == '__main__':

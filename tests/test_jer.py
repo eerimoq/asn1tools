@@ -181,14 +181,14 @@ class Asn1ToolsJerTest(unittest.TestCase):
             foo.encode('A', ('c', None))
 
         self.assertEqual(str(cm.exception),
-                         "Expected choices are ['a', 'b'], but got 'c'.")
+                         "Expected choice 'a' or 'b', but got 'c'.")
 
         # Decode error.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('A', b'{"c": null}')
 
         self.assertEqual(str(cm.exception),
-                         ": Expected choices are ['a', 'b'], but got 'c'.")
+                         ": Expected choice 'a' or 'b', but got 'c'.")
 
     def test_utc_time(self):
         foo = asn1tools.compile_string(

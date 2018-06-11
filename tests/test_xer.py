@@ -165,6 +165,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             "    a INTEGER "
             "  } "
             "} "
+            "B ::= SEQUENCE OF A "
             "END",
             'xer')
 
@@ -176,6 +177,34 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
+        # Encode error.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('A', ('d', None))
+
+        self.assertEqual(str(cm.exception),
+                         "Expected choice 'a', 'b' or 'c', but got 'd'.")
+
+        # Decode error.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', b'<A><d><true /></d></A>')
+
+        self.assertEqual(str(cm.exception),
+                         ": Expected choice 'a', 'b' or 'c', but got 'd'.")
+
+        # Encode of error.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('B', [('d', None)])
+
+        self.assertEqual(str(cm.exception),
+                         "Expected choice 'a', 'b' or 'c', but got 'd'.")
+
+        # Decode of error.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('B', b'<A><d><true /></d></A>')
+
+        self.assertEqual(str(cm.exception),
+                         ": Expected choice 'a', 'b' or 'c', but got 'd'.")
 
     def test_utc_time(self):
         foo = asn1tools.compile_string(

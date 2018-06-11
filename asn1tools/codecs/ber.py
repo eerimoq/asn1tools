@@ -965,13 +965,16 @@ class Choice(Type):
         return format_or(sorted([self.format_tag(tag)
                                  for tag in self.tag_to_member]))
 
+    def format_names(self):
+        return format_or(sorted([member.name for member in self.members]))
+
     def encode(self, data, encoded):
         try:
             member = self.name_to_member[data[0]]
         except KeyError:
             raise EncodeError(
-                "Expected choices are {}, but got '{}'.".format(
-                    sorted([member.name for member in self.members]),
+                "Expected choice {}, but got '{}'.".format(
+                    self.format_names(),
                     data[0]))
 
         member.encode(data[1], encoded)

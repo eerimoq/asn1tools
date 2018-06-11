@@ -10,6 +10,7 @@ import logging
 from . import EncodeError
 from . import DecodeError
 from . import compiler
+from . import format_or
 from . import utc_time_to_datetime
 from . import utc_time_from_datetime
 from . import generalized_time_to_datetime
@@ -363,13 +364,16 @@ class Choice(Type):
         self.members = members
         self.name_to_member = {member.name: member for member in self.members}
 
+    def format_names(self):
+        return format_or(sorted([member.name for member in self.members]))
+
     def encode(self, data):
         try:
             member = self.name_to_member[data[0]]
         except KeyError:
             raise EncodeError(
-                "Expected choices are {}, but got '{}'.".format(
-                    sorted([member.name for member in self.members]),
+                "Expected choice {}, but got '{}'.".format(
+                    self.format_names(),
                     data[0]))
 
         return {member.name: member.encode(data[1])}
@@ -381,8 +385,8 @@ class Choice(Type):
             member = self.name_to_member[name]
         except KeyError:
             raise DecodeError(
-                "Expected choices are {}, but got '{}'.".format(
-                    sorted([member.name for member in self.members]),
+                "Expected choice {}, but got '{}'.".format(
+                    self.format_names(),
                     name))
 
         return (name, member.decode(value))
