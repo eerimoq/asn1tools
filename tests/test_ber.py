@@ -25,6 +25,21 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
     maxDiff = None
 
+    def test_boolean(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= BOOLEAN "
+            "END")
+
+        datas = [
+            ('A',  True, b'\x01\x01\xff'),
+            ('A', False, b'\x01\x01\x00')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_boolean_explicit_tags(self):
         """Test explicit tags on booleans.
 
@@ -58,6 +73,33 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         spec = 'Foo DEFINITIONS ::= BEGIN Foo ::= [2] IMPLICIT BOOLEAN END'
         foo = asn1tools.compile_string(spec)
         self.assert_encode_decode(foo, 'Foo', True, b'\x82\x01\xff')
+
+    def test_integer(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= INTEGER "
+            "END")
+
+        datas = [
+            ('A',    32768, b'\x02\x03\x00\x80\x00'),
+            ('A',    32767, b'\x02\x02\x7f\xff'),
+            ('A',      256, b'\x02\x02\x01\x00'),
+            ('A',      255, b'\x02\x02\x00\xff'),
+            ('A',      128, b'\x02\x02\x00\x80'),
+            ('A',      127, b'\x02\x01\x7f'),
+            ('A',        1, b'\x02\x01\x01'),
+            ('A',        0, b'\x02\x01\x00'),
+            ('A',       -1, b'\x02\x01\xff'),
+            ('A',     -128, b'\x02\x01\x80'),
+            ('A',     -129, b'\x02\x02\xff\x7f'),
+            ('A',     -256, b'\x02\x02\xff\x00'),
+            ('A',   -32768, b'\x02\x02\x80\x00'),
+            ('A',   -32769, b'\x02\x03\xff\x7f\xff')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
 
     def test_integer_explicit_tags(self):
         """Test explicit tags on integers.
@@ -137,10 +179,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo,
-                                      type_name,
-                                      decoded,
-                                      encoded)
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
 
         # NaN cannot be compared.
         encoded = b'\x09\x01\x42'
@@ -2207,22 +2246,6 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         all_types = asn1tools.compile_files('tests/files/all_types.asn')
 
         datas = [
-            ('Boolean',                 True, b'\x01\x01\xff'),
-            ('Boolean',                False, b'\x01\x01\x00'),
-            ('Integer',                32768, b'\x02\x03\x00\x80\x00'),
-            ('Integer',                32767, b'\x02\x02\x7f\xff'),
-            ('Integer',                  256, b'\x02\x02\x01\x00'),
-            ('Integer',                  255, b'\x02\x02\x00\xff'),
-            ('Integer',                  128, b'\x02\x02\x00\x80'),
-            ('Integer',                  127, b'\x02\x01\x7f'),
-            ('Integer',                    1, b'\x02\x01\x01'),
-            ('Integer',                    0, b'\x02\x01\x00'),
-            ('Integer',                   -1, b'\x02\x01\xff'),
-            ('Integer',                 -128, b'\x02\x01\x80'),
-            ('Integer',                 -129, b'\x02\x02\xff\x7f'),
-            ('Integer',                 -256, b'\x02\x02\xff\x00'),
-            ('Integer',               -32768, b'\x02\x02\x80\x00'),
-            ('Integer',               -32769, b'\x02\x03\xff\x7f\xff'),
             ('Octetstring',          b'\x00', b'\x04\x01\x00'),
             ('Octetstring',    127 * b'\x55', b'\x04\x7f' + 127 * b'\x55'),
             ('Octetstring',    128 * b'\xaa', b'\x04\x81\x80' + 128 * b'\xaa'),
