@@ -384,6 +384,7 @@ class BMPString(Type):
                                         Tag.BMP_STRING)
 
     def encode(self, data, encoded):
+        data = data.encode('utf-16-be')
         encoded.extend(self.tag)
         encoded.extend(encode_length_definite(len(data)))
         encoded.extend(data)
@@ -392,8 +393,9 @@ class BMPString(Type):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
+        decoded = bytearray(data[offset:end_offset]).decode('utf-16-be')
 
-        return bytearray(data[offset:end_offset]), end_offset
+        return decoded, end_offset
 
     def __repr__(self):
         return 'BMPString({})'.format(self.name)

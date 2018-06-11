@@ -632,7 +632,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
             ('Universalstring',    'bar', b'"bar"'),
             ('Visiblestring',      'bar', b'"bar"'),
             ('Generalstring',      'bar', b'"bar"'),
-            ('Bmpstring',         b'bar', b'"bar"'),
+            ('Bmpstring',          'bar', b'"bar"'),
             ('Graphicstring',      'bar', b'"bar"'),
             ('Teletexstring',     b'fum', b'"fum"')
         ]

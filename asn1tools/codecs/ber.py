@@ -1147,15 +1147,16 @@ class BMPString(PrimitiveOrConstructedType):
                                         OctetString(name))
 
     def encode(self, data, encoded):
+        data = data.encode('utf-16-be')
         encoded.extend(self.tag)
         encoded.extend(encode_length_definite(len(data)))
         encoded.extend(data)
 
     def decode_primitive_contents(self, data, offset, length):
-        return bytearray(data[offset:offset + length])
+        return data[offset:offset + length].decode('utf-16-be')
 
     def decode_constructed_segments(self, segments):
-        return bytearray().join(segments)
+        return bytearray().join(segments).decode('utf-16-be')
 
     def __repr__(self):
         return 'BMPString({})'.format(self.name)

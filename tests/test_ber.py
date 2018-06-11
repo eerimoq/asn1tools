@@ -774,6 +774,21 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         self.assertEqual(foo.decode('B', b'\x24\x03\x04\x01\x12'), ('a', b'\x12'))
         self.assertEqual(foo.decode('B', b'\x04\x01\x12'), ('a', b'\x12'))
 
+    def test_bmp_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS IMPLICIT TAGS ::= "
+            "BEGIN "
+            "A ::= BMPString "
+            "END")
+
+        datas = [
+            ('A', 'hello', b'\x1e\x0a\x00\x68\x00\x65\x00\x6c\x00\x6c\x00\x6f'),
+            ('A', u'\u0102', b'\x1e\x02\x01\x02')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_utc_time(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS IMPLICIT TAGS ::= "
@@ -2229,7 +2244,6 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('Universalstring',        'bar', b'\x1c\x03bar'),
             ('Visiblestring',          'bar', b'\x1a\x03bar'),
             ('Generalstring',          'bar', b'\x1b\x03bar'),
-            ('Bmpstring',             b'bar', b'\x1e\x03bar'),
             ('Teletexstring',         b'fum', b'\x14\x03fum'),
             ('Utctime',
              ut2dt('010203040506Z'),
@@ -2900,7 +2914,9 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('Universalstring',        'bar', b'\x3c\x07\x04\x02ba\x04\x01r'),
             ('Visiblestring',          'bar', b'\x3a\x07\x04\x02ba\x04\x01r'),
             ('Generalstring',          'bar', b'\x3b\x07\x04\x02ba\x04\x01r'),
-            ('Bmpstring',             b'fie', b'\x3e\x07\x04\x01f\x04\x02ie'),
+            ('Bmpstring',
+             'fie',
+             b'\x3e\x0a\x04\x02\x00\x66\x04\x04\x00\x69\x00\x65'),
             ('Teletexstring',         b'fum', b'\x34\x07\x04\x01f\x04\x02um')
         ]
 
@@ -2926,7 +2942,9 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('Universalstring',        'bar', b'\x3c\x80\x04\x02ba\x04\x01r\x00\x00'),
             ('Visiblestring',          'bar', b'\x3a\x80\x04\x02ba\x04\x01r\x00\x00'),
             ('Generalstring',          'bar', b'\x3b\x80\x04\x02ba\x04\x01r\x00\x00'),
-            ('Bmpstring',             b'fie', b'\x3e\x80\x04\x01f\x04\x02ie\x00\x00'),
+            ('Bmpstring',
+             'fie',
+             b'\x3e\x80\x04\x02\x00\x66\x04\x04\x00\x69\x00\x65\x00\x00'),
             ('Teletexstring',         b'fum', b'\x34\x80\x04\x01f\x04\x02um\x00\x00'),
             #('SequenceOf',                [], b'\x30\x80\x00\x00'),
             #('SetOf',                     [], b'\x31\x80\x00\x00')

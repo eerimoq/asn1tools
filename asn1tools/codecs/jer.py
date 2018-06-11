@@ -493,10 +493,10 @@ class BMPString(Type):
         super(BMPString, self).__init__(name, 'BMPString')
 
     def encode(self, data):
-        return data.decode('ascii')
+        return data
 
     def decode(self, data):
-        return data.encode('ascii')
+        return data
 
     def __repr__(self):
         return 'BMPString({})'.format(self.name)
