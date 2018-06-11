@@ -120,29 +120,29 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
         self.assertEqual(str(cm.exception),
                          "Expected choice 'a', but got 'b'.")
 
-    def test_utc_time(self):
+    def test_utf8_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
-            "A ::= UTCTime "
+            "A ::= UTF8String "
             "END",
             'gser')
 
-        decoded = ut2dt('010203040506Z')
-        encoded = b'a A ::= "010203040506Z"'
+        decoded = 'foo'
+        encoded = b'a A ::= "foo"'
 
         self.assertEqual(foo.encode('A', decoded), encoded)
 
-    def test_generalized_time(self):
+    def test_numeric_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
-            "A ::= GeneralizedTime "
+            "A ::= NumericString "
             "END",
             'gser')
 
-        decoded = gt2dt('20001231235959.999Z')
-        encoded = b'a A ::= "20001231235959.999Z"'
+        decoded = '01 23'
+        encoded = b'a A ::= "01 23"'
 
         self.assertEqual(foo.encode('A', decoded), encoded)
 
@@ -223,6 +223,32 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
 
         decoded = 'bar'
         encoded = b'a A ::= "bar"'
+
+        self.assertEqual(foo.encode('A', decoded), encoded)
+
+    def test_utc_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UTCTime "
+            "END",
+            'gser')
+
+        decoded = ut2dt('010203040506Z')
+        encoded = b'a A ::= "010203040506Z"'
+
+        self.assertEqual(foo.encode('A', decoded), encoded)
+
+    def test_generalized_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= GeneralizedTime "
+            "END",
+            'gser')
+
+        decoded = gt2dt('20001231235959.999Z')
+        encoded = b'a A ::= "20001231235959.999Z"'
 
         self.assertEqual(foo.encode('A', decoded), encoded)
 
