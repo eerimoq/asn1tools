@@ -748,6 +748,8 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
         self.assertEqual(repr(all_types.types['SequenceOf']),
                          'SequenceOf(SequenceOf, Integer())')
         self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
+        self.assertEqual(repr(all_types.types['GeneralizedTime1']),
+                         'GeneralizedTime(GeneralizedTime1)')
         self.assertEqual(repr(all_types.types['Choice']),
                          'Choice(Choice, [Integer(a)])')
 
