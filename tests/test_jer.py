@@ -634,7 +634,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
             ('Generalstring',      'bar', b'"bar"'),
             ('Bmpstring',          'bar', b'"bar"'),
             ('Graphicstring',      'bar', b'"bar"'),
-            ('Teletexstring',     b'fum', b'"fum"')
+            ('Teletexstring',      'fum', b'"fum"')
         ]
 
         for type_name, decoded, encoded in datas:

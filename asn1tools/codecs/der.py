@@ -457,14 +457,15 @@ class TeletexString(Type):
     def encode(self, data, encoded):
         encoded.extend(self.tag)
         encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data)
+        encoded.extend(data.encode('iso-8859-1'))
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
+        decoded = bytearray(data[offset:end_offset]).decode('iso-8859-1')
 
-        return bytearray(data[offset:end_offset]), end_offset
+        return decoded, end_offset
 
     def __repr__(self):
         return 'TeletexString({})'.format(self.name)

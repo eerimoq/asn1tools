@@ -2267,7 +2267,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('Universalstring',        'bar', b'\x1c\x03bar'),
             ('Visiblestring',          'bar', b'\x1a\x03bar'),
             ('Generalstring',          'bar', b'\x1b\x03bar'),
-            ('Teletexstring',         b'fum', b'\x14\x03fum'),
+            ('Teletexstring',          'fum', b'\x14\x03fum'),
             ('Utctime',
              ut2dt('010203040506Z'),
              b'\x17\x0d010203040506Z'),
@@ -2940,7 +2940,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('Bmpstring',
              'fie',
              b'\x3e\x0a\x04\x02\x00\x66\x04\x04\x00\x69\x00\x65'),
-            ('Teletexstring',         b'fum', b'\x34\x07\x04\x01f\x04\x02um')
+            ('Teletexstring',          'fum', b'\x34\x07\x04\x01f\x04\x02um')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -2968,7 +2968,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('Bmpstring',
              'fie',
              b'\x3e\x80\x04\x02\x00\x66\x04\x04\x00\x69\x00\x65\x00\x00'),
-            ('Teletexstring',         b'fum', b'\x34\x80\x04\x01f\x04\x02um\x00\x00'),
+            ('Teletexstring',          'fum', b'\x34\x80\x04\x01f\x04\x02um\x00\x00'),
             #('SequenceOf',                [], b'\x30\x80\x00\x00'),
             #('SetOf',                     [], b'\x31\x80\x00\x00')
         ]

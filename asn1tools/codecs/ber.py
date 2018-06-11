@@ -1219,13 +1219,13 @@ class TeletexString(PrimitiveOrConstructedType):
     def encode(self, data, encoded):
         encoded.extend(self.tag)
         encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data)
+        encoded.extend(data.encode('iso-8859-1'))
 
     def decode_primitive_contents(self, data, offset, length):
-        return bytearray(data[offset:offset + length])
+        return bytearray(data[offset:offset + length]).decode('iso-8859-1')
 
     def decode_constructed_segments(self, segments):
-        return bytearray().join(segments)
+        return bytearray().join(segments).decode('iso-8859-1')
 
     def __repr__(self):
         return 'TeletexString({})'.format(self.name)

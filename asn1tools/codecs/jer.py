@@ -538,10 +538,10 @@ class TeletexString(Type):
         super(TeletexString, self).__init__(name, 'TeletexString')
 
     def encode(self, data):
-        return data.decode('ascii')
+        return data
 
     def decode(self, data):
-        return data.encode('ascii')
+        return data
 
     def __repr__(self):
         return 'TeletexString({})'.format(self.name)

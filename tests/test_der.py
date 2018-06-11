@@ -141,7 +141,7 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
             ('Bmpstring',
              'bar',
              b'\x1e\x06\x00\x62\x00\x61\x00\x72'),
-            ('Teletexstring',         b'fum', b'\x14\x03fum'),
+            ('Teletexstring',          'fum', b'\x14\x03fum'),
             ('Utctime',
              ut2dt('010203040506Z'),
              b'\x17\x0d010203040506Z'),
