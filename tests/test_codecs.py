@@ -137,7 +137,8 @@ class Asn1ToolsUtilsTest(unittest.TestCase):
 
     def test_utc_time_to_datetime_errors(self):
         datas = [
-            '8201021200K'
+            '8201021200K',
+            'Z820102120011Z'
         ]
 
         for utc_time in datas:
