@@ -52,6 +52,23 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
 
         self.assertEqual(foo.encode('A', decoded), encoded)
 
+    def test_sequence(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE { "
+            "  a BOOLEAN "
+            "}"
+            "END",
+            'gser')
+
+        # Missing member.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('A', {})
+
+        self.assertEqual(str(cm.exception),
+                         "Member 'a' not found in {}.")
+
     def test_sequence_of(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "

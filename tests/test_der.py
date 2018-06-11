@@ -167,6 +167,7 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(repr(all_types.types['Boolean']), 'Boolean(Boolean)')
         self.assertEqual(repr(all_types.types['Integer']), 'Integer(Integer)')
+        self.assertEqual(repr(all_types.types['Real']), 'Real(Real)')
         self.assertEqual(repr(all_types.types['Bitstring']), 'BitString(Bitstring)')
         self.assertEqual(repr(all_types.types['Octetstring']), 'OctetString(Octetstring)')
         self.assertEqual(repr(all_types.types['Null']), 'Null(Null)')
@@ -194,6 +195,8 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
                          'BMPString(Bmpstring)')
         self.assertEqual(repr(all_types.types['Teletexstring']),
                          'TeletexString(Teletexstring)')
+        self.assertEqual(repr(all_types.types['Graphicstring']),
+                         'GraphicString(Graphicstring)')
         self.assertEqual(repr(all_types.types['Utctime']), 'UTCTime(Utctime)')
         self.assertEqual(repr(all_types.types['GeneralizedTime1']),
                          'GeneralizedTime(GeneralizedTime1)')

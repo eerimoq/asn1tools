@@ -523,6 +523,13 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             str(cm.exception),
             'Decode until an end-of-contents tag is not yet implemented.')
 
+        # Missing member.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('C', {})
+
+        self.assertEqual(str(cm.exception),
+                         "Member 'a' not found in {}.")
+
     def test_sequence_of(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
@@ -834,14 +841,6 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         # Decode the encoded answer.
         decoded = foo.decode('Answer', encoded)
         self.assertEqual(decoded, {'id': 1, 'answer': False})
-
-        # Encode a question with missing field 'id'.
-        with self.assertRaises(asn1tools.EncodeError) as cm:
-            encoded = foo.encode('Question', {'question': 'Is 1+1=3?'})
-
-        self.assertEqual(
-            str(cm.exception),
-            "Member 'id' not found in {'question': 'Is 1+1=3?'}.")
 
     def test_decode_length(self):
         foo = asn1tools.compile_files('tests/files/foo.asn')
