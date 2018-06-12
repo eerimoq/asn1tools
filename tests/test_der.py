@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import sys
 import unittest
 from copy import deepcopy
@@ -96,6 +99,24 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+    def test_universal_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UniversalString "
+            "END",
+            'der')
+
+        datas = [
+            ('A',   'bar', b'\x1c\x0c\x00\x00\x00b\x00\x00\x00a\x00\x00\x00r'),
+            ('A',
+             u'åäö',
+             b'\x1c\x0c\x00\x00\x00\xe5\x00\x00\x00\xe4\x00\x00\x00\xf6')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn', 'der')
 
@@ -135,7 +156,6 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
             ('Numericstring',          '123', b'\x12\x03123'),
             ('Printablestring',        'foo', b'\x13\x03foo'),
             ('Ia5string',              'bar', b'\x16\x03bar'),
-            ('Universalstring',        'bar', b'\x1c\x03bar'),
             ('Visiblestring',          'bar', b'\x1a\x03bar'),
             ('Generalstring',          'bar', b'\x1b\x03bar'),
             ('Bmpstring',

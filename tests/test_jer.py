@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import json
 import unittest
 import asn1tools
@@ -199,6 +202,23 @@ class Asn1ToolsJerTest(unittest.TestCase):
 
         self.assertEqual(str(cm.exception),
                          ": Expected choice 'a' or 'b', but got 'c'.")
+
+    def test_universal_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UniversalString "
+            "END",
+            'jer')
+
+        datas = [
+            ('A',     u'bar', b'"bar"')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(loadb(foo.encode(type_name, decoded)),
+                             loadb(encoded))
+            self.assertEqual(foo.decode(type_name, encoded), decoded)
 
     def test_utc_time(self):
         foo = asn1tools.compile_string(

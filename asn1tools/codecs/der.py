@@ -409,16 +409,18 @@ class UniversalString(Type):
                                               Tag.UNIVERSAL_STRING)
 
     def encode(self, data, encoded):
+        data = data.encode('utf-32-be')
         encoded.extend(self.tag)
         encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('ascii'))
+        encoded.extend(data)
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
+        decoded = data[offset:end_offset].decode('utf-32-be')
 
-        return data[offset:end_offset].decode('ascii'), end_offset
+        return decoded, end_offset
 
     def __repr__(self):
         return 'UniversalString({})'.format(self.name)

@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import unittest
 from .utils import Asn1ToolsBaseTest
 import asn1tools
@@ -206,6 +209,39 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         self.assertEqual(str(cm.exception),
                          ": Expected choice 'a', 'b' or 'c', but got 'd'.")
 
+    def test_utf8_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UTF8String "
+            "END",
+            'xer')
+
+        datas = [
+            ('A',         u'', b'<A />'),
+            ('A',      u'bar', b'<A>bar</A>'),
+            ('A', u'a\u1010c', b'<A>a&#4112;c</A>'),
+            ('A',    u'f → ∝', b'<A>f &#8594; &#8733;</A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
+    def test_universal_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UniversalString "
+            "END",
+            'xer')
+
+        datas = [
+            ('A',        u'bar', b'<A>bar</A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_utc_time(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
@@ -234,23 +270,6 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             ('A', gt2dt('19920521000000Z'), b'<A>19920521000000Z</A>'),
             ('A', gt2dt('19920622123421Z'), b'<A>19920622123421Z</A>'),
             ('A', gt2dt('19920722132100.3Z'), b'<A>19920722132100.3Z</A>')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
-
-    def test_utf8_string(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= UTF8String "
-            "END",
-            'xer')
-
-        datas = [
-            ('A',         u'', b'<A />'),
-            ('A',      u'bar', b'<A>bar</A>'),
-            ('A', u'a\u1010c', b'<A>a&#4112;c</A>')
         ]
 
         for type_name, decoded, encoded in datas:

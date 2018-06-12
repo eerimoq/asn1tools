@@ -1194,15 +1194,16 @@ class UniversalString(PrimitiveOrConstructedType):
                                               OctetString(name))
 
     def encode(self, data, encoded):
+        data = data.encode('utf-32-be')
         encoded.extend(self.tag)
         encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('ascii'))
+        encoded.extend(data)
 
     def decode_primitive_contents(self, data, offset, length):
-        return data[offset:offset + length].decode('ascii')
+        return data[offset:offset + length].decode('utf-32-be')
 
     def decode_constructed_segments(self, segments):
-        return bytearray().join(segments).decode('ascii')
+        return bytearray().join(segments).decode('utf-32-be')
 
     def __repr__(self):
         return 'UniversalString({})'.format(self.name)

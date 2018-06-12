@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import math
 import unittest
 import timeit
@@ -828,6 +831,39 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+    def test_graphic_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= GraphicString "
+            "END")
+
+        datas = [
+            ('A', 'f', b'\x19\x01\x66')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_universal_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UniversalString "
+            "END")
+
+        datas = [
+            ('A',
+             'bar',
+             b'\x1c\x0c\x00\x00\x00\x62\x00\x00\x00\x61\x00\x00\x00\x72'),
+            ('A',
+             u'åäö',
+             b'\x1c\x0c\x00\x00\x00\xe5\x00\x00\x00\xe4\x00\x00\x00\xf6')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_utc_time(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS IMPLICIT TAGS ::= "
@@ -855,20 +891,6 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                                   'Foo',
                                   ut2dt('121001230001Z'),
                                   b'\xa2\x0f\x17\x0d121001230001Z')
-
-    def test_graphic_string(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= GraphicString "
-            "END")
-
-        datas = [
-            ('A', 'f', b'\x19\x01\x66')
-        ]
-
-        for type_name, decoded, encoded in datas:
-            self.assert_encode_decode(foo, type_name, decoded, encoded)
 
     def test_foo(self):
         foo = asn1tools.compile_files(['tests/files/foo.asn'])
@@ -2264,10 +2286,8 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('Numericstring',          '123', b'\x12\x03123'),
             ('Printablestring',        'foo', b'\x13\x03foo'),
             ('Ia5string',              'bar', b'\x16\x03bar'),
-            ('Universalstring',        'bar', b'\x1c\x03bar'),
             ('Visiblestring',          'bar', b'\x1a\x03bar'),
             ('Generalstring',          'bar', b'\x1b\x03bar'),
-            ('Teletexstring',          'fum', b'\x14\x03fum'),
             ('Utctime',
              ut2dt('010203040506Z'),
              b'\x17\x0d010203040506Z'),
@@ -2934,7 +2954,9 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('Numericstring',          '123', b'\x32\x07\x04\x0212\x04\x013'),
             ('Printablestring',        'foo', b'\x33\x07\x04\x02fo\x04\x01o'),
             ('Ia5string',              'bar', b'\x36\x07\x04\x02ba\x04\x01r'),
-            ('Universalstring',        'bar', b'\x3c\x07\x04\x02ba\x04\x01r'),
+            ('Universalstring',
+             'bar',
+             b'\x3c\x10\x04\x08\x00\x00\x00b\x00\x00\x00a\x04\x04\x00\x00\x00r'),
             ('Visiblestring',          'bar', b'\x3a\x07\x04\x02ba\x04\x01r'),
             ('Generalstring',          'bar', b'\x3b\x07\x04\x02ba\x04\x01r'),
             ('Bmpstring',
@@ -2962,7 +2984,9 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('Numericstring',          '123', b'\x32\x80\x04\x0212\x04\x013\x00\x00'),
             ('Printablestring',        'foo', b'\x33\x80\x04\x02fo\x04\x01o\x00\x00'),
             ('Ia5string',              'bar', b'\x36\x80\x04\x02ba\x04\x01r\x00\x00'),
-            ('Universalstring',        'bar', b'\x3c\x80\x04\x02ba\x04\x01r\x00\x00'),
+            ('Universalstring',
+             'bar',
+             b'\x3c\x80\x04\x08\x00\x00\x00b\x00\x00\x00a\x04\x04\x00\x00\x00r\x00\x00'),
             ('Visiblestring',          'bar', b'\x3a\x80\x04\x02ba\x04\x01r\x00\x00'),
             ('Generalstring',          'bar', b'\x3b\x80\x04\x02ba\x04\x01r\x00\x00'),
             ('Bmpstring',

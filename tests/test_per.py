@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import unittest
 from .utils import Asn1ToolsBaseTest
 import asn1tools
@@ -844,6 +847,24 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_universal_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UniversalString "
+            "END",
+            'per')
+
+        datas = [
+            ('A',
+             u'åäö',
+             b'\x03\x00\x00\x00\xe5\x00\x00\x00\xe4\x00\x00\x00\xf6')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            with self.assertRaises(NotImplementedError):
+                self.assert_encode_decode(foo, type_name, decoded, encoded)
 
     def test_foo(self):
         foo = asn1tools.compile_files('tests/files/foo.asn', 'per')

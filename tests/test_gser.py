@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import unittest
 from .utils import Asn1ToolsBaseTest
 import sys
@@ -221,10 +224,12 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
             "END",
             'gser')
 
-        decoded = 'bar'
-        encoded = b'a A ::= "bar"'
+        datas = [
+            ('A',      u'bar', b'a A ::= "bar"')
+        ]
 
-        self.assertEqual(foo.encode('A', decoded), encoded)
+        for type_name, decoded, encoded in datas:
+            self.assertEqual(foo.encode(type_name, decoded), encoded)
 
     def test_utc_time(self):
         foo = asn1tools.compile_string(
