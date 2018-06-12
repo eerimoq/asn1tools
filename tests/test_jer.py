@@ -212,7 +212,8 @@ class Asn1ToolsJerTest(unittest.TestCase):
             'jer')
 
         datas = [
-            ('A',     u'bar', b'"bar"')
+            ('A',     u'bar', b'"bar"'),
+            ('A',     u'åäö', b'\x22\xc3\xa5\xc3\xa4\xc3\xb6\x22')
         ]
 
         for type_name, decoded, encoded in datas:
