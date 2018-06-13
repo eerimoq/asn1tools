@@ -281,7 +281,7 @@ class BitString(Type):
             if rest != 0:
                 decoded <<= (8 - rest)
 
-            decoded = binascii.unhexlify(hex(decoded)[4:])
+            decoded = binascii.unhexlify(hex(decoded).rstrip('L')[4:])
 
         return (decoded, number_of_bits)
 
