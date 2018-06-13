@@ -44,7 +44,7 @@ def indent_xml(element, indent, level=0):
 class Type(object):
 
     def __init__(self, name, type_name):
-        self.name = name
+        self.name = name.replace(' ', '_')
         self.type_name = type_name
         self.optional = False
         self.default = None

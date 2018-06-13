@@ -138,20 +138,36 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             "F ::= SEQUENCE OF CHOICE { a BOOLEAN, b INTEGER } "
             "G ::= SEQUENCE OF ENUMERATED { one } "
             "H ::= SEQUENCE OF SEQUENCE { a INTEGER } "
+            "I ::= SEQUENCE OF BIT STRING "
+            "J ::= SEQUENCE OF OCTET STRING "
+            "K ::= SEQUENCE OF OBJECT IDENTIFIER "
+            "L ::= SEQUENCE OF SEQUENCE OF NULL "
+            "M ::= SEQUENCE OF SET OF NULL "
             "END",
             'xer')
 
         datas = [
-            ('A',            [], b'<A />'),
-            ('A',        [1, 4], b'<A><INTEGER>1</INTEGER><INTEGER>4</INTEGER></A>'),
-            ('B',         [[5]], b'<B><A><INTEGER>5</INTEGER></A></B>'),
-            ('C', [True, False], b'<C><true /><false /></C>'),
-            ('D',        [True], b'<D><true /></D>'),
+            ('A',               [], b'<A />'),
+            ('A',           [1, 4], b'<A><INTEGER>1</INTEGER><INTEGER>4</INTEGER></A>'),
+            ('B',            [[5]], b'<B><A><INTEGER>5</INTEGER></A></B>'),
+            ('C',    [True, False], b'<C><true /><false /></C>'),
+            ('D',           [True], b'<D><true /></D>'),
             ('F',
              [('a', True), ('b', 1)],
              b'<F><a><true /></a><b>1</b></F>'),
-            ('G',       ['one'], b'<G><one /></G>'),
-            ('H',       [{'a': 1}], b'<H><SEQUENCE><a>1</a></SEQUENCE></H>')
+            ('G',          ['one'], b'<G><one /></G>'),
+            ('H',       [{'a': 1}], b'<H><SEQUENCE><a>1</a></SEQUENCE></H>'),
+            ('I',   [(b'\x80', 1)], b'<I><BIT_STRING>1</BIT_STRING></I>'),
+            ('J',        [b'\x12'], b'<J><OCTET_STRING>12</OCTET_STRING></J>'),
+            ('K',
+             ['1.2.30'],
+             b'<K><OBJECT_IDENTIFIER>1.2.30</OBJECT_IDENTIFIER></K>'),
+            ('L',
+             [[None], []],
+             b'<L><SEQUENCE_OF><NULL /></SEQUENCE_OF><SEQUENCE_OF /></L>'),
+            ('M',
+             [[None], []],
+             b'<M><SET_OF><NULL /></SET_OF><SET_OF /></M>')
         ]
 
         for type_name, decoded, encoded in datas:
