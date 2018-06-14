@@ -24,6 +24,8 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         for codec in CODECS:
             foos.append(asn1tools.compile_string(spec, codec))
 
+        gser = asn1tools.compile_string(spec, 'gser')
+
         for value in values:
             decoded = value
 
@@ -32,6 +34,8 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
                 decoded = foo.decode('A', encoded)
                 self.assertEqual(type(decoded), type(value))
                 self.assertEqual(decoded, value)
+
+            gser.encode('A', decoded)
 
     def test_boolean(self):
         self.encode_decode_all_codecs("BOOLEAN", [True, False])
@@ -94,7 +98,8 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             self.encode_decode_all_codecs("GeneralString", [u'hi'])
 
     def test_bmp_string(self):
-        self.encode_decode_all_codecs("BMPString", [u'hi'])
+        with self.assertRaises(NotImplementedError):
+            self.encode_decode_all_codecs("BMPString", [u'hi'])
 
     def test_graphic_string(self):
         self.encode_decode_all_codecs("GraphicString", [u'hi'])

@@ -5,6 +5,7 @@
 import binascii
 import logging
 import math
+from copy import copy
 
 from . import EncodeError
 from . import DecodeError
@@ -356,8 +357,8 @@ class GraphicString(Type):
     def __init__(self, name):
         super(GraphicString, self).__init__(name, 'GraphicString')
 
-    def encode(self, data, separator, indent):
-        raise NotImplementedError('GraphicString is not yet implemented.')
+    def encode(self, data, _separator, _indent):
+        return '"{}"'.format(data)
 
     def __repr__(self):
         return 'GraphicString({})'.format(self.name)
@@ -425,13 +426,17 @@ class Any(Type):
 
 class Recursive(Type, compiler.Recursive):
 
-    def __init__(self, name, _type_name, _module_name):
+    def __init__(self, name, type_name, module_name):
         super(Recursive, self).__init__(name, 'RECURSIVE')
+        self.type_name = type_name
+        self.module_name = module_name
+        self.inner = None
+
+    def set_inner_type(self, inner):
+        self.inner = copy(inner)
 
     def encode(self, data, separator, indent):
-        raise NotImplementedError(
-            "Recursive types are not yet implemented (type '{}').".format(
-                self.type_name))
+        return self.inner.encode(data, separator, indent)
 
     def __repr__(self):
         return 'Recursive({})'.format(self.name)
@@ -444,6 +449,10 @@ class CompiledType(compiler.CompiledType):
         self._value_name = type_name.lower()
         self._value_type = type_name
         self._type = compiled_type
+
+    @property
+    def type(self):
+        return self._type
 
     def encode(self, data, indent=None):
         if indent is None:
@@ -553,6 +562,7 @@ class Compiler(compiler.Compiler):
                 compiled = Recursive(name,
                                      type_name,
                                      module_name)
+                self.recursive_types.append(compiled)
             else:
                 compiled = self.compile_user_type(name,
                                                   type_name,

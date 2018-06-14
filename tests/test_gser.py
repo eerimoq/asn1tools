@@ -12,8 +12,10 @@ import asn1tools
 
 sys.path.append('tests/files')
 sys.path.append('tests/files/3gpp')
+sys.path.append('tests/files/ietf')
 
 from rrc_8_6_0 import EXPECTED as RRC_8_6_0
+from rfc4511 import EXPECTED as RFC4511
 
 
 class Asn1ToolsGserTest(Asn1ToolsBaseTest):
@@ -256,8 +258,7 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
         decoded = 'foo'
         encoded = b'a A ::= "foo"'
 
-        with self.assertRaises(NotImplementedError):
-            self.assertEqual(foo.encode('A', decoded), encoded)
+        self.assertEqual(foo.encode('A', decoded), encoded)
 
     def test_universal_string(self):
         foo = asn1tools.compile_string(
@@ -800,6 +801,79 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
                          'GeneralizedTime(GeneralizedTime1)')
         self.assertEqual(repr(all_types.types['Choice']),
                          'Choice(Choice, [Integer(a)])')
+
+    def test_rfc4511(self):
+        rfc4511 = asn1tools.compile_dict(deepcopy(RFC4511), 'gser')
+
+        # A search request message.
+        decoded = {
+            'messageID': 2,
+            'protocolOp': (
+                'searchRequest',
+                {
+                    'baseObject': b'',
+                    'scope': 'wholeSubtree',
+                    'derefAliases': 'neverDerefAliases',
+                    'sizeLimit': 0,
+                    'timeLimit': 0,
+                    'typesOnly': False,
+                    'filter': (
+                        'and',
+                        [
+                            (
+                                'substrings',
+                                {
+                                    'type': b'\x63\x6e',
+                                    'substrings': [
+                                        ('any', b'\x66\x72\x65\x64')
+                                    ]
+                                }
+                            ),
+                            (
+                                'equalityMatch',
+                                {
+                                    'attributeDesc': b'\x64\x6e',
+                                    'assertionValue': b'\x6a\x6f\x65'
+                                }
+                            )
+                        ]
+                    ),
+                    'attributes': [
+                    ]
+                }
+            )
+        }
+
+        encoded = (
+            b"ldapmessage LDAPMessage ::= {\n"
+            b"  messageID 2,\n"
+            b"  protocolOp searchRequest : {\n"
+            b"    baseObject ''H,\n"
+            b"    scope wholeSubtree,\n"
+            b"    derefAliases neverDerefAliases,\n"
+            b"    sizeLimit 0,\n"
+            b"    timeLimit 0,\n"
+            b"    typesOnly FALSE,\n"
+            b"    filter and : {\n"
+            b"      substrings : {\n"
+            b"        type '636E'H,\n"
+            b"        substrings {\n"
+            b"          any : '66726564'H\n"
+            b"        }\n"
+            b"      },\n"
+            b"      equalityMatch : {\n"
+            b"        attributeDesc '646E'H,\n"
+            b"        assertionValue '6A6F65'H\n"
+            b"      }\n"
+            b"    },\n"
+            b"    attributes {\n"
+            b"    }\n"
+            b"  }\n"
+            b"}"
+        )
+
+        self.assertEqual(rfc4511.encode('LDAPMessage', decoded, indent=2),
+                         encoded)
 
 
 if __name__ == '__main__':
