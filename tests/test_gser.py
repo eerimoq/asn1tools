@@ -60,10 +60,23 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
             "A ::= SEQUENCE { "
-            "  a BOOLEAN "
+            "  a BOOLEAN, "
+            "  b BOOLEAN OPTIONAL "
+            "}"
+            "B ::= SEQUENCE { "
+            "  a BOOLEAN DEFAULT TRUE "
             "}"
             "END",
             'gser')
+
+        datas = [
+            ('A',             {'a': True}, b'a A ::= { a TRUE }'),
+            ('A', {'a': False, 'b': True}, b'a A ::= { a FALSE, b TRUE }'),
+            ('B',                      {}, b'b B ::= { }')
+        ]
+
+        for name, decoded, encoded in datas:
+            self.assertEqual(foo.encode(name, decoded), encoded)
 
         # Missing member.
         with self.assertRaises(asn1tools.EncodeError) as cm:
@@ -88,6 +101,36 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
 
         for name, decoded, encoded in datas:
             self.assertEqual(foo.encode(name, decoded), encoded)
+
+    def test_set(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SET { "
+            "  a BOOLEAN, "
+            "  b BOOLEAN OPTIONAL "
+            "}"
+            "B ::= SEQUENCE { "
+            "  a BOOLEAN DEFAULT TRUE "
+            "}"
+            "END",
+            'gser')
+
+        datas = [
+            ('A',             {'a': True}, b'a A ::= { a TRUE }'),
+            ('A', {'a': False, 'b': True}, b'a A ::= { a FALSE, b TRUE }'),
+            ('B',                      {}, b'b B ::= { }')
+        ]
+
+        for name, decoded, encoded in datas:
+            self.assertEqual(foo.encode(name, decoded), encoded)
+
+        # Missing member.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('A', {})
+
+        self.assertEqual(str(cm.exception),
+                         "Member 'a' not found in {}.")
 
     def test_set_of(self):
         foo = asn1tools.compile_string(

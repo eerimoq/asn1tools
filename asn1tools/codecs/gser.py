@@ -30,6 +30,46 @@ class Type(object):
         pass
 
 
+class MembersType(Type):
+
+    def __init__(self, name, members, type_name):
+        super(MembersType, self).__init__(name, type_name)
+        self.members = members
+
+    def encode(self, data, separator, indent):
+        encoded_members = []
+        member_separator = separator + ' ' * indent
+
+        for member in self.members:
+            name = member.name
+
+            if name in data:
+                encoded_member = member.encode(data[name],
+                                               member_separator,
+                                               indent)
+                encoded_member = '{}{} {}'.format(member_separator,
+                                                  member.name,
+                                                  encoded_member)
+                encoded_members.append(encoded_member)
+            elif member.optional:
+                pass
+            elif member.default is None:
+                raise EncodeError(
+                    "Member '{}' not found in {}.".format(
+                        name,
+                        data))
+
+        encoded_members = ','.join(encoded_members)
+
+        return separator.join(['{' + encoded_members, '}'])
+
+    def __repr__(self):
+        return '{}({}, [{}])'.format(
+            self.__class__.__name__,
+            self.name,
+            ', '.join([repr(member) for member in self.members]))
+
+
 class ArrayType(Type):
 
     def __init__(self, name, type_name, element_type):
@@ -169,43 +209,10 @@ class Enumerated(Type):
         return 'Enumerated({})'.format(self.name)
 
 
-class Sequence(Type):
+class Sequence(MembersType):
 
     def __init__(self, name, members):
-        super(Sequence, self).__init__(name, 'SEQUENCE')
-        self.members = members
-
-    def encode(self, data, separator, indent):
-        encoded_members = []
-        member_separator = separator + ' ' * indent
-
-        for member in self.members:
-            name = member.name
-
-            if name in data:
-                encoded_member = member.encode(data[name],
-                                               member_separator,
-                                               indent)
-                encoded_member = '{}{} {}'.format(member_separator,
-                                                  member.name,
-                                                  encoded_member)
-                encoded_members.append(encoded_member)
-            elif member.optional:
-                pass
-            elif member.default is None:
-                raise EncodeError(
-                    "Member '{}' not found in {}.".format(
-                        name,
-                        data))
-
-        encoded_members = ','.join(encoded_members)
-
-        return separator.join(['{' + encoded_members, '}'])
-
-    def __repr__(self):
-        return 'Sequence({}, [{}])'.format(
-            self.name,
-            ', '.join([repr(member) for member in self.members]))
+        super(Sequence, self).__init__(name, members, 'SEQUENCE')
 
 
 class SequenceOf(ArrayType):
@@ -216,19 +223,10 @@ class SequenceOf(ArrayType):
                                          element_type)
 
 
-class Set(Type):
+class Set(MembersType):
 
     def __init__(self, name, members):
-        super(Set, self).__init__(name, 'SET')
-        self.members = members
-
-    def encode(self, data, separator, indent):
-        raise NotImplementedError('SET is not yet implemented.')
-
-    def __repr__(self):
-        return 'Set({}, [{}])'.format(
-            self.name,
-            ', '.join([repr(member) for member in self.members]))
+        super(Set, self).__init__(name, members, 'SET')
 
 
 class SetOf(ArrayType):
