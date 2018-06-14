@@ -31,7 +31,7 @@ from .errors import ConstraintsError
 
 
 __author__ = 'Erik Moqvist'
-__version__ = '0.106.0'
+__version__ = '0.107.0'
 
 
 class ArgumentParserError(Error):
