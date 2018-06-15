@@ -98,8 +98,7 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             self.encode_decode_all_codecs("GeneralString", [u'hi'])
 
     def test_bmp_string(self):
-        with self.assertRaises(NotImplementedError):
-            self.encode_decode_all_codecs("BMPString", [u'hi'])
+        self.encode_decode_all_codecs("BMPString", [u'hi'])
 
     def test_graphic_string(self):
         self.encode_decode_all_codecs("GraphicString", [u'hi'])

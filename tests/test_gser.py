@@ -176,10 +176,13 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
             "END",
             'gser')
 
-        decoded = 'foo'
-        encoded = b'a A ::= "foo"'
+        datas = [
+            ('A',      'foo', b'a A ::= "foo"'),
+            ('A',  u'\u0102', b'a A ::= "\xc4\x82"')
+        ]
 
-        self.assertEqual(foo.encode('A', decoded), encoded)
+        for name, decoded, encoded in datas:
+            self.assertEqual(foo.encode(name, decoded), encoded)
 
     def test_numeric_string(self):
         foo = asn1tools.compile_string(
@@ -241,11 +244,13 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
             "END",
             'gser')
 
-        decoded = 'foo'
-        encoded = b'a A ::= "foo"'
+        datas = [
+            ('A',      'foo', b'a A ::= "foo"'),
+            ('A',  u'\u0102', b'a A ::= "\xc4\x82"')
+        ]
 
-        with self.assertRaises(NotImplementedError):
-            self.assertEqual(foo.encode('A', decoded), encoded)
+        for name, decoded, encoded in datas:
+            self.assertEqual(foo.encode(name, decoded), encoded)
 
     def test_graphic_string(self):
         foo = asn1tools.compile_string(

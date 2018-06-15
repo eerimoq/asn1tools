@@ -48,9 +48,9 @@ class MembersType(Type):
                 encoded_member = member.encode(data[name],
                                                member_separator,
                                                indent)
-                encoded_member = '{}{} {}'.format(member_separator,
-                                                  member.name,
-                                                  encoded_member)
+                encoded_member = u'{}{} {}'.format(member_separator,
+                                                   member.name,
+                                                   encoded_member)
                 encoded_members.append(encoded_member)
             elif member.optional:
                 pass
@@ -85,8 +85,8 @@ class ArrayType(Type):
             encoded_element = self.element_type.encode(entry,
                                                        element_separator,
                                                        indent)
-            encoded_element = '{}{}'.format(element_separator,
-                                            encoded_element)
+            encoded_element = u'{}{}'.format(element_separator,
+                                             encoded_element)
             encoded_elements.append(encoded_element)
 
         encoded_elements = ','.join(encoded_elements)
@@ -257,10 +257,10 @@ class Choice(Type):
                     self.format_names(),
                     data[0]))
 
-        return '{} : {}'.format(data[0],
-                                member.encode(data[1],
-                                              separator,
-                                              indent))
+        return u'{} : {}'.format(data[0],
+                                 member.encode(data[1],
+                                               separator,
+                                               indent))
 
     def __repr__(self):
         return 'Choice({}, [{}])'.format(
@@ -274,7 +274,7 @@ class UTF8String(Type):
         super(UTF8String, self).__init__(name, 'UTF8String')
 
     def encode(self, data, _separator, _indent):
-        return '"{}"'.format(data)
+        return u'"{}"'.format(data)
 
     def __repr__(self):
         return 'UTF8String({})'.format(self.name)
@@ -286,7 +286,7 @@ class NumericString(Type):
         super(NumericString, self).__init__(name, 'NumericString')
 
     def encode(self, data, _separator, _indent):
-        return '"{}"'.format(data)
+        return u'"{}"'.format(data)
 
     def __repr__(self):
         return 'NumericString({})'.format(self.name)
@@ -298,7 +298,7 @@ class PrintableString(Type):
         super(PrintableString, self).__init__(name, 'PrintableString')
 
     def encode(self, data, _separator, _indent):
-        return '"{}"'.format(data)
+        return u'"{}"'.format(data)
 
     def __repr__(self):
         return 'PrintableString({})'.format(self.name)
@@ -310,7 +310,7 @@ class IA5String(Type):
         super(IA5String, self).__init__(name, 'IA5String')
 
     def encode(self, data, _separator, _indent):
-        return '"{}"'.format(data)
+        return u'"{}"'.format(data)
 
     def __repr__(self):
         return 'IA5String({})'.format(self.name)
@@ -322,7 +322,7 @@ class VisibleString(Type):
         super(VisibleString, self).__init__(name, 'VisibleString')
 
     def encode(self, data, _separator, _indent):
-        return '"{}"'.format(data)
+        return u'"{}"'.format(data)
 
     def __repr__(self):
         return 'VisibleString({})'.format(self.name)
@@ -334,7 +334,7 @@ class GeneralString(Type):
         super(GeneralString, self).__init__(name, 'GeneralString')
 
     def encode(self, data, _separator, _indent):
-        return '"{}"'.format(data)
+        return u'"{}"'.format(data)
 
     def __repr__(self):
         return 'GeneralString({})'.format(self.name)
@@ -345,8 +345,8 @@ class BMPString(Type):
     def __init__(self, name):
         super(BMPString, self).__init__(name, 'BMPString')
 
-    def encode(self, data, separator, indent):
-        raise NotImplementedError('BMPString is not yet implemented.')
+    def encode(self, data, _separator, _indent):
+        return u'"{}"'.format(data)
 
     def __repr__(self):
         return 'BMPString({})'.format(self.name)
@@ -358,7 +358,7 @@ class GraphicString(Type):
         super(GraphicString, self).__init__(name, 'GraphicString')
 
     def encode(self, data, _separator, _indent):
-        return '"{}"'.format(data)
+        return u'"{}"'.format(data)
 
     def __repr__(self):
         return 'GraphicString({})'.format(self.name)
@@ -370,7 +370,7 @@ class UniversalString(Type):
         super(UniversalString, self).__init__(name, 'UniversalString')
 
     def encode(self, data, _separator, _indent):
-        return '"{}"'.format(data)
+        return u'"{}"'.format(data)
 
     def __repr__(self):
         return 'UniversalString({})'.format(self.name)
@@ -394,7 +394,7 @@ class UTCTime(Type):
         super(UTCTime, self).__init__(name, 'UTCTime')
 
     def encode(self, data, _separator, _indent):
-        return '"{}"'.format(utc_time_from_datetime(data))
+        return u'"{}"'.format(utc_time_from_datetime(data))
 
     def __repr__(self):
         return 'UTCTime({})'.format(self.name)
@@ -406,7 +406,7 @@ class GeneralizedTime(Type):
         super(GeneralizedTime, self).__init__(name, 'GeneralizedTime')
 
     def encode(self, data, _separator, _indent):
-        return '"{}"'.format(generalized_time_from_datetime(data))
+        return u'"{}"'.format(generalized_time_from_datetime(data))
 
     def __repr__(self):
         return 'GeneralizedTime({})'.format(self.name)
@@ -460,9 +460,9 @@ class CompiledType(compiler.CompiledType):
         else:
             encoded = self._type.encode(data, '\n', indent)
 
-        encoded = '{} {} ::= {}'.format(self._value_name,
-                                        self._value_type,
-                                        encoded.lstrip(' '))
+        encoded = u'{} {} ::= {}'.format(self._value_name,
+                                         self._value_type,
+                                         encoded.lstrip(' '))
 
         return encoded.encode('utf-8')
 
