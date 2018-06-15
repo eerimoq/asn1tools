@@ -319,9 +319,9 @@ class ObjectIdentifier(StringType):
 
     def decode(self, element):
         if element.text is None:
-            return ''
-        else:
-            return element.text
+            raise DecodeError("Expected an OBJECT IDENTIFER, but got ''.")
+
+        return element.text
 
 
 class Enumerated(Type):
@@ -330,12 +330,15 @@ class Enumerated(Type):
         super(Enumerated, self).__init__(name, 'ENUMERATED')
         self.values = set(enum_values_as_dict(values).values())
 
+    def format_names(self):
+        return format_or(sorted(self.values))
+
     def encode(self, data):
         if data not in self.values:
             raise EncodeError(
-                "Enumeration value '{}' not found in {}.".format(
-                    data[0],
-                    sorted(list(self.values))))
+                "Expected enumeration value {}, but got '{}'.".format(
+                    self.format_names(),
+                    data))
 
         element = ElementTree.Element(self.name)
         element.append(ElementTree.Element(data))
@@ -347,18 +350,18 @@ class Enumerated(Type):
 
         if value not in self.values:
             raise DecodeError(
-                "Enumeration value '{}' not found in {}.".format(
-                    value,
-                    sorted(list(self.values))))
+                "Expected enumeration value {}, but got '{}'.".format(
+                    self.format_names(),
+                    value))
 
         return value
 
     def encode_of(self, data):
         if data not in self.values:
             raise EncodeError(
-                "Enumeration value '{}' not found in {}.".format(
-                    data[0],
-                    sorted(list(self.values))))
+                "Expected enumeration value {}, but got '{}'.".format(
+                    self.format_names(),
+                    data))
 
         return ElementTree.Element(data)
 
@@ -367,9 +370,9 @@ class Enumerated(Type):
 
         if value not in self.values:
             raise DecodeError(
-                "Enumeration value '{}' not found in {}.".format(
-                    element,
-                    sorted(list(self.values))))
+                "Expected enumeration value {}, but got '{}'.".format(
+                    self.format_names(),
+                    value))
 
         return value
 

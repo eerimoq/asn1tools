@@ -111,6 +111,61 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', b'<A></A>')
+
+        self.assertEqual(str(cm.exception),
+                         ": Expected an OBJECT IDENTIFER, but got ''.")
+
+    def test_enumerated(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= ENUMERATED { r(5), t(10) } "
+            "B ::= SEQUENCE OF ENUMERATED { a(0) } "
+            "END",
+            'xer')
+
+        datas = [
+            ('A',    'r', b'<A><r /></A>'),
+            ('A',    't', b'<A><t /></A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Encode error.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('A', 'foo')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Expected enumeration value 'r' or 't', but got 'foo'.")
+
+        # Decode error.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', b'<A><bar /></A>')
+
+        self.assertEqual(
+            str(cm.exception),
+            ": Expected enumeration value 'r' or 't', but got 'bar'.")
+
+        # Encode of error.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('B', ['foo'])
+
+        self.assertEqual(
+            str(cm.exception),
+            "Expected enumeration value 'a', but got 'foo'.")
+
+        # Decode of error.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('B', b'<B><bar /></B>')
+
+        self.assertEqual(
+            str(cm.exception),
+            ": Expected enumeration value 'a', but got 'bar'.")
+
     def test_sequence(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
@@ -118,16 +173,24 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             "A ::= SEQUENCE { "
             "  a SEQUENCE OF A OPTIONAL "
             "} "
+            "B ::= SEQUENCE { "
+            "  a INTEGER DEFAULT 4 "
+            "} "
             "END",
             'xer')
 
         datas = [
+            ('A',                    {}, b'<A />'),
             ('A',           {'a': [{}]}, b'<A><a><A /></a></A>'),
             ('A',    {'a': [{'a': []}]}, b'<A><a><A><a /></A></a></A>')
         ]
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
+        # Non-symmetrical encoding and decoding.
+        self.assertEqual(foo.encode('B', {}), b'<B />')
+        self.assertEqual(foo.decode('B', b'<B />'), {'a': 4})
 
     def test_sequence_of(self):
         foo = asn1tools.compile_string(
@@ -724,7 +787,6 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             ('Integer',         127, b'<Integer>127</Integer>'),
             ('Integer',           0, b'<Integer>0</Integer>'),
             ('Integer',        -128, b'<Integer>-128</Integer>'),
-            ('Enumerated',    'one', b'<Enumerated><one /></Enumerated>'),
             ('Sequence',         {}, b'<Sequence />'),
             ('Set',              {}, b'<Set />'),
             ('Sequence2',  {'a': 1}, b'<Sequence2><a>1</a></Sequence2>'),
