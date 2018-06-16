@@ -2106,6 +2106,8 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
                          'BMPString(Bmpstring)')
         self.assertEqual(repr(all_types.types['Teletexstring']),
                          'TeletexString(Teletexstring)')
+        self.assertEqual(repr(all_types.types['Graphicstring']),
+                         'GraphicString(Graphicstring)')
         self.assertEqual(repr(all_types.types['Utctime']), 'UTCTime(Utctime)')
         self.assertEqual(repr(all_types.types['SequenceOf']),
                          'SequenceOf(SequenceOf, Integer())')
