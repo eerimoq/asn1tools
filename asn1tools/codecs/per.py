@@ -415,9 +415,10 @@ class Decoder(object):
 
         return value + minimum
 
-    def read_unconstrained_whole_number(self, number_of_bytes):
-        decoded = self.read_non_negative_binary_integer(8 * number_of_bytes)
-        number_of_bits = (8 * number_of_bytes)
+    def read_unconstrained_whole_number(self):
+        length = self.read_length_determinant()
+        decoded = self.read_non_negative_binary_integer(8 * length)
+        number_of_bits = (8 * length)
 
         if decoded & (1 << (number_of_bits - 1)):
             mask = ((1 << number_of_bits) - 1)
@@ -766,7 +767,7 @@ class ArrayType(Type):
             bit = decoder.read_bit()
 
             if bit:
-                raise NotImplementedError('Extension is not implemented.')
+                raise NotImplementedError('Extension is not yet implemented.')
 
         if self.number_of_bits is None:
             decoder.align()
@@ -833,7 +834,13 @@ class Integer(Type):
 
     def encode(self, data, encoder):
         if self.has_extension_marker:
-            encoder.append_bit(0)
+            if self.minimum <= data <= self.maximum:
+                encoder.append_bit(0)
+            else:
+                encoder.append_bit(1)
+                encoder.align()
+                encoder.append_unconstrained_whole_number(data)
+                return
 
         if self.number_of_bits is None:
             encoder.align()
@@ -857,15 +864,15 @@ class Integer(Type):
 
     def decode(self, decoder):
         if self.has_extension_marker:
-            bit = decoder.read_bit()
+            if decoder.read_bit():
+                decoder.align()
 
-            if bit:
-                raise NotImplementedError('Extension is not implemented.')
+                return decoder.read_unconstrained_whole_number()
 
         if self.number_of_bits is None:
             decoder.align()
-            length = decoder.read_length_determinant()
-            value = decoder.read_unconstrained_whole_number(length)
+
+            return decoder.read_unconstrained_whole_number()
         else:
             if self.number_of_indefinite_bits is None:
                 number_of_bits = self.number_of_bits
@@ -877,11 +884,9 @@ class Integer(Type):
                 number_of_bits += 1
                 number_of_bits *= 8
 
-            value = decoder.read_constrained_whole_number(self.minimum,
-                                                          self.maximum,
-                                                          number_of_bits)
-
-        return value
+            return decoder.read_constrained_whole_number(self.minimum,
+                                                         self.maximum,
+                                                         number_of_bits)
 
     def __repr__(self):
         return 'Integer({})'.format(self.name)

@@ -56,6 +56,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "H ::= SEQUENCE { "
             "  a G (7..7) "
             "} "
+            "I ::= INTEGER (5..99, ..., 101..105) "
             "END",
             'uper')
 
@@ -86,7 +87,8 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('E',                        1000, b''),
             ('F', {'a': 4, 'b': 40, 'c': 400}, b''),
             ('G',                           7, b'\x80'),
-            ('H',                    {'a': 7}, b'')
+            ('H',                    {'a': 7}, b''),
+            ('I',                         103, b'\x80\xb3\x80')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -572,6 +574,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "B ::= SEQUENCE SIZE (2) OF INTEGER "
             "C ::= SEQUENCE SIZE (1..5) OF INTEGER "
             "D ::= SEQUENCE SIZE (1..2, ...) OF INTEGER "
+            "E ::= SEQUENCE SIZE (1..2, ..., 6..7) OF INTEGER "
             "END",
             'uper')
 
@@ -596,6 +599,20 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(str(cm.exception),
                          'Length determinant >=16384 is not yet supported.')
+
+        # Encode value in extension.
+        with self.assertRaises(NotImplementedError) as cm:
+            foo.encode('E', 6 * [1])
+
+        self.assertEqual(str(cm.exception), 'Extension is not yet implemented.')
+
+        # Decode value in extension.
+        with self.assertRaises(NotImplementedError) as cm:
+            foo.decode(
+                'E',
+                b'\x83\x00\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80')
+
+        self.assertEqual(str(cm.exception), 'Extension is not yet implemented.')
 
     def test_choice(self):
         foo = asn1tools.compile_string(

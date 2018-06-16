@@ -311,7 +311,10 @@ class ArrayType(Type):
 
     def encode(self, data, encoder):
         if self.has_extension_marker:
-            encoder.append_bit(0)
+            if self.minimum <= len(data) <= self.maximum:
+                encoder.append_bit(0)
+            else:
+                raise NotImplementedError('Extension is not yet implemented.')
 
         if self.number_of_bits is None:
             encoder.append_length_determinant(len(data))
@@ -328,7 +331,7 @@ class ArrayType(Type):
             bit = decoder.read_bit()
 
             if bit:
-                raise NotImplementedError('Extension is not implemented.')
+                raise NotImplementedError('Extension is not yet implemented.')
 
         if self.number_of_bits is None:
             length = decoder.read_length_determinant()
@@ -374,7 +377,12 @@ class Integer(Type):
 
     def encode(self, data, encoder):
         if self.has_extension_marker:
-            encoder.append_bit(0)
+            if self.minimum <= data <= self.maximum:
+                encoder.append_bit(0)
+            else:
+                encoder.append_bit(1)
+                encoder.append_unconstrained_whole_number(data)
+                return
 
         if self.number_of_bits is None:
             encoder.append_unconstrained_whole_number(data)
@@ -384,19 +392,15 @@ class Integer(Type):
 
     def decode(self, decoder):
         if self.has_extension_marker:
-            bit = decoder.read_bit()
-
-            if bit:
-                raise NotImplementedError('Extension is not implemented.')
+            if decoder.read_bit():
+                return decoder.read_unconstrained_whole_number()
 
         if self.number_of_bits is None:
-            length = decoder.read_length_determinant()
-            value = decoder.read_unconstrained_whole_number(length)
+            return decoder.read_unconstrained_whole_number()
         else:
             value = decoder.read_non_negative_binary_integer(self.number_of_bits)
-            value += self.minimum
 
-        return value
+            return value + self.minimum
 
     def __repr__(self):
         return 'Integer({})'.format(self.name)
