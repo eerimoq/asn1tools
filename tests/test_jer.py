@@ -112,6 +112,10 @@ class Asn1ToolsJerTest(unittest.TestCase):
             "B ::= SEQUENCE { "
             "  a INTEGER DEFAULT 5 "
             "} "
+            "C ::= SEQUENCE { "
+            "  a INTEGER, "
+            "  b INTEGER "
+            "} "
             "END",
             'jer')
 
@@ -131,6 +135,14 @@ class Asn1ToolsJerTest(unittest.TestCase):
         # root and addition is present).
         self.assertEqual(foo.encode('B', {}), b'{}')
         self.assertEqual(foo.decode('B', b'{}'), {'a': 5})
+
+        # Missing member.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            encoded = foo.encode('C', {'a': 1})
+
+        self.assertEqual(
+            str(cm.exception),
+            "Sequence member 'b' not found in {'a': 1}.")
 
     def test_sequence_of(self):
         foo = asn1tools.compile_string(
@@ -281,14 +293,6 @@ class Asn1ToolsJerTest(unittest.TestCase):
         self.assertEqual(loadb(encoded), loadb(encoded_message))
         decoded = foo.decode('Answer', encoded)
         self.assertEqual(decoded, decoded_message)
-
-        # Encode a question with missing field 'id'.
-        with self.assertRaises(asn1tools.EncodeError) as cm:
-            encoded = foo.encode('Question', {'question': 'Is 1+1=3?'})
-
-        self.assertEqual(
-            str(cm.exception),
-            "Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
 
     def test_decode_length(self):
         foo = asn1tools.compile_files('tests/files/foo.asn', 'jer')
@@ -710,6 +714,10 @@ class Asn1ToolsJerTest(unittest.TestCase):
         self.assertEqual(repr(foo.types['SequenceOf']),
                          'SequenceOf(SequenceOf, Integer())')
         self.assertEqual(repr(foo.types['SetOf']), 'SetOf(SetOf, Integer())')
+        self.assertEqual(repr(foo.types['GeneralizedTime1']),
+                         'GeneralizedTime(GeneralizedTime1)')
+        self.assertEqual(repr(foo.types['Choice']),
+                         'Choice(Choice, [Integer(a)])')
 
     def test_all_types_automatic_tags(self):
         foo = asn1tools.compile_files(

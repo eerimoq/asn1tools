@@ -33,6 +33,59 @@ class Type(object):
         pass
 
 
+class MembersType(Type):
+
+    def __init__(self,
+                 name,
+                 members,
+                 type_name):
+        super(MembersType, self).__init__(name, type_name)
+        self.members = members
+
+    def encode(self, data):
+        values = {}
+
+        for member in self.members:
+            name = member.name
+
+            if name in data:
+                value = member.encode(data[name])
+            elif member.optional or member.default is not None:
+                continue
+            else:
+                raise EncodeError(
+                    "{} member '{}' not found in {}.".format(
+                        self.__class__.__name__,
+                        name,
+                        data))
+
+            values[name] = value
+
+        return values
+
+    def decode(self, data):
+        values = {}
+
+        for member in self.members:
+            name = member.name
+
+            if name in data:
+                value = member.decode(data[name])
+                values[name] = value
+            elif member.optional:
+                pass
+            elif member.default is not None:
+                values[name] = member.default
+
+        return values
+
+    def __repr__(self):
+        return '{}({}, [{}])'.format(
+            self.__class__.__name__,
+            self.name,
+            ', '.join([repr(member) for member in self.members]))
+
+
 class Boolean(Type):
 
     def __init__(self, name):
@@ -200,52 +253,10 @@ class Enumerated(Type):
         return 'Enumerated({})'.format(self.name)
 
 
-class Sequence(Type):
+class Sequence(MembersType):
 
     def __init__(self, name, members):
-        super(Sequence, self).__init__(name, 'SEQUENCE')
-        self.members = members
-
-    def encode(self, data):
-        values = {}
-
-        for member in self.members:
-            name = member.name
-
-            if name in data:
-                value = member.encode(data[name])
-            elif member.optional or member.default is not None:
-                continue
-            else:
-                raise EncodeError(
-                    "Sequence member '{}' not found in {}.".format(
-                        name,
-                        data))
-
-            values[name] = value
-
-        return values
-
-    def decode(self, data):
-        values = {}
-
-        for member in self.members:
-            name = member.name
-
-            if name in data:
-                value = member.decode(data[name])
-                values[name] = value
-            elif member.optional:
-                pass
-            elif member.default is not None:
-                values[name] = member.default
-
-        return values
-
-    def __repr__(self):
-        return 'Sequence({}, [{}])'.format(
-            self.name,
-            ', '.join([repr(member) for member in self.members]))
+        super(Sequence, self).__init__(name, members, 'SEQUENCE')
 
 
 class SequenceOf(Type):
@@ -277,55 +288,10 @@ class SequenceOf(Type):
                                            self.element_type)
 
 
-class Set(Type):
+class Set(MembersType):
 
     def __init__(self, name, members):
-        super(Set, self).__init__(name, 'SET')
-        self.members = members
-
-    def encode(self, data):
-        values = {}
-
-        for member in self.members:
-            name = member.name
-
-            if name in data:
-                if member.default is None:
-                    value = member.encode(data[name])
-                elif data[name] != member.default:
-                    value = member.encode(data[name])
-            elif member.optional or member.default is not None:
-                continue
-            else:
-                raise EncodeError(
-                    "Set member '{}' not found in {}.".format(
-                        name,
-                        data))
-
-            values[name] = value
-
-        return values
-
-    def decode(self, data):
-        values = {}
-
-        for member in self.members:
-            name = member.name
-
-            if name in data:
-                value = member.decode(data[name])
-                values[name] = value
-            elif member.optional:
-                pass
-            elif member.default is not None:
-                values[name] = member.default
-
-        return values
-
-    def __repr__(self):
-        return 'Set({}, [{}])'.format(
-            self.name,
-            ', '.join([repr(member) for member in self.members]))
+        super(Set, self).__init__(name, members, 'SET')
 
 
 class SetOf(Type):
