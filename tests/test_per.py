@@ -422,6 +422,12 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "T ::= SEQUENCE { "
             "  a SEQUENCE OF T OPTIONAL "
             "} "
+            "U ::= SEQUENCE { "
+            "  ..., "
+            "  a SEQUENCE { "
+            "    a INTEGER "
+            "  } "
+            "} "
             "END",
             'per')
 
@@ -492,6 +498,13 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         # Decode R as Q. Extension addition "a.b" should be skipped.
         self.assertEqual(foo.decode('Q', b'\xc0\x40\x01\x80\x01\x64'),
                          {'a': {'a': True}, 'b': 100})
+
+        # Decode error of present additon member (out of data).
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('U', b'\x80\x80\x03\x02\x05')
+
+        self.assertEqual(str(cm.exception),
+                         'a: a: out of data at bit offset 32 (4.0 bytes)')
 
     def test_sequence_of(self):
         foo = asn1tools.compile_string(
