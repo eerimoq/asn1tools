@@ -734,6 +734,30 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         self.assertEqual(str(cm.exception),
                          'Length determinant 16384 is not yet supported.')
 
+    def test_numeric_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= NumericString (FROM (\"0\"..\"2\", ..., \"4\"..\"5\")) "
+            "B ::= NumericString (SIZE (1..4, ..., 6..7)) "
+            "END",
+            'per')
+
+        datas = [
+            ('A',                  '2', b'\x01\x30')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Decode size extension is not yet supported.
+        with self.assertRaises(NotImplementedError) as cm:
+            foo.decode('B', b'\x80\x06\x11\x11\x11')
+
+        self.assertEqual(
+            str(cm.exception),
+            "String size extension is not yet implemented.")
+
     def test_ia5_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "

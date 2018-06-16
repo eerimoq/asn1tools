@@ -511,7 +511,8 @@ class KnownMultiplierStringType(Type):
             bit = decoder.read_bit()
 
             if bit:
-                raise NotImplementedError('Extension is not implemented.')
+                raise NotImplementedError(
+                    'String size extension is not yet implemented.')
 
         if self.number_of_bits is None:
             decoder.align()
@@ -1663,17 +1664,23 @@ class Compiler(compiler.Compiler):
         elif type_name == 'TeletexString':
             compiled = TeletexString(name)
         elif type_name == 'NumericString':
+            permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
             compiled = NumericString(name,
                                      *self.get_size_range(type_descriptor,
-                                                          module_name))
+                                                          module_name),
+                                     permitted_alphabet=permitted_alphabet)
         elif type_name == 'PrintableString':
+            permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
             compiled = PrintableString(name,
                                        *self.get_size_range(type_descriptor,
-                                                            module_name))
+                                                            module_name),
+                                       permitted_alphabet=permitted_alphabet)
         elif type_name == 'IA5String':
+            permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
             compiled = IA5String(name,
                                  *self.get_size_range(type_descriptor,
-                                                      module_name))
+                                                      module_name),
+                                 permitted_alphabet=permitted_alphabet)
         elif type_name == 'VisibleString':
             permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
             compiled = VisibleString(name,

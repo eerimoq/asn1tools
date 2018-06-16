@@ -766,6 +766,9 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "A ::= NumericString "
             "B ::= NumericString (SIZE (5)) "
             "C ::= NumericString (SIZE (19..133)) "
+            "D ::= NumericString (FROM (\"0\"..\"5\")) "
+            "E ::= NumericString (FROM (\"0\"..\"2\", ..., \"4\"..\"5\")) "
+            "F ::= NumericString (SIZE (1..4, ..., 6..7)) "
             "END",
             'uper')
 
@@ -774,7 +777,11 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('B',              '1 9 5', b'\x20\xa0\x60'),
             ('C',
              '0123456789 9876543210',
-             b'\x04\x24\x68\xac\xf1\x34\x15\x30\xec\xa8\x64\x20')
+             b'\x04\x24\x68\xac\xf1\x34\x15\x30\xec\xa8\x64\x20'),
+            ('D',                  '5', b'\x01\xa0'),
+            #('E',                  '2', b'\x01\x30'),
+            #('E',                  '5', b'\x01\x60')
+            ('F',                   '0', b'\x02')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -796,6 +803,14 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             str(cm.exception),
             ": Expected a value in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "
             "but got 11.")
+
+        # Decode size extension is not yet supported.
+        with self.assertRaises(NotImplementedError) as cm:
+            foo.decode('F', b'\x83\x08\x88\x88\x80')
+
+        self.assertEqual(
+            str(cm.exception),
+            "String size extension is not yet implemented.")
 
     def test_printable_string(self):
         foo = asn1tools.compile_string(
