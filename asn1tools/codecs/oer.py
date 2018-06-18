@@ -96,9 +96,6 @@ class Encoder(object):
         return bytearray(binascii.unhexlify(data))
 
     def append_length_determinant(self, value):
-        if value == 0:
-            value = 1
-
         if value < 128:
             self.append_non_negative_binary_integer(value, 8)
         else:
@@ -296,6 +293,44 @@ class Type(object):
 
     def is_default(self, value):
         return value == self.default
+
+
+class KnownMultiplierStringType(Type):
+
+    TAG = None
+    ENCODING = None
+
+    def __init__(self, name, minimum, maximum, has_extension_marker):
+        super(KnownMultiplierStringType, self).__init__(name,
+                                                        self.__class__.__name__,
+                                                        self.TAG)
+        self.number_of_bytes = None
+
+        if minimum is not None or maximum is not None:
+            if not has_extension_marker:
+                if minimum == maximum:
+                    self.number_of_bytes = minimum
+
+    def encode(self, data, encoder):
+        encoded = data.encode(self.ENCODING)
+
+        if self.number_of_bytes is None:
+            encoder.append_length_determinant(len(encoded))
+            encoder.append_bytes(encoded)
+        else:
+            encoder.append_bytes(encoded)
+
+    def decode(self, decoder):
+        if self.number_of_bytes is None:
+            number_of_bytes = decoder.read_length_determinant()
+        else:
+            number_of_bytes = self.number_of_bytes
+
+        return decoder.read_bytes(number_of_bytes).decode(self.ENCODING)
+
+    def __repr__(self):
+        return '{}({})'.format(self.__class__.__name__,
+                               self.name)
 
 
 class MembersType(Type):
@@ -628,9 +663,10 @@ class BitString(Type):
             data = data[:number_of_bytes]
             data.append(last_byte)
             number_of_unused_bits = (8 - number_of_rest_bits)
+            number_of_bytes += 1
 
         if self.number_of_bits is None:
-            encoder.append_length_determinant(number_of_bytes + 2)
+            encoder.append_length_determinant(number_of_bytes + 1)
             encoder.append_non_negative_binary_integer(number_of_unused_bits,
                                                        8)
             encoder.append_bytes(data)
@@ -870,123 +906,34 @@ class Choice(Type):
             ', '.join([repr(member) for member in members]))
 
 
-class UTF8String(Type):
+class UTF8String(KnownMultiplierStringType):
 
-    def __init__(self, name):
-        super(UTF8String, self).__init__(name,
-                                         'UTF8String',
-                                         Tag.UTF8_STRING)
-
-    def encode(self, data, encoder):
-        raise NotImplementedError
-
-    def decode(self, decoder):
-        raise NotImplementedError
-
-    def __repr__(self):
-        return 'UTF8String({})'.format(self.name)
+    TAG = Tag.UTF8_STRING
+    ENCODING = 'utf-8'
 
 
-class NumericString(Type):
+class NumericString(KnownMultiplierStringType):
 
-    def __init__(self, name):
-        super(NumericString, self).__init__(name,
-                                            'NumericString',
-                                            Tag.NUMERIC_STRING)
-
-    def encode(self, data, encoder):
-        raise NotImplementedError
-
-    def decode(self, decoder):
-        raise NotImplementedError
-
-    def __repr__(self):
-        return 'NumericString({})'.format(self.name)
+    TAG = Tag.NUMERIC_STRING
+    ENCODING = 'ascii'
 
 
-class PrintableString(Type):
+class PrintableString(KnownMultiplierStringType):
 
-    def __init__(self, name):
-        super(PrintableString, self).__init__(name,
-                                              'PrintableString',
-                                              Tag.PRINTABLE_STRING)
-
-    def encode(self, data, encoder):
-        raise NotImplementedError
-
-    def decode(self, decoder):
-        raise NotImplementedError
-
-    def __repr__(self):
-        return 'PrintableString({})'.format(self.name)
+    TAG = Tag.PRINTABLE_STRING
+    ENCODING = 'ascii'
 
 
-class IA5String(Type):
+class IA5String(KnownMultiplierStringType):
 
-    def __init__(self, name, minimum, maximum, has_extension_marker):
-        super(IA5String, self).__init__(name,
-                                        'IA5String',
-                                        Tag.IA5_STRING)
-        self.number_of_bytes = None
-
-        if minimum is not None or maximum is not None:
-            if not has_extension_marker:
-                if minimum == maximum:
-                    self.number_of_bytes = minimum
-
-    def encode(self, data, encoder):
-        encoded = data.encode('ascii')
-
-        if self.number_of_bytes is None:
-            encoder.append_length_determinant(len(encoded))
-            encoder.append_bytes(encoded)
-        else:
-            encoder.append_bytes(encoded)
-
-    def decode(self, decoder):
-        if self.number_of_bytes is None:
-            number_of_bytes = decoder.read_length_determinant()
-        else:
-            number_of_bytes = self.number_of_bytes
-
-        return decoder.read_bytes(number_of_bytes).decode('ascii')
-
-    def __repr__(self):
-        return 'IA5String({})'.format(self.name)
+    TAG = Tag.IA5_STRING
+    ENCODING = 'ascii'
 
 
-class VisibleString(Type):
+class VisibleString(KnownMultiplierStringType):
 
-    def __init__(self, name, minimum, maximum, has_extension_marker):
-        super(VisibleString, self).__init__(name,
-                                            'VisibleString',
-                                            Tag.VISIBLE_STRING)
-        self.number_of_bytes = None
-
-        if minimum is not None or maximum is not None:
-            if not has_extension_marker:
-                if minimum == maximum:
-                    self.number_of_bytes = minimum
-
-    def encode(self, data, encoder):
-        encoded = data.encode('ascii')
-
-        if self.number_of_bytes is None:
-            encoder.append_length_determinant(len(encoded))
-            encoder.append_bytes(encoded)
-        else:
-            encoder.append_bytes(encoded)
-
-    def decode(self, decoder):
-        if self.number_of_bytes is None:
-            number_of_bytes = decoder.read_length_determinant()
-        else:
-            number_of_bytes = self.number_of_bytes
-
-        return decoder.read_bytes(number_of_bytes).decode('ascii')
-
-    def __repr__(self):
-        return 'VisibleString({})'.format(self.name)
+    TAG = Tag.VISIBLE_STRING
+    ENCODING = 'ascii'
 
 
 class GeneralString(Type):
@@ -1250,9 +1197,13 @@ class Compiler(compiler.Compiler):
         elif type_name == 'TeletexString':
             compiled = TeletexString(name)
         elif type_name == 'NumericString':
-            compiled = NumericString(name)
+            compiled = NumericString(name,
+                                     *self.get_size_range(type_descriptor,
+                                                          module_name))
         elif type_name == 'PrintableString':
-            compiled = PrintableString(name)
+            compiled = PrintableString(name,
+                                       *self.get_size_range(type_descriptor,
+                                                            module_name))
         elif type_name == 'IA5String':
             compiled = IA5String(name,
                                  *self.get_size_range(type_descriptor,
@@ -1264,7 +1215,9 @@ class Compiler(compiler.Compiler):
         elif type_name == 'GeneralString':
             compiled = GeneralString(name)
         elif type_name == 'UTF8String':
-            compiled = UTF8String(name)
+            compiled = UTF8String(name,
+                                  *self.get_size_range(type_descriptor,
+                                                       module_name))
         elif type_name == 'BMPString':
             compiled = BMPString(name)
         elif type_name == 'GraphicString':

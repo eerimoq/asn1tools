@@ -95,6 +95,7 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
 
         datas = [
             ('A',          (b'\x40', 4), b'\x02\x04\x40'),
+            ('A',          (b'\x41', 8), b'\x02\x00\x41'),
             ('B',      (b'\x12\x80', 9), b'\x12\x80'),
             ('C',      (b'\x12\x80', 9), b'\x03\x07\x12\x80'),
             ('D',          (b'\x34', 6), b'\x02\x02\x34')
@@ -280,6 +281,69 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+    def test_uft8_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UTF8String "
+            "B ::= UTF8String (SIZE (3)) "
+            "C ::= UTF8String (SIZE (3, ...)) "
+            "D ::= UTF8String (SIZE (3..7)) "
+            "END",
+            'oer')
+
+        datas = [
+            ('A',        'foo', b'\x03\x66\x6f\x6f'),
+            ('B',        'foo', b'\x66\x6f\x6f'),
+            ('C',        'foo', b'\x03\x66\x6f\x6f'),
+            ('D',        'foo', b'\x03\x66\x6f\x6f')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_numeric_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= NumericString "
+            "B ::= NumericString (SIZE (3)) "
+            "C ::= NumericString (SIZE (3, ...)) "
+            "D ::= NumericString (SIZE (3..7)) "
+            "END",
+            'oer')
+
+        datas = [
+            ('A',        '123', b'\x03\x31\x32\x33'),
+            ('B',        '123', b'\x31\x32\x33'),
+            ('C',        '123', b'\x03\x31\x32\x33'),
+            ('D',        '123', b'\x03\x31\x32\x33')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_printable_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= PrintableString "
+            "B ::= PrintableString (SIZE (3)) "
+            "C ::= PrintableString (SIZE (3, ...)) "
+            "D ::= PrintableString (SIZE (3..7)) "
+            "END",
+            'oer')
+
+        datas = [
+            ('A',        'foo', b'\x03\x66\x6f\x6f'),
+            ('B',        'foo', b'\x66\x6f\x6f'),
+            ('C',        'foo', b'\x03\x66\x6f\x6f'),
+            ('D',        'foo', b'\x03\x66\x6f\x6f')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_ia5_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
@@ -288,6 +352,27 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             "B ::= IA5String (SIZE (3)) "
             "C ::= IA5String (SIZE (3, ...)) "
             "D ::= IA5String (SIZE (3..7)) "
+            "END",
+            'oer')
+
+        datas = [
+            ('A',        'foo', b'\x03\x66\x6f\x6f'),
+            ('B',        'foo', b'\x66\x6f\x6f'),
+            ('C',        'foo', b'\x03\x66\x6f\x6f'),
+            ('D',        'foo', b'\x03\x66\x6f\x6f')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_visible_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= VisibleString "
+            "B ::= VisibleString (SIZE (3)) "
+            "C ::= VisibleString (SIZE (3, ...)) "
+            "D ::= VisibleString (SIZE (3..7)) "
             "END",
             'oer')
 
