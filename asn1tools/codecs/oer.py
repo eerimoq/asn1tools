@@ -695,7 +695,9 @@ class OctetString(Type):
 class ObjectIdentifier(Type):
 
     def __init__(self, name):
-        super(ObjectIdentifier, self).__init__(name, 'OBJECT IDENTIFIER')
+        super(ObjectIdentifier, self).__init__(name,
+                                               'OBJECT IDENTIFIER',
+                                               Tag.OBJECT_IDENTIFIER)
 
     def encode(self, data, encoder):
         raise NotImplementedError
@@ -791,6 +793,7 @@ class SetOf(ArrayType):
     def __init__(self, name, element_type):
         super(SetOf, self).__init__(name,
                                     'SET OF',
+                                    Tag.SET,
                                     element_type)
 
 
@@ -877,7 +880,9 @@ class Choice(Type):
 class UTF8String(Type):
 
     def __init__(self, name):
-        super(UTF8String, self).__init__(name, 'UTF8String')
+        super(UTF8String, self).__init__(name,
+                                         'UTF8String',
+                                         Tag.UTF8_STRING)
 
     def encode(self, data, encoder):
         raise NotImplementedError
@@ -892,7 +897,9 @@ class UTF8String(Type):
 class NumericString(Type):
 
     def __init__(self, name):
-        super(NumericString, self).__init__(name, 'NumericString')
+        super(NumericString, self).__init__(name,
+                                            'NumericString',
+                                            Tag.NUMERIC_STRING)
 
     def encode(self, data, encoder):
         raise NotImplementedError
@@ -907,7 +914,9 @@ class NumericString(Type):
 class PrintableString(Type):
 
     def __init__(self, name):
-        super(PrintableString, self).__init__(name, 'PrintableString')
+        super(PrintableString, self).__init__(name,
+                                              'PrintableString',
+                                              Tag.PRINTABLE_STRING)
 
     def encode(self, data, encoder):
         raise NotImplementedError
@@ -990,7 +999,9 @@ class VisibleString(Type):
 class GeneralString(Type):
 
     def __init__(self, name):
-        super(GeneralString, self).__init__(name, 'GeneralString')
+        super(GeneralString, self).__init__(name,
+                                            'GeneralString',
+                                            Tag.GENERAL_STRING)
 
     def encode(self, data, encoder):
         raise NotImplementedError
@@ -1005,7 +1016,9 @@ class GeneralString(Type):
 class BMPString(Type):
 
     def __init__(self, name):
-        super(BMPString, self).__init__(name, 'BMPString')
+        super(BMPString, self).__init__(name,
+                                        'BMPString',
+                                        Tag.BMP_STRING)
 
     def encode(self, data, encoder):
         raise NotImplementedError
@@ -1020,7 +1033,9 @@ class BMPString(Type):
 class GraphicString(Type):
 
     def __init__(self, name):
-        super(GraphicString, self).__init__(name, 'GraphicString')
+        super(GraphicString, self).__init__(name,
+                                            'GraphicString',
+                                            Tag.GENERAL_STRING)
 
     def encode(self, data, encoder):
         raise NotImplementedError
@@ -1035,7 +1050,9 @@ class GraphicString(Type):
 class UniversalString(Type):
 
     def __init__(self, name):
-        super(UniversalString, self).__init__(name, 'UniversalString')
+        super(UniversalString, self).__init__(name,
+                                              'UniversalString',
+                                              Tag.UNIVERSAL_STRING)
 
     def encode(self, data, encoder):
         raise NotImplementedError
@@ -1050,7 +1067,9 @@ class UniversalString(Type):
 class TeletexString(Type):
 
     def __init__(self, name):
-        super(TeletexString, self).__init__(name, 'TeletexString')
+        super(TeletexString, self).__init__(name,
+                                            'TeletexString',
+                                            Tag.T61_STRING)
 
     def encode(self, data, encoder):
         raise NotImplementedError
@@ -1065,7 +1084,9 @@ class TeletexString(Type):
 class UTCTime(Type):
 
     def __init__(self, name):
-        super(UTCTime, self).__init__(name, 'UTCTime')
+        super(UTCTime, self).__init__(name,
+                                      'UTCTime',
+                                      Tag.UTC_TIME)
 
     def encode(self, data, encoder):
         raise NotImplementedError
@@ -1080,7 +1101,9 @@ class UTCTime(Type):
 class GeneralizedTime(Type):
 
     def __init__(self, name):
-        super(GeneralizedTime, self).__init__(name, 'GeneralizedTime')
+        super(GeneralizedTime, self).__init__(name,
+                                              'GeneralizedTime',
+                                              Tag.GENERALIZED_TIME)
 
     def encode(self, data, encoder):
         raise NotImplementedError

@@ -302,7 +302,8 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
     def test_repr_all_types(self):
-        all_types = asn1tools.compile_files('tests/files/all_types.asn')
+        all_types = asn1tools.compile_files('tests/files/all_types.asn',
+                                            'oer')
 
         self.assertEqual(repr(all_types.types['Boolean']), 'Boolean(Boolean)')
         self.assertEqual(repr(all_types.types['Integer']), 'Integer(Integer)')
