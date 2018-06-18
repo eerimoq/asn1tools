@@ -10,6 +10,7 @@ from .codecs import ber
 from .codecs import der
 from .codecs import gser
 from .codecs import jer
+from .codecs import oer
 from .codecs import per
 from .codecs import uper
 from .codecs import xer
@@ -182,7 +183,7 @@ def compile_dict(specification, codec='ber', any_defined_by_choices=None):
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec
     `codec`. `codec` may be one of ``'ber'``, ``'der'``, ``'gser'``,
-    ``'jer'``, ``'per'``, ``'uper'`` and ``'xer'``.
+    ``'jer'``, ``oer``, ``'per'``, ``'uper'`` and ``'xer'``.
 
     >>> foo = asn1tools.compile_dict(asn1tools.parse_files('foo.asn'))
 
@@ -193,6 +194,7 @@ def compile_dict(specification, codec='ber', any_defined_by_choices=None):
         'der': der,
         'gser': gser,
         'jer': jer,
+        'oer': oer,
         'per': per,
         'uper': uper,
         'xer': xer
@@ -216,7 +218,7 @@ def compile_string(string, codec='ber', any_defined_by_choices=None):
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec
     `codec`. `codec` may be one of ``'ber'``, ``'der'``, ``'gser'``,
-    ``'jer'``, ``'per'``, ``'uper'`` and ``'xer'``.
+    ``'jer'``, ``oer``, ``'per'``, ``'uper'`` and ``'xer'``.
 
     >>> with open('foo.asn') as fin:
     ...     foo = asn1tools.compile_string(fin.read())
@@ -236,7 +238,7 @@ def compile_files(filenames,
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec
     `codec`. `codec` may be one of ``'ber'``, ``'der'``, ``'gser'``,
-    ``'jer'``, ``'per'``, ``'uper'`` and ``'xer'``.
+    ``'jer'``, ``oer``, ``'per'``, ``'uper'`` and ``'xer'``.
 
     `encoding` is the text encoding. This argument is passed to the
     built-in function `open()`.

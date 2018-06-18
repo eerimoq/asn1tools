@@ -23,31 +23,35 @@ Foo DEFINITIONS ::= BEGIN
 
 END
 
-Question to encode: {'question': 'Is 1+1=3?', 'id': 1}
+Question to encode: {'id': 1, 'question': 'Is 1+1=3?'}
 
 BER:
 Encoded: 300e0201011609497320312b313d333f (16 bytes)
-Decoded: {'question': 'Is 1+1=3?', 'id': 1}
+Decoded: {'id': 1, 'question': 'Is 1+1=3?'}
 
 DER:
 Encoded: 300e0201011609497320312b313d333f (16 bytes)
-Decoded: {'question': 'Is 1+1=3?', 'id': 1}
+Decoded: {'id': 1, 'question': 'Is 1+1=3?'}
 
 JER:
-Encoded: 7b227175657374696f6e223a22497320312b313d333f222c226964223a317d (31 bytes)
-Decoded: {'question': 'Is 1+1=3?', 'id': 1}
+Encoded: 7b226964223a312c227175657374696f6e223a22497320312b313d333f227d (31 bytes)
+Decoded: {'id': 1, 'question': 'Is 1+1=3?'}
+
+OER:
+Encoded: 010109497320312b313d333f (12 bytes)
+Decoded: {'id': 1, 'question': 'Is 1+1=3?'}
 
 PER:
 Encoded: 010109497320312b313d333f (12 bytes)
-Decoded: {'question': 'Is 1+1=3?', 'id': 1}
+Decoded: {'id': 1, 'question': 'Is 1+1=3?'}
 
 UPER:
 Encoded: 01010993cd03156c5eb37e (11 bytes)
-Decoded: {'question': 'Is 1+1=3?', 'id': 1}
+Decoded: {'id': 1, 'question': 'Is 1+1=3?'}
 
 XER:
 Encoded: 3c5175657374696f6e3e3c69643e313c2f69643e3c7175657374696f6e3e497320312b313d333f3c2f7175657374696f6e3e3c2f5175657374696f6e3e (61 bytes)
-Decoded: {'question': 'Is 1+1=3?', 'id': 1}
+Decoded: {'id': 1, 'question': 'Is 1+1=3?'}
 
 Protocol Buffers:
 Encoded: 08011209497320312b313d333f (13 bytes)
@@ -86,7 +90,7 @@ question = {'id': 1, 'question': 'Is 1+1=3?'}
 print("Question to encode:", question)
 
 # Encode and decode the question once for each codec.
-for codec in ['ber', 'der', 'jer', 'per', 'uper', 'xer']:
+for codec in ['ber', 'der', 'jer', 'oer', 'per', 'uper', 'xer']:
     foo = asn1tools.compile_files(FOO_ASN_PATH, codec)
     encoded = foo.encode('Question', question)
     decoded = foo.decode('Question', encoded)

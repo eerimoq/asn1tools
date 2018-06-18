@@ -15,13 +15,10 @@ Codecs under development:
 - Distinguished Encoding Rules (DER)
 - Generic String Encoding Rules (GSER)
 - JSON Encoding Rules (JER)
+- Octet Encoding Rules (OER)
 - Aligned Packed Encoding Rules (PER)
 - Unaligned Packed Encoding Rules (UPER)
 - XML Encoding Rules (XER)
-
-Planned codecs:
-
-- Octet Encoding Rules (OER)
 
 Project homepage: https://github.com/eerimoq/asn1tools
 
@@ -295,6 +292,9 @@ Encodings
 
 - `Overview of the JSON Encoding Rules (JER)
   <http://www.oss.com/asn1/resources/asn1-papers/Overview_of_JER.pdf>`_
+
+- `X.696: Specification of Octet Encoding Rules (OER)
+  <https://www.itu.int/rec/dologin_pub.asp?lang=e&id=T-REC-X.696-201508-I!!PDF-E&type=items>`_
 
 .. |buildstatus| image:: https://travis-ci.org/eerimoq/asn1tools.svg?branch=master
 .. _buildstatus: https://travis-ci.org/eerimoq/asn1tools

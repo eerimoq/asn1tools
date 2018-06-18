@@ -455,7 +455,7 @@ class KnownMultiplierStringType(Type):
                  name,
                  minimum=None,
                  maximum=None,
-                 has_extension_marker=None,
+                 has_extension_marker=False,
                  permitted_alphabet=None):
         super(KnownMultiplierStringType, self).__init__(name,
                                                         self.__class__.__name__)
@@ -814,7 +814,7 @@ class Integer(Type):
         super(Integer, self).__init__(name, 'INTEGER')
         self.minimum = None
         self.maximum = None
-        self.has_extension_marker = None
+        self.has_extension_marker = False
         self.number_of_bits = None
         self.number_of_indefinite_bits = None
 
@@ -1597,10 +1597,12 @@ class CompiledType(compiler.CompiledType):
     def encode(self, data):
         encoder = Encoder()
         self._type.encode(data, encoder)
+
         return encoder.as_bytearray()
 
     def decode(self, data):
         decoder = Decoder(bytearray(data))
+
         return self._type.decode(decoder)
 
     def __repr__(self):
@@ -1745,14 +1747,6 @@ class Compiler(compiler.Compiler):
         class_prio = CLASS_PRIO[tag.get('class', 'CONTEXT_SPECIFIC')]
         class_number = tag['number']
         compiled.tag = (class_prio, class_number)
-
-        return compiled
-
-    def set_compiled_restricted_to(self, compiled, type_descriptor, module_name):
-        compiled = self.copy(compiled)
-        compiled.set_restricted_to_range(
-            *self.get_restricted_to_range(type_descriptor,
-                                          module_name))
 
         return compiled
 

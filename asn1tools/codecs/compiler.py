@@ -524,14 +524,14 @@ class Compiler(object):
             try:
                 minimum = float(minimum)
             except ValueError:
-                if minimum not in ['TRUE', 'FALSE']:
+                if minimum not in ['TRUE', 'FALSE', 'MIN', 'MAX']:
                     minimum = self.lookup_value(minimum, module_name)[0]['value']
 
         if isinstance(maximum, str):
             try:
                 maximum = float(maximum)
             except ValueError:
-                if maximum not in ['TRUE', 'FALSE']:
+                if maximum not in ['TRUE', 'FALSE', 'MIN', 'MAX']:
                     maximum = self.lookup_value(maximum, module_name)[0]['value']
 
         has_extension_marker = (EXTENSION_MARKER in restricted_to)
@@ -638,6 +638,14 @@ class Compiler(object):
             compiled_type = copy(compiled_type)
 
         return compiled_type
+
+    def set_compiled_restricted_to(self, compiled, type_descriptor, module_name):
+        compiled = self.copy(compiled)
+        compiled.set_restricted_to_range(
+            *self.get_restricted_to_range(type_descriptor,
+                                          module_name))
+
+        return compiled
 
 
 def enum_values_as_dict(values):

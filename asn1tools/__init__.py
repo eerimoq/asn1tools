@@ -152,11 +152,13 @@ def _do_convert(args):
 def _handle_command_compile(line):
     parser = ArgumentParser(prog='compile')
     parser.add_argument('-i', '--input-codec',
-                        choices=('ber', 'der', 'jer', 'per', 'uper', 'xer'),
+                        choices=('ber', 'der', 'jer', 'oer', 'per', 'uper', 'xer'),
                         default='ber',
                         help='Input codec (default: ber).')
     parser.add_argument('-o', '--output-codec',
-                        choices=('ber', 'der', 'jer', 'per', 'uper', 'xer', 'gser'),
+                        choices=(
+                            'ber', 'der', 'jer', 'oer', 'per', 'uper', 'xer', 'gser'
+                        ),
                         default='gser',
                         help='Output codec (default: gser).')
     parser.add_argument('specification',
@@ -293,14 +295,16 @@ def _main():
     subparser = subparsers.add_parser(
         'convert',
         description='Convert given hextring and print it to standard output.')
-    subparser.add_argument('-i', '--input-codec',
-                           choices=('ber', 'der', 'jer', 'per', 'uper', 'xer'),
-                           default='ber',
-                           help='Input format (default: ber).')
-    subparser.add_argument('-o', '--output-codec',
-                           choices=('ber', 'der', 'jer', 'per', 'uper', 'xer', 'gser'),
-                           default='gser',
-                           help='Output format (default: gser).')
+    subparser.add_argument(
+        '-i', '--input-codec',
+        choices=('ber', 'der', 'jer', 'oer', 'per', 'uper', 'xer'),
+        default='ber',
+        help='Input format (default: ber).')
+    subparser.add_argument(
+        '-o', '--output-codec',
+        choices=('ber', 'der', 'jer', 'oer', 'per', 'uper', 'xer', 'gser'),
+        default='gser',
+        help='Output format (default: gser).')
     subparser.add_argument(
         'specification',
         nargs='+',
@@ -332,10 +336,11 @@ def _main():
     # The 'pickle' subparser.
     subparser = subparsers.add_parser('pickle',
                                       description='Pickle.')
-    subparser.add_argument('-c', '--codec',
-                           choices=('ber', 'der', 'jer', 'per', 'uper', 'xer', 'gser'),
-                           default='ber',
-                           help='Codec (default: ber).')
+    subparser.add_argument(
+        '-c', '--codec',
+        choices=('ber', 'der', 'jer', 'oer', 'per', 'uper', 'xer', 'gser'),
+        default='ber',
+        help='Codec (default: ber).')
     subparser.add_argument('specification',
                            nargs='+',
                            help='ASN.1 specification as one or more .asn files.')

@@ -501,7 +501,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         self.assertEqual(foo.decode('Q', b'\xc0\x40\x01\x80\x01\x64'),
                          {'a': {'a': True}, 'b': 100})
 
-        # Decode error of present additon member (out of data).
+        # Decode error of present addition member (out of data).
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('U', b'\x80\x80\x03\x02\x05')
 

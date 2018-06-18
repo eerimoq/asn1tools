@@ -1,0 +1,48 @@
+OverviewOfOer DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+A ::= SEQUENCE {
+  a1 INTEGER (0..100),
+  a2 INTEGER (-290..399),
+  a3 INTEGER (0..60000) OPTIONAL,
+  a4 INTEGER (-5000000..5000000),
+  a5 INTEGER (1000..MAX),
+  a6 INTEGER (-1..MAX),
+  a7 INTEGER OPTIONAL
+}
+
+a A ::= {
+  a1 4,
+  a2 4,
+  a3 4, --optional and present
+  a4 4,
+  a5 1024,
+  a6 4,
+  a7 4 --optional and present
+}
+
+B ::= SEQUENCE {
+  b1 IA5String (SIZE (0..10)),
+  b2 IA5String (SIZE (3)),
+  b3 IA5String,
+  b4 OCTET STRING,
+  b5 BIT STRING (SIZE (4)),
+  b6 BIT STRING
+}
+
+b B ::= {
+  b1 "ABC",
+  b2 "ABC",
+  b3 "ABC",
+  b4 '01020304'H,
+  b5 '0101'B,
+  b6 '0101'B
+}
+
+C ::= CHOICE {
+  c1 BOOLEAN,
+  c2 SEQUENCE OF ENUMERATED { a, b, c, d, e }
+}
+
+c C ::= c2 : { b, c, d, e }
+
+END
