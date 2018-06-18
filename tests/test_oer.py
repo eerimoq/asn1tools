@@ -225,6 +225,11 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             "  b BOOLEAN, "
             "  c INTEGER "
             "} "
+            "C ::= CHOICE { "
+            "  a CHOICE { "
+            "    a [3] INTEGER"
+            "  } "
+            "} "
             "END",
             'oer')
 
@@ -233,7 +238,8 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             ('B',          ('a', True), b'\x80\xff'),
             ('B',          ('b', True), b'\x81\x01\xff'),
             ('B',             ('c', 0), b'\x82\x02\x01\x00'),
-            ('B',          ('c', 1000), b'\x82\x03\x02\x03\xe8')
+            ('B',          ('c', 1000), b'\x82\x03\x02\x03\xe8'),
+            ('C',    ('a', ('a', 150)), b'\x80\x83\x02\x00\x96')
         ]
 
         for type_name, decoded, encoded in datas:

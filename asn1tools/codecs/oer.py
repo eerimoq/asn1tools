@@ -810,35 +810,15 @@ class Choice(Type):
 
     def add_tags(self, tag_to_member, members):
         for member in members:
-            tags = self.get_member_tags(member)
-
-            for tag in tags:
-                tag_to_member[tag] = member
-
-    def get_member_tags(self, member):
-        tags = []
-
-        if isinstance(member, Choice):
-            tags = self.get_choice_tags(member)
-        else:
-            tags.append(bytes(member.tag))
-
-        return tags
-
-    def get_choice_tags(self, choice):
-        tags = []
-
-        for member in choice.members:
-            tags.extend(self.get_member_tags(member))
-
-        return tags
+            tag_to_member[bytes(member.tag)] = member
 
     def format_tag(self, tag):
         return binascii.hexlify(tag).decode('ascii')
 
     def format_tags(self):
-        return format_or(sorted([self.format_tag(tag)
-                                 for tag in self.tag_to_member]))
+        return format_or(
+            sorted([self.format_tag(member.tag)
+                    for member in self.root_members + self.additions]))
 
     def encode(self, data, encoder):
         name = data[0]
@@ -879,9 +859,11 @@ class Choice(Type):
         return (member.name, decoded)
 
     def __repr__(self):
+        members = self.root_members + self.additions
+
         return 'Choice({}, [{}])'.format(
             self.name,
-            ', '.join([repr(member) for member in self.members]))
+            ', '.join([repr(member) for member in members]))
 
 
 class UTF8String(Type):
