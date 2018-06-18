@@ -589,13 +589,13 @@ class Real(Type):
 class Null(Type):
 
     def __init__(self, name):
-        super(Null, self).__init__(name, 'NULL')
+        super(Null, self).__init__(name, 'NULL', Tag.NULL)
 
-    def encode(self, data, encoder):
-        raise NotImplementedError
+    def encode(self, _data, _encoder):
+        return
 
-    def decode(self, decoder):
-        raise NotImplementedError
+    def decode(self, _decoder):
+        return
 
     def __repr__(self):
         return 'Null({})'.format(self.name)
@@ -1305,8 +1305,7 @@ class Compiler(compiler.Compiler):
     def compile_members(self,
                         members,
                         module_name,
-                        sort_by_tag=False,
-                        flat_additions=True):
+                        sort_by_tag=False):
         compiled_members = []
         in_extension = False
         additions = None
@@ -1320,8 +1319,7 @@ class Compiler(compiler.Compiler):
             elif in_extension:
                 self.compile_extension_member(member,
                                               module_name,
-                                              additions,
-                                              flat_additions)
+                                              additions)
             else:
                 self.compile_root_member(member,
                                          module_name,
@@ -1335,21 +1333,12 @@ class Compiler(compiler.Compiler):
     def compile_extension_member(self,
                                  member,
                                  module_name,
-                                 additions,
-                                 flat_additions):
+                                 additions):
         if isinstance(member, list):
-            if flat_additions:
-                for memb in member:
-                    compiled_member = self.compile_member(memb,
-                                                          module_name)
-                    additions.append(compiled_member)
-            else:
-                compiled_member, _ = self.compile_members(member,
-                                                          module_name)
-                compiled_group = AdditionGroup('ExtensionAddition',
-                                               compiled_member,
-                                               None)
-                additions.append(compiled_group)
+            for memb in member:
+                compiled_member = self.compile_member(memb,
+                                                      module_name)
+                additions.append(compiled_member)
         else:
             compiled_member = self.compile_member(member,
                                                   module_name)
