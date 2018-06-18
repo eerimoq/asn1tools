@@ -193,6 +193,25 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+    def test_set(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SET { "
+            "  a [444] INTEGER, "
+            "  b [5] INTEGER, "
+            "  c [APPLICATION 5] INTEGER "
+            "} "
+            "END",
+            'oer')
+
+        datas = [
+            ('A', {'a': 5, 'b': 6, 'c': 7}, b'\x01\x07\x01\x06\x01\x05')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_sequence_of(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
