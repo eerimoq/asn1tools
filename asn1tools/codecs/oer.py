@@ -613,10 +613,10 @@ class Real(Type):
         super(Real, self).__init__(name, 'REAL', Tag.REAL)
 
     def encode(self, data, encoder):
-        raise NotImplementedError
+        raise NotImplementedError('REAL is not yet implemented.')
 
     def decode(self, decoder):
-        raise NotImplementedError
+        raise NotImplementedError('REAL is not yet implemented.')
 
     def __repr__(self):
         return 'Real({})'.format(self.name)
@@ -729,10 +729,10 @@ class ObjectIdentifier(Type):
                                                Tag.OBJECT_IDENTIFIER)
 
     def encode(self, data, encoder):
-        raise NotImplementedError
+        raise NotImplementedError('OBJECT IDENTIFIER is not yet implemented.')
 
     def decode(self, decoder):
-        raise NotImplementedError
+        raise NotImplementedError('OBJECT IDENTIFIER is not yet implemented.')
 
     def __repr__(self):
         return 'ObjectIdentifier({})'.format(self.name)
@@ -944,10 +944,10 @@ class GeneralString(Type):
                                             Tag.GENERAL_STRING)
 
     def encode(self, data, encoder):
-        raise NotImplementedError
+        raise NotImplementedError('GeneralString is not yet implemented.')
 
     def decode(self, decoder):
-        raise NotImplementedError
+        raise NotImplementedError('GeneralString is not yet implemented.')
 
     def __repr__(self):
         return 'GeneralString({})'.format(self.name)
@@ -961,10 +961,10 @@ class BMPString(Type):
                                         Tag.BMP_STRING)
 
     def encode(self, data, encoder):
-        raise NotImplementedError
+        raise NotImplementedError('BMPString is not yet implemented.')
 
     def decode(self, decoder):
-        raise NotImplementedError
+        raise NotImplementedError('BMPString is not yet implemented.')
 
     def __repr__(self):
         return 'BMPString({})'.format(self.name)
@@ -978,10 +978,10 @@ class GraphicString(Type):
                                             Tag.GENERAL_STRING)
 
     def encode(self, data, encoder):
-        raise NotImplementedError
+        raise NotImplementedError('GraphicString is not yet implemented.')
 
     def decode(self, decoder):
-        raise NotImplementedError
+        raise NotImplementedError('GraphicString is not yet implemented.')
 
     def __repr__(self):
         return 'GraphicString({})'.format(self.name)
@@ -995,10 +995,10 @@ class UniversalString(Type):
                                               Tag.UNIVERSAL_STRING)
 
     def encode(self, data, encoder):
-        raise NotImplementedError
+        raise NotImplementedError('UniversalString is not yet implemented.')
 
     def decode(self, decoder):
-        raise NotImplementedError
+        raise NotImplementedError('UniversalString is not yet implemented.')
 
     def __repr__(self):
         return 'UniversalString({})'.format(self.name)
@@ -1012,10 +1012,10 @@ class TeletexString(Type):
                                             Tag.T61_STRING)
 
     def encode(self, data, encoder):
-        raise NotImplementedError
+        raise NotImplementedError('TeletexString is not yet implemented.')
 
     def decode(self, decoder):
-        raise NotImplementedError
+        raise NotImplementedError('TeletexString is not yet implemented.')
 
     def __repr__(self):
         return 'TeletexString({})'.format(self.name)
@@ -1029,10 +1029,10 @@ class UTCTime(Type):
                                       Tag.UTC_TIME)
 
     def encode(self, data, encoder):
-        raise NotImplementedError
+        raise NotImplementedError('UTCTime is not yet implemented.')
 
     def decode(self, decoder):
-        raise NotImplementedError
+        raise NotImplementedError('UTCTime is not yet implemented.')
 
     def __repr__(self):
         return 'UTCTime({})'.format(self.name)
@@ -1046,10 +1046,10 @@ class GeneralizedTime(Type):
                                               Tag.GENERALIZED_TIME)
 
     def encode(self, data, encoder):
-        raise NotImplementedError
+        raise NotImplementedError('GeneralizedTime is not yet implemented.')
 
     def decode(self, decoder):
-        raise NotImplementedError
+        raise NotImplementedError('GeneralizedTime is not yet implemented.')
 
     def __repr__(self):
         return 'GeneralizedTime({})'.format(self.name)
@@ -1061,10 +1061,10 @@ class Any(Type):
         super(Any, self).__init__(name, 'ANY', None)
 
     def encode(self, data, encoder):
-        raise NotImplementedError
+        raise NotImplementedError('ANY is not yet implemented.')
 
     def decode(self, decoder):
-        raise NotImplementedError
+        raise NotImplementedError('ANY is not yet implemented.')
 
     def __repr__(self):
         return 'Any({})'.format(self.name)
@@ -1081,10 +1081,10 @@ class AnyDefinedBy(Type):
         self.choices = choices
 
     def encode(self, data, encoder):
-        raise NotImplementedError
+        raise NotImplementedError('ANY DEFINED BY is not yet implemented.')
 
     def decode(self, decoder):
-        raise NotImplementedError
+        raise NotImplementedError('ANY DEFINED BY is not yet implemented.')
 
     def __repr__(self):
         return 'AnyDefinedBy({})'.format(self.name)
