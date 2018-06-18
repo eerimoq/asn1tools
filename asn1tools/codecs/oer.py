@@ -16,6 +16,8 @@ from .compiler import enum_values_as_dict
 from .ber import Class
 from .ber import Tag
 from .ber import encode_tag
+from .ber import encode_object_identifier
+from .ber import decode_object_identifier
 from .per import OutOfDataError
 
 
@@ -729,10 +731,15 @@ class ObjectIdentifier(Type):
                                                Tag.OBJECT_IDENTIFIER)
 
     def encode(self, data, encoder):
-        raise NotImplementedError('OBJECT IDENTIFIER is not yet implemented.')
+        encoded_subidentifiers = encode_object_identifier(data)
+        encoder.append_length_determinant(len(encoded_subidentifiers))
+        encoder.append_bytes(bytearray(encoded_subidentifiers))
 
     def decode(self, decoder):
-        raise NotImplementedError('OBJECT IDENTIFIER is not yet implemented.')
+        length = decoder.read_length_determinant()
+        data = decoder.read_bits(8 * length)
+
+        return decode_object_identifier(bytearray(data), 0, len(data))
 
     def __repr__(self):
         return 'ObjectIdentifier({})'.format(self.name)

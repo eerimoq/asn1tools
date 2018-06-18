@@ -126,6 +126,22 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+    def test_object_identifier(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= OBJECT IDENTIFIER "
+            "END",
+            'oer')
+
+        datas = [
+            ('A',                   '1.2', b'\x01\x2a'),
+            ('A',              '1.2.3321', b'\x03\x2a\x99\x79')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_enumerated(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
