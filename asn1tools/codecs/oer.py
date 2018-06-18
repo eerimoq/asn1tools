@@ -64,6 +64,9 @@ class Encoder(object):
 
         self.append_non_negative_binary_integer(value, number_of_bits)
 
+    def append_u8(self, value):
+        return self.append_non_negative_binary_integer(value, 8)
+
     def append_bytes(self, data):
         """Append given data.
 
@@ -110,7 +113,7 @@ class Encoder(object):
             if length > 127:
                 raise EncodeError('Too big.')
 
-            self.append_bits(length, 8)
+            self.append_u8(0x80 | length)
             self.append_bytes(encoded[::-1])
 
     def append_non_negative_binary_integer(self, value, number_of_bits):
@@ -229,10 +232,15 @@ class Decoder(object):
         return ((self.value >> self.number_of_bits) & mask)
 
     def read_length_determinant(self):
-        if self.read_bit():
-            pass
+        value = self.read_u8()
+
+        if value & 0x80:
+            length = (value & 0x7f)
+            value = self.read_non_negative_binary_integer(8 * length)
         else:
-            return self.read_non_negative_binary_integer(7)
+            value &= 0x7f
+
+        return value
 
     def read_integer(self):
         number_of_bytes = self.read_length_determinant()

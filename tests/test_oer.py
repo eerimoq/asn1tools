@@ -116,6 +116,7 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
 
         datas = [
             ('A',      b'\x12\x34', b'\x02\x12\x34'),
+            ('A',      999 * b'\x01', b'\x82\x03\xe7' + 999 * b'\x01'),
             ('B',  b'\x12\x34\x56', b'\x12\x34\x56'),
             ('C',  b'\x12\x34\x56', b'\x03\x12\x34\x56'),
             ('D',  b'\x12\x34\x56', b'\x03\x12\x34\x56')
