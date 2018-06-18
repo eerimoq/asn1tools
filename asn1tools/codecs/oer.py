@@ -12,6 +12,10 @@ from . import EncodeError
 from . import DecodeError
 from . import format_or
 from . import compiler
+from . import utc_time_to_datetime
+from . import utc_time_from_datetime
+from . import generalized_time_to_datetime
+from . import generalized_time_from_datetime
 from .compiler import enum_values_as_dict
 from .ber import Class
 from .ber import Tag
@@ -302,7 +306,11 @@ class KnownMultiplierStringType(Type):
     TAG = None
     ENCODING = None
 
-    def __init__(self, name, minimum, maximum, has_extension_marker):
+    def __init__(self,
+                 name,
+                 minimum=None,
+                 maximum=None,
+                 has_extension_marker=False):
         super(KnownMultiplierStringType, self).__init__(name,
                                                         self.__class__.__name__,
                                                         self.TAG)
@@ -968,10 +976,15 @@ class BMPString(Type):
                                         Tag.BMP_STRING)
 
     def encode(self, data, encoder):
-        raise NotImplementedError('BMPString is not yet implemented.')
+        encoded = data.encode('utf-16-be')
+        encoder.append_length_determinant(len(data))
+        encoder.append_bytes(encoded)
 
     def decode(self, decoder):
-        raise NotImplementedError('BMPString is not yet implemented.')
+        length = decoder.read_length_determinant()
+        encoded = decoder.read_bits(16 * length)
+
+        return encoded.decode('utf-16-be')
 
     def __repr__(self):
         return 'BMPString({})'.format(self.name)
@@ -985,10 +998,15 @@ class GraphicString(Type):
                                             Tag.GENERAL_STRING)
 
     def encode(self, data, encoder):
-        raise NotImplementedError('GraphicString is not yet implemented.')
+        encoded = data.encode('latin-1')
+        encoder.append_length_determinant(len(encoded))
+        encoder.append_bytes(encoded)
 
     def decode(self, decoder):
-        raise NotImplementedError('GraphicString is not yet implemented.')
+        length = decoder.read_length_determinant()
+        encoded = decoder.read_bits(8 * length)
+
+        return encoded.decode('latin-1')
 
     def __repr__(self):
         return 'GraphicString({})'.format(self.name)
@@ -1028,38 +1046,34 @@ class TeletexString(Type):
         return 'TeletexString({})'.format(self.name)
 
 
-class UTCTime(Type):
+class UTCTime(VisibleString):
 
-    def __init__(self, name):
-        super(UTCTime, self).__init__(name,
-                                      'UTCTime',
-                                      Tag.UTC_TIME)
+    TAG = Tag.UTC_TIME
 
     def encode(self, data, encoder):
-        raise NotImplementedError('UTCTime is not yet implemented.')
+        encoded = utc_time_from_datetime(data)
+
+        return super(UTCTime, self).encode(encoded, encoder)
 
     def decode(self, decoder):
-        raise NotImplementedError('UTCTime is not yet implemented.')
+        decoded = super(UTCTime, self).decode(decoder)
 
-    def __repr__(self):
-        return 'UTCTime({})'.format(self.name)
+        return utc_time_to_datetime(decoded)
 
 
-class GeneralizedTime(Type):
+class GeneralizedTime(VisibleString):
 
-    def __init__(self, name):
-        super(GeneralizedTime, self).__init__(name,
-                                              'GeneralizedTime',
-                                              Tag.GENERALIZED_TIME)
+    TAG = Tag.GENERALIZED_TIME
 
     def encode(self, data, encoder):
-        raise NotImplementedError('GeneralizedTime is not yet implemented.')
+        encoded = utc_time_from_datetime(data)
+
+        return super(GeneralizedTime, self).encode(encoded, encoder)
 
     def decode(self, decoder):
-        raise NotImplementedError('GeneralizedTime is not yet implemented.')
+        decoded = super(GeneralizedTime, self).decode(decoder)
 
-    def __repr__(self):
-        return 'GeneralizedTime({})'.format(self.name)
+        return utc_time_to_datetime(decoded)
 
 
 class Any(Type):

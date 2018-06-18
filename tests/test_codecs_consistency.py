@@ -4,7 +4,7 @@ from .utils import Asn1ToolsBaseTest
 import asn1tools
 
 
-CODECS = ['ber', 'der', 'jer', 'per', 'uper', 'xer']
+CODECS = ['ber', 'der', 'jer', 'oer', 'per', 'uper', 'xer']
 
 
 class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
