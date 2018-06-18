@@ -377,13 +377,6 @@ class MembersType(Type):
 
         return True
 
-    def encode_addition_group(self, data, encoder):
-        self.encode_root(data, encoder)
-
-        if ((encoder.value == 0)
-            and (encoder.number_of_bits == len(self.optionals))):
-            encoder.number_of_bits = 0
-
     def encode_member(self, member, data, encoder, encode_default=False):
         name = member.name
 
