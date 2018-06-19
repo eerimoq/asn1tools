@@ -3,6 +3,7 @@
 
 import unittest
 from .utils import Asn1ToolsBaseTest
+from datetime import datetime
 
 import asn1tools
 
@@ -405,6 +406,41 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             ('B',        'foo', b'\x66\x6f\x6f'),
             ('C',        'foo', b'\x03\x66\x6f\x6f'),
             ('D',        'foo', b'\x03\x66\x6f\x6f')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_utc_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS IMPLICIT TAGS ::= "
+            "BEGIN "
+            "A ::= UTCTime "
+            "END",
+            'oer')
+
+        datas = [
+            ('A',
+             datetime(2043, 1, 31, 23, 59, 59),
+             b'\x0d\x34\x33\x30\x31\x33\x31\x32\x33\x35\x39\x35\x39\x5a')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_generalized_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= GeneralizedTime "
+            "END",
+            'oer')
+
+        datas = [
+            ('A',
+             datetime(2080, 10, 9, 13, 0, 5, 342000),
+             b'\x12\x32\x30\x38\x30\x31\x30\x30\x39\x31\x33\x30\x30\x30\x35'
+             b'\x2e\x33\x34\x32')
         ]
 
         for type_name, decoded, encoded in datas:

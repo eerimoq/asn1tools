@@ -1083,14 +1083,14 @@ class GeneralizedTime(VisibleString):
     TAG = Tag.GENERALIZED_TIME
 
     def encode(self, data, encoder):
-        encoded = utc_time_from_datetime(data)
+        encoded = generalized_time_from_datetime(data)
 
         return super(GeneralizedTime, self).encode(encoded, encoder)
 
     def decode(self, decoder):
         decoded = super(GeneralizedTime, self).decode(decoder)
 
-        return utc_time_to_datetime(decoded)
+        return generalized_time_to_datetime(decoded)
 
 
 class Any(Type):
