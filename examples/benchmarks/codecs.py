@@ -10,22 +10,24 @@ Starting encoding and decoding of a message 3000 times. This may take a few seco
 Encoding the message 3000 times took:
 
 CODEC      SECONDS
-jer        0.168873
-ber        0.263819
-der        0.269586
-per        0.497229
-uper       0.500905
-xer        0.718371
+jer        0.113198
+ber        0.173475
+der        0.176935
+oer        0.226752
+uper       0.326678
+per        0.350619
+xer        0.476867
 
 Decoding the message 3000 times took:
 
 CODEC      SECONDS
-jer        0.231455
-xer        0.366730
-ber        0.370283
-der        0.371685
-per        0.535226
-uper       0.549343
+jer        0.166447
+ber        0.277560
+xer        0.308562
+der        0.309008
+oer        0.311870
+uper       0.383907
+per        0.396227
 $
 
 """
@@ -105,6 +107,7 @@ print('Starting encoding and decoding of a message {} times. This may '
 ber_encode_time, ber_decode_time = encode_decode('ber')
 der_encode_time, der_decode_time = encode_decode('der')
 jer_encode_time, jer_decode_time = encode_decode('jer')
+oer_encode_time, oer_decode_time = encode_decode('oer')
 per_encode_time, per_decode_time = encode_decode('per')
 uper_encode_time, uper_decode_time = encode_decode('uper')
 xer_encode_time, xer_decode_time = encode_decode('xer')
@@ -113,9 +116,10 @@ xer_encode_time, xer_decode_time = encode_decode('xer')
 measurements = [
     ('ber', ber_encode_time),
     ('der', der_encode_time),
-    ('uper', uper_encode_time),
-    ('per', per_encode_time),
     ('jer', jer_encode_time),
+    ('oer', oer_encode_time),
+    ('per', per_encode_time),
+    ('uper', uper_encode_time),
     ('xer', xer_encode_time)
 ]
 
@@ -132,9 +136,10 @@ for package, seconds in measurements:
 measurements = [
     ('ber', ber_decode_time),
     ('der', der_decode_time),
-    ('uper', uper_decode_time),
-    ('per', per_decode_time),
     ('jer', jer_decode_time),
+    ('oer', oer_decode_time),
+    ('per', per_decode_time),
+    ('uper', uper_decode_time),
     ('xer', xer_decode_time)
 ]
 
