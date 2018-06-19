@@ -49,6 +49,7 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             ('A',              0, b'\x01\x00'),
             ('A',            128, b'\x02\x00\x80'),
             ('A',         100000, b'\x03\x01\x86\xa0'),
+            ('A',           -255, b'\x02\xff\x01'),
             ('A',       -1234567, b'\x03\xed\x29\x79'),
             ('B',             -2, b'\xfe'),
             ('C',             -2, b'\xff\xfe'),
