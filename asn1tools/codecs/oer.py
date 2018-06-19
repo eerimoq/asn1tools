@@ -19,10 +19,27 @@ from . import generalized_time_from_datetime
 from .compiler import enum_values_as_dict
 from .ber import Class
 from .ber import Tag
-from .ber import encode_tag
 from .ber import encode_object_identifier
 from .ber import decode_object_identifier
 from .per import OutOfDataError
+
+
+def encode_tag(number, flags):
+    if number < 63:
+        tag = bytearray([flags | number])
+    else:
+        tag = bytearray([flags | 0x3f])
+        encoded = bytearray()
+
+        while number > 0:
+            encoded.append(0x80 | (number & 0x7f))
+            number >>= 7
+
+        encoded[0] &= 0x7f
+        encoded.reverse()
+        tag.extend(encoded)
+
+    return bytes(tag)
 
 
 class Encoder(object):
@@ -260,7 +277,7 @@ class Decoder(object):
         byte = self.read_u8()
         tag = bytearray([byte])
 
-        if byte & 0x1f == 0x1f:
+        if byte & 0x3f == 0x3f:
             while True:
                 byte = self.read_u8()
                 tag.append(byte)
@@ -865,7 +882,7 @@ class Choice(Type):
 
     def add_tags(self, tag_to_member, members):
         for member in members:
-            tag_to_member[bytes(member.tag)] = member
+            tag_to_member[member.tag] = member
 
     def format_tag(self, tag):
         return binascii.hexlify(tag).decode('ascii')

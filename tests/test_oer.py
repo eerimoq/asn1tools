@@ -282,6 +282,11 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             "    a [3] INTEGER"
             "  } "
             "} "
+            "D ::= CHOICE { "
+            "  a [62] BOOLEAN, "
+            "  b [APPLICATION 63] BOOLEAN, "
+            "  c [PRIVATE 963] BOOLEAN "
+            "} "
             "END",
             'oer')
 
@@ -291,7 +296,10 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             ('B',          ('b', True), b'\x81\x01\xff'),
             ('B',             ('c', 0), b'\x82\x02\x01\x00'),
             ('B',          ('c', 1000), b'\x82\x03\x02\x03\xe8'),
-            ('C',    ('a', ('a', 150)), b'\x80\x83\x02\x00\x96')
+            ('C',    ('a', ('a', 150)), b'\x80\x83\x02\x00\x96'),
+            ('D',         ('a', False), b'\xbe\x00'),
+            ('D',         ('b', False), b'\x7f\x3f\x00'),
+            ('D',         ('c', False), b'\xff\x87\x43\x00')
         ]
 
         for type_name, decoded, encoded in datas:
