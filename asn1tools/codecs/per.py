@@ -593,11 +593,13 @@ class MembersType(Type):
         # Encode extension additions.
         presence_bits = 0
         addition_encoders = []
+        number_of_precence_bits = 0
 
-        for addition in self.additions:
-            try:
+        try:
+            for addition in self.additions:
                 presence_bits <<= 1
                 addition_encoder = Encoder()
+                number_of_precence_bits += 1
 
                 if isinstance(addition, AdditionGroup):
                     addition.encode_addition_group(data, addition_encoder)
@@ -610,8 +612,8 @@ class MembersType(Type):
                 if addition_encoder.number_of_bits > 0:
                     addition_encoders.append(addition_encoder)
                     presence_bits |= 1
-            except EncodeError:
-                pass
+        except EncodeError:
+            pass
 
         # Return false if no extension additions are present.
         if not addition_encoders:
@@ -619,6 +621,7 @@ class MembersType(Type):
 
         # Presence bit field.
         number_of_additions = len(self.additions)
+        presence_bits <<= (number_of_additions - number_of_precence_bits)
         encoder.append_normally_small_length(number_of_additions)
         encoder.append_non_negative_binary_integer(presence_bits,
                                                    number_of_additions)
