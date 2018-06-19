@@ -232,7 +232,7 @@ class Decoder(object):
 
         return binascii.unhexlify(hex(value)[4:].rstrip('L'))
 
-    def read_u8(self):
+    def read_byte(self):
         return self.read_non_negative_binary_integer(8)
 
     def read_bytes(self, number_of_bytes):
@@ -252,7 +252,7 @@ class Decoder(object):
         return ((self.value >> self.number_of_bits) & mask)
 
     def read_length_determinant(self):
-        value = self.read_u8()
+        value = self.read_byte()
 
         if value & 0x80:
             length = (value & 0x7f)
@@ -274,18 +274,18 @@ class Decoder(object):
         return value
 
     def read_tag(self):
-        byte = self.read_u8()
+        byte = self.read_byte()
         tag = bytearray([byte])
 
         if byte & 0x3f == 0x3f:
             while True:
-                byte = self.read_u8()
+                byte = self.read_byte()
                 tag.append(byte)
 
                 if byte & 0x80 == 0:
                     break
 
-        return tag
+        return bytes(tag)
 
 
 class Type(object):
@@ -493,16 +493,14 @@ class MembersType(Type):
     def decode_additions(self, decoder):
         # Presence bit field.
         length = decoder.read_length_determinant()
-        decoder.read_u8()
+        decoder.read_byte()
         presence_bits = decoder.read_non_negative_binary_integer(length)
         decoder.align()
         decoded = {}
 
         for i in range(length):
             if presence_bits & (1 << (length - i - 1)):
-                # Open type decoding.
                 member_length = decoder.read_length_determinant()
-                offset = decoder.number_of_bits
 
                 if i < len(self.additions):
                     addition = self.additions[i]
@@ -514,11 +512,6 @@ class MembersType(Type):
                         raise
                 else:
                     decoder.skip_bits(8 * member_length)
-
-                alignment_bits = (offset - decoder.number_of_bits) % 8
-
-                if alignment_bits != 0:
-                    decoder.skip_bits(8 - alignment_bits)
 
         return decoded
 
@@ -570,7 +563,7 @@ class Boolean(Type):
         encoder.append_non_negative_binary_integer(0xff * data, 8)
 
     def decode(self, decoder):
-        return bool(decoder.read_u8())
+        return bool(decoder.read_byte())
 
     def __repr__(self):
         return 'Boolean({})'.format(self.name)
@@ -703,7 +696,7 @@ class BitString(Type):
     def decode(self, decoder):
         if self.number_of_bits is None:
             number_of_bytes = decoder.read_length_determinant()
-            number_of_unused_bits = decoder.read_u8()
+            number_of_unused_bits = decoder.read_byte()
             number_of_bytes -= 1
             number_of_bits = (8 * number_of_bytes - number_of_unused_bits)
         else:
@@ -806,7 +799,7 @@ class Enumerated(Type):
             decoder.clear_bit()
             value = decoder.read_integer()
         else:
-            value = decoder.read_u8()
+            value = decoder.read_byte()
 
         try:
             return self.value_to_name[value]
@@ -913,7 +906,7 @@ class Choice(Type):
                     data[0]))
 
     def decode(self, decoder):
-        tag = bytes(decoder.read_tag())
+        tag = decoder.read_tag()
 
         if tag in self.tag_to_root_member:
             member = self.tag_to_root_member[tag]

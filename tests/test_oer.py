@@ -202,27 +202,32 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             "  ..., "
             "  b BOOLEAN OPTIONAL "
             "} "
+            "H ::= SEQUENCE { "
+            "  a H OPTIONAL "
+            "} "
             "END",
             'oer')
 
         datas = [
-            ('A',                                {}, b''),
-            ('B',                          {'a': 0}, b'\x00'),
-            ('B',                          {'a': 1}, b'\x80\x01\x01'),
-            ('C',                       {'a': True}, b'\xff'),
-            ('D',                       {'a': True}, b'\x00\xff'),
-            ('E',                       {'a': True}, b'\x00\xff'),
+            ('A',                     {}, b''),
+            ('B',               {'a': 0}, b'\x00'),
+            ('B',               {'a': 1}, b'\x80\x01\x01'),
+            ('C',            {'a': True}, b'\xff'),
+            ('D',            {'a': True}, b'\x00\xff'),
+            ('E',            {'a': True}, b'\x00\xff'),
             ('E',
              {'a': True, 'b': True},
              b'\x80\xff\x02\x07\x80\x01\xff'),
-            ('F',                       {'a': True}, b'\x00\xff'),
+            ('F',            {'a': True}, b'\x00\xff'),
             ('F',
              {'a': True, 'b': True},
              b'\x80\xff\x02\x07\x80\x01\xff'),
-            ('G',                       {'a': True}, b'\x00\xff'),
+            ('G',            {'a': True}, b'\x00\xff'),
             ('G',
              {'a': True, 'b': True},
-             b'\x80\xff\x02\x07\x80\x01\xff')
+             b'\x80\xff\x02\x07\x80\x01\xff'),
+            ('H',                     {}, b'\x00'),
+            ('H',              {'a': {}}, b'\x80\x00')
         ]
 
         for type_name, decoded, encoded in datas:
