@@ -488,6 +488,80 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "    a INTEGER "
             "  } "
             "} "
+            "V ::= SEQUENCE { "
+            "  ..., "
+            "  a BOOLEAN OPTIONAL, "
+            "  b BOOLEAN OPTIONAL, "
+            "  c BOOLEAN OPTIONAL "
+            "} "
+            "W ::= SEQUENCE { "
+            "  ..., "
+            "  a1 BOOLEAN, "
+            "  a2 BOOLEAN, "
+            "  a3 BOOLEAN, "
+            "  a4 BOOLEAN, "
+            "  a5 BOOLEAN, "
+            "  a6 BOOLEAN, "
+            "  a7 BOOLEAN, "
+            "  a8 BOOLEAN, "
+            "  a9 BOOLEAN, "
+            "  a10 BOOLEAN, "
+            "  a11 BOOLEAN, "
+            "  a12 BOOLEAN, "
+            "  a13 BOOLEAN, "
+            "  a14 BOOLEAN, "
+            "  a15 BOOLEAN, "
+            "  a16 BOOLEAN, "
+            "  a17 BOOLEAN, "
+            "  a18 BOOLEAN, "
+            "  a19 BOOLEAN, "
+            "  a20 BOOLEAN, "
+            "  a21 BOOLEAN, "
+            "  a22 BOOLEAN, "
+            "  a23 BOOLEAN, "
+            "  a24 BOOLEAN, "
+            "  a25 BOOLEAN, "
+            "  a26 BOOLEAN, "
+            "  a27 BOOLEAN, "
+            "  a28 BOOLEAN, "
+            "  a29 BOOLEAN, "
+            "  a30 BOOLEAN, "
+            "  a31 BOOLEAN, "
+            "  a32 BOOLEAN, "
+            "  a33 BOOLEAN, "
+            "  a34 BOOLEAN, "
+            "  a35 BOOLEAN, "
+            "  a36 BOOLEAN, "
+            "  a37 BOOLEAN, "
+            "  a38 BOOLEAN, "
+            "  a39 BOOLEAN, "
+            "  a40 BOOLEAN, "
+            "  a41 BOOLEAN, "
+            "  a42 BOOLEAN, "
+            "  a43 BOOLEAN, "
+            "  a44 BOOLEAN, "
+            "  a45 BOOLEAN, "
+            "  a46 BOOLEAN, "
+            "  a47 BOOLEAN, "
+            "  a48 BOOLEAN, "
+            "  a49 BOOLEAN, "
+            "  a50 BOOLEAN, "
+            "  a51 BOOLEAN, "
+            "  a52 BOOLEAN, "
+            "  a53 BOOLEAN, "
+            "  a54 BOOLEAN, "
+            "  a55 BOOLEAN, "
+            "  a56 BOOLEAN, "
+            "  a57 BOOLEAN, "
+            "  a58 BOOLEAN, "
+            "  a59 BOOLEAN, "
+            "  a60 BOOLEAN, "
+            "  a61 BOOLEAN, "
+            "  a62 BOOLEAN, "
+            "  a63 BOOLEAN, "
+            "  a64 BOOLEAN, "
+            "  a65 BOOLEAN "
+            "} "
             "END",
             'uper')
 
@@ -537,7 +611,13 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
              {'a': True, 'b': {'a': True, 'b': True}},
              b'\xc0\x40\x5c\x00'),
             ('T',                       {'a': [{}]}, b'\x80\x80'),
-            ('T',                {'a': [{'a': []}]}, b'\x80\xc0\x00')
+            ('T',                {'a': [{'a': []}]}, b'\x80\xc0\x00'),
+            ('V',                      {'a': False}, b'\x82\x80\x20\x00'),
+            ('V',                      {'b': False}, b'\x82\x40\x20\x00'),
+            ('V',                      {'c': False}, b'\x82\x20\x20\x00'),
+            ('W',
+             {'a1': True},
+             b'\xd0\x60\x00\x00\x00\x00\x00\x00\x00\x00\x30\x00')
         ]
 
         for type_name, decoded, encoded in datas:

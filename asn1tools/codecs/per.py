@@ -225,9 +225,11 @@ class Encoder(object):
     def append_normally_small_length(self, value):
         if value <= 64:
             self.append_non_negative_binary_integer(value - 1, 7)
+        elif value <= 127:
+            self.append_non_negative_binary_integer(0x100 | value, 9)
         else:
             raise NotImplementedError(
-                'Normally small length number >64 is not yet supported.')
+                'Normally small length number >127 is not yet supported.')
 
     def append_constrained_whole_number(self,
                                         value,
@@ -391,6 +393,8 @@ class Decoder(object):
     def read_normally_small_length(self):
         if not self.read_bit():
             return self.read_non_negative_binary_integer(6) + 1
+        elif not self.read_bit():
+            return self.read_non_negative_binary_integer(7)
         else:
             raise NotImplementedError(
                 'Normally small length number >64 is not yet supported.')
@@ -590,8 +594,8 @@ class MembersType(Type):
         presence_bits = 0
         addition_encoders = []
 
-        try:
-            for addition in self.additions:
+        for addition in self.additions:
+            try:
                 presence_bits <<= 1
                 addition_encoder = Encoder()
 
@@ -606,8 +610,8 @@ class MembersType(Type):
                 if addition_encoder.number_of_bits > 0:
                     addition_encoders.append(addition_encoder)
                     presence_bits |= 1
-        except EncodeError:
-            pass
+            except EncodeError:
+                pass
 
         # Return false if no extension additions are present.
         if not addition_encoders:

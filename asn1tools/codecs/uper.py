@@ -154,8 +154,8 @@ class MembersType(Type):
         presence_bits = 0
         addition_encoders = []
 
-        try:
-            for addition in self.additions:
+        for addition in self.additions:
+            try:
                 presence_bits <<= 1
                 addition_encoder = Encoder()
 
@@ -170,8 +170,8 @@ class MembersType(Type):
                 if addition_encoder.number_of_bits > 0:
                     addition_encoders.append(addition_encoder)
                     presence_bits |= 1
-        except EncodeError:
-            pass
+            except EncodeError:
+                pass
 
         # Return false if no extension additions are present.
         if not addition_encoders:
