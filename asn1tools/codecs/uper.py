@@ -135,12 +135,8 @@ class Integer(Type):
         self.minimum = minimum
         self.maximum = maximum
         self.has_extension_marker = has_extension_marker
-
-        if minimum is None or maximum is None:
-            self.number_of_bits = None
-        else:
-            size = self.maximum - self.minimum
-            self.number_of_bits = integer_as_number_of_bits(size)
+        size = self.maximum - self.minimum
+        self.number_of_bits = integer_as_number_of_bits(size)
 
     def encode(self, data, encoder):
         if self.has_extension_marker:

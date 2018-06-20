@@ -840,7 +840,6 @@ class Integer(Type):
         self.minimum = minimum
         self.maximum = maximum
         self.has_extension_marker = has_extension_marker
-
         size = self.maximum - self.minimum
         self.number_of_bits = integer_as_number_of_bits(size)
 
