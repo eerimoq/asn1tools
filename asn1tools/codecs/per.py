@@ -498,7 +498,11 @@ class KnownMultiplierStringType(Type):
         encoded = data.encode('ascii')
 
         if self.has_extension_marker:
-            encoder.append_bit(0)
+            if self.minimum <= len(encoded) <= self.maximum:
+                encoder.append_bit(0)
+            else:
+                raise NotImplementedError(
+                    'String size extension is not yet implemented.')
 
         if self.number_of_bits is None:
             encoder.align()

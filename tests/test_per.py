@@ -802,20 +802,33 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
             "A ::= NumericString (FROM (\"0\"..\"2\", ..., \"4\"..\"5\")) "
-            "B ::= NumericString (SIZE (1..4, ..., 6..7)) "
+            "B ::= NumericString (SIZE (1..4)) "
+            "C ::= NumericString (SIZE (1..4, ...)) "
+            "D ::= NumericString (SIZE (1..4, ..., 6..7)) "
             "END",
             'per')
 
         datas = [
-            ('A',                  '2', b'\x01\x30')
+            ('A',                  '2', b'\x01\x30'),
+            ('B',               '1234', b'\xc0\x23\x45'),
+            ('C',               '1234', b'\x60\x23\x45'),
+            ('D',               '1234', b'\x60\x23\x45')
         ]
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+        # Encode size extension is not yet supported.
+        with self.assertRaises(NotImplementedError) as cm:
+            foo.encode('D', '123456')
+
+        self.assertEqual(
+            str(cm.exception),
+            "String size extension is not yet implemented.")
+
         # Decode size extension is not yet supported.
         with self.assertRaises(NotImplementedError) as cm:
-            foo.decode('B', b'\x80\x06\x11\x11\x11')
+            foo.decode('D', b'\x80\x06\x23\x45\x67')
 
         self.assertEqual(
             str(cm.exception),
