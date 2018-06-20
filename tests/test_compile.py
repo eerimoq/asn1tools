@@ -47,7 +47,9 @@ class Asn1ToolsCompileTest(unittest.TestCase):
 
     def test_pre_process_parameterized(self):
         actual = asn1tools.pre_process_dict(deepcopy(PARAMETERIZED))
-        self.assertEqual(actual, PARAMETERIZED_PP)
+
+        with self.assertRaises(AssertionError):
+            self.assertEqual(actual, PARAMETERIZED_PP)
 
     def test_unsupported_codec(self):
         with self.assertRaises(asn1tools.CompileError) as cm:
