@@ -312,6 +312,21 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+        # Encode bad value.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('B', ('foo', None))
+
+        self.assertEqual(str(cm.exception),
+                         "Expected choice 'a', 'b' or 'c', but got 'foo'.")
+
+        # Decode bad value.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('B', b'\x84\x01\xff')
+
+        self.assertEqual(
+            str(cm.exception),
+            ": Expected choice member tag '80', '81' or '82', but got '84'.")
+
     def test_uft8_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "

@@ -873,6 +873,10 @@ class Choice(Type):
         self.tag_to_addition = {}
         self.add_tags(self.tag_to_addition, additions)
 
+    @property
+    def members(self):
+        return self.root_members + self.additions
+
     def add_tags(self, tag_to_member, members):
         for member in members:
             tag_to_member[member.tag] = member
@@ -882,8 +886,10 @@ class Choice(Type):
 
     def format_tags(self):
         return format_or(
-            sorted([self.format_tag(member.tag)
-                    for member in self.root_members + self.additions]))
+            sorted([self.format_tag(member.tag) for member in self.members]))
+
+    def format_names(self):
+        return format_or(sorted([member.name for member in self.members]))
 
     def encode(self, data, encoder):
         name = data[0]
@@ -902,7 +908,7 @@ class Choice(Type):
         else:
             raise EncodeError(
                 "Expected choice {}, but got '{}'.".format(
-                    '',
+                    self.format_names(),
                     data[0]))
 
     def decode(self, decoder):
@@ -924,11 +930,9 @@ class Choice(Type):
         return (member.name, decoded)
 
     def __repr__(self):
-        members = self.root_members + self.additions
-
         return 'Choice({}, [{}])'.format(
             self.name,
-            ', '.join([repr(member) for member in members]))
+            ', '.join([repr(member) for member in self.members]))
 
 
 class UTF8String(KnownMultiplierStringType):
