@@ -242,6 +242,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         # decoded. Also ignore dangling bits.
         datas = [
             ('E',          (b'\x80', 2), b'\x01\x80', (b'\x80', 1)),
+            ('E',          (b'\x40', 3), b'\x02\x40', (b'\x40', 2)),
             ('E',          (b'\x00', 3), b'\x00',     (b'', 0)),
             ('E',          (b'\x00', 8), b'\x00',     (b'', 0)),
             ('G',          (b'\x40', 3), b'\x20',     (b'\x40', 2)),

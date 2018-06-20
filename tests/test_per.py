@@ -134,6 +134,15 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "  b BIT STRING (SIZE(1)), "
             "  c BIT STRING (SIZE(16)) "
             "} "
+            "F ::= BIT STRING { "
+            "  a (0), "
+            "  b (1), "
+            "  c (2) "
+            "} "
+            "G ::= SEQUENCE { "
+            "  a BIT STRING, "
+            "  b BOOLEAN "
+            "} "
             "END",
             'per')
 
@@ -149,11 +158,34 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
              b'\x80\x04\x40'),
             ('E',
              {'a': True, 'b': (b'\x80', 1), 'c': (b'\x7f\x01', 16)},
-             b'\xdf\xc0\x40')
+             b'\xdf\xc0\x40'),
+            ('F',          (b'\x80', 1), b'\x01\x80'),
+            ('F',          (b'\xe0', 3), b'\x03\xe0'),
+            ('F',          (b'\x01', 8), b'\x08\x01'),
+            ('G',
+             {'a': (b'\x80', 2), 'b': True},
+             b'\x02\xa0'),
+            ('G',
+             {'a': (b'', 0), 'b': True},
+             b'\x00\x80'),
         ]
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Trailing zero bits should be stripped when encoding named
+        # bit list. Default value is not encoded, but part of
+        # decoded. Also ignore dangling bits.
+        datas = [
+            ('F',          (b'\x80', 2), b'\x01\x80', (b'\x80', 1)),
+            ('F',          (b'\x40', 3), b'\x02\x40', (b'\x40', 2)),
+            ('F',          (b'\x00', 3), b'\x00',     (b'', 0)),
+            ('F',          (b'\x00', 8), b'\x00',     (b'', 0))
+        ]
+
+        for type_name, decoded_1, encoded, decoded_2 in datas:
+            self.assertEqual(foo.encode(type_name, decoded_1), encoded)
+            self.assertEqual(foo.decode(type_name, encoded), decoded_2)
 
     def test_octet_string(self):
         foo = asn1tools.compile_string(

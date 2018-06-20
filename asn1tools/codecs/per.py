@@ -18,6 +18,8 @@ from . import restricted_utc_time_from_datetime
 from . import restricted_generalized_time_to_datetime
 from . import restricted_generalized_time_from_datetime
 from .compiler import enum_values_split
+from .compiler import clean_bit_string_value
+from .compiler import rstrip_bit_string_zeros
 from .ber import encode_real
 from .ber import decode_real
 from .ber import encode_object_identifier
@@ -139,6 +141,9 @@ class Encoder(object):
         self.value |= (1 << (self.number_of_bits - pos - 1))
 
     def align(self):
+        self.align_always()
+
+    def align_always(self):
         width = (8 * self.number_of_bytes() - self.number_of_bits)
         self.number_of_bits += width
         self.value <<= width
@@ -242,14 +247,14 @@ class Encoder(object):
             self.append_non_negative_binary_integer(value - minimum,
                                                     number_of_bits)
         elif _range == 256:
-            self.align()
+            self.align_always()
             self.append_non_negative_binary_integer(value - minimum, 8)
         elif _range <= 65536:
-            self.align()
+            self.align_always()
             self.append_non_negative_binary_integer(value - minimum, 16)
         else:
             number_of_bits = size_as_number_of_bytes(value) * 8
-            self.align()
+            self.align_always()
             self.append_non_negative_binary_integer(value - minimum,
                                                     number_of_bits)
 
@@ -291,6 +296,9 @@ class Decoder(object):
             self.value = 0
 
     def align(self):
+        self.align_always()
+
+    def align_always(self):
         width = (self.number_of_bits & 0x7)
         self.number_of_bits -= width
 
@@ -408,13 +416,13 @@ class Decoder(object):
         if _range <= 255:
             value = self.read_non_negative_binary_integer(number_of_bits)
         elif _range == 256:
-            self.align()
+            self.align_always()
             value = self.read_non_negative_binary_integer(8)
         elif _range <= 65536:
-            self.align()
+            self.align_always()
             value = self.read_non_negative_binary_integer(16)
         else:
-            self.align()
+            self.align_always()
             value = self.read_non_negative_binary_integer(number_of_bits)
 
         return value + minimum
@@ -598,7 +606,7 @@ class MembersType(Type):
         try:
             for addition in self.additions:
                 presence_bits <<= 1
-                addition_encoder = Encoder()
+                addition_encoder = encoder.__class__()
                 number_of_precence_bits += 1
 
                 if isinstance(addition, AdditionGroup):
@@ -631,7 +639,7 @@ class MembersType(Type):
         encoder.align()
 
         for addition_encoder in addition_encoders:
-            addition_encoder.align()
+            addition_encoder.align_always()
             encoder.append_length_determinant(addition_encoder.number_of_bytes())
             encoder += addition_encoder
 
@@ -757,7 +765,10 @@ class ArrayType(Type):
 
     def encode(self, data, encoder):
         if self.has_extension_marker:
-            encoder.append_bit(0)
+            if self.minimum <= len(data) <= self.maximum:
+                encoder.append_bit(0)
+            else:
+                raise NotImplementedError('Extension is not yet implemented.')
 
         if self.number_of_bits is None:
             encoder.align()
@@ -935,10 +946,11 @@ class Null(Type):
 
 class BitString(Type):
 
-    def __init__(self, name, minimum, maximum):
+    def __init__(self, name, minimum, maximum, has_named_bits):
         super(BitString, self).__init__(name, 'BIT STRING')
         self.minimum = minimum
         self.maximum = maximum
+        self.has_named_bits = has_named_bits
 
         if minimum is None or maximum is None:
             self.number_of_bits = None
@@ -946,19 +958,44 @@ class BitString(Type):
             size = self.maximum - self.minimum
             self.number_of_bits = integer_as_number_of_bits(size)
 
+    def is_default(self, value):
+        clean_value = clean_bit_string_value(value,
+                                             self.has_named_bits)
+        clean_default = clean_bit_string_value(self.default,
+                                               self.has_named_bits)
+
+        return clean_value == clean_default
+
+    def rstrip_zeros(self, data, number_of_bits):
+        data, number_of_bits = rstrip_bit_string_zeros(bytearray(data))
+
+        if self.minimum is not None:
+            if number_of_bits < self.minimum:
+                number_of_bits = self.minimum
+                number_of_bytes = ((number_of_bits + 7) // 8)
+                data += (number_of_bytes - len(data)) * b'\x00'
+
+        return (data, number_of_bits)
+
     def encode(self, data, encoder):
+        data, number_of_bits = data
+
+        if self.has_named_bits:
+            data, number_of_bits = self.rstrip_zeros(data, number_of_bits)
+
         if self.number_of_bits is None:
             encoder.align()
-            encoder.append_length_determinant(data[1])
+            encoder.append_length_determinant(number_of_bits)
         elif self.minimum != self.maximum:
             encoder.align()
-            encoder.append_non_negative_binary_integer(data[1] - self.minimum,
-                                                       self.number_of_bits)
+            encoder.append_non_negative_binary_integer(
+                number_of_bits - self.minimum,
+                self.number_of_bits)
             encoder.align()
         elif self.minimum > 16:
             encoder.align()
 
-        encoder.append_bits(data[0], data[1])
+        encoder.append_bits(data, number_of_bits)
 
     def decode(self, decoder):
         if self.number_of_bits is None:
@@ -1718,7 +1755,11 @@ class Compiler(compiler.Compiler):
         elif type_name == 'BIT STRING':
             minimum, maximum, _ = self.get_size_range(type_descriptor,
                                                       module_name)
-            compiled = BitString(name, minimum, maximum)
+            has_named_bits = ('named-bits' in type_descriptor)
+            compiled = BitString(name,
+                                 minimum,
+                                 maximum,
+                                 has_named_bits)
         elif type_name == 'ANY':
             compiled = Any(name)
         elif type_name == 'ANY DEFINED BY':

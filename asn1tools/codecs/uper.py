@@ -5,30 +5,43 @@
 import logging
 import string
 
-from . import EncodeError
 from . import DecodeError
 from . import per
 from . import restricted_utc_time_to_datetime
 from . import restricted_utc_time_from_datetime
 from . import restricted_generalized_time_to_datetime
 from . import restricted_generalized_time_from_datetime
-from .ber import encode_object_identifier
-from .ber import decode_object_identifier
 from .per import integer_as_number_of_bits
 from .per import PermittedAlphabet
-from .per import Encoder
 from .per import Type
 from .per import Boolean
 from .per import Real
 from .per import Null
 from .per import Enumerated
+from .per import ObjectIdentifier
+from .per import Sequence
+from .per import Set
+from .per import SequenceOf
+from .per import SetOf
+from .per import Choice
+from .per import UTF8String
 from .per import Any
 from .per import Recursive
-from .compiler import clean_bit_string_value
-from .compiler import rstrip_bit_string_zeros
 
 
 LOGGER = logging.getLogger(__name__)
+
+
+class Encoder(per.Encoder):
+
+    def align(self):
+        pass
+
+
+class Decoder(per.Decoder):
+
+    def align(self):
+        pass
 
 
 class KnownMultiplierStringType(Type):
@@ -109,255 +122,6 @@ class KnownMultiplierStringType(Type):
                                self.name)
 
 
-class MembersType(Type):
-
-    def __init__(self,
-                 name,
-                 root_members,
-                 additions,
-                 type_name):
-        super(MembersType, self).__init__(name, type_name)
-        self.root_members = root_members
-        self.additions = additions
-        self.optionals = [
-            member
-            for member in root_members
-            if member.optional or member.default is not None
-        ]
-
-    def encode(self, data, encoder):
-        if self.additions is not None:
-            offset = encoder.number_of_bits
-            encoder.append_bit(0)
-            self.encode_root(data, encoder)
-
-            if len(self.additions) > 0:
-                if self.encode_additions(data, encoder):
-                    encoder.set_bit(offset)
-        else:
-            self.encode_root(data, encoder)
-
-    def encode_root(self, data, encoder):
-        for optional in self.optionals:
-            if optional.optional:
-                encoder.append_bit(optional.name in data)
-            elif optional.name in data:
-                encoder.append_bit(not optional.is_default(data[optional.name]))
-            else:
-                encoder.append_bit(0)
-
-        for member in self.root_members:
-            self.encode_member(member, data, encoder)
-
-    def encode_additions(self, data, encoder):
-        # Encode extension additions.
-        presence_bits = 0
-        addition_encoders = []
-        number_of_precence_bits = 0
-
-        try:
-            for addition in self.additions:
-                presence_bits <<= 1
-                number_of_precence_bits += 1
-                addition_encoder = Encoder()
-
-                if isinstance(addition, AdditionGroup):
-                    addition.encode_addition_group(data, addition_encoder)
-                else:
-                    self.encode_member(addition,
-                                       data,
-                                       addition_encoder,
-                                       encode_default=True)
-
-                if addition_encoder.number_of_bits > 0:
-                    addition_encoders.append(addition_encoder)
-                    presence_bits |= 1
-        except EncodeError:
-            pass
-
-        # Return false if no extension additions are present.
-        if not addition_encoders:
-            return False
-
-        # Presence bit field.
-        number_of_additions = len(self.additions)
-        presence_bits <<= (number_of_additions - number_of_precence_bits)
-        encoder.append_normally_small_length(number_of_additions)
-        encoder.append_non_negative_binary_integer(presence_bits,
-                                                   number_of_additions)
-
-        # Embed each encoded extension addition in an open type (add a
-        # length field and multiple of 8 bits).
-        for addition_encoder in addition_encoders:
-            addition_encoder.align()
-            encoder.append_length_determinant(addition_encoder.number_of_bytes())
-            encoder += addition_encoder
-
-        return True
-
-    def encode_addition_group(self, data, encoder):
-        self.encode_root(data, encoder)
-
-        if ((encoder.value == 0)
-            and (encoder.number_of_bits == len(self.optionals))):
-            encoder.number_of_bits = 0
-
-    def encode_member(self, member, data, encoder, encode_default=False):
-        name = member.name
-
-        if name in data:
-            if member.default is None:
-                member.encode(data[name], encoder)
-            elif not member.is_default(data[name]) or encode_default:
-                member.encode(data[name], encoder)
-        elif member.optional or member.default is not None:
-            pass
-        else:
-            raise EncodeError(
-                "{} member '{}' not found in {}.".format(
-                    self.__class__.__name__,
-                    name,
-                    data))
-
-    def decode(self, decoder):
-        if self.additions is not None:
-            if decoder.read_bit():
-                decoded = self.decode_root(decoder)
-                decoded.update(self.decode_additions(decoder))
-
-                return decoded
-            else:
-                return self.decode_root(decoder)
-        else:
-            return self.decode_root(decoder)
-
-    def decode_root(self, decoder):
-        values = {}
-        optionals = {
-            optional: decoder.read_bit()
-            for optional in self.optionals
-        }
-
-        for member in self.root_members:
-            try:
-                if optionals.get(member, True):
-                    value = member.decode(decoder)
-                    values[member.name] = value
-                elif member.default is not None:
-                    values[member.name] = member.default
-            except DecodeError as e:
-                e.location.append(member.name)
-                raise
-
-        return values
-
-    def decode_additions(self, decoder):
-        # Presence bit field.
-        length = decoder.read_normally_small_length()
-        presence_bits = decoder.read_non_negative_binary_integer(length)
-        decoded = {}
-
-        for i in range(length):
-            if presence_bits & (1 << (length - i - 1)):
-                # Open type decoding.
-                open_type_length = decoder.read_length_determinant()
-                offset = decoder.number_of_bits
-
-                if i < len(self.additions):
-                    addition = self.additions[i]
-
-                    if isinstance(addition, AdditionGroup):
-                        decoded.update(addition.decode(decoder))
-                    else:
-                        try:
-                            decoded[addition.name] = addition.decode(decoder)
-                        except DecodeError as e:
-                            e.location.append(addition.name)
-                            raise
-                else:
-                    decoder.skip_bits(8 * open_type_length)
-
-                alignment_bits = (offset - decoder.number_of_bits) % 8
-
-                if alignment_bits != 0:
-                    decoder.skip_bits(8 - alignment_bits)
-
-        return decoded
-
-    def __repr__(self):
-        return '{}({}, [{}])'.format(
-            self.__class__.__name__,
-            self.name,
-            ', '.join([repr(member) for member in self.root_members]))
-
-
-class ArrayType(Type):
-
-    def __init__(self,
-                 name,
-                 element_type,
-                 minimum,
-                 maximum,
-                 has_extension_marker,
-                 type_name):
-        super(ArrayType, self).__init__(name, type_name)
-        self.element_type = element_type
-        self.minimum = minimum
-        self.maximum = maximum
-        self.has_extension_marker = has_extension_marker
-
-        if minimum is None or maximum is None:
-            self.number_of_bits = None
-        else:
-            size = maximum - minimum
-            self.number_of_bits = integer_as_number_of_bits(size)
-
-    def encode(self, data, encoder):
-        if self.has_extension_marker:
-            if self.minimum <= len(data) <= self.maximum:
-                encoder.append_bit(0)
-            else:
-                raise NotImplementedError('Extension is not yet implemented.')
-
-        if self.number_of_bits is None:
-            encoder.append_length_determinant(len(data))
-        elif self.minimum != self.maximum:
-            encoder.append_non_negative_binary_integer(
-                len(data) - self.minimum,
-                self.number_of_bits)
-
-        for entry in data:
-            self.element_type.encode(entry, encoder)
-
-    def decode(self, decoder):
-        if self.has_extension_marker:
-            bit = decoder.read_bit()
-
-            if bit:
-                raise NotImplementedError('Extension is not yet implemented.')
-
-        if self.number_of_bits is None:
-            length = decoder.read_length_determinant()
-        else:
-            length = self.minimum
-
-            if self.minimum != self.maximum:
-                length += decoder.read_non_negative_binary_integer(self.number_of_bits)
-
-        decoded = []
-
-        for _ in range(length):
-            decoded_element = self.element_type.decode(decoder)
-            decoded.append(decoded_element)
-
-        return decoded
-
-    def __repr__(self):
-        return '{}({}, {})'.format(self.__class__.__name__,
-                                   self.name,
-                                   self.element_type)
-
-
 class Integer(Type):
 
     def __init__(self, name):
@@ -409,38 +173,7 @@ class Integer(Type):
         return 'Integer({})'.format(self.name)
 
 
-class BitString(Type):
-
-    def __init__(self, name, minimum, maximum, has_named_bits):
-        super(BitString, self).__init__(name, 'BIT STRING')
-        self.minimum = minimum
-        self.maximum = maximum
-        self.has_named_bits = has_named_bits
-
-        if minimum is None or maximum is None:
-            self.number_of_bits = None
-        else:
-            size = self.maximum - self.minimum
-            self.number_of_bits = integer_as_number_of_bits(size)
-
-    def is_default(self, value):
-        clean_value = clean_bit_string_value(value,
-                                             self.has_named_bits)
-        clean_default = clean_bit_string_value(self.default,
-                                               self.has_named_bits)
-
-        return clean_value == clean_default
-
-    def rstrip_zeros(self, data, number_of_bits):
-        data, number_of_bits = rstrip_bit_string_zeros(bytearray(data))
-
-        if self.minimum is not None:
-            if number_of_bits < self.minimum:
-                number_of_bits = self.minimum
-                number_of_bytes = ((number_of_bits + 7) // 8)
-                data += (number_of_bytes - len(data)) * b'\x00'
-
-        return (data, number_of_bits)
+class BitString(per.BitString):
 
     def encode(self, data, encoder):
         data, number_of_bits = data
@@ -470,9 +203,6 @@ class BitString(Type):
         value = decoder.read_bits(number_of_bits)
 
         return (value, number_of_bits)
-
-    def __repr__(self):
-        return 'BitString({})'.format(self.name)
 
 
 class OctetString(Type):
@@ -511,141 +241,6 @@ class OctetString(Type):
 
     def __repr__(self):
         return 'OctetString({})'.format(self.name)
-
-
-class ObjectIdentifier(per.ObjectIdentifier):
-
-    def encode(self, data, encoder):
-        encoded_subidentifiers = encode_object_identifier(data)
-        encoder.append_length_determinant(len(encoded_subidentifiers))
-        encoder.append_bytes(bytearray(encoded_subidentifiers))
-
-    def decode(self, decoder):
-        length = decoder.read_length_determinant()
-        data = decoder.read_bits(8 * length)
-
-        return decode_object_identifier(bytearray(data), 0, len(data))
-
-
-class Sequence(MembersType):
-
-    def __init__(self,
-                 name,
-                 root_members,
-                 additions):
-        super(Sequence, self).__init__(name,
-                                       root_members,
-                                       additions,
-                                       'SEQUENCE')
-
-
-class SequenceOf(ArrayType):
-
-    def __init__(self,
-                 name,
-                 element_type,
-                 minimum,
-                 maximum,
-                 has_extension_marker):
-        super(SequenceOf, self).__init__(name,
-                                         element_type,
-                                         minimum,
-                                         maximum,
-                                         has_extension_marker,
-                                         'SEQUENCE OF')
-
-
-class Set(MembersType):
-
-    def __init__(self,
-                 name,
-                 root_members,
-                 additions):
-        super(Set, self).__init__(name,
-                                  root_members,
-                                  additions,
-                                  'SET')
-
-
-class SetOf(ArrayType):
-
-    def __init__(self,
-                 name,
-                 element_type,
-                 minimum,
-                 maximum,
-                 has_extension_marker):
-        super(SetOf, self).__init__(name,
-                                    element_type,
-                                    minimum,
-                                    maximum,
-                                    has_extension_marker,
-                                    'SET OF')
-
-
-class Choice(per.Choice):
-
-    def encode_additions(self, data, encoder):
-        try:
-            index = self.additions_name_to_index[data[0]]
-        except KeyError:
-            raise EncodeError(
-                "Expected choice {}, but got '{}'.".format(
-                    self.format_names(),
-                    data[0]))
-
-        addition_encoder = Encoder()
-        addition = self.additions_index_to_member[index]
-        addition.encode(data[1], addition_encoder)
-
-        # Embed encoded extension addition in an open type (add a
-        # length field and multiple of 8 bits).
-        addition_encoder.align()
-        encoder.append_normally_small_non_negative_whole_number(index)
-        encoder.append_length_determinant(addition_encoder.number_of_bytes())
-        encoder += addition_encoder
-
-    def decode_additions(self, decoder):
-        index = decoder.read_normally_small_non_negative_whole_number()
-
-        try:
-            addition = self.additions_index_to_member[index]
-        except KeyError:
-            raise DecodeError(
-                'Expected choice index {}, but got {}.'.format(
-                    self.format_addition_indexes(),
-                    index))
-
-        # Open type decoding.
-        decoder.read_length_determinant()
-        offset = decoder.number_of_bits
-        decoded = addition.decode(decoder)
-        alignment_bits = (offset - decoder.number_of_bits) % 8
-
-        if alignment_bits != 0:
-            decoder.skip_bits(8 - alignment_bits)
-
-        return (addition.name, decoded)
-
-
-class UTF8String(Type):
-
-    def __init__(self, name):
-        super(UTF8String, self).__init__(name, 'UTF8String')
-
-    def encode(self, data, encoder):
-        encoded = data.encode('utf-8')
-        encoder.append_length_determinant(len(encoded))
-        encoder.append_bytes(bytearray(encoded))
-
-    def decode(self, decoder):
-        length = decoder.read_length_determinant()
-        encoded = decoder.read_bits(8 * length)
-
-        return encoded.decode('utf-8')
-
-    def __repr__(self):
-        return 'UTF8String({})'.format(self.name)
 
 
 class NumericString(KnownMultiplierStringType):
@@ -794,11 +389,31 @@ class GeneralizedTime(VisibleString):
         return restricted_generalized_time_to_datetime(decoded)
 
 
-class AdditionGroup(Sequence):
-    pass
+class CompiledType(per.CompiledType):
+
+    def encode(self, data):
+        encoder = Encoder()
+        self._type.encode(data, encoder)
+
+        return encoder.as_bytearray()
+
+    def decode(self, data):
+        decoder = Decoder(bytearray(data))
+
+        return self._type.decode(decoder)
 
 
 class Compiler(per.Compiler):
+
+    def process_type(self, type_name, type_descriptor, module_name):
+        compiled_type = self.compile_type(type_name,
+                                          type_descriptor,
+                                          module_name)
+        constraints = self.compile_constraints(type_name,
+                                               type_descriptor,
+                                               module_name)
+
+        return CompiledType(compiled_type, constraints)
 
     def compile_type(self, name, type_descriptor, module_name):
         type_name = type_descriptor['type']
@@ -921,29 +536,6 @@ class Compiler(per.Compiler):
                                                        module_name)
 
         return compiled
-
-    def compile_extension_member(self,
-                                 member,
-                                 module_name,
-                                 additions,
-                                 flat_additions):
-        if isinstance(member, list):
-            if flat_additions:
-                for memb in member:
-                    compiled_member = self.compile_member(memb,
-                                                          module_name)
-                    additions.append(compiled_member)
-            else:
-                compiled_member, _ = self.compile_members(member,
-                                                          module_name)
-                compiled_group = AdditionGroup('ExtensionAddition',
-                                               compiled_member,
-                                               None)
-                additions.append(compiled_group)
-        else:
-            compiled_member = self.compile_member(member,
-                                                  module_name)
-            additions.append(compiled_member)
 
 
 def compile_dict(specification):
