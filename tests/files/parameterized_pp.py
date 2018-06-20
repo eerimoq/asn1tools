@@ -1,0 +1,12 @@
+EXPECTED = {'Parameterized': {'extensibility-implied': False,
+                   'imports': {},
+                   'object-classes': {},
+                   'object-sets': {},
+                   'types': {'IntegerList': {'type': 'List'},
+                             'List': {'members': [{'name': 'elem',
+                                                   'type': 'ElementType'},
+                                                  {'name': 'next',
+                                                   'optional': True,
+                                                   'type': 'List'}],
+                                      'type': 'SEQUENCE'}},
+                   'values': {}}}

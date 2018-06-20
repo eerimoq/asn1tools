@@ -17,6 +17,8 @@ from module_tags_implicit import EXPECTED as MODULE_TAGS_IMPLICIT
 from module_tags_implicit_pp import EXPECTED as MODULE_TAGS_IMPLICIT_PP
 from module_tags_automatic import EXPECTED as MODULE_TAGS_AUTOMATIC
 from module_tags_automatic_pp import EXPECTED as MODULE_TAGS_AUTOMATIC_PP
+from parameterized import EXPECTED as PARAMETERIZED
+from parameterized_pp import EXPECTED as PARAMETERIZED_PP
 
 
 class Asn1ToolsCompileTest(unittest.TestCase):
@@ -42,6 +44,10 @@ class Asn1ToolsCompileTest(unittest.TestCase):
     def test_pre_process_module_tags_automatic(self):
         actual = asn1tools.pre_process_dict(deepcopy(MODULE_TAGS_AUTOMATIC))
         self.assertEqual(actual, MODULE_TAGS_AUTOMATIC_PP)
+
+    def test_pre_process_parameterized(self):
+        actual = asn1tools.pre_process_dict(deepcopy(PARAMETERIZED))
+        self.assertEqual(actual, PARAMETERIZED_PP)
 
     def test_unsupported_codec(self):
         with self.assertRaises(asn1tools.CompileError) as cm:
