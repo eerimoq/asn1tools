@@ -540,6 +540,13 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         self.assertEqual(str(cm.exception),
                          'a: a: out of data at bit offset 32 (4.0 bytes)')
 
+        # Missing root member.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('K', {'b': True})
+
+        self.assertEqual(str(cm.exception),
+                         "Sequence member 'a' not found in {'b': True}.")
+
     def test_sequence_of(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
@@ -972,14 +979,6 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         # Decode the encoded answer.
         decoded = foo.decode('Answer', encoded)
         self.assertEqual(decoded, {'id': 1, 'answer': False})
-
-        # Encode a question with missing field 'id'.
-        with self.assertRaises(asn1tools.EncodeError) as cm:
-            encoded = foo.encode('Question', {'question': 'Is 1+1=3?'})
-
-        self.assertEqual(
-            str(cm.exception),
-            "Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
 
     def test_decode_length(self):
         foo = asn1tools.compile_files('tests/files/foo.asn', 'per')

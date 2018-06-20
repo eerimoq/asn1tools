@@ -493,7 +493,8 @@ class MembersType(Type):
         elif member.optional:
             pass
         elif member.default is None:
-            raise EncodeError("Member '{}' not found in {}.".format(
+            raise EncodeError("{} member '{}' not found in {}.".format(
+                self.__class__.__name__,
                 name,
                 data))
 

@@ -570,7 +570,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             foo.encode('C', {})
 
         self.assertEqual(str(cm.exception),
-                         "Member 'a' not found in {}.")
+                         "Sequence member 'a' not found in {}.")
 
     def test_sequence_of(self):
         foo = asn1tools.compile_string(
