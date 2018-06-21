@@ -233,6 +233,21 @@ class Encoder(object):
 
         return length
 
+    def append_length_determinant_chunks(self, length):
+        offset = 0
+        chunk_length = length
+
+        while True:
+            chunk_length = self.append_length_determinant(chunk_length)
+
+            yield offset, chunk_length
+
+            if chunk_length < 16384:
+                break
+
+            offset += chunk_length
+            chunk_length = length - offset
+
     def append_normally_small_non_negative_whole_number(self, value):
         if value < 64:
             self.append_non_negative_binary_integer(value, 7)
@@ -536,20 +551,12 @@ class KnownMultiplierStringType(Type):
 
     def encode_unbound(self, encoded, encoder):
         encoder.align()
-        offset = 0
 
-        while True:
-            length = encoder.append_length_determinant(len(encoded) - offset)
-
-            for i in range(length):
+        for offset, length in encoder.append_length_determinant_chunks(len(encoded)):
+            for entry in encoded[offset:offset + length]:
                 encoder.append_non_negative_binary_integer(
-                    self.permitted_alphabet.encode(encoded[offset + i]),
+                    self.permitted_alphabet.encode(entry),
                     self.bits_per_character)
-
-            if length < 16384:
-                break
-
-            offset += length
 
     def decode(self, decoder):
         if self.has_extension_marker:
@@ -829,18 +836,10 @@ class ArrayType(Type):
 
     def encode_unbound(self, data, encoder):
         encoder.align()
-        offset = 0
 
-        while True:
-            length = encoder.append_length_determinant(len(data) - offset)
-
-            for i in range(length):
-                self.element_type.encode(data[offset + i], encoder)
-
-            if length < 16384:
-                break
-
-            offset += length
+        for offset, length in encoder.append_length_determinant_chunks(len(data)):
+            for entry in data[offset:offset + length]:
+                self.element_type.encode(entry, encoder)
 
     def decode(self, decoder):
         if self.has_extension_marker:
@@ -1131,17 +1130,10 @@ class OctetString(Type):
 
     def encode_unbound(self, data, encoder):
         encoder.align()
-        offset = 0
 
-        while True:
-            length = encoder.append_length_determinant(len(data) - offset)
+        for offset, length in encoder.append_length_determinant_chunks(len(data)):
             encoder.align()
             encoder.append_bytes(data[offset:offset + length])
-
-            if length < 16384:
-                break
-
-            offset += length
 
     def decode(self, decoder):
         align = True
