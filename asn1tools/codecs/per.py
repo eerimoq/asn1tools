@@ -216,11 +216,22 @@ class Encoder(object):
             encoded = bytearray([length])
         elif length < 16384:
             encoded = bytearray([(0x80 | (length >> 8)), (length & 0xff)])
+        elif length < 32768:
+            encoded = b'\xc1'
+            length = 16384
+        elif length < 49152:
+            encoded = b'\xc2'
+            length = 32768
+        elif length < 65536:
+            encoded = b'\xc3'
+            length = 49152
         else:
-            raise NotImplementedError(
-                'Length determinant >=16384 is not yet supported.')
+            encoded = b'\xc4'
+            length = 65536
 
         self.append_bytes(encoded)
+
+        return length
 
     def append_normally_small_non_negative_whole_number(self, value):
         if value < 64:
@@ -379,7 +390,7 @@ class Decoder(object):
                     | (self.read_non_negative_binary_integer(8)))
         else:
             try:
-                value = {
+                return {
                     0xc1: 16384,
                     0xc2: 32768,
                     0xc3: 49152,
@@ -387,11 +398,8 @@ class Decoder(object):
                 }[value]
             except KeyError:
                 raise DecodeError(
-                    'Bad length determinant type 0x{:02x}.'.format(value))
-
-            raise NotImplementedError(
-                'Length determinant {} is not yet supported.'.format(
-                    value))
+                    'Bad length determinant fragmentation value 0x{:02x}.'.format(
+                        value))
 
     def read_normally_small_non_negative_whole_number(self):
         if not self.read_bit():
@@ -499,7 +507,7 @@ class KnownMultiplierStringType(Type):
             self.number_of_bits = integer_as_number_of_bits(size)
 
     def encode(self, data, encoder):
-        encoded = data.encode('ascii')
+        encoded = bytearray(data.encode('ascii'))
 
         if self.has_extension_marker:
             if self.minimum <= len(encoded) <= self.maximum:
@@ -509,8 +517,7 @@ class KnownMultiplierStringType(Type):
                     'String size extension is not yet implemented.')
 
         if self.number_of_bits is None:
-            encoder.align()
-            encoder.append_length_determinant(len(encoded))
+            return self.encode_unbound(encoded, encoder)
         elif self.minimum != self.maximum:
             encoder.append_constrained_whole_number(len(encoded),
                                                     self.minimum,
@@ -522,10 +529,27 @@ class KnownMultiplierStringType(Type):
         elif self.maximum * self.bits_per_character > 16:
             encoder.align()
 
-        for value in bytearray(encoded):
+        for value in encoded:
             encoder.append_non_negative_binary_integer(
                 self.permitted_alphabet.encode(value),
                 self.bits_per_character)
+
+    def encode_unbound(self, encoded, encoder):
+        encoder.align()
+        offset = 0
+
+        while True:
+            length = encoder.append_length_determinant(len(encoded) - offset)
+
+            for i in range(length):
+                encoder.append_non_negative_binary_integer(
+                    self.permitted_alphabet.encode(encoded[offset + i]),
+                    self.bits_per_character)
+
+            if length < 16384:
+                break
+
+            offset += length
 
     def decode(self, decoder):
         if self.has_extension_marker:
@@ -536,8 +560,7 @@ class KnownMultiplierStringType(Type):
                     'String size extension is not yet implemented.')
 
         if self.number_of_bits is None:
-            decoder.align()
-            length = decoder.read_length_determinant()
+            return self.decode_unbound(decoder)
         else:
             if self.minimum != self.maximum:
                 length = decoder.read_constrained_whole_number(self.minimum,
@@ -557,6 +580,23 @@ class KnownMultiplierStringType(Type):
         for _ in range(length):
             value = decoder.read_non_negative_binary_integer(self.bits_per_character)
             data.append(self.permitted_alphabet.decode(value))
+
+        return bytearray(data).decode('ascii')
+
+    def decode_unbound(self, decoder):
+        decoder.align()
+        data = []
+
+        while True:
+            length = decoder.read_length_determinant()
+
+            for _ in range(length):
+                value = decoder.read_non_negative_binary_integer(
+                    self.bits_per_character)
+                data.append(self.permitted_alphabet.decode(value))
+
+            if length < 16384:
+                break
 
         return bytearray(data).decode('ascii')
 
@@ -779,14 +819,28 @@ class ArrayType(Type):
                 raise NotImplementedError('Extension is not yet implemented.')
 
         if self.number_of_bits is None:
-            encoder.align()
-            encoder.append_length_determinant(len(data))
+            return self.encode_unbound(data, encoder)
         elif self.minimum != self.maximum:
             encoder.append_non_negative_binary_integer(len(data) - self.minimum,
                                                        self.number_of_bits)
 
         for entry in data:
             self.element_type.encode(entry, encoder)
+
+    def encode_unbound(self, data, encoder):
+        encoder.align()
+        offset = 0
+
+        while True:
+            length = encoder.append_length_determinant(len(data) - offset)
+
+            for i in range(length):
+                self.element_type.encode(data[offset + i], encoder)
+
+            if length < 16384:
+                break
+
+            offset += length
 
     def decode(self, decoder):
         if self.has_extension_marker:
@@ -796,8 +850,7 @@ class ArrayType(Type):
                 raise NotImplementedError('Extension is not yet implemented.')
 
         if self.number_of_bits is None:
-            decoder.align()
-            length = decoder.read_length_determinant()
+            return self.decode_unbound(decoder)
         else:
             length = self.minimum
 
@@ -810,6 +863,22 @@ class ArrayType(Type):
         for _ in range(length):
             decoded_element = self.element_type.decode(decoder)
             decoded.append(decoded_element)
+
+        return decoded
+
+    def decode_unbound(self, decoder):
+        decoder.align()
+        decoded = []
+
+        while True:
+            length = decoder.read_length_determinant()
+
+            for _ in range(length):
+                decoded_element = self.element_type.decode(decoder)
+                decoded.append(decoded_element)
+
+            if length < 16384:
+                break
 
         return decoded
 
@@ -1048,8 +1117,7 @@ class OctetString(Type):
         align = True
 
         if self.number_of_bits is None:
-            encoder.align()
-            encoder.append_length_determinant(len(data))
+            return self.encode_unbound(data, encoder)
         elif self.minimum != self.maximum:
             encoder.append_non_negative_binary_integer(len(data) - self.minimum,
                                                        self.number_of_bits)
@@ -1061,12 +1129,25 @@ class OctetString(Type):
 
         encoder.append_bytes(data)
 
+    def encode_unbound(self, data, encoder):
+        encoder.align()
+        offset = 0
+
+        while True:
+            length = encoder.append_length_determinant(len(data) - offset)
+            encoder.align()
+            encoder.append_bytes(data[offset:offset + length])
+
+            if length < 16384:
+                break
+
+            offset += length
+
     def decode(self, decoder):
         align = True
 
         if self.number_of_bits is None:
-            decoder.align()
-            length = decoder.read_length_determinant()
+            return self.decode_unbound(decoder)
         else:
             length = self.minimum
 
@@ -1080,6 +1161,20 @@ class OctetString(Type):
             decoder.align()
 
         return decoder.read_bits(8 * length)
+
+    def decode_unbound(self, decoder):
+        decoder.align()
+        decoded = []
+
+        while True:
+            length = decoder.read_length_determinant()
+            decoder.align()
+            decoded.append(decoder.read_bits(8 * length))
+
+            if length < 16384:
+                break
+
+        return b''.join(decoded)
 
     def __repr__(self):
         return 'OctetString({})'.format(self.name)
@@ -1415,12 +1510,22 @@ class UTF8String(Type):
     def encode(self, data, encoder):
         encoded = data.encode('utf-8')
         encoder.align()
-        encoder.append_length_determinant(len(encoded))
+        length = encoder.append_length_determinant(len(encoded))
+
+        if length >= 16384:
+            raise NotImplementedError(
+                'Length determinant >=16384 is not yet supported.')
+
         encoder.append_bytes(encoded)
 
     def decode(self, decoder):
         decoder.align()
         length = decoder.read_length_determinant()
+
+        if length >= 16384:
+            raise NotImplementedError(
+                'Length determinant >=16384 is not yet supported.')
+
         encoded = decoder.read_bits(8 * length)
 
         return encoded.decode('utf-8')

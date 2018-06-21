@@ -295,10 +295,10 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('E', {'a': True, 'b': b'\x00'}, b'\x80\x80\x00'),
             ('F',                   b'\x12', b'\x01\x12'),
             ('G',     32767 * b'\x01\x02' + b'\x01', 32767 * b'\x01\x02' + b'\x01'),
-            # ('H',
-            #  32768 * b'\x01\x02',
-            #  b'\xc4' + 32768 * b'\x01\x02'
-            #  + b'\x00'),
+            ('H',
+             32768 * b'\x01\x02',
+             b'\xc4' + 32768 * b'\x01\x02'
+             + b'\x00'),
             ('I',                               b'', b'\x00'),
             ('J',                               b'', b'\x00')
         ]
@@ -677,6 +677,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('A',               [1], b'\x01\x01\x01'),
             ('A',            [1, 2], b'\x02\x01\x01\x01\x02'),
             ('A',     1000 * [1, 2], b'\x87\xd0' + 1000 * b'\x01\x01\x01\x02'),
+            ('A',       16384 * [1], b'\xc1' + 16384 * b'\x01\x01' + b'\x00'),
             ('B',            [1, 2], b'\x01\x01\x01\x02'),
             ('B', [4663, 222322233], b'\x02\x12\x37\x04\x0d\x40\x5e\x39'),
             ('C',               [1], b'\x00\x20\x20'),
@@ -686,13 +687,6 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-        # Long sequences are not yet supported.
-        with self.assertRaises(NotImplementedError) as cm:
-            foo.encode('A', 16384 * [1])
-
-        self.assertEqual(str(cm.exception),
-                         'Length determinant >=16384 is not yet supported.')
 
         # Encode value in extension.
         with self.assertRaises(NotImplementedError) as cm:
@@ -881,7 +875,8 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('A', b'\x70\x00\x00\x00')
 
-        self.assertEqual(str(cm.exception), 'b: Bad length determinant type 0xc0.')
+        self.assertEqual(str(cm.exception),
+                         'b: Bad length determinant fragmentation value 0xc0.')
 
     def test_numeric_string(self):
         foo = asn1tools.compile_string(
@@ -1030,27 +1025,27 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
                       b'\xab\x66\xee\x1c\xb0')
              + b'\x62\xc9\x9b\x46\xad\x9b\xb8\x72\xc1\x8b\x26\x6d\x1a\xb6\x6e\xe1'
              + b'\xcb\x06\x2c\x99\x80'),
-            # ('A',
-            #  1638 * '1234567890' + '1234',
-            #  b'\xc1'
-            #  + 409 * (b'\x62\xc9\x9b\x46\xad\x9b\xb8\x72\xc1\x8b'
-            #           b'\x26\x6d\x1a\xb6\x6e\xe1\xcb\x06\x2c\x99'
-            #           b'\xb4\x6a\xd9\xbb\x87\x2c\x18\xb2\x66\xd1'
-            #           b'\xab\x66\xee\x1c\xb0')
-            #  + b'\x62\xc9\x9b\x46\xad\x9b\xb8\x72\xc1\x8b\x26\x6d\x1a\xb6\x6e\xe1'
-            #  + b'\xcb\x06\x2c\x99\xb4'
-            #  + b'\x00'),
-            # ('A',
-            #  1638 * '1234567890' + '12345',
-            #  b'\xc1'
-            #  + 409 * (b'\x62\xc9\x9b\x46\xad\x9b\xb8\x72\xc1\x8b'
-            #           b'\x26\x6d\x1a\xb6\x6e\xe1\xcb\x06\x2c\x99'
-            #           b'\xb4\x6a\xd9\xbb\x87\x2c\x18\xb2\x66\xd1'
-            #           b'\xab\x66\xee\x1c\xb0')
-            #  + b'\x62\xc9\x9b\x46\xad\x9b\xb8\x72\xc1\x8b\x26\x6d\x1a\xb6\x6e\xe1'
-            #  + b'\xcb\x06\x2c\x99\xb4'
-            #  + b'\x01'
-            #  + b'\x6a')
+            ('A',
+             1638 * '1234567890' + '1234',
+             b'\xc1'
+             + 409 * (b'\x62\xc9\x9b\x46\xad\x9b\xb8\x72\xc1\x8b'
+                      b'\x26\x6d\x1a\xb6\x6e\xe1\xcb\x06\x2c\x99'
+                      b'\xb4\x6a\xd9\xbb\x87\x2c\x18\xb2\x66\xd1'
+                      b'\xab\x66\xee\x1c\xb0')
+             + b'\x62\xc9\x9b\x46\xad\x9b\xb8\x72\xc1\x8b\x26\x6d\x1a\xb6\x6e\xe1'
+             + b'\xcb\x06\x2c\x99\xb4'
+             + b'\x00'),
+            ('A',
+             1638 * '1234567890' + '12345',
+             b'\xc1'
+             + 409 * (b'\x62\xc9\x9b\x46\xad\x9b\xb8\x72\xc1\x8b'
+                      b'\x26\x6d\x1a\xb6\x6e\xe1\xcb\x06\x2c\x99'
+                      b'\xb4\x6a\xd9\xbb\x87\x2c\x18\xb2\x66\xd1'
+                      b'\xab\x66\xee\x1c\xb0')
+             + b'\x62\xc9\x9b\x46\xad\x9b\xb8\x72\xc1\x8b\x26\x6d\x1a\xb6\x6e\xe1'
+             + b'\xcb\x06\x2c\x99\xb4'
+             + b'\x01'
+             + b'\x6a')
         ]
 
         for type_name, decoded, encoded in datas:

@@ -68,18 +68,18 @@ class KnownMultiplierStringType(per.KnownMultiplierStringType):
             len(permitted_alphabet) - 1)
 
     def encode(self, data, encoder):
-        encoded = data.encode('ascii')
+        encoded = bytearray(data.encode('ascii'))
 
         if self.has_extension_marker:
             encoder.append_bit(0)
 
         if self.number_of_bits is None:
-            encoder.append_length_determinant(len(encoded))
+            return self.encode_unbound(encoded, encoder)
         elif self.minimum != self.maximum:
             encoder.append_non_negative_binary_integer(len(encoded) - self.minimum,
                                                        self.number_of_bits)
 
-        for value in bytearray(encoded):
+        for value in encoded:
             encoder.append_non_negative_binary_integer(
                 self.permitted_alphabet.encode(value),
                 self.bits_per_character)
@@ -93,7 +93,7 @@ class KnownMultiplierStringType(per.KnownMultiplierStringType):
                     'String size extension is not yet implemented.')
 
         if self.number_of_bits is None:
-            length = decoder.read_length_determinant()
+            return self.decode_unbound(decoder)
         else:
             length = self.minimum
 

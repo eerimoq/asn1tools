@@ -228,21 +228,21 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
              b'\x89\x1a\x2b\x00'),
             ('G', {'a': True, 'b': b'\x00\x01\x02'}, b'\x80\x00\x01\x02'),
             ('H',     32767 * b'\x01\x02' + b'\x01', 32767 * b'\x01\x02' + b'\x01'),
-            # ('I',
-            #  32768 * b'\x01\x02',
-            #  b'\xc4' + 32768 * b'\x01\x02'
-            #  + b'\x00'),
+            ('I',
+             32768 * b'\x01\x02',
+             b'\xc4' + 32768 * b'\x01\x02'
+             + b'\x00'),
             ('A',
              4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02',
              b'\xbf\xff' + 4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02'),
-            # ('A',
-            #  4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03',
-            #  b'\xc1' + 4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03'
-            #  + b'\x00'),
-            # ('A',
-            #  4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03\x00',
-            #  b'\xc1' + 4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03'
-            #  + b'\x01' + b'\x00'),
+            ('A',
+             4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03',
+             b'\xc1' + 4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03'
+             + b'\x00'),
+            ('A',
+             4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03\x00',
+             b'\xc1' + 4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03'
+             + b'\x01' + b'\x00'),
             ('J',                           b'\x12', b'\x01\x12'),
             ('K',                               b'', b'\x00')
         ]
@@ -577,6 +577,15 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('A',               [1], b'\x01\x01\x01'),
             ('A',            [1, 2], b'\x02\x01\x01\x01\x02'),
             ('A',     1000 * [1, 2], b'\x87\xd0' + 1000 * b'\x01\x01\x01\x02'),
+            ('A',       16384 * [1], b'\xc1' + 16384 * b'\x01\x01' + b'\x00'),
+            ('A',
+             65535 * [1],
+             b'\xc3' + 49152 * b'\x01\x01' + b'\xbf\xff' + 16383 * b'\x01\x01'),
+            ('A',
+             100000 * [1],
+             b'\xc4' + 65536 * b'\x01\x01'
+             + b'\xc2' + 32768 * b'\x01\x01'
+             + b'\x86\xa0' + 1696 * b'\x01\x01'),
             ('B',            [1, 2], b'\x01\x01\x01\x02'),
             ('B', [4663, 222322233], b'\x02\x12\x37\x04\x0d\x40\x5e\x39'),
             ('C',               [1], b'\x00\x01\x01'),
@@ -590,13 +599,6 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-        # Long sequences are not yet supported.
-        with self.assertRaises(NotImplementedError) as cm:
-            foo.encode('A', 16384 * [1])
-
-        self.assertEqual(str(cm.exception),
-                         'Length determinant >=16384 is not yet supported.')
 
         # Decode value in extension.
         with self.assertRaises(NotImplementedError) as cm:
@@ -795,13 +797,14 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('A', b'\x40\xc5\x00\x00\x00\x00')
 
-        self.assertEqual(str(cm.exception), 'b: Bad length determinant type 0xc5.')
+        self.assertEqual(str(cm.exception),
+                         'b: Bad length determinant fragmentation value 0xc5.')
 
         with self.assertRaises(NotImplementedError) as cm:
             foo.decode('A', b'\x40\xc1\x00\x00\x00\x00')
 
         self.assertEqual(str(cm.exception),
-                         'Length determinant 16384 is not yet supported.')
+                         'Length determinant >=16384 is not yet supported.')
 
     def test_numeric_string(self):
         foo = asn1tools.compile_string(
@@ -858,19 +861,19 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
              b'\xbf\xff'
              + 1638 * b'\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'
              + b'\x31\x32\x33'),
-            # ('A',
-            #  1638 * '1234567890' + '1234',
-            #  b'\xc1'
-            #  + 1638 * b'\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'
-            #  + b'\x31\x32\x33\x34'
-            #  + b'\x00'),
-            # ('A',
-            #  1638 * '1234567890' + '12345',
-            #  b'\xc1'
-            #  + 1638 * b'\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'
-            #  + b'\x31\x32\x33\x34'
-            #  + b'\x01'
-            #  + b'\x35')
+            ('A',
+             1638 * '1234567890' + '1234',
+             b'\xc1'
+             + 1638 * b'\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'
+             + b'\x31\x32\x33\x34'
+             + b'\x00'),
+            ('A',
+             1638 * '1234567890' + '12345',
+             b'\xc1'
+             + 1638 * b'\x31\x32\x33\x34\x35\x36\x37\x38\x39\x30'
+             + b'\x31\x32\x33\x34'
+             + b'\x01'
+             + b'\x35')
         ]
 
         for type_name, decoded, encoded in datas:
