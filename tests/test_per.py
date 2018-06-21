@@ -210,6 +210,8 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "} "
             "H ::= OCTET STRING (SIZE (65535)) "
             "I ::= OCTET STRING (SIZE (65536)) "
+            "J ::= OCTET STRING (SIZE (1..MAX)) "
+            "K ::= OCTET STRING (SIZE (MIN..5)) "
             "END",
             'per')
 
@@ -240,7 +242,9 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             # ('A',
             #  4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03\x00',
             #  b'\xc1' + 4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03'
-            #  + b'\x01' + b'\x00')
+            #  + b'\x01' + b'\x00'),
+            ('J',                           b'\x12', b'\x01\x12'),
+            ('K',                               b'', b'\x00')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -564,6 +568,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "  b SEQUENCE SIZE(1) OF INTEGER "
             "} "
             "G ::= SEQUENCE SIZE (1..2, ..., 6..7) OF INTEGER "
+            "H ::= SEQUENCE SIZE (1..MAX) OF INTEGER "
             "END",
             'per')
 
@@ -579,7 +584,8 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('D',            [2, 1], b'\x40\x01\x02\x01\x01'),
             ('E',  {'a': False, 'b': []}, b'\x00\x00'),
             ('E', {'a': False, 'b': [1]}, b'\x00\x01\x01\x01'),
-            ('F', {'a': False, 'b': [1]}, b'\x00\x01\x01')
+            ('F', {'a': False, 'b': [1]}, b'\x00\x01\x01'),
+            ('H',               [1], b'\x01\x01\x01')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -805,6 +811,8 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "B ::= NumericString (SIZE (1..4)) "
             "C ::= NumericString (SIZE (1..4, ...)) "
             "D ::= NumericString (SIZE (1..4, ..., 6..7)) "
+            "E ::= NumericString (SIZE (0..MAX)) "
+            "F ::= NumericString (SIZE (2..MAX)) "
             "END",
             'per')
 
@@ -812,7 +820,9 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('A',                  '2', b'\x01\x30'),
             ('B',               '1234', b'\xc0\x23\x45'),
             ('C',               '1234', b'\x60\x23\x45'),
-            ('D',               '1234', b'\x60\x23\x45')
+            ('D',               '1234', b'\x60\x23\x45'),
+            ('E',                   '', b'\x00'),
+            ('F',                '345', b'\x03\x45\x60')
         ]
 
         for type_name, decoded, encoded in datas:

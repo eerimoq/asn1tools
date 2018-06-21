@@ -278,6 +278,11 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "  a BOOLEAN, "
             "  b OCTET STRING "
             "} "
+            "F ::= OCTET STRING (SIZE (1..MAX)) "
+            "G ::= OCTET STRING (SIZE (65535)) "
+            "H ::= OCTET STRING (SIZE (65536)) "
+            "I ::= OCTET STRING (SIZE (MIN..5)) "
+            "J ::= OCTET STRING (SIZE (MIN..MAX)) "
             "END",
             'uper')
 
@@ -287,7 +292,15 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('B',               b'\xab\xcd', b'\xab\xcd'),
             ('C',           b'\xab\xcd\xef', b'\xab\xcd\xef'),
             ('D',       b'\x89\xab\xcd\xef', b'\x31\x35\x79\xbd\xe0'),
-            ('E', {'a': True, 'b': b'\x00'}, b'\x80\x80\x00')
+            ('E', {'a': True, 'b': b'\x00'}, b'\x80\x80\x00'),
+            ('F',                   b'\x12', b'\x01\x12'),
+            ('G',     32767 * b'\x01\x02' + b'\x01', 32767 * b'\x01\x02' + b'\x01'),
+            # ('H',
+            #  32768 * b'\x01\x02',
+            #  b'\xc4' + 32768 * b'\x01\x02'
+            #  + b'\x00'),
+            ('I',                               b'', b'\x00'),
+            ('J',                               b'', b'\x00')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -880,6 +893,8 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "D ::= NumericString (FROM (\"0\"..\"5\")) "
             "E ::= NumericString (FROM (\"0\"..\"2\", ..., \"4\"..\"5\")) "
             "F ::= NumericString (SIZE (1..4, ..., 6..7)) "
+            "G ::= NumericString (SIZE (0..MAX)) "
+            "H ::= NumericString (SIZE (2..MAX)) "
             "END",
             'uper')
 
@@ -892,7 +907,9 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('D',                  '5', b'\x01\xa0'),
             #('E',                  '2', b'\x01\x30'),
             #('E',                  '5', b'\x01\x60')
-            ('F',                   '0', b'\x02')
+            ('F',                   '0', b'\x02'),
+            ('G',                    '', b'\x00'),
+            ('H',                 '345', b'\x03\x45\x60')
         ]
 
         for type_name, decoded, encoded in datas:

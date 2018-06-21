@@ -28,6 +28,10 @@ from .ber import decode_object_identifier
 LOGGER = logging.getLogger(__name__)
 
 
+def is_unbound(minimum, maximum):
+    return minimum in [None, 'MIN'] or maximum in [None, 'MAX']
+
+
 def integer_as_number_of_bits(size):
     """Returns the minimum number of bits needed to fit given positive
     integer.
@@ -488,7 +492,7 @@ class KnownMultiplierStringType(Type):
         self.maximum = maximum
         self.has_extension_marker = has_extension_marker
 
-        if minimum is None or maximum is None:
+        if is_unbound(minimum, maximum):
             self.number_of_bits = None
         else:
             size = maximum - minimum
@@ -761,7 +765,7 @@ class ArrayType(Type):
         self.maximum = maximum
         self.has_extension_marker = has_extension_marker
 
-        if minimum is None or maximum is None:
+        if is_unbound(minimum, maximum):
             self.number_of_bits = None
         else:
             size = maximum - minimum
@@ -955,7 +959,7 @@ class BitString(Type):
         self.maximum = maximum
         self.has_named_bits = has_named_bits
 
-        if minimum is None or maximum is None:
+        if is_unbound(minimum, maximum):
             self.number_of_bits = None
         else:
             size = self.maximum - self.minimum
@@ -1030,7 +1034,7 @@ class OctetString(Type):
         self.minimum = minimum
         self.maximum = maximum
 
-        if minimum is None or maximum is None:
+        if is_unbound(minimum, maximum):
             self.number_of_bits = None
         else:
             size = self.maximum - self.minimum
