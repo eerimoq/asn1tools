@@ -1,0 +1,47 @@
+X683 DEFINITIONS ::= BEGIN
+
+-- A.1
+
+SIGNED { ToBeSigned } ::= SEQUENCE {
+  authenticated-data ToBeSigned,
+  authenticator BIT STRING
+}
+
+SignedUTF8String ::= SIGNED { UTF8String }
+
+OPTIONALLY-SIGNED { ToBeSigned } ::= CHOICE {
+  unsigned-data [0] ToBeSigned,
+  signed-data   [1] SIGNED { ToBeSigned }
+}
+
+OptionallySignedUTF8String ::= OPTIONALLY-SIGNED { UTF8String }
+
+-- A.2
+
+-- A.3
+
+List1 { ElementTypeParam } ::= SEQUENCE {
+  elem ElementTypeParam,
+  next List1 { ElementTypeParam } OPTIONAL
+}
+
+IntegerList1 ::= List1 { INTEGER }
+
+-- A.4
+
+-- genericBirthdayGreeting { IA5String : name } IA5String ::= {
+--   "Happy birthday, ", name, "!!"
+-- }
+
+-- Same as 'greeting2 IA5String ::= "Happy birthday, John!!"'
+-- greeting1 IA5String ::= genericBirthdayGreeting { "John" }
+
+-- A.5
+
+-- A.6
+
+-- A.7
+
+-- A.8
+
+END
