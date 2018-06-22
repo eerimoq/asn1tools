@@ -425,6 +425,14 @@ class Decoder(object):
                     'Bad length determinant fragmentation value 0x{:02x}.'.format(
                         value))
 
+    def read_length_determinant_chunks(self):
+        length = 0
+
+        while length < 16384:
+            length = self.read_length_determinant()
+
+            yield length
+
     def read_normally_small_non_negative_whole_number(self):
         if not self.read_bit():
             decoded = self.read_non_negative_binary_integer(6)
@@ -601,20 +609,15 @@ class KnownMultiplierStringType(Type):
 
     def decode_unbound(self, decoder):
         decoder.align()
-        data = []
+        decoded = []
 
-        while True:
-            length = decoder.read_length_determinant()
-
+        for length in decoder.read_length_determinant_chunks():
             for _ in range(length):
                 value = decoder.read_non_negative_binary_integer(
                     self.bits_per_character)
-                data.append(self.permitted_alphabet.decode(value))
+                decoded.append(self.permitted_alphabet.decode(value))
 
-            if length < 16384:
-                break
-
-        return bytearray(data).decode('ascii')
+        return bytearray(decoded).decode('ascii')
 
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__,
@@ -878,15 +881,10 @@ class ArrayType(Type):
         decoder.align()
         decoded = []
 
-        while True:
-            length = decoder.read_length_determinant()
-
+        for length in decoder.read_length_determinant_chunks():
             for _ in range(length):
                 decoded_element = self.element_type.decode(decoder)
                 decoded.append(decoded_element)
-
-            if length < 16384:
-                break
 
         return decoded
 
@@ -1068,8 +1066,7 @@ class BitString(Type):
             data, number_of_bits = self.rstrip_zeros(data, number_of_bits)
 
         if self.number_of_bits is None:
-            encoder.align()
-            encoder.append_length_determinant(number_of_bits)
+            return self.encode_unbound(data, number_of_bits, encoder)
         elif self.minimum != self.maximum:
             encoder.align()
             encoder.append_non_negative_binary_integer(
@@ -1081,10 +1078,15 @@ class BitString(Type):
 
         encoder.append_bits(data, number_of_bits)
 
+    def encode_unbound(self, data, number_of_bits, encoder):
+        encoder.align()
+
+        for offset, length in encoder.append_length_determinant_chunks(number_of_bits):
+            encoder.append_bits(data[offset // 8:(offset + length + 7) // 8], length)
+
     def decode(self, decoder):
         if self.number_of_bits is None:
-            decoder.align()
-            number_of_bits = decoder.read_length_determinant()
+            return self.decode_unbound(decoder)
         else:
             number_of_bits = self.minimum
 
@@ -1099,6 +1101,17 @@ class BitString(Type):
         value = decoder.read_bits(number_of_bits)
 
         return (value, number_of_bits)
+
+    def decode_unbound(self, decoder):
+        decoder.align()
+        decoded = []
+        number_of_bits = 0
+
+        for length in decoder.read_length_determinant_chunks():
+            decoded.append(decoder.read_bits(length))
+            number_of_bits += length
+
+        return (b''.join(decoded), number_of_bits)
 
     def __repr__(self):
         return 'BitString({})'.format(self.name)
@@ -1167,13 +1180,9 @@ class OctetString(Type):
         decoder.align()
         decoded = []
 
-        while True:
-            length = decoder.read_length_determinant()
+        for length in decoder.read_length_determinant_chunks():
             decoder.align()
             decoded.append(decoder.read_bits(8 * length))
-
-            if length < 16384:
-                break
 
         return b''.join(decoded)
 
