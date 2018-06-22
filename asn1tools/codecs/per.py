@@ -138,11 +138,20 @@ class Encoder(object):
 
         return self
 
+    def reset(self):
+        self.number_of_bits = 0
+
+    def are_all_bits_zero(self):
+        return self.value == 0
+
     def number_of_bytes(self):
         return (self.number_of_bits + 7) // 8
 
-    def set_bit(self, pos):
-        self.value |= (1 << (self.number_of_bits - pos - 1))
+    def offset(self):
+        return self.number_of_bits
+
+    def set_bit(self, offset):
+        self.value |= (1 << (self.number_of_bits - offset - 1))
 
     def align(self):
         self.align_always()
@@ -630,7 +639,7 @@ class MembersType(Type):
 
     def encode(self, data, encoder):
         if self.additions is not None:
-            offset = encoder.number_of_bits
+            offset = encoder.offset()
             encoder.append_bit(0)
             self.encode_root(data, encoder)
 
@@ -703,9 +712,9 @@ class MembersType(Type):
     def encode_addition_group(self, data, encoder):
         self.encode_root(data, encoder)
 
-        if ((encoder.value == 0)
+        if (encoder.are_all_bits_zero()
             and (encoder.number_of_bits == len(self.optionals))):
-            encoder.number_of_bits = 0
+            encoder.reset()
 
     def encode_member(self, member, data, encoder, encode_default=False):
         name = member.name
