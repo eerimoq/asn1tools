@@ -69,7 +69,7 @@ def size_as_number_of_bytes(size):
     """
 
     if size == 0:
-        return 0
+        return 1
     else:
         number_of_bits = size.bit_length()
         rest = (number_of_bits % 8)

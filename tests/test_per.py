@@ -105,6 +105,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('H',                      253, b'\x00\xfd'),
             ('H',                      256, b'\x40\x01\x00'),
             ('H',                    65536, b'\x80\x01\x00\x00'),
+            ('I',                        0, b'\x00\x00'),
             ('I',                        1, b'\x00\x01'),
             ('I',              10000000000, b'\x80\x02\x54\x0b\xe4\x00'),
             ('J',
