@@ -416,6 +416,18 @@ class Decoder(object):
 
         return binascii.unhexlify(hex(int(value, 2))[4:].rstrip('L'))
 
+    def read_bytes(self, number_of_bytes):
+        return self.read_bits(8 * number_of_bytes)
+
+    def read_bytes_aligned(self, number_of_bytes):
+        """Read given number of aligned bytes.
+
+        """
+
+        self.number_of_bits -= (self.number_of_bits % 8)
+
+        return bytearray(self.read_bytes(number_of_bytes))
+
     def read_non_negative_binary_integer(self, number_of_bits):
         """Read an integer value of given number of bits.
 
@@ -432,15 +444,6 @@ class Decoder(object):
         self.number_of_bits -= number_of_bits
 
         return int(value, 2)
-
-    def read_bytes_aligned(self, number_of_bytes):
-        """Read given number of aligned bytes.
-
-        """
-
-        self.number_of_bits -= (self.number_of_bits % 8)
-
-        return bytearray(self.read_bits(8 * number_of_bytes))
 
     def read_length_determinant(self):
         value = self.read_non_negative_binary_integer(8)
@@ -1213,7 +1216,7 @@ class OctetString(Type):
         if align:
             decoder.align()
 
-        return decoder.read_bits(8 * length)
+        return decoder.read_bytes(length)
 
     def decode_unbound(self, decoder):
         decoder.align()
@@ -1221,7 +1224,7 @@ class OctetString(Type):
 
         for length in decoder.read_length_determinant_chunks():
             decoder.align()
-            decoded.append(decoder.read_bits(8 * length))
+            decoded.append(decoder.read_bytes(length))
 
         return b''.join(decoded)
 
@@ -1243,7 +1246,7 @@ class ObjectIdentifier(Type):
     def decode(self, decoder):
         decoder.align()
         length = decoder.read_length_determinant()
-        data = decoder.read_bits(8 * length)
+        data = decoder.read_bytes(length)
 
         return decode_object_identifier(bytearray(data), 0, len(data))
 
@@ -1565,12 +1568,12 @@ class UTF8String(Type):
 
     def decode(self, decoder):
         decoder.align()
-        decoded = []
+        encoded = []
 
         for length in decoder.read_length_determinant_chunks():
-            decoded.append(decoder.read_bits(8 * length))
+            encoded.append(decoder.read_bytes(length))
 
-        return b''.join(decoded).decode('utf-8')
+        return b''.join(encoded).decode('utf-8')
 
     def __repr__(self):
         return 'UTF8String({})'.format(self.name)
@@ -1633,14 +1636,18 @@ class BMPString(Type):
 
     def encode(self, data, encoder):
         encoded = data.encode('utf-16-be')
-        encoder.append_length_determinant(len(data))
-        encoder.append_bytes(encoded)
+
+        for offset, length in encoder.append_length_determinant_chunks(len(data)):
+            offset *= 2
+            encoder.append_bytes(encoded[offset:offset + 2 * length])
 
     def decode(self, decoder):
-        length = decoder.read_length_determinant()
-        encoded = decoder.read_bits(16 * length)
+        encoded = []
 
-        return encoded.decode('utf-16-be')
+        for length in decoder.read_length_determinant_chunks():
+            encoded.append(decoder.read_bytes(2 * length))
+
+        return b''.join(encoded).decode('utf-16-be')
 
     def __repr__(self):
         return 'BMPString({})'.format(self.name)
@@ -1653,14 +1660,17 @@ class GraphicString(Type):
 
     def encode(self, data, encoder):
         encoded = data.encode('latin-1')
-        encoder.append_length_determinant(len(encoded))
-        encoder.append_bytes(encoded)
+
+        for offset, length in encoder.append_length_determinant_chunks(len(encoded)):
+            encoder.append_bytes(encoded[offset:offset + length])
 
     def decode(self, decoder):
-        length = decoder.read_length_determinant()
-        encoded = decoder.read_bits(8 * length)
+        encoded = []
 
-        return encoded.decode('latin-1')
+        for length in decoder.read_length_determinant_chunks():
+            encoded.append(decoder.read_bytes(length))
+
+        return b''.join(encoded).decode('latin-1')
 
     def __repr__(self):
         return 'GraphicString({})'.format(self.name)
@@ -1736,7 +1746,7 @@ class OpenType(Type):
         decoder.align()
         length = decoder.read_length_determinant()
 
-        return decoder.read_bits(8 * length)
+        return decoder.read_bytes(length)
 
     def __repr__(self):
         return 'OpenType({})'.format(self.name)
