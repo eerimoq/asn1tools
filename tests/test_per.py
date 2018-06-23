@@ -43,6 +43,12 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', b'')
+
+        self.assertEqual(str(cm.exception),
+                         ': out of data at bit offset 0 (0.0 bytes)')
+
     def test_integer(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
