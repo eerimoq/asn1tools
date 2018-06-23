@@ -426,12 +426,13 @@ class Decoder(object):
                         value))
 
     def read_length_determinant_chunks(self):
-        length = 0
-
-        while length < 16384:
+        while True:
             length = self.read_length_determinant()
 
             yield length
+
+            if length < 16384:
+                break
 
     def read_normally_small_non_negative_whole_number(self):
         if not self.read_bit():
