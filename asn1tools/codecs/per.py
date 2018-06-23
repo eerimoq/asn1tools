@@ -131,8 +131,13 @@ class Encoder(object):
     def __init__(self):
         self.number_of_bits = 0
         self.value = 0
+        self.chunks_number_of_bits = 0
+        self.chunks = []
 
     def __iadd__(self, other):
+        for value, number_of_bits in other.chunks:
+            self.append_non_negative_binary_integer(value, number_of_bits)
+
         self.append_non_negative_binary_integer(other.value,
                                                 other.number_of_bits)
 
@@ -140,24 +145,35 @@ class Encoder(object):
 
     def reset(self):
         self.number_of_bits = 0
+        self.value = 0
+        self.chunks_number_of_bits = 0
+        self.chunks = []
 
     def are_all_bits_zero(self):
-        return self.value == 0
+        return not (any([value for value, _ in self.chunks]) or self.value)
 
     def number_of_bytes(self):
-        return (self.number_of_bits + 7) // 8
+        return (self.chunks_number_of_bits + self.number_of_bits + 7) // 8
 
     def offset(self):
-        return self.number_of_bits
+        return (len(self.chunks), self.number_of_bits)
 
     def set_bit(self, offset):
-        self.value |= (1 << (self.number_of_bits - offset - 1))
+        chunk_offset, bit_offset = offset
+
+        if len(self.chunks) == chunk_offset:
+            self.value |= (1 << (self.number_of_bits - bit_offset - 1))
+        else:
+            chunk = self.chunks[chunk_offset]
+            chunk[0] |= (1 << (chunk[1] - bit_offset - 1))
 
     def align(self):
         self.align_always()
 
     def align_always(self):
-        width = (8 * self.number_of_bytes() - self.number_of_bits)
+        width = 8 * self.number_of_bytes()
+        width -= self.chunks_number_of_bits
+        width -= self.number_of_bits
         self.number_of_bits += width
         self.value <<= width
 
@@ -188,6 +204,12 @@ class Encoder(object):
 
         """
 
+        if self.number_of_bits > 4096:
+            self.chunks.append([self.value, self.number_of_bits])
+            self.chunks_number_of_bits += self.number_of_bits
+            self.number_of_bits = 0
+            self.value = 0
+
         self.number_of_bits += number_of_bits
         self.value <<= number_of_bits
         self.value |= value
@@ -204,21 +226,31 @@ class Encoder(object):
 
         """
 
-        if self.number_of_bits == 0:
+        value = 0
+        number_of_bits = 0
+
+        for chunk_value, chunk_number_of_bits in self.chunks:
+            value <<= chunk_number_of_bits
+            value |= chunk_value
+            number_of_bits += chunk_number_of_bits
+
+        value <<= self.number_of_bits
+        value |= self.value
+        number_of_bits += self.number_of_bits
+
+        if number_of_bits == 0:
             return bytearray()
 
-        data = self.value
-        number_of_bits = self.number_of_bits
         number_of_alignment_bits = (8 - (number_of_bits % 8))
 
         if number_of_alignment_bits != 8:
-            data <<= number_of_alignment_bits
+            value <<= number_of_alignment_bits
             number_of_bits += number_of_alignment_bits
 
-        data |= (0x80 << number_of_bits)
-        data = hex(data)[4:].rstrip('L')
+        value |= (0x80 << number_of_bits)
+        value = hex(value)[4:].rstrip('L')
 
-        return bytearray(binascii.unhexlify(data))
+        return bytearray(binascii.unhexlify(value))
 
     def append_length_determinant(self, length):
         if length < 128:
@@ -330,9 +362,11 @@ class Decoder(object):
         self.total_number_of_bits = self.number_of_bits
 
         if len(encoded) > 0:
-            self.value = int(binascii.hexlify(encoded), 16)
+            value = int(binascii.hexlify(encoded), 16)
+            value |= (0x80 << self.number_of_bits)
+            self.value = bin(value)[10:]
         else:
-            self.value = 0
+            self.value = ''
 
     def align(self):
         self.align_always()
@@ -358,9 +392,10 @@ class Decoder(object):
         if self.number_of_bits == 0:
             raise OutOfDataError(self.number_of_read_bits())
 
+        bit = int(self.value[self.number_of_read_bits()])
         self.number_of_bits -= 1
 
-        return ((self.value >> self.number_of_bits) & 1)
+        return bit
 
     def read_bits(self, number_of_bits):
         """Read given number of bits.
@@ -370,17 +405,16 @@ class Decoder(object):
         if number_of_bits > self.number_of_bits:
             raise OutOfDataError(self.number_of_read_bits())
 
+        offset = self.number_of_read_bits()
+        value = self.value[offset:offset + number_of_bits]
         self.number_of_bits -= number_of_bits
-        mask = ((1 << number_of_bits) - 1)
-        value = ((self.value >> self.number_of_bits) & mask)
-        value &= mask
-        value |= (0x80 << number_of_bits)
+        value = '10000000' + value
         number_of_alignment_bits = (8 - (number_of_bits % 8))
 
         if number_of_alignment_bits != 8:
-            value <<= number_of_alignment_bits
+            value += '0' * number_of_alignment_bits
 
-        return binascii.unhexlify(hex(value)[4:].rstrip('L'))
+        return binascii.unhexlify(hex(int(value, 2))[4:].rstrip('L'))
 
     def read_non_negative_binary_integer(self, number_of_bits):
         """Read an integer value of given number of bits.
@@ -390,10 +424,14 @@ class Decoder(object):
         if number_of_bits > self.number_of_bits:
             raise OutOfDataError(self.number_of_read_bits())
 
-        self.number_of_bits -= number_of_bits
-        mask = ((1 << number_of_bits) - 1)
+        if number_of_bits == 0:
+            return 0
 
-        return ((self.value >> self.number_of_bits) & mask)
+        offset = self.number_of_read_bits()
+        value = self.value[offset:offset + number_of_bits]
+        self.number_of_bits -= number_of_bits
+
+        return int(value, 2)
 
     def read_bytes_aligned(self, number_of_bytes):
         """Read given number of aligned bytes.

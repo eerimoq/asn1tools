@@ -469,6 +469,11 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "    a INTEGER "
             "  } "
             "} "
+            "V ::= SEQUENCE { "
+            "  ..., "
+            "  a OCTET STRING, "
+            "  b INTEGER "
+            "} "
             "END",
             'per')
 
@@ -518,7 +523,10 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
              {'a': True, 'b': {'a': True, 'b': True}},
              b'\xc0\x40\x01\x70'),
             ('T',                       {'a': [{}]}, b'\x80\x01\x00'),
-            ('T',                {'a': [{'a': []}]}, b'\x80\x01\x80\x00')
+            ('T',                {'a': [{'a': []}]}, b'\x80\x01\x80\x00'),
+            ('V',
+             {'a': 5000 * b'\x00', 'b': 1000},
+             b'\x81\xc0\x93\x8a\x93\x88' + 5000 * b'\x00' + b'\x03\x02\x03\xe8')
         ]
 
         for type_name, decoded, encoded in datas:
