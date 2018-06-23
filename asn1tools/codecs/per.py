@@ -1559,25 +1559,18 @@ class UTF8String(Type):
     def encode(self, data, encoder):
         encoded = data.encode('utf-8')
         encoder.align()
-        length = encoder.append_length_determinant(len(encoded))
 
-        if length >= 16384:
-            raise NotImplementedError(
-                'Length determinant >=16384 is not yet supported.')
-
-        encoder.append_bytes(encoded)
+        for offset, length in encoder.append_length_determinant_chunks(len(encoded)):
+            encoder.append_bytes(encoded[offset:offset + length])
 
     def decode(self, decoder):
         decoder.align()
-        length = decoder.read_length_determinant()
+        decoded = []
 
-        if length >= 16384:
-            raise NotImplementedError(
-                'Length determinant >=16384 is not yet supported.')
+        for length in decoder.read_length_determinant_chunks():
+            decoded.append(decoder.read_bits(8 * length))
 
-        encoded = decoder.read_bits(8 * length)
-
-        return encoded.decode('utf-8')
+        return b''.join(decoded).decode('utf-8')
 
     def __repr__(self):
         return 'UTF8String({})'.format(self.name)

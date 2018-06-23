@@ -794,17 +794,15 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('C',                  u'P', b'\x01\x50'),
             ('D',                u'agg', b'\x03\x61\x67\x67'),
             ('E',                u'bar', b'\x03\x62\x61\x72'),
-            ('E',           u'a\u1010c', b'\x05\x61\xe1\x80\x90\x63')
+            ('E',           u'a\u1010c', b'\x05\x61\xe1\x80\x90\x63'),
+            ('E',
+             15000 * u'123' + u'\u1010',
+             b'\xc2' + 10922 * b'123' + b'12\xaf\xcb3' + 4077 * b'123'
+             + b'\xe1\x80\x90')
         ]
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-        with self.assertRaises(NotImplementedError) as cm:
-            foo.encode('A', {'a': False, 'b': 16384 * u'0'})
-
-        self.assertEqual(str(cm.exception),
-                         'Length determinant >=16384 is not yet supported.')
 
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('A', b'\x40\xc5\x00\x00\x00\x00')
@@ -812,11 +810,11 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         self.assertEqual(str(cm.exception),
                          'b: Bad length determinant fragmentation value 0xc5.')
 
-        with self.assertRaises(NotImplementedError) as cm:
+        with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('A', b'\x40\xc1\x00\x00\x00\x00')
 
         self.assertEqual(str(cm.exception),
-                         'Length determinant >=16384 is not yet supported.')
+                         'b: out of data at bit offset 16 (2.0 bytes)')
 
     def test_numeric_string(self):
         foo = asn1tools.compile_string(

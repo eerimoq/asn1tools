@@ -863,14 +863,14 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('C',                  u'P', b'\x01\x50'),
             ('D',                u'agg', b'\x03\x61\x67\x67'),
             ('E',                u'bar', b'\x03\x62\x61\x72'),
-            ('E',           u'a\u1010c', b'\x05\x61\xe1\x80\x90\x63')
+            ('E',           u'a\u1010c', b'\x05\x61\xe1\x80\x90\x63'),
+            ('E',
+             15000 * u'123',
+             b'\xc2' + 10922 * b'123' + b'12\xaf\xc83' + 4077 * b'123')
         ]
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-        with self.assertRaises(NotImplementedError):
-            foo.encode('A', {'a': False, 'b': 16384 * u'0'})
 
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('A', b'\x70\x00\x00\x00')
