@@ -67,6 +67,12 @@ class Type(object):
 
 class StringType(Type):
 
+    def __init__(self, name, type_name=None):
+        if type_name is None:
+            type_name = self.__class__.__name__
+            
+        super(StringType, self).__init__(name, type_name)
+
     def encode(self, data):
         element = ElementTree.Element(self.name)
 
@@ -477,63 +483,43 @@ class Choice(Type):
 
 
 class UTF8String(StringType):
-
-    def __init__(self, name):
-        super(UTF8String, self).__init__(name, 'UTF8String')
+    pass
 
 
 class NumericString(StringType):
-
-    def __init__(self, name):
-        super(NumericString, self).__init__(name, 'NumericString')
+    pass
 
 
 class PrintableString(StringType):
-
-    def __init__(self, name):
-        super(PrintableString, self).__init__(name, 'PrintableString')
+    pass
 
 
 class IA5String(StringType):
-
-    def __init__(self, name):
-        super(IA5String, self).__init__(name, 'IA5String')
+    pass
 
 
 class VisibleString(StringType):
-
-    def __init__(self, name):
-        super(VisibleString, self).__init__(name, 'VisibleString')
+    pass
 
 
 class GeneralString(StringType):
-
-    def __init__(self, name):
-        super(GeneralString, self).__init__(name, 'GeneralString')
+    pass
 
 
 class BMPString(StringType):
-
-    def __init__(self, name):
-        super(BMPString, self).__init__(name, 'BMPString')
+    pass
 
 
 class GraphicString(StringType):
-
-    def __init__(self, name):
-        super(GraphicString, self).__init__(name, 'GraphicString')
+    pass
 
 
 class UniversalString(StringType):
-
-    def __init__(self, name):
-        super(UniversalString, self).__init__(name, 'UniversalString')
+    pass
 
 
 class TeletexString(StringType):
-
-    def __init__(self, name):
-        super(TeletexString, self).__init__(name, 'TeletexString')
+    pass
 
 
 class UTCTime(Type):
