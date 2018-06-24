@@ -1061,10 +1061,15 @@ class TeletexString(Type):
                                             Tag.T61_STRING)
 
     def encode(self, data, encoder):
-        raise NotImplementedError('TeletexString is not yet implemented.')
+        encoded = data.encode('iso-8859-1')
+        encoder.append_length_determinant(len(encoded))
+        encoder.append_bytes(encoded)
 
     def decode(self, decoder):
-        raise NotImplementedError('TeletexString is not yet implemented.')
+        length = decoder.read_length_determinant()
+        encoded = decoder.read_bits(8 * length)
+
+        return encoded.decode('iso-8859-1')
 
     def __repr__(self):
         return 'TeletexString({})'.format(self.name)
