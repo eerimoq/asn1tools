@@ -962,17 +962,84 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "GHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~', but got"
             " '.' (0x19)'.")
 
+    def test_general_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= GeneralString "
+            "B ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b GeneralString "
+            "} "
+            "END",
+            'per')
+
+        datas = [
+            ('A',                      '', b'\x00'),
+            ('A',                     '2', b'\x01\x32'),
+            ('B', {'a': False, 'b': u'K'}, b'\x00\x01\x4b')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_bmp_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
             "A ::= BMPString "
+            "B ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b BMPString "
+            "} "
             "END",
             'per')
 
         datas = [
             ('A',     '', b'\x00'),
-            ('A',  '123', b'\x03\x00\x31\x00\x32\x00\x33')
+            ('A',  '123', b'\x03\x00\x31\x00\x32\x00\x33'),
+            ('B', {'a': False, 'b': u'K'}, b'\x00\x01\x00\x4b')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_graphic_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= GraphicString "
+            "B ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b GraphicString "
+            "} "
+            "END",
+            'per')
+
+        datas = [
+            ('A',                      '', b'\x00'),
+            ('A',                     '2', b'\x01\x32'),
+            ('B', {'a': False, 'b': u'K'}, b'\x00\x01\x4b')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_teletex_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= TeletexString "
+            "B ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b TeletexString "
+            "} "
+            "END",
+            'per')
+
+        datas = [
+            ('A',                  u'123', b'\x03\x31\x32\x33'),
+            ('B', {'a': False, 'b': u'K'}, b'\x00\x01\x4b')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -983,6 +1050,10 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
             "A ::= UniversalString "
+            "B ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b UniversalString "
+            "} "
             "END",
             'per')
 
@@ -992,7 +1063,8 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
              b'\x03\x00\x00\x00\xe5\x00\x00\x00\xe4\x00\x00\x00\xf6'),
             ('A',
              u'1𐈃Q',
-             b'\x03\x00\x00\x00\x31\x00\x01\x02\x03\x00\x00\x00\x51')
+             b'\x03\x00\x00\x00\x31\x00\x01\x02\x03\x00\x00\x00\x51'),
+            ('B', {'a': False, 'b': u'K'}, b'\x00\x01\x00\x00\x00\x4b')
         ]
 
         for type_name, decoded, encoded in datas:

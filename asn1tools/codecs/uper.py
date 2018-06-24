@@ -27,6 +27,10 @@ from .per import SequenceOf
 from .per import SetOf
 from .per import Choice
 from .per import UTF8String
+from .per import GeneralString
+from .per import BMPString
+from .per import GraphicString
+from .per import TeletexString
 from .per import UniversalString
 from .per import Any
 from .per import Recursive
@@ -190,76 +194,6 @@ class VisibleString(KnownMultiplierStringType):
     ENCODE_DECODE_MAP = {v: v for v in range(32, 127)}
     PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_DECODE_MAP,
                                            ENCODE_DECODE_MAP)
-
-
-class GeneralString(Type):
-
-    def __init__(self, name):
-        super(GeneralString, self).__init__(name, 'GeneralString')
-
-    def encode(self, _data, _encoder):
-        raise NotImplementedError('GeneralString is not yet implemented.')
-
-    def decode(self, _decoder):
-        raise NotImplementedError('GeneralString is not yet implemented.')
-
-    def __repr__(self):
-        return 'GeneralString({})'.format(self.name)
-
-
-class BMPString(Type):
-
-    def __init__(self, name):
-        super(BMPString, self).__init__(name, 'BMPString')
-
-    def encode(self, data, encoder):
-        encoded = data.encode('utf-16-be')
-        encoder.append_length_determinant(len(data))
-        encoder.append_bytes(encoded)
-
-    def decode(self, decoder):
-        length = decoder.read_length_determinant()
-        encoded = decoder.read_bits(16 * length)
-
-        return encoded.decode('utf-16-be')
-
-    def __repr__(self):
-        return 'BMPString({})'.format(self.name)
-
-
-class GraphicString(Type):
-
-    def __init__(self, name):
-        super(GraphicString, self).__init__(name, 'GraphicString')
-
-    def encode(self, data, encoder):
-        encoded = data.encode('latin-1')
-        encoder.append_length_determinant(len(encoded))
-        encoder.append_bytes(bytearray(encoded))
-
-    def decode(self, decoder):
-        length = decoder.read_length_determinant()
-        encoded = decoder.read_bits(8 * length)
-
-        return encoded.decode('latin-1')
-
-    def __repr__(self):
-        return 'GraphicString({})'.format(self.name)
-
-
-class TeletexString(Type):
-
-    def __init__(self, name):
-        super(TeletexString, self).__init__(name, 'TeletexString')
-
-    def encode(self, _data, _encoder):
-        raise NotImplementedError('TeletexString is not yet implemented.')
-
-    def decode(self, _decoder):
-        raise NotImplementedError('TeletexString is not yet implemented.')
-
-    def __repr__(self):
-        return 'TeletexString({})'.format(self.name)
 
 
 class UTCTime(VisibleString):

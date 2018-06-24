@@ -432,6 +432,27 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+    def test_general_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= GeneralString "
+            "B ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b GeneralString "
+            "} "
+            "END",
+            'oer')
+
+        datas = [
+            ('A',                      '', b'\x00'),
+            ('A',                     '2', b'\x01\x32'),
+            ('B', {'a': False, 'b': u'K'}, b'\x00\x01\x4b')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_universal_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "

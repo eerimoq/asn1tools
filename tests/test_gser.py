@@ -265,6 +265,19 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
 
         self.assertEqual(foo.encode('A', decoded), encoded)
 
+    def test_teletex_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= TeletexString "
+            "END",
+            'gser')
+
+        decoded = 'foo'
+        encoded = b'a A ::= "foo"'
+
+        self.assertEqual(foo.encode('A', decoded), encoded)
+
     def test_universal_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "

@@ -25,6 +25,7 @@ from .ber import decode_real
 from .ber import encode_object_identifier
 from .ber import decode_object_identifier
 
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -660,6 +661,37 @@ class KnownMultiplierStringType(Type):
                 decoded.append(self.permitted_alphabet.decode(value))
 
         return bytearray(decoded).decode('ascii')
+
+    def __repr__(self):
+        return '{}({})'.format(self.__class__.__name__,
+                               self.name)
+
+
+class StringType(Type):
+
+    CODEC = None
+    LENGTH_MULTIPLIER = 1
+
+    def __init__(self, name):
+        super(StringType, self).__init__(name, self.__class__.__name__)
+
+    def encode(self, data, encoder):
+        encoded = data.encode(self.CODEC)
+        encoder.align()
+
+        for offset, length in encoder.append_length_determinant_chunks(len(data)):
+            offset *= self.LENGTH_MULTIPLIER
+            data = encoded[offset:offset + self.LENGTH_MULTIPLIER * length]
+            encoder.append_bytes(data)
+
+    def decode(self, decoder):
+        decoder.align()
+        encoded = []
+
+        for length in decoder.read_length_determinant_chunks():
+            encoded.append(decoder.read_bytes(self.LENGTH_MULTIPLIER * length))
+
+        return b''.join(encoded).decode(self.CODEC)
 
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__,
@@ -1614,107 +1646,31 @@ class VisibleString(KnownMultiplierStringType):
                                            ENCODE_DECODE_MAP)
 
 
-class GeneralString(Type):
+class GeneralString(StringType):
 
-    def __init__(self, name):
-        super(GeneralString, self).__init__(name, 'GeneralString')
-
-    def encode(self, _data, _encoder):
-        raise NotImplementedError('GeneralString is not yet implemented.')
-
-    def decode(self, _decoder):
-        raise NotImplementedError('GeneralString is not yet implemented.')
-
-    def __repr__(self):
-        return 'GeneralString({})'.format(self.name)
+    CODEC = 'latin-1'
 
 
-class BMPString(Type):
+class BMPString(StringType):
 
-    def __init__(self, name):
-        super(BMPString, self).__init__(name, 'BMPString')
-
-    def encode(self, data, encoder):
-        encoded = data.encode('utf-16-be')
-
-        for offset, length in encoder.append_length_determinant_chunks(len(data)):
-            offset *= 2
-            encoder.append_bytes(encoded[offset:offset + 2 * length])
-
-    def decode(self, decoder):
-        encoded = []
-
-        for length in decoder.read_length_determinant_chunks():
-            encoded.append(decoder.read_bytes(2 * length))
-
-        return b''.join(encoded).decode('utf-16-be')
-
-    def __repr__(self):
-        return 'BMPString({})'.format(self.name)
+    CODEC = 'utf-16-be'
+    LENGTH_MULTIPLIER = 2
 
 
-class GraphicString(Type):
+class GraphicString(StringType):
 
-    def __init__(self, name):
-        super(GraphicString, self).__init__(name, 'GraphicString')
-
-    def encode(self, data, encoder):
-        encoded = data.encode('latin-1')
-
-        for offset, length in encoder.append_length_determinant_chunks(len(encoded)):
-            encoder.append_bytes(encoded[offset:offset + length])
-
-    def decode(self, decoder):
-        encoded = []
-
-        for length in decoder.read_length_determinant_chunks():
-            encoded.append(decoder.read_bytes(length))
-
-        return b''.join(encoded).decode('latin-1')
-
-    def __repr__(self):
-        return 'GraphicString({})'.format(self.name)
+    CODEC = 'latin-1'
 
 
-class UniversalString(Type):
+class TeletexString(StringType):
 
-    def __init__(self, name):
-        super(UniversalString, self).__init__(name, 'UniversalString')
-
-    def encode(self, data, encoder):
-        encoded = data.encode('utf-32-be')
-        encoder.align()
-
-        for offset, length in encoder.append_length_determinant_chunks(len(data)):
-            offset *= 4
-            encoder.append_bytes(encoded[offset:offset + 4 * length])
-
-    def decode(self, decoder):
-        decoder.align()
-        encoded = []
-
-        for length in decoder.read_length_determinant_chunks():
-            encoded.append(decoder.read_bytes(4 * length))
-
-        return b''.join(encoded).decode('utf-32-be')
-
-    def __repr__(self):
-        return 'UniversalString({})'.format(self.name)
+    CODEC = 'iso-8859-1'
 
 
-class TeletexString(Type):
+class UniversalString(StringType):
 
-    def __init__(self, name):
-        super(TeletexString, self).__init__(name, 'TeletexString')
-
-    def encode(self, _data, _encoder):
-        raise NotImplementedError('TeletexString is not yet implemented.')
-
-    def decode(self, _decoder):
-        raise NotImplementedError('TeletexString is not yet implemented.')
-
-    def __repr__(self):
-        return 'TeletexString({})'.format(self.name)
+    CODEC = 'utf-32-be'
+    LENGTH_MULTIPLIER = 4
 
 
 class UTCTime(VisibleString):

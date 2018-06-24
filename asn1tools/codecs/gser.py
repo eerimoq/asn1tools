@@ -381,8 +381,8 @@ class TeletexString(Type):
     def __init__(self, name):
         super(TeletexString, self).__init__(name, 'TeletexString')
 
-    def encode(self, data, separator, indent):
-        raise NotImplementedError('TeletexString is not yet implemented.')
+    def encode(self, data, _separator, _indent):
+        return u'"{}"'.format(data)
 
     def __repr__(self):
         return 'TeletexString({})'.format(self.name)

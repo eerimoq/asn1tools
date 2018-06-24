@@ -973,10 +973,15 @@ class GeneralString(Type):
                                             Tag.GENERAL_STRING)
 
     def encode(self, data, encoder):
-        raise NotImplementedError('GeneralString is not yet implemented.')
+        encoded = data.encode('latin-1')
+        encoder.append_length_determinant(len(encoded))
+        encoder.append_bytes(encoded)
 
     def decode(self, decoder):
-        raise NotImplementedError('GeneralString is not yet implemented.')
+        length = decoder.read_length_determinant()
+        encoded = decoder.read_bits(8 * length)
+
+        return encoded.decode('latin-1')
 
     def __repr__(self):
         return 'GeneralString({})'.format(self.name)
