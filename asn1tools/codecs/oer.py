@@ -131,7 +131,7 @@ class Encoder(object):
             length = len(encoded)
 
             if length > 127:
-                raise EncodeError('Too big.')
+                raise EncodeError('Length determinant {} is too big.'.format(value))
 
             self.append_u8(0x80 | length)
             self.append_bytes(encoded[::-1])
