@@ -1127,13 +1127,13 @@ class GeneralString(PrimitiveOrConstructedType):
     def encode(self, data, encoded):
         encoded.extend(self.tag)
         encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('ascii'))
+        encoded.extend(data.encode('latin-1'))
 
     def decode_primitive_contents(self, data, offset, length):
-        return data[offset:offset + length].decode('ascii')
+        return data[offset:offset + length].decode('latin-1')
 
     def decode_constructed_segments(self, segments):
-        return bytearray().join(segments).decode('ascii')
+        return bytearray().join(segments).decode('latin-1')
 
     def __repr__(self):
         return 'GeneralString({})'.format(self.name)
