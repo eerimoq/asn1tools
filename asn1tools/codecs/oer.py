@@ -965,114 +965,34 @@ class VisibleString(KnownMultiplierStringType):
     ENCODING = 'ascii'
 
 
-class GeneralString(Type):
+class GeneralString(KnownMultiplierStringType):
 
-    def __init__(self, name):
-        super(GeneralString, self).__init__(name,
-                                            'GeneralString',
-                                            Tag.GENERAL_STRING)
-
-    def encode(self, data, encoder):
-        encoded = data.encode('latin-1')
-        encoder.append_length_determinant(len(encoded))
-        encoder.append_bytes(encoded)
-
-    def decode(self, decoder):
-        length = decoder.read_length_determinant()
-        encoded = decoder.read_bits(8 * length)
-
-        return encoded.decode('latin-1')
-
-    def __repr__(self):
-        return 'GeneralString({})'.format(self.name)
+    TAG = Tag.GENERAL_STRING
+    ENCODING = 'latin-1'
 
 
-class BMPString(Type):
+class BMPString(KnownMultiplierStringType):
 
-    def __init__(self, name):
-        super(BMPString, self).__init__(name,
-                                        'BMPString',
-                                        Tag.BMP_STRING)
-
-    def encode(self, data, encoder):
-        encoded = data.encode('utf-16-be')
-        encoder.append_length_determinant(len(data))
-        encoder.append_bytes(encoded)
-
-    def decode(self, decoder):
-        length = decoder.read_length_determinant()
-        encoded = decoder.read_bits(16 * length)
-
-        return encoded.decode('utf-16-be')
-
-    def __repr__(self):
-        return 'BMPString({})'.format(self.name)
+    TAG = Tag.BMP_STRING
+    ENCODING = 'utf-16-be'
 
 
-class GraphicString(Type):
+class GraphicString(KnownMultiplierStringType):
 
-    def __init__(self, name):
-        super(GraphicString, self).__init__(name,
-                                            'GraphicString',
-                                            Tag.GENERAL_STRING)
-
-    def encode(self, data, encoder):
-        encoded = data.encode('latin-1')
-        encoder.append_length_determinant(len(encoded))
-        encoder.append_bytes(encoded)
-
-    def decode(self, decoder):
-        length = decoder.read_length_determinant()
-        encoded = decoder.read_bits(8 * length)
-
-        return encoded.decode('latin-1')
-
-    def __repr__(self):
-        return 'GraphicString({})'.format(self.name)
+    TAG = Tag.GENERAL_STRING
+    ENCODING = 'latin-1'
 
 
-class UniversalString(Type):
+class UniversalString(KnownMultiplierStringType):
 
-    def __init__(self, name):
-        super(UniversalString, self).__init__(name,
-                                              'UniversalString',
-                                              Tag.UNIVERSAL_STRING)
-
-    def encode(self, data, encoder):
-        encoded = data.encode('utf-32-be')
-        encoder.append_length_determinant(len(encoded))
-        encoder.append_bytes(encoded)
-
-    def decode(self, decoder):
-        length = decoder.read_length_determinant()
-        encoded = decoder.read_bits(8 * length)
-
-        return encoded.decode('utf-32-be')
-
-    def __repr__(self):
-        return 'UniversalString({})'.format(self.name)
+    TAG = Tag.UNIVERSAL_STRING
+    ENCODING = 'utf-32-be'
 
 
-class TeletexString(Type):
+class TeletexString(KnownMultiplierStringType):
 
-    def __init__(self, name):
-        super(TeletexString, self).__init__(name,
-                                            'TeletexString',
-                                            Tag.T61_STRING)
-
-    def encode(self, data, encoder):
-        encoded = data.encode('iso-8859-1')
-        encoder.append_length_determinant(len(encoded))
-        encoder.append_bytes(encoded)
-
-    def decode(self, decoder):
-        length = decoder.read_length_determinant()
-        encoded = decoder.read_bits(8 * length)
-
-        return encoded.decode('iso-8859-1')
-
-    def __repr__(self):
-        return 'TeletexString({})'.format(self.name)
+    TAG = Tag.T61_STRING
+    ENCODING = 'iso-8859-1'
 
 
 class UTCTime(VisibleString):
