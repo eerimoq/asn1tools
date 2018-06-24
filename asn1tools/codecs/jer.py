@@ -33,6 +33,23 @@ class Type(object):
         pass
 
 
+class StringType(Type):
+
+    def __init__(self, name):
+        super(StringType, self).__init__(name,
+                                         self.__class__.__name__)
+
+    def encode(self, data):
+        return data
+
+    def decode(self, data):
+        return data
+
+    def __repr__(self):
+        return '{}({})'.format(self.__class__.__name__,
+                               self.name)
+
+
 class MembersType(Type):
 
     def __init__(self,
@@ -363,160 +380,47 @@ class Choice(Type):
             ', '.join([repr(member) for member in self.members]))
 
 
-class UTF8String(Type):
-
-    def __init__(self, name):
-        super(UTF8String, self).__init__(name, 'UTF8String')
-
-    def encode(self, data):
-        return data
-
-    def decode(self, data):
-        return data
-
-    def __repr__(self):
-        return 'UTF8String({})'.format(self.name)
+class UTF8String(StringType):
+    pass
 
 
-class NumericString(Type):
-
-    def __init__(self, name):
-        super(NumericString, self).__init__(name, 'NumericString')
-
-    def encode(self, data):
-        return data
-
-    def decode(self, data):
-        return data
-
-    def __repr__(self):
-        return 'NumericString({})'.format(self.name)
+class NumericString(StringType):
+    pass
 
 
-class PrintableString(Type):
-
-    def __init__(self, name):
-        super(PrintableString, self).__init__(name, 'PrintableString')
-
-    def encode(self, data):
-        return data
-
-    def decode(self, data):
-        return data
-
-    def __repr__(self):
-        return 'PrintableString({})'.format(self.name)
+class PrintableString(StringType):
+    pass
 
 
-class IA5String(Type):
-
-    def __init__(self, name):
-        super(IA5String, self).__init__(name, 'IA5String')
-
-    def encode(self, data):
-        return data
-
-    def decode(self, data):
-        return data
-
-    def __repr__(self):
-        return 'IA5String({})'.format(self.name)
+class IA5String(StringType):
+    pass
 
 
-class VisibleString(Type):
-
-    def __init__(self, name):
-        super(VisibleString, self).__init__(name, 'VisibleString')
-
-    def encode(self, data):
-        return data
-
-    def decode(self, data):
-        return data
-
-    def __repr__(self):
-        return 'VisibleString({})'.format(self.name)
+class VisibleString(StringType):
+    pass
 
 
-class GeneralString(Type):
-
-    def __init__(self, name):
-        super(GeneralString, self).__init__(name, 'GeneralString')
-
-    def encode(self, data):
-        return data
-
-    def decode(self, data):
-        return data
-
-    def __repr__(self):
-        return 'GeneralString({})'.format(self.name)
+class GeneralString(StringType):
+    pass
 
 
-class BMPString(Type):
-
-    def __init__(self, name):
-        super(BMPString, self).__init__(name, 'BMPString')
-
-    def encode(self, data):
-        return data
-
-    def decode(self, data):
-        return data
-
-    def __repr__(self):
-        return 'BMPString({})'.format(self.name)
+class BMPString(StringType):
+    pass
 
 
-class GraphicString(Type):
-
-    def __init__(self, name):
-        super(GraphicString, self).__init__(name, 'GraphicString')
-
-    def encode(self, data):
-        return data
-
-    def decode(self, data):
-        return data
-
-    def __repr__(self):
-        return 'GraphicString({})'.format(self.name)
+class GraphicString(StringType):
+    pass
 
 
-class UniversalString(Type):
-
-    def __init__(self, name):
-        super(UniversalString, self).__init__(name, 'UniversalString')
-
-    def encode(self, data):
-        return data
-
-    def decode(self, data):
-        return data
-
-    def __repr__(self):
-        return 'UniversalString({})'.format(self.name)
+class UniversalString(StringType):
+    pass
 
 
-class TeletexString(Type):
-
-    def __init__(self, name):
-        super(TeletexString, self).__init__(name, 'TeletexString')
-
-    def encode(self, data):
-        return data
-
-    def decode(self, data):
-        return data
-
-    def __repr__(self):
-        return 'TeletexString({})'.format(self.name)
+class TeletexString(StringType):
+    pass
 
 
-class UTCTime(Type):
-
-    def __init__(self, name):
-        super(UTCTime, self).__init__(name, 'UTCTime')
+class UTCTime(StringType):
 
     def encode(self, data):
         return utc_time_from_datetime(data)
@@ -524,23 +428,14 @@ class UTCTime(Type):
     def decode(self, data):
         return utc_time_to_datetime(data)
 
-    def __repr__(self):
-        return 'UTCTime({})'.format(self.name)
 
-
-class GeneralizedTime(Type):
-
-    def __init__(self, name):
-        super(GeneralizedTime, self).__init__(name, 'GeneralizedTime')
+class GeneralizedTime(StringType):
 
     def encode(self, data):
         return generalized_time_from_datetime(data)
 
     def decode(self, data):
         return generalized_time_to_datetime(data)
-
-    def __repr__(self):
-        return 'GeneralizedTime({})'.format(self.name)
 
 
 class Any(Type):
