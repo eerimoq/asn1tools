@@ -436,6 +436,34 @@ class PrimitiveOrConstructedType(Type):
         raise NotImplementedError('To be implemented by subclasses.')
 
 
+class StringType(PrimitiveOrConstructedType):
+
+    TAG = None
+    ENCODING = None
+
+    def __init__(self, name):
+        super(StringType, self).__init__(name,
+                                         self.__class__.__name__,
+                                         self.TAG,
+                                         OctetString(name))
+
+    def encode(self, data, encoded):
+        data = data.encode(self.ENCODING)
+        encoded.extend(self.tag)
+        encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(data)
+
+    def decode_primitive_contents(self, data, offset, length):
+        return data[offset:offset + length].decode(self.ENCODING)
+
+    def decode_constructed_segments(self, segments):
+        return bytearray().join(segments).decode(self.ENCODING)
+
+    def __repr__(self):
+        return '{}({})'.format(self.__class__.__name__,
+                               self.name)
+
+
 class MembersType(Type):
 
     def __init__(self, name, tag_name, tag, root_members, additions):
@@ -1001,236 +1029,64 @@ class Choice(Type):
             ', '.join([repr(member) for member in self.members]))
 
 
-class UTF8String(PrimitiveOrConstructedType):
+class UTF8String(StringType):
 
-    def __init__(self, name):
-        super(UTF8String, self).__init__(name,
-                                         'UTF8String',
-                                         Tag.UTF8_STRING,
-                                         OctetString(name))
+    TAG = Tag.UTF8_STRING
+    ENCODING = 'utf-8'
 
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('utf-8'))
 
-    def decode_primitive_contents(self, data, offset, length):
-        return data[offset:offset + length].decode('utf-8')
+class NumericString(StringType):
 
-    def decode_constructed_segments(self, segments):
-        return bytearray().join(segments).decode('utf-8')
+    TAG = Tag.NUMERIC_STRING
+    ENCODING = 'ascii'
 
-    def __repr__(self):
-        return 'UTF8String({})'.format(self.name)
 
+class PrintableString(StringType):
 
-class NumericString(PrimitiveOrConstructedType):
+    TAG = Tag.PRINTABLE_STRING
+    ENCODING = 'ascii'
 
-    def __init__(self, name):
-        super(NumericString, self).__init__(name,
-                                            'NumericString',
-                                            Tag.NUMERIC_STRING,
-                                            OctetString(name))
 
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('ascii'))
+class IA5String(StringType):
 
-    def decode_primitive_contents(self, data, offset, length):
-        return data[offset:offset + length].decode('ascii')
+    TAG = Tag.IA5_STRING
+    ENCODING = 'ascii'
 
-    def decode_constructed_segments(self, segments):
-        return bytearray().join(segments).decode('ascii')
 
-    def __repr__(self):
-        return 'NumericString({})'.format(self.name)
+class VisibleString(StringType):
 
+    TAG = Tag.VISIBLE_STRING
+    ENCODING = 'ascii'
 
-class PrintableString(PrimitiveOrConstructedType):
 
-    def __init__(self, name):
-        super(PrintableString, self).__init__(name,
-                                              'PrintableString',
-                                              Tag.PRINTABLE_STRING,
-                                              OctetString(name))
+class GeneralString(StringType):
 
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('ascii'))
+    TAG = Tag.GENERAL_STRING
+    ENCODING = 'latin-1'
 
-    def decode_primitive_contents(self, data, offset, length):
-        return data[offset:offset + length].decode('ascii')
 
-    def decode_constructed_segments(self, segments):
-        return bytearray().join(segments).decode('ascii')
+class BMPString(StringType):
 
-    def __repr__(self):
-        return 'PrintableString({})'.format(self.name)
+    TAG = Tag.BMP_STRING
+    ENCODING = 'utf-16-be'
 
 
-class IA5String(PrimitiveOrConstructedType):
+class GraphicString(StringType):
 
-    def __init__(self, name):
-        super(IA5String, self).__init__(name,
-                                        'IA5String',
-                                        Tag.IA5_STRING,
-                                        OctetString(name))
+    TAG = Tag.GRAPHIC_STRING
+    ENCODING = 'latin-1'
 
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('ascii'))
 
-    def decode_primitive_contents(self, data, offset, length):
-        return data[offset:offset + length].decode('ascii')
+class UniversalString(StringType):
 
-    def decode_constructed_segments(self, segments):
-        return bytearray().join(segments).decode('ascii')
+    TAG = Tag.UNIVERSAL_STRING
+    ENCODING = 'utf-32-be'
 
-    def __repr__(self):
-        return 'IA5String({})'.format(self.name)
 
+class TeletexString(StringType):
 
-class VisibleString(PrimitiveOrConstructedType):
-
-    def __init__(self, name):
-        super(VisibleString, self).__init__(name,
-                                            'VisibleString',
-                                            Tag.VISIBLE_STRING,
-                                            OctetString(name))
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('ascii'))
-
-    def decode_primitive_contents(self, data, offset, length):
-        return data[offset:offset + length].decode('ascii')
-
-    def decode_constructed_segments(self, segments):
-        return bytearray().join(segments).decode('ascii')
-
-    def __repr__(self):
-        return 'VisibleString({})'.format(self.name)
-
-
-class GeneralString(PrimitiveOrConstructedType):
-
-    def __init__(self, name):
-        super(GeneralString, self).__init__(name,
-                                            'GeneralString',
-                                            Tag.GENERAL_STRING,
-                                            OctetString(name))
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('latin-1'))
-
-    def decode_primitive_contents(self, data, offset, length):
-        return data[offset:offset + length].decode('latin-1')
-
-    def decode_constructed_segments(self, segments):
-        return bytearray().join(segments).decode('latin-1')
-
-    def __repr__(self):
-        return 'GeneralString({})'.format(self.name)
-
-
-class BMPString(PrimitiveOrConstructedType):
-
-    def __init__(self, name):
-        super(BMPString, self).__init__(name,
-                                        'BMPString',
-                                        Tag.BMP_STRING,
-                                        OctetString(name))
-
-    def encode(self, data, encoded):
-        data = data.encode('utf-16-be')
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data)
-
-    def decode_primitive_contents(self, data, offset, length):
-        return data[offset:offset + length].decode('utf-16-be')
-
-    def decode_constructed_segments(self, segments):
-        return bytearray().join(segments).decode('utf-16-be')
-
-    def __repr__(self):
-        return 'BMPString({})'.format(self.name)
-
-
-class GraphicString(PrimitiveOrConstructedType):
-
-    def __init__(self, name):
-        super(GraphicString, self).__init__(name,
-                                            'GraphicString',
-                                            Tag.GRAPHIC_STRING,
-                                            OctetString(name))
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('latin-1'))
-
-    def decode_primitive_contents(self, data, offset, length):
-        return data[offset:offset + length].decode('latin-1')
-
-    def decode_constructed_segments(self, segments):
-        return bytearray().join(segments).decode('latin-1')
-
-    def __repr__(self):
-        return 'GraphicString({})'.format(self.name)
-
-
-class UniversalString(PrimitiveOrConstructedType):
-
-    def __init__(self, name):
-        super(UniversalString, self).__init__(name,
-                                              'UniversalString',
-                                              Tag.UNIVERSAL_STRING,
-                                              OctetString(name))
-
-    def encode(self, data, encoded):
-        data = data.encode('utf-32-be')
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data)
-
-    def decode_primitive_contents(self, data, offset, length):
-        return data[offset:offset + length].decode('utf-32-be')
-
-    def decode_constructed_segments(self, segments):
-        return bytearray().join(segments).decode('utf-32-be')
-
-    def __repr__(self):
-        return 'UniversalString({})'.format(self.name)
-
-
-class TeletexString(PrimitiveOrConstructedType):
-
-    def __init__(self, name):
-        super(TeletexString, self).__init__(name,
-                                            'TeletexString',
-                                            Tag.T61_STRING,
-                                            OctetString(name))
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('iso-8859-1'))
-
-    def decode_primitive_contents(self, data, offset, length):
-        return bytearray(data[offset:offset + length]).decode('iso-8859-1')
-
-    def decode_constructed_segments(self, segments):
-        return bytearray().join(segments).decode('iso-8859-1')
-
-    def __repr__(self):
-        return 'TeletexString({})'.format(self.name)
+    TAG = Tag.T61_STRING
+    ENCODING = 'iso-8859-1'
 
 
 class UTCTime(Type):

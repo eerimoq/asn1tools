@@ -816,6 +816,22 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         self.assertEqual(foo.decode('B', b'\x24\x03\x04\x01\x12'), ('a', b'\x12'))
         self.assertEqual(foo.decode('B', b'\x04\x01\x12'), ('a', b'\x12'))
 
+    def test_utf8_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UTF8String "
+            "END",
+            'ber')
+
+        datas = [
+            ('A',                u'bar', b'\x0c\x03\x62\x61\x72'),
+            ('A',           u'a\u1010c', b'\x0c\x05\x61\xe1\x80\x90\x63')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_bmp_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS IMPLICIT TAGS ::= "

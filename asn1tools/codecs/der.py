@@ -68,6 +68,34 @@ class Type(object):
         return value == self.default
 
 
+class StringType(Type):
+
+    TAG = None
+    ENCODING = None
+
+    def __init__(self, name):
+        super(StringType, self).__init__(name,
+                                         self.__class__.__name__,
+                                         self.TAG)
+
+    def encode(self, data, encoded):
+        data = data.encode(self.ENCODING)
+        encoded.extend(self.tag)
+        encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(data)
+
+    def decode(self, data, offset):
+        offset = self.decode_tag(data, offset)
+        length, offset = decode_length_definite(data, offset)
+        end_offset = offset + length
+
+        return data[offset:end_offset].decode(self.ENCODING), end_offset
+
+    def __repr__(self):
+        return '{}({})'.format(self.__class__.__name__,
+                               self.name)
+
+
 class ArrayType(Type):
 
     def __init__(self, name, tag_name, tag, element_type):
@@ -238,239 +266,64 @@ class SetOf(ArrayType):
                                     element_type)
 
 
-class UTF8String(Type):
+class UTF8String(StringType):
 
-    def __init__(self, name):
-        super(UTF8String, self).__init__(name,
-                                         'UTF8String',
-                                         Tag.UTF8_STRING)
+    TAG = Tag.UTF8_STRING
+    ENCODING = 'utf-8'
 
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('utf-8'))
 
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
+class NumericString(StringType):
 
-        return data[offset:end_offset].decode('utf-8'), end_offset
+    TAG = Tag.NUMERIC_STRING
+    ENCODING = 'ascii'
 
-    def __repr__(self):
-        return 'UTF8String({})'.format(self.name)
 
+class PrintableString(StringType):
 
-class NumericString(Type):
+    TAG = Tag.PRINTABLE_STRING
+    ENCODING = 'ascii'
 
-    def __init__(self, name):
-        super(NumericString, self).__init__(name,
-                                            'NumericString',
-                                            Tag.NUMERIC_STRING)
 
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('ascii'))
+class IA5String(StringType):
 
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
+    TAG = Tag.IA5_STRING
+    ENCODING = 'ascii'
 
-        return data[offset:end_offset].decode('ascii'), end_offset
 
-    def __repr__(self):
-        return 'NumericString({})'.format(self.name)
+class VisibleString(StringType):
 
+    TAG = Tag.VISIBLE_STRING
+    ENCODING = 'ascii'
 
-class PrintableString(Type):
 
-    def __init__(self, name):
-        super(PrintableString, self).__init__(name,
-                                              'PrintableString',
-                                              Tag.PRINTABLE_STRING)
+class GeneralString(StringType):
 
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('ascii'))
+    TAG = Tag.GENERAL_STRING
+    ENCODING = 'latin-1'
 
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
 
-        return data[offset:end_offset].decode('ascii'), end_offset
+class BMPString(StringType):
 
-    def __repr__(self):
-        return 'PrintableString({})'.format(self.name)
+    TAG = Tag.BMP_STRING
+    ENCODING = 'utf-16-be'
 
 
-class IA5String(Type):
+class UniversalString(StringType):
 
-    def __init__(self, name):
-        super(IA5String, self).__init__(name,
-                                        'IA5String',
-                                        Tag.IA5_STRING)
+    TAG = Tag.UNIVERSAL_STRING
+    ENCODING = 'utf-32-be'
 
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('ascii'))
 
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
+class GraphicString(StringType):
 
-        return data[offset:end_offset].decode('ascii'), end_offset
+    TAG = Tag.GRAPHIC_STRING
+    ENCODING = 'latin-1'
 
-    def __repr__(self):
-        return 'IA5String({})'.format(self.name)
 
+class TeletexString(StringType):
 
-class VisibleString(Type):
-
-    def __init__(self, name):
-        super(VisibleString, self).__init__(name,
-                                            'VisibleString',
-                                            Tag.VISIBLE_STRING)
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('ascii'))
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
-
-        return data[offset:end_offset].decode('ascii'), end_offset
-
-    def __repr__(self):
-        return 'VisibleString({})'.format(self.name)
-
-
-class GeneralString(Type):
-
-    def __init__(self, name):
-        super(GeneralString, self).__init__(name,
-                                            'GeneralString',
-                                            Tag.GENERAL_STRING)
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('latin-1'))
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
-
-        return data[offset:end_offset].decode('latin-1'), end_offset
-
-    def __repr__(self):
-        return 'GeneralString({})'.format(self.name)
-
-
-class BMPString(Type):
-
-    def __init__(self, name):
-        super(BMPString, self).__init__(name,
-                                        'BMPString',
-                                        Tag.BMP_STRING)
-
-    def encode(self, data, encoded):
-        data = data.encode('utf-16-be')
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data)
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
-        decoded = bytearray(data[offset:end_offset]).decode('utf-16-be')
-
-        return decoded, end_offset
-
-    def __repr__(self):
-        return 'BMPString({})'.format(self.name)
-
-
-class UniversalString(Type):
-
-    def __init__(self, name):
-        super(UniversalString, self).__init__(name,
-                                              'UniversalString',
-                                              Tag.UNIVERSAL_STRING)
-
-    def encode(self, data, encoded):
-        data = data.encode('utf-32-be')
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data)
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
-        decoded = data[offset:end_offset].decode('utf-32-be')
-
-        return decoded, end_offset
-
-    def __repr__(self):
-        return 'UniversalString({})'.format(self.name)
-
-
-class GraphicString(Type):
-
-    def __init__(self, name):
-        super(GraphicString, self).__init__(name,
-                                            'GraphicString',
-                                            Tag.GRAPHIC_STRING)
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('latin-1'))
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
-
-        return data[offset:end_offset].decode('latin-1'), end_offset
-
-    def __repr__(self):
-        return 'GraphicString({})'.format(self.name)
-
-
-class TeletexString(Type):
-
-    def __init__(self, name):
-        super(TeletexString, self).__init__(name,
-                                            'TeletexString',
-                                            Tag.T61_STRING)
-
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data.encode('iso-8859-1'))
-
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
-        length, offset = decode_length_definite(data, offset)
-        end_offset = offset + length
-        decoded = bytearray(data[offset:end_offset]).decode('iso-8859-1')
-
-        return decoded, end_offset
-
-    def __repr__(self):
-        return 'TeletexString({})'.format(self.name)
+    TAG = Tag.T61_STRING
+    ENCODING = 'iso-8859-1'
 
 
 class UTCTime(Type):
