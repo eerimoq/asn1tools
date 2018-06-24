@@ -669,14 +669,14 @@ class KnownMultiplierStringType(Type):
 
 class StringType(Type):
 
-    CODEC = None
+    ENCODING = None
     LENGTH_MULTIPLIER = 1
 
     def __init__(self, name):
         super(StringType, self).__init__(name, self.__class__.__name__)
 
     def encode(self, data, encoder):
-        encoded = data.encode(self.CODEC)
+        encoded = data.encode(self.ENCODING)
         encoder.align()
 
         for offset, length in encoder.append_length_determinant_chunks(len(data)):
@@ -691,7 +691,7 @@ class StringType(Type):
         for length in decoder.read_length_determinant_chunks():
             encoded.append(decoder.read_bytes(self.LENGTH_MULTIPLIER * length))
 
-        return b''.join(encoded).decode(self.CODEC)
+        return b''.join(encoded).decode(self.ENCODING)
 
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__,
@@ -1648,28 +1648,28 @@ class VisibleString(KnownMultiplierStringType):
 
 class GeneralString(StringType):
 
-    CODEC = 'latin-1'
+    ENCODING = 'latin-1'
 
 
 class BMPString(StringType):
 
-    CODEC = 'utf-16-be'
+    ENCODING = 'utf-16-be'
     LENGTH_MULTIPLIER = 2
 
 
 class GraphicString(StringType):
 
-    CODEC = 'latin-1'
+    ENCODING = 'latin-1'
 
 
 class TeletexString(StringType):
 
-    CODEC = 'iso-8859-1'
+    ENCODING = 'iso-8859-1'
 
 
 class UniversalString(StringType):
 
-    CODEC = 'utf-32-be'
+    ENCODING = 'utf-32-be'
     LENGTH_MULTIPLIER = 4
 
 
