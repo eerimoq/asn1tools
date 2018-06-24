@@ -1681,11 +1681,22 @@ class UniversalString(Type):
     def __init__(self, name):
         super(UniversalString, self).__init__(name, 'UniversalString')
 
-    def encode(self, _data, _encoder):
-        raise NotImplementedError('UniversalString is not yet implemented.')
+    def encode(self, data, encoder):
+        encoded = data.encode('utf-32-be')
+        encoder.align()
 
-    def decode(self, _decoder):
-        raise NotImplementedError('UniversalString is not yet implemented.')
+        for offset, length in encoder.append_length_determinant_chunks(len(data)):
+            offset *= 4
+            encoder.append_bytes(encoded[offset:offset + 4 * length])
+
+    def decode(self, decoder):
+        decoder.align()
+        encoded = []
+
+        for length in decoder.read_length_determinant_chunks():
+            encoded.append(decoder.read_bytes(4 * length))
+
+        return b''.join(encoded).decode('utf-32-be')
 
     def __repr__(self):
         return 'UniversalString({})'.format(self.name)

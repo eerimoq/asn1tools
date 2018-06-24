@@ -432,6 +432,26 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+    def test_universal_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UniversalString "
+            "END",
+            'oer')
+
+        datas = [
+            ('A',
+             u'åäö',
+             b'\x0c\x00\x00\x00\xe5\x00\x00\x00\xe4\x00\x00\x00\xf6'),
+            ('A',
+             u'1𐈃Q',
+             b'\x0c\x00\x00\x00\x31\x00\x01\x02\x03\x00\x00\x00\x51')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_utc_time(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS IMPLICIT TAGS ::= "

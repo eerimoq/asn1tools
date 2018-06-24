@@ -1034,10 +1034,15 @@ class UniversalString(Type):
                                               Tag.UNIVERSAL_STRING)
 
     def encode(self, data, encoder):
-        raise NotImplementedError('UniversalString is not yet implemented.')
+        encoded = data.encode('utf-32-be')
+        encoder.append_length_determinant(len(encoded))
+        encoder.append_bytes(encoded)
 
     def decode(self, decoder):
-        raise NotImplementedError('UniversalString is not yet implemented.')
+        length = decoder.read_length_determinant()
+        encoded = decoder.read_bits(8 * length)
+
+        return encoded.decode('utf-32-be')
 
     def __repr__(self):
         return 'UniversalString({})'.format(self.name)

@@ -27,6 +27,7 @@ from .per import SequenceOf
 from .per import SetOf
 from .per import Choice
 from .per import UTF8String
+from .per import UniversalString
 from .per import Any
 from .per import Recursive
 
@@ -244,21 +245,6 @@ class GraphicString(Type):
 
     def __repr__(self):
         return 'GraphicString({})'.format(self.name)
-
-
-class UniversalString(Type):
-
-    def __init__(self, name):
-        super(UniversalString, self).__init__(name, 'UniversalString')
-
-    def encode(self, _data, _encoder):
-        raise NotImplementedError('UniversalString is not yet implemented.')
-
-    def decode(self, _decoder):
-        raise NotImplementedError('UniversalString is not yet implemented.')
-
-    def __repr__(self):
-        return 'UniversalString({})'.format(self.name)
 
 
 class TeletexString(Type):

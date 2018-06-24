@@ -804,7 +804,8 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('E',
              15000 * u'123' + u'\u1010',
              b'\xc2' + 10922 * b'123' + b'12\xaf\xcb3' + 4077 * b'123'
-             + b'\xe1\x80\x90')
+             + b'\xe1\x80\x90'),
+            ('E',               u'1𐈃Q', b'\x06\x31\xf0\x90\x88\x83\x51')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -988,12 +989,14 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         datas = [
             ('A',
              u'åäö',
-             b'\x03\x00\x00\x00\xe5\x00\x00\x00\xe4\x00\x00\x00\xf6')
+             b'\x03\x00\x00\x00\xe5\x00\x00\x00\xe4\x00\x00\x00\xf6'),
+            ('A',
+             u'1𐈃Q',
+             b'\x03\x00\x00\x00\x31\x00\x01\x02\x03\x00\x00\x00\x51')
         ]
 
         for type_name, decoded, encoded in datas:
-            with self.assertRaises(NotImplementedError):
-                self.assert_encode_decode(foo, type_name, decoded, encoded)
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
 
     def test_foo(self):
         foo = asn1tools.compile_files('tests/files/foo.asn', 'per')

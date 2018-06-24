@@ -1148,12 +1148,14 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         datas = [
             ('A',
              u'åäö',
-             b'\x03\x00\x00\x00\xe5\x00\x00\x00\xe4\x00\x00\x00\xf6')
+             b'\x03\x00\x00\x00\xe5\x00\x00\x00\xe4\x00\x00\x00\xf6'),
+            ('A',
+             u'1𐈃Q',
+             b'\x03\x00\x00\x00\x31\x00\x01\x02\x03\x00\x00\x00\x51')
         ]
 
         for type_name, decoded, encoded in datas:
-            with self.assertRaises(NotImplementedError):
-                self.assert_encode_decode(foo, type_name, decoded, encoded)
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
 
     def test_utc_time(self):
         foo = asn1tools.compile_string(

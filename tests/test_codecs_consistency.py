@@ -108,8 +108,7 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             self.encode_decode_all_codecs("TeletexString", [u'hi'])
 
     def test_universal_string(self):
-        with self.assertRaises(NotImplementedError):
-            self.encode_decode_all_codecs("UniversalString", [u'hi'])
+        self.encode_decode_all_codecs("UniversalString", [u'hi'])
 
     def test_utc_time(self):
         self.encode_decode_all_codecs("UTCTime", [datetime(2020, 3, 12)])
