@@ -826,7 +826,10 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         datas = [
             ('A',                u'bar', b'\x0c\x03\x62\x61\x72'),
-            ('A',           u'a\u1010c', b'\x0c\x05\x61\xe1\x80\x90\x63')
+            ('A',           u'a\u1010c', b'\x0c\x05\x61\xe1\x80\x90\x63'),
+            ('A',
+             u'f → ∝',
+             b'\x0c\x09\x66\x20\xe2\x86\x92\x20\xe2\x88\x9d')
         ]
 
         for type_name, decoded, encoded in datas:
