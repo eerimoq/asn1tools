@@ -432,6 +432,47 @@ ff0e0201011609497320312b313d333f
                 self.assertEqual(str(cm.exception),
                                  "error: '012': Odd-length string")
 
+    def test_command_line_convert_py(self):
+        # Preparations.
+        argv = [
+            'asn1tools',
+            'parse',
+            'tests/files/foo.asn',
+            'test_command_line_convert_py.py'
+        ]
+
+        if os.path.exists('test_command_line_convert_py.py'):
+            os.remove('test_command_line_convert_py.py')
+
+        with patch('sys.argv', argv):
+            asn1tools._main()
+
+        # Test convert.
+        argv = [
+            'asn1tools',
+            'convert',
+            'test_command_line_convert_py.py',
+            'Question',
+            '300e0201011609497320312b313d333f'
+        ]
+
+        expected_output = (
+            'question Question ::= {\n'
+            '    id 1,\n'
+            '    question "Is 1+1=3?"\n'
+            '}\n'
+        )
+
+        stdout = StringIO()
+
+        with patch('sys.stdout', stdout):
+            with patch('sys.argv', argv):
+                asn1tools._main()
+
+        print(stdout.getvalue())
+
+        self.assertEqual(expected_output, stdout.getvalue())
+
     def test_command_line_shell(self):
         argv = ['asn1tools', 'shell']
         commands = StringIO('''\
@@ -521,6 +562,7 @@ exit
         from test_command_line_parse import SPECIFICATION
 
         self.assertEqual(SPECIFICATION, expected_specification)
+
 
 if __name__ == '__main__':
     unittest.main()
