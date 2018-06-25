@@ -224,4 +224,6 @@ SequenceOf ::= SEQUENCE OF INTEGER
 
 SetOf ::= SET OF INTEGER
 
+Any ::= ANY
+
 END

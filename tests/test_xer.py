@@ -844,6 +844,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
                          'GeneralizedTime(GeneralizedTime1)')
         self.assertEqual(repr(foo.types['Choice']),
                          'Choice(Choice, [Integer(a)])')
+        self.assertEqual(repr(foo.types['Any']), 'Any(Any)')
 
     def test_all_types_automatic_tags(self):
         foo = asn1tools.compile_files(

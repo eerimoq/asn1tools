@@ -583,6 +583,7 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
                          'GeneralizedTime(GeneralizedTime1)')
         self.assertEqual(repr(all_types.types['Choice']),
                          'Choice(Choice, [Integer(a)])')
+        self.assertEqual(repr(all_types.types['Any']), 'Any(Any)')
 
     def test_overview_of_oer(self):
         foo = asn1tools.compile_files('tests/files/overview_of_oer.asn',

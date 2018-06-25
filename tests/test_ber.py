@@ -2638,6 +2638,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                          'GeneralizedTime(GeneralizedTime1)')
         self.assertEqual(repr(all_types.types['Choice']),
                          'Choice(Choice, [Integer(a)])')
+        self.assertEqual(repr(all_types.types['Any']), 'Any(Any)')
 
     def test_utf8_string_explicit_tags(self):
         """Test explicit tags on UTC time.

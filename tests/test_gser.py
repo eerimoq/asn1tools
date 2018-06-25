@@ -819,6 +819,7 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
                          'GeneralizedTime(GeneralizedTime1)')
         self.assertEqual(repr(all_types.types['Choice']),
                          'Choice(Choice, [Integer(a)])')
+        self.assertEqual(repr(all_types.types['Any']), 'Any(Any)')
 
     def test_rfc4511(self):
         rfc4511 = asn1tools.compile_dict(deepcopy(RFC4511), 'gser')
