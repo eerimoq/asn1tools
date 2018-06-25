@@ -206,6 +206,24 @@ class Asn1ToolsJerTest(unittest.TestCase):
         self.assertEqual(str(cm.exception),
                          ": Expected choice 'a' or 'b', but got 'c'.")
 
+    def test_utf8_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UTF8String "
+            "END",
+            'jer')
+
+        datas = [
+            ('A',         u'', b'""'),
+            ('A',      u'bar', b'"bar"'),
+            ('A', u'a\u1010c', b'"a\xe1\x80\x90c"'),
+            ('A',    u'f → ∝', b'"f \xe2\x86\x92 \xe2\x88\x9d"')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
     def test_universal_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
