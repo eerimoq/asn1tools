@@ -1,4 +1,4 @@
-import sys
+import os
 import unittest
 
 try:
@@ -450,7 +450,7 @@ exit
 
             def __init__(self, *_args, **_kwargs):
                 pass
-            
+
             def prompt(*_args, **_kwargs):
                 return commands.readline()
 
@@ -487,6 +487,39 @@ exit
 
         self.assertEqual(expected_output, stdout.getvalue())
 
+    def test_command_line_parse(self):
+        argv = [
+            'asn1tools',
+            'parse',
+            'tests/files/foo.asn',
+            'test_command_line_parse.py'
+        ]
+
+        expected_specification = {
+            'Foo': {'extensibility-implied': False,
+                    'imports': {},
+                    'object-classes': {},
+                    'object-sets': {},
+                    'types': {'Answer': {'members': [{'name': 'id',
+                                                      'type': 'INTEGER'},
+                                                     {'name': 'answer',
+                                                      'type': 'BOOLEAN'}],
+                                         'type': 'SEQUENCE'},
+                              'Question': {'members': [{'name': 'id',
+                                                        'type': 'INTEGER'},
+                                                       {'name': 'question',
+                                                        'type': 'IA5String'}],
+                                           'type': 'SEQUENCE'}},
+                    'values': {}}}
+
+        os.remove('test_command_line_parse.py')
+
+        with patch('sys.argv', argv):
+            asn1tools._main()
+
+        from test_command_line_parse import SPECIFICATION
+
+        self.assertEqual(SPECIFICATION, expected_specification)
 
 if __name__ == '__main__':
     unittest.main()
