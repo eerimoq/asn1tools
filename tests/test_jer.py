@@ -24,6 +24,11 @@ class Asn1ToolsJerTest(unittest.TestCase):
 
     maxDiff = None
 
+    def assert_encode_decode_string(self, foo, type_name, decoded, encoded):
+        self.assertEqual(loadb(foo.encode(type_name, decoded)),
+                         loadb(encoded))
+        self.assertEqual(foo.decode(type_name, encoded), decoded)
+
     def test_real(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS ::= "
@@ -40,9 +45,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(foo.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(foo.decode(type_name, encoded), decoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
         self.assertEqual(foo.encode('A', float('nan')), b'"NaN"')
         self.assertTrue(math.isnan(foo.decode('A', b'"NaN"')))
@@ -63,9 +66,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(foo.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(foo.decode(type_name, encoded), decoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
     def test_enumerated(self):
         foo = asn1tools.compile_string(
@@ -84,9 +85,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(foo.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(foo.decode(type_name, encoded), decoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
         # Encode error.
         with self.assertRaises(asn1tools.EncodeError) as cm:
@@ -126,9 +125,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(foo.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(foo.decode(type_name, encoded), decoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
         # Non-symmetrical encoding and decoding because default values
         # are not encoded, but part of the decoded (given that the
@@ -158,9 +155,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(foo.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(foo.decode(type_name, encoded), decoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
     def test_set_of(self):
         foo = asn1tools.compile_string(
@@ -176,9 +171,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(foo.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(foo.decode(type_name, encoded), decoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
     def test_choice(self):
         foo = asn1tools.compile_string(
@@ -197,9 +190,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(foo.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(foo.decode(type_name, encoded), decoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
         # Encode error.
         with self.assertRaises(asn1tools.EncodeError) as cm:
@@ -229,9 +220,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(foo.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(foo.decode(type_name, encoded), decoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
     def test_utc_time(self):
         foo = asn1tools.compile_string(
@@ -246,9 +235,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(foo.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(foo.decode(type_name, encoded), decoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
     def test_generalized_time(self):
         foo = asn1tools.compile_string(
@@ -263,9 +250,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(foo.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(foo.decode(type_name, encoded), decoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
     def test_foo(self):
         foo = asn1tools.compile_files(['tests/files/foo.asn'], 'jer')
@@ -728,9 +713,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
         ]
 
         for type_name, decoded, encoded in datas:
-            self.assertEqual(loadb(foo.encode(type_name, decoded)),
-                             loadb(encoded))
-            self.assertEqual(foo.decode(type_name, encoded), decoded)
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
     def test_error_out_of_data(self):
         foo = asn1tools.compile_string(
