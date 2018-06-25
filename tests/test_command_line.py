@@ -512,7 +512,8 @@ exit
                                            'type': 'SEQUENCE'}},
                     'values': {}}}
 
-        os.remove('test_command_line_parse.py')
+        if os.path.exists('test_command_line_parse.py'):
+            os.remove('test_command_line_parse.py')
 
         with patch('sys.argv', argv):
             asn1tools._main()
