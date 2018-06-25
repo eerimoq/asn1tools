@@ -740,6 +740,8 @@ class Asn1ToolsJerTest(unittest.TestCase):
         self.assertEqual(repr(foo.types['Choice']),
                          'Choice(Choice, [Integer(a)])')
         self.assertEqual(repr(foo.types['Any']), 'Any(Any)')
+        self.assertEqual(repr(foo.types['Sequence12']),
+                         'Sequence(Sequence12, [SequenceOf(a, Recursive(Sequence12))])')
 
     def test_all_types_automatic_tags(self):
         foo = asn1tools.compile_files(

@@ -1692,6 +1692,8 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
         self.assertEqual(repr(all_types.types['Choice']), "Choice(Choice, ['a'])")
         self.assertEqual(repr(all_types.types['Any']), 'Any(Any)')
+        self.assertEqual(repr(all_types.types['Sequence12']),
+                         'Sequence(Sequence12, [SequenceOf(a, Recursive(Sequence12))])')
 
     def test_s1ap_14_4_0(self):
         with self.assertRaises(asn1tools.CompileError) as cm:

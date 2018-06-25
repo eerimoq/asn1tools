@@ -471,7 +471,7 @@ class Recursive(Type, compiler.Recursive):
         return self._inner.decode(data)
 
     def __repr__(self):
-        return 'Recursive({})'.format(self.name)
+        return 'Recursive({})'.format(self.type_name)
 
 
 class CompiledType(compiler.CompiledType):

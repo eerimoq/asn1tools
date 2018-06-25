@@ -2639,6 +2639,8 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         self.assertEqual(repr(all_types.types['Choice']),
                          'Choice(Choice, [Integer(a)])')
         self.assertEqual(repr(all_types.types['Any']), 'Any(Any)')
+        self.assertEqual(repr(all_types.types['Sequence12']),
+                         'Sequence(Sequence12, [SequenceOf(a, Recursive(Sequence12))])')
 
     def test_utf8_string_explicit_tags(self):
         """Test explicit tags on UTC time.

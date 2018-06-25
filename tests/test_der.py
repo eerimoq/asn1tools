@@ -242,6 +242,8 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
                          'SequenceOf(SequenceOf, Integer())')
         self.assertEqual(repr(all_types.types['SetOf']), 'SetOf(SetOf, Integer())')
         self.assertEqual(repr(all_types.types['Any']), 'Any(Any)')
+        self.assertEqual(repr(all_types.types['Sequence12']),
+                         'Sequence(Sequence12, [SequenceOf(a, Recursive(Sequence12))])')
 
     def test_all_types_automatic_tags(self):
         all_types = asn1tools.compile_files(
