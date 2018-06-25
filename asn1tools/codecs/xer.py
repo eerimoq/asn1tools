@@ -70,7 +70,7 @@ class StringType(Type):
     def __init__(self, name, type_name=None):
         if type_name is None:
             type_name = self.__class__.__name__
-            
+
         super(StringType, self).__init__(name, type_name)
 
     def encode(self, data):
