@@ -443,10 +443,10 @@ class Any(Type):
     def __init__(self, name):
         super(Any, self).__init__(name, 'ANY')
 
-    def encode(self, _, encoder):
+    def encode(self, _data):
         raise NotImplementedError('ANY is not yet implemented.')
 
-    def decode(self, data):
+    def decode(self, _data):
         raise NotImplementedError('ANY is not yet implemented.')
 
     def __repr__(self):

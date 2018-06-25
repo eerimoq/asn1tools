@@ -270,6 +270,24 @@ class Asn1ToolsJerTest(unittest.TestCase):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
+    def test_any(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= "
+            "BEGIN "
+            "A ::= ANY "
+            "END",
+            'jer')
+
+        with self.assertRaises(NotImplementedError) as cm:
+            foo.encode('A', b'')
+
+        self.assertEqual(str(cm.exception), 'ANY is not yet implemented.')
+
+        with self.assertRaises(NotImplementedError) as cm:
+            foo.decode('A', b'""')
+
+        self.assertEqual(str(cm.exception), 'ANY is not yet implemented.')
+
     def test_foo(self):
         foo = asn1tools.compile_files(['tests/files/foo.asn'], 'jer')
 
