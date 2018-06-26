@@ -418,7 +418,9 @@ class Any(Type):
         super(Any, self).__init__(name, 'ANY')
 
     def encode(self, data, _separator, _indent):
-        return "'{}'H".format(binascii.hexlify(data).decode('ascii'))
+        data = binascii.hexlify(data).decode('ascii').upper()
+
+        return "'{}'H".format(data)
 
     def __repr__(self):
         return 'Any({})'.format(self.name)

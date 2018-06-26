@@ -57,6 +57,23 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
 
         self.assertEqual(foo.encode('A', decoded), encoded)
 
+    def test_octet_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= OCTET STRING "
+            "END",
+            'gser')
+
+        datas = [
+            ('A',
+             b'\x01\x23\x45\x67\x89\xab\xcd\xef',
+             b"a A ::= '0123456789ABCDEF'H")
+        ]
+
+        for name, decoded, encoded in datas:
+            self.assertEqual(foo.encode(name, decoded), encoded)
+
     def test_sequence(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
@@ -329,7 +346,9 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
 
         datas = [
             ('A',                   b'', b"a A ::= ''H"),
-            ('A',               b'\x20', b"a A ::= '20'H")
+            ('A',
+             b'\x01\x23\x45\x67\x89\xab\xcd\xef',
+             b"a A ::= '0123456789ABCDEF'H")
         ]
 
         for name, decoded, encoded in datas:
