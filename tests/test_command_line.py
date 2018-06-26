@@ -652,6 +652,38 @@ exit
 
         self.assertIn('compile: error: ', stdout.getvalue())
 
+    def test_command_line_shell_convert_without_compile(self):
+        argv = ['asn1tools', 'shell']
+        commands = StringIO('''\
+convert A 00
+exit
+''')
+
+        expected_output = (
+            '\n'
+            'Welcome to the asn1tools shell!\n'
+            '\n'
+            "No compiled specification found. Please use the 'compile' command "
+            "to compile one.\n"
+        )
+
+        class PromptSession(object):
+
+            def __init__(self, *_args, **_kwargs):
+                pass
+
+            def prompt(*_args, **_kwargs):
+                return commands.readline()
+
+        stdout = StringIO()
+
+        with patch('asn1tools.PromptSession', PromptSession):
+            with patch('sys.stdout', stdout):
+                with patch('sys.argv', argv):
+                    asn1tools._main()
+
+        self.assertEqual(expected_output, stdout.getvalue())
+
     def test_command_line_parse(self):
         argv = [
             'asn1tools',
