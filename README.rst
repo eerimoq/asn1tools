@@ -20,6 +20,11 @@ Codecs under development:
 - Unaligned Packed Encoding Rules (UPER)
 - XML Encoding Rules (XER)
 
+Planned codecs:
+
+- Canonical Encoding Rules (CER)
+- Canonical Octet Encoding Rules (COER)
+
 Project homepage: https://github.com/eerimoq/asn1tools
 
 Documentation: http://asn1tools.readthedocs.org/en/latest
