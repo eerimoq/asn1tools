@@ -1579,8 +1579,7 @@ def create_grammar():
                        - Suppress(semi_colon))
     symbols_exported = OneOrMore(symbol_list)
     exports = Suppress(Optional(EXPORTS
-                                - (ALL
-                                   | (symbols_exported + semi_colon))))
+                                - (ALL | symbols_exported) + semi_colon))
     assignment = (parameterized_object_set_assignment
                   | parameterized_object_assignment
                   | parameterized_object_class_assignment

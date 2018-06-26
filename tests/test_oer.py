@@ -1,11 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
 import unittest
 from .utils import Asn1ToolsBaseTest
 from datetime import datetime
-
+from copy import deepcopy
 import asn1tools
+
+sys.path.append('tests/files/ieee')
+
+from ieee1609_2 import EXPECTED as IEEE1609_2
 
 
 class Asn1ToolsOerTest(Asn1ToolsBaseTest):
@@ -666,6 +671,74 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
         )
 
         self.assert_encode_decode(a1, 'PersonnelRecord', decoded, encoded)
+
+    def test_ieee1609_2(self):
+        foo = asn1tools.compile_dict(deepcopy(IEEE1609_2), 'oer')
+
+        decoded = {
+            'version': 1,
+            'content': (
+                'caCerts',
+                [
+                    {
+                        'version': 3,
+                        'type': 'explicit',
+                        'issuer': ('sha256AndDigest', 8 * b'\x01'),
+                        'toBeSigned': {
+                            'id': ('none', None),
+                            'cracaId': 3 * b'\x32',
+                            'crlSeries': 65535,
+                            'validityPeriod': {
+                                'start': 12345,
+                                'duration': ('seconds', 5)
+                            },
+                            'appPermissions': [],
+                            'certIssuePermissions': [],
+                            'certRequestPermissions': [],
+                            'verifyKeyIndicator': (
+                                'verificationKey',
+                                (
+                                    'ecdsaNistP256',
+                                    (
+                                        'uncompressed',
+                                        {
+                                            'x': 32 * b'\x14',
+                                            'y': 32 * b'\x54'
+                                        }
+                                    )
+                                )
+                            )
+                        },
+                        'signature': (
+                            'ecdsaNistP256Signature',
+                            {
+                                'r' : ('x-only' , 32 * b'\x98'),
+                                's' : 32 * b'\xab'
+                            }
+                        )
+                    }
+                ]
+            )
+        }
+
+        encoded = (
+            b'\x01\x80\x01\x01\x80\x03\x00\x80\x01\x01\x01\x01\x01\x01\x01\x01'
+            b'\x1c\x83\x32\x32\x32\xff\xff\x00\x00\x30\x39\x82\x00\x05\x01\x00'
+            b'\x01\x00\x01\x00\x80\x80\x84\x14\x14\x14\x14\x14\x14\x14\x14\x14'
+            b'\x14\x14\x14\x14\x14\x14\x14\x14\x14\x14\x14\x14\x14\x14\x14\x14'
+            b'\x14\x14\x14\x14\x14\x14\x14\x54\x54\x54\x54\x54\x54\x54\x54\x54'
+            b'\x54\x54\x54\x54\x54\x54\x54\x54\x54\x54\x54\x54\x54\x54\x54\x54'
+            b'\x54\x54\x54\x54\x54\x54\x54\x80\x80\x98\x98\x98\x98\x98\x98\x98'
+            b'\x98\x98\x98\x98\x98\x98\x98\x98\x98\x98\x98\x98\x98\x98\x98\x98'
+            b'\x98\x98\x98\x98\x98\x98\x98\x98\x98\xab\xab\xab\xab\xab\xab\xab'
+            b'\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab'
+            b'\xab\xab\xab\xab\xab\xab\xab\xab\xab'
+        )
+
+        self.assert_encode_decode(foo,
+                                  'Ieee1609dot2Peer2PeerPDU',
+                                  decoded,
+                                  encoded)
 
 
 if __name__ == '__main__':

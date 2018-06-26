@@ -1,0 +1,883 @@
+-- B.1.1 1609.2 schema
+
+IEEE1609dot2 {iso(1) identified-organization(3) ieee(111)
+standards-association-numbered-series-standards(2) wave-stds(1609)
+dot2(2) base (1) schema (1)}
+
+-- ******************************************************************************
+--
+-- IEEE P1609.2 Data Types
+--
+-- ******************************************************************************
+
+DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+    CrlSeries,
+    EccP256CurvePoint,
+    EciesP256EncryptedKey,
+    EncryptionKey,
+    GeographicRegion,
+    GroupLinkageValue,
+    HashAlgorithm,
+    HashedId3,
+    HashedId8,
+    HashedId32,
+    Hostname,
+    IValue,
+    LinkageValue,
+    Opaque,
+    Psid,
+    PsidSsp,
+    PsidSspRange,
+    PublicEncryptionKey,
+    PublicVerificationKey,
+    SequenceOfPsidSsp,
+    SequenceOfPsidSspRange,
+    ServiceSpecificPermissions,
+    Signature,
+    SubjectAssurance,
+    SymmetricEncryptionKey,
+    ThreeDLocation,
+    Time64,
+    Uint3,
+    Uint8,
+    Uint16,
+    Uint32,
+    ValidityPeriod
+
+FROM IEEE1609dot2BaseTypes {iso(1) identified-organization(3) ieee(111)
+    standards-association-numbered-series-standards(2) wave-stds(1609)
+    dot2(2) base(1) base-types(2)} ;
+
+--
+--*********************************************************************
+--
+-- Structures for describing secured data
+--
+--*********************************************************************
+-- this structure belongs later in the file but putting it here avoids
+-- compiler errors with certain tools
+
+SignedDataPayload ::= SEQUENCE {
+    data         Ieee1609Dot2Data OPTIONAL,
+    extDataHash  HashedData OPTIONAL,
+    ...
+} (WITH COMPONENTS {..., data PRESENT}
+   | WITH COMPONENTS {..., extDataHash PRESENT})
+
+Ieee1609Dot2Data ::= SEQUENCE {
+    protocolVersion   Uint8(3),
+    content           Ieee1609Dot2Content
+}
+
+
+Ieee1609Dot2Content ::= CHOICE {
+    unsecuredData             Opaque,
+    signedData                SignedData,
+    encryptedData             EncryptedData,
+    signedCertificateRequest  Opaque,
+    ...
+}
+
+SignedData ::= SEQUENCE {
+    hashId     HashAlgorithm,
+    tbsData    ToBeSignedData,
+    signer     SignerIdentifier,
+    signature  Signature
+}
+
+SignerIdentifier ::= CHOICE {
+    digest      HashedId8,
+    certificate SequenceOfCertificate,
+    self    NULL,
+    ...
+}
+
+ToBeSignedData ::= SEQUENCE {
+    payload     SignedDataPayload,
+    headerInfo  HeaderInfo
+}
+
+HashedData::= CHOICE {
+    sha256HashedData OCTET STRING (SIZE(32)),
+    ...
+}
+
+HeaderInfo ::= SEQUENCE {
+    psid                  Psid,
+    generationTime        Time64 OPTIONAL,
+    expiryTime            Time64 OPTIONAL,
+    generationLocation    ThreeDLocation OPTIONAL,
+    p2pcdLearningRequest  HashedId3 OPTIONAL,
+    missingCrlIdentifier  MissingCrlIdentifier OPTIONAL,
+    encryptionKey         EncryptionKey OPTIONAL,
+    ...
+}
+
+MissingCrlIdentifier ::= SEQUENCE {
+    cracaId    HashedId3,
+    crlSeries  CrlSeries,
+    ...
+}
+
+Countersignature ::= Ieee1609Dot2Data (WITH COMPONENTS {
+    ...,
+    content (WITH COMPONENTS {
+        ...,
+        signedData (WITH COMPONENTS {
+            ...,
+            tbsData (WITH COMPONENTS {
+                ...,
+                payload (WITH COMPONENTS {
+                    ...,
+                    data ABSENT,
+                    extDataHash PRESENT
+                }),
+                headerInfo (WITH COMPONENTS {
+                    ...,
+                    generationTime PRESENT,
+                    expiryTime ABSENT,
+                    generationLocation ABSENT,
+                    p2pcdLearningRequest ABSENT,
+                    missingCrlIdentifier ABSENT,
+                    encryptionKey ABSENT
+                })
+            })
+        })
+    })
+})
+
+--**********************************************************************
+--
+-- Structures for describing encrypted data
+--
+--**********************************************************************
+
+EncryptedData ::= SEQUENCE {
+    recipients  SequenceOfRecipientInfo,
+    ciphertext  SymmetricCiphertext
+}
+
+
+RecipientInfo ::= CHOICE {
+    pskRecipInfo         PreSharedKeyRecipientInfo,
+    symmRecipInfo        SymmRecipientInfo,
+    certRecipInfo        PKRecipientInfo,
+    signedDataRecipInfo  PKRecipientInfo,
+    rekRecipInfo         PKRecipientInfo
+}
+
+SequenceOfRecipientInfo ::= SEQUENCE OF RecipientInfo
+
+PreSharedKeyRecipientInfo ::= HashedId8
+
+SymmRecipientInfo ::= SEQUENCE {
+    recipientId  HashedId8,
+    encKey       SymmetricCiphertext
+}
+
+PKRecipientInfo ::= SEQUENCE {
+    recipientId  HashedId8,
+    encKey       EncryptedDataEncryptionKey
+}
+
+EncryptedDataEncryptionKey ::= CHOICE {
+    eciesNistP256         EciesP256EncryptedKey,
+    eciesBrainpoolP256r1  EciesP256EncryptedKey,
+    ...
+}
+
+SymmetricCiphertext ::= CHOICE {
+    aes128ccm  AesCcmCiphertext,
+    ...
+}
+
+AesCcmCiphertext ::= SEQUENCE {
+    nonce          OCTET STRING (SIZE (12)),
+    ccmCiphertext  Opaque -- 16 bytes longer than plaintext
+}
+
+--**********************************************************************
+--
+-- Certificates and other security management data structures
+--
+--**********************************************************************
+
+-- Certificates are implicit (type = implicit, toBeSigned includes
+-- reconstruction value, signature absent) or explicit (type = explicit,
+-- toBeSigned includes verification key, signature present).
+
+Certificate ::= CertificateBase  (ImplicitCertificate | ExplicitCertificate)
+
+SequenceOfCertificate ::= SEQUENCE OF Certificate
+
+CertificateBase ::= SEQUENCE {
+    version     Uint8(3),
+    type        CertificateType,
+    issuer      IssuerIdentifier,
+    toBeSigned  ToBeSignedCertificate,
+    signature   Signature OPTIONAL
+}
+
+CertificateType ::= ENUMERATED {
+    explicit,
+    implicit,
+    ...
+}
+
+ImplicitCertificate ::= CertificateBase (WITH COMPONENTS {
+    ...,
+    type(implicit),
+    toBeSigned (WITH COMPONENTS {
+        ...,
+        verifyKeyIndicator (WITH COMPONENTS {reconstructionValue})
+    }),
+    signature ABSENT
+})
+
+ExplicitCertificate ::= CertificateBase (WITH COMPONENTS {
+    ...,
+    type(explicit),
+    toBeSigned (WITH COMPONENTS {
+        ...,
+        verifyKeyIndicator (WITH COMPONENTS {verificationKey})
+    }),
+    signature PRESENT
+})
+
+IssuerIdentifier ::= CHOICE {
+    sha256AndDigest  HashedId8,
+    self             HashAlgorithm,
+    ...
+}
+
+ToBeSignedCertificate ::= SEQUENCE {
+    id                      CertificateId,
+    cracaId                 HashedId3,
+    crlSeries               CrlSeries,
+    validityPeriod          ValidityPeriod,
+    region                  GeographicRegion OPTIONAL,
+    assuranceLevel          SubjectAssurance OPTIONAL,
+    appPermissions          SequenceOfPsidSsp OPTIONAL,
+    certIssuePermissions    SequenceOfPsidGroupPermissions OPTIONAL,
+    certRequestPermissions  SequenceOfPsidGroupPermissions OPTIONAL,
+    canRequestRollover      NULL OPTIONAL,
+    encryptionKey           PublicEncryptionKey OPTIONAL,
+    verifyKeyIndicator      VerificationKeyIndicator,
+    ...
+} (WITH COMPONENTS { ..., appPermissions PRESENT }
+   | WITH COMPONENTS { ..., certIssuePermissions PRESENT }
+   | WITH COMPONENTS { ..., certRequestPermissions PRESENT })
+
+CertificateId ::= CHOICE {
+   linkageData  LinkageData,
+   name         Hostname,
+   binaryId     OCTET STRING(SIZE(1..64)),
+   none         NULL,
+   ...
+}
+
+LinkageData ::= SEQUENCE {
+    iCert                IValue,
+    linkage-value        LinkageValue,
+    group-linkage-value  GroupLinkageValue OPTIONAL
+}
+
+EndEntityType ::= BIT STRING {app (0), enrol (1) } (SIZE (8))
+
+PsidGroupPermissions ::= SEQUENCE {
+    appPermissions   SubjectPermissions,
+    minChainDepth    INTEGER DEFAULT 1, -- 0 for enrolment certs
+    chainDepthRange  INTEGER DEFAULT 0, -- max depth = min + range
+    eeType           EndEntityType DEFAULT {app}
+}
+
+SequenceOfPsidGroupPermissions ::= SEQUENCE OF PsidGroupPermissions
+
+SubjectPermissions ::= CHOICE {
+    explicit    SequenceOfPsidSspRange,
+    all     NULL,
+    ...
+}
+
+VerificationKeyIndicator ::= CHOICE {
+    verificationKey      PublicVerificationKey,
+    reconstructionValue  EccP256CurvePoint,
+    ...
+}
+
+END
+
+
+-- B.1.2 1609.2 base types
+
+IEEE1609dot2BaseTypes {iso(1) identified-organization(3) ieee(111)
+standards-association-numbered-series-standards(2) wave-stds(1609)
+dot2(2) base(1) base-types(2)}
+
+--
+-- ********************************************************************
+-- * IEEE P1609.2 Base Data Types
+--
+-- ********************************************************************
+
+DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+EXPORTS ALL;
+
+-- ------------------------------------------------------------------
+--
+-- Integers
+--
+-- ------------------------------------------------------------------
+
+Uint3 ::= INTEGER (0..7)
+Uint8 ::= INTEGER (0..255)
+Uint16 ::= INTEGER (0..65535)
+Uint32 ::= INTEGER (0..4294967295)
+Uint64 ::= INTEGER (0..18446744073709551615)
+
+SequenceOfUint3 ::= SEQUENCE OF Uint3
+SequenceOfUint8 ::= SEQUENCE OF Uint8
+SequenceOfUint16 ::= SEQUENCE OF Uint16
+
+-- ------------------------------------------------------------------
+--
+-- OCTET STRING types
+--
+-- ------------------------------------------------------------------
+
+Opaque ::= OCTET STRING
+
+HashedId32 ::= OCTET STRING (SIZE(32))
+HashedId10 ::= OCTET STRING (SIZE(10))
+HashedId8 ::= OCTET STRING (SIZE(8))
+HashedId4 ::= OCTET STRING (SIZE(4))
+HashedId3 ::= OCTET STRING (SIZE(3))
+
+-- ------------------------------------------------------------------
+--
+-- Time
+--
+-- ------------------------------------------------------------------
+
+Time32 ::= Uint32
+Time64 ::= Uint64
+
+ValidityPeriod ::= SEQUENCE {
+    start     Time32,
+    duration  Duration
+}
+
+Duration ::= CHOICE {
+    microseconds  Uint16,
+    milliseconds  Uint16,
+    seconds       Uint16,
+    minutes       Uint16,
+    hours         Uint16,
+    sixtyHours    Uint16,
+    years         Uint16
+}
+
+-- ------------------------------------------------------------------
+--
+-- Location
+--
+-- ------------------------------------------------------------------
+
+GeographicRegion ::= CHOICE  {
+    circularRegion     CircularRegion,
+    rectangularRegion  SequenceOfRectangularRegion,
+    polygonalRegion    PolygonalRegion,
+    identifiedRegion   SequenceOfIdentifiedRegion,
+    ...
+}
+
+CircularRegion ::= SEQUENCE {
+    center  TwoDLocation,
+    radius  Uint16
+}
+
+RectangularRegion ::= SEQUENCE {
+    northWest  TwoDLocation,
+    southEast  TwoDLocation
+}
+
+SequenceOfRectangularRegion ::= SEQUENCE OF RectangularRegion
+
+PolygonalRegion ::= SEQUENCE SIZE(3..MAX) OF TwoDLocation
+
+TwoDLocation ::= SEQUENCE {
+    latitude   Latitude,
+    longitude  Longitude
+}
+
+IdentifiedRegion ::= CHOICE {
+    countryOnly           CountryOnly,
+    countryAndRegions     CountryAndRegions,
+    countryAndSubregions  CountryAndSubregions,
+    ...
+}
+
+SequenceOfIdentifiedRegion ::= SEQUENCE OF IdentifiedRegion
+
+CountryOnly ::= Uint16
+
+CountryAndRegions ::= SEQUENCE {
+    countryOnly  CountryOnly,
+    regions      SequenceOfUint8
+}
+
+CountryAndSubregions ::= SEQUENCE {
+    country              CountryOnly,
+    regionAndSubregions  SequenceOfRegionAndSubregions
+}
+
+RegionAndSubregions ::= SEQUENCE {
+    region      Uint8,
+    subregions  SequenceOfUint16
+}
+
+SequenceOfRegionAndSubregions ::= SEQUENCE OF RegionAndSubregions
+
+ThreeDLocation ::= SEQUENCE {
+    latitude   Latitude,
+    longitude  Longitude,
+    elevation  Elevation
+}
+
+Latitude ::= NinetyDegreeInt
+
+Longitude ::= OneEightyDegreeInt
+
+Elevation ::= ElevInt
+
+NinetyDegreeInt ::= INTEGER {
+    min (-900000000),
+    max (900000000),
+    unknown (900000001)
+} (-900000000..900000001)
+
+KnownLatitude ::= NinetyDegreeInt (min..max)
+
+UnknownLatitude ::= NinetyDegreeInt (unknown) -- Minus 90 deg to +90
+                                              -- deg in microdegree
+                                              -- intervals
+
+OneEightyDegreeInt ::= INTEGER {
+    min (-1799999999),
+    max (1800000000),
+    unknown (1800000001)
+} (-1799999999..1800000001)
+
+KnownLongitude ::= OneEightyDegreeInt (min..max)
+
+UnknownLongitude ::= OneEightyDegreeInt (unknown)
+
+ElevInt ::= Uint16 -- Range is from -4096 to 61439 in units of
+                   -- one-tenth of ameter
+
+-- ------------------------------------------------------------------
+--
+-- Crypto
+--
+-- ------------------------------------------------------------------
+
+Signature ::= CHOICE {
+    ecdsaNistP256Signature         EcdsaP256Signature,
+    ecdsaBrainpoolP256r1Signature  EcdsaP256Signature,
+    ...
+}
+
+EcdsaP256Signature ::= SEQUENCE {
+    r   EccP256CurvePoint,
+    s   OCTET STRING (SIZE (32))
+}
+
+EccP256CurvePoint ::= CHOICE {
+    x-only          OCTET STRING (SIZE (32)),
+    fill            NULL, -- consistency with 1363 / X9.62
+    compressed-y-0  OCTET STRING (SIZE (32)),
+    compressed-y-1  OCTET STRING (SIZE (32)),
+    uncompressed    SEQUENCE {
+        x  OCTET STRING (SIZE (32)),
+        y  OCTET STRING (SIZE (32))
+    }
+}
+
+SymmAlgorithm ::= ENUMERATED    {
+    aes128Ccm,
+    ...
+}
+
+HashAlgorithm ::= ENUMERATED    {
+    sha256,
+    ...
+}
+
+EciesP256EncryptedKey ::= SEQUENCE {
+    v  EccP256CurvePoint,
+    c  OCTET STRING (SIZE (16)),
+    t  OCTET STRING (SIZE (16))
+}
+
+EncryptionKey ::= CHOICE {
+    public     PublicEncryptionKey,
+    symmetric  SymmetricEncryptionKey
+}
+
+PublicEncryptionKey ::= SEQUENCE {
+    supportedSymmAlg  SymmAlgorithm,
+    publicKey         BasePublicEncryptionKey
+}
+
+BasePublicEncryptionKey ::= CHOICE {
+    eciesNistP256         EccP256CurvePoint,
+    eciesBrainpoolP256r1  EccP256CurvePoint,
+    ...
+}
+
+PublicVerificationKey ::= CHOICE {
+    ecdsaNistP256         EccP256CurvePoint,
+    ecdsaBrainpoolP256r1  EccP256CurvePoint,
+    ...
+}
+
+SymmetricEncryptionKey ::= CHOICE {
+    aes128Ccm  OCTET STRING(SIZE(16)),
+    ...
+}
+
+-- ------------------------------------------------------------------
+--
+-- PSID / ITS-AID
+--
+-- ------------------------------------------------------------------
+
+PsidSsp ::= SEQUENCE {
+    psid  Psid,
+    ssp   ServiceSpecificPermissions OPTIONAL
+}
+
+SequenceOfPsidSsp ::= SEQUENCE OF PsidSsp
+
+Psid ::= INTEGER (0..MAX)
+
+SequenceOfPsid ::= SEQUENCE OF Psid
+
+ServiceSpecificPermissions ::= CHOICE {
+    opaque  OCTET STRING (SIZE(0..MAX)),
+    ...     -- will define Structured SSP here
+}
+
+PsidSspRange ::= SEQUENCE {
+    psid      Psid,
+    sspRange  SspRange OPTIONAL
+}
+
+SequenceOfPsidSspRange ::= SEQUENCE OF PsidSspRange
+
+SspRange ::= CHOICE {
+    opaque  SequenceOfOctetString,
+    all     NULL,
+    ...     -- will define Structured SSP Range here
+}
+
+SequenceOfOctetString ::= SEQUENCE (SIZE (0..MAX)) OF OCTET STRING (SIZE(0..MAX))
+
+-- ------------------------------------------------------------------
+--
+-- Goes in certs
+--
+-- ------------------------------------------------------------------
+
+SubjectAssurance ::= OCTET STRING (SIZE(1))
+
+CrlSeries ::= Uint16
+
+-- ------------------------------------------------------------------
+--
+-- Pseudonym Linkage
+--
+-- ------------------------------------------------------------------
+
+IValue ::= Uint16
+
+Hostname ::= UTF8String (SIZE(0..255))
+
+LinkageValue ::= OCTET STRING (SIZE(9))
+
+GroupLinkageValue ::= SEQUENCE {
+    jValue  OCTET STRING (SIZE(4)),
+    value   OCTET STRING (SIZE(9))
+}
+
+LaId ::= OCTET STRING (SIZE(2))
+
+LinkageSeed ::= OCTET STRING (SIZE(16))
+
+END
+
+-- B.2.1 Certificate revocation list: Base types
+
+IEEE1609dot2CrlBaseTypes {iso(1) identified-organization(3) ieee(111)
+standards-association-numbered-series-standards(2) wave-stds(1609)
+dot2(2) crl(3) base-types(2)}
+
+DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+    CrlSeries,
+    GeographicRegion,
+    HashedId8,
+    HashedId10,
+    IValue,
+    LaId,
+    LinkageSeed,
+    Opaque,
+    Psid,
+    Signature,
+    Time32,
+    Uint3,
+    Uint8,
+    Uint16,
+    Uint32,
+    ValidityPeriod
+
+FROM IEEE1609dot2BaseTypes {iso(1) identified-organization(3) ieee(111)
+    standards-association-numbered-series-standards(2) wave-stds(1609)
+    dot2(2) base(1) base-types(2)} ;
+
+--
+--
+-- CRL contents
+--
+--
+
+CrlContents ::= SEQUENCE {
+    version       Uint8 (1),
+    crlSeries     CrlSeries,
+    cracaId       HashedId8,
+    issueDate     Time32,
+    nextCrl       Time32,
+    priorityInfo  CrlPriorityInfo,
+    typeSpecific  CHOICE {
+        fullHashCrl     ToBeSignedHashIdCrl,
+        deltaHashCrl    ToBeSignedHashIdCrl,
+        fullLinkedCrl   ToBeSignedLinkageValueCrl,
+        deltaLinkedCrl  ToBeSignedLinkageValueCrl,
+        ...
+    }
+}
+
+CrlPriorityInfo ::= SEQUENCE {
+    priority  Uint8 OPTIONAL,
+    ...
+}
+
+ToBeSignedHashIdCrl ::= SEQUENCE {
+    crlSerial  Uint32,
+    entries    SequenceOfHashBasedRevocationInfo,
+    ...
+}
+
+HashBasedRevocationInfo ::= SEQUENCE {
+    id HashedId10,
+    expiry Time32
+}
+
+SequenceOfHashBasedRevocationInfo ::= SEQUENCE OF HashBasedRevocationInfo
+
+ToBeSignedLinkageValueCrl ::= SEQUENCE {
+    iRev          IValue,
+    indexWithinI  Uint8,
+    individual    SequenceOfJMaxGroup OPTIONAL,
+    groups        SequenceOfGroupCrlEntry OPTIONAL,
+    ...
+} (WITH COMPONENTS {..., individual PRESENT}
+   | WITH COMPONENTS {..., groups PRESENT})
+
+JMaxGroup ::= SEQUENCE {
+    jmax      Uint8,
+    contents  SEQUENCE OF LAGroup
+}
+
+SequenceOfJMaxGroup ::= SEQUENCE OF JMaxGroup
+
+LAGroup ::= SEQUENCE {
+    la1Id     LaId,
+    la2Id     LaId,
+    contents  SequenceOfIMaxGroup
+}
+
+SequenceOfLAGroup ::= SEQUENCE OF LAGroup
+
+IMaxGroup ::= SEQUENCE {
+    iMax      Uint16,
+    contents  SequenceOfIndividualRevocation
+}
+
+SequenceOfIMaxGroup ::= SEQUENCE OF IMaxGroup
+
+IndividualRevocation ::= SEQUENCE {
+    linkage-seed1 LinkageSeed,
+    linkage-seed2 LinkageSeed
+}
+
+SequenceOfIndividualRevocation ::= SEQUENCE OF IndividualRevocation
+
+GroupCrlEntry ::= SEQUENCE {
+    iMax          Uint16,
+    la1Id         LaId,
+    linkageSeed1  LinkageSeed,
+    la2Id         LaId,
+    linkageSeed2  LinkageSeed
+}
+
+SequenceOfGroupCrlEntry ::= SEQUENCE OF GroupCrlEntry
+
+END
+
+-- B.2.2 CRL: Security envelope
+
+IEEE1609dot2Crl {iso(1) identified-organization(3) ieee(111)
+standards-association-numbered-series-standards(2) wave-stds(1609)
+dot2(2) crl(3) protocol(1)}
+
+DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+    EXPORTS ALL;
+
+IMPORTS
+    Ieee1609Dot2Data
+
+FROM IEEE1609dot2 { iso(1) identified-organization(3) ieee(111)
+    standards-association-numbered-series-standards(2) wave-stds(1609)
+    dot2(2) base (1) schema (1) }
+
+    Psid,
+    Opaque
+
+FROM IEEE1609dot2BaseTypes { iso(1) identified-organization(3) ieee(111)
+    standards-association-numbered-series-standards(2) wave-stds(1609)
+    dot2(2) base(1) base-types(2) }
+
+    CrlContents
+
+FROM IEEE1609dot2CrlBaseTypes { iso(1) identified-organization(3) ieee(111)
+    standards-association-numbered-series-standards(2) wave-stds(1609)
+    dot2(2) crl(3) base-types(2) } ;
+
+CrlPsid ::= Psid(135)
+
+SecuredCrl ::= Ieee1609Dot2Data (WITH COMPONENTS {
+    ...,
+    content (WITH COMPONENTS {
+        signedData (WITH COMPONENTS {
+            ...,
+            tbsData (WITH COMPONENTS {
+                payload (WITH COMPONENTS {
+                    ...,
+                    data (WITH COMPONENTS {
+                        ...,
+                        content (WITH COMPONENTS {
+                            unsecuredData (CONTAINING CrlContents)
+                        })
+                    })
+                }),
+                headerInfo (WITH COMPONENTS {
+                    ...,
+                    psid (CrlPsid),
+                    generationTime ABSENT,
+                    expiryTime ABSENT,
+                    generationLocation ABSENT,
+                    p2pcdLearningRequest ABSENT,
+                    missingCrlIdentifier ABSENT,
+                    encryptionKey ABSENT
+                })
+            })
+        })
+    })
+})
+
+END
+
+-- B.2.3 CRL: Service Specific Permissions (SSP)
+
+IEEE1609dot2CrlSsp {iso(1) identified-organization(3) ieee(111)
+standards-association-numbered-series-standards(2) wave-stds(1609)
+dot2(2) crl(3) service-specific-permissions (3)}
+
+DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+    CrlSeries,
+    Uint8
+
+FROM IEEE1609dot2BaseTypes {iso(1) identified-organization(3) ieee(111)
+    standards-association-numbered-series-standards(2) wave-stds(1609)
+    dot2(2) base(1) base-types(2)} ;
+
+CrlSsp::= SEQUENCE {
+    version          Uint8(1),
+    associatedCraca  CracaType,
+    crls             PermissibleCrls,
+    ...
+}
+
+CracaType ::= ENUMERATED {isCraca, issuerIsCraca}
+
+PermissibleCrls ::= SEQUENCE OF CrlSeries
+
+END
+
+-- B.3 Peer-to-peer certificate distribution (P2PCD)
+
+IEEE1609dot2-Peer2Peer {iso(1) identified-organization(3) ieee(111)
+standards-association-numbered-series-standards(2) wave-stds(1609)
+dot2(2) management (2) peer-to-peer (1)}
+
+--**********************************************************************
+--
+-- Data types for Peer-to-peer distribution of IEEE P1609.2 support data
+--
+-- Associated with a two-byte PSID to be assigned.
+-- When broadcast over WSMP, to be encoded with COER.
+--
+--**********************************************************************
+
+DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+    Uint8
+
+FROM IEEE1609dot2BaseTypes {iso(1) identified-organization(3) ieee(111)
+    standards-association-numbered-series-standards(2) wave-stds(1609)
+    dot2(2) base(1) base-types(2)}
+
+    Certificate
+
+FROM IEEE1609dot2 {iso(1) identified-organization(3) ieee(111)
+    standards-association-numbered-series-standards(2) wave-stds(1609)
+    dot2(2) base(1) schema(1)} ;
+
+Ieee1609dot2Peer2PeerPDU ::= SEQUENCE {
+    version  Uint8(1),
+    content  CHOICE {
+        caCerts  CaCertP2pPDU,
+        ...
+    }
+}
+
+CaCertP2pPDU::= SEQUENCE OF Certificate
+
+END

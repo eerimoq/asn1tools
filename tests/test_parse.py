@@ -5,9 +5,10 @@ import importlib
 import asn1tools
 
 sys.path.append('tests/files')
-sys.path.append('tests/files/etsi')
-sys.path.append('tests/files/ietf')
 sys.path.append('tests/files/3gpp')
+sys.path.append('tests/files/etsi')
+sys.path.append('tests/files/ieee')
+sys.path.append('tests/files/ietf')
 
 
 class Asn1ToolsParseTest(unittest.TestCase):
@@ -136,6 +137,10 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
     def test_parse_etsi_its_container_1_2_1(self):
         self.parse_and_verify('its_container_1_2_1', 'etsi')
+
+    def test_parse_ieee_1609_2(self):
+        with self.assertRaises(AssertionError):
+            self.parse_and_verify('ieee1609_2', 'ieee')
 
     def test_parse_enumerated(self):
         self.parse_and_verify('enumerated')
