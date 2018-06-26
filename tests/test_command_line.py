@@ -474,6 +474,27 @@ ff0e0201011609497320312b313d333f
 
         self.assertEqual(expected_output, stdout.getvalue())
 
+    def test_command_line_convert_py_too_many_files(self):
+        argv = [
+            'asn1tools',
+            'convert',
+            'spec.py',
+            'too-many.py',
+            'Question',
+            '300e0201011609497320312b313d333f'
+        ]
+
+        stdout = StringIO()
+
+        with patch('sys.stdout', stdout):
+            with patch('sys.argv', argv):
+                with self.assertRaises(SystemExit) as cm:
+                    asn1tools._main()
+
+                self.assertEqual(
+                    str(cm.exception),
+                    "error: Expected one .py-file, but got 2.")
+
     def test_command_line_convert_pkl(self):
         # Preparations.
         argv = [
@@ -530,6 +551,28 @@ ff0e0201011609497320312b313d333f
 
         self.assertEqual(expected_output, stdout.getvalue())
 
+    def test_command_line_convert_pkl_too_many_files(self):
+        argv = [
+            'asn1tools',
+            'convert',
+            'input.pkl',
+            'output.pkl',
+            'too-many.pkl',
+            'Question',
+            '300e0201011609497320312b313d333f'
+        ]
+
+        stdout = StringIO()
+
+        with patch('sys.stdout', stdout):
+            with patch('sys.argv', argv):
+                with self.assertRaises(SystemExit) as cm:
+                    asn1tools._main()
+
+                self.assertEqual(
+                    str(cm.exception),
+                    "error: Expected two .pkl-files, but got 3.")
+
     def test_command_line_shell(self):
         argv = ['asn1tools', 'shell']
         commands = StringIO('''\
@@ -584,6 +627,30 @@ exit
         print(stdout.getvalue())
 
         self.assertEqual(expected_output, stdout.getvalue())
+
+    def test_command_line_shell_compile_without_arguments(self):
+        argv = ['asn1tools', 'shell']
+        commands = StringIO('''\
+compile
+exit
+''')
+
+        class PromptSession(object):
+
+            def __init__(self, *_args, **_kwargs):
+                pass
+
+            def prompt(*_args, **_kwargs):
+                return commands.readline()
+
+        stdout = StringIO()
+
+        with patch('asn1tools.PromptSession', PromptSession):
+            with patch('sys.stdout', stdout):
+                with patch('sys.argv', argv):
+                    asn1tools._main()
+
+        self.assertIn('compile: error: ', stdout.getvalue())
 
     def test_command_line_parse(self):
         argv = [
