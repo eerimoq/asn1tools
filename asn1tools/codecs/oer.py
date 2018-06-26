@@ -1,4 +1,4 @@
-"""Octet Encoding Rules (OER) codec.
+"""Basic Octet Encoding Rules (OER) codec.
 
 """
 
