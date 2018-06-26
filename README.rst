@@ -15,7 +15,7 @@ Codecs under development:
 - Distinguished Encoding Rules (DER)
 - Generic String Encoding Rules (GSER)
 - JSON Encoding Rules (JER)
-- Octet Encoding Rules (OER)
+- Basic Octet Encoding Rules (OER)
 - Aligned Packed Encoding Rules (PER)
 - Unaligned Packed Encoding Rules (UPER)
 - XML Encoding Rules (XER)
