@@ -684,6 +684,30 @@ exit
 
         self.assertEqual(expected_output, stdout.getvalue())
 
+    def test_command_line_shell_compile_help_no_exit(self):
+        argv = ['asn1tools', 'shell']
+        commands = StringIO('''\
+compile --help
+exit
+''')
+
+        class PromptSession(object):
+
+            def __init__(self, *_args, **_kwargs):
+                pass
+
+            def prompt(*_args, **_kwargs):
+                return commands.readline()
+
+        stdout = StringIO()
+
+        with patch('asn1tools.PromptSession', PromptSession):
+            with patch('sys.stdout', stdout):
+                with patch('sys.argv', argv):
+                    asn1tools._main()
+
+        self.assertIn('usage:', stdout.getvalue())
+
     def test_command_line_parse(self):
         argv = [
             'asn1tools',
