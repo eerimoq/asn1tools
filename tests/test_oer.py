@@ -231,6 +231,14 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             "J ::= I (WITH COMPONENTS { a PRESENT }) "
             "K ::= I (WITH COMPONENTS { a ABSENT }) "
             "L ::= I (J | K) "
+            "M ::= SEQUENCE { "
+            "  a D, "
+            "  b INTEGER "
+            "} "
+            "N ::= SEQUENCE { "
+            "  a E, "
+            "  b INTEGER "
+            "} "
             "END",
             'oer')
 
@@ -257,11 +265,29 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             ('J',            {'a': True}, b'\x80\xff'),
             ('K',                     {}, b'\x00'),
             ('L',            {'a': True}, b'\x80\xff'),
-            ('L',                     {}, b'\x00')
+            ('L',                     {}, b'\x00'),
+            ('N',
+             {'a': {'a': True, 'b': True}, 'b': 5},
+             b'\x80\xff\x02\x07\x80\x01\xff\x01\x05')
         ]
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Decode E as D. Extension addition "a.b" should be skipped.
+        self.assertEqual(foo.decode('D', b'\x80\xff\x02\x07\x80\x01\xff'),
+                         {'a': True})
+
+        # Decode N as M. Extension addition "a.b" should be skipped.
+        self.assertEqual(foo.decode('M', b'\x80\xff\x02\x07\x80\x01\xff\x01\x05'),
+                         {'a': {'a': True}, 'b': 5})
+
+        # Out of data skipping extension member a.b.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('M', b'\x80\xff\x02\x07\x80\x01')
+
+        self.assertEqual(str(cm.exception),
+                         "a: out of data at bit offset 48 (6.0 bytes)")
 
     def test_set(self):
         foo = asn1tools.compile_string(
