@@ -765,6 +765,40 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
                                   decoded,
                                   encoded)
 
+    def test_out_of_data(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= BOOLEAN "
+            "B ::= OCTET STRING "
+            "C ::= SEQUENCE { "
+            "  ..., "
+            "  a BOOLEAN "
+            "} "
+            "END",
+            'oer')
+
+        # Fails trying to read a non-negative number.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', b'')
+
+        self.assertEqual(str(cm.exception),
+                         ": out of data at bit offset 0 (0.0 bytes)")
+
+        # Fails trying to read 2 bytes, but only one available.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('B', b'\x02\x00')
+
+        self.assertEqual(str(cm.exception),
+                         ": out of data at bit offset 8 (1.0 bytes)")
+
+        # Fails trying to read the single additions present bit.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('C', b'')
+
+        self.assertEqual(str(cm.exception),
+                         ": out of data at bit offset 0 (0.0 bytes)")
+
 
 if __name__ == '__main__':
     unittest.main()

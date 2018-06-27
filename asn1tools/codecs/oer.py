@@ -755,7 +755,7 @@ class ObjectIdentifier(Type):
 
     def decode(self, decoder):
         length = decoder.read_length_determinant()
-        data = decoder.read_bits(8 * length)
+        data = decoder.read_bytes(length)
 
         return decode_object_identifier(bytearray(data), 0, len(data))
 
