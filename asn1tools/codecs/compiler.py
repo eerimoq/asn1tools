@@ -26,6 +26,14 @@ def is_object_class_type_name(type_name):
     return '&' in type_name
 
 
+def is_type_name(type_name):
+    """Does not handle keywords.
+
+    """
+
+    return type_name[0].isupper()
+
+
 def lowest_set_bit(value):
     offset = (value & -value).bit_length() - 1
 
@@ -524,14 +532,14 @@ class Compiler(object):
             try:
                 minimum = float(minimum)
             except ValueError:
-                if minimum not in ['TRUE', 'FALSE', 'MIN', 'MAX']:
+                if not is_type_name(minimum):
                     minimum = self.lookup_value(minimum, module_name)[0]['value']
 
         if isinstance(maximum, str):
             try:
                 maximum = float(maximum)
             except ValueError:
-                if maximum not in ['TRUE', 'FALSE', 'MIN', 'MAX']:
+                if not is_type_name(maximum):
                     maximum = self.lookup_value(maximum, module_name)[0]['value']
 
         has_extension_marker = (EXTENSION_MARKER in restricted_to)

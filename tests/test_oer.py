@@ -210,6 +210,12 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             "H ::= SEQUENCE { "
             "  a H OPTIONAL "
             "} "
+            "I ::= SEQUENCE { "
+            "  a BOOLEAN OPTIONAL "
+            "} "
+            "J ::= I (WITH COMPONENTS { a PRESENT }) "
+            "K ::= I (WITH COMPONENTS { a ABSENT }) "
+            "L ::= I (J | K) "
             "END",
             'oer')
 
@@ -232,7 +238,11 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
              {'a': True, 'b': True},
              b'\x80\xff\x02\x07\x80\x01\xff'),
             ('H',                     {}, b'\x00'),
-            ('H',              {'a': {}}, b'\x80\x00')
+            ('H',              {'a': {}}, b'\x80\x00'),
+            ('J',            {'a': True}, b'\x80\xff'),
+            ('K',                     {}, b'\x00'),
+            ('L',            {'a': True}, b'\x80\xff'),
+            ('L',                     {}, b'\x00')
         ]
 
         for type_name, decoded, encoded in datas:
