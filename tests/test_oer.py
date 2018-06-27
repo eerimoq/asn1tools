@@ -175,6 +175,21 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+        # Encoding bad enumeration value.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('C', 'c')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Expected enumeration value 'a' or 'b', but got 'c'.")
+
+        # Decoding bad enumeration value.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', b'\x02')
+
+        self.assertEqual(str(cm.exception),
+                         ": Expected enumeration value 1, but got 2.")
+
     def test_sequence(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
