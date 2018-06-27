@@ -53,6 +53,39 @@ class Asn1ToolsJerTest(unittest.TestCase):
         self.assertEqual(foo.decode('A', b'"0"'), 0.0)
         self.assertEqual(foo.decode('A', b'"-0"'), 0.0)
 
+    def test_bit_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= BIT STRING "
+            "B ::= BIT STRING (SIZE (6)) "
+            "END",
+            'jer')
+
+        datas = [
+            ('A',       (b'\x40', 4), b'{"value": "40", "length": 4}'),
+            ('A',       (b'\xab', 8), b'{"value": "AB", "length": 8}'),
+            ('B',       (b'\xac', 6), b'"AC"')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
+    def test_octet_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= OCTET STRING "
+            "END",
+            'jer')
+
+        datas = [
+            ('A', b'\x01\x23\x45\x67\x89\xab\xcd\xef', b'"0123456789ABCDEF"')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
     def test_object_identifier(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS ::= "
@@ -602,7 +635,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
             b'{"message":{"c1":{"systemInformation":{"criticalExtensions":{"sy'
             b'stemInformation-r8":{"sib-TypeAndInfo":[{"sib2":{"ac-BarringInfo'
             b'":{"ac-BarringForEmergency":true,"ac-BarringForMO-Data":{"ac-Bar'
-            b'ringFactor":"p95","ac-BarringForSpecialAC":"f0","ac-BarringTime"'
+            b'ringFactor":"p95","ac-BarringForSpecialAC":"F0","ac-BarringTime"'
             b':"s128"}},"freqInfo":{"additionalSpectrumEmission":3},"radioReso'
             b'urceConfigCommon":{"bcch-Config":{"modificationPeriodCoeff":"n2"'
             b'},"pcch-Config":{"defaultPagingCycle":"rf256","nB":"twoT"},"pdsc'

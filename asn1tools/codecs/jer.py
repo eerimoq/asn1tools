@@ -192,7 +192,7 @@ class BitString(Type):
             self.size = None
 
     def encode(self, data):
-        value = binascii.hexlify(data[0]).decode('ascii')
+        value = binascii.hexlify(data[0]).decode('ascii').upper()
 
         if self.size is None:
             value = {
@@ -218,7 +218,7 @@ class OctetString(Type):
         super(OctetString, self).__init__(name, 'OCTET STRING')
 
     def encode(self, data):
-        return binascii.hexlify(data).decode('ascii')
+        return binascii.hexlify(data).decode('ascii').upper()
 
     def decode(self, data):
         return binascii.unhexlify(data)
