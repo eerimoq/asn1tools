@@ -106,14 +106,7 @@ class Encoder(object):
             return bytearray()
 
         data = self.value
-        number_of_bits = self.number_of_bits
-        number_of_alignment_bits = (8 - (number_of_bits % 8))
-
-        if number_of_alignment_bits != 8:
-            data <<= number_of_alignment_bits
-            number_of_bits += number_of_alignment_bits
-
-        data |= (0x80 << number_of_bits)
+        data |= (0x80 << self.number_of_bits)
         data = hex(data)[4:].rstrip('L')
 
         return bytearray(binascii.unhexlify(data))
@@ -225,10 +218,6 @@ class Decoder(object):
         value = ((self.value >> self.number_of_bits) & mask)
         value &= mask
         value |= (0x80 << number_of_bits)
-        number_of_alignment_bits = (8 - (number_of_bits % 8))
-
-        if number_of_alignment_bits != 8:
-            value <<= number_of_alignment_bits
 
         return binascii.unhexlify(hex(value)[4:].rstrip('L'))
 
