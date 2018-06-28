@@ -622,10 +622,10 @@ class Real(Type):
         super(Real, self).__init__(name, 'REAL', Tag.REAL)
 
     def encode(self, data, encoder):
-        raise NotImplementedError('REAL is not yet implemented.')
+        encoder.append_bytes(struct.pack('>f', data))
 
     def decode(self, decoder):
-        raise NotImplementedError('REAL is not yet implemented.')
+        return struct.unpack('>f', decoder.read_bytes(4))[0]
 
     def __repr__(self):
         return 'Real({})'.format(self.name)

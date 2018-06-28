@@ -74,6 +74,34 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+    def test_real(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= REAL "
+            "B ::= REAL (WITH COMPONENTS { "
+            "                mantissa (-16777215..16777215), "
+            "                base (2), "
+            "                exponent (-149..104) "
+            "            })"
+            "C ::= REAL (WITH COMPONENTS { "
+            "                mantissa (-9007199254740991..9007199254740991), "
+            "                base (2), "
+            "                exponent (-1074..971) "
+            "            })"
+            "END",
+            'oer')
+
+        datas = [
+            ('B',                       0.0, b'\x00\x00\x00\x00'),
+            ('B',                       1.0, b'\x3f\x80\x00\x00'),
+            ('B',                 2 ** -126, b'\x00\x80\x00\x00'),
+            ('B', (1 - 2 ** -24) * 2 ** 128, b'\x7f\x7f\xff\xff')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_null(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
