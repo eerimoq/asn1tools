@@ -274,6 +274,12 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+        # Non-symmetrical encoding and decoding because default values
+        # are not encoded, but part of the decoded (given that the
+        # root and addition is present).
+        self.assertEqual(foo.encode('B', {}), b'\x00')
+        self.assertEqual(foo.decode('B', b'\x00'), {'a': 0})
+
         # Decode E as D. Extension addition "a.b" should be skipped.
         self.assertEqual(foo.decode('D', b'\x80\xff\x02\x07\x80\x01\xff'),
                          {'a': True})
