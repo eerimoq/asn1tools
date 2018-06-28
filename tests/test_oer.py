@@ -295,6 +295,13 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
         self.assertEqual(str(cm.exception),
                          "a: out of data at bit offset 48 (6.0 bytes)")
 
+        # Out of data decoding extension member a.b.
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('N', b'\x80\xff\x02\x07\x80\x01')
+
+        self.assertEqual(str(cm.exception),
+                         'a: b: out of data at bit offset 48 (6.0 bytes)')
+
     def test_set(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
