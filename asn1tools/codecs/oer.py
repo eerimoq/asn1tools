@@ -618,14 +618,62 @@ class Integer(Type):
 
 class Real(Type):
 
-    def __init__(self, name):
+    def __init__(self, name, with_components):
         super(Real, self).__init__(name, 'REAL', Tag.REAL)
 
+        if with_components is None:
+            self.length = None
+            self.fmt = None
+        else:
+            mantissa, base, exponent = self.unpack_with_components(with_components)
+
+            if self.is_binary32(mantissa, base, exponent):
+                self.length = 4
+                self.fmt = '>f'
+            elif self.is_binary64(mantissa, base, exponent):
+                self.length = 8
+                self.fmt = '>d'
+            else:
+                self.length = None
+                self.fmt = None
+
+    def unpack_with_components(self, with_components):
+        with_components = dict(with_components)
+
+        try:
+            mantissa = with_components['mantissa']
+            base = with_components['base']
+            exponent = with_components['exponent']
+        except KeyError:
+            mantissa = None
+            base = None
+            exponent = None
+
+        return (mantissa, base, exponent)
+
+    def is_binary32(self, mantissa, base, exponent):
+        return (-16777215 <= mantissa[0] <= mantissa[1] <= 16777215
+                and base == 2
+                and -149 <= exponent[0] <= exponent[1] <= 104)
+
+    def is_binary64(self, mantissa, base, exponent):
+        return (-9007199254740991 <= mantissa[0] <= mantissa[1] <= 9007199254740991
+                and base == 2
+                and -1074 <= exponent[0] <= exponent[1] <= 971)
+
     def encode(self, data, encoder):
-        encoder.append_bytes(struct.pack('>f', data))
+        if self.fmt is None:
+            raise NotImplementedError(
+                'Variable length REAL is not yet implemented.')
+        else:
+            encoder.append_bytes(struct.pack(self.fmt, data))
 
     def decode(self, decoder):
-        return struct.unpack('>f', decoder.read_bytes(4))[0]
+        if self.fmt is None:
+            raise NotImplementedError(
+                'Variable length REAL is not yet implemented.')
+        else:
+            return struct.unpack(self.fmt, decoder.read_bytes(self.length))[0]
 
     def __repr__(self):
         return 'Real({})'.format(self.name)
@@ -1142,7 +1190,7 @@ class Compiler(compiler.Compiler):
         elif type_name == 'INTEGER':
             compiled = Integer(name)
         elif type_name == 'REAL':
-            compiled = Real(name)
+            compiled = Real(name, self.get_with_components(type_descriptor))
         elif type_name == 'ENUMERATED':
             compiled = Enumerated(name, type_descriptor['values'])
         elif type_name == 'BOOLEAN':

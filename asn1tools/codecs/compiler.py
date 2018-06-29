@@ -546,6 +546,9 @@ class Compiler(object):
 
         return minimum, maximum, has_extension_marker
 
+    def get_with_components(self, type_descriptor):
+        return type_descriptor.get('with-components', None)
+
     def is_explicit_tag(self, type_descriptor):
         try:
             return type_descriptor['tag']['kind'] == 'EXPLICIT'
