@@ -94,6 +94,9 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             "                base (10), "
             "                exponent (-1..1) "
             "            })"
+            "E ::= REAL (WITH COMPONENTS { "
+            "                mantissa (1..2) "
+            "            })"
             "END",
             'oer')
 

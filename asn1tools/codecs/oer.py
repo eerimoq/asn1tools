@@ -627,12 +627,16 @@ class Real(Type):
         else:
             mantissa, base, exponent = self.unpack_with_components(with_components)
 
-            if self.is_binary32(mantissa, base, exponent):
-                self.length = 4
-                self.fmt = '>f'
-            elif self.is_binary64(mantissa, base, exponent):
-                self.length = 8
-                self.fmt = '>d'
+            if all([mantissa, base, exponent]):
+                if self.is_binary32(mantissa, base, exponent):
+                    self.length = 4
+                    self.fmt = '>f'
+                elif self.is_binary64(mantissa, base, exponent):
+                    self.length = 8
+                    self.fmt = '>d'
+                else:
+                    self.length = None
+                    self.fmt = None
             else:
                 self.length = None
                 self.fmt = None
