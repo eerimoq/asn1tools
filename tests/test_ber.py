@@ -156,6 +156,8 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('A',        float('inf'), b'\x09\x01\x40'),
             ('A',       float('-inf'), b'\x09\x01\x41'),
             ('A',                 1.0, b'\x09\x03\x80\x00\x01'),
+            ('A',               100.0, b'\x09\x03\x80\x02\x19'),
+            ('A',              -100.0, b'\x09\x03\xc0\x02\x19'),
             ('A',           2 ** 1023, b'\x09\x04\x81\x03\xff\x01'),
             ('A',          2 ** -1022, b'\x09\x04\x81\xfc\x02\x01'),
             ('A',

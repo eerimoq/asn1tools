@@ -214,7 +214,13 @@ def encode_real(data):
     elif data == 0.0:
         data = b''
     else:
-        mantissa, exponent = math.frexp(data)
+        if data >= 0:
+            negative_bit = 0
+        else:
+            negative_bit = 0x40
+            data *= -1
+
+        mantissa, exponent = math.frexp(abs(data))
         mantissa = int(mantissa * 2 ** 53)
         lowest_set_bit = compiler.lowest_set_bit(mantissa)
         mantissa >>= lowest_set_bit
@@ -223,10 +229,10 @@ def encode_real(data):
         exponent = (52 - lowest_set_bit - exponent)
 
         if -129 < exponent < 128:
-            exponent = [0x80, ((0xff - exponent) & 0xff)]
+            exponent = [0x80 | negative_bit, ((0xff - exponent) & 0xff)]
         elif -32769 < exponent < 32768:
             exponent = ((0xffff - exponent) & 0xffff)
-            exponent = [0x81, (exponent >> 8), exponent & 0xff]
+            exponent = [0x81 | negative_bit, (exponent >> 8), exponent & 0xff]
         else:
             raise NotImplementedError(
                 'REAL exponent {} out of range.'.format(exponent))
@@ -256,14 +262,14 @@ def decode_real(data):
                 raise DecodeError(
                     'Unsupported REAL control word 0x{:02x}.'.format(control))
         else:
-            if control == 0x80:
+            if control in [0x80, 0xc0]:
                 exponent = data[offset + 1]
 
                 if exponent & 0x80:
                     exponent -= 0x100
 
                 offset += 2
-            elif control == 0x81:
+            elif control in [0x81, 0xc1]:
                 exponent = ((data[offset + 1] << 8) | data[offset + 2])
 
                 if exponent & 0x8000:
@@ -276,6 +282,9 @@ def decode_real(data):
 
             mantissa = int(binascii.hexlify(data[offset:]), 16)
             decoded = float(mantissa * 2 ** exponent)
+
+            if control & 0x40:
+                decoded *= -1
 
     return decoded
 
