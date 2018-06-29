@@ -21,6 +21,7 @@ from .ber import Class
 from .ber import Tag
 from .ber import encode_object_identifier
 from .ber import decode_object_identifier
+from . import der
 from .per import OutOfDataError
 
 
@@ -667,15 +668,17 @@ class Real(Type):
 
     def encode(self, data, encoder):
         if self.fmt is None:
-            raise NotImplementedError(
-                'Variable length REAL is not yet implemented.')
+            encoded = der.encode_real(data)
+            encoder.append_length_determinant(len(encoded))
+            encoder.append_bytes(encoded)
         else:
             encoder.append_bytes(struct.pack(self.fmt, data))
 
     def decode(self, decoder):
         if self.fmt is None:
-            raise NotImplementedError(
-                'Variable length REAL is not yet implemented.')
+            length = decoder.read_length_determinant()
+
+            return der.decode_real(bytearray(decoder.read_bytes(length)))
         else:
             return struct.unpack(self.fmt, decoder.read_bytes(self.length))[0]
 

@@ -101,31 +101,22 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             'oer')
 
         datas = [
-            ('B',                       0.0, b'\x00\x00\x00\x00'),
-            ('B',                       1.0, b'\x3f\x80\x00\x00'),
-            ('B',                 2 ** -126, b'\x00\x80\x00\x00'),
-            ('B', (1 - 2 ** -24) * 2 ** 128, b'\x7f\x7f\xff\xff'),
-            ('C',                       0.0, b'\x00\x00\x00\x00\x00\x00\x00\x00'),
-            ('C',                       1.0, b'\x3f\xf0\x00\x00\x00\x00\x00\x00'),
+            ('A',                        0.0, b'\x00'),
+            ('A',                        1.0, b'\x03\x80\x00\x01'),
+            ('A',                      100.0, b'\x03\x80\x02\x19'),
+            ('A',                     -100.0, b'\x03\xc0\x02\x19'),
+            ('B',                        0.0, b'\x00\x00\x00\x00'),
+            ('B',                        1.0, b'\x3f\x80\x00\x00'),
+            ('B',                  2 ** -126, b'\x00\x80\x00\x00'),
+            ('B',  (1 - 2 ** -24) * 2 ** 128, b'\x7f\x7f\xff\xff'),
+            ('C',                        0.0, b'\x00\x00\x00\x00\x00\x00\x00\x00'),
+            ('C',                        1.0, b'\x3f\xf0\x00\x00\x00\x00\x00\x00'),
             ('C',                 2 ** -1022, b'\x00\x10\x00\x00\x00\x00\x00\x00'),
             ('C', (2 - 2 ** -52) * 2 ** 1023, b'\x7f\xef\xff\xff\xff\xff\xff\xff')
         ]
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-        # Valiable length is not yet supported.
-        with self.assertRaises(NotImplementedError) as cm:
-            foo.encode('A', 0.0)
-
-        self.assertEqual(str(cm.exception),
-                         "Variable length REAL is not yet implemented.")
-
-        with self.assertRaises(NotImplementedError) as cm:
-            foo.decode('A', b'\x02')
-
-        self.assertEqual(str(cm.exception),
-                         "Variable length REAL is not yet implemented.")
 
     def test_null(self):
         foo = asn1tools.compile_string(

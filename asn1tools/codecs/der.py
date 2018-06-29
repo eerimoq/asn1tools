@@ -28,6 +28,8 @@ from .ber import Any
 from .ber import AnyDefinedBy
 from .ber import Recursive
 from .ber import decode_length
+from .ber import encode_real
+from .ber import decode_real
 
 
 class Type(object):
