@@ -248,6 +248,31 @@ def convert_value_range(_s, _l, tokens):
     return (minimum, maximum)
 
 
+def convert_inner_type_constraints(_s, _l, tokens):
+    tokens = tokens.asList()
+    components = []
+
+    for item_tokens in tokens[2]:
+        if item_tokens == '...':
+            value = EXTENSION_MARKER
+        elif len(item_tokens) == 2:
+            if isinstance(item_tokens[1], list):
+                value = item_tokens[1][0]
+
+                if isinstance(value, list):
+                    value = value[0]
+
+                value = (item_tokens[0], value)
+            else:
+                value = (item_tokens[0], item_tokens[1])
+        else:
+            value = item_tokens
+
+        components.append(value)
+
+    return {'with-components': components}
+
+
 def convert_size_constraint(_s, _l, tokens):
     tokens = tokens.asList()[1]
     values = []
@@ -489,6 +514,8 @@ def convert_type(tokens):
             elif 'size' in constraint_tokens[0]:
                 converted_type.update(constraint_tokens[0])
             elif 'from' in constraint_tokens[0]:
+                converted_type.update(constraint_tokens[0])
+            elif 'with-components' in constraint_tokens[0]:
                 converted_type.update(constraint_tokens[0])
 
     if '{' in restricted_to:
@@ -1141,13 +1168,13 @@ def create_grammar():
     presence_constraint = (PRESENT | ABSENT | OPTIONAL)
     component_constraint = (Optional(value_constraint)
                             + Optional(presence_constraint))
-    named_constraint = (identifier + component_constraint)
+    named_constraint = Group(identifier + component_constraint)
     type_constraints = delimitedList(named_constraint)
-    full_specification = (left_brace + type_constraints + right_brace)
+    full_specification = (left_brace + Group(type_constraints) + right_brace)
     partial_specification = (left_brace
-                             + ellipsis
-                             + comma
-                             + type_constraints
+                             + Group(ellipsis
+                                     + Suppress(comma)
+                                     + type_constraints)
                              + right_brace)
     single_type_constraint = constraint
     multiple_type_constraints = (full_specification | partial_specification)
@@ -1622,6 +1649,7 @@ def create_grammar():
     bstring.setParseAction(convert_bstring)
     hstring.setParseAction(convert_hstring)
     value_range.setParseAction(convert_value_range)
+    inner_type_constraints.setParseAction(convert_inner_type_constraints)
     size_constraint.setParseAction(convert_size_constraint)
     permitted_alphabet.setParseAction(convert_permitted_alphabet)
     constraint.setParseAction(convert_constraint)

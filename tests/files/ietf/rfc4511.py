@@ -18,7 +18,11 @@ EXPECTED = {'Lightweight-Directory-Access-Protocol-V3': {'extensibility-implied'
                                                                         'type': 'LDAPResult'},
                                                         'AssertionValue': {'type': 'OCTET '
                                                                                    'STRING'},
-                                                        'Attribute': {'type': 'PartialAttribute'},
+                                                        'Attribute': {'type': 'PartialAttribute',
+                                                                      'with-components': [None,
+                                                                                          ('vals',
+                                                                                           {'size': [(1,
+                                                                                                      'MAX')]})]},
                                                         'AttributeDescription': {'type': 'LDAPString'},
                                                         'AttributeList': {'element': {'type': 'Attribute'},
                                                                           'type': 'SEQUENCE '

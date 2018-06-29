@@ -40,6 +40,12 @@ Real8 ::= [APPLICATION 0] REAL
 
 Real9 ::= [PRIVATE 0] REAL
 
+Real10 ::= REAL (WITH COMPONENTS {
+                     mantissa (-16777215..16777215),
+                     base (2),
+                     exponent (-149..104)
+                 })
+
 Bitstring ::= BIT STRING
 
 Bitstring2 ::= BIT STRING (SIZE (9))
