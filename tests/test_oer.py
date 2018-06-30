@@ -375,13 +375,6 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
         self.assertEqual(str(cm.exception),
                          'a: b: out of data at bit offset 48 (6.0 bytes)')
 
-        # Missing member a.b to encode.
-        with self.assertRaises(asn1tools.EncodeError) as cm:
-            foo.encode('M', {'a': {}})
-
-        self.assertEqual(str(cm.exception),
-                         "a: Sequence member 'a' not found in {}.")
-
     def test_set(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
@@ -443,13 +436,6 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             "  b [APPLICATION 63] BOOLEAN, "
             "  c [PRIVATE 963] BOOLEAN "
             "} "
-            "E ::= CHOICE { "
-            "  a CHOICE { "
-            "    b CHOICE {"
-            "      c INTEGER "
-            "    } "
-            "  }"
-            "} "
             "END",
             'oer')
 
@@ -482,13 +468,6 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
         self.assertEqual(
             str(cm.exception),
             "Expected choice member tag '80', '81' or '82', but got '84'.")
-
-        # Bad inner choice.
-        with self.assertRaises(asn1tools.EncodeError) as cm:
-            foo.encode('E', ('a', ('b', ('d', None))))
-
-        self.assertEqual(str(cm.exception),
-                         "a: b: Expected choice 'c', but got 'd'.")
 
     def test_uft8_string(self):
         foo = asn1tools.compile_string(

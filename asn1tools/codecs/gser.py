@@ -61,7 +61,8 @@ class MembersType(Type):
                 pass
             elif member.default is None:
                 raise EncodeError(
-                    "Member '{}' not found in {}.".format(
+                    "{} member '{}' not found in {}.".format(
+                        self.__class__.__name__,
                         name,
                         data))
 

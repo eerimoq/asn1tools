@@ -716,13 +716,6 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             "    b BOOLEAN "
             "  } "
             "} "
-            "N ::= CHOICE { "
-            "  a CHOICE { "
-            "    b CHOICE {"
-            "      c INTEGER "
-            "    } "
-            "  }"
-            "} "
             "END")
 
         datas = [
@@ -766,13 +759,6 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         self.assertEqual(
             str(cm.exception),
             "Expected choice member tag '80', '81' or '82', but got '88'.")
-
-        # Bad inner choice.
-        with self.assertRaises(asn1tools.EncodeError) as cm:
-            foo.encode('N', ('a', ('b', ('d', None))))
-
-        self.assertEqual(str(cm.exception),
-                         "a: b: Expected choice 'c', but got 'd'.")
 
     def test_choice_implicit_tags(self):
         foo = asn1tools.compile_string(

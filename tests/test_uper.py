@@ -785,13 +785,6 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "  g BOOLEAN, "
             "  h BOOLEAN "
             "} "
-            "L ::= CHOICE { "
-            "  a CHOICE { "
-            "    b CHOICE {"
-            "      c INTEGER "
-            "    } "
-            "  }"
-            "} "
             "END",
             'uper')
 
@@ -838,13 +831,6 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             str(cm.exception),
             "Expected choice 'a', 'b', 'c', 'd', 'e', 'f', 'g' or 'h', but "
             "got 'i'.")
-
-        # Bad inner choice.
-        with self.assertRaises(asn1tools.EncodeError) as cm:
-            foo.encode('L', ('a', ('b', ('d', None))))
-
-        self.assertEqual(str(cm.exception),
-                         "a: b: Expected choice 'c', but got 'd'.")
 
     def test_utf8_string(self):
         foo = asn1tools.compile_string(

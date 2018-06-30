@@ -5,6 +5,7 @@ import asn1tools
 
 
 CODECS = ['ber', 'der', 'jer', 'oer', 'per', 'uper', 'xer']
+ALL_CODECS = CODECS + ['gser']
 
 
 class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
@@ -114,6 +115,31 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
     def test_generalized_time(self):
         self.encode_decode_all_codecs("GeneralizedTime",
                                       [datetime(2021, 3, 12)])
+
+    def test_error_location(self):
+        spec = (
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE { "
+            "  a SEQUENCE { "
+            "    b CHOICE { "
+            "      c SEQUENCE { "
+            "        d INTEGER "
+            "      } "
+            "    } "
+            "  } "
+            "}"
+            "END"
+        )
+
+        for codec in ALL_CODECS:
+            foo = asn1tools.compile_string(spec, codec)
+
+            with self.assertRaises(asn1tools.EncodeError) as cm:
+                foo.encode('A', {'a': {'b': ('c', {})}})
+
+            self.assertEqual(str(cm.exception),
+                             "a: b: c: Sequence member 'd' not found in {}.")
 
 
 if __name__ == '__main__':

@@ -251,13 +251,6 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             "  } "
             "} "
             "B ::= SEQUENCE OF A "
-            "C ::= CHOICE { "
-            "  a CHOICE { "
-            "    b CHOICE {"
-            "      c INTEGER "
-            "    } "
-            "  }"
-            "} "
             "END",
             'xer')
 
@@ -297,13 +290,6 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(str(cm.exception),
                          "Expected choice 'a', 'b' or 'c', but got 'd'.")
-
-        # Bad inner choice.
-        with self.assertRaises(asn1tools.EncodeError) as cm:
-            foo.encode('C', ('a', ('b', ('d', None))))
-
-        self.assertEqual(str(cm.exception),
-                         "a: b: Expected choice 'c', but got 'd'.")
 
     def test_utf8_string(self):
         foo = asn1tools.compile_string(
