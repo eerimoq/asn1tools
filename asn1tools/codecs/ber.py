@@ -523,10 +523,14 @@ class MembersType(Type):
         if name in data:
             value = data[name]
 
-            if isinstance(member, AnyDefinedBy):
-                member.encode(value, encoded_members, data)
-            elif not member.is_default(value):
-                member.encode(value, encoded_members)
+            try:
+                if isinstance(member, AnyDefinedBy):
+                    member.encode(value, encoded_members, data)
+                elif not member.is_default(value):
+                    member.encode(value, encoded_members)
+            except EncodeError as e:
+                e.location.append(member.name)
+                raise
         elif member.optional:
             pass
         elif member.default is None:
@@ -1015,7 +1019,11 @@ class Choice(Type):
                     self.format_names(),
                     data[0]))
 
-        member.encode(data[1], encoded)
+        try:
+            member.encode(data[1], encoded)
+        except EncodeError as e:
+            e.location.append(member.name)
+            raise
 
     def decode(self, data, offset):
         tag = bytes(read_tag(data, offset))

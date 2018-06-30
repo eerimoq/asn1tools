@@ -433,10 +433,14 @@ class MembersType(Type):
         name = member.name
 
         if name in data:
-            if member.default is None:
-                member.encode(data[name], encoder)
-            elif not member.is_default(data[name]) or encode_default:
-                member.encode(data[name], encoder)
+            try:
+                if member.default is None:
+                    member.encode(data[name], encoder)
+                elif not member.is_default(data[name]) or encode_default:
+                    member.encode(data[name], encoder)
+            except EncodeError as e:
+                e.location.append(member.name)
+                raise
         elif member.optional or member.default is not None:
             pass
         else:
@@ -672,7 +676,13 @@ class Real(Type):
             encoder.append_length_determinant(len(encoded))
             encoder.append_bytes(encoded)
         else:
-            encoder.append_bytes(struct.pack(self.fmt, data))
+            try:
+                encoder.append_bytes(struct.pack(self.fmt, data))
+            except (struct.error, OverflowError):
+                raise EncodeError(
+                    'Expected an IEEE 754 {} bits floating point number, but '
+                    'got {}.'.format(8 * self.length,
+                                     data))
 
     def decode(self, decoder):
         if self.fmt is None:
@@ -941,12 +951,12 @@ class Choice(Type):
         if name in self.name_to_root_member:
             member = self.name_to_root_member[name]
             encoder.append_bytes(member.tag)
-            member.encode(data[1], encoder)
+            self.encode_member(member, data[1], encoder)
         elif name in self.name_to_addition:
             member = self.name_to_addition[name]
             encoder.append_bytes(member.tag)
             addition_encoder = Encoder()
-            member.encode(data[1], addition_encoder)
+            self.encode_member(member, data[1], addition_encoder)
             encoder.append_length_determinant(addition_encoder.number_of_bytes())
             encoder += addition_encoder
         else:
@@ -954,6 +964,13 @@ class Choice(Type):
                 "Expected choice {}, but got '{}'.".format(
                     self.format_names(),
                     data[0]))
+
+    def encode_member(self, member, data, encoder):
+        try:
+            member.encode(data, encoder)
+        except EncodeError as e:
+            e.location.append(member.name)
+            raise
 
     def decode(self, decoder):
         tag = decoder.read_tag()

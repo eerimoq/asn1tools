@@ -175,6 +175,13 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
             "A ::= CHOICE { "
             "  a NULL "
             "} "
+            "B ::= CHOICE { "
+            "  a CHOICE { "
+            "    b CHOICE {"
+            "      c INTEGER "
+            "    } "
+            "  }"
+            "} "
             "END",
             'gser')
 
@@ -184,6 +191,13 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
 
         self.assertEqual(str(cm.exception),
                          "Expected choice 'a', but got 'b'.")
+
+        # Bad inner choice.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('B', ('a', ('b', ('d', None))))
+
+        self.assertEqual(str(cm.exception),
+                         "a: b: Expected choice 'c', but got 'd'.")
 
     def test_utf8_string(self):
         foo = asn1tools.compile_string(

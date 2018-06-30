@@ -785,6 +785,13 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "  g BOOLEAN, "
             "  h BOOLEAN "
             "} "
+            "L ::= CHOICE { "
+            "  a CHOICE { "
+            "    b CHOICE {"
+            "      c INTEGER "
+            "    } "
+            "  }"
+            "} "
             "END",
             'uper')
 
@@ -821,7 +828,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             foo.decode('K', b'\x8f')
 
         self.assertEqual(str(cm.exception),
-                         ": Expected choice index 0, 1, 2, 3 or 4, but got 15.")
+                         "Expected choice index 0, 1, 2, 3 or 4, but got 15.")
 
         # Bad addition value.
         with self.assertRaises(asn1tools.EncodeError) as cm:
@@ -831,6 +838,13 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             str(cm.exception),
             "Expected choice 'a', 'b', 'c', 'd', 'e', 'f', 'g' or 'h', but "
             "got 'i'.")
+
+        # Bad inner choice.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('L', ('a', ('b', ('d', None))))
+
+        self.assertEqual(str(cm.exception),
+                         "a: b: Expected choice 'c', but got 'd'.")
 
     def test_utf8_string(self):
         foo = asn1tools.compile_string(
@@ -924,7 +938,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            ": Expected a value in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "
+            "Expected a value in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "
             "but got 11.")
 
         # Decode size extension is not yet supported.
@@ -1284,7 +1298,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             foo.decode_length(b'')
 
         self.assertEqual(str(cm.exception),
-                         ': Decode length is not supported for this codec.')
+                         "Decode length is not supported for this codec.")
 
     def test_versions(self):
         foo = asn1tools.compile_files('tests/files/versions.asn', 'uper')
@@ -2337,7 +2351,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             'uper')
 
         datas = [
-            ('A', b'',         ': out of data at bit offset 0 (0.0 bytes)'),
+            ('A', b'',         'out of data at bit offset 0 (0.0 bytes)'),
             ('B', b'\x00',     'a: c: out of data at bit offset 1 (0.1 bytes)'),
             ('B', b'\x80\x80', 'a: c: out of data at bit offset 9 (1.1 bytes)')
         ]

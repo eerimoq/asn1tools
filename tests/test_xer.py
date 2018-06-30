@@ -115,7 +115,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             foo.decode('A', b'<A></A>')
 
         self.assertEqual(str(cm.exception),
-                         ": Expected an OBJECT IDENTIFER, but got ''.")
+                         "Expected an OBJECT IDENTIFER, but got ''.")
 
     def test_enumerated(self):
         foo = asn1tools.compile_string(
@@ -148,7 +148,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            ": Expected enumeration value 'r' or 't', but got 'bar'.")
+            "Expected enumeration value 'r' or 't', but got 'bar'.")
 
         # Encode of error.
         with self.assertRaises(asn1tools.EncodeError) as cm:
@@ -164,7 +164,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            ": Expected enumeration value 'a', but got 'bar'.")
+            "Expected enumeration value 'a', but got 'bar'.")
 
     def test_sequence(self):
         foo = asn1tools.compile_string(
@@ -251,6 +251,13 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             "  } "
             "} "
             "B ::= SEQUENCE OF A "
+            "C ::= CHOICE { "
+            "  a CHOICE { "
+            "    b CHOICE {"
+            "      c INTEGER "
+            "    } "
+            "  }"
+            "} "
             "END",
             'xer')
 
@@ -275,7 +282,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             foo.decode('A', b'<A><d><true /></d></A>')
 
         self.assertEqual(str(cm.exception),
-                         ": Expected choice 'a', 'b' or 'c', but got 'd'.")
+                         "Expected choice 'a', 'b' or 'c', but got 'd'.")
 
         # Encode of error.
         with self.assertRaises(asn1tools.EncodeError) as cm:
@@ -289,7 +296,14 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             foo.decode('B', b'<A><d><true /></d></A>')
 
         self.assertEqual(str(cm.exception),
-                         ": Expected choice 'a', 'b' or 'c', but got 'd'.")
+                         "Expected choice 'a', 'b' or 'c', but got 'd'.")
+
+        # Bad inner choice.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('C', ('a', ('b', ('d', None))))
+
+        self.assertEqual(str(cm.exception),
+                         "a: b: Expected choice 'c', but got 'd'.")
 
     def test_utf8_string(self):
         foo = asn1tools.compile_string(
@@ -421,7 +435,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             foo.decode_length(b'')
 
         self.assertEqual(str(cm.exception),
-                         ': Decode length is not supported for this codec.')
+                         'Decode length is not supported for this codec.')
 
     def test_rrc_8_6_0(self):
         rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0), 'xer')

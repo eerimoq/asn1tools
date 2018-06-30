@@ -108,7 +108,11 @@ class MembersType(Type):
             name = member.name
 
             if name in data:
-                member_element = member.encode(data[name])
+                try:
+                    member_element = member.encode(data[name])
+                except EncodeError as e:
+                    e.location.append(member.name)
+                    raise
             elif member.optional or member.default is not None:
                 continue
             else:
@@ -434,7 +438,12 @@ class Choice(Type):
                     data[0]))
 
         element = ElementTree.Element(self.name)
-        element.append(member.encode(data[1]))
+
+        try:
+            element.append(member.encode(data[1]))
+        except EncodeError as e:
+            e.location.append(member.name)
+            raise
 
         return element
 

@@ -45,9 +45,14 @@ class MembersType(Type):
             name = member.name
 
             if name in data:
-                encoded_member = member.encode(data[name],
-                                               member_separator,
-                                               indent)
+                try:
+                    encoded_member = member.encode(data[name],
+                                                   member_separator,
+                                                   indent)
+                except EncodeError as e:
+                    e.location.append(member.name)
+                    raise
+
                 encoded_member = u'{}{} {}'.format(member_separator,
                                                    member.name,
                                                    encoded_member)
@@ -257,10 +262,13 @@ class Choice(Type):
                     self.format_names(),
                     data[0]))
 
-        return u'{} : {}'.format(data[0],
-                                 member.encode(data[1],
-                                               separator,
-                                               indent))
+        try:
+            encoded = member.encode(data[1], separator, indent)
+        except EncodeError as e:
+            e.location.append(member.name)
+            raise
+
+        return u'{} : {}'.format(data[0], encoded)
 
     def __repr__(self):
         return 'Choice({}, [{}])'.format(

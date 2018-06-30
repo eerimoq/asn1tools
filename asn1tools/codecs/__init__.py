@@ -13,7 +13,17 @@ class EncodeError(_EncodeError):
 
     """
 
-    pass
+    def __init__(self, message):
+        super(EncodeError, self).__init__()
+        self.message = message
+        self.location = []
+
+    def __str__(self):
+        if self.location:
+            return "{}: {}".format(': '.join(self.location[::-1]),
+                                   self.message)
+        else:
+            return self.message
 
 
 class DecodeError(_DecodeError):
@@ -27,8 +37,11 @@ class DecodeError(_DecodeError):
         self.location = []
 
     def __str__(self):
-        return "{}: {}".format(': '.join(self.location[::-1]),
-                               self.message)
+        if self.location:
+            return "{}: {}".format(': '.join(self.location[::-1]),
+                                   self.message)
+        else:
+            return self.message
 
 
 class DecodeTagError(DecodeError):

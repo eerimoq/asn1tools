@@ -47,7 +47,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             foo.decode('A', b'')
 
         self.assertEqual(str(cm.exception),
-                         ': out of data at bit offset 0 (0.0 bytes)')
+                         'out of data at bit offset 0 (0.0 bytes)')
 
     def test_integer(self):
         foo = asn1tools.compile_string(
@@ -340,14 +340,14 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             foo.decode('C', b'\x70')
 
         self.assertEqual(str(cm.exception),
-                         ": Expected enumeration index 0, 1 or 2, but got 3.")
+                         "Expected enumeration index 0, 1 or 2, but got 3.")
 
         # Bad additions index.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('C', b'\x8f')
 
         self.assertEqual(str(cm.exception),
-                         ": Expected enumeration index 0 or 1, but got 15.")
+                         "Expected enumeration index 0 or 1, but got 15.")
 
     def test_sequence(self):
         foo = asn1tools.compile_string(
@@ -709,6 +709,13 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "  g BOOLEAN, "
             "  h BOOLEAN "
             "} "
+            "L ::= CHOICE { "
+            "  a CHOICE { "
+            "    b CHOICE {"
+            "      c INTEGER "
+            "    } "
+            "  }"
+            "} "
             "END",
             'per')
 
@@ -745,14 +752,14 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             foo.decode('K', b'\x70')
 
         self.assertEqual(str(cm.exception),
-                         ": Expected choice index 0, 1 or 2, but got 3.")
+                         "Expected choice index 0, 1 or 2, but got 3.")
 
         # Bad additions index.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('K', b'\x8f')
 
         self.assertEqual(str(cm.exception),
-                         ": Expected choice index 0, 1, 2, 3 or 4, but got 15.")
+                         "Expected choice index 0, 1, 2, 3 or 4, but got 15.")
 
         # Bad value.
         with self.assertRaises(asn1tools.EncodeError) as cm:
@@ -768,6 +775,13 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             foo.encode('A', ('b', True))
 
         self.assertEqual(str(cm.exception), "Expected choice 'a', but got 'b'.")
+
+        # Bad inner choice.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('L', ('a', ('b', ('d', None))))
+
+        self.assertEqual(str(cm.exception),
+                         "a: b: Expected choice 'c', but got 'd'.")
 
     def test_utf8_string(self):
         foo = asn1tools.compile_string(
@@ -1104,7 +1118,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             foo.decode_length(b'')
 
         self.assertEqual(str(cm.exception),
-                         ': Decode length is not supported for this codec.')
+                         'Decode length is not supported for this codec.')
 
     def test_versions(self):
         foo = asn1tools.compile_files('tests/files/versions.asn', 'per')

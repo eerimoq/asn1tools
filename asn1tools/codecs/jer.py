@@ -66,7 +66,11 @@ class MembersType(Type):
             name = member.name
 
             if name in data:
-                value = member.encode(data[name])
+                try:
+                    value = member.encode(data[name])
+                except EncodeError as e:
+                    e.location.append(member.name)
+                    raise
             elif member.optional or member.default is not None:
                 continue
             else:
@@ -359,7 +363,11 @@ class Choice(Type):
                     self.format_names(),
                     data[0]))
 
-        return {member.name: member.encode(data[1])}
+        try:
+            return {member.name: member.encode(data[1])}
+        except EncodeError as e:
+            e.location.append(member.name)
+            raise
 
     def decode(self, data):
         name, value = list(data.items())[0]

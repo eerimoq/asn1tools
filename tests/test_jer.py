@@ -132,7 +132,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
             foo.decode('A', b'"c"')
 
         self.assertEqual(str(cm.exception),
-                         ": Enumeration value 'c' not found in ['a', 'b'].")
+                         "Enumeration value 'c' not found in ['a', 'b'].")
 
     def test_sequence(self):
         foo = asn1tools.compile_string(
@@ -214,6 +214,13 @@ class Asn1ToolsJerTest(unittest.TestCase):
             "  a BOOLEAN, "
             "  b INTEGER "
             "} "
+            "B ::= CHOICE { "
+            "  a CHOICE { "
+            "    b CHOICE {"
+            "      c INTEGER "
+            "    } "
+            "  }"
+            "} "
             "END",
             'jer')
 
@@ -237,7 +244,14 @@ class Asn1ToolsJerTest(unittest.TestCase):
             foo.decode('A', b'{"c": null}')
 
         self.assertEqual(str(cm.exception),
-                         ": Expected choice 'a' or 'b', but got 'c'.")
+                         "Expected choice 'a' or 'b', but got 'c'.")
+
+        # Bad inner choice.
+        with self.assertRaises(asn1tools.EncodeError) as cm:
+            foo.encode('B', ('a', ('b', ('d', None))))
+
+        self.assertEqual(str(cm.exception),
+                         "a: b: Expected choice 'c', but got 'd'.")
 
     def test_utf8_string(self):
         foo = asn1tools.compile_string(
@@ -355,7 +369,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
             foo.decode_length(b'')
 
         self.assertEqual(str(cm.exception),
-                         ': Decode length is not supported for this codec.')
+                         'Decode length is not supported for this codec.')
 
     def test_rrc_8_6_0(self):
         rrc = asn1tools.compile_dict(deepcopy(RRC_8_6_0), 'jer')
@@ -802,7 +816,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
             'uper')
 
         datas = [
-            ('A', b'',         ': out of data at bit offset 0 (0.0 bytes)'),
+            ('A', b'',         'out of data at bit offset 0 (0.0 bytes)'),
             ('B', b'\x00',     'a: c: out of data at bit offset 1 (0.1 bytes)'),
             ('B', b'\x80\x80', 'a: c: out of data at bit offset 9 (1.1 bytes)')
         ]

@@ -797,10 +797,14 @@ class MembersType(Type):
         name = member.name
 
         if name in data:
-            if member.default is None:
-                member.encode(data[name], encoder)
-            elif not member.is_default(data[name]) or encode_default:
-                member.encode(data[name], encoder)
+            try:
+                if member.default is None:
+                    member.encode(data[name], encoder)
+                elif not member.is_default(data[name]) or encode_default:
+                    member.encode(data[name], encoder)
+            except EncodeError as e:
+                e.location.append(member.name)
+                raise
         elif member.optional or member.default is not None:
             pass
         else:
@@ -1507,7 +1511,7 @@ class Choice(Type):
                                                        self.root_number_of_bits)
 
         member = self.root_index_to_member[index]
-        member.encode(data[1], encoder)
+        self.encode_member(member, data[1], encoder)
 
     def encode_additions(self, data, encoder):
         try:
@@ -1520,7 +1524,7 @@ class Choice(Type):
 
         addition_encoder = Encoder()
         addition = self.additions_index_to_member[index]
-        addition.encode(data[1], addition_encoder)
+        self.encode_member(addition, data[1], addition_encoder)
 
         # Embed encoded extension addition in an open type (add a
         # length field and multiple of 8 bits).
@@ -1529,6 +1533,13 @@ class Choice(Type):
         encoder.align()
         encoder.append_length_determinant(addition_encoder.number_of_bytes())
         encoder += addition_encoder
+
+    def encode_member(self, member, data, encoder):
+        try:
+            member.encode(data, encoder)
+        except EncodeError as e:
+            e.location.append(member.name)
+            raise
 
     def decode(self, decoder):
         if self.additions_index_to_member is not None:
