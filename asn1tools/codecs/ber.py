@@ -242,21 +242,21 @@ def encode_real(data):
     return data
 
 
-def decode_real_binary(control, data, offset):
+def decode_real_binary(control, data):
     if control in [0x80, 0xc0]:
-        exponent = data[offset + 1]
+        exponent = data[1]
 
         if exponent & 0x80:
             exponent -= 0x100
 
-        offset += 2
+        offset = 2
     elif control in [0x81, 0xc1]:
-        exponent = ((data[offset + 1] << 8) | data[offset + 2])
+        exponent = ((data[1] << 8) | data[2])
 
         if exponent & 0x8000:
             exponent -= 0x10000
 
-        offset += 3
+        offset = 3
     else:
         raise DecodeError(
             'Unsupported binary REAL control word 0x{:02x}.'.format(control))
@@ -283,24 +283,22 @@ def decode_real_special(control):
             'Unsupported special REAL control word 0x{:02x}.'.format(control))
 
 
-def decode_real_decimal(data, offset):
-    return float(data[offset + 1:])
+def decode_real_decimal(data):
+    return float(data[1:])
 
 
 def decode_real(data):
-    offset = 0
-
     if len(data) == 0:
         decoded = 0.0
     else:
-        control = data[offset]
+        control = data[0]
 
         if control & 0x80:
-            decoded = decode_real_binary(control, data, offset)
+            decoded = decode_real_binary(control, data)
         elif (control & 0xc0) == 0x40:
             decoded = decode_real_special(control)
         else:
-            decoded = decode_real_decimal(data, offset)
+            decoded = decode_real_decimal(data)
 
     return decoded
 
