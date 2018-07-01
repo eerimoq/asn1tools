@@ -125,8 +125,14 @@ class Asn1ToolsEncodeTypeCheckerTest(unittest.TestCase):
     def test_choice(self):
         self.assert_good_bad('CHOICE { a NULL }',
                              'Expected data of type tuple(str, object)',
-                             good_datas=[('a', None), ('b', {})],
+                             good_datas=[('a', None)],
                              bad_datas=[(1, None), {'a': 1}, None])
+
+        self.assert_good_bad('CHOICE { a CHOICE { b CHOICE { c NULL } } }',
+                             'a: b: Expected data of type tuple(str, object)',
+                             good_datas=[('a', ('b', ('c', None)))],
+                             bad_datas=[('a', ('b', {}))],
+                             bad_datas_strings=['{}'])
 
     def test_utf8_string(self):
         self.assert_good_bad('UTF8String',

@@ -9,6 +9,7 @@ from copy import copy
 
 from . import EncodeError
 from . import compiler
+from . import format_or
 
 
 LOGGER = logging.getLogger(__name__)
@@ -164,6 +165,10 @@ class Choice(Type):
     def __init__(self, name, members):
         super(Choice, self).__init__(name)
         self.members = members
+        self.name_to_member = {member.name: member for member in self.members}
+
+    def format_names(self):
+        return format_or(sorted([member.name for member in self.members]))
 
     def encode(self, data):
         if sys.version_info[0] > 2:
@@ -180,6 +185,20 @@ class Choice(Type):
                 raise EncodeError(
                     'Expected data of type tuple(str, object), but got {}.'.format(
                         data))
+
+        try:
+            member = self.name_to_member[data[0]]
+        except KeyError:
+            raise EncodeError(
+                "Expected choice {}, but got '{}'.".format(
+                    self.format_names(),
+                    data[0]))
+
+        try:
+            member.encode(data[1])
+        except EncodeError as e:
+            e.location.append(member.name)
+            raise
 
 
 class Time(Type):
