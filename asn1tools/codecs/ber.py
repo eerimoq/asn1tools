@@ -242,6 +242,51 @@ def encode_real(data):
     return data
 
 
+def decode_real_binary(control, data, offset):
+    if control in [0x80, 0xc0]:
+        exponent = data[offset + 1]
+
+        if exponent & 0x80:
+            exponent -= 0x100
+
+        offset += 2
+    elif control in [0x81, 0xc1]:
+        exponent = ((data[offset + 1] << 8) | data[offset + 2])
+
+        if exponent & 0x8000:
+            exponent -= 0x10000
+
+        offset += 3
+    else:
+        raise DecodeError(
+            'Unsupported REAL control word 0x{:02x}.'.format(control))
+
+    mantissa = int(binascii.hexlify(data[offset:]), 16)
+    decoded = float(mantissa * 2 ** exponent)
+
+    if control & 0x40:
+        decoded *= -1
+
+    return decoded
+
+
+def decode_real_special(control):
+    try:
+        return {
+            0x40: float('inf'),
+            0x41: float('-inf'),
+            0x42: float('nan'),
+            0x43: -0.0
+        }[control]
+    except KeyError:
+        raise DecodeError(
+            'Unsupported special REAL value 0x{:02x}.'.format(control))
+
+
+def decode_real_decimal(data, offset):
+    return float(data[offset + 1:])
+
+
 def decode_real(data):
     offset = 0
 
@@ -250,41 +295,15 @@ def decode_real(data):
     else:
         control = data[offset]
 
-        if len(data) == 1:
-            try:
-                decoded = {
-                    0x40: float('inf'),
-                    0x41: float('-inf'),
-                    0x42: float('nan'),
-                    0x43: -0.0
-                }[control]
-            except KeyError:
-                raise DecodeError(
-                    'Unsupported REAL control word 0x{:02x}.'.format(control))
+        if control & 0x80:
+            decoded = decode_real_binary(control, data, offset)
+        elif (control & 0xc0) == 0x40:
+            decoded = decode_real_special(control)
+        elif (control & 0xc0) == 0:
+            decoded = decode_real_decimal(data, offset)
         else:
-            if control in [0x80, 0xc0]:
-                exponent = data[offset + 1]
-
-                if exponent & 0x80:
-                    exponent -= 0x100
-
-                offset += 2
-            elif control in [0x81, 0xc1]:
-                exponent = ((data[offset + 1] << 8) | data[offset + 2])
-
-                if exponent & 0x8000:
-                    exponent -= 0x10000
-
-                offset += 3
-            else:
-                raise DecodeError(
-                    'Unsupported REAL control word 0x{:02x}.'.format(control))
-
-            mantissa = int(binascii.hexlify(data[offset:]), 16)
-            decoded = float(mantissa * 2 ** exponent)
-
-            if control & 0x40:
-                decoded *= -1
+            raise DecodeError(
+                'Unsupported REAL control word 0x{:02x}.'.format(control))
 
     return decoded
 

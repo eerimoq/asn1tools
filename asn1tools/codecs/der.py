@@ -18,6 +18,7 @@ from .ber import encode_signed_integer
 from .ber import decode_signed_integer
 from .ber import encode_tag
 from .ber import Boolean
+from .ber import Real
 from .ber import Null
 from .ber import ObjectIdentifier
 from .ber import Enumerated
@@ -159,21 +160,6 @@ class Integer(Type):
 
     def __repr__(self):
         return 'Integer({})'.format(self.name)
-
-
-class Real(Type):
-
-    def __init__(self, name):
-        super(Real, self).__init__(name, 'REAL', Tag.REAL)
-
-    def encode(self, data, encoded):
-        raise NotImplementedError('REAL is not yet implemented.')
-
-    def decode(self, data, offset):
-        raise NotImplementedError('REAL is not yet implemented.')
-
-    def __repr__(self):
-        return 'Real({})'.format(self.name)
 
 
 class BitString(Type):

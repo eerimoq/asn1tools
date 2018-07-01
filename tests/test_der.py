@@ -19,6 +19,26 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
 
     maxDiff = None
 
+    def test_real(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= REAL "
+            "END")
+
+        datas = [
+            ('A',                 0.0, b'\x09\x00'),
+            ('A',               100.0, b'\x09\x03\x80\x02\x19'),
+            ('A',              -100.0, b'\x09\x03\xc0\x02\x19'),
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Decode 100.0 in decimal form (1.e2).
+        self.assertEqual(foo.decode('A', b'\x09\x05\x03\x31\x2e\x45\x32'),
+                         100.0)
+
     def test_bit_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "

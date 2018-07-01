@@ -45,8 +45,7 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         self.encode_decode_all_codecs("INTEGER", [1, 123456789, -2, 0])
 
     def test_real(self):
-        with self.assertRaises(NotImplementedError):
-            self.encode_decode_all_codecs("REAL", [0.0, 1.0])
+        self.encode_decode_all_codecs("REAL", [0.0, 1.0, -1.0])
 
     def test_null(self):
         self.encode_decode_all_codecs("NULL", [None])
