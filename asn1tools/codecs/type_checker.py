@@ -39,9 +39,6 @@ class Type(object):
     def set_size_range(self, minimum, maximum, has_extension_marker):
         pass
 
-    def set_restricted_to_range(self, minimum, maximum, has_extension_marker):
-        pass
-
     def encode(self, data):
         if not isinstance(data, self.TYPE):
             raise EncodeError(
@@ -56,15 +53,32 @@ class Boolean(Type):
 
 class Integer(Type):
 
-    TYPE = int
+    def encode(self, data):
+        if sys.version_info[0] > 2:
+            if not isinstance(data, (int, str)):
+                raise EncodeError(
+                    'Expected data of type int or str, but got {}.'.format(
+                        data))
+        else:
+            if not isinstance(data, (int, long, str, unicode)):
+                raise EncodeError(
+                    'Expected data of type int or str, but got {}.'.format(
+                        data))
 
 
 class Float(Type):
 
     def encode(self, data):
-        if not isinstance(data, (float, int)):
-            raise EncodeError(
-                'Expected data of type float or int, but got {}.'.format(data))
+        if sys.version_info[0] > 2:
+            if not isinstance(data, (float, int)):
+                raise EncodeError(
+                    'Expected data of type float or int, but got {}.'.format(
+                        data))
+        else:
+            if not isinstance(data, (float, int, long)):
+                raise EncodeError(
+                    'Expected data of type float or int, but got {}.'.format(
+                        data))
 
 
 class Null(Type):
@@ -79,7 +93,7 @@ class BitString(Type):
     def encode(self, data):
         if (not isinstance(data, tuple)
             or len(data) != 2
-            or not isinstance(data[0], bytes)
+            or not isinstance(data[0], (bytes, bytearray))
             or not isinstance(data[1], int)):
             raise EncodeError(
                 'Expected data of type tuple(bytes, int), but got {}.'.format(
@@ -152,12 +166,20 @@ class Choice(Type):
         self.members = members
 
     def encode(self, data):
-        if (not isinstance(data, tuple)
-            or len(data) != 2
-            or not isinstance(data[0], str)):
-            raise EncodeError(
-                'Expected data of type tuple(str, object), but got {}.'.format(
-                    data))
+        if sys.version_info[0] > 2:
+            if (not isinstance(data, tuple)
+                or len(data) != 2
+                or not isinstance(data[0], str)):
+                raise EncodeError(
+                    'Expected data of type tuple(str, object), but got {}.'.format(
+                        data))
+        else:
+            if (not isinstance(data, tuple)
+                or len(data) != 2
+                or not isinstance(data[0], (str, unicode))):
+                raise EncodeError(
+                    'Expected data of type tuple(str, object), but got {}.'.format(
+                        data))
 
 
 class Time(Type):
@@ -192,10 +214,8 @@ class Recursive(Type, compiler.Recursive):
 
 class CompiledType(compiler.CompiledType):
 
-    def __init__(self,
-                 type_,
-                 constraints):
-        super(CompiledType, self).__init__(constraints)
+    def __init__(self, type_):
+        super(CompiledType, self).__init__()
         self._type = type_
 
     @property
@@ -212,12 +232,8 @@ class Compiler(compiler.Compiler):
         compiled_type = self.compile_type(type_name,
                                           type_descriptor,
                                           module_name)
-        constraints = self.compile_constraints(type_name,
-                                               type_descriptor,
-                                               module_name)
 
-        return CompiledType(compiled_type,
-                            constraints)
+        return CompiledType(compiled_type)
 
     def compile_type(self, name, type_descriptor, module_name):
         type_name = type_descriptor['type']
@@ -249,7 +265,7 @@ class Compiler(compiler.Compiler):
             compiled = BitString(name)
         elif type_name in STRING_TYPES:
             compiled = String(name)
-        elif type_name in ['ANY', 'ANY DEFINED BY']:
+        elif type_name in ['ANY', 'ANY DEFINED BY', 'OpenType']:
             compiled = Skip(name)
         elif type_name == 'NULL':
             compiled = Null(name)

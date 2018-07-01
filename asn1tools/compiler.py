@@ -14,10 +14,17 @@ from .codecs import oer
 from .codecs import per
 from .codecs import uper
 from .codecs import xer
+from .codecs import type_checker
 from .errors import CompileError
 from .errors import EncodeError
 from .errors import DecodeError
 from .errors import ConstraintsError
+
+
+class ConstraintsChecker(object):
+
+    def encode(self, data):
+        raise NotImplementedError
 
 
 class Specification(object):
@@ -31,7 +38,7 @@ class Specification(object):
 
     """
 
-    def __init__(self, modules, decode_length):
+    def __init__(self, modules, decode_length, type_checkers):
         self._modules = modules
         self._decode_length = decode_length
         self._types = {}
@@ -41,7 +48,10 @@ class Specification(object):
         for module_name in modules:
             types = modules[module_name]
 
-            for type_name in types:
+            for type_name, type_ in types.items():
+                type_.type_checker = type_checkers[module_name][type_name]
+                type_.constraints_checker = ConstraintsChecker()
+
                 if type_name in duplicated:
                     continue
 
@@ -50,7 +60,7 @@ class Specification(object):
                     duplicated.add(type_name)
                     continue
 
-                self._types[type_name] = types[type_name]
+                self._types[type_name] = type_
 
     @property
     def types(self):
@@ -83,9 +93,14 @@ class Specification(object):
 
         return self._modules
 
-    def encode(self, name, data, **kwargs):
+    def encode(self, name, data, type_checking=True, **kwargs):
         """Encode given dictionary `data` as given type `name` and return the
         encoded data as a bytes object.
+
+        If `type_checking` is ``True`` all objects in `data` are
+        checked against the expected Python type for its ASN.1
+        type. Set `type_checking` to ``False`` to minimize the runtime
+        overhead, but instead get less informative error messages.
 
         See `Types`_ for a mapping table from ASN.1 types to Python
         types.
@@ -98,6 +113,9 @@ class Specification(object):
         if name not in self._types:
             raise EncodeError(
                 "Type '{}' not found in types dictionary.".format(name))
+
+        if type_checking:
+            self._types[name].type_checker.encode(data)
 
         return self._types[name].encode(data, **kwargs)
 
@@ -145,7 +163,7 @@ class Specification(object):
             raise ConstraintsError(
                 "Type '{}' not found in types dictionary.".format(name))
 
-        return self._types[name].check_constraints(data)
+        return self._types[name].constraints_checker.encode(data)
 
 
 def _compile_any_defined_by_type(type_, choices):
@@ -210,7 +228,8 @@ def compile_dict(specification, codec='ber', any_defined_by_choices=None):
                                         any_defined_by_choices)
 
     return Specification(codec.compile_dict(specification),
-                         codec.decode_length)
+                         codec.decode_length,
+                         type_checker.compile_dict(specification))
 
 
 def compile_string(string, codec='ber', any_defined_by_choices=None):

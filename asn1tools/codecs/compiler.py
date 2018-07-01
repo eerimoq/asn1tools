@@ -73,21 +73,13 @@ def clean_bit_string_value(value, has_named_bits):
 
 class CompiledType(object):
 
-    def __init__(self, constraints):
-        self._constraints = constraints
-
-    def check_constraints(self, data):
-        self._constraints.check(data)
+    def __init__(self):
+        self.constraints_checker = None
+        self.type_checker = None
 
 
 class Recursive(object):
     pass
-
-
-class Constraints(object):
-
-    def check(self, data):
-        raise NotImplementedError('Constraints check is not yet implemented.')
 
 
 class Compiler(object):
@@ -426,12 +418,6 @@ class Compiler(object):
                                    compiled)
 
         return compiled
-
-    def compile_constraints(self,
-                            type_name,
-                            type_descriptor,
-                            module_name):
-        return Constraints()
 
     def compile_members(self, members, module_name):
         compiled_members = []

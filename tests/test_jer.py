@@ -122,7 +122,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
 
         # Encode error.
         with self.assertRaises(asn1tools.EncodeError) as cm:
-            foo.encode('A', ('c', None))
+            foo.encode('A', 'c')
 
         self.assertEqual(str(cm.exception),
                          "Enumeration value 'c' not found in ['a', 'b'].")

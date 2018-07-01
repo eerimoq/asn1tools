@@ -1288,8 +1288,8 @@ class Recursive(Type, compiler.Recursive):
 
 class CompiledType(compiler.CompiledType):
 
-    def __init__(self, type_, constraints):
-        super(CompiledType, self).__init__(constraints)
+    def __init__(self, type_):
+        super(CompiledType, self).__init__()
         self._type = type_
 
     @property
@@ -1315,11 +1315,8 @@ class Compiler(compiler.Compiler):
         compiled_type = self.compile_type(type_name,
                                           type_descriptor,
                                           module_name)
-        constraints = self.compile_constraints(type_name,
-                                               type_descriptor,
-                                               module_name)
 
-        return CompiledType(compiled_type, constraints)
+        return CompiledType(compiled_type)
 
     def compile_implicit_type(self, name, type_descriptor, module_name):
         type_name = type_descriptor['type']

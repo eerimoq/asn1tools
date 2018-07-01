@@ -52,9 +52,9 @@ class Asn1ToolsEncodeTypeCheckerTest(unittest.TestCase):
 
     def test_integer(self):
         self.assert_good_bad('INTEGER',
-                             'Expected data of type int',
+                             'Expected data of type int or str',
                              good_datas=[1, -1],
-                             bad_datas=['1', None])
+                             bad_datas=[[], None])
 
     def test_real(self):
         self.assert_good_bad('REAL',

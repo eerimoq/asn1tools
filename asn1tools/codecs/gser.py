@@ -455,8 +455,8 @@ class Recursive(Type, compiler.Recursive):
 
 class CompiledType(compiler.CompiledType):
 
-    def __init__(self, type_name, compiled_type, constraints):
-        super(CompiledType, self).__init__(constraints)
+    def __init__(self, type_name, compiled_type):
+        super(CompiledType, self).__init__()
         self._value_name = type_name.lower()
         self._value_type = type_name
         self._type = compiled_type
@@ -490,11 +490,8 @@ class Compiler(compiler.Compiler):
         compiled_type = self.compile_type(type_name,
                                           type_descriptor,
                                           module_name)
-        constraints = self.compile_constraints(type_name,
-                                               type_descriptor,
-                                               module_name)
 
-        return CompiledType(type_name, compiled_type, constraints)
+        return CompiledType(type_name, compiled_type)
 
     def compile_type(self, name, type_descriptor, module_name):
         type_name = type_descriptor['type']

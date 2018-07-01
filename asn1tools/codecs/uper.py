@@ -242,11 +242,8 @@ class Compiler(per.Compiler):
         compiled_type = self.compile_type(type_name,
                                           type_descriptor,
                                           module_name)
-        constraints = self.compile_constraints(type_name,
-                                               type_descriptor,
-                                               module_name)
 
-        return CompiledType(compiled_type, constraints)
+        return CompiledType(compiled_type)
 
     def compile_type(self, name, type_descriptor, module_name):
         type_name = type_descriptor['type']

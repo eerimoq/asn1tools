@@ -141,11 +141,16 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
 
         # Non-float value.
         with self.assertRaises(asn1tools.EncodeError) as cm:
-            foo.encode('C', None)
+            foo.encode('C', 2 ** 1025)
 
         self.assertEqual(
             str(cm.exception),
-            'Expected an IEEE 754 64 bits floating point number, but got None.')
+            'Expected an IEEE 754 64 bits floating point number, but got 35953'
+            '86269724631815458610381578049467235953957884613145468601623154653'
+            '51611001926265416954644815072042240227759742786715317579537628833'
+            '24498569486127894824875553578684973097055260443920249218823890616'
+            '59041700115376763013646849257629478262210816544743267010213691725'
+            '96479894491876959432609670712659248448274432.')
 
     def test_null(self):
         foo = asn1tools.compile_string(
