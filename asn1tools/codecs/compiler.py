@@ -77,6 +77,12 @@ class CompiledType(object):
         self.constraints_checker = None
         self.type_checker = None
 
+    def check_types(self, data):
+        return self.type_checker.encode(data)
+
+    def check_constraints(self, data):
+        return self.constraints_checker.encode(data)
+
 
 class Recursive(object):
     pass

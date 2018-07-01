@@ -26,8 +26,7 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
                 "END",
                 codec)
 
-            with self.assertRaises(NotImplementedError):
-                foo.check_constraints('A', 0)
+            foo.check_constraints('A', 0)
 
     def test_integer(self):
         foo = asn1tools.compile_string(
@@ -62,28 +61,38 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
         ]
 
         for type_name, decoded in datas:
-            with self.assertRaises(NotImplementedError):
-                foo.check_constraints(type_name, decoded)
+            foo.check_constraints(type_name, decoded)
 
         # Not ok.
         datas = [
-            ('B',      4, ': 4 does not fulfill 5..99'),
-            ('B',    100, ': 100 does not fulfill 5..99'),
-            ('C',    -11, ': -11 does not fulfill -10..10'),
-            ('C',     11, ': 11 does not fulfill -10..10'),
-            ('D',    100, ': 100 does not fulfill 5..99'),
-            ('E',      0, ': 0 does not fulfill 1000..1000'),
+            ('B',
+             4,
+             'Expected an integer between 5 and 99, but got 4.'),
+            ('B',
+             100,
+             'Expected an integer between 5 and 99, but got 100.'),
+            ('C',
+             -11,
+             'Expected an integer between -10 and 10, but got -11.'),
+            ('C',
+             11,
+             'Expected an integer between -10 and 10, but got 11.'),
+            ('D',
+             100,
+             'Expected an integer between 5 and 99, but got 100.'),
+            ('E',
+             0,
+             'Expected an integer between 1000 and 1000, but got 0.'),
             ('F',
              {'a': 4, 'b': 41, 'c': 400},
-             'b: 41 does not fulfill 40..40')
+             'b: Expected an integer between 40 and 40, but got 41.')
         ]
 
         for type_name, decoded, message in datas:
-            with self.assertRaises(NotImplementedError):
-                with self.assertRaises(asn1tools.ConstraintsError) as cm:
-                    foo.check_constraints(type_name, decoded)
+            with self.assertRaises(asn1tools.ConstraintsError) as cm:
+                foo.check_constraints(type_name, decoded)
 
-                self.assertEqual(str(cm.exception), message)
+            self.assertEqual(str(cm.exception), message)
 
 
 if __name__ == '__main__':

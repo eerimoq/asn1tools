@@ -5,6 +5,7 @@ from datetime import timedelta
 from ..errors import Error
 from ..errors import EncodeError as _EncodeError
 from ..errors import DecodeError as _DecodeError
+from ..errors import ConstraintsError as _ConstraintsError
 from .. import compat
 
 
@@ -33,6 +34,24 @@ class DecodeError(_DecodeError):
 
     def __init__(self, message):
         super(DecodeError, self).__init__()
+        self.message = message
+        self.location = []
+
+    def __str__(self):
+        if self.location:
+            return "{}: {}".format(': '.join(self.location[::-1]),
+                                   self.message)
+        else:
+            return self.message
+
+
+class ConstraintsError(_ConstraintsError):
+    """General ASN.1 constraints error with error location in the message.
+
+    """
+
+    def __init__(self, message):
+        super(ConstraintsError, self).__init__()
         self.message = message
         self.location = []
 
