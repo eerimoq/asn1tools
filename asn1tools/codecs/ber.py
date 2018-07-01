@@ -295,7 +295,7 @@ def decode_real(data):
 
         if control & 0x80:
             decoded = decode_real_binary(control, data)
-        elif (control & 0xc0) == 0x40:
+        elif control & 0x40:
             decoded = decode_real_special(control)
         else:
             decoded = decode_real_decimal(data)
