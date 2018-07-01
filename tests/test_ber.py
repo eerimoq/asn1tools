@@ -200,13 +200,13 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             foo.decode('A', b'\x09\x01\x44')
 
         self.assertEqual(str(cm.exception),
-                         'Unsupported special REAL value 0x44.')
+                         'Unsupported special REAL control word 0x44.')
 
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('A', b'\x09\x02\x82\x00')
 
         self.assertEqual(str(cm.exception),
-                         'Unsupported REAL control word 0x82.')
+                         'Unsupported binary REAL control word 0x82.')
 
         # Decode 100.0 in decimal form (1.e2).
         self.assertEqual(foo.decode('A', b'\x09\x05\x03\x31\x2e\x45\x32'),

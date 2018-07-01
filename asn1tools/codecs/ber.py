@@ -259,7 +259,7 @@ def decode_real_binary(control, data, offset):
         offset += 3
     else:
         raise DecodeError(
-            'Unsupported REAL control word 0x{:02x}.'.format(control))
+            'Unsupported binary REAL control word 0x{:02x}.'.format(control))
 
     mantissa = int(binascii.hexlify(data[offset:]), 16)
     decoded = float(mantissa * 2 ** exponent)
@@ -280,7 +280,7 @@ def decode_real_special(control):
         }[control]
     except KeyError:
         raise DecodeError(
-            'Unsupported special REAL value 0x{:02x}.'.format(control))
+            'Unsupported special REAL control word 0x{:02x}.'.format(control))
 
 
 def decode_real_decimal(data, offset):
@@ -299,11 +299,8 @@ def decode_real(data):
             decoded = decode_real_binary(control, data, offset)
         elif (control & 0xc0) == 0x40:
             decoded = decode_real_special(control)
-        elif (control & 0xc0) == 0:
-            decoded = decode_real_decimal(data, offset)
         else:
-            raise DecodeError(
-                'Unsupported REAL control word 0x{:02x}.'.format(control))
+            decoded = decode_real_decimal(data, offset)
 
     return decoded
 
