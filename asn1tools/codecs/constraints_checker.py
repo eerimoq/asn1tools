@@ -98,7 +98,7 @@ class BitString(Type):
 
         if number_of_bits < self.minimum or number_of_bits > self.maximum:
             raise ConstraintsError(
-                'Expected between {} and {} number of bits, but got {}.'.format(
+                'Expected between {} and {} bits, but got {}.'.format(
                     self.minimum,
                     self.maximum,
                     number_of_bits))
@@ -119,7 +119,7 @@ class Bytes(Type):
 
         if length < self.minimum or length > self.maximum:
             raise ConstraintsError(
-                'Expected between {} and {} number of bytes, but got {}.'.format(
+                'Expected between {} and {} bytes, but got {}.'.format(
                     self.minimum,
                     self.maximum,
                     length))
@@ -140,7 +140,7 @@ class String(Type):
 
         if length < self.minimum or length > self.maximum:
             raise ConstraintsError(
-                'Expected between {} and {} number of characters, but got {}.'.format(
+                'Expected between {} and {} characters, but got {}.'.format(
                     self.minimum,
                     self.maximum,
                     length))
@@ -178,7 +178,7 @@ class List(Type):
 
             if length < self.minimum or length > self.maximum:
                 raise ConstraintsError(
-                    'Expected between {} and {} elements, but got {}.'.format(
+                    'Expected a list of between {} and {} elements, but got {}.'.format(
                         self.minimum,
                         self.maximum,
                         length))

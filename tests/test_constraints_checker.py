@@ -189,7 +189,7 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
         datas = [
             ('B',
              (b'\x01\x23', 9),
-             'Expected between 10 and 10 number of bits, but got 9.')
+             'Expected between 10 and 10 bits, but got 9.')
         ]
 
         self.assert_encode_decode_bad(foo, datas)
@@ -214,7 +214,7 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
         datas = [
             ('B',
              11 * b'\x01',
-             'Expected between 10 and 10 number of bytes, but got 11.')
+             'Expected between 10 and 10 bytes, but got 11.')
         ]
 
         self.assert_encode_decode_bad(foo, datas)
@@ -259,7 +259,7 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
         datas = [
             ('A',
              [3, 4, 5],
-             'Expected between 2 and 2 elements, but got 3.'),
+             'Expected a list of between 2 and 2 elements, but got 3.'),
             ('A',
              [3, 6],
              'Expected an integer between 3 and 5, but got 6.')
@@ -288,10 +288,10 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
         datas = [
             ('B',
              '1',
-             'Expected between 2 and 5 number of characters, but got 1.'),
+             'Expected between 2 and 5 characters, but got 1.'),
             ('B',
              '123456',
-             'Expected between 2 and 5 number of characters, but got 6.')
+             'Expected between 2 and 5 characters, but got 6.')
         ]
 
         self.assert_encode_decode_bad(foo, datas)
