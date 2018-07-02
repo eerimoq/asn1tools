@@ -1,4 +1,4 @@
-"""Python type checker.
+"""ASN.1 constraints checker.
 
 """
 
