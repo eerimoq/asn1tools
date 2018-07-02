@@ -214,7 +214,7 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
         datas = [
             ('B',
              11 * b'\x01',
-             'Expected between 10 and 10 number of bits, but got 11.')
+             'Expected between 10 and 10 number of bytes, but got 11.')
         ]
 
         self.assert_encode_decode_bad(foo, datas)
@@ -263,6 +263,35 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
             ('A',
              [3, 6],
              'Expected an integer between 3 and 5, but got 6.')
+        ]
+
+        self.assert_encode_decode_bad(foo, datas)
+
+    def test_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UTF8String "
+            "B ::= UTF8String (SIZE (2..5)) "
+            "END")
+
+        # Ok.
+        datas = [
+            ('A',  '123'),
+            ('B',  '12'),
+            ('B',  '12345')
+        ]
+
+        self.assert_encode_decode_ok(foo, datas)
+
+        # Not ok.
+        datas = [
+            ('B',
+             '1',
+             'Expected between 2 and 5 number of characters, but got 1.'),
+            ('B',
+             '123456',
+             'Expected between 2 and 5 number of characters, but got 6.')
         ]
 
         self.assert_encode_decode_bad(foo, datas)

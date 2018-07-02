@@ -119,7 +119,7 @@ class Bytes(Type):
 
         if length < self.minimum or length > self.maximum:
             raise ConstraintsError(
-                'Expected between {} and {} number of bits, but got {}.'.format(
+                'Expected between {} and {} number of bytes, but got {}.'.format(
                     self.minimum,
                     self.maximum,
                     length))
@@ -127,8 +127,23 @@ class Bytes(Type):
 
 class String(Type):
 
+    def __init__(self, name, minimum, maximum):
+        super(String, self).__init__(name)
+        self.minimum = minimum
+        self.maximum = maximum
+
     def encode(self, data):
-        pass
+        if self.minimum is None:
+            return
+
+        length = len(data)
+
+        if length < self.minimum or length > self.maximum:
+            raise ConstraintsError(
+                'Expected between {} and {} number of characters, but got {}.'.format(
+                    self.minimum,
+                    self.maximum,
+                    length))
 
 
 class Dict(Type):
@@ -279,7 +294,9 @@ class Compiler(compiler.Compiler):
                                  minimum,
                                  maximum)
         elif type_name in STRING_TYPES:
-            compiled = String(name)
+            minimum, maximum, _ = self.get_size_range(type_descriptor,
+                                                      module_name)
+            compiled = String(name, minimum, maximum)
         elif type_name in ['ANY', 'ANY DEFINED BY', 'OpenType']:
             compiled = Skip(name)
         elif type_name == 'NULL':
