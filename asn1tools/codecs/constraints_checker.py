@@ -39,13 +39,13 @@ class Type(object):
         pass
 
     def encode(self, data):
-        raise NotImplementedError
+        raise NotImplementedError('To be implemented by subclasses.')
 
 
 class Boolean(Type):
 
     def encode(self, data):
-        raise NotImplementedError
+        pass
 
 
 class Integer(Type):
@@ -77,31 +77,46 @@ class Integer(Type):
 class Float(Type):
 
     def encode(self, data):
-        raise NotImplementedError
+        pass
 
 
 class Null(Type):
 
     def encode(self, data):
-        raise NotImplementedError
+        pass
 
 
 class BitString(Type):
 
+    def __init__(self, name, minimum, maximum):
+        super(BitString, self).__init__(name)
+        self.minimum = minimum
+        self.maximum = maximum
+
     def encode(self, data):
-        raise NotImplementedError
+        if self.minimum is None:
+            return
+
+        number_of_bits = data[1]
+
+        if number_of_bits < self.minimum or number_of_bits > self.maximum:
+            raise ConstraintsError(
+                'Expected between {} and {} number of bits, but got {}.'.format(
+                    self.minimum,
+                    self.maximum,
+                    number_of_bits))
 
 
 class Bytes(Type):
 
     def encode(self, data):
-        raise NotImplementedError
+        pass
 
 
 class String(Type):
 
     def encode(self, data):
-        raise NotImplementedError
+        pass
 
 
 class Dict(Type):
@@ -138,21 +153,28 @@ class Choice(Type):
     def __init__(self, name, members):
         super(Choice, self).__init__(name)
         self.members = members
+        self.name_to_member = {member.name: member for member in self.members}
 
     def encode(self, data):
-        raise NotImplementedError
+        member = self.name_to_member[data[0]]
+
+        try:
+            member.encode(data[1])
+        except ConstraintsError as e:
+            e.location.append(member.name)
+            raise
 
 
 class Time(Type):
 
     def encode(self, data):
-        raise NotImplementedError
+        pass
 
 
 class Skip(Type):
 
     def encode(self, data):
-        raise NotImplementedError
+        pass
 
 
 class Recursive(Type, compiler.Recursive):
@@ -220,7 +242,11 @@ class Compiler(compiler.Compiler):
         elif type_name in ['UTCTime', 'GeneralizedTime']:
             compiled = Time(name)
         elif type_name == 'BIT STRING':
-            compiled = BitString(name)
+            minimum, maximum, _ = self.get_size_range(type_descriptor,
+                                                      module_name)
+            compiled = BitString(name,
+                                 minimum,
+                                 maximum)
         elif type_name in STRING_TYPES:
             compiled = String(name)
         elif type_name in ['ANY', 'ANY DEFINED BY', 'OpenType']:

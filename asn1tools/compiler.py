@@ -19,7 +19,6 @@ from .codecs import constraints_checker
 from .errors import CompileError
 from .errors import EncodeError
 from .errors import DecodeError
-from .errors import ConstraintsError
 
 
 class Specification(object):
@@ -109,37 +108,62 @@ class Specification(object):
         See `Types`_ for a mapping table from ASN.1 types to Python
         types.
 
+        If `check_constraints` is ``True`` all objects in `data` are
+        checked against their ASN.1 type constraints. A
+        ConstraintsError exception is raised if the constraints are
+        not fulfilled. Set `check_constraints` to ``False`` to skip
+        the constraints check and minimize the runtime overhead, but
+        instead get less informative error messages and allow encoding
+        of values not fulfilling the constraints.
+
         >>> foo.encode('Question', {'id': 1, 'question': 'Is 1+1=3?'})
         b'0\\x0e\\x02\\x01\\x01\\x16\\x09Is 1+1=3?'
 
         """
 
-        if name not in self._types:
+        try:
+            type_ = self._types[name]
+        except KeyError:
             raise EncodeError(
                 "Type '{}' not found in types dictionary.".format(name))
 
         if check_types:
-            self._types[name].check_types(data)
+            type_.check_types(data)
 
         if check_constraints:
-            self._types[name].check_constraints(data)
+            type_.check_constraints(data)
 
-        return self._types[name].encode(data, **kwargs)
+        return type_.encode(data, **kwargs)
 
-    def decode(self, name, data):
+    def decode(self, name, data, check_constraints=False):
         """Decode given bytes object `data` as given type `name` and return
         the decoded data as a dictionary.
+
+        If `check_constraints` is ``True`` all objects in `data` are
+        checked against their ASN.1 type constraints. A
+        ConstraintsError exception is raised if the constraints are
+        not fulfilled. Set `check_constraints` to ``False`` to skip
+        the constraints check and minimize the runtime overhead, but
+        instead allow decoding of values not fulfilling the
+        constraints.
 
         >>> foo.decode('Question', b'0\\x0e\\x02\\x01\\x01\\x16\\x09Is 1+1=3?')
         {'id': 1, 'question': 'Is 1+1=3?'}
 
         """
 
-        if name not in self._types:
+        try:
+            type_ = self._types[name]
+        except KeyError:
             raise DecodeError(
                 "Type '{}' not found in types dictionary.".format(name))
 
-        return self._types[name].decode(data)
+        decoded = type_.decode(data)
+
+        if check_constraints:
+            type_.check_constraints(decoded)
+
+        return decoded
 
     def decode_length(self, data):
         """Decode the length of given data `data`. Returns None if not enough
@@ -155,22 +179,6 @@ class Specification(object):
         """
 
         return self._decode_length(data)
-
-    def check_constraints(self, name, data):
-        """Check if `data` fulfills given type `name`'s constraints.
-
-        Raises ConstraintsError if the constraints are not fulfilled,
-        or if given type does not exist.
-
-        >>> foo.check_constraints('Question', {'id': 1, 'question': 'Is 1+1=3?'})
-
-        """
-
-        if name not in self._types:
-            raise ConstraintsError(
-                "Type '{}' not found in types dictionary.".format(name))
-
-        return self._types[name].check_constraints(data)
 
 
 def _compile_any_defined_by_type(type_, choices):
