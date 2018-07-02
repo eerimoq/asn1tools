@@ -136,11 +136,23 @@ class Dict(Type):
 
 class List(Type):
 
-    def __init__(self, name, element_type):
+    def __init__(self, name, element_type, minimum, maximum):
         super(List, self).__init__(name)
         self.element_type = element_type
+        self.minimum = minimum
+        self.maximum = maximum
 
     def encode(self, data):
+        if self.minimum is not None:
+            length = len(data)
+
+            if length < self.minimum or length > self.maximum:
+                raise ConstraintsError(
+                    'Expected between {} and {} elements, but got {}.'.format(
+                        self.minimum,
+                        self.maximum,
+                        length))
+
         for entry in data:
             self.element_type.encode(entry)
 
@@ -223,7 +235,12 @@ class Compiler(compiler.Compiler):
             element_type = self.compile_type('',
                                              type_descriptor['element'],
                                              module_name)
-            compiled = List(name, element_type)
+            minimum, maximum, _ = self.get_size_range(type_descriptor,
+                                                      module_name)
+            compiled = List(name,
+                            element_type,
+                            minimum,
+                            maximum)
         elif type_name == 'CHOICE':
             members = self.compile_members(type_descriptor['members'],
                                            module_name)

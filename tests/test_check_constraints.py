@@ -138,6 +138,32 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
 
         self.assert_encode_decode_bad(foo, datas)
 
+    def test_sequence_of(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE (SIZE (2)) OF INTEGER (3..5)"
+            "END")
+
+        # Ok.
+        datas = [
+            ('A',  [3, 4])
+        ]
+
+        self.assert_encode_decode_ok(foo, datas)
+
+        # Not ok.
+        datas = [
+            ('A',
+             [3, 4, 5],
+             'Expected between 2 and 2 elements, but got 3.'),
+            ('A',
+             [3, 6],
+             'Expected an integer between 3 and 5, but got 6.')
+        ]
+
+        self.assert_encode_decode_bad(foo, datas)
+
     def test_choice(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
