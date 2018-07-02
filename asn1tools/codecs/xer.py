@@ -3,7 +3,6 @@
 """
 
 import sys
-import logging
 from xml.etree import ElementTree
 import binascii
 
@@ -16,9 +15,6 @@ from . import utc_time_from_datetime
 from . import generalized_time_to_datetime
 from . import generalized_time_from_datetime
 from .compiler import enum_values_as_dict
-
-
-LOGGER = logging.getLogger(__name__)
 
 
 def indent_xml(element, indent, level=0):

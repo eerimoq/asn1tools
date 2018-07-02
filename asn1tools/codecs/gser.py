@@ -3,7 +3,6 @@
 """
 
 import binascii
-import logging
 import math
 from copy import copy
 
@@ -14,9 +13,6 @@ from . import format_or
 from . import utc_time_from_datetime
 from . import generalized_time_from_datetime
 from .compiler import enum_values_as_dict
-
-
-LOGGER = logging.getLogger(__name__)
 
 
 class Type(object):

@@ -5,7 +5,6 @@
 import json
 import binascii
 import math
-import logging
 
 from . import EncodeError
 from . import DecodeError
@@ -16,9 +15,6 @@ from . import utc_time_from_datetime
 from . import generalized_time_to_datetime
 from . import generalized_time_from_datetime
 from .compiler import enum_values_as_dict
-
-
-LOGGER = logging.getLogger(__name__)
 
 
 class Type(object):

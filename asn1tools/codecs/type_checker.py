@@ -3,7 +3,6 @@
 """
 
 import sys
-import logging
 import datetime
 from copy import copy
 
@@ -11,8 +10,6 @@ from . import EncodeError
 from . import compiler
 from . import format_or
 
-
-LOGGER = logging.getLogger(__name__)
 
 STRING_TYPES = [
     'ENUMERATED',

@@ -2,7 +2,6 @@
 
 """
 
-import logging
 import string
 
 from . import DecodeError
@@ -34,9 +33,6 @@ from .per import TeletexString
 from .per import UniversalString
 from .per import Any
 from .per import Recursive
-
-
-LOGGER = logging.getLogger(__name__)
 
 
 class Encoder(per.Encoder):

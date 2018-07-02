@@ -2,7 +2,6 @@
 
 """
 
-import logging
 from operator import attrgetter
 from operator import itemgetter
 import binascii
@@ -24,9 +23,6 @@ from .ber import encode_real
 from .ber import decode_real
 from .ber import encode_object_identifier
 from .ber import decode_object_identifier
-
-
-LOGGER = logging.getLogger(__name__)
 
 
 def is_unbound(minimum, maximum):

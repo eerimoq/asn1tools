@@ -2,14 +2,11 @@
 
 """
 
-import logging
 from copy import copy
 
 from . import ConstraintsError
 from . import compiler
 
-
-LOGGER = logging.getLogger(__name__)
 
 STRING_TYPES = [
     'ENUMERATED',
