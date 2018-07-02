@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime
 from .utils import Asn1ToolsBaseTest
 import asn1tools
 
@@ -51,6 +52,27 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
 
             if codec != 'gser':
                 foo.decode('A', encoded, check_constraints=True)
+
+    def test_boolean(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= BOOLEAN "
+            "END")
+
+        # Ok.
+        datas = [
+            ('A', True),
+            ('A', False)
+        ]
+
+        self.assert_encode_decode_ok(foo, datas)
+
+        # Not ok.
+        datas = [
+        ]
+
+        self.assert_encode_decode_bad(foo, datas)
 
     def test_integer(self):
         foo = asn1tools.compile_string(
@@ -113,6 +135,40 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
 
         self.assert_encode_decode_bad(foo, datas)
 
+    def test_real(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= REAL "
+            "END")
+
+        # Ok.
+        datas = [
+            ('A', 1.0)
+        ]
+
+        self.assert_encode_decode_ok(foo, datas)
+
+        # Not ok.
+        datas = [
+        ]
+
+        self.assert_encode_decode_bad(foo, datas)
+
+    def test_null(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= NULL "
+            "END")
+
+        # Ok.
+        datas = [
+            ('A', None)
+        ]
+
+        self.assert_encode_decode_ok(foo, datas)
+
     def test_bit_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
@@ -134,6 +190,53 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
             ('B',
              (b'\x01\x23', 9),
              'Expected between 10 and 10 number of bits, but got 9.')
+        ]
+
+        self.assert_encode_decode_bad(foo, datas)
+
+    def test_octet_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= OCTET STRING "
+            "B ::= OCTET STRING (SIZE (10)) "
+            "END")
+
+        # Ok.
+        datas = [
+            ('A',  b''),
+            ('B',  10 * b'\x23')
+        ]
+
+        self.assert_encode_decode_ok(foo, datas)
+
+        # Not ok.
+        datas = [
+            ('B',
+             11 * b'\x01',
+             'Expected between 10 and 10 number of bits, but got 11.')
+        ]
+
+        self.assert_encode_decode_bad(foo, datas)
+
+    def test_sequence(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE { "
+            "  a A OPTIONAL "
+            "} "
+            "END")
+
+        # Ok.
+        datas = [
+            ('A',  {'a': {}})
+        ]
+
+        self.assert_encode_decode_ok(foo, datas)
+
+        # Not ok.
+        datas = [
         ]
 
         self.assert_encode_decode_bad(foo, datas)
@@ -160,6 +263,26 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
             ('A',
              [3, 6],
              'Expected an integer between 3 and 5, but got 6.')
+        ]
+
+        self.assert_encode_decode_bad(foo, datas)
+
+    def test_utc_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UTCTime "
+            "END")
+
+        # Ok.
+        datas = [
+            ('A',  datetime(1982, 1, 2, 12, 0))
+        ]
+
+        self.assert_encode_decode_ok(foo, datas)
+
+        # Not ok.
+        datas = [
         ]
 
         self.assert_encode_decode_bad(foo, datas)

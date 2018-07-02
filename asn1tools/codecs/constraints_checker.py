@@ -106,8 +106,23 @@ class BitString(Type):
 
 class Bytes(Type):
 
+    def __init__(self, name, minimum, maximum):
+        super(Bytes, self).__init__(name)
+        self.minimum = minimum
+        self.maximum = maximum
+
     def encode(self, data):
-        pass
+        if self.minimum is None:
+            return
+
+        length = len(data)
+
+        if length < self.minimum or length > self.maximum:
+            raise ConstraintsError(
+                'Expected between {} and {} number of bits, but got {}.'.format(
+                    self.minimum,
+                    self.maximum,
+                    length))
 
 
 class String(Type):
@@ -252,7 +267,9 @@ class Compiler(compiler.Compiler):
         elif type_name == 'BOOLEAN':
             compiled = Boolean(name)
         elif type_name == 'OCTET STRING':
-            compiled = Bytes(name)
+            minimum, maximum, _ = self.get_size_range(type_descriptor,
+                                                      module_name)
+            compiled = Bytes(name, minimum, maximum)
         elif type_name in ['UTCTime', 'GeneralizedTime']:
             compiled = Time(name)
         elif type_name == 'BIT STRING':
