@@ -10,6 +10,7 @@ import string
 from ..parser import EXTENSION_MARKER
 from . import EncodeError
 from . import DecodeError
+from . import OutOfDataError
 from . import compiler
 from . import format_or
 from . import restricted_utc_time_to_datetime
@@ -83,15 +84,6 @@ CLASS_PRIO = {
     'CONTEXT_SPECIFIC': 2,
     'PRIVATE': 3
 }
-
-
-class OutOfDataError(DecodeError):
-
-    def __init__(self, offset):
-        super(OutOfDataError, self).__init__(
-            'out of data at bit offset {} ({}.{} bytes)'.format(
-                offset,
-                *divmod(offset, 8)))
 
 
 class PermittedAlphabet(object):

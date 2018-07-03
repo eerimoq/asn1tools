@@ -10,6 +10,7 @@ from operator import attrgetter
 from ..parser import EXTENSION_MARKER
 from . import EncodeError
 from . import DecodeError
+from . import OutOfDataError
 from . import format_or
 from . import compiler
 from . import utc_time_to_datetime
@@ -22,7 +23,6 @@ from .ber import Tag
 from .ber import encode_object_identifier
 from .ber import decode_object_identifier
 from . import der
-from .per import OutOfDataError
 
 
 def encode_tag(number, flags):

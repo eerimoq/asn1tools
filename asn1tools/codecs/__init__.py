@@ -94,6 +94,15 @@ class DecodeContentsLengthError(DecodeError):
         self.contents_max = contents_max
 
 
+class OutOfDataError(DecodeError):
+
+    def __init__(self, offset):
+        super(OutOfDataError, self).__init__(
+            'out of data at bit offset {} ({}.{} bytes)'.format(
+                offset,
+                *divmod(offset, 8)))
+
+
 def format_or(items):
     """Return a string of comma separated items, with the last to items
     separated by "or".
