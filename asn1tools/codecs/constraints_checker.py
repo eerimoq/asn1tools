@@ -7,6 +7,10 @@ from copy import copy
 
 from . import ConstraintsError
 from . import compiler
+from .permitted_alphabet import NUMERIC_STRING
+from .permitted_alphabet import PRINTABLE_STRING
+from .permitted_alphabet import IA5_STRING
+from .permitted_alphabet import VISIBLE_STRING
 
 
 STRING_TYPES = [
@@ -73,7 +77,8 @@ class String(Type):
             if character not in self.permitted_alphabet:
                 raise ConstraintsError(
                     "Expected a character in '{}', but got '{}' (0x{:02x}).".format(
-                        ''.join(self.permitted_alphabet),
+                        ''.join([c if c in string.printable[:-5] else '.'
+                                 for c in self.permitted_alphabet]),
                         character if character in string.printable else '.',
                         ord(character)))
 
@@ -224,12 +229,22 @@ class Choice(Type):
 
 class NumericString(String):
 
-    PERMITTED_ALPHABET = '0123456789 '
+    PERMITTED_ALPHABET = NUMERIC_STRING
+
+
+class PrintableString(String):
+
+    PERMITTED_ALPHABET = PRINTABLE_STRING
+
+
+class IA5String(String):
+
+    PERMITTED_ALPHABET = IA5_STRING
 
 
 class VisibleString(String):
 
-    PERMITTED_ALPHABET = ''.join([chr(v) for v in range(32, 127)])
+    PERMITTED_ALPHABET = VISIBLE_STRING
 
 
 class Time(Type):
@@ -321,19 +336,35 @@ class Compiler(compiler.Compiler):
             compiled = BitString(name,
                                  minimum,
                                  maximum)
-        elif type_name == 'VisibleString':
-            minimum, maximum, _ = self.get_size_range(type_descriptor,
-                                                      module_name)
-            permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
-            compiled = VisibleString(name,
-                                     minimum,
-                                     maximum,
-                                     permitted_alphabet)
         elif type_name == 'NumericString':
             minimum, maximum, _ = self.get_size_range(type_descriptor,
                                                       module_name)
             permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
             compiled = NumericString(name,
+                                     minimum,
+                                     maximum,
+                                     permitted_alphabet)
+        elif type_name == 'PrintableString':
+            minimum, maximum, _ = self.get_size_range(type_descriptor,
+                                                      module_name)
+            permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
+            compiled = PrintableString(name,
+                                       minimum,
+                                       maximum,
+                                       permitted_alphabet)
+        elif type_name == 'IA5String':
+            minimum, maximum, _ = self.get_size_range(type_descriptor,
+                                                      module_name)
+            permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
+            compiled = IA5String(name,
+                                 minimum,
+                                 maximum,
+                                 permitted_alphabet)
+        elif type_name == 'VisibleString':
+            minimum, maximum, _ = self.get_size_range(type_descriptor,
+                                                      module_name)
+            permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
+            compiled = VisibleString(name,
                                      minimum,
                                      maximum,
                                      permitted_alphabet)

@@ -10,6 +10,7 @@ from . import restricted_utc_time_to_datetime
 from . import restricted_utc_time_from_datetime
 from . import restricted_generalized_time_to_datetime
 from . import restricted_generalized_time_from_datetime
+from . import permitted_alphabet
 from .per import integer_as_number_of_bits
 from .per import PermittedAlphabet
 from .per import Type
@@ -33,6 +34,10 @@ from .per import TeletexString
 from .per import UniversalString
 from .per import Any
 from .per import Recursive
+from .permitted_alphabet import NUMERIC_STRING
+from .permitted_alphabet import PRINTABLE_STRING
+from .permitted_alphabet import IA5_STRING
+from .permitted_alphabet import VISIBLE_STRING
 
 
 class Encoder(per.Encoder):
@@ -159,7 +164,7 @@ class Integer(Type):
 
 class NumericString(KnownMultiplierStringType):
 
-    ALPHABET = bytearray(b' 0123456789')
+    ALPHABET = bytearray(NUMERIC_STRING.encode('ascii'))
     ENCODE_MAP = {v: i for i, v in enumerate(ALPHABET)}
     DECODE_MAP = {i: v for i, v in enumerate(ALPHABET)}
     PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_MAP,
@@ -168,10 +173,7 @@ class NumericString(KnownMultiplierStringType):
 
 class PrintableString(KnownMultiplierStringType):
 
-    ALPHABET = bytearray((string.ascii_uppercase
-                          + string.ascii_lowercase
-                          + string.digits
-                          + " '()+,-./:=?").encode('ascii'))
+    ALPHABET = bytearray(PRINTABLE_STRING.encode('ascii'))
     ENCODE_MAP = {v: v for v in ALPHABET}
     DECODE_MAP = {v: v for v in ALPHABET}
     PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_MAP,
@@ -180,14 +182,16 @@ class PrintableString(KnownMultiplierStringType):
 
 class IA5String(KnownMultiplierStringType):
 
-    ENCODE_DECODE_MAP = {v: v for v in range(128)}
+    ALPHABET = bytearray(IA5_STRING.encode('ascii'))
+    ENCODE_DECODE_MAP = {v: v for v in ALPHABET}
     PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_DECODE_MAP,
                                            ENCODE_DECODE_MAP)
 
 
 class VisibleString(KnownMultiplierStringType):
 
-    ENCODE_DECODE_MAP = {v: v for v in range(32, 127)}
+    ALPHABET = bytearray(VISIBLE_STRING.encode('ascii'))
+    ENCODE_DECODE_MAP = {v: v for v in ALPHABET}
     PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_DECODE_MAP,
                                            ENCODE_DECODE_MAP)
 

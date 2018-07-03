@@ -13,7 +13,7 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
             encoded = foo.encode(type_name, decoded, check_constraints=True)
             foo.decode(type_name, encoded, check_constraints=True)
 
-    def assert_encode_decode_bad(self, foo, datas):
+    def assert_encode_decode_bad(self, foo, datas, decode_check=True):
         for type_name, decoded, message in datas:
             # Encode check.
             with self.assertRaises(asn1tools.ConstraintsError) as cm:
@@ -22,12 +22,13 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
             self.assertEqual(str(cm.exception), message)
 
             # Decode check.
-            encoded = foo.encode(type_name, decoded, check_constraints=False)
+            if decode_check:
+                encoded = foo.encode(type_name, decoded, check_constraints=False)
 
-            with self.assertRaises(asn1tools.ConstraintsError) as cm:
-                foo.decode(type_name, encoded, check_constraints=True)
+                with self.assertRaises(asn1tools.ConstraintsError) as cm:
+                    foo.decode(type_name, encoded, check_constraints=True)
 
-            self.assertEqual(str(cm.exception), message)
+                self.assertEqual(str(cm.exception), message)
 
     def test_all_codecs(self):
         codecs = [
@@ -285,13 +286,63 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
         datas = [
             ('A',
              'a',
-             "Expected a character in '0123456789 ', but got 'a' (0x61)."),
+             "Expected a character in ' 0123456789', but got 'a' (0x61)."),
             ('A',
              '-',
-             "Expected a character in '0123456789 ', but got '-' (0x2d).")
+             "Expected a character in ' 0123456789', but got '-' (0x2d).")
         ]
 
         self.assert_encode_decode_bad(foo, datas)
+
+    def test_printable_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= PrintableString "
+            "END")
+
+        # Ok.
+        datas = [
+            ('A',  '09azAZ')
+        ]
+
+        self.assert_encode_decode_ok(foo, datas)
+
+        # Not ok.
+        datas = [
+            ('A',
+             '{',
+             "Expected a character in '"
+             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+             " '()+,-./:=?', but got '{' (0x7b).")
+        ]
+
+        self.assert_encode_decode_bad(foo, datas)
+
+    def test_ia5_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= IA5String "
+            "END")
+
+        # Ok.
+        datas = [
+            ('A',  '09azAZ')
+        ]
+
+        self.assert_encode_decode_ok(foo, datas)
+
+        # Not ok.
+        datas = [
+            ('A',
+             b'\x81'.decode('latin-1'),
+             "Expected a character in '................................ !\"#$%"
+             "&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcde"
+             "fghijklmnopqrstuvwxyz{|}~.', but got '.' (0x81).")
+        ]
+
+        self.assert_encode_decode_bad(foo, datas, decode_check=False)
 
     def test_visible_string(self):
         foo = asn1tools.compile_string(
