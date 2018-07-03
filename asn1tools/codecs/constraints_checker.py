@@ -2,6 +2,7 @@
 
 """
 
+import string
 from copy import copy
 
 from . import ConstraintsError
@@ -37,6 +38,44 @@ class Type(object):
 
     def encode(self, data):
         raise NotImplementedError('To be implemented by subclasses.')
+
+
+class String(Type):
+
+    PERMITTED_ALPHABET = ''
+
+    def __init__(self,
+                 name,
+                 minimum,
+                 maximum,
+                 permitted_alphabet=None):
+        super(String, self).__init__(name)
+        self.minimum = minimum
+        self.maximum = maximum
+
+        if permitted_alphabet is None:
+            permitted_alphabet = self.PERMITTED_ALPHABET
+
+        self.permitted_alphabet = permitted_alphabet
+
+    def encode(self, data):
+        if self.minimum is not None:
+            length = len(data)
+
+            if length < self.minimum or length > self.maximum:
+                raise ConstraintsError(
+                    'Expected between {} and {} characters, but got {}.'.format(
+                        self.minimum,
+                        self.maximum,
+                        length))
+
+        for character in data:
+            if character not in self.permitted_alphabet:
+                raise ConstraintsError(
+                    "Expected a character in '{}', but got '{}' (0x{:02x}).".format(
+                        ''.join(self.permitted_alphabet),
+                        character if character in string.printable else '.',
+                        ord(character)))
 
 
 class Boolean(Type):
@@ -125,27 +164,6 @@ class Bytes(Type):
                     length))
 
 
-class String(Type):
-
-    def __init__(self, name, minimum, maximum):
-        super(String, self).__init__(name)
-        self.minimum = minimum
-        self.maximum = maximum
-
-    def encode(self, data):
-        if self.minimum is None:
-            return
-
-        length = len(data)
-
-        if length < self.minimum or length > self.maximum:
-            raise ConstraintsError(
-                'Expected between {} and {} characters, but got {}.'.format(
-                    self.minimum,
-                    self.maximum,
-                    length))
-
-
 class Dict(Type):
 
     def __init__(self, name, members):
@@ -202,6 +220,16 @@ class Choice(Type):
         except ConstraintsError as e:
             e.location.append(member.name)
             raise
+
+
+class NumericString(String):
+
+    PERMITTED_ALPHABET = '0123456789 '
+
+
+class VisibleString(String):
+
+    PERMITTED_ALPHABET = ''.join([chr(v) for v in range(32, 127)])
 
 
 class Time(Type):
@@ -293,10 +321,30 @@ class Compiler(compiler.Compiler):
             compiled = BitString(name,
                                  minimum,
                                  maximum)
+        elif type_name == 'VisibleString':
+            minimum, maximum, _ = self.get_size_range(type_descriptor,
+                                                      module_name)
+            permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
+            compiled = VisibleString(name,
+                                     minimum,
+                                     maximum,
+                                     permitted_alphabet)
+        elif type_name == 'NumericString':
+            minimum, maximum, _ = self.get_size_range(type_descriptor,
+                                                      module_name)
+            permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
+            compiled = NumericString(name,
+                                     minimum,
+                                     maximum,
+                                     permitted_alphabet)
         elif type_name in STRING_TYPES:
             minimum, maximum, _ = self.get_size_range(type_descriptor,
                                                       module_name)
-            compiled = String(name, minimum, maximum)
+            permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
+            compiled = String(name,
+                              minimum,
+                              maximum,
+                              permitted_alphabet)
         elif type_name in ['ANY', 'ANY DEFINED BY', 'OpenType']:
             compiled = Skip(name)
         elif type_name == 'NULL':
@@ -318,6 +366,25 @@ class Compiler(compiler.Compiler):
                                                        module_name)
 
         return compiled
+
+    def get_permitted_alphabet(self, type_descriptor):
+        def char_range(begin, end):
+            return ''.join([chr(char)
+                            for char in range(ord(begin), ord(end) + 1)])
+
+        if 'from' not in type_descriptor:
+            return
+
+        permitted_alphabet = type_descriptor['from']
+        value = ''
+
+        for item in permitted_alphabet:
+            if isinstance(item, tuple):
+                value += char_range(item[0], item[1])
+            else:
+                value += item
+
+        return ''.join(sorted(value))
 
 
 def compile_dict(specification):

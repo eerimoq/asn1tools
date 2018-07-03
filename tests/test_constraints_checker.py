@@ -267,19 +267,47 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
 
         self.assert_encode_decode_bad(foo, datas)
 
-    def test_string(self):
+    def test_numeric_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
-            "A ::= UTF8String "
-            "B ::= UTF8String (SIZE (2..5)) "
+            "A ::= NumericString "
+            "END")
+
+        # Ok.
+        datas = [
+            ('A',  '0123456789 ')
+        ]
+
+        self.assert_encode_decode_ok(foo, datas)
+
+        # Not ok.
+        datas = [
+            ('A',
+             'a',
+             "Expected a character in '0123456789 ', but got 'a' (0x61)."),
+            ('A',
+             '-',
+             "Expected a character in '0123456789 ', but got '-' (0x2d).")
+        ]
+
+        self.assert_encode_decode_bad(foo, datas)
+
+    def test_visible_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= VisibleString "
+            "B ::= VisibleString (SIZE (2..5)) "
+            "C ::= VisibleString (FROM (\"a\"..\"j\" | \"u\"..\"w\")) "
             "END")
 
         # Ok.
         datas = [
             ('A',  '123'),
             ('B',  '12'),
-            ('B',  '12345')
+            ('B',  '12345'),
+            ('C',  'abijuvw')
         ]
 
         self.assert_encode_decode_ok(foo, datas)
@@ -291,7 +319,10 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
              'Expected between 2 and 5 characters, but got 1.'),
             ('B',
              '123456',
-             'Expected between 2 and 5 characters, but got 6.')
+             'Expected between 2 and 5 characters, but got 6.'),
+            ('C',
+             'k',
+             "Expected a character in 'abcdefghijuvw', but got 'k' (0x6b).")
         ]
 
         self.assert_encode_decode_bad(foo, datas)
