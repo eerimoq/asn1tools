@@ -74,6 +74,12 @@ class Asn1ToolsEncodeTypeCheckerTest(unittest.TestCase):
                              good_datas=[(b'', 0)],
                              bad_datas=[1, '101', (1, 0, 1), None])
 
+        self.assert_good_bad('BIT STRING',
+                             'Expected at least 1 bit(s) data',
+                             good_datas=[],
+                             bad_datas=[(b'', 1)],
+                             bad_datas_strings=['0'])
+
     def test_bytes(self):
         self.assert_good_bad('OCTET STRING',
                              'Expected data of type bytes or bytearray',

@@ -97,6 +97,12 @@ class BitString(Type):
                 'Expected data of type tuple(bytes, int), but got {}.'.format(
                     data))
 
+        if 8 * len(data[0]) < data[1]:
+            raise EncodeError(
+                'Expected at least {} bit(s) data, but got {}.'.format(
+                    data[1],
+                    8 * len(data[0])))
+
 
 class Bytes(Type):
 
