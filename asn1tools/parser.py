@@ -1706,6 +1706,9 @@ def parse_string(string):
     """Parse given ASN.1 specification string and return a dictionary of
     its contents.
 
+    The dictionary can later be compiled with
+    :func:`~asn1tools.compile_dict()`.
+
     >>> with open('foo.asn') as fin:
     ...     foo = asn1tools.parse_string(fin.read())
 
