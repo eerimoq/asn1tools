@@ -1733,6 +1733,9 @@ def parse_files(filenames, encoding='utf-8'):
     """Parse given ASN.1 specification file(s) and return a dictionary of
     its/their contents.
 
+    The dictionary can later be compiled with
+    :func:`~asn1tools.compile_dict()`.
+
     `encoding` is the text encoding. This argument is passed to the
     built-in function `open()`.
 
