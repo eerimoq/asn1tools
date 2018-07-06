@@ -2,6 +2,7 @@
 
 """
 
+from operator import attrgetter
 import bitstruct
 
 from copy import copy
@@ -425,7 +426,10 @@ class Compiler(object):
 
         return compiled
 
-    def compile_members(self, members, module_name):
+    def compile_members(self,
+                        members,
+                        module_name,
+                        sort_by_tag=False):
         compiled_members = []
 
         for member in members:
@@ -439,6 +443,9 @@ class Compiler(object):
 
             compiled_member = self.compile_member(member, module_name)
             compiled_members.append(compiled_member)
+
+        if sort_by_tag:
+            compiled_members = sorted(compiled_members, key=attrgetter('tag'))
 
         return compiled_members
 

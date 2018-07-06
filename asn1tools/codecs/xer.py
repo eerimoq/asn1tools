@@ -325,7 +325,7 @@ class ObjectIdentifier(StringType):
 
     def decode(self, element):
         if element.text is None:
-            raise DecodeError("Expected an OBJECT IDENTIFER, but got ''.")
+            raise DecodeError("Expected an OBJECT IDENTIFIER, but got ''.")
 
         return element.text
 

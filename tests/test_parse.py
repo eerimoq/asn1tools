@@ -172,7 +172,7 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
     def test_parse_imports_single_value_reference(self):
         """Test that a value reference, in this test 'c', is not parsed as an
-        assignmed identifer, but an imported value from 'D'.
+        assignmed identifier, but an imported value from 'D'.
 
         """
 

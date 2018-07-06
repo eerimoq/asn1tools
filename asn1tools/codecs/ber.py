@@ -5,6 +5,7 @@
 import math
 import binascii
 from copy import copy
+from operator import attrgetter
 
 from ..errors import Error
 from ..parser import EXTENSION_MARKER
@@ -1335,7 +1336,8 @@ class Compiler(compiler.Compiler):
             compiled = Set(
                 name,
                 *self.compile_members(type_descriptor['members'],
-                                      module_name))
+                                      module_name,
+                                      sort_by_tag=True))
         elif type_name == 'SET OF':
             compiled = SetOf(name,
                              self.compile_type('',
@@ -1438,7 +1440,10 @@ class Compiler(compiler.Compiler):
 
         return compiled
 
-    def compile_members(self, members, module_name):
+    def compile_members(self,
+                        members,
+                        module_name,
+                        sort_by_tag=False):
         compiled_members = []
         in_extension = False
         additions = None
@@ -1457,6 +1462,9 @@ class Compiler(compiler.Compiler):
                 self.compile_root_member(member,
                                          module_name,
                                          compiled_members)
+
+        if sort_by_tag:
+            compiled_members = sorted(compiled_members, key=attrgetter('tag'))
 
         return compiled_members, additions
 

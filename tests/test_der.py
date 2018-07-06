@@ -105,6 +105,29 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
             self.assertEqual(foo.encode(type_name, decoded_1), encoded)
             self.assertEqual(foo.decode(type_name, encoded), decoded_2)
 
+    def test_set(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS IMPLICIT TAGS ::= "
+            "BEGIN "
+            "A ::= SET { "
+            "  a [0] INTEGER, "
+            "  b [1] INTEGER "
+            "} "
+            "B ::= SET { "
+            "  b [1] INTEGER, "
+            "  a [0] INTEGER "
+            "} "
+            "END",
+            'ber')
+
+        datas = [
+            ('A',     {'a': 3, 'b': 4}, b'\x31\x06\x80\x01\x03\x81\x01\x04'),
+            ('B',     {'a': 3, 'b': 4}, b'\x31\x06\x80\x01\x03\x81\x01\x04')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_utf8_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "

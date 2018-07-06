@@ -547,7 +547,7 @@ print('Starting encoding and decoding of a message {} times. This may '
 asn1tools_encode_time, asn1tools_decode_time = asn1tools_encode_decode()
 pycrate_encode_time, pycrate_decode_time = pycrate_encode_decode()
 
-# Encode comparsion output.
+# Encode comparison output.
 measurements = [
     ('asn1tools', asn1tools_encode_time),
     ('pycrate', pycrate_encode_time)
@@ -562,7 +562,7 @@ print('PACKAGE      SECONDS')
 for package, seconds in measurements:
     print('{:12s} {:f}'.format(package, seconds))
 
-# Decode comparsion output.
+# Decode comparison output.
 measurements = [
     ('asn1tools', asn1tools_decode_time),
     ('pycrate', pycrate_decode_time)

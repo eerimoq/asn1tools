@@ -112,7 +112,7 @@ per_encode_time, per_decode_time = encode_decode('per')
 uper_encode_time, uper_decode_time = encode_decode('uper')
 xer_encode_time, xer_decode_time = encode_decode('xer')
 
-# Encode comparsion output.
+# Encode comparison output.
 measurements = [
     ('ber', ber_encode_time),
     ('der', der_encode_time),
@@ -132,7 +132,7 @@ print('CODEC      SECONDS')
 for package, seconds in measurements:
     print('{:10s} {:f}'.format(package, seconds))
 
-# Decode comparsion output.
+# Decode comparison output.
 measurements = [
     ('ber', ber_decode_time),
     ('der', der_decode_time),

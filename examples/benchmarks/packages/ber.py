@@ -362,7 +362,7 @@ pyasn1_encode_time, pyasn1_decode_time = pyasn1_encode_decode()
 asn1crypto_encode_time, asn1crypto_decode_time = asn1crypto_encode_decode()
 pycrate_encode_time, pycrate_decode_time = pycrate_encode_decode()
 
-# Encode comparsion output.
+# Encode comparison output.
 measurements = [
     ('asn1tools', asn1tools_encode_time),
     ('libsnmp', libsnmp_encode_time),
@@ -380,7 +380,7 @@ print('PACKAGE      SECONDS')
 for package, seconds in measurements:
     print('{:12s} {:f}'.format(package, seconds))
 
-# Decode comparsion output.
+# Decode comparison output.
 measurements = [
     ('asn1tools', asn1tools_decode_time),
     ('libsnmp', libsnmp_decode_time),

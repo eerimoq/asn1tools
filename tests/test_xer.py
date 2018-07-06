@@ -115,7 +115,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             foo.decode('A', b'<A></A>')
 
         self.assertEqual(str(cm.exception),
-                         "Expected an OBJECT IDENTIFER, but got ''.")
+                         "Expected an OBJECT IDENTIFIER, but got ''.")
 
     def test_enumerated(self):
         foo = asn1tools.compile_string(
