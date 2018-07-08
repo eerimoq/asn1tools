@@ -249,9 +249,12 @@ class Compiler(per.Compiler):
         type_name = type_descriptor['type']
 
         if type_name == 'SEQUENCE':
-            compiled = Sequence(name,
-                                *self.compile_members(type_descriptor['members'],
-                                                      module_name))
+            compiled = Sequence(
+                name,
+                *self.compile_members(type_descriptor['members'],
+                                      module_name),
+                open_types=self.create_open_types(type_descriptor['members'],
+                                                  module_name))
         elif type_name == 'SEQUENCE OF':
             compiled = SequenceOf(name,
                                   self.compile_type('',
@@ -260,11 +263,13 @@ class Compiler(per.Compiler):
                                   *self.get_size_range(type_descriptor,
                                                        module_name))
         elif type_name == 'SET':
-            compiled = Set(name,
-                           *self.compile_members(
-                               type_descriptor['members'],
-                               module_name,
-                               sort_by_tag=True))
+            compiled = Set(
+                name,
+                *self.compile_members(type_descriptor['members'],
+                                      module_name,
+                                      sort_by_tag=True),
+                open_types=self.create_open_types(type_descriptor['members'],
+                                                  module_name))
         elif type_name == 'SET OF':
             compiled = SetOf(name,
                              self.compile_type('',

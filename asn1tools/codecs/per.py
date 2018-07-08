@@ -696,6 +696,7 @@ class MembersType(Type):
                  name,
                  root_members,
                  additions,
+                 open_types,
                  type_name):
         super(MembersType, self).__init__(name, type_name)
         self.root_members = root_members
@@ -705,8 +706,12 @@ class MembersType(Type):
             for member in root_members
             if member.optional or member.default is not None
         ]
+        self._open_types = open_types
 
     def encode(self, data, encoder):
+        if self._open_types:
+            self.encode_open_types(data)
+
         if self.additions is not None:
             offset = encoder.offset()
             encoder.append_bit(0)
@@ -806,17 +811,30 @@ class MembersType(Type):
                     name,
                     data))
 
+    def encode_open_types(self, data):
+        return
+        print('xxx encode', data)
+
+        for value_location, key_location in self._open_types:
+            print(value_location, key_location)
+            continue
+            if open_type.type_name in data:
+                data[open_type.name] = open_type.encode(data[open_type.name])
+
     def decode(self, decoder):
         if self.additions is not None:
             if decoder.read_bit():
                 decoded = self.decode_root(decoder)
                 decoded.update(self.decode_additions(decoder))
-
-                return decoded
             else:
-                return self.decode_root(decoder)
+                decoded = self.decode_root(decoder)
         else:
-            return self.decode_root(decoder)
+            decoded = self.decode_root(decoder)
+
+        if self._open_types:
+            decoded = self.decode_open_types(decoded)
+
+        return decoded
 
     def decode_root(self, decoder):
         values = {}
@@ -869,6 +887,18 @@ class MembersType(Type):
 
                 if alignment_bits != 0:
                     decoder.skip_bits(8 - alignment_bits)
+
+        return decoded
+
+    def decode_open_types(self, decoded):
+        return decoded
+        print('xxx decode', decoded)
+        return decoded
+
+        for open_type in self._open_types:
+            if open_type.type_name in decoded:
+                decoded[open_type.name] = open_type.decode(
+                    decoded[open_type.name])
 
         return decoded
 
@@ -1380,10 +1410,12 @@ class Sequence(MembersType):
     def __init__(self,
                  name,
                  root_members,
-                 additions):
+                 additions,
+                 open_types):
         super(Sequence, self).__init__(name,
                                        root_members,
                                        additions,
+                                       open_types,
                                        'SEQUENCE')
 
 
@@ -1408,10 +1440,12 @@ class Set(MembersType):
     def __init__(self,
                  name,
                  root_members,
-                 additions):
+                 additions,
+                 open_types):
         super(Set, self).__init__(name,
                                   root_members,
                                   additions,
+                                  open_types,
                                   'SET')
 
 
@@ -1799,9 +1833,12 @@ class Compiler(compiler.Compiler):
         type_name = type_descriptor['type']
 
         if type_name == 'SEQUENCE':
-            compiled = Sequence(name,
-                                *self.compile_members(type_descriptor['members'],
-                                                      module_name))
+            compiled = Sequence(
+                name,
+                *self.compile_members(type_descriptor['members'],
+                                      module_name),
+                open_types=self.create_open_types(type_descriptor['members'],
+                                                  module_name))
         elif type_name == 'SEQUENCE OF':
             compiled = SequenceOf(name,
                                   self.compile_type('',
@@ -1810,11 +1847,13 @@ class Compiler(compiler.Compiler):
                                   *self.get_size_range(type_descriptor,
                                                        module_name))
         elif type_name == 'SET':
-            compiled = Set(name,
-                           *self.compile_members(
-                               type_descriptor['members'],
-                               module_name,
-                               sort_by_tag=True))
+            compiled = Set(
+                name,
+                *self.compile_members(type_descriptor['members'],
+                                      module_name,
+                                      sort_by_tag=True),
+                open_types=self.create_open_types(type_descriptor['members'],
+                                                  module_name))
         elif type_name == 'SET OF':
             compiled = SetOf(name,
                              self.compile_type('',
@@ -1974,6 +2013,7 @@ class Compiler(compiler.Compiler):
                                                           module_name)
                 compiled_group = AdditionGroup('ExtensionAddition',
                                                compiled_member,
+                                               None,
                                                None)
                 additions.append(compiled_group)
         else:

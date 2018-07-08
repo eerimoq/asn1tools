@@ -657,6 +657,25 @@ class Compiler(object):
 
         return compiled
 
+    def create_open_types(self,
+                          members,
+                          module_name):
+        open_types = []
+
+        for member in members:
+            if member == EXTENSION_MARKER:
+                continue
+
+            if not isinstance(member, list):
+                member = [member]
+
+            for m in member:
+                if 'table' in m:
+                    if isinstance(m['table'], list):
+                        open_types.append(([m['name']], m['table'][1]))
+
+        return open_types
+
 
 def enum_values_as_dict(values):
     return {
