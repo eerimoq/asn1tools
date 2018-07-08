@@ -1831,6 +1831,56 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             encoded = information_object.encode('ErrorReturn', decoded_message)
             self.assertEqual(encoded, encoded_message)
 
+        # Message 4 - C.
+        decoded_message = {
+            'a': 0
+        }
+
+        encoded_message = (
+            b'\x00\x01\x00'
+        )
+
+        encoded = information_object.encode('C', decoded_message)
+        self.assertEqual(encoded, encoded_message)
+
+        # Message 5 - C.
+        decoded_message = {
+            'a': 0,
+            'b': {
+                'a': 0
+            }
+        }
+
+        encoded_message = (
+            b'\x80\x01\x00\x03\x00\x01\x00'
+        )
+
+        with self.assertRaises(TypeError):
+            encoded = information_object.encode('C', decoded_message)
+            self.assertEqual(encoded, encoded_message)
+
+        # Message 6 - C.
+        decoded_message = {
+            'a': 0,
+            'b': {
+                'a': 0,
+                'b': {
+                    'a': 0,
+                    'b': {
+                        'a': 0
+                    }
+                }
+            }
+        }
+
+        encoded_message = (
+            b'\x80\x01\x00\x0b\x80\x01\x00\x07\x80\x01\x00\x03\x00\x01\x00'
+        )
+
+        with self.assertRaises(TypeError):
+            encoded = information_object.encode('C', decoded_message)
+            self.assertEqual(encoded, encoded_message)
+
 
 if __name__ == '__main__':
     unittest.main()

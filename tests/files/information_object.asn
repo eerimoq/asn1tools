@@ -100,4 +100,19 @@ ErrorReturn ::= SEQUENCE {
     }
 }
 
+-- Recursive type.
+A ::= CLASS {
+    &a INTEGER,
+    &B
+}
+
+As A ::= {
+    { &a 0, &B C }
+}
+
+C ::= SEQUENCE {
+    a A.&a ({As}),
+    b A.&B ({As}{@a}) OPTIONAL
+}
+
 END
