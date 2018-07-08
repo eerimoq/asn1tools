@@ -502,7 +502,9 @@ def asn1tools_encode_decode():
     rrc = asn1tools.compile_files(RRC_8_6_0_ASN_PATH, 'uper')
 
     def encode():
-        rrc.encode('BCCH-DL-SCH-Message', DECODED_MESSAGE_ASN1TOOLS)
+        rrc.encode('BCCH-DL-SCH-Message',
+                   DECODED_MESSAGE_ASN1TOOLS,
+                   check_types=False)
 
     def decode():
         rrc.decode('BCCH-DL-SCH-Message', ENCODED_MESSAGE)
@@ -518,6 +520,10 @@ def pycrate_encode_decode():
         import rrc_8_6_0_pycrate
 
         rrc = rrc_8_6_0_pycrate.EUTRA_RRC_Definitions.BCCH_DL_SCH_Message
+        rrc._SAFE_INIT = False
+        rrc._SAFE_VAL = False
+        rrc._SAFE_BND = False
+        rrc._SAFE_BNDTAB = False
 
         def encode():
             rrc.set_val(DECODED_MESSAGE_PYCRATE)

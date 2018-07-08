@@ -177,7 +177,9 @@ def asn1tools_encode_decode():
     snmp_v1 = asn1tools.compile_files(SNMP_V1_ASN_PATHS)
 
     def encode():
-        snmp_v1.encode('Message', DECODED_MESSAGE_ASN1TOOLS)
+        snmp_v1.encode('Message',
+                       DECODED_MESSAGE_ASN1TOOLS,
+                       check_types=False)
 
     def decode():
         snmp_v1.decode('Message', ENCODED_MESSAGE)
@@ -330,6 +332,10 @@ def pycrate_encode_decode():
         import rfc1155_1157_pycrate
 
         snmp_v1 = rfc1155_1157_pycrate.RFC1157_SNMP.Message
+        snmp_v1._SAFE_INIT = False
+        snmp_v1._SAFE_VAL = False
+        snmp_v1._SAFE_BND = False
+        snmp_v1._SAFE_BNDTAB = False
 
         def encode():
             snmp_v1.set_val(DECODED_MESSAGE_PYCRATE)
