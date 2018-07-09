@@ -1,5 +1,20 @@
 X683 DEFINITIONS ::= BEGIN
 
+-- 8.5 Example
+
+-- PARAMETERIZED-OBJECT-CLASS { TypeParam,
+--                              INTEGER : valueParam,
+--                              INTEGER : ValueSetParam } ::= CLASS {
+--     &valueField1    TypeParam,
+--     &valueField2    INTEGER       DEFAULT valueParam,
+--     &valueField3    INTEGER       (ValueSetParam),
+--     &ValueSetField  INTEGER       DEFAULT { ValueSetParam }
+-- }
+
+-- 9.6 Example
+
+-- MY-OBJECT-CLASS ::= PARAMETERIZED-OBJECT-CLASS { BIT STRING, 123, { 4 | 5 | 6 } }
+
 -- A.1
 
 SIGNED { ToBeSigned } ::= SEQUENCE {
@@ -38,10 +53,91 @@ IntegerList1 ::= List1 { INTEGER }
 
 -- A.5
 
+-- QuestList1 {IA5String : extraQuest} IA5String ::= { "Jack" | "John" | extraQuest }
+--
+-- QuestList2 {IA5String : ExtraQuests} IA5String ::= { "Jack" | "John" | ExtraQuests }
+
+-- The following value sets denote the same value set:
+-- SetOfQuests1 IA5String ::= { QuestList1 { "Jill" } }
+--
+-- SetOfQuests2 IA5String ::= { QuestList2 { {"Jill"} } }
+--
+-- SetOfQuests3 IA5String ::= { "Jack" | "John" | "Jill" }
+
+-- The following value sets denote the same value set:
+-- SetOfQuests4 IA5String ::= { QuestList2 { {"Jill" | "Mary"} } }
+--
+-- SetOfQuests5 IA5String ::= { "Jack" | "John" | "Jill" | "Mary"}
+
 -- A.6
+
+-- GENERIC-ERROR { ErrorCodeType, ErrorCodeType : ValidErrorCodes } ::= CLASS {
+--     &errorCode  ValidErrorCodes
+-- } WITH SYNTAX {
+--     CODE        &errorCode
+-- }
+--
+-- ERROR-1 ::= GENERIC-ERROR { INTEGER, { 1 | 2 | 3 } }
+--
+-- ERROR-2 ::= GENERIC-ERROR { ErrorCodeString, { StringErrorCodes } }
+--
+-- ERROR-3 ::= GENERIC-ERROR { EnumeratedErrorCode, { fatal | error } }
+--
+ErrorCodeString ::= IA5String (SIZE (4))
+--
+-- StringErrorCodes ErrorCodeString ::= { "E001" | "E002" | "E003" }
+--
+-- EnumeratedErrorCode ::= ENUMERATED { fatal, error, warning }
+--
+-- The defined classes can then be used as follows:
+-- My-Errors ERROR-2 ::= { { CODE "E001" } | { CODE "E002" } }
+--
+-- fatalError ERROR-3 ::= { CODE fatal }
 
 -- A.7
 
 -- A.8
 
 END
+
+
+-- 9.8 Example
+--
+-- M1 DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+--
+-- EXPORTS T1;
+--
+-- T1 ::= SET {
+--    f1 INTEGER,
+--    f2 BOOLEAN
+-- }
+--
+-- END
+--
+--
+-- M2 DEFINITIONS EXPLICIT TAGS ::= BEGIN
+--
+-- IMPORTS T1 FROM M1;
+--
+-- T3 ::= T2 { T1 }
+--
+-- T2 { X } ::= SEQUENCE {
+--     a INTEGER,
+--     b X
+-- }
+--
+-- END
+--
+--
+-- M3 DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+--
+-- IMPORTS T1 FROM M1;
+--
+-- T5 ::= T4 { T1 }
+--
+-- T4 { Y } ::= SEQUENCE {
+--     a INTEGER,
+--     b Y
+-- }
+--
+-- END
