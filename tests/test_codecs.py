@@ -29,6 +29,7 @@ class Asn1ToolsUtilsTest(unittest.TestCase):
     def test_utc_time(self):
         datas = [
             ('8201021200Z',     datetime(1982, 1, 2, 12, 0)),
+            ('8201021211Z',     datetime(1982, 1, 2, 12, 11)),
             ('820102120005Z',   datetime(1982, 1, 2, 12, 0, 5)),
             ('8201021200+0100',
              datetime(1982, 1, 2, 12, 0, tzinfo=tzinfo(1))),
@@ -77,16 +78,30 @@ class Asn1ToolsUtilsTest(unittest.TestCase):
     def test_generalized_time(self):
         datas = [
             ('19820102120022',  datetime(1982, 1, 2, 12, 0, 22)),
+            ('198201021200',  datetime(1982, 1, 2, 12, 0, 0)),
+            ('198201021211',  datetime(1982, 1, 2, 12, 11)),
             ('19820102120023.5',
              datetime(1982, 1, 2, 12, 0, 23, 500000)),
+            ('198201021222.5',
+             datetime(1982, 1, 2, 12, 22, 0, 500000)),
+            ('198201021200.5',
+             datetime(1982, 1, 2, 12, 0, 0, 500000)),
             ('19820102120024Z',
              datetime(1982, 1, 2, 12, 0, 24, tzinfo=tzinfo(0))),
+            ('198201021200Z',
+             datetime(1982, 1, 2, 12, 0, 0, tzinfo=tzinfo(0))),
             ('19820102120025.1Z',
              datetime(1982, 1, 2, 12, 0, 25, 100000, tzinfo=tzinfo(0))),
+            ('198201021200.1Z',
+             datetime(1982, 1, 2, 12, 0, 0, 100000, tzinfo=tzinfo(0))),
             ('19820102120026-1000',
              datetime(1982, 1, 2, 12, 0, 26, tzinfo=tzinfo(-10))),
+            ('198201021200-1000',
+             datetime(1982, 1, 2, 12, 0, 0, tzinfo=tzinfo(-10))),
             ('19820102120027.1+0100',
-             datetime(1982, 1, 2, 12, 0, 27, 100000, tzinfo=tzinfo(1)))
+             datetime(1982, 1, 2, 12, 0, 27, 100000, tzinfo=tzinfo(1))),
+            ('198201021200.1+0100',
+             datetime(1982, 1, 2, 12, 0, 0, 100000, tzinfo=tzinfo(1)))
         ]
 
         for generalized_time, date in datas:
@@ -137,91 +152,75 @@ class Asn1ToolsUtilsTest(unittest.TestCase):
 
     def test_utc_time_to_datetime_errors(self):
         datas = [
+            '',
+            '8201021211',
+            '820102120111',
             '8201021200K',
-            'Z820102120011Z'
-        ]
-
-        for utc_time in datas:
-            with self.assertRaises(asn1tools.Error):
-                utc_time_to_datetime(utc_time)
-
-        datas = [
+            'Z820102120011Z',
             '820102120060Z',
+            '82010212006Z',
             '8201021200*0100',
             '82010212000000100'
         ]
 
         for utc_time in datas:
-            with self.assertRaises(ValueError):
+            with self.assertRaises(asn1tools.Error) as cm:
                 utc_time_to_datetime(utc_time)
 
+            self.assertEqual(
+                str(cm.exception),
+                "Expected a UTC time string, but got '{}'.".format(utc_time))
+
     def test_restricted_utc_time_errors(self):
-        with self.assertRaises(asn1tools.Error) as cm:
-            restricted_utc_time_to_datetime('8201021200Z')
+        datas = [
+            '',
+            '8201021200Z',
+            '8201021200+0100',
+            '180102120003+0000'
+        ]
 
-        self.assertEqual(
-            str(cm.exception),
-            "Expected a restricted UTC time string of length 13, but "
-            "got '8201021200Z'.")
+        for utc_time in datas:
+            with self.assertRaises(asn1tools.Error) as cm:
+                restricted_utc_time_to_datetime(utc_time)
 
-        with self.assertRaises(asn1tools.Error) as cm:
-            restricted_utc_time_to_datetime('8201021200+0100')
-
-        self.assertEqual(
-            str(cm.exception),
-            "Expected a restricted UTC time string ending with 'Z', but "
-            "got '8201021200+0100'.")
-
-        with self.assertRaises(asn1tools.Error) as cm:
-            restricted_utc_time_to_datetime('180102120003+0000')
-
-        self.assertEqual(
-            str(cm.exception),
-            "Expected a restricted UTC time string ending with 'Z', but "
-            "got '180102120003+0000'.")
+            self.assertEqual(
+                str(cm.exception),
+                "Expected a restricted UTC time string, but got '{}'.".format(
+                    utc_time))
 
     def test_generalized_time_to_datetime_errors(self):
         datas = [
+            '',
             '19820102120022K',
             '19820102120022.1=0100'
         ]
 
         for generalized_time in datas:
-            with self.assertRaises(ValueError):
+            with self.assertRaises(asn1tools.Error) as cm:
                 generalized_time_to_datetime(generalized_time)
 
+            self.assertEqual(
+                str(cm.exception),
+                "Expected a generalized time string, but got "
+                "'{}'.".format(generalized_time))
+
     def test_restricted_generalized_time_errors(self):
-        with self.assertRaises(asn1tools.Error) as cm:
-            restricted_generalized_time_to_datetime('198201021200Z')
+        datas = [
+            '',
+            '198201021200Z',
+            '198201021200+0100',
+            '20180102120003.0Z',
+            '20180102120003.Z'
+        ]
 
-        self.assertEqual(
-            str(cm.exception),
-            "Expected a restricted generalized time string, but got "
-            "'198201021200Z'.")
+        for generalized_time in datas:
+            with self.assertRaises(asn1tools.Error) as cm:
+                restricted_generalized_time_to_datetime(generalized_time)
 
-        with self.assertRaises(asn1tools.Error) as cm:
-            restricted_generalized_time_to_datetime('198201021200+0100')
-
-        self.assertEqual(
-            str(cm.exception),
-            "Expected a restricted generalized time string ending "
-            "with 'Z', but got '198201021200+0100'.")
-
-        with self.assertRaises(asn1tools.Error) as cm:
-            restricted_generalized_time_to_datetime('20180102120003.0Z')
-
-        self.assertEqual(
-            str(cm.exception),
-            "Expected a restricted generalized time string with no trailing "
-            "zeros, but got '20180102120003.0Z'.")
-
-        with self.assertRaises(ValueError) as cm:
-            restricted_generalized_time_to_datetime('20180102120003.Z')
-
-        self.assertEqual(
-            str(cm.exception),
-            "time data '20180102120003.' does not match format "
-            "'%Y%m%d%H%M%S.%f'")
+            self.assertEqual(
+                str(cm.exception),
+                "Expected a restricted generalized time string, but got "
+                "'{}'.".format(generalized_time))
 
 
 if __name__ == '__main__':

@@ -349,9 +349,9 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             'xer')
 
         datas = [
-            ('A', gt2dt('19920521000000Z'), b'<A>19920521000000Z</A>'),
+            ('A', gt2dt('199205210000Z'), b'<A>199205210000Z</A>'),
             ('A', gt2dt('19920622123421Z'), b'<A>19920622123421Z</A>'),
-            ('A', gt2dt('19920722132100.3Z'), b'<A>19920722132100.3Z</A>')
+            ('A', gt2dt('199207221321.3Z'), b'<A>199207221321.3Z</A>')
         ]
 
         for type_name, decoded, encoded in datas:

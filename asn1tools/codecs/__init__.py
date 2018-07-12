@@ -103,6 +103,22 @@ class OutOfDataError(DecodeError):
                 *divmod(offset, 8)))
 
 
+def _generalized_time_to_datetime(string):
+    length = len(string)
+
+    if '.' in string:
+        try:
+            return datetime.strptime(string, '%Y%m%d%H%M.%f')
+        except ValueError:
+            return datetime.strptime(string, '%Y%m%d%H%M%S.%f')
+    elif length == 12:
+        return datetime.strptime(string, '%Y%m%d%H%M')
+    elif length == 14:
+        return datetime.strptime(string, '%Y%m%d%H%M%S')
+    else:
+        raise ValueError
+
+
 def format_or(items):
     """Return a string of comma separated items, with the last to items
     separated by "or".
@@ -136,21 +152,23 @@ def utc_time_to_datetime(string):
 
     length = len(string)
 
-    if string[-1] == 'Z':
-        if length == 11:
-            return datetime.strptime(string[:10], '%y%m%d%H%M')
-        elif length == 13:
-            return datetime.strptime(string[:12], '%y%m%d%H%M%S')
+    try:
+        if string[-1] == 'Z':
+            if length == 11:
+                return datetime.strptime(string[:-1], '%y%m%d%H%M')
+            elif length == 13:
+                return datetime.strptime(string[:-1], '%y%m%d%H%M%S')
+            else:
+                raise ValueError
+        elif length == 15:
+            return compat.strptime(string, '%y%m%d%H%M%z')
+        elif length == 17:
+            return compat.strptime(string, '%y%m%d%H%M%S%z')
         else:
-            raise Error(
-                "Expected an UTC time string, but got '{}'.".format(string))
-    elif length == 15:
-        return compat.strptime(string, '%y%m%d%H%M%z')
-    elif length == 17:
-        return compat.strptime(string, '%y%m%d%H%M%S%z')
-    else:
+            raise ValueError
+    except (ValueError, IndexError):
         raise Error(
-            "Expected an UTC time string, but got '{}'.".format(string))
+            "Expected a UTC time string, but got '{}'.".format(string))
 
 
 def utc_time_from_datetime(date):
@@ -180,17 +198,18 @@ def restricted_utc_time_to_datetime(string):
 
     length = len(string)
 
-    if string[-1] != 'Z':
-        raise Error(
-            "Expected a restricted UTC time string ending with 'Z', "
-            "but got '{}'.".format(string))
+    try:
+        if string[-1] != 'Z':
+            raise ValueError
 
-    if length != 13:
-        raise Error(
-            "Expected a restricted UTC time string of length 13, "
-            "but got '{}'.".format(string))
+        if length != 13:
+            raise ValueError
 
-    return datetime.strptime(string[:-1], '%y%m%d%H%M%S')
+        return datetime.strptime(string[:-1], '%y%m%d%H%M%S')
+    except (ValueError, IndexError):
+        raise Error(
+            "Expected a restricted UTC time string, but got '{}'.".format(
+                string))
 
 
 def restricted_utc_time_from_datetime(date):
@@ -211,25 +230,25 @@ def generalized_time_to_datetime(string):
 
     """
 
-    length = len(string)
+    try:
+        if string[-1] == 'Z':
+            date = _generalized_time_to_datetime(string[:-1])
 
-    if string[-1] == 'Z':
-        if length == 15:
-            date = datetime.strptime(string[:14], '%Y%m%d%H%M%S')
+            return date.replace(tzinfo=compat.timezone(timedelta(hours=0)))
+        elif string[-5] in '-+':
+            if '.' in string:
+                try:
+                    return compat.strptime(string, '%Y%m%d%H%M.%f%z')
+                except ValueError:
+                    return compat.strptime(string, '%Y%m%d%H%M%S.%f%z')
+            else:
+                return compat.strptime(string, '%Y%m%d%H%M%S%z')
         else:
-            date = datetime.strptime(string[:-1], '%Y%m%d%H%M%S.%f')
-
-        return date.replace(tzinfo=compat.timezone(timedelta(hours=0)))
-    elif string[-5] in '-+':
-        if length == 19:
-            return compat.strptime(string, '%Y%m%d%H%M%S%z')
-        else:
-            return compat.strptime(string, '%Y%m%d%H%M%S.%f%z')
-    else:
-        if length == 14:
-            return compat.strptime(string, '%Y%m%d%H%M%S')
-        else:
-            return compat.strptime(string, '%Y%m%d%H%M%S.%f')
+            return _generalized_time_to_datetime(string)
+    except (ValueError, IndexError):
+        raise Error(
+            "Expected a generalized time string, but got '{}'.".format(
+                string))
 
 
 def generalized_time_from_datetime(date):
@@ -238,10 +257,16 @@ def generalized_time_from_datetime(date):
 
     """
 
-    if date.microsecond > 0:
-        string = date.strftime('%Y%m%d%H%M%S.%f').rstrip('0')
+    if date.second == 0:
+        if date.microsecond > 0:
+            string = date.strftime('%Y%m%d%H%M.%f').rstrip('0')
+        else:
+            string = date.strftime('%Y%m%d%H%M')
     else:
-        string = date.strftime('%Y%m%d%H%M%S')
+        if date.microsecond > 0:
+            string = date.strftime('%Y%m%d%H%M%S.%f').rstrip('0')
+        else:
+            string = date.strftime('%Y%m%d%H%M%S')
 
     if date.tzinfo is not None:
         if date.utcoffset():
@@ -258,21 +283,25 @@ def restricted_generalized_time_to_datetime(string):
 
     """
 
-    if string[-1] != 'Z':
-        raise Error(
-            "Expected a restricted generalized time string ending with 'Z', "
-            "but got '{}'.".format(string))
+    length = len(string)
 
-    if '.' in string:
-        if string[-2] == '0':
-            raise Error(
-                "Expected a restricted generalized time string with no "
-                "trailing zeros, but got '{}'.".format(string))
+    try:
+        if string[-1] != 'Z':
+            raise ValueError
 
-        return datetime.strptime(string[:-1], '%Y%m%d%H%M%S.%f')
-    elif len(string) == 15:
+        if '.' in string:
+            if string[-2] == '0':
+                raise ValueError
+
+            if string[14] != '.':
+                raise ValueError
+
+            return datetime.strptime(string[:-1], '%Y%m%d%H%M%S.%f')
+        elif length != 15:
+            raise ValueError
+
         return datetime.strptime(string[:-1], '%Y%m%d%H%M%S')
-    else:
+    except (ValueError, IndexError):
         raise Error(
             "Expected a restricted generalized time string, but got '{}'.".format(
                 string))
