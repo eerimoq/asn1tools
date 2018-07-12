@@ -4,6 +4,7 @@
 import sys
 import unittest
 from copy import deepcopy
+from datetime import datetime
 from .utils import Asn1ToolsBaseTest
 
 import asn1tools
@@ -171,6 +172,45 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
             ('A',
              u'åäö',
              b'\x1c\x0c\x00\x00\x00\xe5\x00\x00\x00\xe4\x00\x00\x00\xf6')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_utc_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UTCTime "
+            "END",
+            'der')
+
+        datas = [
+            ('A',
+             datetime(2018, 1, 22, 13, 0),
+             b'\x17\x0d\x31\x38\x30\x31\x32\x32\x31\x33\x30\x30\x30\x30\x5a')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_generalized_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= GeneralizedTime "
+            "END",
+            'der')
+
+        datas = [
+            ('A',
+             datetime(2018, 1, 22, 13, 29),
+             b'\x18\x0f\x32\x30\x31\x38\x30\x31\x32\x32\x31\x33\x32\x39\x30'
+             b'\x30\x5a'),
+            ('A',
+             datetime(2018, 1, 22, 13, 0),
+             b'\x18\x0f\x32\x30\x31\x38\x30\x31\x32\x32\x31\x33\x30\x30\x30'
+             b'\x30\x5a')
         ]
 
         for type_name, decoded, encoded in datas:

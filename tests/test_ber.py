@@ -6,6 +6,7 @@ import unittest
 import timeit
 import sys
 from copy import deepcopy
+from datetime import datetime
 from .utils import Asn1ToolsBaseTest
 
 import asn1tools
@@ -939,6 +940,28 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                                   'Foo',
                                   ut2dt('121001230001Z'),
                                   b'\xa2\x0f\x17\x0d121001230001Z')
+
+    def test_generalized_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= GeneralizedTime "
+            "END")
+
+        datas = [
+            ('A',
+             datetime(2018, 1, 22, 13, 29),
+             b'\x18\x0c\x32\x30\x31\x38\x30\x31\x32\x32\x31\x33\x32\x39'),
+            ('A',
+             datetime(2018, 1, 22, 13, 0),
+             b'\x18\x0c\x32\x30\x31\x38\x30\x31\x32\x32\x31\x33\x30\x30'),
+            ('A',
+             datetime(2018, 1, 22, 13, 2),
+             b'\x18\x0c\x32\x30\x31\x38\x30\x31\x32\x32\x31\x33\x30\x32')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
 
     def test_foo(self):
         foo = asn1tools.compile_files(['tests/files/foo.asn'])
