@@ -10,6 +10,8 @@ from .utils import Asn1ToolsBaseTest
 import asn1tools
 from asn1tools.codecs import restricted_utc_time_to_datetime as ut2dt
 from asn1tools.codecs import restricted_generalized_time_to_datetime as gt2dt
+from asn1tools.compat import timezone
+from asn1tools.compat import timedelta
 
 sys.path.append('tests/files/ietf')
 
@@ -188,7 +190,10 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
         datas = [
             ('A',
              datetime(2018, 1, 22, 13, 0),
-             b'\x17\x0d\x31\x38\x30\x31\x32\x32\x31\x33\x30\x30\x30\x30\x5a')
+             b'\x17\x0d\x31\x38\x30\x31\x32\x32\x31\x33\x30\x30\x30\x30\x5a'),
+            ('A',
+             datetime(2001, 2, 3, 4, 5, 6),
+             b'\x17\x0d\x30\x31\x30\x32\x30\x33\x30\x34\x30\x35\x30\x36\x5a')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -210,7 +215,11 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
             ('A',
              datetime(2018, 1, 22, 13, 0),
              b'\x18\x0f\x32\x30\x31\x38\x30\x31\x32\x32\x31\x33\x30\x30\x30'
-             b'\x30\x5a')
+             b'\x30\x5a'),
+            ('A',
+             datetime(2000, 12, 31, 23, 59, 59),
+             b'\x18\x0f\x32\x30\x30\x30\x31\x32\x33\x31\x32\x33\x35\x39'
+             b'\x35\x39\x5a'),
         ]
 
         for type_name, decoded, encoded in datas:
@@ -261,13 +270,6 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
              'bar',
              b'\x1e\x06\x00\x62\x00\x61\x00\x72'),
             ('Teletexstring',          'fum', b'\x14\x03fum'),
-            ('Utctime',
-             ut2dt('010203040506Z'),
-             b'\x17\x0d010203040506Z'),
-            ('GeneralizedTime1',
-             gt2dt('20001231235959Z'),
-             b'\x18\x0f\x32\x30\x30\x30\x31\x32\x33\x31\x32\x33\x35\x39'
-             b'\x35\x39\x5a'),
             ('SequenceOf',                [], b'0\x00'),
             ('SetOf',                     [], b'1\x00')
         ]

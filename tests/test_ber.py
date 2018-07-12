@@ -11,7 +11,8 @@ from .utils import Asn1ToolsBaseTest
 
 import asn1tools
 from asn1tools.codecs import utc_time_to_datetime as ut2dt
-from asn1tools.codecs import generalized_time_to_datetime as gt2dt
+from asn1tools.compat import timezone
+from asn1tools.compat import timedelta
 
 sys.path.append('tests/files')
 sys.path.append('tests/files/3gpp')
@@ -923,7 +924,10 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         datas = [
             ('A',
              ut2dt('001001000000Z'),
-             b'\x17\x0b\x30\x30\x31\x30\x30\x31\x30\x30\x30\x30\x5a')
+             b'\x17\x0b\x30\x30\x31\x30\x30\x31\x30\x30\x30\x30\x5a'),
+            ('A',
+             ut2dt('010203040506Z'),
+             b'\x17\x0d010203040506Z'),
         ]
 
         for type_name, decoded, encoded in datas:
@@ -957,7 +961,12 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
              b'\x18\x0c\x32\x30\x31\x38\x30\x31\x32\x32\x31\x33\x30\x30'),
             ('A',
              datetime(2018, 1, 22, 13, 2),
-             b'\x18\x0c\x32\x30\x31\x38\x30\x31\x32\x32\x31\x33\x30\x32')
+             b'\x18\x0c\x32\x30\x31\x38\x30\x31\x32\x32\x31\x33\x30\x32'),
+            ('A',
+             datetime(2000, 12, 31, 23, 59, 59, 999000,
+                      timezone(timedelta(hours=0))),
+             b'\x18\x13\x32\x30\x30\x30\x31\x32\x33\x31\x32\x33\x35\x39'
+             b'\x35\x39\x2e\x39\x39\x39\x5a')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -2360,13 +2369,6 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('Ia5string',              'bar', b'\x16\x03bar'),
             ('Visiblestring',          'bar', b'\x1a\x03bar'),
             ('Generalstring',          'bar', b'\x1b\x03bar'),
-            ('Utctime',
-             ut2dt('010203040506Z'),
-             b'\x17\x0d010203040506Z'),
-            ('GeneralizedTime1',
-             gt2dt('20001231235959.999Z'),
-             b'\x18\x13\x32\x30\x30\x30\x31\x32\x33\x31\x32\x33\x35\x39'
-             b'\x35\x39\x2e\x39\x39\x39\x5a'),
             ('SequenceOf',                [], b'\x30\x00'),
             ('SetOf',                     [], b'\x31\x00')
         ]
