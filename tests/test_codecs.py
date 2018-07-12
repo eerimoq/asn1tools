@@ -210,7 +210,8 @@ class Asn1ToolsUtilsTest(unittest.TestCase):
             '198201021200Z',
             '198201021200+0100',
             '20180102120003.0Z',
-            '20180102120003.Z'
+            '20180102120003.Z',
+            '201801021200.1Z'
         ]
 
         for generalized_time in datas:
