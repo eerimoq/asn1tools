@@ -196,13 +196,11 @@ def restricted_utc_time_to_datetime(string):
 
     """
 
-    length = len(string)
-
     try:
         if string[-1] != 'Z':
             raise ValueError
 
-        if length != 13:
+        if len(string) != 13:
             raise ValueError
 
         return datetime.strptime(string[:-1], '%y%m%d%H%M%S')
@@ -283,8 +281,6 @@ def restricted_generalized_time_to_datetime(string):
 
     """
 
-    length = len(string)
-
     try:
         if string[-1] != 'Z':
             raise ValueError
@@ -297,7 +293,7 @@ def restricted_generalized_time_to_datetime(string):
                 raise ValueError
 
             return datetime.strptime(string[:-1], '%Y%m%d%H%M%S.%f')
-        elif length != 15:
+        elif len(string) != 15:
             raise ValueError
 
         return datetime.strptime(string[:-1], '%Y%m%d%H%M%S')
