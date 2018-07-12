@@ -131,12 +131,12 @@ GCs GC ::= {
 }
 
 D1 ::= SEQUENCE {
+    id             GC.&id             ({GCs}),
+    value          GC.&Value          ({GCs}{@id}),
     a E1 {{ GCs }}
 }
 
-E1 {GC : Param} ::= SEQUENCE OF H1 {{Param}}
-
-H1 {GC : Param} ::= SEQUENCE {
+E1 {GC : Param} ::= SEQUENCE {
     id             GC.&id             ({Param}),
     value          GC.&Value          ({Param}{@id})
 }
@@ -144,12 +144,12 @@ H1 {GC : Param} ::= SEQUENCE {
 -- The same as above, but with parameters expanded.
 
 D2 ::= SEQUENCE {
-    a E2
+    id             GC.&id             ({GCs}),
+    value          GC.&Value          ({GCs}{@id}),
+    a T1
 }
 
-E2 ::= SEQUENCE OF H2
-
-H2 ::= SEQUENCE {
+T1 ::= SEQUENCE {
     id             GC.&id             ({GCs}),
     value          GC.&Value          ({GCs}{@id})
 }

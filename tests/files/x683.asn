@@ -141,3 +141,39 @@ END
 -- }
 --
 -- END
+
+X683-EXPANDED DEFINITIONS ::= BEGIN
+
+-- A.1
+
+SIGNED-1 ::= SEQUENCE {
+  authenticated-data UTF8String,
+  authenticator BIT STRING
+}
+
+SignedUTF8String ::= SIGNED-1
+
+-- A second SIGNED type with the same parameter becuse that's how
+-- asn1tools implements parameter expansion.
+SIGNED-2 ::= SEQUENCE {
+  authenticated-data UTF8String,
+  authenticator BIT STRING
+}
+
+OPTIONALLY-SIGNED-1 ::= CHOICE {
+  unsigned-data [0] UTF8String,
+  signed-data   [1] SIGNED-2
+}
+
+OptionallySignedUTF8String ::= OPTIONALLY-SIGNED-1
+
+-- A.3
+
+List1-1 ::= SEQUENCE {
+  elem INTEGER,
+  next List1-1 OPTIONAL
+}
+
+IntegerList1 ::= List1-1
+
+END
