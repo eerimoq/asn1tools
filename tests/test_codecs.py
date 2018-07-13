@@ -160,7 +160,8 @@ class Asn1ToolsUtilsTest(unittest.TestCase):
             '820102120060Z',
             '82010212006Z',
             '8201021200*0100',
-            '82010212000000100'
+            '82010212000000100',
+            '820102999Z'
         ]
 
         for utc_time in datas:
@@ -176,7 +177,8 @@ class Asn1ToolsUtilsTest(unittest.TestCase):
             '',
             '8201021200Z',
             '8201021200+0100',
-            '180102120003+0000'
+            '180102120003+0000',
+            '820102999Z'
         ]
 
         for utc_time in datas:
@@ -192,7 +194,9 @@ class Asn1ToolsUtilsTest(unittest.TestCase):
         datas = [
             '',
             '19820102120022K',
-            '19820102120022.1=0100'
+            '19820102120022.1=0100',
+            '1982010209099',
+            '19820102999'
         ]
 
         for generalized_time in datas:
@@ -211,7 +215,8 @@ class Asn1ToolsUtilsTest(unittest.TestCase):
             '198201021200+0100',
             '20180102120003.0Z',
             '20180102120003.Z',
-            '201801021200.1Z'
+            '201801021200.1Z',
+            '000102111213Z'
         ]
 
         for generalized_time in datas:
