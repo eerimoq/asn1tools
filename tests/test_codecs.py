@@ -110,6 +110,22 @@ class Asn1ToolsUtilsTest(unittest.TestCase):
             actual = generalized_time_from_datetime(date)
             self.assertEqual(actual, generalized_time)
 
+    def test_generalized_time_comma(self):
+        datas = [
+            ('19820102120023,5',
+             datetime(1982, 1, 2, 12, 0, 23, 500000)),
+            ('198201021200,5',
+             datetime(1982, 1, 2, 12, 0, 0, 500000)),
+            ('19820102120027,1+0100',
+             datetime(1982, 1, 2, 12, 0, 27, 100000, tzinfo=tzinfo(1))),
+            ('198201021200,1+0100',
+             datetime(1982, 1, 2, 12, 0, 0, 100000, tzinfo=tzinfo(1))),
+        ]
+
+        for generalized_time, date in datas:
+            actual = generalized_time_to_datetime(generalized_time)
+            self.assertEqual(actual, date)
+
     def test_restricted_generalized_time(self):
         datas = [
             (

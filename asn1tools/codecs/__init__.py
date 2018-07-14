@@ -111,6 +111,11 @@ def _generalized_time_to_datetime(string):
             return datetime.strptime(string, '%Y%m%d%H%M.%f')
         except ValueError:
             return datetime.strptime(string, '%Y%m%d%H%M%S.%f')
+    elif ',' in string:
+        try:
+            return datetime.strptime(string, '%Y%m%d%H%M,%f')
+        except ValueError:
+            return datetime.strptime(string, '%Y%m%d%H%M%S,%f')
     elif length == 12:
         return datetime.strptime(string, '%Y%m%d%H%M')
     elif length == 14:
@@ -239,6 +244,11 @@ def generalized_time_to_datetime(string):
                     return compat.strptime(string, '%Y%m%d%H%M.%f%z')
                 except ValueError:
                     return compat.strptime(string, '%Y%m%d%H%M%S.%f%z')
+            elif ',' in string:
+                try:
+                    return compat.strptime(string, '%Y%m%d%H%M,%f%z')
+                except ValueError:
+                    return compat.strptime(string, '%Y%m%d%H%M%S,%f%z')
             else:
                 return compat.strptime(string, '%Y%m%d%H%M%S%z')
         else:
