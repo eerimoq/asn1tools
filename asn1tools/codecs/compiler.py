@@ -154,6 +154,10 @@ class Compiler(object):
         return self._specification
 
     def pre_process_components_of(self, type_descriptors, module_name):
+        """COMPONENTS OF expansion.
+
+        """
+
         for type_descriptor in type_descriptors:
             self.pre_process_components_of_type(type_descriptor,
                                                 module_name)
@@ -189,6 +193,10 @@ class Compiler(object):
         return expanded_members
 
     def pre_process_extensibility_implied(self, type_descriptors):
+        """Make all types extensible.
+
+        """
+
         for type_descriptor in type_descriptors:
             self.pre_process_extensibility_implied_type(type_descriptor)
 
@@ -211,6 +219,10 @@ class Compiler(object):
             members.append(EXTENSION_MARKER)
 
     def pre_process_tags(self, module, module_name):
+        """Add tags where missing.
+
+        """
+
         module_tags = module.get('tags', 'EXPLICIT')
 
         for type_descriptor in module['types'].values():
@@ -286,6 +298,10 @@ class Compiler(object):
                                        module_name)
 
     def pre_process_default_value(self, sequences_and_sets, module_name):
+        """SEQUENCE and SET default member value cleanup.
+
+        """
+
         for type_descriptor in sequences_and_sets:
             for member in type_descriptor['members']:
                 if member == EXTENSION_MARKER:
@@ -298,38 +314,46 @@ class Compiler(object):
                                                                module_name)
 
                 if resolved_member['type'] == 'BIT STRING':
-                    default = member['default']
+                    self.pre_process_default_value_bit_string(member,
+                                                              resolved_member)
 
-                    if isinstance(default, tuple):
-                        # Already pre-processed.
-                        continue
-                    elif isinstance(default, list):
-                        named_bits = dict(resolved_member['named-bits'])
-                        reversed_mask = 0
+    def pre_process_default_value_bit_string(self, member, resolved_member):
+        default = member['default']
 
-                        for name in default:
-                            reversed_mask |= (1 << int(named_bits[name]))
+        if isinstance(default, tuple):
+            # Already pre-processed.
+            return
+        elif isinstance(default, list):
+            named_bits = dict(resolved_member['named-bits'])
+            reversed_mask = 0
 
-                        mask = int(bin(reversed_mask)[2:][::-1], 2)
-                        number_of_bits = reversed_mask.bit_length()
-                    elif default.startswith('0x'):
-                        if len(default) % 2 == 1:
-                            default += '0'
+            for name in default:
+                reversed_mask |= (1 << int(named_bits[name]))
 
-                        default = '01' + default[2:]
-                        mask = int(default, 16)
-                        mask >>= lowest_set_bit(mask)
-                        number_of_bits = mask.bit_length() - 1
-                        mask ^= (1 << number_of_bits)
-                    else:
-                        mask = int(default, 2)
-                        mask >>= lowest_set_bit(mask)
-                        number_of_bits = len(default) - 2
+            mask = int(bin(reversed_mask)[2:][::-1], 2)
+            number_of_bits = reversed_mask.bit_length()
+        elif default.startswith('0x'):
+            if len(default) % 2 == 1:
+                default += '0'
 
-                    mask = bitstruct.pack('u{}'.format(number_of_bits), mask)
-                    member['default'] = (mask, number_of_bits)
+            default = '01' + default[2:]
+            mask = int(default, 16)
+            mask >>= lowest_set_bit(mask)
+            number_of_bits = mask.bit_length() - 1
+            mask ^= (1 << number_of_bits)
+        else:
+            mask = int(default, 2)
+            mask >>= lowest_set_bit(mask)
+            number_of_bits = len(default) - 2
+
+        mask = bitstruct.pack('u{}'.format(number_of_bits), mask)
+        member['default'] = (mask, number_of_bits)
 
     def resolve_type_name(self, type_name, module_name):
+        """Returns the ASN.1 type name of given type.
+
+        """
+
         try:
             while True:
                 if is_object_class_type_name(type_name):
