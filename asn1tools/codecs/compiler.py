@@ -324,7 +324,8 @@ class Compiler(object):
         if isinstance(default, tuple):
             # Already pre-processed.
             return
-        elif isinstance(default, list):
+
+        if isinstance(default, list):
             named_bits = dict(resolved_member['named-bits'])
             reversed_mask = 0
 
