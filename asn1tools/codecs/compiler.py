@@ -140,16 +140,9 @@ class Compiler(object):
             type_descriptors = module['types'].values()
 
             self.pre_process_components_of(type_descriptors, module_name)
-
-            if module['extensibility-implied']:
-                self.pre_process_extensibility_implied(type_descriptors)
-
+            self.pre_process_extensibility_implied(module, type_descriptors)
             self.pre_process_tags(module, module_name)
-            sequences_and_sets = self.get_type_descriptors(
-                type_descriptors,
-                ['SEQUENCE', 'SET'])
-            self.pre_process_default_value(sequences_and_sets,
-                                           module_name)
+            self.pre_process_default_value(type_descriptors, module_name)
 
         return self._specification
 
@@ -192,10 +185,13 @@ class Compiler(object):
 
         return expanded_members
 
-    def pre_process_extensibility_implied(self, type_descriptors):
+    def pre_process_extensibility_implied(self, module, type_descriptors):
         """Make all types extensible.
 
         """
+
+        if not module['extensibility-implied']:
+            return
 
         for type_descriptor in type_descriptors:
             self.pre_process_extensibility_implied_type(type_descriptor)
@@ -211,7 +207,8 @@ class Compiler(object):
                 continue
 
             if isinstance(member, list):
-                self.pre_process_extensibility_implied(member)
+                for type_descriptor in member:
+                    self.pre_process_extensibility_implied_type(type_descriptor)
             else:
                 self.pre_process_extensibility_implied_type(member)
 
@@ -297,10 +294,14 @@ class Compiler(object):
                                        module_tags,
                                        module_name)
 
-    def pre_process_default_value(self, sequences_and_sets, module_name):
+    def pre_process_default_value(self, type_descriptors, module_name):
         """SEQUENCE and SET default member value cleanup.
 
         """
+
+        sequences_and_sets = self.get_type_descriptors(
+            type_descriptors,
+            ['SEQUENCE', 'SET'])
 
         for type_descriptor in sequences_and_sets:
             for member in type_descriptor['members']:
