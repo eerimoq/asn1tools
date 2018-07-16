@@ -7,6 +7,7 @@ install:
   - pip install -r requirements.txt
 script:
   - coverage run --source=asn1tools setup.py test
+  - make test-sdist
   - (cd examples/benchmarks/packages && wget https://github.com/ANSSI-FR/pycrate/archive/master.zip && unzip -qq master.zip)
   - env PYTHONPATH=.:examples/benchmarks/packages/pycrate-master python examples/benchmarks/packages/ber.py
   - env PYTHONPATH=.:examples/benchmarks/packages/pycrate-master python examples/benchmarks/packages/uper.py
