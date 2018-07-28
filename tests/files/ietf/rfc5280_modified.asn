@@ -666,7 +666,7 @@ BEGIN
 IMPORTS
       id-pe, id-kp, id-qt-unotice, id-qt-cps,
       -- delete following line if "new" types are supported --
-      BMPString, UTF8String,  -- end "new" types --
+      -- BMPString, UTF8String,  \-\- end "new" types --
       ORAddress, Name, RelativeDistinguishedName,
       CertificateSerialNumber, Attribute, DirectoryString
       FROM PKIX1Explicit88 { iso(1) identified-organization(3)

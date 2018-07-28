@@ -10,8 +10,8 @@ BEGIN
 
 IMPORTS
 
-    Certificate, CertificateList, Extensions, AlgorithmIdentifier,
-    UTF8String -- if required; otherwise, comment out
+    Certificate , CertificateList, Extensions, AlgorithmIdentifier
+    -- , UTF8String \-\- if required; otherwise, comment out
            FROM PKIX1Explicit88 {iso(1) identified-organization(3)
            dod(6) internet(1) security(5) mechanisms(5) pkix(7)
            id-mod(0) id-pkix1-explicit-88(1)}

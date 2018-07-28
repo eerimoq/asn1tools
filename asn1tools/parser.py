@@ -29,12 +29,855 @@ from pyparsing import Combine
 from pyparsing import ParseResults
 from pyparsing import lineno
 
+import textparser as tp
+from textparser import Sequence
+from textparser import choice
+from textparser import DelimitedList
+
 from .errors import Error
 
 
 LOGGER = logging.getLogger(__name__)
 
 EXTENSION_MARKER = None
+
+
+class Asn1Parser(tp.Parser):
+
+    def keywords(self):
+        return set([
+            'ABSENT',
+            'ENCODED',
+            'INTEGER',
+            'RELATIVE-OID',
+            'ABSTRACT-SYNTAX',
+            'END',
+            'INTERSECTION',
+            'SEQUENCE',
+            'ALL',
+            'ENUMERATED',
+            'ISO646String',
+            'SET',
+            'APPLICATION',
+            'EXCEPT',
+            'MAX',
+            'SIZE',
+            'AUTOMATIC',
+            'EXPLICIT',
+            'MIN',
+            'STRING',
+            'BEGIN',
+            'EXPORTS',
+            'MINUS-INFINITY',
+            'SYNTAX',
+            'BIT',
+            'EXTENSIBILITY',
+            'NULL',
+            'T61String',
+            'BMPString',
+            'EXTERNAL',
+            'NumericString',
+            'TAGS',
+            'BOOLEAN',
+            'FALSE',
+            'OBJECT',
+            'TeletexString',
+            'BY',
+            'FROM',
+            'ObjectDescriptor',
+            'TRUE',
+            'CHARACTER',
+            'GeneralizedTime',
+            'OCTET',
+            'TYPE-IDENTIFIER',
+            'CHOICE',
+            'GeneralString',
+            'OF',
+            'UNION',
+            'CLASS',
+            'GraphicString',
+            'OPTIONAL',
+            'UNIQUE',
+            'COMPONENT',
+            'IA5String',
+            'PATTERN',
+            'UNIVERSAL',
+            'COMPONENTS',
+            'IDENTIFIER',
+            'PDV',
+            'UniversalString',
+            'CONSTRAINED',
+            'IMPLICIT',
+            'PLUS-INFINITY',
+            'UTCTime',
+            'CONTAINING',
+            'IMPLIED',
+            'PRESENT',
+            'UTF8String',
+            'DEFAULT',
+            'IMPORTS',
+            'PrintableString',
+            'VideotexString',
+            'DEFINITIONS',
+            'INCLUDES',
+            'PRIVATE',
+            'VisibleString',
+            'EMBEDDED',
+            'INSTANCE',
+            'REAL',
+            'WITH',
+            'ANY',
+            'DEFINED'
+        ])
+
+    def token_specs(self):
+        return [
+            ('SKIP',           r'[ \r\n\t]+|--([\s\S]*?(--|\n))'),
+            ('NUMBER',         r'-?\d+'),
+            ('LVBRACK', '[[',  r'\[\['),
+            ('RVBRACK', ']]',  r'\]\]'),
+            ('LBRACE',  '{',   r'{'),
+            ('RBRACE',  '}',   r'}'),
+            ('LT',      '<',   r'<'),
+            ('GT',      '>',   r'>'),
+            ('COMMA',   ',',   r','),
+            ('DOTX3',   '...', r'\.\.\.'),
+            ('DOTX2',   '..',  r'\.\.'),
+            ('DOT',     '.',   r'\.'),
+            ('LPAREN',  '(',   r'\('),
+            ('RPAREN',  ')',   r'\)'),
+            ('LBRACK',  '[',   r'\['),
+            ('RBRACK',  ']',   r'\]'),
+            ('MINUS',   '-',   r'-'),
+            ('ASSIGN',  '::=', r'::='),
+            ('COLON',   ':',   r':'),
+            ('EQ',      '=',   r'='),
+            ('CSTRING',        r'"[^"]*"'),
+            ('QMARK',   '"',   r'"'),
+            ('BSTRING',        r"'[01\s]*'B"),
+            ('HSTRING',        r"'[0-9A-F\s]*'H"),
+            ('APSTR',   "'",   r"'"),
+            ('SCOLON',  ';',   r';'),
+            ('AT',      '@',   r'@'),
+            ('PIPE',    '|',   r'\|'),
+            ('EMARK',   '!',   r'!'),
+            ('HAT',     '^',   r'\^'),
+            ('AMPND',   '&',   r'&'),
+            ('TREF',           r'[A-Z][a-zA-Z0-9-]*'),
+            ('IDENT',          r'[a-z][a-zA-Z0-9-]*'),
+            ('MISMATCH',       r'.')
+        ]
+
+    def grammar(self):
+        value = tp.Forward()
+        type_ = tp.Forward()
+        object_ = tp.Forward()
+        object_set = tp.Forward()
+        primitive_field_name = tp.Forward()
+        constraint = tp.Forward()
+        element_set_spec = tp.Forward()
+        token_or_group_spec = tp.Forward()
+        value_set = tp.Forward()
+        named_type = tp.Forward()
+        root_element_set_spec = tp.Forward()
+        defined_object_set = tp.Forward()
+        syntax_list = tp.Forward()
+        object_from_object = tp.Forward()
+        object_set_from_objects = tp.Forward()
+        defined_value = tp.Forward()
+        component_type_lists = tp.Forward()
+        extension_and_exception = tp.Forward()
+        optional_extension_marker = tp.Forward()
+        additional_element_set_spec = tp.Forward()
+        reference = tp.Forward()
+        defined_object_class = tp.Forward()
+        defined_type = tp.Forward()
+        external_type_reference = tp.Forward()
+        external_value_reference = tp.Forward()
+        simple_defined_type = tp.Forward()
+        defined_object = tp.Forward()
+        referenced_value = tp.Forward()
+        builtin_value = tp.Forward()
+        named_value = tp.Forward()
+        signed_number = tp.Forward()
+        name_and_number_form = tp.Forward()
+        number_form = tp.Forward()
+        definitive_number_form = tp.Forward()
+        version_number = tp.Forward()
+        named_number = tp.Forward()
+        intersections = tp.Forward()
+        unions = tp.Forward()
+
+        # ToDo!
+        value_set <<= tp.NoMatch()
+
+        # X680: 11. ASN.1 lexical items
+        identifier = 'IDENT'
+        value_reference = identifier
+        type_reference = 'TREF'
+        module_reference = type_reference
+        real_number = Sequence('NUMBER', '.', tp.Optional('NUMBER'))
+        number = 'NUMBER'
+
+        value_field_reference = Sequence('&',  value_reference)
+        type_field_reference = Sequence('&', type_reference)
+        word = type_reference
+
+        # X.683: 8. Parameterized assignments
+        dummy_reference = reference
+        dummy_governor = dummy_reference
+        governor = choice(type_, defined_object_class)
+        param_governor = choice(governor, dummy_governor)
+        parameter = Sequence(tp.Optional(Sequence(param_governor, ':')),
+                             dummy_reference)
+        parameter_list = tp.Optional(Sequence('{',
+                                              DelimitedList(parameter),
+                                              '}'))
+
+        # X.683: 9. Referencing parameterized definitions
+        actual_parameter = choice(type_,
+                                  value,
+                                  value_set,
+                                  defined_object_class,
+                                  object_,
+                                  object_set)
+        actual_parameter_list = Sequence('{',
+                                         DelimitedList(actual_parameter),
+                                         '}')
+        parameterized_object = Sequence(defined_object,
+                                        actual_parameter_list)
+        parameterized_object_set = Sequence(defined_object_set,
+                                            actual_parameter_list)
+        parameterized_object_class = Sequence(defined_object_class,
+                                              actual_parameter_list)
+        parameterized_value_set_type = Sequence(simple_defined_type,
+                                                actual_parameter_list)
+        simple_defined_value = choice(external_value_reference,
+                                      value_reference)
+        parameterized_value = Sequence(simple_defined_value,
+                                       actual_parameter_list)
+        simple_defined_type <<= choice(external_type_reference,
+                                       type_reference)
+        parameterized_type = Sequence(simple_defined_type,
+                                      actual_parameter_list)
+        parameterized_reference = Sequence(reference,
+                                           tp.Optional(Sequence('{', '}')))
+
+        # X.682: 11. Contents constraints
+        contents_constraint = choice(
+            Sequence('CONTAINING',
+                     type_,
+                     tp.Optional(Sequence('ENCODED', 'BY', value))),
+            Sequence('ENCODED', 'BY', value))
+
+        # X.682: 10. Table constraints, including component relation constraints
+        level = tp.OneOrMore('.')
+        component_id_list = identifier
+        at_notation = Sequence('@',
+                               choice(component_id_list,
+                                      Sequence(level, component_id_list)))
+        component_relation_constraint = Sequence('{',
+                                                 defined_object_set,
+                                                 '}',
+                                                 '{',
+                                                 DelimitedList(at_notation),
+                                                 '}')
+        simple_table_constraint = object_set
+        table_constraint = choice(component_relation_constraint,
+                                  simple_table_constraint)
+
+        # X.682: 9. User-defined constants
+        user_defined_constraint_parameter = choice(
+            Sequence(governor,
+                     ':',
+                     choice(value,
+                            value_set,
+                            object_,
+                            object_set)),
+            type_,
+            defined_object_class)
+        user_defined_constraint = Sequence(
+            'CONSTRAINED', 'BY',
+            '{',
+            tp.Optional(DelimitedList(user_defined_constraint_parameter)),
+            '}')
+
+        # X.682: 8. General constraint specification
+        general_constraint = choice(user_defined_constraint,
+                                    table_constraint,
+                                    contents_constraint)
+
+        # X.681: 7. ASN.1 lexical items
+        object_set_reference = type_reference
+        value_set_field_reference = tp.NoMatch()
+        object_field_reference = tp.NoMatch()
+        object_set_field_reference = tp.NoMatch()
+        object_class_reference = type_reference
+        object_reference = value_reference
+
+        # X.681: 8. Referencing definitions
+        external_object_set_reference = tp.NoMatch()
+        defined_object_set <<= choice(external_object_set_reference,
+                                      object_set_reference)
+        defined_object <<= tp.NoMatch()
+        defined_object_class <<= object_class_reference
+
+        # X.681: 9. Information object class definition and assignment
+        field_name = primitive_field_name
+        primitive_field_name <<= choice(type_field_reference,
+                                        value_field_reference,
+                                        value_set_field_reference,
+                                        object_field_reference,
+                                        object_set_field_reference)
+        object_set_field_spec = tp.NoMatch()
+        object_field_spec = tp.NoMatch()
+        variable_type_value_set_field_spec = tp.NoMatch()
+        fixed_type_value_set_field_spec = tp.NoMatch()
+        variable_type_value_field_spec = tp.NoMatch()
+        fixed_type_value_field_spec = Sequence(
+            value_field_reference,
+            type_,
+            tp.Optional('UNIQUE'),
+            tp.Optional(choice('OPTIONAL',
+                               Sequence('DEFAULT', value))))
+        type_field_spec = Sequence(
+            type_field_reference,
+            tp.Optional(choice('OPTIONAL',
+                               Sequence('DEFAULT', type_))))
+        field_spec = choice(type_field_spec,
+                            fixed_type_value_field_spec,
+                            variable_type_value_field_spec,
+                            fixed_type_value_set_field_spec,
+                            variable_type_value_set_field_spec,
+                            object_field_spec,
+                            object_set_field_spec)
+        with_syntax_spec = Sequence('WITH', 'SYNTAX', syntax_list)
+        object_class_defn = Sequence('CLASS',
+                                     '{',
+                                     DelimitedList(field_spec),
+                                     '}',
+                                     tp.Optional(with_syntax_spec))
+        object_class = choice(object_class_defn,
+                              # defined_object_class,
+                              parameterized_object_class)
+        parameterized_object_class_assignment = Sequence(
+            object_class_reference,
+            parameter_list,
+            '::=',
+            object_class)
+
+        # X.681: 10. Syntax list
+        literal = choice(word, ',')
+        required_token = choice(literal, primitive_field_name)
+        optional_group = Sequence('[',
+                                  tp.OneOrMore(token_or_group_spec),
+                                  ']')
+        token_or_group_spec <<= choice(required_token, optional_group)
+        syntax_list <<= Sequence('{',
+                                 tp.OneOrMore(token_or_group_spec),
+                                 '}')
+
+        # X.681: 11. Information object definition and assignment
+        setting = choice(type_, value, value_set, object_, object_set, 'CSTRING')
+        field_setting = Sequence(primitive_field_name, setting)
+        default_syntax = Sequence('{',
+                                  DelimitedList(field_setting),
+                                  '}')
+        defined_syntax = tp.NoMatch()
+        object_defn = choice(default_syntax, defined_syntax)
+        object_ <<= choice(defined_object,
+                           object_defn,
+                           object_from_object,
+                           parameterized_object)
+        parameterized_object_assignment = Sequence(object_reference,
+                                                   parameter_list,
+                                                   defined_object_class,
+                                                   '::=',
+                                                   object_)
+
+        # X.681: 12. Information object set definition and assignment
+        object_set_elements = choice(object_,
+                                     defined_object_set,
+                                     object_set_from_objects,
+                                     parameterized_object_set)
+        object_set_spec = choice(
+            Sequence(
+                root_element_set_spec,
+                tp.Optional(
+                    Sequence(',', '...',
+                             tp.Optional(
+                                 Sequence(',',
+                                          additional_element_set_spec))))),
+            Sequence('...',
+                     tp.Optional(Sequence(',',
+                                          additional_element_set_spec))))
+        object_set <<= Sequence('{', object_set_spec, '}')
+        parameterized_object_set_assignment = Sequence(
+            object_set_reference,
+            parameter_list,
+            defined_object_class,
+            '::=',
+            object_set)
+
+        # X.681: 13. Associated tables
+
+        # X.681: 14. Notation for the object class field type
+        fixed_type_field_val = choice(builtin_value, referenced_value)
+        open_type_field_val = Sequence(type_, ':', value)
+        object_class_field_value = choice(open_type_field_val,
+                                          fixed_type_field_val)
+        object_class_field_type = Sequence(defined_object_class,
+                                           '.',
+                                           field_name)
+
+        # X.681: 15. Information from objects
+        object_set_from_objects <<= tp.NoMatch()
+        object_from_object <<= tp.NoMatch()
+
+        # X.680: 49. The exception identifier
+        exception_identification = choice(signed_number,
+                                          defined_value,
+                                          Sequence(type_, ":", value))
+        exception_spec = tp.Optional(Sequence('!', exception_identification))
+
+        # X.680: 47. Subtype elements
+        pattern_constraint = Sequence('PATTERN', value)
+        presence_constraint = tp.Optional(choice('PRESENT', 'ABSENT', 'OPTIONAL'))
+        value_constraint = tp.Optional(constraint)
+        component_constraint = Sequence(value_constraint, presence_constraint)
+        named_constraint = Sequence(identifier, component_constraint)
+        type_constraints = DelimitedList(named_constraint)
+        partial_specification = Sequence('{', '...', ',', type_constraints, '}')
+        full_specification = Sequence('{', type_constraints, '}')
+        multiple_type_constraints = choice(full_specification,
+                                           partial_specification)
+        single_type_constraint = constraint
+        inner_type_constraints = choice(
+            Sequence('WITH', 'COMPONENT', single_type_constraint),
+            Sequence('WITH', 'COMPONENTS', multiple_type_constraints))
+        permitted_alphabet = Sequence('FROM', constraint)
+        type_constraint = type_
+        size_constraint = Sequence('SIZE', constraint)
+        lower_end_value = choice(value, 'MIN')
+        upper_end_value = choice(value, 'MAX')
+        lower_endpoint = Sequence(lower_end_value, tp.Optional('<'))
+        upper_endpoint = Sequence(tp.Optional('<'), upper_end_value)
+        value_range = Sequence(lower_endpoint, '..', upper_endpoint)
+        includes = tp.Optional('INCLUDES')
+        contained_subtype = Sequence(includes, type_)
+        single_value = value
+        subtype_elements = choice(size_constraint,
+                                  permitted_alphabet,
+                                  value_range,
+                                  inner_type_constraints,
+                                  single_value,
+                                  pattern_constraint,
+                                  contained_subtype,
+                                  type_constraint)
+
+        # X.680: 46. Element set specification
+        elements = choice(subtype_elements,
+                          object_set_elements,
+                          Sequence('(', element_set_spec, ')'))
+        intersection_mark = choice('^', 'INTERSECTION')
+        union_mark = choice('|', 'UNION')
+        exclusions = Sequence('EXCEPT', elements)
+        intersection_elements = Sequence(elements, tp.Optional(exclusions))
+        intersections <<= choice(intersection_elements,
+                                 Sequence(intersections,
+                                          intersection_mark,
+                                          intersection_elements))
+        unions <<= DelimitedList(elements, delim=choice(union_mark,
+                                                        intersection_mark))
+        element_set_spec <<= choice(unions, Sequence('ALL', exclusions))
+        additional_element_set_spec <<= element_set_spec
+        root_element_set_spec <<= element_set_spec
+        element_set_specs = Sequence(
+            root_element_set_spec,
+            tp.Optional(Sequence(',', '...',
+                                 tp.Optional(
+                                     Sequence(',', additional_element_set_spec)))))
+
+        # X.680: 45. Constrained types
+        subtype_constraint = element_set_specs
+        constraint_spec = choice(subtype_constraint, general_constraint)
+        constraint <<= Sequence('(', constraint_spec, exception_spec, ')')
+        type_with_constraint = Sequence(choice('SET', 'SEQUENCE'),
+                                        choice(constraint, size_constraint),
+                                        'OF',
+                                        choice(type_, named_type))
+
+        # X.680: 40. Definition of unrestricted character string types
+        unrestricted_character_string_type = Sequence('CHARACTER', 'STRING')
+        unrestricted_character_string_value = tp.NoMatch()
+
+        # X.680: 39. Canonical order of characters
+
+        # X.680: 38. Specification of the ASN.1 module "ASN.1-CHARACTER-MODULE"
+
+        # X.680: 37. Definition of restricted character string types
+        group = number
+        plane = number
+        row = number
+        cell = number
+        quadruple = Sequence('{',
+                             group, ',',
+                             plane, ',',
+                             row, ',',
+                             cell,
+                             '}')
+        table_column = number
+        table_row = number
+        tuple_ = Sequence('{', table_column, ',', table_row, '}')
+        chars_defn = choice('CSTRING', quadruple, tuple_, defined_value)
+        charsyms = DelimitedList(chars_defn)
+        character_string_list = Sequence('{', charsyms, '}')
+        restricted_character_string_value = choice('CSTRING',
+                                                   character_string_list,
+                                                   quadruple,
+                                                   tuple_)
+        restricted_character_string_type = choice('BMPString',
+                                                  'GeneralString',
+                                                  'GraphicString',
+                                                  'IA5String',
+                                                  'ISO646String',
+                                                  'NumericString',
+                                                  'PrintableString',
+                                                  'TeletexString',
+                                                  'UTCTime',
+                                                  'GeneralizedTime',
+                                                  'T61String',
+                                                  'UniversalString',
+                                                  'UTF8String',
+                                                  'VideotexString',
+                                                  'VisibleString')
+
+        # X.680: 36. Notation for character string types
+        character_string_value = choice(restricted_character_string_value,
+                                        unrestricted_character_string_value)
+        character_string_type = choice(restricted_character_string_type,
+                                       unrestricted_character_string_type)
+
+        # X.680: 35. The character string types
+
+        # X.680: 34. Notation for the external type
+        # external_value = sequence_value
+
+        # X.680: 33. Notation for embedded-pdv type
+        # embedded_pdv_value = sequence_value
+
+        # X.680: 32. Notation for relative object identifier type
+        relative_oid_components = choice(number_form,
+                                         name_and_number_form,
+                                         defined_value)
+        relative_oid_component_list = tp.OneOrMore(relative_oid_components)
+        relative_oid_value = Sequence('{',
+                                      relative_oid_component_list,
+                                      '}')
+
+        # X.680: 31. Notation for object identifier type
+        name_and_number_form <<= Sequence(identifier,
+                                          '(',
+                                          number_form,
+                                          ')')
+        number_form <<= choice(number, defined_value)
+        name_form = identifier
+        obj_id_components = choice(name_and_number_form,
+                                   defined_value,
+                                   number_form,
+                                   name_form)
+        obj_id_components_list = tp.OneOrMore(obj_id_components)
+        object_identifier_value = choice(
+            Sequence('{', obj_id_components_list, '}'),
+            Sequence('{', defined_value, obj_id_components_list, '}'))
+        object_identifier_type = Sequence('OBJECT', 'IDENTIFIER')
+
+        # X.680: 30. Notation for tagged types
+        # tagged_value = NoMatch()
+
+        # X.680: 29. Notation for selection types
+
+        # X.680: 28. Notation for the choice types
+        alternative_type_list = DelimitedList(named_type)
+        extension_addition_alternatives_group = Sequence('[[',
+                                                         version_number,
+                                                         alternative_type_list,
+                                                         ']]')
+        extension_addition_alternative = choice(extension_addition_alternatives_group,
+                                                named_type)
+        extension_addition_alternatives_list = DelimitedList(extension_addition_alternative)
+        extension_addition_alternatives = tp.Optional(
+            Sequence(',', extension_addition_alternatives_list))
+        root_alternative_type_list = alternative_type_list
+        alternative_type_lists = Sequence(
+            root_alternative_type_list,
+            tp.Optional(Sequence(',',
+                                 extension_and_exception,
+                                 extension_addition_alternatives,
+                                 optional_extension_marker)))
+        choice_type = Sequence('CHOICE',
+                               '{',
+                               alternative_type_lists,
+                               '}')
+        choice_value = Sequence(identifier, ':', value)
+
+        # X.680: 27. Notation for the set-of types
+        set_of_type = Sequence('SET', 'OF', choice(type_, named_type))
+
+        # X.680: 26. Notation for the set types
+        # set_value = NoMatch()
+        set_type = Sequence(
+            'SET',
+            '{',
+            tp.Optional(choice(component_type_lists,
+                               Sequence(extension_and_exception,
+                                        optional_extension_marker))),
+            '}')
+
+        # X.680: 25. Notation for the sequence-of types
+        sequence_of_value = tp.NoMatch()
+        sequence_of_type = Sequence('SEQUENCE', 'OF', choice(type_, named_type))
+
+        # X.680: 24. Notation for the sequence types
+        component_value_list = DelimitedList(named_value)
+        sequence_value = Sequence('{',
+                                  tp.Optional(component_value_list),
+                                  '}')
+        component_type = choice(
+            Sequence(named_type,
+                     tp.Optional(choice('OPTIONAL',
+                                        Sequence('DEFAULT', value)))),
+            Sequence('COMPONENTS', 'OF', type_))
+        version_number <<= tp.Optional(Sequence(number, ':'))
+        extension_addition_group = Sequence('[[',
+                                            version_number,
+                                            DelimitedList(component_type),
+                                            ']]')
+        extension_and_exception <<= Sequence('...', tp.Optional(exception_spec))
+        extension_addition = choice(component_type, extension_addition_group)
+        extension_addition_list = DelimitedList(extension_addition)
+        extension_additions = tp.Optional(Sequence(',', extension_addition_list))
+        extension_end_marker = Sequence(',', '...')
+        optional_extension_marker <<= tp.Optional(Sequence(',', '...'))
+        component_type_list = DelimitedList(component_type)
+        root_component_type_list = component_type_list
+        component_type_lists <<= choice(
+            Sequence(root_component_type_list,
+                     tp.Optional(Sequence(',',
+                                          extension_and_exception,
+                                          extension_additions,
+                                          choice(Sequence(extension_end_marker,
+                                                          ',',
+                                                          root_component_type_list),
+                                                 optional_extension_marker)))),
+            Sequence(extension_and_exception,
+                     extension_additions,
+                     choice(Sequence(extension_end_marker,
+                                     ',',
+                                     root_component_type_list),
+                            optional_extension_marker)))
+        sequence_type = Sequence('SEQUENCE',
+                                 '{',
+                                 tp.Optional(choice(component_type_lists,
+                                                    Sequence(extension_and_exception,
+                                                             optional_extension_marker))),
+                                 '}')
+
+        # X.680: 23. Notation for the null type
+        null_value = 'NULL'
+        null_type = 'NULL'
+
+        # X.680: 22. Notation for the octetstring type
+        # octet_string_value = choice('BSTRING',
+        #                       'HSTRING',
+        #                       Sequence('CONTAINING', value))
+        octet_string_type = Sequence('OCTET', 'STRING')
+
+        # X.680: 21. Notation for the bitstring type
+        bit_string_value = choice('BSTRING',
+                                  'HSTRING',
+                                  Sequence('{',
+                                           tp.Optional(DelimitedList(identifier)),
+                                           '}'))
+        named_bit = Sequence('IDENT', '(', choice(number, defined_value), ')')
+        bit_string_type = Sequence('BIT', 'STRING',
+                                   tp.Optional(Sequence('{',
+                                                        DelimitedList(named_bit),
+                                                        '}')))
+
+        tag = Sequence('[',
+                       tp.Optional(choice('UNIVERSAL', 'APPLICATION', 'PRIVATE')),
+                       number,
+                       ']')
+        tagged_type = Sequence(tag,
+                               tp.Optional(choice('IMPLICIT', 'EXPLICIT')),
+                               type_)
+
+        # X.680: 20. Notation for the real type
+        special_real_value = choice('PLUS-INFINITY', 'MINUS-INFINITY')
+        numeric_real_value = choice(real_number, sequence_value)
+        real_value = choice(numeric_real_value, special_real_value)
+        real_type = 'REAL'
+
+        # X.680: 19. Notation for the enumerated type
+        enumerated_value = identifier
+        enumeration_item = choice(named_number, identifier)
+        enumeration = DelimitedList(enumeration_item)
+        root_enumeration = enumeration
+        additional_enumeration = enumeration
+        enumerations = Sequence(
+            root_enumeration,
+            tp.Optional(Sequence(',', '...', exception_spec,
+                                 tp.Optional(
+                                     Sequence(',', additional_enumeration)))))
+        enumerated_type = Sequence('ENUMERATED', '{', enumerations, '}')
+
+        # X.680: 18. Notation for the integer type
+        integer_value = choice(signed_number, identifier)
+        signed_number <<= number
+        named_number <<= Sequence(identifier,
+                                  '(',
+                                  choice(signed_number, defined_value),
+                                  ')')
+        integer_type = Sequence('INTEGER',
+                                tp.Optional(Sequence('{',
+                                                     DelimitedList(named_number),
+                                                     '}')))
+
+        # X.680: 17. Notation for the boolean type
+        boolean_value = choice('TRUE', 'FALSE')
+        boolean_type = 'BOOLEAN'
+
+        any_defined_by_type = Sequence('ANY', 'DEFINED', 'BY', value_reference)
+
+        # X.680: 16. Definition of types and values
+        named_value <<= Sequence(identifier, value)
+        referenced_value <<= tp.NoMatch()
+        builtin_value <<= choice(bit_string_value,
+                                 boolean_value,
+                                 character_string_value,
+                                 choice_value,
+                                 relative_oid_value,
+                                 sequence_value,
+                                 enumerated_value,
+                                 real_value,
+                                 integer_value,
+                                 null_value,
+                                 object_identifier_value,
+                                 sequence_of_value)
+        value <<= choice(object_class_field_value)
+        # ,
+        # referenced_value,
+        # builtin_value)
+        builtin_type = choice(choice_type,
+                              integer_type,
+                              null_type,
+                              bit_string_type,
+                              octet_string_type,
+                              enumerated_type,
+                              'IA5String',
+                              boolean_type,
+                              real_type,
+                              character_string_type,
+                              object_class_field_type,
+                              sequence_type,
+                              set_type,
+                              sequence_of_type,
+                              set_of_type,
+                              object_identifier_type,
+                              tagged_type,
+                              any_defined_by_type,
+                              'ANY')
+        named_type <<= Sequence('IDENT', type_)
+        referenced_type = type_reference
+        type_ <<= choice(Sequence(choice(builtin_type, referenced_type),
+                                  tp.ZeroOrMore(constraint)),
+                         type_with_constraint)
+
+        # X.680: 15. Assigning types and values
+        parameterized_value_assignment = Sequence(value_reference,
+                                                  type_,
+                                                  '::=',
+                                                  value)
+        parameterized_type_assignment = Sequence(type_reference,
+                                                 parameter_list,
+                                                 '::=',
+                                                 type_)
+
+        # X.680: 14. Notation to support references to ASN.1 components
+
+        # X.680: 13. Referencing type and value definitions
+        external_value_reference <<= Sequence(module_reference,
+                                              '.',
+                                              value_reference)
+        external_type_reference <<= Sequence(module_reference,
+                                             '.',
+                                             type_reference)
+        defined_type <<= choice(external_type_reference,
+                                parameterized_type,
+                                parameterized_value_set_type,
+                                type_reference)
+        defined_value <<= choice(external_value_reference,
+                                 parameterized_value,
+                                 value_reference)
+
+        # X.680: 12. Module definition
+        assignment = choice(parameterized_object_set_assignment,
+                            parameterized_object_assignment,
+                            parameterized_object_class_assignment,
+                            parameterized_type_assignment,
+                            parameterized_value_assignment)
+        assignment_list = tp.ZeroOrMore(assignment)
+        reference <<= choice(type_reference,
+                             value_reference,
+                             object_class_reference,
+                             object_reference,
+                             object_set_reference)
+        symbol = choice(parameterized_reference,
+                        reference)
+        symbol_list = DelimitedList(symbol)
+        assigned_identifier = tp.Optional(choice(
+            object_identifier_value,
+            Sequence(defined_value, tp.Not(choice(',', 'FROM')))))
+        global_module_reference = Sequence(module_reference, assigned_identifier)
+        symbols_from_module = Sequence(symbol_list,
+                                       'FROM',
+                                       global_module_reference)
+        imports = tp.Optional(Sequence('IMPORTS',
+                                       tp.ZeroOrMore(symbols_from_module),
+                                       ';'))
+        symbols_exported = tp.Optional(symbol_list)
+        exports = tp.Optional(Sequence('EXPORTS',
+                                       choice('ALL', symbols_exported),
+                                       ';'))
+        module_body = Sequence(exports, imports, assignment_list)
+        extension_default = tp.Optional(Sequence('EXTENSIBILITY', 'IMPLIED'))
+        tag_default = tp.Optional(
+            Sequence(choice('EXPLICIT', 'IMPLICIT', 'AUTOMATIC'), 'TAGS'))
+        definitive_name_and_number_form = Sequence(identifier,
+                                                   '(',
+                                                   definitive_number_form,
+                                                   ')')
+        definitive_number_form <<= number
+        definitive_obj_id_component = choice(definitive_name_and_number_form,
+                                             name_form,
+                                             definitive_number_form)
+        definitive_obj_id_components_list = tp.OneOrMore(definitive_obj_id_component)
+        definitive_identifier = tp.Optional(Sequence(
+            '{',
+            definitive_obj_id_components_list,
+            '}'))
+        module_identifier = Sequence(module_reference, definitive_identifier)
+        module_definition = Sequence(module_identifier,
+                                     'DEFINITIONS',
+                                     tag_default,
+                                     extension_default,
+                                     '::=',
+                                     'BEGIN',
+                                     module_body,
+                                     'END')
+
+        return tp.OneOrMore(module_definition)
 
 
 class ParseError(Error):
@@ -1713,6 +2556,14 @@ def parse_string(string):
     ...     foo = asn1tools.parse_string(fin.read())
 
     """
+
+    try:
+        Asn1Parser().parse(string)
+    except tp.ParseError as e:
+        raise ParseError("Invalid ASN.1 syntax at line {}, column {}: '{}'.".format(
+            e.line,
+            e.column,
+            tp.markup_line(e.text, e.offset)))
 
     grammar = create_grammar()
 

@@ -3787,7 +3787,7 @@ CQI-ReportPeriodic-v1130 ::= SEQUENCE {
 
 CQI-ReportPeriodic-v1310 ::= SEQUENCE {
     cri-ReportConfig-r13            CRI-ReportConfig-r13                OPTIONAL,    -- Need OR
-    simultaneousAckNackAndCQI-Format4-Format5-r13        ENUMERATED {setup}        OPTIONAL-- Need OR
+    simultaneousAckNackAndCQI-Format4-Format5-r13        ENUMERATED {setup}        OPTIONAL -- Need OR
 }
 
 CQI-ReportPeriodic-v1320 ::= SEQUENCE {
@@ -5816,7 +5816,7 @@ RadioResourceConfigCommonSCell-r10 ::= SEQUENCE {
     harq-ReferenceConfig-r14                    ENUMERATED {sa2,sa4,sa5}     OPTIONAL,        -- Need OR
     soundingRS-FlexibleTiming-r14                ENUMERATED {true}            OPTIONAL        -- Need OR
     ]],
-    [[    mbsfn-SubframeConfigList-v1430        MBSFN-SubframeConfigList-v1430        OPTIONAL-- Need ON
+    [[    mbsfn-SubframeConfigList-v1430        MBSFN-SubframeConfigList-v1430        OPTIONAL -- Need ON
     ]]
 }
 

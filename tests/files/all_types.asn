@@ -28,8 +28,6 @@ Real2 ::= REAL (1.0..2.0)
 
 Real3 ::= REAL (1..2)
 
-Real4 ::= REAL (1...2)
-
 Real5 ::= REAL (1. ..2)
 
 Real6 ::= REAL (-20.0 .. -10.0)
