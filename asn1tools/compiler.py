@@ -3,6 +3,8 @@ encode and decode types.
 
 """
 
+import diskcache
+
 from .parser import parse_files
 from .parser import parse_string
 from .codecs import compiler
@@ -211,6 +213,34 @@ def _compile_any_defined_by_choices(specification,
                 break
 
 
+def _compile_files_cache(filenames,
+                         codec,
+                         any_defined_by_choices,
+                         encoding,
+                         cache_dir):
+    key = [codec.encode('ascii')]
+
+    if isinstance(filenames, str):
+        filenames = [filenames]
+
+    for filename in filenames:
+        with open(filename, 'rb') as fin:
+            key.append(fin.read())
+
+    key = b''.join(key)
+    cache = diskcache.Cache(cache_dir)
+
+    try:
+        return cache[key]
+    except KeyError:
+        compiled = compile_dict(parse_files(filenames, encoding),
+                                codec,
+                                any_defined_by_choices)
+        cache[key] = compiled
+
+        return compiled
+
+
 def compile_dict(specification, codec='ber', any_defined_by_choices=None):
     """Compile given ASN.1 specification dictionary and return a
     :class:`~asn1tools.compiler.Specification` object that can be used
@@ -268,7 +298,8 @@ def compile_string(string, codec='ber', any_defined_by_choices=None):
 def compile_files(filenames,
                   codec='ber',
                   any_defined_by_choices=None,
-                  encoding='utf-8'):
+                  encoding='utf-8',
+                  cache_dir=None):
     """Compile given ASN.1 specification file(s) and return a
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec
@@ -278,13 +309,24 @@ def compile_files(filenames,
     `encoding` is the text encoding. This argument is passed to the
     built-in function `open()`.
 
+    `cache_dir` specifies the database cache location in the file
+    system. Give as ``None`` to disable the cache. By default the
+    cache is disabled.
+
     >>> foo = asn1tools.compile_files('foo.asn')
 
     """
 
-    return compile_dict(parse_files(filenames, encoding),
-                        codec,
-                        any_defined_by_choices)
+    if cache_dir is None:
+        return compile_dict(parse_files(filenames, encoding),
+                            codec,
+                            any_defined_by_choices)
+    else:
+        return _compile_files_cache(filenames,
+                                    codec,
+                                    any_defined_by_choices,
+                                    encoding,
+                                    cache_dir)
 
 
 def pre_process_dict(specification):

@@ -9,3 +9,4 @@ protobuf
 prompt_toolkit
 pycodestyle
 bitstruct
+diskcache
