@@ -1029,7 +1029,7 @@ class Integer(Type):
         if size <= 65535:
             self.number_of_indefinite_bits = None
         else:
-            number_of_bits = ((self.number_of_bits + 7) // 8).bit_length()
+            number_of_bits = ((self.number_of_bits + 7) // 8 - 1).bit_length()
             self.number_of_indefinite_bits = number_of_bits
 
     def encode(self, data, encoder):

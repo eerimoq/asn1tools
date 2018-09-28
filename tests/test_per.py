@@ -79,6 +79,11 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "  a K (7..7) "
             "} "
             "M ::= INTEGER (5..99, ..., 101..105) "
+            "N ::= INTEGER (0..65535) "
+            "O ::= INTEGER (0..65536) "
+            "P ::= INTEGER (0..2147483647) "
+            "Q ::= INTEGER (0..4294967295) "
+            "R ::= INTEGER (0..4294967296) "
             "END",
             'per')
 
@@ -119,7 +124,26 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
              b'\x7e\x80\xfd\x00\x00\xfd'),
             ('K',                        7, b'\x80'),
             ('L',                 {'a': 7}, b''),
-            ('M',                         103, b'\x80\x01\x67')
+            ('M',                      103, b'\x80\x01\x67'),
+            ('N',                        1, b'\x00\x01'),
+            ('N',                      255, b'\x00\xff'),
+            ('N',                      256, b'\x01\x00'),
+            ('N',                    65535, b'\xff\xff'),
+            ('O',                        1, b'\x00\x01'),
+            ('O',                      255, b'\x00\xff'),
+            ('O',                      256, b'\x40\x01\x00'),
+            ('O',                    65535, b'\x40\xff\xff'),
+            ('O',                    65536, b'\x80\x01\x00\x00'),
+            ('P',                        1, b'\x00\x01'),
+            ('P',                      255, b'\x00\xff'),
+            ('P',                      256, b'\x40\x01\x00'),
+            ('P',                    65535, b'\x40\xff\xff'),
+            ('P',                    65536, b'\x80\x01\x00\x00'),
+            ('P',                 16777215, b'\x80\xff\xff\xff'),
+            ('P',                 16777216, b'\xc0\x01\x00\x00\x00'),
+            ('P',                100000000, b'\xc0\x05\xf5\xe1\x00'),
+            ('Q',               4294967295, b'\xc0\xff\xff\xff\xff'),
+            ('R',               4294967296, b'\x80\x01\x00\x00\x00\x00')
         ]
 
         for type_name, decoded, encoded in datas:
