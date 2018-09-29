@@ -313,9 +313,15 @@ def compile_files(filenames,
     file system. Give as ``None`` to disable the cache. By default the
     cache is disabled. The cache key is the concatenated contents of
     given files and the codec name. Using a cache will significantly
-    reduce the compile time of big files.
+    reduce the compile when recompiling the same files. The cache
+    directory is automatically created if it does not exist. Remove
+    the cache directory `cache_dir` to clear the cache.
 
     >>> foo = asn1tools.compile_files('foo.asn')
+
+    Give `cache_dir` as a string to use a cache.
+
+    >>> foo = asn1tools.compile_files('foo.asn', cache_dir='my_cache_dir')
 
     """
 
