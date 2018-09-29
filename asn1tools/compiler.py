@@ -309,9 +309,11 @@ def compile_files(filenames,
     `encoding` is the text encoding. This argument is passed to the
     built-in function `open()`.
 
-    `cache_dir` specifies the database cache location in the file
-    system. Give as ``None`` to disable the cache. By default the
-    cache is disabled.
+    `cache_dir` specifies the compiled files cache location in the
+    file system. Give as ``None`` to disable the cache. By default the
+    cache is disabled. The cache key is the concatenated contents of
+    given files and the codec name. Using a cache will significantly
+    reduce the compile time of big files.
 
     >>> foo = asn1tools.compile_files('foo.asn')
 
