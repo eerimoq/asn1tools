@@ -321,7 +321,7 @@ def compile_files(filenames,
 
     Give `cache_dir` as a string to use a cache.
 
-    >>> foo = asn1tools.compile_files('foo.asn', cache_dir='my_cache_dir')
+    >>> foo = asn1tools.compile_files('foo.asn', cache_dir='my_cache')
 
     """
 
