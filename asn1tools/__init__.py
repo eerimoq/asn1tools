@@ -9,7 +9,6 @@ import argparse
 import binascii
 import logging
 from pprint import pformat
-import pickle
 
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit import PromptSession
@@ -89,9 +88,8 @@ def _convert_hexstring(input_spec,
     print(decoded.decode('latin-1'))
 
 
-def _compile_files(specs, input_codec, output_codec):
+def _compile_files(specs, input_codec, output_codec, cache_dir):
     py_count = [spec.endswith('.py') for spec in specs].count(True)
-    pkl_count = [spec.endswith('.pkl') for spec in specs].count(True)
 
     if py_count > 0:
         if py_count != 1:
@@ -101,19 +99,13 @@ def _compile_files(specs, input_codec, output_codec):
         parsed = module.SPECIFICATION
         input_spec = compile_dict(parsed, input_codec)
         output_spec = compile_dict(parsed, output_codec)
-    elif pkl_count > 0:
-        if pkl_count != 2:
-            raise Exception('Expected two .pkl-files, but got {}.'.format(pkl_count))
-
-        with open(specs[0], 'rb') as fin:
-            input_spec = pickle.load(fin)
-
-        with open(specs[1], 'rb') as fin:
-            output_spec = pickle.load(fin)
     else:
-        parsed = parse_files(specs)
-        input_spec = compile_dict(parsed, input_codec)
-        output_spec = compile_dict(parsed, output_codec)
+        input_spec = compile_files(specs,
+                                   input_codec,
+                                   cache_dir=cache_dir)
+        output_spec = compile_files(specs,
+                                    output_codec,
+                                    cache_dir=cache_dir)
 
     return input_spec, output_spec
 
@@ -121,7 +113,8 @@ def _compile_files(specs, input_codec, output_codec):
 def _do_convert(args):
     input_spec, output_spec = _compile_files(args.specification,
                                              args.input_codec,
-                                             args.output_codec)
+                                             args.output_codec,
+                                             args.cache_dir)
 
     if args.hexstring == '-':
         for hexstring in sys.stdin:
@@ -161,6 +154,8 @@ def _handle_command_compile(line):
                         ),
                         default='gser',
                         help='Output codec (default: gser).')
+    parser.add_argument('-c', '--cache-dir',
+                        help='Cache directory.')
     parser.add_argument('specification',
                         nargs='+',
                         help='ASN.1 specification as one or more .asn files.')
@@ -173,7 +168,8 @@ def _handle_command_compile(line):
     try:
         input_spec, output_spec = _compile_files(args.specification,
                                                  args.input_codec,
-                                                 args.output_codec)
+                                                 args.output_codec,
+                                                 args.cache_dir)
         return input_spec, output_spec, args.output_codec
     except Exception as e:
         print('error: {}'.format(str(e)))
@@ -263,13 +259,6 @@ def _do_parse(args):
         fout.write('SPECIFICATION = {}'.format(pformat(parsed)))
 
 
-def _do_pickle(args):
-    compiled = compile_files(args.specification, args.codec)
-
-    with open(args.outfile, 'wb') as fout:
-        pickle.dump(compiled, fout)
-
-
 def _main():
     parser = argparse.ArgumentParser(
         description='Various ASN.1 utilities.')
@@ -305,13 +294,13 @@ def _main():
         choices=('ber', 'der', 'jer', 'oer', 'per', 'uper', 'xer', 'gser'),
         default='gser',
         help='Output format (default: gser).')
+    subparser.add_argument('-c', '--cache-dir',
+                           help='Cache directory.')
     subparser.add_argument(
         'specification',
         nargs='+',
-        help=('ASN.1 specification as one or more .asn files, one .py file or '
-              'one input and one output codec .pkl files. The .py-file may be '
-              'created with the parse subcommand. The .pkl-files may be '
-              'created with the pickle subcommand.'))
+        help=('ASN.1 specification as one or more .asn files or one .py '
+              'file. The .py-file may be created with the parse subcommand.'))
     subparser.add_argument('type', help='Type to convert.')
     subparser.add_argument(
         'hexstring',
@@ -332,21 +321,6 @@ def _main():
     subparser.add_argument('outfile',
                            help='Output file name.')
     subparser.set_defaults(func=_do_parse)
-
-    # The 'pickle' subparser.
-    subparser = subparsers.add_parser('pickle',
-                                      description='Pickle.')
-    subparser.add_argument(
-        '-c', '--codec',
-        choices=('ber', 'der', 'jer', 'oer', 'per', 'uper', 'xer', 'gser'),
-        default='ber',
-        help='Codec (default: ber).')
-    subparser.add_argument('specification',
-                           nargs='+',
-                           help='ASN.1 specification as one or more .asn files.')
-    subparser.add_argument('outfile',
-                           help='Output file name.')
-    subparser.set_defaults(func=_do_pickle)
 
     args = parser.parse_args()
 

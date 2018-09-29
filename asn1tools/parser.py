@@ -1243,8 +1243,8 @@ def create_grammar():
     quadruple = (left_brace
                  + group + comma
                  + plane + comma
-                 + row + comma +
-                 cell
+                 + row + comma
+                 + cell
                  + right_brace)
     table_column = number
     table_row = number

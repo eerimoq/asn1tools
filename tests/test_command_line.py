@@ -495,84 +495,6 @@ ff0e0201011609497320312b313d333f
                     str(cm.exception),
                     "error: Expected one .py-file, but got 2.")
 
-    def test_command_line_convert_pkl(self):
-        # Preparations.
-        argv = [
-            'asn1tools',
-            'pickle',
-            'tests/files/foo.asn',
-            'test_command_line_convert_pkl_ber.pkl'
-        ]
-
-        if os.path.exists('test_command_line_convert_pkl_ber.pkl'):
-            os.remove('test_command_line_convert_pkl_ber.pkl')
-
-        with patch('sys.argv', argv):
-            asn1tools._main()
-
-        argv = [
-            'asn1tools',
-            'pickle',
-            '--codec', 'gser',
-            'tests/files/foo.asn',
-            'test_command_line_convert_pkl_gser.pkl'
-        ]
-
-        if os.path.exists('test_command_line_convert_pkl_gser.pkl'):
-            os.remove('test_command_line_convert_pkl_gser.pkl')
-
-        with patch('sys.argv', argv):
-            asn1tools._main()
-
-        # Test convert.
-        argv = [
-            'asn1tools',
-            'convert',
-            'test_command_line_convert_pkl_ber.pkl',
-            'test_command_line_convert_pkl_gser.pkl',
-            'Question',
-            '300e0201011609497320312b313d333f'
-        ]
-
-        expected_output = (
-            'question Question ::= {\n'
-            '    id 1,\n'
-            '    question "Is 1+1=3?"\n'
-            '}\n'
-        )
-
-        stdout = StringIO()
-
-        with patch('sys.stdout', stdout):
-            with patch('sys.argv', argv):
-                asn1tools._main()
-
-        print(stdout.getvalue())
-
-        self.assertEqual(expected_output, stdout.getvalue())
-
-    def test_command_line_convert_pkl_too_many_files(self):
-        argv = [
-            'asn1tools',
-            'convert',
-            'input.pkl',
-            'output.pkl',
-            'too-many.pkl',
-            'Question',
-            '300e0201011609497320312b313d333f'
-        ]
-
-        stdout = StringIO()
-
-        with patch('sys.stdout', stdout):
-            with patch('sys.argv', argv):
-                with self.assertRaises(SystemExit) as cm:
-                    asn1tools._main()
-
-                self.assertEqual(
-                    str(cm.exception),
-                    "error: Expected two .pkl-files, but got 3.")
-
     def test_command_line_shell(self):
         argv = ['asn1tools', 'shell']
         commands = StringIO('''\
@@ -742,25 +664,6 @@ exit
         from test_command_line_parse import SPECIFICATION
 
         self.assertEqual(SPECIFICATION, expected_specification)
-
-    def test_command_line_pickle(self):
-        argv = [
-            'asn1tools',
-            'pickle',
-            'tests/files/foo.asn',
-            'test_command_line_pickle.pkl'
-        ]
-
-        if os.path.exists('test_command_line_pickle.pkl'):
-            os.remove('test_command_line_pickle.pkl')
-
-        with patch('sys.argv', argv):
-            asn1tools._main()
-
-        with open('test_command_line_pickle.pkl', 'rb') as fin:
-            specification = pickle.load(fin)
-
-        # Don't know how to verify the output.
 
 
 if __name__ == '__main__':
