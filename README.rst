@@ -199,7 +199,7 @@ dates.
 The convert subcommand with a cache
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Same as the first example in the previous section, but with the
+Convert given encoded PCCH-Message from UPER to GSER with the
 ``--cache-dir`` option set to ``my_cache``. Using a cache
 significantly reduces the command execution time after the first call.
 
