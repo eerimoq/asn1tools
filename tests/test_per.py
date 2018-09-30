@@ -334,6 +334,9 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "  a BOOLEAN, "
             "  b B "
             "} "
+            "F ::= SEQUENCE {"
+            "  a ENUMERATED { zero(0), one(1) } DEFAULT one"
+            "}"
             "END",
             'per')
 
@@ -353,11 +356,21 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('D',                     'jw', b'\xc0\x80\x40\x00'),
             ('D',                     'jz', b'\xc0\x80\x40\xc0'),
             ('E', {'a': True, 'b': 'zero'}, b'\x80'),
-            ('E',  {'a': True, 'b': 'one'}, b'\xa0')
-        ]
+            ('E',  {'a': True, 'b': 'one'}, b'\xa0'),
+            ('F', {'a': 'zero'}, b'\x80'),
+            ('F',  {'a': 'one'}, b'\x00')        ]
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Default value is not encoded, but part of decoded.
+        datas = [
+            ('F', {}, b'\x00', {'a': 'one'})
+        ]
+
+        for type_name, decoded_1, encoded_1, decoded_2 in datas:
+            self.assertEqual(foo.encode(type_name, decoded_1), encoded_1)
+            self.assertEqual(foo.decode(type_name, encoded_1), decoded_2)
 
         # Bad root index.
         with self.assertRaises(asn1tools.DecodeError) as cm:
