@@ -129,6 +129,7 @@ print()
 print('Encoding the message {} times took:'.format(ITERATIONS))
 print()
 print('CODEC      SECONDS')
+
 for package, seconds in measurements:
     print('{:10s} {:f}'.format(package, seconds))
 
@@ -149,5 +150,6 @@ print()
 print('Decoding the message {} times took:'.format(ITERATIONS))
 print()
 print('CODEC      SECONDS')
+
 for package, seconds in measurements:
     print('{:10s} {:f}'.format(package, seconds))

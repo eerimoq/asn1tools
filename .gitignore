@@ -58,3 +58,4 @@ target/
 
 test_command_line_*
 test_cache
+compile_methods_cache
