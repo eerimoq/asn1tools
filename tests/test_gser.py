@@ -22,6 +22,23 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
 
     maxDiff = None
 
+    def test_external(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= EXTERNAL "
+            "END",
+            'gser')
+
+        datas = [
+            ('A',
+             {'encoding': ('octet-aligned', b'\x12')},
+             b"a A ::= { encoding octet-aligned : '12'H }")
+        ]
+
+        for name, decoded, encoded in datas:
+            self.assertEqual(foo.encode(name, decoded), encoded)
+
     def test_real(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "

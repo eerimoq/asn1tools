@@ -1056,6 +1056,11 @@ class TeletexString(KnownMultiplierStringType):
     ENCODING = 'iso-8859-1'
 
 
+class ObjectDescriptor(GraphicString):
+
+    TAG = Tag.OBJECT_DESCRIPTOR
+
+
 class UTCTime(VisibleString):
 
     TAG = Tag.UTC_TIME
@@ -1275,6 +1280,14 @@ class Compiler(compiler.Compiler):
                                     choices)
         elif type_name == 'NULL':
             compiled = Null(name)
+        elif type_name == 'EXTERNAL':
+            compiled = Sequence(
+                name,
+                *self.compile_members(self.external_type_descriptor()['members'],
+                                      module_name))
+            compiled.set_tag(Tag.EXTERNAL, 0)
+        elif type_name == 'ObjectDescriptor':
+            compiled = ObjectDescriptor(name)
         else:
             if type_name in self.types_backtrace:
                 compiled = Recursive(name,

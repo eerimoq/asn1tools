@@ -1709,6 +1709,10 @@ class UniversalString(StringType):
     LENGTH_MULTIPLIER = 4
 
 
+class ObjectDescriptor(GraphicString):
+    pass
+
+
 class UTCTime(VisibleString):
 
     def encode(self, data, encoder):
@@ -1937,6 +1941,14 @@ class Compiler(compiler.Compiler):
             compiled = Null(name)
         elif type_name == 'OpenType':
             compiled = OpenType(name)
+        elif type_name == 'EXTERNAL':
+            compiled = Sequence(
+                name,
+                *self.compile_members(self.external_type_descriptor()['members'],
+                                      module_name),
+                open_types=None)
+        elif type_name == 'ObjectDescriptor':
+            compiled = ObjectDescriptor(name)
         else:
             if type_name in self.types_backtrace:
                 compiled = Recursive(name,

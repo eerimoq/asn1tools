@@ -393,6 +393,12 @@ class TeletexString(Type):
         return 'TeletexString({})'.format(self.name)
 
 
+class ObjectDescriptor(GraphicString):
+
+    def __repr__(self):
+        return 'ObjectDescriptor({})'.format(self.name)
+
+
 class UTCTime(Type):
 
     def __init__(self, name):
@@ -561,6 +567,13 @@ class Compiler(compiler.Compiler):
             compiled = Any(name)
         elif type_name == 'NULL':
             compiled = Null(name)
+        elif type_name == 'EXTERNAL':
+            compiled = Sequence(
+                name,
+                self.compile_members(self.external_type_descriptor()['members'],
+                                     module_name))
+        elif type_name == 'ObjectDescriptor':
+            compiled = ObjectDescriptor(name)
         else:
             if type_name in self.types_backtrace:
                 compiled = Recursive(name,

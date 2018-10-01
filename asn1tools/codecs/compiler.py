@@ -137,7 +137,8 @@ class Compiler(object):
     def pre_process(self):
         for module_name in self._specification:
             module = self._specification[module_name]
-            type_descriptors = module['types'].values()
+            types = module['types']
+            type_descriptors = types.values()
 
             self.pre_process_components_of(type_descriptors, module_name)
             self.pre_process_extensibility_implied(module, type_descriptors)
@@ -701,6 +702,72 @@ class Compiler(object):
                         open_types.append(([m['name']], m['table'][1]))
 
         return open_types
+
+    def external_type_descriptor(self):
+        return {
+            'type': 'SEQUENCE',
+            'tag': {
+                'class': 'UNIVERSAL',
+                'number': 8,
+                'kind': 'IMPLICIT'
+            },
+            'members': [
+                {
+                    'name': 'direct-reference',
+                    'type': 'OBJECT IDENTIFIER',
+                    'optional': True
+                },
+                {
+                    'name': 'indirect-reference',
+                    'type': 'INTEGER',
+                    'optional': True
+                },
+                {
+                    'name': 'data-value-descriptor',
+                    'type': 'ObjectDescriptor',
+                    'optional': True
+                },
+                {
+                    'name': 'encoding',
+                    'type': 'CHOICE',
+                    'members': [
+                        {
+                            'name': 'single-ASN1-type',
+                            'type': 'NULL',  # ToDo: Should be ABSTRACT-SYNTAX.&Type
+                            'tag': {
+                                'number': 0
+                            }
+                        },
+                        {
+                            'name': 'octet-aligned',
+                            'type': 'OCTET STRING',
+                            'tag': {
+                                'number': 1,
+                                'kind': 'IMPLICIT'
+                            }
+                        },
+                        {
+                            'name': 'arbitrary',
+                            'type': 'BIT STRING',
+                            'tag': {
+                                'number': 2,
+                                'kind': 'IMPLICIT'
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+
+    def object_descriptor_type_descriptor(self):
+        return {
+            'type': 'GraphicString',
+            'tag': {
+                'class': 'UNIVERSAL',
+                'number': 7,
+                'kind': 'IMPLICIT'
+            }
+        }
 
 
 def enum_values_as_dict(values):

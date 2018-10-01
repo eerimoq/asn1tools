@@ -327,6 +327,21 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+    def test_external(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= EXTERNAL "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',    {'encoding': ('octet-aligned', b'\x12')}, b'\x08\x08\x90')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_enumerated(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "

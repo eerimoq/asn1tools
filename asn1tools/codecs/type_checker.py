@@ -23,7 +23,8 @@ STRING_TYPES = [
     'UTF8String',
     'BMPString',
     'GraphicString',
-    'UniversalString'
+    'UniversalString',
+    'ObjectDescriptor'
 ]
 
 
@@ -291,6 +292,11 @@ class Compiler(compiler.Compiler):
             compiled = Skip(name)
         elif type_name == 'NULL':
             compiled = Null(name)
+        elif type_name == 'EXTERNAL':
+            members = self.compile_members(
+                self.external_type_descriptor()['members'],
+                module_name)
+            compiled = Dict(name, members)
         else:
             if type_name in self.types_backtrace:
                 compiled = Recursive(name,

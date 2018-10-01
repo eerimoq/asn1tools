@@ -370,9 +370,6 @@ class Type(object):
         self.default = None
 
     def set_tag(self, number, flags):
-        if not Class.APPLICATION & flags:
-            flags |= Class.CONTEXT_SPECIFIC
-
         self.tag = encode_tag(number, flags)
 
     def set_size_range(self, minimum, maximum, has_extension_marker):
@@ -405,9 +402,6 @@ class PrimitiveOrConstructedType(Type):
         self.constructed_tag[0] |= Encoding.CONSTRUCTED
 
     def set_tag(self, number, flags):
-        if not Class.APPLICATION & flags:
-            flags |= Class.CONTEXT_SPECIFIC
-
         self.tag = encode_tag(number, flags)
         self.constructed_tag = copy(self.tag)
         self.constructed_tag[0] |= Encoding.CONSTRUCTED
@@ -1121,6 +1115,11 @@ class TeletexString(StringType):
     ENCODING = 'iso-8859-1'
 
 
+class ObjectDescriptor(GraphicString):
+
+    TAG = Tag.OBJECT_DESCRIPTOR
+
+
 class UTCTime(Type):
 
     def __init__(self, name):
@@ -1402,6 +1401,14 @@ class Compiler(compiler.Compiler):
                                     choices)
         elif type_name == 'NULL':
             compiled = Null(name)
+        elif type_name == 'EXTERNAL':
+            compiled = Sequence(
+                name,
+                *self.compile_members(self.external_type_descriptor()['members'],
+                                      module_name))
+            compiled.set_tag(Tag.EXTERNAL, 0)
+        elif type_name == 'ObjectDescriptor':
+            compiled = ObjectDescriptor(name)
         else:
             if type_name in self.types_backtrace:
                 compiled = Recursive(name,
@@ -1433,8 +1440,10 @@ class Compiler(compiler.Compiler):
                 flags = Class.APPLICATION
             elif class_ == 'PRIVATE':
                 flags = Class.PRIVATE
-            else:
+            elif class_ == 'UNIVERSAL':
                 flags = 0
+            else:
+                flags = Class.CONTEXT_SPECIFIC
 
             compiled.set_tag(tag['number'], flags)
 
