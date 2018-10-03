@@ -36,6 +36,8 @@ Known limitations
 
 - Parametrization (X.683) is not yet supported.
 
+- The EMBEDDED PDV type is not yet supported.
+
 Installation
 ============
 
