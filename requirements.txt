@@ -1,4 +1,3 @@
-pyparsing
 codespell
 pyasn1
 asn1crypto
