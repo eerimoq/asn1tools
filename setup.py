@@ -30,6 +30,7 @@ setup(name='asn1tools',
           'pyparsing>=2.2.0',
           'prompt_toolkit',
           'bitstruct',
+          'diskcache',
           'textparser'
       ],
       test_suite="tests",

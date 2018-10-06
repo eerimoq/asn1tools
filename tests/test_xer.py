@@ -117,6 +117,23 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         self.assertEqual(str(cm.exception),
                          "Expected an OBJECT IDENTIFIER, but got ''.")
 
+    def test_external(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= EXTERNAL "
+            "END",
+            'xer')
+
+        datas = [
+            ('A',
+             {'encoding': ('octet-aligned', b'\x12')},
+             b'<A><encoding><octet-aligned>12</octet-aligned></encoding></A>')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_enumerated(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "

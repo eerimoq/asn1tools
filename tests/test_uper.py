@@ -327,6 +327,21 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+    def test_external(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= EXTERNAL "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',    {'encoding': ('octet-aligned', b'\x12')}, b'\x08\x08\x90')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_enumerated(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
@@ -352,28 +367,42 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "iq, ir, is, it, iu, iv, iw, ix, iy, iz, ja, jb, jc, jd, je, jf, "
             "jg, jh, ji, jj, jk, jl, jm, jn, jo, jp, jq, jr, js, jt, ju, jv, "
             "jw, jx, jy, jz } "
+            "E ::= SEQUENCE {"
+            "  a ENUMERATED { zero(0), one(1) } DEFAULT one"
+            "}"
             "END",
             'uper')
 
         datas = [
-            ('A',   'one', b''),
-            ('B',  'zero', b'\x00'),
-            ('B',   'one', b'\x40'),
-            ('C',   'one', b'\x00'),
-            ('C',   'two', b'\x20'),
-            ('C',  'four', b'\x40'),
-            ('C',   'six', b'\x80'),
-            ('C',  'nine', b'\x81'),
-            ('D',    'aa', b'\x80'),
-            ('D',    'cl', b'\xbf'),
-            ('D',    'cm', b'\xc0\x50\x00'),
-            ('D',    'jv', b'\xc0\x7f\xc0'),
-            ('D',    'jw', b'\xc0\x80\x40\x00'),
-            ('D',    'jz', b'\xc0\x80\x40\xc0')
+            ('A',         'one', b''),
+            ('B',        'zero', b'\x00'),
+            ('B',         'one', b'\x40'),
+            ('C',         'one', b'\x00'),
+            ('C',         'two', b'\x20'),
+            ('C',        'four', b'\x40'),
+            ('C',         'six', b'\x80'),
+            ('C',        'nine', b'\x81'),
+            ('D',          'aa', b'\x80'),
+            ('D',          'cl', b'\xbf'),
+            ('D',          'cm', b'\xc0\x50\x00'),
+            ('D',          'jv', b'\xc0\x7f\xc0'),
+            ('D',          'jw', b'\xc0\x80\x40\x00'),
+            ('D',          'jz', b'\xc0\x80\x40\xc0'),
+            ('E', {'a': 'zero'}, b'\x80'),
+            ('E',  {'a': 'one'}, b'\x00')
         ]
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Default value is not encoded, but part of decoded.
+        datas = [
+            ('E', {}, b'\x00', {'a': 'one'})
+        ]
+
+        for type_name, decoded_1, encoded_1, decoded_2 in datas:
+            self.assertEqual(foo.encode(type_name, decoded_1), encoded_1)
+            self.assertEqual(foo.decode(type_name, encoded_1), decoded_2)
 
     def test_sequence(self):
         foo = asn1tools.compile_string(

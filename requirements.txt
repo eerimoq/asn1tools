@@ -9,4 +9,6 @@ protobuf
 prompt_toolkit
 pycodestyle
 bitstruct
+diskcache
+humanfriendly
 textparser

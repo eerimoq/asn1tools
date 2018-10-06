@@ -101,6 +101,23 @@ class Asn1ToolsJerTest(unittest.TestCase):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
+    def test_external(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= EXTERNAL "
+            "END",
+            'jer')
+
+        datas = [
+            ('A',
+             {'encoding': ('octet-aligned', b'\x12')},
+             b'{"encoding": {"octet-aligned": "12"}}')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
     def test_enumerated(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "

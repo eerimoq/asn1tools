@@ -2,6 +2,8 @@ import sys
 import unittest
 import asn1tools
 from copy import deepcopy
+import shutil
+import os
 
 sys.path.append('tests/files')
 sys.path.append('tests/files/ietf')
@@ -142,6 +144,24 @@ class Asn1ToolsCompileTest(unittest.TestCase):
             "Fie DEFINITIONS ::= BEGIN Fum ::= REAL END ")
 
         self.assertEqual(spec.types, {})
+
+    def test_cache(self):
+        cache_dir = 'test_cache'
+
+        if os.path.exists(cache_dir):
+            shutil.rmtree(cache_dir)
+
+        foo = asn1tools.compile_files('tests/files/foo.asn',
+                                      cache_dir=cache_dir)
+        foo_cached = asn1tools.compile_files('tests/files/foo.asn',
+                                             cache_dir=cache_dir)
+
+        encoded = foo.encode('Question',
+                             {'id': 1, 'question': '???'})
+        encoded_cached = foo_cached.encode('Question',
+                                           {'id': 1, 'question': '???'})
+
+        self.assertEqual(encoded, encoded_cached)
 
 
 if __name__ == '__main__':

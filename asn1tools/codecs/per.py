@@ -1029,7 +1029,7 @@ class Integer(Type):
         if size <= 65535:
             self.number_of_indefinite_bits = None
         else:
-            number_of_bits = ((self.number_of_bits + 7) // 8).bit_length()
+            number_of_bits = ((self.number_of_bits + 7) // 8 - 1).bit_length()
             self.number_of_indefinite_bits = number_of_bits
 
     def encode(self, data, encoder):
@@ -1709,6 +1709,10 @@ class UniversalString(StringType):
     LENGTH_MULTIPLIER = 4
 
 
+class ObjectDescriptor(GraphicString):
+    pass
+
+
 class UTCTime(VisibleString):
 
     def encode(self, data, encoder):
@@ -1937,6 +1941,14 @@ class Compiler(compiler.Compiler):
             compiled = Null(name)
         elif type_name == 'OpenType':
             compiled = OpenType(name)
+        elif type_name == 'EXTERNAL':
+            compiled = Sequence(
+                name,
+                *self.compile_members(self.external_type_descriptor()['members'],
+                                      module_name),
+                open_types=None)
+        elif type_name == 'ObjectDescriptor':
+            compiled = ObjectDescriptor(name)
         else:
             if type_name in self.types_backtrace:
                 compiled = Recursive(name,

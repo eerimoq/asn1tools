@@ -36,6 +36,8 @@ Known limitations
 
 - Parametrization (X.683) is not yet supported.
 
+- The EMBEDDED PDV type is not yet supported.
+
 Installation
 ============
 
@@ -196,6 +198,41 @@ dates.
    }
    >
 
+The convert subcommand with a cache
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Convert given encoded PCCH-Message from UPER to GSER with the
+``--cache-dir`` option set to ``my_cache``. Using a cache
+significantly reduces the command execution time after the first call.
+
+.. code-block:: text
+
+   > time asn1tools convert --cache-dir my_cache -i uper tests/files/3gpp/rrc_8_6_0.asn PCCH-Message 28
+   pcch-message PCCH-Message ::= {
+       message c1 : paging : {
+           systemInfoModification true,
+           nonCriticalExtension {
+           }
+       }
+   }
+
+   real    0m2.090s
+   user    0m1.977s
+   sys     0m0.032s
+   > time asn1tools convert --cache-dir my_cache -i uper tests/files/3gpp/rrc_8_6_0.asn PCCH-Message 28
+   pcch-message PCCH-Message ::= {
+       message c1 : paging : {
+           systemInfoModification true,
+           nonCriticalExtension {
+           }
+       }
+   }
+
+   real    0m0.276s
+   user    0m0.197s
+   sys     0m0.026s
+   >
+
 The parse subcommand
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -213,26 +250,6 @@ subcommand, especially for larger ASN.1 specifications.
        id 1,
        question "Is 1+1=3?"
    }
-   >
-
-The pickle subcommand
-^^^^^^^^^^^^^^^^^^^^^
-
-Compile and pickle given ASN.1 specification with BER and XER
-codecs. Use the created files to convert given encoded Question from
-BER to XER (produces human readable text). The conversion is
-significantly faster than passing .asn-file(s) to the convert
-subcommand, especially for larger ASN.1 specifications.
-
-.. code-block:: text
-
-   > asn1tools pickle --codec ber tests/files/foo.asn foo-ber.pkl
-   > asn1tools pickle --codec xer tests/files/foo.asn foo-xer.pkl
-   > asn1tools convert -o xer foo-ber.pkl foo-xer.pkl Question 300e0201011609497320312b313d333f
-   <Question>
-       <id>1</id>
-       <question>Is 1+1=3?</question>
-   </Question>
    >
 
 Contributing

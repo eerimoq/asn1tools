@@ -32,6 +32,7 @@ from .per import BMPString
 from .per import GraphicString
 from .per import TeletexString
 from .per import UniversalString
+from .per import ObjectDescriptor
 from .per import Any
 from .per import Recursive
 from .permitted_alphabet import NUMERIC_STRING
@@ -351,6 +352,14 @@ class Compiler(per.Compiler):
             compiled = Any(name)
         elif type_name == 'NULL':
             compiled = Null(name)
+        elif type_name == 'EXTERNAL':
+            compiled = Sequence(
+                name,
+                *self.compile_members(self.external_type_descriptor()['members'],
+                                      module_name),
+                open_types=None)
+        elif type_name == 'ObjectDescriptor':
+            compiled = ObjectDescriptor(name)
         else:
             if type_name in self.types_backtrace:
                 compiled = Recursive(name,

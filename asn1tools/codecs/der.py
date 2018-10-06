@@ -28,6 +28,7 @@ from .ber import Choice
 from .ber import Any
 from .ber import AnyDefinedBy
 from .ber import Recursive
+from .ber import ObjectDescriptor
 from .ber import decode_length
 from .ber import encode_real
 from .ber import decode_real
@@ -448,6 +449,14 @@ class Compiler(ber.Compiler):
                                     choices)
         elif type_name == 'NULL':
             compiled = Null(name)
+        elif type_name == 'EXTERNAL':
+            compiled = Sequence(
+                name,
+                *self.compile_members(self.external_type_descriptor()['members'],
+                                      module_name))
+            compiled.set_tag(Tag.EXTERNAL, 0)
+        elif type_name == 'ObjectDescriptor':
+            compiled = ObjectDescriptor(name)
         else:
             if type_name in self.types_backtrace:
                 compiled = Recursive(name,

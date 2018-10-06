@@ -22,6 +22,23 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
 
     maxDiff = None
 
+    def test_external(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= EXTERNAL "
+            "END",
+            'der')
+
+        datas = [
+            ('A',
+             {'encoding': ('octet-aligned', b'\x12')},
+             b'\x28\x03\x81\x01\x12')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_real(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "

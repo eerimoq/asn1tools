@@ -297,6 +297,86 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         foo = asn1tools.compile_string(spec)
         self.assert_encode_decode(foo, 'Foo', b'\x56', b'\xa2\x03\x04\x01\x56')
 
+    def test_object_descriptor(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= "
+            "BEGIN "
+            "A ::= ObjectDescriptor "
+            "B ::= [5] ObjectDescriptor "
+            "END")
+
+        datas = [
+            ('A',    '1234', b'\x07\x04\x31\x32\x33\x34'),
+            ('B',    '1234', b'\xa5\x06\x07\x04\x31\x32\x33\x34')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_external_explicit_tags(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= "
+            "BEGIN "
+            "A ::= EXTERNAL "
+            "B ::= [0] EXTERNAL "
+            "END")
+
+        datas = [
+            ('A',
+             {'encoding': ('octet-aligned', b'\x12')},
+             b'\x28\x03\x81\x01\x12'),
+            ('A',
+             {
+                 'data-value-descriptor': '12',
+                 'encoding': ('octet-aligned', b'\x34')
+             },
+             b'\x28\x07\x07\x02\x31\x32\x81\x01\x34'),
+            ('B',
+             {'encoding': ('octet-aligned', b'\x12')},
+             b'\xa0\x05\x28\x03\x81\x01\x12'),
+            ('B',
+             {
+                 'data-value-descriptor': '12',
+                 'encoding': ('octet-aligned', b'\x34')
+             },
+             b'\xa0\x09\x28\x07\x07\x02\x31\x32\x81\x01\x34')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_external_implicit_tags(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS IMPLICIT TAGS ::= "
+            "BEGIN "
+            "A ::= EXTERNAL "
+            "B ::= [0] EXTERNAL "
+            "END")
+
+        datas = [
+            ('A',
+             {'encoding': ('octet-aligned', b'\x12')},
+             b'\x28\x03\x81\x01\x12'),
+            ('A',
+             {
+                 'data-value-descriptor': '12',
+                 'encoding': ('octet-aligned', b'\x34')
+             },
+             b'\x28\x07\x07\x02\x31\x32\x81\x01\x34'),
+            ('B',
+             {'encoding': ('octet-aligned', b'\x12')},
+             b'\xa0\x03\x81\x01\x12'),
+            ('B',
+             {
+                 'data-value-descriptor': '12',
+                 'encoding': ('octet-aligned', b'\x34')
+             },
+             b'\xa0\x07\x07\x02\x31\x32\x81\x01\x34')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_enumerated(self):
         foo = asn1tools.compile_dict(deepcopy(ENUMERATED))
 
