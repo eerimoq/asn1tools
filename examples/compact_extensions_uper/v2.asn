@@ -1,0 +1,39 @@
+--- Second version of the Foo protocol.
+
+Foo DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+  State ::= ENUMERATED {
+    on (0),
+    off (1)
+  }
+
+  -- Selection encoded in two bits.
+  Message ::= CHOICE {
+    foo Foo,
+    -- Added in version 2.
+    bar Bar,
+    -- Future extensions, more compact encoding than '...'.
+    extension2 NULL,
+    extension3 NULL
+  }
+
+  Foo ::= SEQUENCE {
+    a BOOLEAN,
+    b INTEGER (0..127), -- Fixed range, encoded in 7 bits.
+    c INTEGER (0..7),   -- Fixed range, encoded in 3 bits.
+    d BOOLEAN,
+    e State,
+    -- Extension in this version, version 2.
+    v2 SEQUENCE {
+      a INTEGER (-128..127), -- Fixed range, encoded in 8 bits.
+      b BOOLEAN,
+      -- Future extension, more compact encoding than '...'.
+      extension NULL OPTIONAL
+    } OPTIONAL
+  }
+
+  Bar ::= INTEGER (0..31)
+
+END

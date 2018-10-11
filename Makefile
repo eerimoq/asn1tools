@@ -9,6 +9,7 @@ test:
 	env PYTHONPATH=. python3 examples/benchmarks/question/question.py
 	env PYTHONPATH=. python3 examples/hello_world.py
 	env PYTHONPATH=. python3 examples/x509_pem.py
+	env PYTHONPATH=. python3 examples/compact_extensions_uper/main.py
 	codespell -d $$(git ls-files | grep -v ietf | grep -v 3gpp)
 	python3 -m pycodestyle $$(git ls-files "asn1tools/*.py")
 

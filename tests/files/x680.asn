@@ -221,7 +221,8 @@ X680 DEFINITIONS AUTOMATIC TAGS ::= BEGIN
         accountNumber INTEGER
     }
 
-    Record-E-2-10-a ::= SEQUENCE { -- First version of protocol containing "Record"
+    -- First version of protocol containing "Record"   
+    Record-E-2-10-a ::= SEQUENCE {
         userName VisibleString,
         password VisibleString,
         accountNumber INTEGER,
@@ -229,12 +230,14 @@ X680 DEFINITIONS AUTOMATIC TAGS ::= BEGIN
         ...
     }
 
-    Record-E-2-10-b ::= SEQUENCE { -- Second version of protocol containing "Record"
+    -- Second version of protocol containing "Record"    
+    Record-E-2-10-b ::= SEQUENCE {
         userName VisibleString,
         password VisibleString,
         accountNumber INTEGER,
         ...,
-        [[ --2: \-\- Extension addition added in protocol version 2
+        -- Extension addition added in protocol version 2
+        [[ -- 2: 
         lastLoggedIn GeneralizedTime OPTIONAL,
         minutesLastLoggedIn INTEGER
         ]],
@@ -245,16 +248,19 @@ X680 DEFINITIONS AUTOMATIC TAGS ::= BEGIN
 
     Certificate ::= NULL
 
-    Record-E-2-10-c ::= SEQUENCE { -- Third version of protocol containing "Record"
+    -- Third version of protocol containing "Record"    
+    Record-E-2-10-c ::= SEQUENCE {
         userName VisibleString,
         password VisibleString,
         accountNumber INTEGER,
         ...,
-        [[ --2: \-\- Extension addition added in protocol version 2
+        -- Extension addition added in protocol version 2
+        [[ -- 2: 
         lastLoggedIn GeneralizedTime OPTIONAL,
         minutesLastLoggedIn INTEGER
         ]],
-        [[ --4: \-\- Extension addition added in protocol version 3
+        -- Extension addition added in protocol version 3
+        [[ -- 3: 
         certificate Certificate,
         thumb ThumbPrint OPTIONAL
         ]],
