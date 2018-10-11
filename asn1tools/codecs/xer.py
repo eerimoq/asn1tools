@@ -594,7 +594,10 @@ class Recursive(Type, compiler.Recursive):
         self._inner = inner
 
     def encode(self, data):
-        return self._inner.encode(data)
+        encoded = self._inner.encode(data)
+        encoded.tag = self.name
+
+        return encoded
 
     def decode(self, element):
         return self._inner.decode(element)

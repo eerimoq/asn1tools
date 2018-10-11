@@ -993,6 +993,11 @@ class Choice(Type):
 
         if isinstance(member, Choice):
             tags = self.get_choice_tags(member)
+        elif isinstance(member, Recursive):
+            if member.inner is None:
+                member.choice_parents.append(self)
+            else:
+                tags = self.get_member_tags(member.inner)
         else:
             tags.append(bytes(member.tag))
 
@@ -1265,6 +1270,7 @@ class Recursive(Type, compiler.Recursive):
         self.tag_number = None
         self.tag_flags = None
         self.inner = None
+        self.choice_parents = []
 
     def set_tag(self, number, flags):
         self.tag_number = number
@@ -1275,6 +1281,9 @@ class Recursive(Type, compiler.Recursive):
 
         if self.tag_number is not None:
             self.inner.set_tag(self.tag_number, self.tag_flags)
+
+        for choice_parent in self.choice_parents:
+            choice_parent.add_tags([self])
 
     def encode(self, data, encoded):
         self.inner.encode(data, encoded)

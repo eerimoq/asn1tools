@@ -3238,6 +3238,27 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+    def test_issue_34(self):
+        """Test that a choice type with a recursive member can be compiled and
+        used.
+
+        """
+
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= BEGIN "
+            "A ::= SEQUENCE { "
+            "  a B "
+            "} "
+            "B ::= CHOICE { "
+            "  b A, "
+            "  c NULL "
+            "} "
+            "END ")
+
+        decoded = {'a': ('b', {'a': ('c', None)})}
+        encoded = b'\x30\x08\xa0\x06\xa0\x04\xa0\x02\x81\x00'
+        self.assert_encode_decode(foo, 'A', decoded, encoded)
+
 
 if __name__ == '__main__':
     unittest.main()

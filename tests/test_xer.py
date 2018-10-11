@@ -929,6 +929,31 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
                                              encoded,
                                              indent=4)
 
+    def test_issue_34(self):
+        """Test that a choice type with a recursive member can be compiled and
+        used.
+
+        """
+
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= BEGIN "
+            "A ::= SEQUENCE { "
+            "  a B "
+            "} "
+            "B ::= CHOICE { "
+            "  b A, "
+            "  c NULL "
+            "} "
+            "END ",
+            'xer')
+
+        decoded = {'a': ('b', {'a': ('c', None)})}
+        encoded = b'<A><a><b><a><c /></a></b></a></A>'
+        self.assert_encode_decode_string(foo,
+                                         'A',
+                                         decoded,
+                                         encoded)
+
 
 if __name__ == '__main__':
     unittest.main()
