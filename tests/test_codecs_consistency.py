@@ -140,6 +140,19 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             self.assertEqual(str(cm.exception),
                              "a: b: c: Sequence member 'd' not found in {}.")
 
+    def test_recursive(self):
+        spec = (
+            "SEQUENCE { "
+            "  a B "
+            "} "
+            "B ::= CHOICE { "
+            "  b A, "
+            "  c NULL "
+            "} "
+        )
+
+        self.encode_decode_all_codecs(spec, [{'a': ('b', {'a': ('c', None)})}])
+
 
 if __name__ == '__main__':
     unittest.main()
