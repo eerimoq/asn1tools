@@ -1,18 +1,18 @@
 About
 =====
 
-An example using OPTIONAL and power of two CHOICE instead of extension
-markers (...) for more compact UPER encoding.
+An example using ``OPTIONAL`` and power of two ``CHOICE`` instead of
+extension markers ``...`` for more compact UPER encoding.
 
-v1.asn contains the first version of the protocol, and v2.asn the
-second. Notice how the last member in Foo version 1 is "extension NULL
-OPTIONAL" instead of '...'. In version 2 it has been replaced with 'v2
-SEQUENCE', which also has the last member "extension NULL OPTIONAL",
-allowing future extensions of the Foo message.
+`v1.asn` contains the first version of the protocol, and `v2.asn` the
+second. Notice how the last member in ``Foo`` version 1 is ``extension
+NULL OPTIONAL`` instead of ``...``. In version 2 it has been replaced
+with ``v2 SEQUENCE``, which also has the last member ``extension NULL
+OPTIONAL``, allowing future extensions of the ``Foo`` message.
 
-To allow more than four messages in Message, the last member,
-"extension3 NULL" must be replaced with "more CHOICE {fum Fum,
-extension1 NULL, extension2 NULL, extension3 NULL}" once the first
+To allow more than four messages in ``Message``, the last member,
+``extension3 NULL`` must be replaced with ``more CHOICE {fum Fum,
+extension1 NULL, extension2 NULL, extension3 NULL}`` once the first
 three messages are used.
 
 Example execution
