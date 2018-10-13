@@ -39,7 +39,7 @@ Known limitations
 - The EMBEDDED PDV type is not yet supported.
 
 - The ANY and ANY DEFINED BY types are not supported. They were
-  removed from the ASN.1 specification 1994.
+  removed from the ASN.1 standard 1994.
 
 Installation
 ============
