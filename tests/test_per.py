@@ -1831,9 +1831,10 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
 
         # ToDo: Constraints are not yet implemented.
         with self.assertRaises(TypeError) as cm:
-            encoded = information_object.encode('ItemWithConstraints',
-                                                decoded_message)
-            self.assertEqual(encoded, encoded_message)
+            self.assert_encode_decode(information_object,
+                                      'ItemWithConstraints',
+                                      decoded_message,
+                                      encoded_message)
 
         self.assertEqual(str(cm.exception), "object of type 'bool' has no len()")
 
@@ -1855,9 +1856,10 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
 
         # ToDo: Constraints are not yet implemented.
         with self.assertRaises(TypeError):
-            encoded = information_object.encode('ItemWithConstraints',
-                                                decoded_message)
-            self.assertEqual(encoded, encoded_message)
+            self.assert_encode_decode(information_object,
+                                      'ItemWithConstraints',
+                                      decoded_message,
+                                      encoded_message)
 
         # Message 3 - error class.
         decoded_message = {
@@ -1880,8 +1882,10 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
 
         # ToDo: Constraints are not yet implemented.
         with self.assertRaises(TypeError):
-            encoded = information_object.encode('ErrorReturn', decoded_message)
-            self.assertEqual(encoded, encoded_message)
+            self.assert_encode_decode(information_object,
+                                      'ErrorReturn',
+                                      decoded_message,
+                                      encoded_message)
 
         # Message 4 - C.
         decoded_message = {

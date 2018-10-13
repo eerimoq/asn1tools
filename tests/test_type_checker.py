@@ -7,9 +7,11 @@ import datetime
 import asn1tools.codecs.type_checker
 from copy import deepcopy
 
+sys.path.append('tests/files')
 sys.path.append('tests/files/3gpp')
 
 from rrc_8_6_0 import EXPECTED as RRC_8_6_0
+from information_object import EXPECTED as INFORMATION_OBJECT
 
 
 class Asn1ToolsEncodeTypeCheckerTest(unittest.TestCase):
@@ -437,6 +439,81 @@ class Asn1ToolsEncodeTypeCheckerTest(unittest.TestCase):
         }
 
         rrc['EUTRA-RRC-Definitions']['BCCH-DL-SCH-Message'].encode(decoded)
+
+    def test_information_object(self):
+        information_object = asn1tools.codecs.type_checker.compile_dict(
+            deepcopy(INFORMATION_OBJECT))
+
+        # Message 1 - without constraints.
+        decoded = {
+            'id': 0,
+            'value': b'\x05',
+            'comment': 'item 0',
+            'extra': 2
+        }
+
+        information_object['InformationObject']['ItemWithoutConstraints'].encode(
+            decoded)
+
+        # Message 1 - with constraints.
+        decoded = {
+            'id': 0,
+            'value': True,
+            'comment': 'item 0',
+            'extra': 2
+        }
+
+        information_object['InformationObject']['ItemWithConstraints'].encode(
+            decoded)
+
+        # Message 1 failure - with constraints.
+        decoded = {
+            'id': 0,
+            'value': b'\x05',
+            'comment': 'item 0',
+            'extra': 2
+        }
+
+        # No checks of open types performed yet.
+        with self.assertRaises(AssertionError):
+            with self.assertRaises(asn1tools.EncodeError) as cm:
+                information_object['InformationObject']['ItemWithConstraints'].encode(
+                    decoded)
+
+            self.assertEqual(str(cm.exception),
+                             "Expected data of type bool, but got b'\x05'.")
+
+        # Message 2.
+        decoded = {
+            'id': 1,
+            'value': {
+                'myValue': 7,
+                'myType': 0
+            },
+            'comment': 'item 1',
+            'extra': 5
+        }
+
+        information_object['InformationObject']['ItemWithConstraints'].encode(
+            decoded)
+
+        # Message 3 - error class.
+        decoded = {
+            'errorCategory': 'A',
+            'errors': [
+                {
+                    'errorCode': 1,
+                    'errorInfo': 3
+                },
+                {
+                    'errorCode': 2,
+                    'errorInfo': True
+                }
+            ]
+        }
+
+        information_object['InformationObject']['ErrorReturn'].encode(
+            decoded)
 
 
 if __name__ == '__main__':
