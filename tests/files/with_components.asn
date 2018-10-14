@@ -1,0 +1,30 @@
+Foo DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+Foo ::= SEQUENCE {
+    a Uint8 (1),
+    b Bar (WITH COMPONENTS {
+      c (SIZE (1) INTERSECTION (WITH COMPONENT (
+        Fie (WITH COMPONENTS {
+            f
+      }))))
+    })
+}
+
+Uint8 ::= INTEGER (0..255)
+
+Bar ::= SEQUENCE {
+    c SequenceOfFie,
+    d INTEGER
+}
+
+Fie ::= CHOICE  {
+    e INTEGER,
+    f BOOLEAN,
+    g NULL
+}
+
+SequenceOfFie ::= SEQUENCE OF Fie
+
+END

@@ -520,6 +520,7 @@ class Compiler(object):
 
         """
 
+        compiled = None
         type_name = type_descriptor['type']
 
         if type_name in ['SEQUENCE', 'SET']:
@@ -548,18 +549,20 @@ class Compiler(object):
                     if compiled_member is not None:
                         compiled_members.append(compiled_member)
 
-            compiled = OpenTypeSequence(name, compiled_members)
+            if compiled_members:
+                compiled = OpenTypeSequence(name, compiled_members)
         elif type_name in ['SEQUENCE OF', 'SET OF']:
-            compiled = OpenTypeSequenceOf(
-                name,
-                self.compile_open_types('',
-                                        type_descriptor['element'],
-                                        module_name))
+            compiled_element = self.compile_open_types('',
+                                                       type_descriptor['element'],
+                                                       module_name)
+
+            if compiled_element:
+                compiled = OpenTypeSequenceOf(name, compiled_element)
         elif type_name == 'CHOICE':
             # ToDo: Handle CHOICE.
-            return None
+            pass
         else:
-            return None
+            pass
 
         return compiled
 
@@ -636,10 +639,6 @@ class Compiler(object):
             compiled_member = self.copy(compiled_member)
             compiled_member.set_size_range(*self.get_size_range(member,
                                                                 module_name))
-
-        if 'table' in member:
-            # print('table:', member['table'])
-            pass
 
         return compiled_member
 

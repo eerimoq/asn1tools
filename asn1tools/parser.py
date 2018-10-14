@@ -252,25 +252,28 @@ def convert_inner_type_constraints(_s, _l, tokens):
     tokens = tokens.asList()
     components = []
 
-    for item_tokens in tokens[2]:
-        if item_tokens == '...':
-            value = EXTENSION_MARKER
-        elif len(item_tokens) == 2:
-            if isinstance(item_tokens[1], list):
-                value = item_tokens[1][0]
+    if tokens[0] == 'WITH COMPONENTS':
+        for item_tokens in tokens[2]:
+            if item_tokens == '...':
+                value = EXTENSION_MARKER
+            elif len(item_tokens) == 2:
+                if isinstance(item_tokens[1], list):
+                    value = item_tokens[1][0]
 
-                if isinstance(value, list):
-                    value = value[0]
+                    if isinstance(value, list):
+                        value = value[0]
 
-                value = (item_tokens[0], value)
+                    value = (item_tokens[0], value)
+                else:
+                    value = (item_tokens[0], item_tokens[1])
             else:
-                value = (item_tokens[0], item_tokens[1])
-        else:
-            value = item_tokens
+                value = item_tokens
 
-        components.append(value)
+            components.append(value)
 
-    return {'with-components': components}
+        return {'with-components': components}
+    else:
+        return {}
 
 
 def convert_size_constraint(_s, _l, tokens):
@@ -608,10 +611,11 @@ def convert_parameterized_object_set_assignment(_s, _l, tokens):
 
                     if isinstance(value, Tokens):
                         value = value[0]
+
                     member[name] = convert_number(value)
 
             members.append(member)
-    except IndexError:
+    except (IndexError, KeyError):
         pass
 
     converted_type = {
@@ -877,11 +881,10 @@ def create_grammar():
     hstring = Regex(r"'[0-9A-F\s]*'H")
     cstring = QuotedString('"')
     number = (Word(nums).setName('number') + ~dot)
-    number = Word(printables, excludeChars=',(){}[].:=;"|').setName('number')
     ampersand = Literal('&')
     less_than = Literal('<')
 
-    reserved_words = Regex(r'(END|SEQUENCE|ENUMERATED)(\s|$)')
+    reserved_words = Regex(r'(END|SEQUENCE|ENUMERATED|WITH)(\s|$)')
 
     # Forward declarations.
     value = Forward()
@@ -1109,7 +1112,8 @@ def create_grammar():
     default_syntax = (Suppress(left_brace)
                       + delimitedList(field_setting)
                       + Suppress(right_brace))
-    defined_syntax = NoMatch().setName('"definedSyntax" not implemented')
+    defined_syntax_token = (literal | setting)
+    defined_syntax = (left_brace + ZeroOrMore(defined_syntax_token) + right_brace)
     object_defn = Group(default_syntax | defined_syntax)
     object_ <<= (defined_object
                  | object_defn
@@ -1201,7 +1205,6 @@ def create_grammar():
                         | pattern_constraint
                         | contained_subtype
                         | type_constraint)
-
     # X.680: 46. Element set specification
     union_mark <<= (pipe | UNION)
     intersection_mark = (caret | INTERSECTION)

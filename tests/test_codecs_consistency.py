@@ -1,3 +1,4 @@
+import json
 import unittest
 from datetime import datetime
 from .utils import Asn1ToolsBaseTest
@@ -6,6 +7,10 @@ import asn1tools
 
 CODECS = ['ber', 'der', 'jer', 'oer', 'per', 'uper', 'xer']
 ALL_CODECS = CODECS + ['gser']
+
+
+def loadb(encoded):
+    return json.loads(encoded.decode('utf-8'))
 
 
 class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
@@ -37,6 +42,27 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
                 self.assertEqual(decoded, value)
 
             gser.encode('A', decoded)
+
+    def encode_decode_codecs_file(self,
+                                  filename,
+                                  type_name,
+                                  decoded,
+                                  encoded):
+
+        for codec, encoded_message in zip(CODECS, encoded):
+            foo = asn1tools.compile_files(filename, codec)
+
+            encoded = foo.encode(type_name, decoded)
+
+            if codec == 'jer':
+                self.assertEqual(loadb(encoded), loadb(encoded_message))
+            else:
+                self.assertEqual(encoded_message, encoded)
+
+            decoded_message = foo.decode(type_name, encoded)
+            self.assertEqual(decoded_message, decoded)
+
+        self.assertEqual(foo.decode(type_name, encoded), decoded)
 
     def test_boolean(self):
         self.encode_decode_all_codecs("BOOLEAN", [True, False])
@@ -152,6 +178,34 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         )
 
         self.encode_decode_all_codecs(spec, [{'a': ('b', {'a': ('c', None)})}])
+
+    def test_with_components(self):
+        decoded = {
+            'a': 1,
+            'b': {
+                'c': [
+                    (
+                        'f', True
+                    )
+                ],
+                'd': 2
+            }
+        }
+
+        encoded = [
+            b'\x30\x0d\x80\x01\x01\xa1\x08\xa0\x03\x81\x01\xff\x81\x01\x02',
+            b'\x30\x0d\x80\x01\x01\xa1\x08\xa0\x03\x81\x01\xff\x81\x01\x02',
+            b'{"a":1,"b":{"c":[{"f":true}],"d":2}}',
+            b'\x01\x01\x01\x81\xff\x01\x02',
+            b'\x01\x60\x01\x02',
+            b'\x01\x60\x20\x40',
+            b'<Foo><a>1</a><b><c><f><true /></f></c><d>2</d></b></Foo>'
+        ]
+
+        self.encode_decode_codecs_file('tests/files/with_components.asn',
+                                       'Foo',
+                                       decoded,
+                                       encoded)
 
 
 if __name__ == '__main__':

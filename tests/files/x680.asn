@@ -579,12 +579,12 @@ X680 DEFINITIONS AUTOMATIC TAGS ::= BEGIN
     TestPDU-E-4 ::= PDU-E-4 (WITH COMPONENTS
         {... , delta (FALSE), alpha (MIN..<0)})
 
-    -- FurtherTestPDU-E-4 ::= TestPDU-E-4
-    --     (WITH COMPONENTS {... , beta (SIZE (5|12)) PRESENT} )
+    FurtherTestPDU-E-4 ::= TestPDU-E-4
+        (WITH COMPONENTS {... , beta (SIZE (5|12)) PRESENT} )
 
     Text-block-E-4 ::= SEQUENCE OF VisibleString
 
-    -- Address-E-4 ::= Text-block (SIZE (1..6)) (WITH COMPONENT (SIZE (1..32)))
+    Address-E-4 ::= Text-block-E-4 (SIZE (1..6)) (WITH COMPONENT (SIZE (1..32)))
 
     A ::= NULL
 
