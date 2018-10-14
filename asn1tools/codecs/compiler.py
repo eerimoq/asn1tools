@@ -102,10 +102,18 @@ class OpenType(object):
 
     def __init__(self, name, table):
         self._name = name
-        self._table = table
+        self._object_set_name = table[0]
+        self._table = []
+
+        for item in table[1]:
+            offset = item.count('.')
+            offset *= -1
+            self._table.append((offset, item.lstrip('.')))
 
     def __repr__(self):
-        return 'OpenType({}, {})'.format(self._name, self._table)
+        return 'OpenType({}, {}, {})'.format(self._name,
+                                             self._object_set_name,
+                                             self._table)
 
 
 class OpenTypeSequence(object):
