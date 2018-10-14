@@ -27,6 +27,15 @@ def is_object_class_type_name(type_name):
     return '&' in type_name
 
 
+def is_open_type(type_name):
+    index = type_name.find('&')
+
+    if index == -1:
+        return False
+
+    return type_name[index + 1].isupper()
+
+
 def is_type_name(type_name):
     """Does not handle keywords.
 
@@ -89,6 +98,62 @@ class Recursive(object):
     pass
 
 
+class OpenType(object):
+
+    def __init__(self, name, table):
+        self._name = name
+        self._table = table
+
+    def __repr__(self):
+        return 'OpenType({}, {})'.format(self._name, self._table)
+
+
+class OpenTypeSequence(object):
+
+    def __init__(self, name, members):
+        self._name = name
+        self._members = members
+
+    def __repr__(self):
+        return 'OpenTypeSequence({}, {})'.format(self._name, self._members)
+
+
+class OpenTypeSequenceOf(object):
+
+    def __init__(self, name, element_type):
+        self._name = name
+        self._element_type = element_type
+
+    def __repr__(self):
+        return 'OpenTypeSequenceOf({}, {})'.format(self._name,
+                                                   self._element_type)
+
+
+class CompiledOpenTypes(CompiledType):
+
+    def __init__(self, compiled_open_types, compiled_type):
+        super(CompiledOpenTypes, self).__init__()
+        self._compiled_open_types = compiled_open_types
+        self._inner = compiled_type
+
+    @property
+    def type(self):
+        return self._inner.type
+
+    def encode(self, data, **kwargs):
+        # print()
+        # print('data:', data)
+        # print(self._compiled_open_types)
+
+        return self._inner.encode(data, **kwargs)
+
+    def decode(self, data):
+        return self._inner.decode(data)
+
+    def __repr__(self):
+        return repr(self._inner)
+
+
 class Compiler(object):
 
     def __init__(self, specification):
@@ -120,6 +185,14 @@ class Compiler(object):
                 compiled_type = self.process_type(type_name,
                                                   type_descriptor,
                                                   module_name)
+                compiled_open_types = self.compile_open_types(type_name,
+                                                              type_descriptor,
+                                                              module_name)
+
+                if compiled_open_types:
+                    compiled_type = CompiledOpenTypes(compiled_open_types,
+                                                      compiled_type)
+
                 self.types_backtrace_pop()
 
                 if module_name not in compiled:
@@ -433,6 +506,55 @@ class Compiler(object):
     def compile_type(self, name, type_descriptor, module_name):
         return NotImplementedError('To be implemented by subclasses.')
 
+    def compile_open_types(self, name, type_descriptor, module_name):
+        """Compile the open types wrapper for given type. Returns ``None`` if
+        given type does not have any open types.
+
+        """
+
+        type_name = type_descriptor['type']
+
+        if type_name in ['SEQUENCE', 'SET']:
+            compiled_members = []
+
+            for member in type_descriptor['members']:
+                if member == EXTENSION_MARKER:
+                    continue
+
+                if isinstance(member, list):
+                    # ToDo: Handle groups.
+                    continue
+
+                if is_open_type(member['type']):
+                    if 'table' in member:
+                        table = member['table']
+
+                        if isinstance(table, list):
+                            compiled_members.append(OpenType(member['name'],
+                                                             table))
+                else:
+                    compiled_member = self.compile_open_types(member['name'],
+                                                              member,
+                                                              module_name)
+
+                    if compiled_member is not None:
+                        compiled_members.append(compiled_member)
+
+            compiled = OpenTypeSequence(name, compiled_members)
+        elif type_name in ['SEQUENCE OF', 'SET OF']:
+            compiled = OpenTypeSequenceOf(
+                name,
+                self.compile_open_types('',
+                                        type_descriptor['element'],
+                                        module_name))
+        elif type_name == 'CHOICE':
+            # ToDo: Handle CHOICE.
+            return None
+        else:
+            return None
+
+        return compiled
+
     def compile_user_type(self, name, type_name, module_name):
         compiled = self.get_compiled_type(name,
                                           type_name,
@@ -683,25 +805,6 @@ class Compiler(object):
                                           module_name))
 
         return compiled
-
-    def create_open_types(self,
-                          members,
-                          module_name):
-        open_types = []
-
-        for member in members:
-            if member == EXTENSION_MARKER:
-                continue
-
-            if not isinstance(member, list):
-                member = [member]
-
-            for m in member:
-                if 'table' in m:
-                    if isinstance(m['table'], list):
-                        open_types.append(([m['name']], m['table'][1]))
-
-        return open_types
 
     def external_type_descriptor(self):
         return {
