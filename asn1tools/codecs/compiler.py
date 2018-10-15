@@ -36,6 +36,10 @@ def is_open_type(type_name):
     return type_name[index + 1].isupper()
 
 
+def is_class_value(name):
+    return is_object_class_type_name(name) and not is_open_type(name)
+
+
 def is_type_name(type_name):
     """Does not handle keywords.
 
@@ -100,19 +104,29 @@ class Recursive(object):
 
 class OpenType(object):
 
-    def __init__(self, name, table):
-        self._name = name
-        self._object_set_name = table[0]
+    def __init__(self, name, object_set, table):
+        self.name = name
+        self._object_set = object_set
         self._table = []
 
-        for item in table[1]:
+        for item in table:
             offset = item.count('.')
             offset *= -1
             self._table.append((offset, item.lstrip('.')))
 
+        print('a', self._object_set)
+        print('b', self._table)
+
+    def encode(self, stack, data):
+        print('open type encode:', stack, data)
+        print(self._object_set)
+
+        for offset, item in self._table:
+            print(stack[offset][item])
+
     def __repr__(self):
-        return 'OpenType({}, {}, {})'.format(self._name,
-                                             self._object_set_name,
+        return 'OpenType({}, {}, {})'.format(self.name,
+                                             self._object_set,
                                              self._table)
 
 
@@ -121,6 +135,14 @@ class OpenTypeSequence(object):
     def __init__(self, name, members):
         self._name = name
         self._members = members
+
+    def encode(self, stack, data):
+        stack.append(data)
+
+        for member in self._members:
+            member.encode(stack, data[member.name])
+
+        stack.pop()
 
     def __repr__(self):
         return 'OpenTypeSequence({}, {})'.format(self._name, self._members)
@@ -131,6 +153,11 @@ class OpenTypeSequenceOf(object):
     def __init__(self, name, element_type):
         self._name = name
         self._element_type = element_type
+
+    def encode(self, stack, data):
+        stack.append(data)
+        self._element_type.encode(stack, data)
+        stack.pop()
 
     def __repr__(self):
         return 'OpenTypeSequenceOf({}, {})'.format(self._name,
@@ -143,6 +170,9 @@ class CompiledOpenTypes(CompiledType):
         super(CompiledOpenTypes, self).__init__()
         self._compiled_open_types = compiled_open_types
         self._inner = compiled_type
+        self._tables = {
+            'Items': {}
+        }
 
     @property
     def type(self):
@@ -152,6 +182,9 @@ class CompiledOpenTypes(CompiledType):
         # print()
         # print('data:', data)
         # print(self._compiled_open_types)
+
+        stack = []
+        self._compiled_open_types.encode(stack, data)
 
         return self._inner.encode(data, **kwargs)
 
@@ -169,6 +202,7 @@ class Compiler(object):
         self._types_backtrace = []
         self.recursive_types = []
         self.compiled = {}
+        self.compiled_sets = {}
 
     def types_backtrace_push(self, type_name):
         self._types_backtrace.append(type_name)
@@ -183,6 +217,38 @@ class Compiler(object):
     def process(self):
         self.pre_process()
 
+        # Compile types in object sets.
+        for module_name in self._specification:
+            items = self._specification[module_name]['object-sets'].items()
+
+            for set_name, set_descriptor in items:
+                compiled_set = []
+
+                for member in set_descriptor['members']:
+                    if not isinstance(member, dict):
+                        continue
+
+                    compiled_set_member = {}
+
+                    for member_name, member_value in member.items():
+                        if is_class_value(member_name):
+                            compiled_set_member[member_name] = member_value
+                        else:
+                            self.types_backtrace_push(member_name)
+                            compiled_member = self.process_type(member_name,
+                                                                member_value,
+                                                                module_name)
+                            self.types_backtrace_pop()
+                            compiled_set_member[member_name] = compiled_member
+
+                    compiled_set.append(compiled_set_member)
+
+                if module_name not in self.compiled_sets:
+                    self.compiled_sets[module_name] = {}
+
+                self.compiled_sets[module_name][set_name] = compiled_set
+
+        # Compile types.
         compiled = {}
 
         for module_name in self._specification:
@@ -193,9 +259,16 @@ class Compiler(object):
                 compiled_type = self.process_type(type_name,
                                                   type_descriptor,
                                                   module_name)
-                compiled_open_types = self.compile_open_types(type_name,
-                                                              type_descriptor,
-                                                              module_name)
+
+                # ToDo: Remove once parameterization has been
+                #       implemented.
+                try:
+                    compiled_open_types = self.compile_open_types(
+                        type_name,
+                        type_descriptor,
+                        module_name)
+                except CompileError:
+                    compiled_open_types = None
 
                 if compiled_open_types:
                     compiled_type = CompiledOpenTypes(compiled_open_types,
@@ -514,7 +587,10 @@ class Compiler(object):
     def compile_type(self, name, type_descriptor, module_name):
         return NotImplementedError('To be implemented by subclasses.')
 
-    def compile_open_types(self, name, type_descriptor, module_name):
+    def compile_open_types(self,
+                           name,
+                           type_descriptor,
+                           module_name):
         """Compile the open types wrapper for given type. Returns ``None`` if
         given type does not have any open types.
 
@@ -535,12 +611,19 @@ class Compiler(object):
                     continue
 
                 if is_open_type(member['type']):
-                    if 'table' in member:
-                        table = member['table']
+                    if 'table' not in member:
+                        continue
 
-                        if isinstance(table, list):
-                            compiled_members.append(OpenType(member['name'],
-                                                             table))
+                    table = member['table']
+
+                    if isinstance(table, list):
+                        compiled_members.append(
+                            OpenType(member['name'],
+                                     self.get_object_set(
+                                         table,
+                                         member['type'].split('.')[1],
+                                         module_name),
+                                     table[1]))
                 else:
                     compiled_member = self.compile_open_types(member['name'],
                                                               member,
@@ -560,8 +643,6 @@ class Compiler(object):
                 compiled = OpenTypeSequenceOf(name, compiled_element)
         elif type_name == 'CHOICE':
             # ToDo: Handle CHOICE.
-            pass
-        else:
             pass
 
         return compiled
@@ -704,6 +785,50 @@ class Compiler(object):
     def get_with_components(self, type_descriptor):
         return type_descriptor.get('with-components', None)
 
+    def get_object_set(self,
+                       table,
+                       type_name,
+                       module_name):
+        name, location = table
+        print('location', location)
+        compiled_set = self.compiled_sets[module_name][name]
+        object_set_descriptor, _ = self.lookup_object_set_descriptor(
+            name,
+            module_name)
+        object_class_descriptor, _ = self.lookup_object_class_descriptor(
+            object_set_descriptor['class'],
+            module_name)
+        object_set = {}
+        members = object_set_descriptor['members']
+
+        for object_set_item, compiled_item in zip(members, compiled_set):
+            if not isinstance(object_set_item, dict):
+                continue
+
+            compiled_type = compiled_item[type_name]
+            keys = []
+
+            for member in object_class_descriptor['members']:
+                member_name = member['name']
+
+                if is_class_value(member_name):
+                    keys.append(object_set_item[member_name])
+
+            value_object_set = object_set
+
+            for key in keys[:-1]:
+                if key not in value_object_set:
+                    value_object_set[key] = {}
+
+                value_object_set = value_object_set[key]
+
+            if keys[-1] in value_object_set:
+                raise CompileError('Duplicated object set entry values.')
+
+            value_object_set[keys[-1]] = compiled_type
+
+        return object_set
+
     def is_explicit_tag(self, type_descriptor):
         try:
             return type_descriptor['tag']['kind'] == 'EXPLICIT'
@@ -774,6 +899,12 @@ class Compiler(object):
         for member in object_class_descriptor['members']:
             if member['name'] == member_name:
                 return member['type'], module_name
+
+    def lookup_object_set_descriptor(self, object_set_name, module_name):
+        return self.lookup_in_modules('object-sets',
+                                      'object set',
+                                      object_set_name,
+                                      module_name)
 
     def get_compiled_type(self, name, type_name, module_name):
         try:

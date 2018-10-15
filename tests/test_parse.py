@@ -56,6 +56,9 @@ class Asn1ToolsParseTest(unittest.TestCase):
     def test_parse_information_object(self):
         self.parse_and_verify('information_object')
 
+    def test_parse_parameterized_information_object(self):
+        self.parse_and_verify('parameterized_information_object')
+
     def test_parse_x683(self):
         with self.assertRaises(AssertionError):
             self.parse_and_verify('x683')

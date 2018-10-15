@@ -1829,14 +1829,10 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             b'\x01\x00\x01\x80\x06\x69\x74\x65\x6d\x20\x30\x01\x02'
         )
 
-        # ToDo: Constraints are not yet implemented.
-        with self.assertRaises(TypeError) as cm:
-            self.assert_encode_decode(information_object,
-                                      'ItemWithConstraints',
-                                      decoded_message,
-                                      encoded_message)
-
-        self.assertEqual(str(cm.exception), "object of type 'bool' has no len()")
+        self.assert_encode_decode(information_object,
+                                  'ItemWithConstraints',
+                                  decoded_message,
+                                  encoded_message)
 
         # Message 2.
         decoded_message = {

@@ -162,43 +162,4 @@ C ::= SEQUENCE {
     b A.&B ({As}{@a}) OPTIONAL
 }
 
--- Parameterized.
-
-GC ::= CLASS {
-    &id      INTEGER    UNIQUE,
-    &Value
-} WITH SYNTAX {
-    ID              &id
-    VALUE           &Value
-}
-
-GCs GC ::= {
-    { ID 0 VALUE INTEGER }
-    | { ID 1 VALUE BOOLEAN }
-}
-
-D1 ::= SEQUENCE {
-    id             GC.&id             ({GCs}),
-    value          GC.&Value          ({GCs}{@id}),
-    a E1 {{ GCs }}
-}
-
-E1 {GC : Param} ::= SEQUENCE {
-    id             GC.&id             ({Param}),
-    value          GC.&Value          ({Param}{@id})
-}
-
--- The same as above, but with parameters expanded.
-
-D2 ::= SEQUENCE {
-    id             GC.&id             ({GCs}),
-    value          GC.&Value          ({GCs}{@id}),
-    a T1
-}
-
-T1 ::= SEQUENCE {
-    id             GC.&id             ({GCs}),
-    value          GC.&Value          ({GCs}{@id})
-}
-
 END
