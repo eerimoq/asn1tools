@@ -64,6 +64,29 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
 
         self.assertEqual(foo.decode(type_name, encoded), decoded)
 
+    def encode_decode_codecs(self, type_spec, decoded, encoded):
+        spec = (
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= " + type_spec + " "
+            + "END"
+        )
+
+        for codec, encoded_message in zip(CODECS, encoded):
+            foo = asn1tools.compile_string(spec, codec)
+
+            encoded = foo.encode('A', decoded)
+
+            if codec == 'jer':
+                self.assertEqual(loadb(encoded), loadb(encoded_message))
+            else:
+                self.assertEqual(encoded_message, encoded)
+
+            decoded_message = foo.decode('A', encoded)
+            self.assertEqual(decoded_message, decoded)
+
+        self.assertEqual(foo.decode('A', encoded), decoded)
+
     def test_boolean(self):
         self.encode_decode_all_codecs("BOOLEAN", [True, False])
 
@@ -206,6 +229,23 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
                                        'Foo',
                                        decoded,
                                        encoded)
+
+    def test_integer_min_max(self):
+        decoded = 5
+
+        encoded = [
+            b'\x02\x01\x05',
+            b'\x02\x01\x05',
+            b'5',
+            b'\x01\x05',
+            b'\x01\x05',
+            b'\x01\x05',
+            b'<A>5</A>'
+        ]
+
+        self.encode_decode_codecs('INTEGER (MIN..MAX)',
+                                  decoded,
+                                  encoded)
 
 
 if __name__ == '__main__':

@@ -990,9 +990,13 @@ class Integer(Type):
         self.number_of_indefinite_bits = None
 
     def set_restricted_to_range(self, minimum, maximum, has_extension_marker):
+        self.has_extension_marker = has_extension_marker
+
+        if minimum == 'MIN' or maximum == 'MAX':
+            return
+
         self.minimum = minimum
         self.maximum = maximum
-        self.has_extension_marker = has_extension_marker
         size = self.maximum - self.minimum
         self.number_of_bits = integer_as_number_of_bits(size)
 
