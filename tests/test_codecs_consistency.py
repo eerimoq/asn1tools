@@ -52,7 +52,9 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         for codec, encoded_message in zip(CODECS, encoded):
             foo = asn1tools.compile_files(filename, codec)
 
-            encoded = foo.encode(type_name, decoded)
+            encoded = foo.encode(type_name,
+                                 decoded,
+                                 check_constraints=True)
 
             if codec == 'jer':
                 self.assertEqual(loadb(encoded), loadb(encoded_message))
@@ -75,7 +77,9 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         for codec, encoded_message in zip(CODECS, encoded):
             foo = asn1tools.compile_string(spec, codec)
 
-            encoded = foo.encode('A', decoded)
+            encoded = foo.encode('A',
+                                 decoded,
+                                 check_constraints=True)
 
             if codec == 'jer':
                 self.assertEqual(loadb(encoded), loadb(encoded_message))

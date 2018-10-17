@@ -94,8 +94,8 @@ class Integer(Type):
 
     def __init__(self, name):
         super(Integer, self).__init__(name)
-        self.minimum = None
-        self.maximum = None
+        self.minimum = 'MIN'
+        self.maximum = 'MAX'
 
     def set_restricted_to_range(self,
                                 minimum,
@@ -105,10 +105,10 @@ class Integer(Type):
         self.maximum = maximum
 
     def encode(self, data):
-        if self.minimum is None:
-            return
+        minimum_ok = ((self.minimum == 'MIN') or (data >= self.minimum))
+        maximum_ok = ((self.maximum == 'MAX') or (data <= self.maximum))
 
-        if data < self.minimum or data > self.maximum:
+        if not minimum_ok or not maximum_ok:
             raise ConstraintsError(
                 'Expected an integer between {} and {}, but got {}.'.format(
                     self.minimum,

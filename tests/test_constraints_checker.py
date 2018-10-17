@@ -90,6 +90,9 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
             "  c INTEGER (400..400) "
             "} "
             "G ::= B (6..7) "
+            "H ::= INTEGER (MIN..10) "
+            "I ::= INTEGER (10..MAX) "
+            "J ::= INTEGER (MIN..MAX) "
             "END")
 
         # Ok.
@@ -104,7 +107,13 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
             ('C',     10),
             ('D',     99),
             ('E',   1000),
-            ('F',   {'a': 4, 'b': 40, 'c': 400})
+            ('F',   {'a': 4, 'b': 40, 'c': 400}),
+            ('H',  -1000),
+            ('H',     10),
+            ('I',     10),
+            ('I',   1000),
+            ('J',  -1000),
+            ('J',   1000)
         ]
 
         self.assert_encode_decode_ok(foo, datas)
@@ -131,7 +140,13 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
              'Expected an integer between 1000 and 1000, but got 0.'),
             ('F',
              {'a': 4, 'b': 41, 'c': 400},
-             'b: Expected an integer between 40 and 40, but got 41.')
+             'b: Expected an integer between 40 and 40, but got 41.'),
+            ('H',
+             11,
+             'Expected an integer between MIN and 10, but got 11.'),
+            ('I',
+             9,
+             'Expected an integer between 10 and MAX, but got 9.')
         ]
 
         self.assert_encode_decode_bad(foo, datas)
