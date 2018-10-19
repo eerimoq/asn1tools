@@ -827,6 +827,7 @@ def create_grammar():
     PRESENT = Keyword('PRESENT').setName('PRESENT')
     ABSENT = Keyword('ABSENT').setName('ABSENT')
     ALL = Keyword('ALL').setName('ALL')
+    EXCEPT = Keyword('EXCEPT').setName('EXCEPT')
     MIN = Keyword('MIN').setName('MIN')
     MAX = Keyword('MAX').setName('MAX')
     INCLUDES = Keyword('INCLUDES').setName('INCLUDES')
@@ -1212,7 +1213,8 @@ def create_grammar():
                      | object_set_elements
                      | (left_parenthesis + element_set_spec + right_parenthesis))
     unions = delimitedList(elements, delim=(union_mark | intersection_mark))
-    element_set_spec <<= unions
+    exclusions = (EXCEPT + elements)
+    element_set_spec <<= (Suppress(ALL + exclusions) | unions)
     root_element_set_spec <<= element_set_spec
     additional_element_set_spec <<= element_set_spec
     element_set_specs = (root_element_set_spec

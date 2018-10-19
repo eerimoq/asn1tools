@@ -235,6 +235,20 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
 
         self.assert_encode_decode_bad(foo, datas)
 
+    def test_enumerated(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= ENUMERATED { a, b } "
+            "END")
+
+        # Ok.
+        datas = [
+            ('A',  'a')
+        ]
+
+        self.assert_encode_decode_ok(foo, datas)
+
     def test_sequence(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "

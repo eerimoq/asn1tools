@@ -251,6 +251,23 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
                                   decoded,
                                   encoded)
 
+    def test_enumerated_all_except(self):
+        decoded = 'c'
+
+        encoded = [
+            b'\x0a\x01\x02',
+            b'\x0a\x01\x02',
+            b'"c"',
+            b'\x02',
+            b'\x40',
+            b'\x40',
+            b'<A><c /></A>'
+        ]
+
+        self.encode_decode_codecs('ENUMERATED {a, b, c, d, e} (ALL EXCEPT b)',
+                                  decoded,
+                                  encoded)
+
 
 if __name__ == '__main__':
     unittest.main()

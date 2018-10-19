@@ -221,7 +221,7 @@ X680 DEFINITIONS AUTOMATIC TAGS ::= BEGIN
         accountNumber INTEGER
     }
 
-    -- First version of protocol containing "Record"   
+    -- First version of protocol containing "Record"
     Record-E-2-10-a ::= SEQUENCE {
         userName VisibleString,
         password VisibleString,
@@ -230,14 +230,14 @@ X680 DEFINITIONS AUTOMATIC TAGS ::= BEGIN
         ...
     }
 
-    -- Second version of protocol containing "Record"    
+    -- Second version of protocol containing "Record"
     Record-E-2-10-b ::= SEQUENCE {
         userName VisibleString,
         password VisibleString,
         accountNumber INTEGER,
         ...,
         -- Extension addition added in protocol version 2
-        [[ -- 2: 
+        [[ -- 2:
         lastLoggedIn GeneralizedTime OPTIONAL,
         minutesLastLoggedIn INTEGER
         ]],
@@ -248,19 +248,19 @@ X680 DEFINITIONS AUTOMATIC TAGS ::= BEGIN
 
     Certificate ::= NULL
 
-    -- Third version of protocol containing "Record"    
+    -- Third version of protocol containing "Record"
     Record-E-2-10-c ::= SEQUENCE {
         userName VisibleString,
         password VisibleString,
         accountNumber INTEGER,
         ...,
         -- Extension addition added in protocol version 2
-        [[ -- 2: 
+        [[ -- 2:
         lastLoggedIn GeneralizedTime OPTIONAL,
         minutesLastLoggedIn INTEGER
         ]],
         -- Extension addition added in protocol version 3
-        [[ -- 3: 
+        [[ -- 3:
         certificate Certificate,
         thumb ThumbPrint OPTIONAL
         ]],
@@ -642,15 +642,14 @@ X680 DEFINITIONS AUTOMATIC TAGS ::= BEGIN
     -- F.2.6
 
     -- ToDo: Fix.
-    -- VanillaBMPString ::= BMPString (FROM (ALL EXCEPT ({0,0,0,0}..{0,0,0,31} |
-    --                                           {0,0,0,128}..{0,0,0,159})))
+    VanillaBMPString-F-2-6-1 ::= BMPString (FROM (ALL EXCEPT ({0,0,0,0}..{0,0,0,31} |
+                                                      {0,0,0,128}..{0,0,0,159})))
 
     C0-F-2-6 ::= BMPString (FROM ({0,0,0,0} .. {0,0,0,31})) -- C0 control functions
 
     C1-F-2-6 ::= BMPString (FROM ({0,0,0,128} .. {0,0,0,159})) -- C1 control functions
 
-    -- ToDo: Fix.
-    -- VanillaBMPString ::= BMPString (FROM (ALL EXCEPT (C0 | C1)))
+    VanillaBMPString-F-2-6-2 ::= BMPString (FROM (ALL EXCEPT (C0 | C1)))
 
     -- G.1.4
 

@@ -14,7 +14,6 @@ from .permitted_alphabet import VISIBLE_STRING
 
 
 STRING_TYPES = [
-    'ENUMERATED',
     'OBJECT IDENTIFIER',
     'TeletexString',
     'NumericString',
@@ -147,6 +146,12 @@ class BitString(Type):
                     self.minimum,
                     self.maximum,
                     number_of_bits))
+
+
+class Enumerated(Type):
+
+    def encode(self, data):
+        pass
 
 
 class Bytes(Type):
@@ -329,6 +334,8 @@ class Compiler(compiler.Compiler):
             minimum, maximum, _ = self.get_size_range(type_descriptor,
                                                       module_name)
             compiled = Bytes(name, minimum, maximum)
+        elif type_name == 'ENUMERATED':
+            compiled = Enumerated(name)
         elif type_name in ['UTCTime', 'GeneralizedTime']:
             compiled = Time(name)
         elif type_name == 'BIT STRING':
