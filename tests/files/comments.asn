@@ -1,0 +1,24 @@
+-- A single line comment.
+
+-- A single line comment with end -- Foo
+
+-- A single line comment with /* inside.
+
+DEFINITIONS ::= BEGIN
+
+-- A single line comment with */ inside.
+
+-- A single line comment with /* foo */ inside.
+
+/* A one line comment. */
+
+/* A multi line
+   comment. */
+
+/* Comment /* in comment. */ */
+
+/* A -- single line comment in another comment. */
+
+/* First. */ -- Second. -- /* Third. */
+
+END

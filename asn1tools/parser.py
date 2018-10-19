@@ -1700,11 +1700,51 @@ def ignore_comments(string):
 
     """
 
-    re_replace = re.compile(r'[^\n]')
+    comments = [(mo.start(), '/*') for mo in re.finditer(r'/\*', string)]
+    comments += [(mo.start(), '*/') for mo in re.finditer(r'\*/', string)]
+    comments += [(mo.start(), '--') for mo in re.finditer(r'--', string)]
+    comments += [(mo.start(), '\n') for mo in re.finditer(r'\n', string)]
 
-    return re.sub(r"--([\s\S]*?(--|\n))",
-                  lambda mo: re_replace.sub(' ', mo.group(0)),
-                  string)
+    comments.sort()
+
+    in_single_line_comment = False
+    multi_line_comment_depth = 0
+    start_offset = 0
+    non_comment_offset = 0
+    chunks = []
+
+    for offset, kind in comments:
+        if in_single_line_comment:
+            if kind in ['--', '\n']:
+                in_single_line_comment = False
+
+                if kind == '--':
+                    offset += 2
+
+                chunks.append(' ' * (offset - start_offset))
+                non_comment_offset = offset
+        elif multi_line_comment_depth > 0:
+            if kind == '/*':
+                multi_line_comment_depth += 1
+            elif kind == '*/':
+                multi_line_comment_depth -= 1
+
+                if multi_line_comment_depth == 0:
+                    offset += 2
+                    chunks.append(' ' * (offset - start_offset))
+                    non_comment_offset = offset
+        elif kind == '--':
+            in_single_line_comment = True
+            start_offset = offset
+            chunks.append(string[non_comment_offset:start_offset])
+        elif kind == '/*':
+            multi_line_comment_depth = 1
+            start_offset = offset
+            chunks.append(string[non_comment_offset:start_offset])
+
+    chunks.append(string[non_comment_offset:])
+
+    return ''.join(chunks)
 
 
 def parse_string(string):

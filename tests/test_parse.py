@@ -145,6 +145,9 @@ class Asn1ToolsParseTest(unittest.TestCase):
     def test_parse_enumerated(self):
         self.parse_and_verify('enumerated')
 
+    def test_parse_comments(self):
+        self.parse_and_verify('comments')
+
     def test_parse_imports_global_module_reference(self):
         actual = asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
                                         'IMPORTS '
