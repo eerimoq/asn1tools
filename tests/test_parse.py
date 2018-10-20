@@ -426,6 +426,36 @@ class Asn1ToolsParseTest(unittest.TestCase):
             "BEGIN Foo ::= SEQUENCE { a BOOLEAN, ..., [[ b BOOLEAN ]], [[ c "
             "BOOLEAN ]], ..., d BOOLEAN>!<, ... } END\': Expected \"}\".")
 
+    def test_parse_error_missing_single_line_comment_end(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('A DEFINITIONS ::= \n'
+                                   'BEGIN -- END')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Invalid ASN.1 syntax at line 2, column 7: 'BEGIN >!<-- END': "
+            "Missing newline or -- for single line comment.")
+
+    def test_parse_error_missing_multi_line_comment_end(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('A DEFINITIONS ::= \n'
+                                   'BEGIN /* END')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Invalid ASN.1 syntax at line 2, column 7: 'BEGIN >!</* END': "
+            "Missing */ for multi line comment.")
+
+    def test_parse_error_multi_line_comment_overlapping(self):
+        with self.assertRaises(asn1tools.ParseError) as cm:
+            asn1tools.parse_string('A DEFINITIONS ::= \n'
+                                   'BEGIN /*/ END')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Invalid ASN.1 syntax at line 2, column 7: 'BEGIN >!</*/ END': "
+            "Missing */ for multi line comment.")
+
     def test_parse_x680_duplicated_enum_number_a_c_0(self):
         with self.assertRaises(asn1tools.ParseError) as cm:
             asn1tools.compile_string('A DEFINITIONS ::= BEGIN '

@@ -1700,10 +1700,10 @@ def ignore_comments(string):
 
     """
 
-    comments = [(mo.start(), '/*') for mo in re.finditer(r'/\*', string)]
-    comments += [(mo.start(), '*/') for mo in re.finditer(r'\*/', string)]
-    comments += [(mo.start(), '--') for mo in re.finditer(r'--', string)]
-    comments += [(mo.start(), '\n') for mo in re.finditer(r'\n', string)]
+    comments = [
+        (mo.start(), mo.group(0))
+        for mo in re.finditer(r'(/\*|\*/|--|\n)', string)
+    ]
 
     comments.sort()
 
@@ -1741,6 +1741,18 @@ def ignore_comments(string):
             multi_line_comment_depth = 1
             start_offset = offset
             chunks.append(string[non_comment_offset:start_offset])
+
+    if in_single_line_comment:
+        raise ParseSyntaxException(
+            string,
+            start_offset,
+            'Missing newline or -- for single line comment')
+
+    if multi_line_comment_depth > 0:
+        raise ParseSyntaxException(
+            string,
+            start_offset,
+            'Missing */ for multi line comment')
 
     chunks.append(string[non_comment_offset:])
 

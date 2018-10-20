@@ -4,6 +4,8 @@
 
 -- A single line comment with /* inside.
 
+--- A single line comment starting with -.
+
 DEFINITIONS ::= BEGIN
 
 -- A single line comment with */ inside.
@@ -19,6 +21,7 @@ DEFINITIONS ::= BEGIN
 
 /* A -- single line comment in another comment. */
 
-/* First. */ -- Second. -- /* Third. */
+A/* First. */ ::=-- Second. --INTEGER/* Third. */
+/*/*B::=BOOLEAN*/---*/C::=OCTET STRING
 
 END
