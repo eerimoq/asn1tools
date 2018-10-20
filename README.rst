@@ -41,6 +41,12 @@ Known limitations
 - The ANY and ANY DEFINED BY types are not supported. They were
   removed from the ASN.1 standard 1994.
 
+- WITH COMPONENT and WITH COMPONENTS constraints are ignored, except
+  for OER REAL.
+
+- Named constants are ignored, i.e. first and last are ignored in
+  INTEGER { first(1), last(10) } (1..10).
+
 Installation
 ============
 
