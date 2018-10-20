@@ -32,20 +32,20 @@ Documentation: http://asn1tools.readthedocs.org/en/latest
 Known limitations
 =================
 
-- The CLASS keyword (X.681) and its friends are not yet supported.
+- The ``CLASS`` keyword (X.681) and its friends are not yet supported.
 
 - Parametrization (X.683) is not yet supported.
 
-- The EMBEDDED PDV type is not yet supported.
+- The ``EMBEDDED PDV`` type is not yet supported.
 
-- The ANY and ANY DEFINED BY types are not supported. They were
-  removed from the ASN.1 standard 1994.
+- The ``ANY`` and ``ANY DEFINED BY`` types are not supported. They
+  were removed from the ASN.1 standard 1994.
 
-- WITH COMPONENT and WITH COMPONENTS constraints are ignored, except
-  for OER REAL.
+- ``WITH COMPONENT`` and ``WITH COMPONENTS`` constraints are ignored,
+  except for OER ``REAL``.
 
-- Named constants are ignored, i.e. first and last are ignored in
-  INTEGER { first(1), last(10) } (1..10).
+- Named constants are ignored, i.e. ``first (1)`` and ``last (10)``
+  are ignored in ``INTEGER { first(1), last(10) } (1..10)``.
 
 Installation
 ============
