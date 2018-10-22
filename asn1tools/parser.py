@@ -1605,7 +1605,7 @@ def create_grammar():
     symbols_from_module = (symbol_list
                            + FROM
                            + global_module_reference)
-    symbols_imported = OneOrMore(Group(symbols_from_module))
+    symbols_imported = ZeroOrMore(Group(symbols_from_module))
     imports = Optional(Suppress(IMPORTS)
                        - symbols_imported
                        - Suppress(semi_colon))

@@ -201,6 +201,24 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
         self.assertEqual(actual, expected)
 
+    def test_parse_empty_imports(self):
+        actual = asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
+                                        'IMPORTS ; '
+                                        'END')
+
+        expected = {
+            'A': {
+                'extensibility-implied': False,
+                'imports': {},
+                'object-classes': {},
+                'object-sets': {},
+                'types': {},
+                'values': {}
+            }
+        }
+
+        self.assertEqual(actual, expected)
+
     def test_parse_keyword_in_type_name(self):
         actual = asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
                                         'ENDa ::= INTEGER '
