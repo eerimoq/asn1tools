@@ -1,0 +1,13 @@
+ConstraintsExtensions DEFINITIONS ::=
+
+BEGIN
+
+Foo ::= SEQUENCE {
+   a OCTET STRING (SIZE (1..2, ...)),
+   b OCTET STRING (SIZE (1..2), ...),
+   c SEQUENCE (SIZE (9..9), ...) OF BOOLEAN,
+   d SEQUENCE SIZE (2..3, ...) OF INTEGER (1..5, ...),
+   e SEQUENCE (SIZE (2..3, ...)) OF INTEGER (1..5, ...)
+}
+
+END

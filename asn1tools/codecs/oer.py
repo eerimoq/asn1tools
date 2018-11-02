@@ -576,7 +576,7 @@ class Integer(Type):
     def set_restricted_to_range(self, minimum, maximum, has_extension_marker):
         self.has_extension_marker = has_extension_marker
 
-        if minimum == 'MIN' or maximum == 'MAX':
+        if minimum == 'MIN' or maximum == 'MAX' or has_extension_marker:
             return
 
         if minimum >= 0:

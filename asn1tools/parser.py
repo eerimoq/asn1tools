@@ -375,7 +375,10 @@ def convert_sequence_of_type(_s, _l, tokens):
     }
 
     if len(tokens[1]) > 0:
-        converted_type['size'] = tokens[1][0]['size']
+        converted_type['size'] = tokens[1][0][0]['size']
+
+        if len(tokens[1]) > 1 and tokens[1][1] == '...':
+            converted_type['size'].append(None)
 
     tag = convert_tag(tokens[3])
 
@@ -399,7 +402,10 @@ def convert_set_of_type(_s, _l, tokens):
     }
 
     if len(tokens[1]) > 0:
-        converted_type['size'] = tokens[1][0]['size']
+        converted_type['size'] = tokens[1][0][0]['size']
+
+        if len(tokens[1]) > 1 and tokens[1][1] == '...':
+            converted_type['size'].append(None)
 
     tag = convert_tag(tokens[3])
 
@@ -510,7 +516,11 @@ def convert_type(tokens):
             constraint_tokens = constraint_tokens.asList()
 
         if constraint_tokens == '...':
-            restricted_to.append(EXTENSION_MARKER)
+            if restricted_to:
+                restricted_to.append(EXTENSION_MARKER)
+
+            if 'size' in converted_type:
+                converted_type['size'].append(None)
         elif len(constraint_tokens) == 1:
             if not isinstance(constraint_tokens[0], dict):
                 restricted_to.append(convert_number(constraint_tokens[0]))
@@ -1358,7 +1368,7 @@ def create_grammar():
     # X.680: 27. Notation for the set-of types
     # set_of_value = NoMatch()
     set_of_type = (SET
-                   + Group(Optional(size_paren))
+                   + Group(Optional(Group(size_constraint) | constraint))
                    + OF
                    + Optional(Suppress(identifier))
                    - tag
@@ -1378,7 +1388,7 @@ def create_grammar():
     # X.680: 25. Notation for the sequence-of types
     sequence_of_value = NoMatch()
     sequence_of_type = (SEQUENCE
-                        + Group(Optional(size_paren))
+                        + Group(Optional(Group(size_constraint) | constraint))
                         + OF
                         + Optional(Suppress(identifier))
                         - tag

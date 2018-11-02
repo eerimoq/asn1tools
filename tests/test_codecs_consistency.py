@@ -48,7 +48,6 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
                                   type_name,
                                   decoded,
                                   encoded):
-
         for codec, encoded_message in zip(CODECS, encoded):
             foo = asn1tools.compile_files(filename, codec)
 
@@ -64,9 +63,11 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             decoded_message = foo.decode(type_name, encoded)
             self.assertEqual(decoded_message, decoded)
 
-        self.assertEqual(foo.decode(type_name, encoded), decoded)
-
-    def encode_decode_codecs(self, type_spec, decoded, encoded):
+    def encode_decode_codecs(self,
+                             type_spec,
+                             decoded,
+                             encoded,
+                             codecs_to_fail=None):
         spec = (
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
@@ -74,22 +75,29 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             + "END"
         )
 
+        if codecs_to_fail is None:
+            codecs_to_fail = []
+
         for codec, encoded_message in zip(CODECS, encoded):
-            foo = asn1tools.compile_string(spec, codec)
+            try:
+                foo = asn1tools.compile_string(spec, codec)
 
-            encoded = foo.encode('A',
-                                 decoded,
-                                 check_constraints=True)
+                encoded = foo.encode('A',
+                                     decoded,
+                                     check_constraints=True)
 
-            if codec == 'jer':
-                self.assertEqual(loadb(encoded), loadb(encoded_message))
+                if codec == 'jer':
+                    self.assertEqual(loadb(encoded), loadb(encoded_message))
+                else:
+                    self.assertEqual(encoded_message, encoded)
+
+                decoded_message = foo.decode('A', encoded)
+                self.assertEqual(decoded_message, decoded)
+            except NotImplementedError:
+                if codec not in codecs_to_fail:
+                    raise
             else:
-                self.assertEqual(encoded_message, encoded)
-
-            decoded_message = foo.decode('A', encoded)
-            self.assertEqual(decoded_message, decoded)
-
-        self.assertEqual(foo.decode('A', encoded), decoded)
+                self.assertTrue(codec not in codecs_to_fail)
 
     def test_boolean(self):
         self.encode_decode_all_codecs("BOOLEAN", [True, False])
@@ -267,6 +275,64 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         self.encode_decode_codecs('ENUMERATED {a, b, c, d, e} (ALL EXCEPT b)',
                                   decoded,
                                   encoded)
+
+    def test_constraints_extensions(self):
+        decoded = {
+            'a': b'\x12\x34',
+            'b': b'\x56\x78',
+            'c': [True, True, False, True, True, False, True, True, False],
+            'd': [True, True, False, True, True, False, True, True, False, True],
+            'e': [1, 100, 10000],
+            'f': [1, 100, 10000, 1000000]
+        }
+
+        encoded = [
+            b'\x30\x62\x80\x02\x12\x34\x81\x02\x56\x78\xa2\x1b\x01\x01\xff\x01'
+            b'\x01\xff\x01\x01\x00\x01\x01\xff\x01\x01\xff\x01\x01\x00\x01\x01'
+            b'\xff\x01\x01\xff\x01\x01\x00\xa3\x1e\x01\x01\xff\x01\x01\xff\x01'
+            b'\x01\x00\x01\x01\xff\x01\x01\xff\x01\x01\x00\x01\x01\xff\x01\x01'
+            b'\xff\x01\x01\x00\x01\x01\xff\xa4\x0a\x02\x01\x01\x02\x01\x64\x02'
+            b'\x02\x27\x10\xa5\x0f\x02\x01\x01\x02\x01\x64\x02\x02\x27\x10\x02'
+            b'\x03\x0f\x42\x40',
+            b'\x30\x62\x80\x02\x12\x34\x81\x02\x56\x78\xa2\x1b\x01\x01\xff\x01'
+            b'\x01\xff\x01\x01\x00\x01\x01\xff\x01\x01\xff\x01\x01\x00\x01\x01'
+            b'\xff\x01\x01\xff\x01\x01\x00\xa3\x1e\x01\x01\xff\x01\x01\xff\x01'
+            b'\x01\x00\x01\x01\xff\x01\x01\xff\x01\x01\x00\x01\x01\xff\x01\x01'
+            b'\xff\x01\x01\x00\x01\x01\xff\xa4\x0a\x02\x01\x01\x02\x01\x64\x02'
+            b'\x02\x27\x10\xa5\x0f\x02\x01\x01\x02\x01\x64\x02\x02\x27\x10\x02'
+            b'\x03\x0f\x42\x40',
+            b'{"a":"1234","b":"5678","c":[true,true,false,true,true,false,true'
+            b',true,false],"d":[true,true,false,true,true,false,true,true,fals'
+            b'e,true],"e":[1,100,10000],"f":[1,100,10000,1000000]}',
+            b'\x02\x12\x34\x02\x56\x78\x01\x09\xff\xff\x00\xff\xff\x00\xff\xff'
+            b'\x00\x01\x0a\xff\xff\x00\xff\xff\x00\xff\xff\x00\xff\x01\x03\x01'
+            b'\x01\x01\x64\x02\x27\x10\x01\x04\x01\x01\x01\x64\x02\x27\x10\x03'
+            b'\x0f\x42\x40',
+            b'\x40\x12\x34\x40\x56\x78\x6d\xa0\x0a\xdb\x50\x80\x01\x64\x80\x02'
+            b'\x27\x10\x80\x04\x08\x01\x64\x80\x02\x27\x10\x80\x03\x0f\x42\x40',
+            b'\x44\x8d\x15\x67\x86\xda\x15\xb6\xa1\x01\x64\x81\x13\x88\x41\x02'
+            b'\x02\xc9\x02\x27\x10\x81\x87\xa1\x20\x00',
+            b'<A><a>1234</a><b>5678</b><c><true /><true /><false /><true /><tr'
+            b'ue /><false /><true /><true /><false /></c><d><true /><true /><f'
+            b'alse /><true /><true /><false /><true /><true /><false /><true /'
+            b'></d><e><INTEGER>1</INTEGER><INTEGER>100</INTEGER><INTEGER>10000'
+            b'</INTEGER></e><f><INTEGER>1</INTEGER><INTEGER>100</INTEGER><INTE'
+            b'GER>10000</INTEGER><INTEGER>1000000</INTEGER></f></A>'
+        ]
+
+        # PER and UPER does not yet support sequence extensions.
+        self.encode_decode_codecs(
+            'SEQUENCE {\n'
+            '  a OCTET STRING (SIZE (1..2, ...)),\n'
+            '  b OCTET STRING (SIZE (1..2), ...),\n'
+            '  c SEQUENCE (SIZE (9..9), ...) OF BOOLEAN,\n'
+            '  d SEQUENCE (SIZE (9..9), ...) OF BOOLEAN,\n'
+            '  e SEQUENCE SIZE (2..3, ...) OF INTEGER (1..5, ...),\n'
+            '  f SEQUENCE (SIZE (2..3, ...)) OF INTEGER (1..5, ...)\n'
+            '}',
+            decoded,
+            encoded,
+            codecs_to_fail=['per', 'uper'])
 
 
 if __name__ == '__main__':

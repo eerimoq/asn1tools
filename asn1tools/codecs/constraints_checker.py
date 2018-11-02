@@ -50,12 +50,18 @@ class String(Type):
 
     def __init__(self,
                  name,
+                 permitted_alphabet,
                  minimum,
                  maximum,
-                 permitted_alphabet=None):
+                 has_extension_marker):
         super(String, self).__init__(name)
-        self.minimum = minimum
-        self.maximum = maximum
+
+        if has_extension_marker:
+            self.minimum = None
+            self.maximum = None
+        else:
+            self.minimum = minimum
+            self.maximum = maximum
 
         if permitted_alphabet is None:
             permitted_alphabet = self.PERMITTED_ALPHABET
@@ -99,7 +105,10 @@ class Integer(Type):
     def set_restricted_to_range(self,
                                 minimum,
                                 maximum,
-                                _has_extension_marker):
+                                has_extension_marker):
+        if has_extension_marker:
+            return
+
         self.minimum = minimum
         self.maximum = maximum
 
@@ -129,10 +138,15 @@ class Null(Type):
 
 class BitString(Type):
 
-    def __init__(self, name, minimum, maximum):
+    def __init__(self, name, minimum, maximum, has_extension_marker):
         super(BitString, self).__init__(name)
-        self.minimum = minimum
-        self.maximum = maximum
+
+        if has_extension_marker:
+            self.minimum = None
+            self.maximum = None
+        else:
+            self.minimum = minimum
+            self.maximum = maximum
 
     def encode(self, data):
         if self.minimum is None:
@@ -156,10 +170,15 @@ class Enumerated(Type):
 
 class Bytes(Type):
 
-    def __init__(self, name, minimum, maximum):
+    def __init__(self, name, minimum, maximum, has_extension_marker):
         super(Bytes, self).__init__(name)
-        self.minimum = minimum
-        self.maximum = maximum
+
+        if has_extension_marker:
+            self.minimum = None
+            self.maximum = None
+        else:
+            self.minimum = minimum
+            self.maximum = maximum
 
     def encode(self, data):
         if self.minimum is None:
@@ -195,11 +214,16 @@ class Dict(Type):
 
 class List(Type):
 
-    def __init__(self, name, element_type, minimum, maximum):
+    def __init__(self, name, element_type, minimum, maximum, has_extension_marker):
         super(List, self).__init__(name)
         self.element_type = element_type
-        self.minimum = minimum
-        self.maximum = maximum
+
+        if has_extension_marker:
+            self.minimum = None
+            self.maximum = None
+        else:
+            self.minimum = minimum
+            self.maximum = maximum
 
     def encode(self, data):
         if self.minimum is not None:
@@ -314,12 +338,11 @@ class Compiler(compiler.Compiler):
             element_type = self.compile_type('',
                                              type_descriptor['element'],
                                              module_name)
-            minimum, maximum, _ = self.get_size_range(type_descriptor,
-                                                      module_name)
             compiled = List(name,
                             element_type,
-                            minimum,
-                            maximum)
+                            *self.get_size_range(
+                                type_descriptor,
+                                module_name))
         elif type_name == 'CHOICE':
             members = self.compile_members(type_descriptor['members'],
                                            module_name)
@@ -331,59 +354,42 @@ class Compiler(compiler.Compiler):
         elif type_name == 'BOOLEAN':
             compiled = Boolean(name)
         elif type_name == 'OCTET STRING':
-            minimum, maximum, _ = self.get_size_range(type_descriptor,
-                                                      module_name)
-            compiled = Bytes(name, minimum, maximum)
+            compiled = Bytes(name,
+                             *self.get_size_range(type_descriptor,
+                                                  module_name))
         elif type_name == 'ENUMERATED':
             compiled = Enumerated(name)
         elif type_name in ['UTCTime', 'GeneralizedTime']:
             compiled = Time(name)
         elif type_name == 'BIT STRING':
-            minimum, maximum, _ = self.get_size_range(type_descriptor,
-                                                      module_name)
             compiled = BitString(name,
-                                 minimum,
-                                 maximum)
+                                 *self.get_size_range(type_descriptor,
+                                                      module_name))
         elif type_name == 'NumericString':
-            minimum, maximum, _ = self.get_size_range(type_descriptor,
-                                                      module_name)
-            permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
             compiled = NumericString(name,
-                                     minimum,
-                                     maximum,
-                                     permitted_alphabet)
+                                     self.get_permitted_alphabet(type_descriptor),
+                                     *self.get_size_range(type_descriptor,
+                                                          module_name))
         elif type_name == 'PrintableString':
-            minimum, maximum, _ = self.get_size_range(type_descriptor,
-                                                      module_name)
-            permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
             compiled = PrintableString(name,
-                                       minimum,
-                                       maximum,
-                                       permitted_alphabet)
+                                       self.get_permitted_alphabet(type_descriptor),
+                                       *self.get_size_range(type_descriptor,
+                                                            module_name))
         elif type_name == 'IA5String':
-            minimum, maximum, _ = self.get_size_range(type_descriptor,
-                                                      module_name)
-            permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
             compiled = IA5String(name,
-                                 minimum,
-                                 maximum,
-                                 permitted_alphabet)
+                                 self.get_permitted_alphabet(type_descriptor),
+                                 *self.get_size_range(type_descriptor,
+                                                      module_name))
         elif type_name == 'VisibleString':
-            minimum, maximum, _ = self.get_size_range(type_descriptor,
-                                                      module_name)
-            permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
             compiled = VisibleString(name,
-                                     minimum,
-                                     maximum,
-                                     permitted_alphabet)
+                                     self.get_permitted_alphabet(type_descriptor),
+                                     *self.get_size_range(type_descriptor,
+                                                          module_name))
         elif type_name in STRING_TYPES:
-            minimum, maximum, _ = self.get_size_range(type_descriptor,
-                                                      module_name)
-            permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
             compiled = String(name,
-                              minimum,
-                              maximum,
-                              permitted_alphabet)
+                              self.get_permitted_alphabet(type_descriptor),
+                              *self.get_size_range(type_descriptor,
+                                                   module_name))
         elif type_name in ['ANY', 'ANY DEFINED BY', 'OpenType']:
             compiled = Skip(name)
         elif type_name == 'NULL':

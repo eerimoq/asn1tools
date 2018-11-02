@@ -132,9 +132,6 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
             ('C',
              11,
              'Expected an integer between -10 and 10, but got 11.'),
-            ('D',
-             100,
-             'Expected an integer between 5 and 99, but got 100.'),
             ('E',
              0,
              'Expected an integer between 1000 and 1000, but got 0.'),
@@ -216,12 +213,14 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
             "BEGIN "
             "A ::= OCTET STRING "
             "B ::= OCTET STRING (SIZE (10)) "
+            "C ::= OCTET STRING (SIZE (10, ...)) "
             "END")
 
         # Ok.
         datas = [
             ('A',  b''),
-            ('B',  10 * b'\x23')
+            ('B',  10 * b'\x23'),
+            ('C',  11 * b'\x23')
         ]
 
         self.assert_encode_decode_ok(foo, datas)
@@ -276,11 +275,13 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
             "A ::= SEQUENCE (SIZE (2)) OF INTEGER (3..5)"
+            "B ::= SEQUENCE (SIZE (2, ...)) OF INTEGER (3..5)"
             "END")
 
         # Ok.
         datas = [
-            ('A',  [3, 4])
+            ('A',  [3, 4]),
+            ('B',  [3, 4, 5])
         ]
 
         self.assert_encode_decode_ok(foo, datas)
@@ -380,6 +381,7 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
             "A ::= VisibleString "
             "B ::= VisibleString (SIZE (2..5)) "
             "C ::= VisibleString (FROM (\"a\"..\"j\" | \"u\"..\"w\")) "
+            "D ::= VisibleString (SIZE (2..5, ...)) "
             "END")
 
         # Ok.
@@ -387,7 +389,8 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
             ('A',  '123'),
             ('B',  '12'),
             ('B',  '12345'),
-            ('C',  'abijuvw')
+            ('C',  'abijuvw'),
+            ('D',  '123456')
         ]
 
         self.assert_encode_decode_ok(foo, datas)

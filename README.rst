@@ -47,6 +47,9 @@ Known limitations
 - Named numbers are ignored, i.e. ``first (1)`` and ``last (10)`` are
   ignored in ``INTEGER { first(1), last(10) } (1..10)``.
 
+- The ``DATE``, ``DATE-TIME``, ``DURATION`` and ``TIME-OF-DAY`` types
+  are not yet supported.
+
 Installation
 ============
 
