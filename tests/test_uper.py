@@ -283,6 +283,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "H ::= OCTET STRING (SIZE (65536)) "
             "I ::= OCTET STRING (SIZE (MIN..5)) "
             "J ::= OCTET STRING (SIZE (MIN..MAX)) "
+            "K ::= OCTET STRING (SIZE (1..2, ...)) "
             "END",
             'uper')
 
@@ -300,7 +301,9 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
              b'\xc4' + 32768 * b'\x01\x02'
              + b'\x00'),
             ('I',                               b'', b'\x00'),
-            ('J',                               b'', b'\x00')
+            ('J',                               b'', b'\x00'),
+            ('K',                       b'\x12\x34', b'\x44\x8d\x00'),
+            ('K',                   b'\x12\x34\x56', b'\x81\x89\x1a\x2b\x00')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -711,25 +714,14 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('B', [4663, 222322233], b'\x02\x12\x37\x04\x0d\x40\x5e\x39'),
             ('C',               [1], b'\x00\x20\x20'),
             ('C',            [1, 2], b'\x20\x20\x20\x20\x40'),
-            ('D',            [2, 1], b'\x40\x40\x80\x40\x40')
+            ('D',            [2, 1], b'\x40\x40\x80\x40\x40'),
+            ('E',
+             6 * [1],
+             b'\x83\x00\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80')
         ]
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-        # Encode value in extension.
-        with self.assertRaises(NotImplementedError) as cm:
-            foo.encode('E', 6 * [1])
-
-        self.assertEqual(str(cm.exception), 'Extension is not yet implemented.')
-
-        # Decode value in extension.
-        with self.assertRaises(NotImplementedError) as cm:
-            foo.decode(
-                'E',
-                b'\x83\x00\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80')
-
-        self.assertEqual(str(cm.exception), 'Extension is not yet implemented.')
 
     def test_choice(self):
         foo = asn1tools.compile_string(

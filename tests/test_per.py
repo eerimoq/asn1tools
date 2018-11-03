@@ -246,6 +246,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "I ::= OCTET STRING (SIZE (65536)) "
             "J ::= OCTET STRING (SIZE (1..MAX)) "
             "K ::= OCTET STRING (SIZE (MIN..5)) "
+            "L ::= OCTET STRING (SIZE (1..2, ...)) "
             "END",
             'per')
 
@@ -278,7 +279,9 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
              b'\xc1' + 4095 * b'\x00\x01\x02\x03' + b'\x00\x01\x02\x03'
              + b'\x01' + b'\x00'),
             ('J',                           b'\x12', b'\x01\x12'),
-            ('K',                               b'', b'\x00')
+            ('K',                               b'', b'\x00'),
+            ('L',                       b'\x12\x34', b'\x40\x12\x34'),
+            ('L',                   b'\x12\x34\x56', b'\x80\x03\x12\x34\x56')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -664,19 +667,14 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('E',  {'a': False, 'b': []}, b'\x00\x00'),
             ('E', {'a': False, 'b': [1]}, b'\x00\x01\x01\x01'),
             ('F', {'a': False, 'b': [1]}, b'\x00\x01\x01'),
+            ('G',
+             6 * [1],
+             b'\x80\x06\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01'),
             ('H',               [1], b'\x01\x01\x01')
         ]
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
-
-        # Decode value in extension.
-        with self.assertRaises(NotImplementedError) as cm:
-            foo.decode(
-                'G',
-                b'\x80\x06\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01')
-
-        self.assertEqual(str(cm.exception), 'Extension is not yet implemented.')
 
     def test_choice(self):
         foo = asn1tools.compile_string(

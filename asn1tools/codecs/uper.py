@@ -295,9 +295,9 @@ class Compiler(per.Compiler):
         elif type_name == 'OBJECT IDENTIFIER':
             compiled = ObjectIdentifier(name)
         elif type_name == 'OCTET STRING':
-            minimum, maximum, _ = self.get_size_range(type_descriptor,
-                                                      module_name)
-            compiled = OctetString(name, minimum, maximum)
+            compiled = OctetString(name,
+                                   *self.get_size_range(type_descriptor,
+                                                        module_name))
         elif type_name == 'TeletexString':
             compiled = TeletexString(name)
         elif type_name == 'NumericString':

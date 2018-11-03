@@ -905,7 +905,14 @@ class ArrayType(Type):
             if self.minimum <= len(data) <= self.maximum:
                 encoder.append_bit(0)
             else:
-                raise NotImplementedError('Extension is not yet implemented.')
+                encoder.append_bit(1)
+                encoder.align()
+                encoder.append_length_determinant(len(data))
+
+                for entry in data:
+                    self.element_type.encode(entry, encoder)
+
+                return
 
         if self.number_of_bits is None:
             return self.encode_unbound(data, encoder)
@@ -924,13 +931,18 @@ class ArrayType(Type):
                 self.element_type.encode(entry, encoder)
 
     def decode(self, decoder):
+        length = None
+
         if self.has_extension_marker:
             bit = decoder.read_bit()
 
             if bit:
-                raise NotImplementedError('Extension is not yet implemented.')
+                decoder.align()
+                length = decoder.read_length_determinant()
 
-        if self.number_of_bits is None:
+        if length is not None:
+            pass
+        elif self.number_of_bits is None:
             return self.decode_unbound(decoder)
         else:
             length = self.minimum
@@ -1193,10 +1205,11 @@ class BitString(Type):
 
 class OctetString(Type):
 
-    def __init__(self, name, minimum, maximum):
+    def __init__(self, name, minimum, maximum, has_extension_marker):
         super(OctetString, self).__init__(name, 'OCTET STRING')
         self.minimum = minimum
         self.maximum = maximum
+        self.has_extension_marker = has_extension_marker
 
         if is_unbound(minimum, maximum):
             self.number_of_bits = None
@@ -1210,6 +1223,17 @@ class OctetString(Type):
 
     def encode(self, data, encoder):
         align = True
+
+        if self.has_extension_marker:
+            if self.minimum <= len(data) <= self.maximum:
+                encoder.append_bit(0)
+            else:
+                encoder.append_bit(1)
+                encoder.align()
+                encoder.append_length_determinant(len(data))
+                encoder.append_bytes(data)
+
+                return
 
         if self.number_of_bits is None:
             return self.encode_unbound(data, encoder)
@@ -1233,6 +1257,15 @@ class OctetString(Type):
 
     def decode(self, decoder):
         align = True
+
+        if self.has_extension_marker:
+            bit = decoder.read_bit()
+
+            if bit:
+                decoder.align()
+                length = decoder.read_length_determinant()
+
+                return decoder.read_bytes(length)
 
         if self.number_of_bits is None:
             return self.decode_unbound(decoder)
@@ -1848,9 +1881,9 @@ class Compiler(compiler.Compiler):
         elif type_name == 'OBJECT IDENTIFIER':
             compiled = ObjectIdentifier(name)
         elif type_name == 'OCTET STRING':
-            minimum, maximum, _ = self.get_size_range(type_descriptor,
-                                                      module_name)
-            compiled = OctetString(name, minimum, maximum)
+            compiled = OctetString(name,
+                                   *self.get_size_range(type_descriptor,
+                                                        module_name))
         elif type_name == 'TeletexString':
             compiled = TeletexString(name)
         elif type_name == 'NumericString':

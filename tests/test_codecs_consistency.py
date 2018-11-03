@@ -66,8 +66,7 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
     def encode_decode_codecs(self,
                              type_spec,
                              decoded,
-                             encoded,
-                             codecs_to_fail=None):
+                             encoded):
         spec = (
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
@@ -75,29 +74,20 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             + "END"
         )
 
-        if codecs_to_fail is None:
-            codecs_to_fail = []
-
         for codec, encoded_message in zip(CODECS, encoded):
-            try:
-                foo = asn1tools.compile_string(spec, codec)
+            foo = asn1tools.compile_string(spec, codec)
 
-                encoded = foo.encode('A',
-                                     decoded,
-                                     check_constraints=True)
+            encoded = foo.encode('A',
+                                 decoded,
+                                 check_constraints=True)
 
-                if codec == 'jer':
-                    self.assertEqual(loadb(encoded), loadb(encoded_message))
-                else:
-                    self.assertEqual(encoded_message, encoded)
-
-                decoded_message = foo.decode('A', encoded)
-                self.assertEqual(decoded_message, decoded)
-            except NotImplementedError:
-                if codec not in codecs_to_fail:
-                    raise
+            if codec == 'jer':
+                self.assertEqual(loadb(encoded), loadb(encoded_message))
             else:
-                self.assertTrue(codec not in codecs_to_fail)
+                self.assertEqual(encoded_message, encoded)
+
+            decoded_message = foo.decode('A', encoded)
+            self.assertEqual(decoded_message, decoded)
 
     def test_boolean(self):
         self.encode_decode_all_codecs("BOOLEAN", [True, False])
@@ -331,8 +321,7 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             '  f SEQUENCE (SIZE (2..3, ...)) OF INTEGER (1..5, ...)\n'
             '}',
             decoded,
-            encoded,
-            codecs_to_fail=['per', 'uper'])
+            encoded)
 
 
 if __name__ == '__main__':
