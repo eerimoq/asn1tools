@@ -310,15 +310,14 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             b'GER>10000</INTEGER><INTEGER>1000000</INTEGER></f></A>'
         ]
 
-        # PER and UPER does not yet support sequence extensions.
         self.encode_decode_codecs(
-            'SEQUENCE {\n'
-            '  a OCTET STRING (SIZE (1..2, ...)),\n'
-            '  b OCTET STRING (SIZE (1..2), ...),\n'
-            '  c SEQUENCE (SIZE (9..9), ...) OF BOOLEAN,\n'
-            '  d SEQUENCE (SIZE (9..9), ...) OF BOOLEAN,\n'
-            '  e SEQUENCE SIZE (2..3, ...) OF INTEGER (1..5, ...),\n'
-            '  f SEQUENCE (SIZE (2..3, ...)) OF INTEGER (1..5, ...)\n'
+            'SEQUENCE {'
+            '  a OCTET STRING (SIZE (1..2, ...)),'
+            '  b OCTET STRING (SIZE (1..2), ...),'
+            '  c SEQUENCE (SIZE (9..9), ...) OF BOOLEAN,'
+            '  d SEQUENCE (SIZE (9..9), ...) OF BOOLEAN,'
+            '  e SEQUENCE SIZE (2..3, ...) OF INTEGER (1..5, ...),'
+            '  f SEQUENCE (SIZE (2..3, ...)) OF INTEGER (1..5, ...)'
             '}',
             decoded,
             encoded)
