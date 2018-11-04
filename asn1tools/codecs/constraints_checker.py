@@ -28,6 +28,14 @@ STRING_TYPES = [
     'ObjectDescriptor'
 ]
 
+TIME_TYPES = [
+    'UTCTime',
+    'GeneralizedTime',
+    'DATE',
+    'TIME-OF-DAY',
+    'DATE-TIME'
+]
+
 
 class Type(object):
 
@@ -359,7 +367,7 @@ class Compiler(compiler.Compiler):
                                                   module_name))
         elif type_name == 'ENUMERATED':
             compiled = Enumerated(name)
-        elif type_name in ['UTCTime', 'GeneralizedTime']:
+        elif type_name in TIME_TYPES:
             compiled = Time(name)
         elif type_name == 'BIT STRING':
             compiled = BitString(name,

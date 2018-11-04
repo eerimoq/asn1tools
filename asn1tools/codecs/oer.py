@@ -6,6 +6,7 @@ import binascii
 from copy import copy
 import struct
 from operator import attrgetter
+import datetime
 
 from ..parser import EXTENSION_MARKER
 from . import EncodeError
@@ -1091,6 +1092,90 @@ class GeneralizedTime(VisibleString):
         return generalized_time_to_datetime(decoded)
 
 
+class Date(Type):
+
+    def __init__(self, name):
+        super(Date, self).__init__(name, 'DATE', None)
+        year = Integer('year')
+        month = Integer('month')
+        day = Integer('day')
+        month.set_restricted_to_range(1, 12, False)
+        day.set_restricted_to_range(1, 31, False)
+        self._inner = Sequence('DATE-ENCODING',
+                               [year, month, day],
+                               None)
+
+    def encode(self, data, encoder):
+        data = {
+            'year': data.year,
+            'month': data.month,
+            'day': data.day
+        }
+
+        self._inner.encode(data, encoder)
+
+    def decode(self, decoder):
+        decoded = self._inner.decode(decoder)
+
+        return datetime.date(decoded['year'],
+                             decoded['month'],
+                             decoded['day'])
+
+
+class TimeOfDay(Type):
+
+    def __init__(self, name):
+        super(TimeOfDay, self).__init__(name, 'TIME-OF-DAY', None)
+        hours = Integer('hours')
+        minutes = Integer('minutes')
+        seconds = Integer('seconds')
+        hours.set_restricted_to_range(0, 24, False)
+        minutes.set_restricted_to_range(0, 59, False)
+        seconds.set_restricted_to_range(0, 60, False)
+        self._inner = Sequence('TIME-OF-DAY-ENCODING',
+                               [hours, minutes, seconds],
+                               None)
+
+    def encode(self, data, encoder):
+        data = {
+            'hours': data.hour,
+            'minutes': data.minute,
+            'seconds': data.second
+        }
+
+        self._inner.encode(data, encoder)
+
+    def decode(self, decoder):
+        decoded = self._inner.decode(decoder)
+
+        return datetime.time(decoded['hours'],
+                             decoded['minutes'],
+                             decoded['seconds'])
+
+
+class DateTime(Type):
+
+    def __init__(self, name):
+        super(DateTime, self).__init__(name, 'DATE-TIME', None)
+        self._date = Date('date')
+        self._time = TimeOfDay('time')
+
+    def encode(self, data, encoder):
+        self._date.encode(data, encoder)
+        self._time.encode(data, encoder)
+
+    def decode(self, decoder):
+        decoded_date = self._date.decode(decoder)
+        decoded_time = self._time.decode(decoder)
+
+        return datetime.datetime(decoded_date.year,
+                                 decoded_date.month,
+                                 decoded_date.day,
+                                 decoded_time.hour,
+                                 decoded_time.minute,
+                                 decoded_time.second)
+
+
 class Any(Type):
 
     def __init__(self, name):
@@ -1261,6 +1346,12 @@ class Compiler(compiler.Compiler):
             compiled = UniversalString(name)
         elif type_name == 'GeneralizedTime':
             compiled = GeneralizedTime(name)
+        elif type_name == 'DATE':
+            compiled = Date(name)
+        elif type_name == 'TIME-OF-DAY':
+            compiled = TimeOfDay(name)
+        elif type_name == 'DATE-TIME':
+            compiled = DateTime(name)
         elif type_name == 'BIT STRING':
             compiled = BitString(name,
                                  *self.get_size_range(type_descriptor,

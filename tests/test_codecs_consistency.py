@@ -1,5 +1,7 @@
 import json
 import unittest
+from datetime import date
+from datetime import time
 from datetime import datetime
 from .utils import Asn1ToolsBaseTest
 import asn1tools
@@ -321,6 +323,53 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             '}',
             decoded,
             encoded)
+
+    def test_date(self):
+        decoded = date(1985, 4, 12)
+
+        encoded = [
+            b'\x1f\x1f\x08\x31\x39\x38\x35\x30\x34\x31\x32',
+            b'\x1f\x1f\x08\x31\x39\x38\x35\x30\x34\x31\x32',
+            b'"1985-04-12"',
+            b'\x02\x07\xc1\x04\x0c',
+            b'\x80\xec\x35\x80',
+            b'\xbb\x0d\x60',
+            b'<A>1985-04-12</A>'
+        ]
+
+        self.encode_decode_codecs('DATE', decoded, encoded)
+
+    def test_time_of_day(self):
+        decoded = time(15, 27, 46)
+
+        encoded = [
+            b'\x1f\x20\x06\x31\x35\x32\x37\x34\x36',
+            b'\x1f\x20\x06\x31\x35\x32\x37\x34\x36',
+            b'"15:27:46"',
+            b'\x0f\x1b\x2e',
+            b'\x7b\x77\x00',
+            b'\x7b\x77\x00',
+            b'<A>15:27:46</A>'
+        ]
+
+        self.encode_decode_codecs('TIME-OF-DAY', decoded, encoded)
+
+    def test_date_time(self):
+        decoded = datetime(1985, 4, 12, 15, 27, 46)
+
+        encoded = [
+            b'\x1f\x21\x0e\x31\x39\x38\x35\x30\x34\x31\x32\x31\x35\x32\x37\x34'
+            b'\x36',
+            b'\x1f\x21\x0e\x31\x39\x38\x35\x30\x34\x31\x32\x31\x35\x32\x37\x34'
+            b'\x36',
+            b'"1985-04-12T15:27:46"',
+            b'\x02\x07\xc1\x04\x0c\x0f\x1b\x2e',
+            b'\x80\xec\x35\xbd\xbb\x80',
+            b'\xbb\x0d\x6f\x6e\xe0',
+            b'<A>1985-04-12T15:27:46</A>'
+        ]
+
+        self.encode_decode_codecs('DATE-TIME', decoded, encoded)
 
 
 if __name__ == '__main__':

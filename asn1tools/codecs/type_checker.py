@@ -205,7 +205,25 @@ class Choice(Type):
             raise
 
 
-class Time(Type):
+class Date(Type):
+
+    def encode(self, data):
+        if not isinstance(data, datetime.date):
+            raise EncodeError(
+                'Expected data of type datetime.date, but got {}.'.format(
+                    data))
+
+
+class TimeOfDay(Type):
+
+    def encode(self, data):
+        if not isinstance(data, datetime.time):
+            raise EncodeError(
+                'Expected data of type datetime.time, but got {}.'.format(
+                    data))
+
+
+class DateTime(Type):
 
     def encode(self, data):
         if not isinstance(data, datetime.datetime):
@@ -282,8 +300,12 @@ class Compiler(compiler.Compiler):
             compiled = Boolean(name)
         elif type_name == 'OCTET STRING':
             compiled = Bytes(name)
-        elif type_name in ['UTCTime', 'GeneralizedTime']:
-            compiled = Time(name)
+        elif type_name in ['UTCTime', 'GeneralizedTime', 'DATE-TIME']:
+            compiled = DateTime(name)
+        elif type_name == 'TIME-OF-DAY':
+            compiled = TimeOfDay(name)
+        elif type_name == 'DATE':
+            compiled = Date(name)
         elif type_name == 'BIT STRING':
             compiled = BitString(name)
         elif type_name in STRING_TYPES:

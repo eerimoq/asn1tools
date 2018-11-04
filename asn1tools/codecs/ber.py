@@ -2,10 +2,12 @@
 
 """
 
+import time
 import math
 import binascii
 from copy import copy
 from operator import attrgetter
+import datetime
 
 from ..errors import Error
 from ..parser import EXTENSION_MARKER
@@ -65,6 +67,9 @@ class Tag(object):
     UNIVERSAL_STRING  = 0x1c
     CHARACTER_STRING  = 0x1d
     BMP_STRING        = 0x1e
+    DATE              = 0x1f
+    TIME_OF_DAY       = 0x20
+    DATE_TIME         = 0x21
 
 
 class DecodeChoiceError(Error):
@@ -1175,6 +1180,85 @@ class GeneralizedTime(Type):
         return 'GeneralizedTime({})'.format(self.name)
 
 
+class Date(Type):
+
+    def __init__(self, name):
+        super(Date, self).__init__(name, 'DATE', Tag.DATE)
+
+    def encode(self, data, encoded):
+        data = str(data).replace('-', '').encode('ascii')
+        encoded.extend(self.tag)
+        encoded.append(len(data))
+        encoded.extend(data)
+
+    def decode(self, data, offset):
+        offset = self.decode_tag(data, offset)
+        length, offset = decode_length_definite(data, offset)
+        end_offset = offset + length
+        decoded = data[offset:end_offset].decode('ascii')
+        decoded = datetime.date(*time.strptime(decoded, '%Y%m%d')[:3])
+
+        return decoded, end_offset
+
+    def __repr__(self):
+        return 'Date({})'.format(self.name)
+
+
+class TimeOfDay(Type):
+
+    def __init__(self, name):
+        super(TimeOfDay, self).__init__(name,
+                                        'TIME-OF-DAY',
+                                        Tag.TIME_OF_DAY)
+
+    def encode(self, data, encoded):
+        data = str(data).replace(':', '').encode('ascii')
+        encoded.extend(self.tag)
+        encoded.append(len(data))
+        encoded.extend(data)
+
+    def decode(self, data, offset):
+        offset = self.decode_tag(data, offset)
+        length, offset = decode_length_definite(data, offset)
+        end_offset = offset + length
+        decoded = data[offset:end_offset].decode('ascii')
+        decoded = datetime.time(*time.strptime(decoded, '%H%M%S')[3:6])
+
+        return decoded, end_offset
+
+    def __repr__(self):
+        return 'TimeOfDay({})'.format(self.name)
+
+
+class DateTime(Type):
+
+    def __init__(self, name):
+        super(DateTime, self).__init__(name,
+                                       'DATE-TIME',
+                                       Tag.DATE_TIME)
+
+    def encode(self, data, encoded):
+        data = str(data).replace('-', '')
+        data = data.replace(':', '')
+        data = data.replace(' ', '')
+        data = data.encode('ascii')
+        encoded.extend(self.tag)
+        encoded.append(len(data))
+        encoded.extend(data)
+
+    def decode(self, data, offset):
+        offset = self.decode_tag(data, offset)
+        length, offset = decode_length_definite(data, offset)
+        end_offset = offset + length
+        decoded = data[offset:end_offset].decode('ascii')
+        decoded = datetime.datetime(*time.strptime(decoded, '%Y%m%d%H%M%S')[:6])
+
+        return decoded, end_offset
+
+    def __repr__(self):
+        return 'DateTime({})'.format(self.name)
+
+
 class Any(Type):
 
     def __init__(self, name):
@@ -1392,6 +1476,12 @@ class Compiler(compiler.Compiler):
             compiled = UniversalString(name)
         elif type_name == 'GeneralizedTime':
             compiled = GeneralizedTime(name)
+        elif type_name == 'DATE':
+            compiled = Date(name)
+        elif type_name == 'TIME-OF-DAY':
+            compiled = TimeOfDay(name)
+        elif type_name == 'DATE-TIME':
+            compiled = DateTime(name)
         elif type_name == 'BIT STRING':
             has_named_bits = ('named-bits' in type_descriptor)
             compiled = BitString(name, has_named_bits)

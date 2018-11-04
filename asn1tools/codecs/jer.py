@@ -2,9 +2,11 @@
 
 """
 
+import time
 import json
 import binascii
 import math
+import datetime
 
 from . import EncodeError
 from . import DecodeError
@@ -446,6 +448,33 @@ class GeneralizedTime(StringType):
         return generalized_time_to_datetime(data)
 
 
+class Date(StringType):
+
+    def encode(self, data):
+        return str(data)
+
+    def decode(self, data):
+        return datetime.date(*time.strptime(data, '%Y-%m-%d')[:3])
+
+
+class TimeOfDay(StringType):
+
+    def encode(self, data):
+        return str(data)
+
+    def decode(self, data):
+        return datetime.time(*time.strptime(data, '%H:%M:%S')[3:6])
+
+
+class DateTime(StringType):
+
+    def encode(self, data):
+        return str(data).replace(' ', 'T')
+
+    def decode(self, data):
+        return datetime.datetime(*time.strptime(data, '%Y-%m-%dT%H:%M:%S')[:6])
+
+
 class Any(Type):
 
     def __init__(self, name):
@@ -570,6 +599,12 @@ class Compiler(compiler.Compiler):
             compiled = VisibleString(name)
         elif type_name == 'GeneralString':
             compiled = GeneralString(name)
+        elif type_name == 'DATE':
+            compiled = Date(name)
+        elif type_name == 'TIME-OF-DAY':
+            compiled = TimeOfDay(name)
+        elif type_name == 'DATE-TIME':
+            compiled = DateTime(name)
         elif type_name == 'UTF8String':
             compiled = UTF8String(name)
         elif type_name == 'BMPString':

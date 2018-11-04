@@ -2,9 +2,11 @@
 
 """
 
+import time
 import sys
 from xml.etree import ElementTree
 import binascii
+import datetime
 
 from . import EncodeError
 from . import DecodeError
@@ -567,6 +569,43 @@ class GeneralizedTime(Type):
         return 'GeneralizedTime({})'.format(self.name)
 
 
+class Date(StringType):
+
+    def encode(self, data):
+        element = ElementTree.Element(self.name)
+        element.text = str(data)
+
+        return element
+
+    def decode(self, element):
+        return datetime.date(*time.strptime(element.text, '%Y-%m-%d')[:3])
+
+
+class TimeOfDay(StringType):
+
+    def encode(self, data):
+        element = ElementTree.Element(self.name)
+        element.text = str(data)
+
+        return element
+
+    def decode(self, element):
+        return datetime.time(*time.strptime(element.text, '%H:%M:%S')[3:6])
+
+
+class DateTime(StringType):
+
+    def encode(self, data):
+        element = ElementTree.Element(self.name)
+        element.text = str(data).replace(' ', 'T')
+
+        return element
+
+    def decode(self, element):
+        return datetime.datetime(*time.strptime(element.text,
+                                                '%Y-%m-%dT%H:%M:%S')[:6])
+
+
 class Any(Type):
 
     def __init__(self, name):
@@ -708,6 +747,12 @@ class Compiler(compiler.Compiler):
             compiled = UniversalString(name)
         elif type_name == 'GeneralizedTime':
             compiled = GeneralizedTime(name)
+        elif type_name == 'DATE':
+            compiled = Date(name)
+        elif type_name == 'TIME-OF-DAY':
+            compiled = TimeOfDay(name)
+        elif type_name == 'DATE-TIME':
+            compiled = DateTime(name)
         elif type_name == 'BIT STRING':
             compiled = BitString(name)
         elif type_name == 'ANY':

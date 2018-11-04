@@ -6,6 +6,7 @@ from operator import attrgetter
 from operator import itemgetter
 import binascii
 import string
+import datetime
 
 from ..parser import EXTENSION_MARKER
 from . import EncodeError
@@ -1742,6 +1743,113 @@ class GeneralizedTime(VisibleString):
         return restricted_generalized_time_to_datetime(decoded)
 
 
+class Date(Type):
+
+    def __init__(self, name):
+        super(Date, self).__init__(name, 'DATE')
+        immediate = Integer('immediate')
+        near_future = Integer('near_future')
+        near_past = Integer('near_past')
+        reminder = Integer('reminder')
+        immediate.set_restricted_to_range(2005, 2020, False)
+        near_future.set_restricted_to_range(2021, 2276, False)
+        near_past.set_restricted_to_range(1749, 2004, False)
+        reminder.set_restricted_to_range('MIN', 1748, False)
+        year = Choice('year',
+                      [immediate, near_future, near_past, reminder],
+                      None)
+        month = Integer('month')
+        day = Integer('day')
+        month.set_restricted_to_range(1, 12, False)
+        day.set_restricted_to_range(1, 31, False)
+        self._inner = Sequence('DATE-ENCODING',
+                               [year, month, day],
+                               None)
+
+    def encode(self, data, encoder):
+        if 2005 <= data.year <= 2020:
+            choice = 'immediate'
+        elif 2021 <= data.year <= 2276:
+            choice = 'near_future'
+        elif 1749 <= data.year <= 2004:
+            choice = 'near_past'
+        else:
+            choice = 'reminder'
+
+        data = {
+            'year': (choice, data.year),
+            'month': data.month,
+            'day': data.day
+        }
+
+        return self._inner.encode(data, encoder)
+
+    def decode(self, decoder):
+        decoded = self._inner.decode(decoder)
+
+        return datetime.date(decoded['year'][1],
+                             decoded['month'],
+                             decoded['day'])
+
+
+class TimeOfDay(Type):
+
+    def __init__(self, name):
+        super(TimeOfDay, self).__init__(name, 'TIME-OF-DAY')
+        hours = Integer('hours')
+        minutes = Integer('minutes')
+        seconds = Integer('seconds')
+        hours.set_restricted_to_range(0, 24, False)
+        minutes.set_restricted_to_range(0, 59, False)
+        seconds.set_restricted_to_range(0, 60, False)
+        self._inner = Sequence('TIME-OF-DAY-ENCODING',
+                               [hours, minutes, seconds],
+                               None)
+
+    def encode(self, data, encoder):
+        data = {
+            'hours': data.hour,
+            'minutes': data.minute,
+            'seconds': data.second
+        }
+
+        return self._inner.encode(data, encoder)
+
+    def decode(self, decoder):
+        decoded = self._inner.decode(decoder)
+
+        return datetime.time(decoded['hours'],
+                             decoded['minutes'],
+                             decoded['seconds'])
+
+
+class DateTime(Type):
+
+    def __init__(self, name):
+        super(DateTime, self).__init__(name, 'DATE-TIME')
+        self._inner = Sequence('DATE-TIME-ENCODING',
+                               [Date('date'), TimeOfDay('time')],
+                               None)
+
+    def encode(self, data, encoder):
+        data = {
+            'date': data,
+            'time': data
+        }
+
+        return self._inner.encode(data, encoder)
+
+    def decode(self, decoder):
+        decoded = self._inner.decode(decoder)
+
+        return datetime.datetime(decoded['date'].year,
+                                 decoded['date'].month,
+                                 decoded['date'].day,
+                                 decoded['time'].hour,
+                                 decoded['time'].minute,
+                                 decoded['time'].second)
+
+
 class OpenType(Type):
 
     def __init__(self, name):
@@ -1924,6 +2032,12 @@ class Compiler(compiler.Compiler):
             compiled = UniversalString(name)
         elif type_name == 'GeneralizedTime':
             compiled = GeneralizedTime(name)
+        elif type_name == 'DATE':
+            compiled = Date(name)
+        elif type_name == 'TIME-OF-DAY':
+            compiled = TimeOfDay(name)
+        elif type_name == 'DATE-TIME':
+            compiled = DateTime(name)
         elif type_name == 'BIT STRING':
             minimum, maximum, _ = self.get_size_range(type_descriptor,
                                                       module_name)

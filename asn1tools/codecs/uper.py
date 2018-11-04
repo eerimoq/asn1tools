@@ -2,7 +2,7 @@
 
 """
 
-import string
+from datetime import date
 
 from . import DecodeError
 from . import per
@@ -10,7 +10,6 @@ from . import restricted_utc_time_to_datetime
 from . import restricted_utc_time_from_datetime
 from . import restricted_generalized_time_to_datetime
 from . import restricted_generalized_time_from_datetime
-from . import permitted_alphabet
 from .per import integer_as_number_of_bits
 from .per import PermittedAlphabet
 from .per import Type
@@ -227,6 +226,54 @@ class GeneralizedTime(VisibleString):
         return restricted_generalized_time_to_datetime(decoded)
 
 
+class Date(per.Date):
+
+    def __init__(self, name):
+        super(Date, self).__init__(name)
+        immediate = Integer('immediate')
+        near_future = Integer('near_future')
+        near_past = Integer('near_past')
+        reminder = Integer('reminder')
+        immediate.set_restricted_to_range(2005, 2020, False)
+        near_future.set_restricted_to_range(2021, 2276, False)
+        near_past.set_restricted_to_range(1749, 2004, False)
+        reminder.set_restricted_to_range('MIN', 1748, False)
+        year = Choice('year',
+                      [immediate, near_future, near_past, reminder],
+                      None)
+        month = Integer('month')
+        day = Integer('day')
+        month.set_restricted_to_range(1, 12, False)
+        day.set_restricted_to_range(1, 31, False)
+        self._inner = Sequence('DATE-ENCODING',
+                               [year, month, day],
+                               None)
+
+
+class TimeOfDay(per.TimeOfDay):
+
+    def __init__(self, name):
+        super(TimeOfDay, self).__init__(name)
+        hours = Integer('hours')
+        minutes = Integer('minutes')
+        seconds = Integer('seconds')
+        hours.set_restricted_to_range(0, 24, False)
+        minutes.set_restricted_to_range(0, 59, False)
+        seconds.set_restricted_to_range(0, 60, False)
+        self._inner = Sequence('TIME-OF-DAY-ENCODING',
+                               [hours, minutes, seconds],
+                               None)
+
+
+class DateTime(per.DateTime):
+
+    def __init__(self, name):
+        super(DateTime, self).__init__(name)
+        self._inner = Sequence('DATE-TIME-ENCODING',
+                               [Date('date'), TimeOfDay('time')],
+                               None)
+
+
 class CompiledType(per.CompiledType):
 
     def encode(self, data):
@@ -338,6 +385,12 @@ class Compiler(per.Compiler):
             compiled = UniversalString(name)
         elif type_name == 'GeneralizedTime':
             compiled = GeneralizedTime(name)
+        elif type_name == 'DATE':
+            compiled = Date(name)
+        elif type_name == 'TIME-OF-DAY':
+            compiled = TimeOfDay(name)
+        elif type_name == 'DATE-TIME':
+            compiled = DateTime(name)
         elif type_name == 'BIT STRING':
             minimum, maximum, _ = self.get_size_range(type_descriptor,
                                                       module_name)

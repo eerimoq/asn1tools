@@ -151,6 +151,9 @@ class Asn1ToolsParseTest(unittest.TestCase):
     def test_parse_constraints_extensions(self):
         self.parse_and_verify('constraints_extensions')
 
+    def test_parse_time_types(self):
+        self.parse_and_verify('time_types')
+
     def test_parse_imports_global_module_reference(self):
         actual = asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
                                         'IMPORTS '

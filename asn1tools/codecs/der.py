@@ -29,6 +29,9 @@ from .ber import Any
 from .ber import AnyDefinedBy
 from .ber import Recursive
 from .ber import ObjectDescriptor
+from .ber import Date
+from .ber import TimeOfDay
+from .ber import DateTime
 from .ber import decode_length
 from .ber import encode_real
 from .ber import decode_real
@@ -431,6 +434,12 @@ class Compiler(ber.Compiler):
             compiled = UniversalString(name)
         elif type_name == 'GeneralizedTime':
             compiled = GeneralizedTime(name)
+        elif type_name == 'DATE':
+            compiled = Date(name)
+        elif type_name == 'TIME-OF-DAY':
+            compiled = TimeOfDay(name)
+        elif type_name == 'DATE-TIME':
+            compiled = DateTime(name)
         elif type_name == 'BIT STRING':
             has_named_bits = ('named-bits' in type_descriptor)
             compiled = BitString(name, has_named_bits)

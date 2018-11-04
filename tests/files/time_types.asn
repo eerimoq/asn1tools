@@ -1,0 +1,11 @@
+Foo DEFINITIONS ::=
+
+BEGIN
+
+B ::= DATE
+
+C ::= TIME-OF-DAY
+
+D ::= DATE-TIME
+
+END

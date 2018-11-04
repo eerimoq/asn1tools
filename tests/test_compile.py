@@ -21,6 +21,8 @@ from module_tags_automatic import EXPECTED as MODULE_TAGS_AUTOMATIC
 from module_tags_automatic_pp import EXPECTED as MODULE_TAGS_AUTOMATIC_PP
 from x683 import EXPECTED as X683
 from x683_pp import EXPECTED as X683_PP
+from time_types import EXPECTED as TIME_TYPES
+from time_types_pp import EXPECTED as TIME_TYPES_PP
 
 
 class Asn1ToolsCompileTest(unittest.TestCase):
@@ -52,6 +54,10 @@ class Asn1ToolsCompileTest(unittest.TestCase):
 
         with self.assertRaises(AssertionError):
             self.assertEqual(actual, X683_PP)
+
+    def test_pre_process_time_types(self):
+        actual = asn1tools.pre_process_dict(deepcopy(TIME_TYPES))
+        self.assertEqual(actual, TIME_TYPES_PP)
 
     def test_unsupported_codec(self):
         with self.assertRaises(asn1tools.CompileError) as cm:
