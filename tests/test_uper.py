@@ -9,6 +9,7 @@ from copy import deepcopy
 import string
 from asn1tools.codecs import restricted_utc_time_to_datetime as ut2dt
 from asn1tools.codecs import restricted_generalized_time_to_datetime as gt2dt
+import datetime
 
 sys.path.append('tests/files')
 sys.path.append('tests/files/3gpp')
@@ -1264,6 +1265,82 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
              gt2dt('20001231235959.999Z'),
              b'\x13\x64\xc1\x83\x06\x2c\x99\xb1\x64\xcd\xab\x96\xae\x57\x39\x72'
              b'\xe6\xd0')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_date(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= DATE "
+            "END",
+            'uper')
+
+        datas = [
+            ('A', datetime.date(1748, 12, 31), b'\xc0\x81\xb5\x2f\xc0'),
+            ('A',   datetime.date(1749, 1, 1), b'\x80\x00\x00'),
+            ('A', datetime.date(2004, 12, 31), b'\xbf\xef\xc0'),
+            ('A',   datetime.date(2005, 1, 1), b'\x00\x00'),
+            ('A', datetime.date(2020, 12, 31), b'\x3e\xfc'),
+            ('A',   datetime.date(2021, 1, 1), b'\x40\x00\x00'),
+            ('A', datetime.date(2276, 12, 31), b'\x7f\xef\xc0'),
+            ('A',   datetime.date(2277, 1, 1), b'\xc0\x82\x39\x40\x00')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_time_of_day(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= TIME-OF-DAY "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',    datetime.time(0, 0, 0), b'\x00\x00\x00'),
+            ('A', datetime.time(23, 59, 59), b'\xbf\x7d\x80')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+    def test_date_time(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= DATE-TIME "
+            "END",
+            'uper')
+
+        datas = [
+            ('A',
+             datetime.datetime(1748, 12, 31, 23, 59, 59),
+             b'\xc0\x81\xb5\x2f\xd7\xef\xb0'),
+            ('A',
+             datetime.datetime(1749, 1, 1, 0, 1, 2),
+             b'\x80\x00\x00\x04\x20'),
+            ('A',
+             datetime.datetime(2004, 12, 31, 23, 59, 58),
+             b'\xbf\xef\xd7\xef\xa0'),
+            ('A',
+             datetime.datetime(2005, 1, 1, 1, 2, 3),
+             b'\x00\x00\x10\x83'),
+            ('A',
+             datetime.datetime(2020, 12, 31, 23, 59, 57),
+             b'\x3e\xfd\x7e\xf9'),
+            ('A',
+             datetime.datetime(2021, 1, 1, 2, 3, 4),
+             b'\x40\x00\x02\x0c\x40'),
+            ('A',
+             datetime.datetime(2276, 12, 31, 23, 59, 56),
+             b'\x7f\xef\xd7\xef\x80'),
+            ('A',
+             datetime.datetime(2277, 1, 1, 4, 5, 6),
+             b'\xc0\x82\x39\x40\x04\x14\x60')
         ]
 
         for type_name, decoded, encoded in datas:
