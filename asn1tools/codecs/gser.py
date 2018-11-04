@@ -2,9 +2,11 @@
 
 """
 
+import time
 import binascii
 import math
 from copy import copy
+import datetime
 
 from . import EncodeError
 from . import DecodeError
@@ -423,6 +425,33 @@ class GeneralizedTime(Type):
         return 'GeneralizedTime({})'.format(self.name)
 
 
+class Date(Type):
+
+    def __init__(self, name):
+        super(Date, self).__init__(name, 'DATE')
+
+    def encode(self, data, _separator, _indent):
+        return u'"{}"'.format(str(data))
+
+
+class TimeOfDay(Type):
+
+    def __init__(self, name):
+        super(TimeOfDay, self).__init__(name, 'TIME-OF-DAY')
+
+    def encode(self, data, _separator, _indent):
+        return u'"{}"'.format(str(data))
+
+
+class DateTime(Type):
+
+    def __init__(self, name):
+        super(DateTime, self).__init__(name, 'DATE-TIME')
+
+    def encode(self, data, _separator, _indent):
+        return u'"{}"'.format(str(data).replace(' ', 'T'))
+
+
 class Any(Type):
 
     def __init__(self, name):
@@ -559,6 +588,12 @@ class Compiler(compiler.Compiler):
             compiled = UniversalString(name)
         elif type_name == 'GeneralizedTime':
             compiled = GeneralizedTime(name)
+        elif type_name == 'DATE':
+            compiled = Date(name)
+        elif type_name == 'TIME-OF-DAY':
+            compiled = TimeOfDay(name)
+        elif type_name == 'DATE-TIME':
+            compiled = DateTime(name)
         elif type_name == 'BIT STRING':
             compiled = BitString(name)
         elif type_name == 'ANY':

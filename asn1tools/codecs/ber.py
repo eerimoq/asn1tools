@@ -1238,9 +1238,7 @@ class DateTime(Type):
                                        Tag.DATE_TIME)
 
     def encode(self, data, encoded):
-        data = str(data).replace('-', '')
-        data = data.replace(':', '')
-        data = data.replace(' ', '')
+        data = '{:04d}{:02d}{:02d}{:02d}{:02d}{:02d}'.format(*data.timetuple())
         data = data.encode('ascii')
         encoded.extend(self.tag)
         encoded.append(len(data))

@@ -50,7 +50,7 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
                                   type_name,
                                   decoded,
                                   encoded):
-        for codec, encoded_message in zip(CODECS, encoded):
+        for codec, encoded_message in zip(ALL_CODECS, encoded):
             foo = asn1tools.compile_files(filename, codec)
 
             encoded = foo.encode(type_name,
@@ -61,6 +61,9 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
                 self.assertEqual(loadb(encoded), loadb(encoded_message))
             else:
                 self.assertEqual(encoded_message, encoded)
+
+            if codec == 'gser':
+                continue
 
             decoded_message = foo.decode(type_name, encoded)
             self.assertEqual(decoded_message, decoded)
@@ -76,7 +79,7 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             + "END"
         )
 
-        for codec, encoded_message in zip(CODECS, encoded):
+        for codec, encoded_message in zip(ALL_CODECS, encoded):
             foo = asn1tools.compile_string(spec, codec)
 
             encoded = foo.encode('A',
@@ -87,6 +90,9 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
                 self.assertEqual(loadb(encoded), loadb(encoded_message))
             else:
                 self.assertEqual(encoded_message, encoded)
+
+            if codec == 'gser':
+                continue
 
             decoded_message = foo.decode('A', encoded)
             self.assertEqual(decoded_message, decoded)
@@ -226,7 +232,8 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             b'\x01\x01\x01\x81\xff\x01\x02',
             b'\x01\x60\x01\x02',
             b'\x01\x60\x20\x40',
-            b'<Foo><a>1</a><b><c><f><true /></f></c><d>2</d></b></Foo>'
+            b'<Foo><a>1</a><b><c><f><true /></f></c><d>2</d></b></Foo>',
+            b'foo Foo ::= { a 1, b { c { f : TRUE }, d 2 } }'
         ]
 
         self.encode_decode_codecs_file('tests/files/with_components.asn',
@@ -244,7 +251,8 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             b'\x01\x05',
             b'\x01\x05',
             b'\x01\x05',
-            b'<A>5</A>'
+            b'<A>5</A>',
+            b'a A ::= 5'
         ]
 
         self.encode_decode_codecs('INTEGER (MIN..MAX)',
@@ -261,7 +269,8 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             b'\x02',
             b'\x40',
             b'\x40',
-            b'<A><c /></A>'
+            b'<A><c /></A>',
+            b'a A ::= c'
         ]
 
         self.encode_decode_codecs('ENUMERATED {a, b, c, d, e} (ALL EXCEPT b)',
@@ -309,7 +318,11 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             b'alse /><true /><true /><false /><true /><true /><false /><true /'
             b'></d><e><INTEGER>1</INTEGER><INTEGER>100</INTEGER><INTEGER>10000'
             b'</INTEGER></e><f><INTEGER>1</INTEGER><INTEGER>100</INTEGER><INTE'
-            b'GER>10000</INTEGER><INTEGER>1000000</INTEGER></f></A>'
+            b'GER>10000</INTEGER><INTEGER>1000000</INTEGER></f></A>',
+            b"a A ::= { a '1234'H, b '5678'H, c { TRUE, TRUE, FALSE, TRUE, TRU"
+            b"E, FALSE, TRUE, TRUE, FALSE }, d { TRUE, TRUE, FALSE, TRUE, TRUE"
+            b", FALSE, TRUE, TRUE, FALSE, TRUE }, e { 1, 100, 10000 }, f { 1, "
+            b"100, 10000, 1000000 } }"
         ]
 
         self.encode_decode_codecs(
@@ -334,7 +347,8 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             b'\x02\x07\xc1\x04\x0c',
             b'\x80\xec\x35\x80',
             b'\xbb\x0d\x60',
-            b'<A>1985-04-12</A>'
+            b'<A>1985-04-12</A>',
+            b'a A ::= "1985-04-12"'
         ]
 
         self.encode_decode_codecs('DATE', decoded, encoded)
@@ -349,27 +363,47 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             b'\x0f\x1b\x2e',
             b'\x7b\x77\x00',
             b'\x7b\x77\x00',
-            b'<A>15:27:46</A>'
+            b'<A>15:27:46</A>',
+            b'a A ::= "15:27:46"'
         ]
 
         self.encode_decode_codecs('TIME-OF-DAY', decoded, encoded)
 
     def test_date_time(self):
-        decoded = datetime(1985, 4, 12, 15, 27, 46)
-
-        encoded = [
-            b'\x1f\x21\x0e\x31\x39\x38\x35\x30\x34\x31\x32\x31\x35\x32\x37\x34'
-            b'\x36',
-            b'\x1f\x21\x0e\x31\x39\x38\x35\x30\x34\x31\x32\x31\x35\x32\x37\x34'
-            b'\x36',
-            b'"1985-04-12T15:27:46"',
-            b'\x02\x07\xc1\x04\x0c\x0f\x1b\x2e',
-            b'\x80\xec\x35\xbd\xbb\x80',
-            b'\xbb\x0d\x6f\x6e\xe0',
-            b'<A>1985-04-12T15:27:46</A>'
+        decoded = [
+            datetime(1985, 4, 12, 15, 27, 46),
+            datetime(1582, 2, 3, 4, 5, 6)
         ]
 
-        self.encode_decode_codecs('DATE-TIME', decoded, encoded)
+        encoded = [
+            [
+                b'\x1f\x21\x0e\x31\x39\x38\x35\x30\x34\x31\x32\x31\x35\x32\x37\x34'
+                b'\x36',
+                b'\x1f\x21\x0e\x31\x39\x38\x35\x30\x34\x31\x32\x31\x35\x32\x37\x34'
+                b'\x36',
+                b'"1985-04-12T15:27:46"',
+                b'\x02\x07\xc1\x04\x0c\x0f\x1b\x2e',
+                b'\x80\xec\x35\xbd\xbb\x80',
+                b'\xbb\x0d\x6f\x6e\xe0',
+                b'<A>1985-04-12T15:27:46</A>',
+                b'a A ::= "1985-04-12T15:27:46"'
+            ],
+            [
+                b'\x1f\x21\x0e\x31\x35\x38\x32\x30\x32\x30\x33\x30\x34\x30\x35\x30\x36',
+                b'\x1f\x21\x0e\x31\x35\x38\x32\x30\x32\x30\x33\x30\x34\x30\x35\x30\x36',
+                b'"1582-02-03T04:05:06"',
+                b'\x02\x06\x2e\x02\x03\x04\x05\x06',
+                b'\xc0\x02\x06\x2e\x11\x10\x51\x80',
+                b'\xc0\x81\x8b\x84\x44\x14\x60',
+                b'<A>1582-02-03T04:05:06</A>',
+                b'a A ::= "1582-02-03T04:05:06"'
+            ]
+        ]
+
+        for decoded_message, encoded_message in zip(decoded, encoded):
+            self.encode_decode_codecs('DATE-TIME',
+                                      decoded_message,
+                                      encoded_message)
 
 
 if __name__ == '__main__':
