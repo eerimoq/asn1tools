@@ -38,6 +38,6 @@ Double is defined as `64 bits`_ and Float as `32 bits`_.
 
 .. _programming_types.asn: https://github.com/eerimoq/asn1tools/tree/master/examples/programming_types/programming_types.asn
 
-.. _63 bits: https://en.wikipedia.org/wiki/Double-precision_floating-point_format
+.. _64 bits: https://en.wikipedia.org/wiki/Double-precision_floating-point_format
 
 .. _32 bits: https://en.wikipedia.org/wiki/Single-precision_floating-point_format
