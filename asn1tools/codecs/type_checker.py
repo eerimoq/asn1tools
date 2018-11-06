@@ -12,7 +12,6 @@ from . import format_or
 
 
 STRING_TYPES = [
-    'ENUMERATED',
     'OBJECT IDENTIFIER',
     'TeletexString',
     'NumericString',
@@ -164,6 +163,41 @@ class List(Type):
             self.element_type.encode(entry)
 
 
+class Enumerated(Type):
+
+    def __init__(self, name, numeric_enums):
+        super(Enumerated, self).__init__(name)
+        self._numeric_enums = numeric_enums
+
+    def encode(self, data):
+        if self._numeric_enums:
+            self.encode_integer(data)
+        else:
+            self.encode_string(data)
+
+    def encode_integer(self, data):
+        if sys.version_info[0] > 2:
+            if not isinstance(data, int):
+                raise EncodeError(
+                    'Expected data of type int, but got {}.'.format(
+                        data))
+        else:
+            if not isinstance(data, (int, long)):
+                raise EncodeError(
+                    'Expected data of type int, but got {}.'.format(
+                        data))
+
+    def encode_string(self, data):
+        if sys.version_info[0] > 2:
+            if not isinstance(data, str):
+                raise EncodeError(
+                    'Expected data of type str, but got {}.'.format(data))
+        else:
+            if not isinstance(data, (str, unicode)):
+                raise EncodeError(
+                    'Expected data of type str, but got {}.'.format(data))
+
+
 class Choice(Type):
 
     def __init__(self, name, members):
@@ -310,6 +344,8 @@ class Compiler(compiler.Compiler):
             compiled = BitString(name)
         elif type_name in STRING_TYPES:
             compiled = String(name)
+        elif type_name == 'ENUMERATED':
+            compiled = Enumerated(name, self._numeric_enums)
         elif type_name in ['ANY', 'ANY DEFINED BY', 'OpenType']:
             compiled = Skip(name)
         elif type_name == 'NULL':
@@ -333,5 +369,5 @@ class Compiler(compiler.Compiler):
         return compiled
 
 
-def compile_dict(specification):
-    return Compiler(specification).process()
+def compile_dict(specification, numeric_enums=False):
+    return Compiler(specification, numeric_enums).process()

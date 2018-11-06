@@ -203,12 +203,18 @@ class ObjectIdentifier(Type):
 
 class Enumerated(Type):
 
-    def __init__(self, name, values):
+    def __init__(self, name, values, numeric):
         super(Enumerated, self).__init__(name, 'ENUMERATED')
-        self.values = enum_values_as_dict(values)
+
+        if numeric:
+            self.data_to_value = enum_values_as_dict(values)
+        else:
+            self.data_to_value = {
+                v: v for v in enum_values_as_dict(values).values()
+            }
 
     def encode(self, data, _separator, _indent):
-        return data
+        return self.data_to_value[data]
 
     def __repr__(self):
         return 'Enumerated({})'.format(self.name)
@@ -557,7 +563,9 @@ class Compiler(compiler.Compiler):
         elif type_name == 'REAL':
             compiled = Real(name)
         elif type_name == 'ENUMERATED':
-            compiled = Enumerated(name, type_descriptor['values'])
+            compiled = Enumerated(name,
+                                  type_descriptor['values'],
+                                  self._numeric_enums)
         elif type_name == 'BOOLEAN':
             compiled = Boolean(name)
         elif type_name == 'OBJECT IDENTIFIER':
@@ -623,8 +631,8 @@ class Compiler(compiler.Compiler):
         return compiled
 
 
-def compile_dict(specification):
-    return Compiler(specification).process()
+def compile_dict(specification, numeric_enums=False):
+    return Compiler(specification, numeric_enums).process()
 
 
 def decode_length(_data):

@@ -336,7 +336,9 @@ class Compiler(per.Compiler):
         elif type_name == 'REAL':
             compiled = Real(name)
         elif type_name == 'ENUMERATED':
-            compiled = Enumerated(name, type_descriptor['values'])
+            compiled = Enumerated(name,
+                                  type_descriptor['values'],
+                                  self._numeric_enums)
         elif type_name == 'BOOLEAN':
             compiled = Boolean(name)
         elif type_name == 'OBJECT IDENTIFIER':
@@ -434,8 +436,8 @@ class Compiler(per.Compiler):
         return compiled
 
 
-def compile_dict(specification):
-    return Compiler(specification).process()
+def compile_dict(specification, numeric_enums=False):
+    return Compiler(specification, numeric_enums).process()
 
 
 def decode_length(_data):

@@ -217,7 +217,8 @@ def _compile_files_cache(filenames,
                          codec,
                          any_defined_by_choices,
                          encoding,
-                         cache_dir):
+                         cache_dir,
+                         numeric_enums):
     key = [codec.encode('ascii')]
 
     if isinstance(filenames, str):
@@ -235,13 +236,17 @@ def _compile_files_cache(filenames,
     except KeyError:
         compiled = compile_dict(parse_files(filenames, encoding),
                                 codec,
-                                any_defined_by_choices)
+                                any_defined_by_choices,
+                                numeric_enums)
         cache[key] = compiled
 
         return compiled
 
 
-def compile_dict(specification, codec='ber', any_defined_by_choices=None):
+def compile_dict(specification,
+                 codec='ber',
+                 any_defined_by_choices=None,
+                 numeric_enums=False):
     """Compile given ASN.1 specification dictionary and return a
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec
@@ -272,13 +277,19 @@ def compile_dict(specification, codec='ber', any_defined_by_choices=None):
         _compile_any_defined_by_choices(specification,
                                         any_defined_by_choices)
 
-    return Specification(codec.compile_dict(specification),
+    return Specification(codec.compile_dict(specification,
+                                            numeric_enums),
                          codec.decode_length,
-                         type_checker.compile_dict(specification),
-                         constraints_checker.compile_dict(specification))
+                         type_checker.compile_dict(specification,
+                                                   numeric_enums),
+                         constraints_checker.compile_dict(specification,
+                                                          numeric_enums))
 
 
-def compile_string(string, codec='ber', any_defined_by_choices=None):
+def compile_string(string,
+                   codec='ber',
+                   any_defined_by_choices=None,
+                   numeric_enums=False):
     """Compile given ASN.1 specification string and return a
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec
@@ -292,14 +303,16 @@ def compile_string(string, codec='ber', any_defined_by_choices=None):
 
     return compile_dict(parse_string(string),
                         codec,
-                        any_defined_by_choices)
+                        any_defined_by_choices,
+                        numeric_enums)
 
 
 def compile_files(filenames,
                   codec='ber',
                   any_defined_by_choices=None,
                   encoding='utf-8',
-                  cache_dir=None):
+                  cache_dir=None,
+                  numeric_enums=False):
     """Compile given ASN.1 specification file(s) and return a
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec
@@ -328,13 +341,15 @@ def compile_files(filenames,
     if cache_dir is None:
         return compile_dict(parse_files(filenames, encoding),
                             codec,
-                            any_defined_by_choices)
+                            any_defined_by_choices,
+                            numeric_enums)
     else:
         return _compile_files_cache(filenames,
                                     codec,
                                     any_defined_by_choices,
                                     encoding,
-                                    cache_dir)
+                                    cache_dir,
+                                    numeric_enums)
 
 
 def pre_process_dict(specification):

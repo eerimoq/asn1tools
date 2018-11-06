@@ -334,55 +334,70 @@ class ObjectIdentifier(StringType):
 
 class Enumerated(Type):
 
-    def __init__(self, name, values):
+    def __init__(self, name, values, numeric):
         super(Enumerated, self).__init__(name, 'ENUMERATED')
-        self.values = set(enum_values_as_dict(values).values())
+
+        if numeric:
+            self.data_to_value = enum_values_as_dict(values)
+            self.value_to_data = {v: k for k, v in self.data_to_value.items()}
+        else:
+            self.value_to_data = {
+                k: k for k in enum_values_as_dict(values).values()
+            }
+            self.data_to_value = self.value_to_data
 
     def format_names(self):
-        return format_or(sorted(self.values))
+        return format_or(list(self.value_to_data.values()))
+
+    def format_values(self):
+        return format_or(list(self.value_to_data))
 
     def encode(self, data):
-        if data not in self.values:
+        try:
+            value = self.data_to_value[data]
+        except KeyError:
             raise EncodeError(
                 "Expected enumeration value {}, but got '{}'.".format(
                     self.format_names(),
                     data))
 
         element = ElementTree.Element(self.name)
-        element.append(ElementTree.Element(data))
+        element.append(ElementTree.Element(value))
 
         return element
 
     def decode(self, element):
         value = element[0].tag
 
-        if value not in self.values:
+        try:
+            return self.value_to_data[value]
+        except KeyError:
             raise DecodeError(
                 "Expected enumeration value {}, but got '{}'.".format(
-                    self.format_names(),
+                    self.format_values(),
                     value))
 
-        return value
-
     def encode_of(self, data):
-        if data not in self.values:
+        try:
+            value = self.data_to_value[data]
+        except KeyError:
             raise EncodeError(
                 "Expected enumeration value {}, but got '{}'.".format(
                     self.format_names(),
                     data))
 
-        return ElementTree.Element(data)
+        return ElementTree.Element(value)
 
     def decode_of(self, element):
         value = element.tag
 
-        if value not in self.values:
+        try:
+            return self.value_to_data[value]
+        except KeyError:
             raise DecodeError(
                 "Expected enumeration value {}, but got '{}'.".format(
-                    self.format_names(),
+                    self.format_values(),
                     value))
-
-        return value
 
     def __repr__(self):
         return 'Enumerated({})'.format(self.name)
@@ -716,7 +731,9 @@ class Compiler(compiler.Compiler):
         elif type_name == 'REAL':
             compiled = Real(name)
         elif type_name == 'ENUMERATED':
-            compiled = Enumerated(name, type_descriptor['values'])
+            compiled = Enumerated(name,
+                                  type_descriptor['values'],
+                                  self._numeric_enums)
         elif type_name == 'BOOLEAN':
             compiled = Boolean(name)
         elif type_name == 'OBJECT IDENTIFIER':
@@ -782,8 +799,8 @@ class Compiler(compiler.Compiler):
         return compiled
 
 
-def compile_dict(specification):
-    return Compiler(specification).process()
+def compile_dict(specification, numeric_enums):
+    return Compiler(specification, numeric_enums).process()
 
 
 def decode_length(_data):

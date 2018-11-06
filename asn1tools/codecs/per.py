@@ -1322,63 +1322,72 @@ class ObjectIdentifier(Type):
 
 class Enumerated(Type):
 
-    def __init__(self, name, values):
+    def __init__(self, name, values, numeric):
         super(Enumerated, self).__init__(name, 'ENUMERATED')
         root, additions = enum_values_split(values)
         root = sorted(root, key=itemgetter(1))
 
         # Root.
-        index_to_name, name_to_index = self.create_maps(root)
-        self.root_index_to_name = index_to_name
-        self.root_name_to_index = name_to_index
-        self.root_number_of_bits = integer_as_number_of_bits(len(index_to_name) - 1)
+        index_to_data, data_to_index = self.create_maps(root,
+                                                        numeric)
+        self.root_index_to_data = index_to_data
+        self.root_data_to_index = data_to_index
+        self.root_number_of_bits = integer_as_number_of_bits(len(index_to_data) - 1)
 
         # Optional additions.
         if additions is None:
-            index_to_name = None
-            name_to_index = None
+            index_to_data = None
+            data_to_index = None
         else:
-            index_to_name, name_to_index = self.create_maps(additions)
+            index_to_data, data_to_index = self.create_maps(additions,
+                                                            numeric)
 
-        self.additions_index_to_name = index_to_name
-        self.additions_name_to_index = name_to_index
+        self.additions_index_to_data = index_to_data
+        self.additions_data_to_index = data_to_index
 
-    def create_maps(self, items):
-        index_to_name = {
-            index: value[0]
-            for index, value in enumerate(items)
+    def create_maps(self, items, numeric):
+        if numeric:
+            index_to_data = {
+                index: value[1]
+                for index, value in enumerate(items)
+            }
+        else:
+            index_to_data = {
+                index: value[0]
+                for index, value in enumerate(items)
+            }
+
+        data_to_index = {
+            data: index
+            for index, data in index_to_data.items()
         }
-        name_to_index = {
-            name: index
-            for index, name in index_to_name.items()
-        }
 
-        return index_to_name, name_to_index
+        return index_to_data, data_to_index
 
     def format_root_indexes(self):
-        return format_or(sorted(list(self.root_index_to_name)))
+        return format_or(sorted(list(self.root_index_to_data)))
 
     def format_addition_indexes(self):
-        return format_or(sorted(list(self.additions_index_to_name)))
+        return format_or(sorted(list(self.additions_index_to_data)))
 
     def encode(self, data, encoder):
-        if self.additions_index_to_name is None:
-            index = self.root_name_to_index[data]
+        if self.additions_index_to_data is None:
+            index = self.root_data_to_index[data]
             encoder.append_non_negative_binary_integer(index,
                                                        self.root_number_of_bits)
         else:
-            if data in self.root_name_to_index:
+            if data in self.root_data_to_index:
                 encoder.append_bit(0)
-                index = self.root_name_to_index[data]
+                index = self.root_data_to_index[data]
                 encoder.append_non_negative_binary_integer(index,
                                                            self.root_number_of_bits)
             else:
                 encoder.append_bit(1)
-                index = self.additions_name_to_index[data]
+                index = self.additions_data_to_index[data]
                 encoder.append_normally_small_non_negative_whole_number(index)
 
     def decode(self, decoder):
-        if self.additions_index_to_name is None:
+        if self.additions_index_to_data is None:
             return self.decode_root(decoder)
         else:
             additions = decoder.read_bit()
@@ -1389,7 +1398,7 @@ class Enumerated(Type):
                 index = decoder.read_normally_small_non_negative_whole_number()
 
                 try:
-                    return self.additions_index_to_name[index]
+                    return self.additions_index_to_data[index]
                 except KeyError:
                     raise DecodeError(
                         'Expected enumeration index {}, but got {}.'.format(
@@ -1400,14 +1409,14 @@ class Enumerated(Type):
         index = decoder.read_non_negative_binary_integer(self.root_number_of_bits)
 
         try:
-            name = self.root_index_to_name[index]
+            data = self.root_index_to_data[index]
         except KeyError:
             raise DecodeError(
                 'Expected enumeration index {}, but got {}.'.format(
                     self.format_root_indexes(),
                     index))
 
-        return name
+        return data
 
     def __repr__(self):
         return 'Enumerated({})'.format(self.name)
@@ -1983,7 +1992,9 @@ class Compiler(compiler.Compiler):
         elif type_name == 'REAL':
             compiled = Real(name)
         elif type_name == 'ENUMERATED':
-            compiled = Enumerated(name, type_descriptor['values'])
+            compiled = Enumerated(name,
+                                  type_descriptor['values'],
+                                  self._numeric_enums)
         elif type_name == 'BOOLEAN':
             compiled = Boolean(name)
         elif type_name == 'OBJECT IDENTIFIER':
@@ -2168,8 +2179,8 @@ class Compiler(compiler.Compiler):
         return PermittedAlphabet(encode_map, decode_map)
 
 
-def compile_dict(specification):
-    return Compiler(specification).process()
+def compile_dict(specification, numeric_enums=False):
+    return Compiler(specification, numeric_enums).process()
 
 
 def decode_length(_data):

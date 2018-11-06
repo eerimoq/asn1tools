@@ -19,7 +19,10 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
 
     maxDiff = None
 
-    def encode_decode_all_codecs(self, type_spec, values):
+    def encode_decode_all_codecs(self,
+                                 type_spec,
+                                 values,
+                                 numeric_enums=False):
         spec = (
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
@@ -30,9 +33,13 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         foos = []
 
         for codec in CODECS:
-            foos.append(asn1tools.compile_string(spec, codec))
+            foos.append(asn1tools.compile_string(spec,
+                                                 codec,
+                                                 numeric_enums=numeric_enums))
 
-        gser = asn1tools.compile_string(spec, 'gser')
+        gser = asn1tools.compile_string(spec,
+                                        'gser',
+                                        numeric_enums=numeric_enums)
 
         for value in values:
             decoded = value
@@ -121,6 +128,11 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
 
     def test_enumerated(self):
         self.encode_decode_all_codecs("ENUMERATED { a(0), b(5) }", ['a', 'b'])
+
+    def test_enumerated_numeric(self):
+        self.encode_decode_all_codecs("ENUMERATED { a(0), b(5) }",
+                                      [0, 5],
+                                      numeric_enums=True)
 
     def test_sequence(self):
         self.encode_decode_all_codecs("SEQUENCE { a NULL }", [{'a': None}])

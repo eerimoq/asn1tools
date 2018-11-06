@@ -887,22 +887,26 @@ class ObjectIdentifier(Type):
 
 class Enumerated(Type):
 
-    def __init__(self, name, values):
+    def __init__(self, name, values, numeric):
         super(Enumerated, self).__init__(name,
                                          'ENUMERATED',
                                          Tag.ENUMERATED)
-        self.value_to_name = enum_values_as_dict(values)
-        self.name_to_value = {v: k for k, v in self.value_to_name.items()}
+        if numeric:
+            self.value_to_data = {k: k for k in enum_values_as_dict(values)}
+            self.data_to_value = self.value_to_data
+        else:
+            self.value_to_data = enum_values_as_dict(values)
+            self.data_to_value = {v: k for k, v in self.value_to_data.items()}
 
     def format_names(self):
-        return format_or(list(self.value_to_name.values()))
+        return format_or(list(self.value_to_data.values()))
 
     def format_values(self):
-        return format_or(list(self.value_to_name))
+        return format_or(list(self.value_to_data))
 
     def encode(self, data, encoded):
         try:
-            value = self.name_to_value[data]
+            value = self.data_to_value[data]
         except KeyError:
             raise EncodeError(
                 "Expected enumeration value {}, but got '{}'.".format(
@@ -919,7 +923,7 @@ class Enumerated(Type):
         value = decode_signed_integer(data[offset:end_offset])
 
         try:
-            return self.value_to_name[value], end_offset
+            return self.value_to_data[value], end_offset
         except KeyError:
             raise DecodeError(
                 'Expected enumeration value {}, but got {}.'.format(
@@ -1443,7 +1447,9 @@ class Compiler(compiler.Compiler):
         elif type_name == 'REAL':
             compiled = Real(name)
         elif type_name == 'ENUMERATED':
-            compiled = Enumerated(name, type_descriptor['values'])
+            compiled = Enumerated(name,
+                                  type_descriptor['values'],
+                                  self._numeric_enums)
         elif type_name == 'BOOLEAN':
             compiled = Boolean(name)
         elif type_name == 'OBJECT IDENTIFIER':
@@ -1593,8 +1599,8 @@ class Compiler(compiler.Compiler):
             additions.append(compiled_member)
 
 
-def compile_dict(specification):
-    return Compiler(specification).process()
+def compile_dict(specification, numeric_enums=False):
+    return Compiler(specification, numeric_enums).process()
 
 
 def decode_length(data):

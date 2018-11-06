@@ -164,8 +164,9 @@ class CompiledOpenTypes(CompiledType):
 
 class Compiler(object):
 
-    def __init__(self, specification):
+    def __init__(self, specification, numeric_enums=False):
         self._specification = specification
+        self._numeric_enums = numeric_enums
         self._types_backtrace = []
         self.recursive_types = []
         self.compiled = {}

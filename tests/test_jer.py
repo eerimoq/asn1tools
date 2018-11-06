@@ -142,14 +142,14 @@ class Asn1ToolsJerTest(unittest.TestCase):
             foo.encode('A', 'c')
 
         self.assertEqual(str(cm.exception),
-                         "Enumeration value 'c' not found in ['a', 'b'].")
+                         "Expected enumeration value 'a' or 'b', but got 'c'.")
 
         # Decode error.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('A', b'"c"')
 
         self.assertEqual(str(cm.exception),
-                         "Enumeration value 'c' not found in ['a', 'b'].")
+                         "Expected enumeration value 'a' or 'b', but got 'c'.")
 
     def test_sequence(self):
         foo = asn1tools.compile_string(
