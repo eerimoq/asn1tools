@@ -1367,9 +1367,6 @@ class Enumerated(Type):
     def format_root_indexes(self):
         return format_or(sorted(list(self.root_index_to_data)))
 
-    def format_addition_indexes(self):
-        return format_or(sorted(list(self.additions_index_to_data)))
-
     def encode(self, data, encoder):
         if self.additions_index_to_data is None:
             index = self.root_data_to_index[data]

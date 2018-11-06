@@ -6,5 +6,6 @@ E DEFINITIONS AUTOMATIC TAGS ::= BEGIN
     D ::= ENUMERATED {a, z(25), ..., d}
     E ::= ENUMERATED {a, b, c(0), d, e(25), f, ..., g}
     F ::= ENUMERATED {a, ...}
+    G ::= ENUMERATED {a}
 
 END
