@@ -16,5 +16,6 @@ script:
   - env PYTHONPATH=. python examples/hello_world.py
   - env PYTHONPATH=. python examples/x509_pem.py
   - env PYTHONPATH=. python examples/compact_extensions_uper/main.py
+  - env PYTHONPATH=. python examples/programming_types/main.py
 after_success:
   coveralls
