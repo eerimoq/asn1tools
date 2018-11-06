@@ -129,6 +129,28 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
     def test_integer(self):
         self.encode_decode_all_codecs("INTEGER", [1, 123456789, -2, 0])
 
+    def test_integer_versions(self):
+        decoded_v1 = 2
+        decoded_v2 = 2
+
+        encoded_v2 = [
+            b'\x02\x01\x02',
+            b'\x02\x01\x02',
+            b'2',
+            b'\x01\x02',
+            b'\x80\x01\x02',
+            b'\x80\x81\x00',
+            b'<A>2</A>'
+        ]
+
+        self.decode_codecs('INTEGER (1, ..., 2)',
+                           decoded_v2,
+                           encoded_v2)
+
+        self.decode_codecs('INTEGER (1, ...)',
+                           decoded_v1,
+                           encoded_v2)
+
     def test_real(self):
         self.encode_decode_all_codecs("REAL", [0.0, 1.0, -1.0])
 
@@ -190,6 +212,29 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
 
     def test_choice(self):
         self.encode_decode_all_codecs("CHOICE { a NULL }", [('a', None)])
+
+    def _test_choice_versions(self):
+        # Unknown choice 'b' decoded as None.
+        decoded_v1 = (None, None)
+        decoded_v2 = ('b', None)
+
+        encoded_v2 = [
+            b'\x81\x00',
+            b'\x81\x00',
+            b'{"b":null}',
+            b'\x81\x00',
+            b'\x80\x01\x00',
+            b'\x80\x01\x00',
+            b'<A><b /></A>'
+        ]
+
+        self.decode_codecs('CHOICE {a NULL, ..., b NULL}',
+                           decoded_v2,
+                           encoded_v2)
+
+        self.decode_codecs('CHOICE {a NULL, ...}',
+                           decoded_v1,
+                           encoded_v2)
 
     def test_utf8_string(self):
         self.encode_decode_all_codecs("UTF8String", [u'hi'])

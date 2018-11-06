@@ -397,7 +397,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         self.assertEqual(str(cm.exception),
                          "Expected enumeration index 0, 1 or 2, but got 3.")
 
-        # Unkonwn additions index.
+        # Unknown additions index.
         self.assertEqual(foo.decode('C', b'\x8f'), None)
 
     def test_sequence(self):
