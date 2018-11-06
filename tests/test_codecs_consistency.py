@@ -72,7 +72,9 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             if codec == 'gser':
                 continue
 
-            decoded_message = foo.decode(type_name, encoded)
+            decoded_message = foo.decode(type_name,
+                                         encoded,
+                                         check_constraints=True)
             self.assertEqual(decoded_message, decoded)
 
     def encode_decode_codecs(self,
@@ -101,7 +103,24 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             if codec == 'gser':
                 continue
 
-            decoded_message = foo.decode('A', encoded)
+            decoded_message = foo.decode('A',
+                                         encoded,
+                                         check_constraints=True)
+            self.assertEqual(decoded_message, decoded)
+
+    def decode_codecs(self, type_spec, decoded, encoded):
+        spec = (
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= " + type_spec + " "
+            + "END"
+        )
+
+        for codec, encoded_message in zip(CODECS, encoded):
+            foo = asn1tools.compile_string(spec, codec)
+            decoded_message = foo.decode('A',
+                                         encoded_message,
+                                         check_constraints=True)
             self.assertEqual(decoded_message, decoded)
 
     def test_boolean(self):
@@ -133,6 +152,29 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         self.encode_decode_all_codecs("ENUMERATED { a(0), b(5) }",
                                       [0, 5],
                                       numeric_enums=True)
+
+    def test_enumerated_versions(self):
+        # Unknown enumeration value 'c' decoded as None.
+        decoded_v1 = None
+        decoded_v2 = 'c'
+
+        encoded_v2 = [
+            b'\x0a\x01\x02',
+            b'\x0a\x01\x02',
+            b'"c"',
+            b'\x02',
+            b'\x80',
+            b'\x80',
+            b'<A><c /></A>'
+        ]
+
+        self.decode_codecs('ENUMERATED {a, b, ..., c}',
+                           decoded_v2,
+                           encoded_v2)
+
+        self.decode_codecs('ENUMERATED {a, b, ...}',
+                           decoded_v1,
+                           encoded_v2)
 
     def test_sequence(self):
         self.encode_decode_all_codecs("SEQUENCE { a NULL }", [{'a': None}])

@@ -898,6 +898,8 @@ class Enumerated(Type):
             self.value_to_data = enum_values_as_dict(values)
             self.data_to_value = {v: k for k, v in self.value_to_data.items()}
 
+        self.has_extension_marker = (EXTENSION_MARKER in values)
+
     def format_names(self):
         return format_or(list(self.value_to_data.values()))
 
@@ -922,9 +924,11 @@ class Enumerated(Type):
         end_offset = offset + length
         value = decode_signed_integer(data[offset:end_offset])
 
-        try:
+        if value in self.value_to_data:
             return self.value_to_data[value], end_offset
-        except KeyError:
+        elif self.has_extension_marker:
+            return None, end_offset
+        else:
             raise DecodeError(
                 'Expected enumeration value {}, but got {}.'.format(
                     self.format_values(),

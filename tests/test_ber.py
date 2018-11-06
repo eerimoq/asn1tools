@@ -407,11 +407,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
-        with self.assertRaises(asn1tools.DecodeError) as cm:
-            foo.decode('F', b'\x0a\x01\xff')
-
-        self.assertEqual(str(cm.exception),
-                         "Expected enumeration value 0, but got -1.")
+        self.assertEqual(foo.decode('F', b'\x0a\x01\xff'), None)
 
     def test_sequence(self):
         foo = asn1tools.compile_string(

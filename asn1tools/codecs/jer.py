@@ -8,6 +8,7 @@ import binascii
 import math
 import datetime
 
+from ..parser import EXTENSION_MARKER
 from . import EncodeError
 from . import DecodeError
 from . import compiler
@@ -256,6 +257,8 @@ class Enumerated(Type):
                 v: v for v in enum_values_as_dict(values).values()
             }
 
+        self.has_extension_marker = (EXTENSION_MARKER in values)
+
     def format_values(self):
         return format_or(list(self.values))
 
@@ -271,9 +274,11 @@ class Enumerated(Type):
         return value
 
     def decode(self, data):
-        try:
+        if data in self.values:
             return self.values[data]
-        except KeyError:
+        elif self.has_extension_marker:
+            return None
+        else:
             raise DecodeError(
                 "Expected enumeration value {}, but got '{}'.".format(
                     self.format_values(),

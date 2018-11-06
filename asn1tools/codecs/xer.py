@@ -8,6 +8,7 @@ from xml.etree import ElementTree
 import binascii
 import datetime
 
+from ..parser import EXTENSION_MARKER
 from . import EncodeError
 from . import DecodeError
 from . import compiler
@@ -346,6 +347,8 @@ class Enumerated(Type):
             }
             self.data_to_value = self.value_to_data
 
+        self.has_extension_marker = (EXTENSION_MARKER in values)
+
     def format_names(self):
         return format_or(list(self.value_to_data.values()))
 
@@ -369,9 +372,11 @@ class Enumerated(Type):
     def decode(self, element):
         value = element[0].tag
 
-        try:
+        if value in self.value_to_data:
             return self.value_to_data[value]
-        except KeyError:
+        elif self.has_extension_marker:
+            return None
+        else:
             raise DecodeError(
                 "Expected enumeration value {}, but got '{}'.".format(
                     self.format_values(),

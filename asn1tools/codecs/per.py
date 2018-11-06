@@ -1397,13 +1397,10 @@ class Enumerated(Type):
             else:
                 index = decoder.read_normally_small_non_negative_whole_number()
 
-                try:
+                if index in self.additions_index_to_data:
                     return self.additions_index_to_data[index]
-                except KeyError:
-                    raise DecodeError(
-                        'Expected enumeration index {}, but got {}.'.format(
-                            self.format_addition_indexes(),
-                            index))
+                else:
+                    return None
 
     def decode_root(self, decoder):
         index = decoder.read_non_negative_binary_integer(self.root_number_of_bits)
