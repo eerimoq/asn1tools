@@ -1,0 +1,44 @@
+--
+-- Same as the fictitious Foo protocol found in the asn1tools
+-- README.rst, but using programming types instead of the built-in
+-- ASN.1 types.
+--
+
+AllTypes DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+IMPORTS
+
+    Int8,
+    Int16,
+    Int32,
+    Int64,
+    Uint8,
+    Uint16,
+    Uint32,
+    Uint64,
+    Float,
+    Double,
+    Bool,
+    String,
+    Bytes
+FROM ProgrammingTypes;
+
+Struct ::= SEQUENCE {
+    int8      Int8,
+    int16     Int16,
+    int32     Int32,
+    int64     Int64,
+    uint8     Uint8,
+    uint16    Uint16,
+    uint32    Uint32,
+    uint64    Uint64,
+    float     Float,
+    double    Double,
+    bool      Bool,
+    string    String,
+    bytes     Bytes
+}
+
+END
