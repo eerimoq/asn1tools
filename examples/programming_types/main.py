@@ -3,8 +3,18 @@
 """Example execution:
 
 $ ./main.py
+Encoding and decoding a question found in my protocol.
+
 Encoded: 300e8001018109497320312b313d333f
 Decoded: {'id': 1, 'question': 'Is 1+1=3?'}
+
+Comparing OER encoding to struct pack, as they are similar for defined programming types.
+
+OER encoded:
+fcfffdfffffffeffffffffffffffff01000200000003000000000000000440a00000c025000000000000ff084120737472696e67021122
+Struct packed:
+fcfffdfffffffeffffffffffffffff01000200000003000000000000000440a00000c025000000000000ff084120737472696e67021122
+OER encoded and struct packed are equal.
 $
 
 """
@@ -37,7 +47,6 @@ print('Encoded:', binascii.hexlify(encoded).decode('ascii'))
 
 decoded = my_protocol.decode('Question', encoded)
 print('Decoded:', decoded)
-print()
 print()
 
 
