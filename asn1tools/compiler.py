@@ -253,7 +253,7 @@ def compile_dict(specification,
     `codec`. `codec` may be one of ``'ber'``, ``'der'``, ``'gser'``,
     ``'jer'``, ``oer``, ``'per'``, ``'uper'`` and ``'xer'``.
 
-    Give `numeric_enums` as ``True`` for numeric enumerations values
+    Give `numeric_enums` as ``True`` for numeric enumeration values
     instead of strings.
 
     >>> foo = asn1tools.compile_dict(asn1tools.parse_files('foo.asn'))
@@ -299,7 +299,7 @@ def compile_string(string,
     `codec`. `codec` may be one of ``'ber'``, ``'der'``, ``'gser'``,
     ``'jer'``, ``oer``, ``'per'``, ``'uper'`` and ``'xer'``.
 
-    Give `numeric_enums` as ``True`` for numeric enumerations values
+    Give `numeric_enums` as ``True`` for numeric enumeration values
     instead of strings.
 
     >>> with open('foo.asn') as fin:
@@ -336,7 +336,7 @@ def compile_files(filenames,
     directory is automatically created if it does not exist. Remove
     the cache directory `cache_dir` to clear the cache.
 
-    Give `numeric_enums` as ``True`` for numeric enumerations values
+    Give `numeric_enums` as ``True`` for numeric enumeration values
     instead of strings.
 
     >>> foo = asn1tools.compile_files('foo.asn')
