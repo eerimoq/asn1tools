@@ -1508,9 +1508,6 @@ class Choice(Type):
     def format_root_indexes(self):
         return format_or(sorted(list(self.root_index_to_member)))
 
-    def format_addition_indexes(self):
-        return format_or(sorted(list(self.additions_index_to_member)))
-
     def format_names(self):
         members = list(self.root_index_to_member.values())
 
@@ -1605,13 +1602,8 @@ class Choice(Type):
 
         if index in self.additions_index_to_member:
             addition = self.additions_index_to_member[index]
-        elif self.additions_index_to_member is not None:
-            addition = None
         else:
-            raise DecodeError(
-                'Expected choice index {}, but got {}.'.format(
-                    self.format_addition_indexes(),
-                    index))
+            addition = None
 
         # Open type decoding.
         decoder.align()
