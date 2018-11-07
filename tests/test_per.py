@@ -812,7 +812,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
 
         # Bad value.
         with self.assertRaises(asn1tools.EncodeError) as cm:
-            foo.encode('K', ('i', True))
+            foo.encode('K', ('i', True), check_types=False)
 
         self.assertEqual(
             str(cm.exception),
@@ -821,7 +821,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
 
         # Bad value.
         with self.assertRaises(asn1tools.EncodeError) as cm:
-            foo.encode('A', ('b', True))
+            foo.encode('A', ('b', True), check_types=False)
 
         self.assertEqual(str(cm.exception), "Expected choice 'a', but got 'b'.")
 
