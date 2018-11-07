@@ -1619,10 +1619,6 @@ class Choice(Type):
             length -= (offset - decoder.number_of_bits)
 
         decoder.skip_bits(length)
-        alignment_bits = (offset - decoder.number_of_bits) % 8
-
-        if alignment_bits != 0:
-            decoder.skip_bits(8 - alignment_bits)
 
         return (name, decoded)
 
