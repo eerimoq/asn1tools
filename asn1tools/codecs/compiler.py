@@ -592,14 +592,17 @@ class Compiler(object):
                         module_name,
                         sort_by_tag=False):
         compiled_members = []
+        has_extension_marker = False
 
         for member in members:
             if member == EXTENSION_MARKER:
+                has_extension_marker = True
                 continue
 
             if isinstance(member, list):
-                compiled_members.extend(self.compile_members(member,
-                                                             module_name))
+                group_members, _ = self.compile_members(member,
+                                                        module_name)
+                compiled_members.extend(group_members)
                 continue
 
             compiled_member = self.compile_member(member, module_name)
@@ -608,7 +611,7 @@ class Compiler(object):
         if sort_by_tag:
             compiled_members = sorted(compiled_members, key=attrgetter('tag'))
 
-        return compiled_members
+        return compiled_members, has_extension_marker
 
     def compile_root_member(self, member, module_name, compiled_members):
         compiled_member = self.compile_member(member,

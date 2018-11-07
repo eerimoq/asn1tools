@@ -1603,9 +1603,11 @@ class Choice(Type):
     def decode_additions(self, decoder):
         index = decoder.read_normally_small_non_negative_whole_number()
 
-        try:
+        if index in self.additions_index_to_member:
             addition = self.additions_index_to_member[index]
-        except KeyError:
+        elif self.additions_index_to_member is not None:
+            addition = None
+        else:
             raise DecodeError(
                 'Expected choice index {}, but got {}.'.format(
                     self.format_addition_indexes(),
@@ -1613,15 +1615,24 @@ class Choice(Type):
 
         # Open type decoding.
         decoder.align()
-        decoder.read_length_determinant()
+        length = 8 * decoder.read_length_determinant()
         offset = decoder.number_of_bits
-        decoded = addition.decode(decoder)
+
+        if addition is None:
+            name = None
+            decoded = None
+        else:
+            name = addition.name
+            decoded = addition.decode(decoder)
+            length -= (offset - decoder.number_of_bits)
+
+        decoder.skip_bits(length)
         alignment_bits = (offset - decoder.number_of_bits) % 8
 
         if alignment_bits != 0:
             decoder.skip_bits(8 - alignment_bits)
 
-        return (addition.name, decoded)
+        return (name, decoded)
 
     def __repr__(self):
         return 'Choice({}, [{}])'.format(

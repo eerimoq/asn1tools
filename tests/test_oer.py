@@ -485,11 +485,11 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
 
         # Decode bad value.
         with self.assertRaises(asn1tools.DecodeError) as cm:
-            foo.decode('B', b'\x84\x01\xff')
+            foo.decode('A', b'\x81\x00\xff')
 
         self.assertEqual(
             str(cm.exception),
-            "Expected choice member tag '80', '81' or '82', but got '84'.")
+            "Expected choice member tag '80', but got '81'.")
 
     def test_uft8_string(self):
         foo = asn1tools.compile_string(

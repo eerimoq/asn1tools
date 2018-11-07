@@ -210,6 +210,12 @@ def read_tag(data, offset):
     return data[offset:skip_tag(data, offset)]
 
 
+def skip_tag_length_contents(data, offset):
+    offset = skip_tag(data, offset)
+
+    return sum(decode_length_definite(data, offset))
+
+
 def encode_real(data):
     if data == float('inf'):
         data = b'\x40'
@@ -989,6 +995,10 @@ class Choice(Type):
                 else:
                     members.append(addition)
 
+            self.has_extension_marker = True
+        else:
+            self.has_extension_marker = False
+
         self.members = members
         self.name_to_member = {member.name: member for member in self.members}
         self.tag_to_member = {}
@@ -1055,9 +1065,13 @@ class Choice(Type):
     def decode(self, data, offset):
         tag = bytes(read_tag(data, offset))
 
-        try:
+        if tag in self.tag_to_member:
             member = self.tag_to_member[tag]
-        except KeyError:
+        elif self.has_extension_marker:
+            offset = skip_tag_length_contents(data, offset)
+
+            return (None, None), offset
+        else:
             raise DecodeError(
                 "Expected choice member tag {}, but got '{}'.".format(
                     self.format_tags(),
@@ -1609,10 +1623,7 @@ def compile_dict(specification, numeric_enums=False):
 
 def decode_length(data):
     try:
-        data = bytearray(data)
-        offset = skip_tag(data, 0)
-
-        return sum(decode_length_definite(data, offset))
+        return skip_tag_length_contents(bytearray(data), 0)
     except DecodeContentsLengthError as e:
         return (e.length + e.offset)
     except IndexError:

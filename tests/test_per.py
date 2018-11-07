@@ -755,6 +755,18 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "  g BOOLEAN, "
             "  h BOOLEAN "
             "} "
+            "L ::= CHOICE { "
+            "  a BOOLEAN, "
+            "  b BOOLEAN, "
+            "  c BOOLEAN, "
+            "  ..., "
+            "  d BOOLEAN, "
+            "  e BOOLEAN, "
+            "  f BOOLEAN, "
+            "  g BOOLEAN, "
+            "  h BOOLEAN, "
+            "  i BOOLEAN "
+            "} "
             "END",
             'per')
 
@@ -780,7 +792,8 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('I',            ('c', True), b'\x81\x01\x80'),
             ('J',            ('a', True), b'\x40'),
             ('J',        ('b', ('a', 1)), b'\x80\x02\x01\x01'),
-            ('J',            ('c', True), b'\x81\x01\x80')
+            ('J',            ('c', True), b'\x81\x01\x80'),
+            ('L',            ('i', True), b'\x85\x01\x80')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -793,12 +806,9 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         self.assertEqual(str(cm.exception),
                          "Expected choice index 0, 1 or 2, but got 3.")
 
-        # Bad additions index.
-        with self.assertRaises(asn1tools.DecodeError) as cm:
-            foo.decode('K', b'\x8f')
-
-        self.assertEqual(str(cm.exception),
-                         "Expected choice index 0, 1, 2, 3 or 4, but got 15.")
+        # Bad additions index becomes None.
+        decoded = foo.decode('K', b'\x85\x01\x80')
+        self.assertEqual(decoded, (None, None))
 
         # Bad value.
         with self.assertRaises(asn1tools.EncodeError) as cm:

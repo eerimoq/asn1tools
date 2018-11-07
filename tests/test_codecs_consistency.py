@@ -213,26 +213,39 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
     def test_choice(self):
         self.encode_decode_all_codecs("CHOICE { a NULL }", [('a', None)])
 
-    def _test_choice_versions(self):
-        # Unknown choice 'b' decoded as None.
-        decoded_v1 = (None, None)
-        decoded_v2 = ('b', None)
+    def test_choice_versions(self):
+        # Unknown choice 'c' decoded as (None, None).
+        decoded_v1 = {
+            'a': (None, None),
+            'd': True
+        }
+
+        decoded_v2 = {
+            'a': ('c', None),
+            'd': True
+        }
 
         encoded_v2 = [
-            b'\x81\x00',
-            b'\x81\x00',
-            b'{"b":null}',
-            b'\x81\x00',
-            b'\x80\x01\x00',
-            b'\x80\x01\x00',
-            b'<A><b /></A>'
+            b'\x30\x07\xa0\x02\x81\x00\x81\x01\xff',
+            b'\x30\x07\xa0\x02\x81\x00\x81\x01\xff',
+            b'{"a":{"c":null},"d":true}',
+            b'\x81\x00\xff',
+            b'\x80\x00\x80',
+            b'\x80\x00\x80',
+            b'<A><a><c /></a><d><true /></d></A>'
         ]
 
-        self.decode_codecs('CHOICE {a NULL, ..., b NULL}',
+        self.decode_codecs('SEQUENCE { '
+                           '  a CHOICE {b NULL, ..., c NULL}, '
+                           '  d BOOLEAN '
+                           '}',
                            decoded_v2,
                            encoded_v2)
 
-        self.decode_codecs('CHOICE {a NULL, ...}',
+        self.decode_codecs('SEQUENCE { '
+                           '  a CHOICE {b NULL, ...}, '
+                           '  d BOOLEAN '
+                           '}',
                            decoded_v1,
                            encoded_v2)
 

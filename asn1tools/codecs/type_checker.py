@@ -314,8 +314,8 @@ class Compiler(compiler.Compiler):
         type_name = type_descriptor['type']
 
         if type_name in ['SEQUENCE', 'SET']:
-            members = self.compile_members(type_descriptor['members'],
-                                           module_name)
+            members, _ = self.compile_members(type_descriptor['members'],
+                                              module_name)
             compiled = Dict(name, members)
         elif type_name in ['SEQUENCE OF', 'SET OF']:
             element_type = self.compile_type('',
@@ -323,8 +323,8 @@ class Compiler(compiler.Compiler):
                                              module_name)
             compiled = List(name, element_type)
         elif type_name == 'CHOICE':
-            members = self.compile_members(type_descriptor['members'],
-                                           module_name)
+            members, _ = self.compile_members(type_descriptor['members'],
+                                              module_name)
             compiled = Choice(name, members)
         elif type_name == 'INTEGER':
             compiled = Integer(name)
@@ -351,7 +351,7 @@ class Compiler(compiler.Compiler):
         elif type_name == 'NULL':
             compiled = Null(name)
         elif type_name == 'EXTERNAL':
-            members = self.compile_members(
+            members, _ = self.compile_members(
                 self.external_type_descriptor()['members'],
                 module_name)
             compiled = Dict(name, members)

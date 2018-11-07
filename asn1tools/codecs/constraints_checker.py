@@ -5,8 +5,10 @@
 import string
 from copy import copy
 
+from ..parser import EXTENSION_MARKER
 from . import ConstraintsError
 from . import compiler
+from . import format_or
 from .permitted_alphabet import NUMERIC_STRING
 from .permitted_alphabet import PRINTABLE_STRING
 from .permitted_alphabet import IA5_STRING
@@ -250,13 +252,27 @@ class List(Type):
 
 class Choice(Type):
 
-    def __init__(self, name, members):
+    def __init__(self, name, members, has_extension_marker):
         super(Choice, self).__init__(name)
         self.members = members
         self.name_to_member = {member.name: member for member in self.members}
+        self.has_extension_marker = has_extension_marker
+
+    def format_names(self):
+        return format_or(sorted(self.name_to_member))
 
     def encode(self, data):
-        member = self.name_to_member[data[0]]
+        value = data[0]
+
+        if value in self.name_to_member:
+            member = self.name_to_member[value]
+        elif self.has_extension_marker:
+            return
+        else:
+            raise ConstraintsError(
+                "Expected choice {}, but got '{}'.".format(
+                    self.format_names(),
+                    value))
 
         try:
             member.encode(data[1])
@@ -339,8 +355,8 @@ class Compiler(compiler.Compiler):
         type_name = type_descriptor['type']
 
         if type_name in ['SEQUENCE', 'SET']:
-            members = self.compile_members(type_descriptor['members'],
-                                           module_name)
+            members, _ = self.compile_members(type_descriptor['members'],
+                                              module_name)
             compiled = Dict(name, members)
         elif type_name in ['SEQUENCE OF', 'SET OF']:
             element_type = self.compile_type('',
@@ -352,9 +368,9 @@ class Compiler(compiler.Compiler):
                                 type_descriptor,
                                 module_name))
         elif type_name == 'CHOICE':
-            members = self.compile_members(type_descriptor['members'],
-                                           module_name)
-            compiled = Choice(name, members)
+            compiled = Choice(name,
+                              *self.compile_members(type_descriptor['members'],
+                                                    module_name))
         elif type_name == 'INTEGER':
             compiled = Integer(name)
         elif type_name == 'REAL':
@@ -403,7 +419,7 @@ class Compiler(compiler.Compiler):
         elif type_name == 'NULL':
             compiled = Null(name)
         elif type_name == 'EXTERNAL':
-            members = self.compile_members(
+            members, _ = self.compile_members(
                 self.external_type_descriptor()['members'],
                 module_name)
             compiled = Dict(name, members)

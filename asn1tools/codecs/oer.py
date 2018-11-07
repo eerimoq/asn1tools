@@ -928,6 +928,9 @@ class Choice(Type):
 
         if additions is None:
             additions = []
+            self.has_extension_marker = False
+        else:
+            self.has_extension_marker = True
 
         self.additions = additions
 
@@ -992,6 +995,11 @@ class Choice(Type):
             member = self.tag_to_addition[tag]
             decoder.read_length_determinant()
             decoded = member.decode(decoder)
+        elif self.has_extension_marker:
+            length = decoder.read_length_determinant()
+            decoder.skip_bits(8 * length)
+
+            return (None, None)
         else:
             raise DecodeError(
                 "Expected choice member tag {}, but got '{}'.".format(
