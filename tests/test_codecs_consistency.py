@@ -52,30 +52,23 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
 
             gser.encode('A', decoded)
 
-    def encode_decode_codecs_file(self,
-                                  filename,
-                                  type_name,
-                                  decoded,
-                                  encoded):
-        for codec, encoded_message in zip(ALL_CODECS, encoded):
-            foo = asn1tools.compile_files(filename, codec)
+    def encode_decode_codec(self, spec, codec, type_name, decoded, encoded):
+        encoded_message = spec.encode(type_name,
+                                      decoded,
+                                      check_constraints=True)
 
-            encoded = foo.encode(type_name,
-                                 decoded,
-                                 check_constraints=True)
+        if codec == 'jer':
+            self.assertEqual(loadb(encoded), loadb(encoded_message))
+        else:
+            self.assertEqual(encoded_message, encoded)
 
-            if codec == 'jer':
-                self.assertEqual(loadb(encoded), loadb(encoded_message))
-            else:
-                self.assertEqual(encoded_message, encoded)
+        if codec == 'gser':
+            return
 
-            if codec == 'gser':
-                continue
-
-            decoded_message = foo.decode(type_name,
-                                         encoded,
-                                         check_constraints=True)
-            self.assertEqual(decoded_message, decoded)
+        decoded_message = spec.decode(type_name,
+                                      encoded,
+                                      check_constraints=True)
+        self.assertEqual(decoded_message, decoded)
 
     def encode_decode_codecs(self,
                              type_spec,
@@ -90,23 +83,24 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
 
         for codec, encoded_message in zip(ALL_CODECS, encoded):
             foo = asn1tools.compile_string(spec, codec)
+            self.encode_decode_codec(foo,
+                                     codec,
+                                     'A',
+                                     decoded,
+                                     encoded_message)
 
-            encoded = foo.encode('A',
-                                 decoded,
-                                 check_constraints=True)
-
-            if codec == 'jer':
-                self.assertEqual(loadb(encoded), loadb(encoded_message))
-            else:
-                self.assertEqual(encoded_message, encoded)
-
-            if codec == 'gser':
-                continue
-
-            decoded_message = foo.decode('A',
-                                         encoded,
-                                         check_constraints=True)
-            self.assertEqual(decoded_message, decoded)
+    def encode_decode_codecs_file(self,
+                                  filename,
+                                  type_name,
+                                  decoded,
+                                  encoded):
+        for codec, encoded_message in zip(ALL_CODECS, encoded):
+            foo = asn1tools.compile_files(filename, codec)
+            self.encode_decode_codec(foo,
+                                     codec,
+                                     type_name,
+                                     decoded,
+                                     encoded_message)
 
     def decode_codecs(self, type_spec, decoded, encoded):
         spec = (
