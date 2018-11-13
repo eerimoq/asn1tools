@@ -692,14 +692,28 @@ class Compiler(object):
                 minimum = float(minimum)
             except ValueError:
                 if not is_type_name(minimum):
-                    minimum = self.lookup_value(minimum, module_name)[0]['value']
+                    try:
+                        resolved_type_descriptor = self.resolve_type_descriptor(
+                            type_descriptor,
+                            module_name)
+                        minimum = resolved_type_descriptor['named-numbers'][minimum]
+                    except KeyError:
+                        minimum = self.lookup_value(minimum,
+                                                    module_name)[0]['value']
 
         if isinstance(maximum, str):
             try:
                 maximum = float(maximum)
             except ValueError:
                 if not is_type_name(maximum):
-                    maximum = self.lookup_value(maximum, module_name)[0]['value']
+                    try:
+                        resolved_type_descriptor = self.resolve_type_descriptor(
+                            type_descriptor,
+                            module_name)
+                        maximum = resolved_type_descriptor['named-numbers'][maximum]
+                    except KeyError:
+                        maximum = self.lookup_value(maximum,
+                                                    module_name)[0]['value']
 
         has_extension_marker = (EXTENSION_MARKER in restricted_to)
 

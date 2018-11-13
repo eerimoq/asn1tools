@@ -139,8 +139,7 @@ class Asn1ToolsParseTest(unittest.TestCase):
         self.parse_and_verify('its_container_1_2_1', 'etsi')
 
     def test_parse_ieee_1609_2(self):
-        with self.assertRaises(AssertionError):
-            self.parse_and_verify('ieee1609_2', 'ieee')
+        self.parse_and_verify('ieee1609_2', 'ieee')
 
     def test_parse_enumerated(self):
         self.parse_and_verify('enumerated')
@@ -153,6 +152,9 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
     def test_parse_time_types(self):
         self.parse_and_verify('time_types')
+
+    def test_parse_named_numbers(self):
+        self.parse_and_verify('named_numbers')
 
     def test_parse_imports_global_module_reference(self):
         actual = asn1tools.parse_string('A DEFINITIONS ::= BEGIN '

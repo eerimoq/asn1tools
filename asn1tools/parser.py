@@ -428,8 +428,16 @@ def convert_defined_type(_s, _l, tokens):
     }
 
 
-def convert_integer_type(_s, _l, _tokens):
-    return {'type': 'INTEGER'}
+def convert_integer_type(_s, _l, tokens):
+    tokens = tokens.asList()
+    compiled = {'type': 'INTEGER'}
+
+    if tokens[1]:
+        compiled['named-numbers'] = {
+            item[0]: item[2] for item in tokens[1]
+        }
+
+    return compiled
 
 
 def convert_real_type(_s, _l, _tokens):
@@ -1481,7 +1489,7 @@ def create_grammar():
 
     # X.680: 19. Notation for the enumerated type
     enumerated_value = identifier
-    enumeration_item = (Group(named_number) | identifier)
+    enumeration_item = (named_number | identifier)
     enumeration = delimitedList(enumeration_item)
     root_enumeration = enumeration
     additional_enumeration = enumeration
@@ -1500,15 +1508,15 @@ def create_grammar():
     # X.680: 18. Notation for the integer type
     integer_value = (signed_number | identifier)
     signed_number <<= Combine(Optional('-') + number)
-    named_number <<= (identifier
-                      + left_parenthesis
-                      + (signed_number | defined_value)
-                      + right_parenthesis)
+    named_number <<= Group(identifier
+                           + left_parenthesis
+                           + (signed_number | defined_value)
+                           + right_parenthesis)
     named_number_list = delimitedList(named_number)
     integer_type = (INTEGER
-                    + Group(Optional(left_brace
+                    + Group(Optional(Suppress(left_brace)
                                      + named_number_list
-                                     + right_brace)))
+                                     + Suppress(right_brace))))
     integer_type.setName('INTEGER')
 
     # X.680: 17. Notation for boolean type

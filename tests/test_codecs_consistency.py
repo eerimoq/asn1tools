@@ -511,6 +511,156 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
                                       decoded_message,
                                       encoded_message)
 
+    def test_named_numbers(self):
+        datas = [
+            (
+                'Constants',
+                -1,
+                [
+                    b'\x02\x01\xff',
+                    b'\x02\x01\xff',
+                    b'-1',
+                    b'\xff',
+                    b'\x00',
+                    b'\x00',
+                    b'<Constants>-1</Constants>'
+                ]
+            ),
+            (
+                'Constants',
+                2,
+                [
+                    b'\x02\x01\x02',
+                    b'\x02\x01\x02',
+                    b'2',
+                    b'\x02',
+                    b'\xc0',
+                    b'\xc0',
+                    b'<Constants>2</Constants>'
+                ]
+            ),
+            (
+                'A',
+                -1,
+                [
+                    b'\x02\x01\xff',
+                    b'\x02\x01\xff',
+                    b'-1',
+                    b'\xff',
+                    b'\x00',
+                    b'\x00',
+                    b'<A>-1</A>'
+                ]
+            ),
+            (
+                'A',
+                1,
+                [
+                    b'\x02\x01\x01',
+                    b'\x02\x01\x01',
+                    b'1',
+                    b'\x01',
+                    b'\x80',
+                    b'\x80',
+                    b'<A>1</A>'
+                ]
+            ),
+            (
+                'B',
+                2,
+                [
+                    b'\x02\x01\x02',
+                    b'\x02\x01\x02',
+                    b'2',
+                    b'\x02',
+                    b'',
+                    b'',
+                    b'<B>2</B>'
+                ]
+            ),
+            (
+                'C',
+                0,
+                [
+                    b'\x02\x01\x00',
+                    b'\x02\x01\x00',
+                    b'0',
+                    b'\x00',
+                    b'\x00',
+                    b'\x00',
+                    b'<C>0</C>'
+                ]
+            ),
+            (
+                'C',
+                1,
+                [
+                    b'\x02\x01\x01',
+                    b'\x02\x01\x01',
+                    b'1',
+                    b'\x01',
+                    b'\x80',
+                    b'\x80',
+                    b'<C>1</C>'
+                ]
+            )
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.encode_decode_codecs_file('tests/files/named_numbers.asn',
+                                           type_name,
+                                           decoded,
+                                           encoded)
+
+    def test_named_numbers_errors(self):
+        datas = [
+            (
+                'Constants',
+                -2,
+                'Expected an integer between -1 and 2, but got -2.'
+            ),
+            (
+                'Constants',
+                3,
+                'Expected an integer between -1 and 2, but got 3.'
+            ),
+            (
+                'A',
+                -2,
+                'Expected an integer between -1 and 1, but got -2.'
+            ),
+            (
+                'A',
+                2,
+                'Expected an integer between -1 and 1, but got 2.'
+            ),
+            (
+                'B',
+                1,
+                'Expected an integer between 2 and 2, but got 1.'
+            ),
+            (
+                'C',
+                -1,
+                'Expected an integer between 0 and 1, but got -1.'
+            ),
+            (
+                'C',
+                2,
+                'Expected an integer between 0 and 1, but got 2.'
+            )
+        ]
+
+        for codec in ALL_CODECS:
+            foo = asn1tools.compile_files('tests/files/named_numbers.asn',
+                                          codec)
+
+            for type_name, decoded, message in datas:
+                with self.assertRaises(asn1tools.ConstraintsError) as cm:
+                    foo.encode(type_name, decoded, check_constraints=True)
+
+                self.assertEqual(str(cm.exception), message)
+
 
 if __name__ == '__main__':
     unittest.main()
