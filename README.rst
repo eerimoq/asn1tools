@@ -44,9 +44,6 @@ Known limitations
 - ``WITH COMPONENT`` and ``WITH COMPONENTS`` constraints are ignored,
   except for OER ``REAL``.
 
-- Named numbers are ignored, i.e. ``first (1)`` and ``last (10)`` are
-  ignored in ``INTEGER { first(1), last(10) } (1..10)``.
-
 - The ``DURATION`` type is not yet supported.
 
 Installation
