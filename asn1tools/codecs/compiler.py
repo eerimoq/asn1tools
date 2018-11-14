@@ -881,16 +881,6 @@ class Compiler(object):
             ]
         }
 
-    def object_descriptor_type_descriptor(self):
-        return {
-            'type': 'GraphicString',
-            'tag': {
-                'class': 'UNIVERSAL',
-                'number': 7,
-                'kind': 'IMPLICIT'
-            }
-        }
-
 
 def enum_values_as_dict(values):
     return {
