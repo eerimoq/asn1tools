@@ -907,10 +907,10 @@ class Enumerated(Type):
         self.has_extension_marker = (EXTENSION_MARKER in values)
 
     def format_names(self):
-        return format_or(list(self.value_to_data.values()))
+        return format_or(sorted(list(self.value_to_data.values())))
 
     def format_values(self):
-        return format_or(list(self.value_to_data))
+        return format_or(sorted(list(self.value_to_data)))
 
     def encode(self, data, encoded):
         try:

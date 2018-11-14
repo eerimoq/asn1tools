@@ -679,6 +679,22 @@ class Compiler(object):
         return minimum, maximum, has_extension_marker
 
     def get_restricted_to_range(self, type_descriptor, module_name):
+        def convert_value(value):
+            try:
+                value = float(value)
+            except ValueError:
+                if not is_type_name(value):
+                    try:
+                        resolved_type_descriptor = self.resolve_type_descriptor(
+                            type_descriptor,
+                            module_name)
+                        value = resolved_type_descriptor['named-numbers'][value]
+                    except KeyError:
+                        value = self.lookup_value(value,
+                                                  module_name)[0]['value']
+
+            return value
+
         restricted_to = type_descriptor['restricted-to']
 
         if isinstance(restricted_to[0], tuple):
@@ -688,32 +704,10 @@ class Compiler(object):
             maximum = restricted_to[0]
 
         if isinstance(minimum, str):
-            try:
-                minimum = float(minimum)
-            except ValueError:
-                if not is_type_name(minimum):
-                    try:
-                        resolved_type_descriptor = self.resolve_type_descriptor(
-                            type_descriptor,
-                            module_name)
-                        minimum = resolved_type_descriptor['named-numbers'][minimum]
-                    except KeyError:
-                        minimum = self.lookup_value(minimum,
-                                                    module_name)[0]['value']
+            minimum = convert_value(minimum)
 
         if isinstance(maximum, str):
-            try:
-                maximum = float(maximum)
-            except ValueError:
-                if not is_type_name(maximum):
-                    try:
-                        resolved_type_descriptor = self.resolve_type_descriptor(
-                            type_descriptor,
-                            module_name)
-                        maximum = resolved_type_descriptor['named-numbers'][maximum]
-                    except KeyError:
-                        maximum = self.lookup_value(maximum,
-                                                    module_name)[0]['value']
+            maximum = convert_value(maximum)
 
         has_extension_marker = (EXTENSION_MARKER in restricted_to)
 
