@@ -156,6 +156,9 @@ class Asn1ToolsParseTest(unittest.TestCase):
     def test_parse_named_numbers(self):
         self.parse_and_verify('named_numbers')
 
+    def test_parse_import_imported(self):
+        self.parse_and_verify('import_imported')
+
     def test_parse_imports_global_module_reference(self):
         actual = asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
                                         'IMPORTS '

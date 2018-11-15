@@ -87,6 +87,9 @@ class Asn1ToolsCompileTest(unittest.TestCase):
     def test_encoding(self):
         asn1tools.compile_files('tests/files/foo.asn', encoding='ascii')
 
+    def test_import_imported(self):
+        asn1tools.compile_files('tests/files/import_imported.asn')
+
     def test_missing_type(self):
         with self.assertRaises(asn1tools.CompileError) as cm:
             asn1tools.compile_string('A DEFINITIONS ::= BEGIN A ::= B END')

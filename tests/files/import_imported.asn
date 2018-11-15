@@ -1,0 +1,47 @@
+-- Import imported type and value.
+
+A DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+    EXPORTS ALL;
+
+    Type ::= INTEGER
+
+    value Type ::= 5
+
+END
+
+
+B DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+    IMPORTS
+
+        Type,
+        value
+    FROM A;
+
+    AnotherType ::= Type
+
+    anotherValue AnotherType ::= value
+
+END
+
+
+C DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+    IMPORTS
+
+        Type,
+        anotherValue
+    FROM B;
+
+    AndAnotherType ::= Type
+
+    andAnotherValue AndAnotherType ::= anotherValue
+
+END

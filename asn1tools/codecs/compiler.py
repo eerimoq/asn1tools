@@ -727,43 +727,40 @@ class Compiler(object):
     def lookup_in_modules(self, section, debug_string, name, module_name):
         begin_debug_string = debug_string[:1].upper() + debug_string[1:]
         module = self._specification[module_name]
-        value = None
 
         if name in module[section]:
-            value = module[section][name]
+            return module[section][name], module_name
         else:
             for from_module_name, imports in module['imports'].items():
-                if name in imports:
-                    try:
-                        from_module = self._specification[from_module_name]
-                    except KeyError:
-                        raise CompileError(
-                            "Module '{}' cannot import {} '{}' from missing "
-                            "module '{}'.".format(module_name,
+                if name not in imports:
+                    continue
+
+                if from_module_name not in self._specification:
+                    raise CompileError(
+                        "Module '{}' cannot import {} '{}' from missing "
+                        "module '{}'.".format(module_name,
+                                              debug_string,
+                                              name,
+                                              from_module_name))
+
+                try:
+                    return self.lookup_in_modules(section,
                                                   debug_string,
                                                   name,
-                                                  from_module_name))
+                                                  from_module_name)
+                except CompileError:
+                    raise CompileError(
+                        "{} '{}' imported by module '{}' not found in "
+                        "module '{}'.".format(
+                            begin_debug_string,
+                            name,
+                            module_name,
+                            from_module_name))
 
-                    try:
-                        value = from_module[section][name]
-                    except KeyError:
-                        raise CompileError(
-                            "{} '{}' imported by module '{}' not found in "
-                            "module '{}'.".format(begin_debug_string,
-                                                  name,
-                                                  module_name,
-                                                  from_module_name))
-
-                    module_name = from_module_name
-                    break
-
-        if value is None:
-            raise CompileError("{} '{}' not found in module '{}'.".format(
-                begin_debug_string,
-                name,
-                module_name))
-
-        return value, module_name
+        raise CompileError("{} '{}' not found in module '{}'.".format(
+            begin_debug_string,
+            name,
+            module_name))
 
     def lookup_type_descriptor(self, type_name, module_name):
         return self.lookup_in_modules('types', 'type', type_name, module_name)
