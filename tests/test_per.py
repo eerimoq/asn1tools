@@ -149,6 +149,33 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+    def test_real(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= REAL "
+            "B ::= SEQUENCE { "
+            "    a REAL, "
+            "    ... "
+            "}"
+            "END",
+            'per')
+
+        datas = [
+            ('A',                     0.0, b'\x00'),
+            ('A',                    -0.0, b'\x00'),
+            ('A',            float('inf'), b'\x01\x40'),
+            ('A',           float('-inf'), b'\x01\x41'),
+            ('A',                     1.0, b'\x03\x80\x00\x01'),
+            ('B', {'a': 1.0}, b'\x00\x03\x80\x00\x01'),
+            ('B',
+             {'a': 1000000000},
+             b'\x00\x05\x80\x09\x1d\xcd\x65')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_bit_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "

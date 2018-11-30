@@ -100,6 +100,10 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
             "A ::= REAL "
+            "B ::= SEQUENCE { "
+            "    a REAL, "
+            "    ... "
+            "}"
             "END",
             'uper')
 
@@ -122,7 +126,11 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
              b'\x0a\x81\x00\xe9\x02\x92\xe3\x2a\xc6\x85\x59'),
             ('A',
              0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000001,
-             b'\x0a\x81\xfe\xae\x13\xe4\x97\x06\x5c\xd6\x1f')
+             b'\x0a\x81\xfe\xae\x13\xe4\x97\x06\x5c\xd6\x1f'),
+            ('B', {'a': 1.0}, b'\x01\xc0\x00\x00\x80'),
+            ('B',
+             {'a': 1000000000},
+             b'\x02\xc0\x04\x8e\xe6\xb2\x80')
         ]
 
         for type_name, decoded, encoded in datas:

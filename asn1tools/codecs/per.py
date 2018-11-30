@@ -413,15 +413,6 @@ class Decoder(object):
     def read_bytes(self, number_of_bytes):
         return self.read_bits(8 * number_of_bytes)
 
-    def read_bytes_aligned(self, number_of_bytes):
-        """Read given number of aligned bytes.
-
-        """
-
-        self.number_of_bits -= (self.number_of_bits % 8)
-
-        return bytearray(self.read_bytes(number_of_bytes))
-
     def read_non_negative_binary_integer(self, number_of_bits):
         """Read an integer value of given number of bits.
 
@@ -1086,13 +1077,15 @@ class Real(Type):
 
     def encode(self, data, encoder):
         encoded = encode_real(data)
+        encoder.align()
         encoder.append_length_determinant(len(encoded))
         encoder.append_bytes(encoded)
 
     def decode(self, decoder):
+        decoder.align()
         length = decoder.read_length_determinant()
 
-        return decode_real(decoder.read_bytes_aligned(length))
+        return decode_real(bytearray(decoder.read_bytes(length)))
 
     def __repr__(self):
         return 'Real({})'.format(self.name)
