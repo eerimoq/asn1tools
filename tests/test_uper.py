@@ -13,10 +13,12 @@ import datetime
 
 sys.path.append('tests/files')
 sys.path.append('tests/files/3gpp')
+sys.path.append('tests/files/oma')
 
 from rrc_8_6_0 import EXPECTED as RRC_8_6_0
 from lpp_14_3_0 import EXPECTED as LPP_14_3_0
 from x691_a4 import EXPECTED as X691_A4
+from ulp import EXPECTED as OMA_ULP
 
 
 class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
@@ -2463,6 +2465,136 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
                 foo.decode(type_name, encoded)
 
             self.assertEqual(str(cm.exception), message)
+
+    def test_oma_ulp(self):
+        ulp = asn1tools.compile_dict(deepcopy(OMA_ULP), 'uper')
+
+        decoded = {
+            'length': 162,
+            'version': {'maj': 2, 'min': 0, 'servind': 0},
+            'sessionID': {
+                'setSessionID': {
+                    'sessionId': 8838,
+                    'setId': ('imsi', b'\x64\x00\x00\x00\x00\x00\x20\xf2')
+                },
+                'slpSessionID': {
+                    'sessionID': b'\x00\x00\x40\x00',
+                    'slpId': ('iPAddress', ('ipv4Address', b'\x7f\x00\x00\x01'))
+                }
+            },
+            'message': (
+                'msSUPLPOSINIT', {
+                    'sETCapabilities': {
+                        'posTechnology': {
+                            'agpsSETassisted': True,
+                            'agpsSETBased': True,
+                            'autonomousGPS': False,
+                            'aFLT': False,
+                            'eCID': True,
+                            'eOTD': False,
+                            'oTDOA': True,
+                            'ver2-PosTechnology-extension': {
+                                'gANSSPositionMethods': [
+                                    {
+                                        'ganssId': 4,
+                                        'gANSSPositioningMethodTypes': {
+                                            'setAssisted': True,
+                                            'setBased': True,
+                                            'autonomous': True
+                                        },
+                                        'gANSSSignals': (b'\x80', 1)
+                                    }
+                                ]
+                            }
+                        },
+                        'prefMethod': 'noPreference',
+                        'posProtocol': {
+                            'tia801': False,
+                            'rrlp': False,
+                            'rrc': False,
+                            'ver2-PosProtocol-extension': {
+                                'lpp': True,
+                                'posProtocolVersionLPP': {
+                                    'majorVersionField': 12,
+                                    'technicalVersionField': 4,
+                                    'editorialVersionField': 0
+                                }
+                            }
+                        }
+                    },
+                    'locationId': {
+                        'cellInfo': (
+                            'ver2-CellInfo-extension', (
+                                'lteCell',
+                                {
+                                    'cellGlobalIdEUTRA': {
+                                        'plmn-Identity': {
+                                            'mcc': [3, 1, 0],
+                                            'mnc': [3, 1, 0]
+                                        },
+                                        'cellIdentity': (b'\x34\xa3\x20\x20', 28)
+                                    },
+                                    'physCellId': 304,
+                                    'trackingAreaCode': (b'\x13\x8e', 16),
+                                    'rsrpResult': 59,
+                                    'rsrqResult': 24,
+                                    'tA': 1,
+                                    'measResultListEUTRA': [
+                                        {
+                                            'physCellId': 275,
+                                            'measResult': {
+                                                'rsrpResult': 45,
+                                                'rsrqResult': 14
+                                            }
+                                        },
+                                        {
+                                            'physCellId': 200,
+                                            'measResult': {
+                                                'rsrpResult': 39,
+                                                'rsrqResult': 8
+                                            }
+                                        }
+                                    ]
+                                }
+                            )
+                        ),
+                        'status': 'current'
+                    },
+                    'sUPLPOS': {
+                        'posPayLoad': (
+                            'ver2-PosPayLoad-extension',
+                            {
+                                'lPPPayload': [
+                                    b'\x92\x2b\x08\x31\xe2\x00\x5d\x00\x82\x17'
+                                    b'\x40\x27\x04\x88\x22\x1b\x80\x00\x2d\xe4'
+                                    b'\x00\x00\x41\x88\x3c\x09\x24\x30\x44\x18'
+                                    b'\xb3\x18\x66\x8f\xc0\x03\x24\x01\x01',
+                                    b'\x92\x2c\x10\x62\x62\x13\x10\x34\xa3\x20'
+                                    b'\x26\xa4\x01\x40\x84\x00\x00\x00\x00\x01'
+                                    b'\x41\x20\x02\x00\x00\x00\x00'
+                                ]
+                            }
+                        )
+                    },
+                    'ver': (b'\x52\x88\xec\xab\xa9\x37\x5c\x4e', 64)
+                }
+            )
+        }
+
+        encoded = (
+            b'\x00\xa2\x02\x00\x00\xc8\xa1\x8d\x90\x00\x00\x00\x00\x00\x83'
+            b'\xc8\x00\x01\x00\x00\x3f\x80\x00\x00\x98\xdc\xa0\x20\x68\x08'
+            b'\xe2\x14\x00\x82\x06\x0c\x04\x00\x20\x05\x49\xe9\x88\x4c\x40'
+            b'\xd2\x8c\x80\xa6\x02\x71\xce\xd8\x00\x25\x13\x6b\x4e\x32\x1a'
+            b'\x72\x09\x00\x8e\x90\x02\x69\x22\xb0\x83\x1e\x20\x05\xd0\x08'
+            b'\x21\x74\x02\x70\x48\x82\x21\xb8\x00\x02\xde\x40\x00\x04\x18'
+            b'\x83\xc0\x92\x43\x04\x41\x8b\x31\x86\x68\xfc\x00\x32\x40\x10'
+            b'\x10\x01\xa9\x22\xc1\x06\x26\x21\x31\x03\x4a\x32\x02\x6a\x40'
+            b'\x14\x08\x40\x00\x00\x00\x00\x14\x12\x00\x20\x00\x00\x00\x00'
+            b'\xa5\x11\xd9\x57\x52\x6e\xb8\x9c'
+        )
+
+        self.assert_encode_decode(ulp, 'ULP-PDU', decoded, encoded)
 
 
 if __name__ == '__main__':

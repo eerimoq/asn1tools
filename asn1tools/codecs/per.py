@@ -1545,13 +1545,13 @@ class Choice(Type):
                     self.format_names(),
                     data[0]))
 
-        addition_encoder = Encoder()
+        addition_encoder = encoder.__class__()
         addition = self.additions_index_to_member[index]
         self.encode_member(addition, data[1], addition_encoder)
 
         # Embed encoded extension addition in an open type (add a
         # length field and multiple of 8 bits).
-        addition_encoder.align()
+        addition_encoder.align_always()
         encoder.append_normally_small_non_negative_whole_number(index)
         encoder.align()
         encoder.append_length_determinant(addition_encoder.number_of_bytes())

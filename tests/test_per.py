@@ -9,10 +9,12 @@ from copy import deepcopy
 
 sys.path.append('tests/files')
 sys.path.append('tests/files/3gpp')
+sys.path.append('tests/files/oma')
 
 from rrc_8_6_0 import EXPECTED as RRC_8_6_0
 from s1ap_14_4_0 import EXPECTED as S1AP_14_4_0
 from x691_a4 import EXPECTED as X691_A4
+from ulp import EXPECTED as OMA_ULP
 
 
 class Asn1ToolsPerTest(Asn1ToolsBaseTest):
@@ -1967,6 +1969,139 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         with self.assertRaises(TypeError):
             encoded = information_object.encode('C', decoded_message)
             self.assertEqual(encoded, encoded_message)
+
+    def test_oma_ulp(self):
+        ulp = asn1tools.compile_dict(deepcopy(OMA_ULP), 'per')
+
+        decoded = {
+            'length': 162,
+            'version': {'maj': 2, 'min': 0, 'servind': 0},
+            'sessionID': {
+                'setSessionID': {
+                    'sessionId': 8838,
+                    'setId': ('imsi', b'\x64\x00\x00\x00\x00\x00\x20\xf2')
+                },
+                'slpSessionID': {
+                    'sessionID': b'\x00\x00\x40\x00',
+                    'slpId': ('iPAddress', ('ipv4Address', b'\x7f\x00\x00\x01'))
+                }
+            },
+            'message': (
+                'msSUPLPOSINIT', {
+                    'sETCapabilities': {
+                        'posTechnology': {
+                            'agpsSETassisted': True,
+                            'agpsSETBased': True,
+                            'autonomousGPS': False,
+                            'aFLT': False,
+                            'eCID': True,
+                            'eOTD': False,
+                            'oTDOA': True,
+                            'ver2-PosTechnology-extension': {
+                                'gANSSPositionMethods': [
+                                    {
+                                        'ganssId': 4,
+                                        'gANSSPositioningMethodTypes': {
+                                            'setAssisted': True,
+                                            'setBased': True,
+                                            'autonomous': True
+                                        },
+                                        'gANSSSignals': (b'\x80', 1)
+                                    }
+                                ]
+                            }
+                        },
+                        'prefMethod': 'noPreference',
+                        'posProtocol': {
+                            'tia801': False,
+                            'rrlp': False,
+                            'rrc': False,
+                            'ver2-PosProtocol-extension': {
+                                'lpp': True,
+                                'posProtocolVersionLPP': {
+                                    'majorVersionField': 12,
+                                    'technicalVersionField': 4,
+                                    'editorialVersionField': 0
+                                }
+                            }
+                        }
+                    },
+                    'locationId': {
+                        'cellInfo': (
+                            'ver2-CellInfo-extension', (
+                                'lteCell',
+                                {
+                                    'cellGlobalIdEUTRA': {
+                                        'plmn-Identity': {
+                                            'mcc': [3, 1, 0],
+                                            'mnc': [3, 1, 0]
+                                        },
+                                        'cellIdentity': (b'\x34\xa3\x20\x20', 28)
+                                    },
+                                    'physCellId': 304,
+                                    'trackingAreaCode': (b'\x13\x8e', 16),
+                                    'rsrpResult': 59,
+                                    'rsrqResult': 24,
+                                    'tA': 1,
+                                    'measResultListEUTRA': [
+                                        {
+                                            'physCellId': 275,
+                                            'measResult': {
+                                                'rsrpResult': 45,
+                                                'rsrqResult': 14
+                                            }
+                                        },
+                                        {
+                                            'physCellId': 200,
+                                            'measResult': {
+                                                'rsrpResult': 39,
+                                                'rsrqResult': 8
+                                            }
+                                        }
+                                    ]
+                                }
+                            )
+                        ),
+                        'status': 'current'
+                    },
+                    'sUPLPOS': {
+                        'posPayLoad': (
+                            'ver2-PosPayLoad-extension',
+                            {
+                                'lPPPayload': [
+                                    b'\x92\x2b\x08\x31\xe2\x00\x5d\x00\x82\x17'
+                                    b'\x40\x27\x04\x88\x22\x1b\x80\x00\x2d\xe4'
+                                    b'\x00\x00\x41\x88\x3c\x09\x24\x30\x44\x18'
+                                    b'\xb3\x18\x66\x8f\xc0\x03\x24\x01\x01',
+                                    b'\x92\x2c\x10\x62\x62\x13\x10\x34\xa3\x20'
+                                    b'\x26\xa4\x01\x40\x84\x00\x00\x00\x00\x01'
+                                    b'\x41\x20\x02\x00\x00\x00\x00'
+                                ]
+                            }
+                        )
+                    },
+                    'ver': (b'\x52\x88\xec\xab\xa9\x37\x5c\x4e', 64)
+                }
+            )
+        }
+
+        encoded = (
+            b'\x00\xa2\x02\x00\x00\xc0\x22\x86\x30\x64\x00\x00\x00\x00\x00'
+            b'\x20\xf2\x00\x00\x40\x00\x00\x7f\x00\x00\x01\x31\xb9\x40\x40'
+            b'\x04\x40\x47\x00\x80\xa0\x04\x04\x0c\x0c\x04\x00\x40\x00\x1b'
+            b'\x27\xa6\x21\x31\x00\x34\xa3\x20\x20\x01\x30\x13\x8e\x76\xc0'
+            b'\x00\x01\x20\x01\x13\x6b\x4e\x00\x00\xc8\x69\xc8\x24\x00\x47'
+            b'\x48\x00\x26\x92\x2b\x08\x31\xe2\x00\x5d\x00\x82\x17\x40\x27'
+            b'\x04\x88\x22\x1b\x80\x00\x2d\xe4\x00\x00\x41\x88\x3c\x09\x24'
+            b'\x30\x44\x18\xb3\x18\x66\x8f\xc0\x03\x24\x01\x01\x00\x1a\x92'
+            b'\x2c\x10\x62\x62\x13\x10\x34\xa3\x20\x26\xa4\x01\x40\x84\x00'
+            b'\x00\x00\x00\x01\x41\x20\x02\x00\x00\x00\x00\x52\x88\xec\xab'
+            b'\xa9\x37\x5c\x4e'
+        )
+
+        # ToDo: Fix the encoding of lPPPayload.
+        with self.assertRaises(AssertionError):
+            self.assert_encode_decode(ulp, 'ULP-PDU', decoded, encoded)
 
 
 if __name__ == '__main__':
