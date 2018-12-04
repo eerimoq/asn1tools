@@ -1148,10 +1148,10 @@ class BitString(Type):
         if self.number_of_bits is None:
             return self.encode_unbound(data, number_of_bits, encoder)
         elif self.minimum != self.maximum:
-            encoder.align()
-            encoder.append_non_negative_binary_integer(
-                number_of_bits - self.minimum,
-                self.number_of_bits)
+            encoder.append_constrained_whole_number(number_of_bits,
+                                                    self.minimum,
+                                                    self.maximum,
+                                                    self.number_of_bits)
             encoder.align()
         elif self.minimum > 16:
             encoder.align()
@@ -1171,8 +1171,9 @@ class BitString(Type):
             number_of_bits = self.minimum
 
             if self.minimum != self.maximum:
-                decoder.align()
-                number_of_bits += decoder.read_non_negative_binary_integer(
+                number_of_bits = decoder.read_constrained_whole_number(
+                    self.minimum,
+                    self.maximum,
                     self.number_of_bits)
                 decoder.align()
             elif self.minimum > 16:
@@ -1232,8 +1233,10 @@ class OctetString(Type):
         if self.number_of_bits is None:
             return self.encode_unbound(data, encoder)
         elif self.minimum != self.maximum:
-            encoder.append_non_negative_binary_integer(len(data) - self.minimum,
-                                                       self.number_of_bits)
+            encoder.append_constrained_whole_number(len(data),
+                                                    self.minimum,
+                                                    self.maximum,
+                                                    self.number_of_bits)
         elif self.maximum <= 2:
             align = False
 
@@ -1267,7 +1270,9 @@ class OctetString(Type):
             length = self.minimum
 
             if self.minimum != self.maximum:
-                length += decoder.read_non_negative_binary_integer(
+                length = decoder.read_constrained_whole_number(
+                    self.minimum,
+                    self.maximum,
                     self.number_of_bits)
             elif self.maximum <= 2:
                 align = False

@@ -197,6 +197,10 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "  a A DEFAULT '00'B, "
             "  b E DEFAULT '00'B "
             "} "
+            "Q ::= SEQUENCE SIZE (0..2) OF BIT STRING (SIZE(1..255)) "
+            "R ::= SEQUENCE SIZE (0..2) OF BIT STRING (SIZE(1..256)) "
+            "S ::= SEQUENCE SIZE (0..2) OF BIT STRING (SIZE(2..256)) "
+            "T ::= SEQUENCE SIZE (0..2) OF BIT STRING (SIZE(2..257)) "
             "END",
             'uper')
 
@@ -242,7 +246,11 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('O',   {'a': {'a': (b'\x40', 2)}}, b'\x81\x20'),
             ('P',
              {'a': (b'\x00', 2), 'b': (b'\x00', 2)},
-             b'\x00')
+             b'\x00'),
+            ('Q',                   [(b'\x40', 2)], b'\x40\x50'),
+            ('R',                   [(b'\x40', 2)], b'\x40\x50'),
+            ('S',                   [(b'\x40', 2)], b'\x40\x10'),
+            ('T',                   [(b'\x40', 2)], b'\x40\x10')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -295,6 +303,8 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "I ::= OCTET STRING (SIZE (MIN..5)) "
             "J ::= OCTET STRING (SIZE (MIN..MAX)) "
             "K ::= OCTET STRING (SIZE (1..2, ...)) "
+            "M ::= SEQUENCE SIZE (0..2) OF OCTET STRING (SIZE(1..256)) "
+            "N ::= SEQUENCE SIZE (0..2) OF OCTET STRING (SIZE(1..257)) "
             "END",
             'uper')
 
@@ -311,10 +321,14 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
              32768 * b'\x01\x02',
              b'\xc4' + 32768 * b'\x01\x02'
              + b'\x00'),
-            ('I',                               b'', b'\x00'),
-            ('J',                               b'', b'\x00'),
-            ('K',                       b'\x12\x34', b'\x44\x8d\x00'),
-            ('K',                   b'\x12\x34\x56', b'\x81\x89\x1a\x2b\x00')
+            ('I',                       b'', b'\x00'),
+            ('J',                       b'', b'\x00'),
+            ('K',               b'\x12\x34', b'\x44\x8d\x00'),
+            ('K',           b'\x12\x34\x56', b'\x81\x89\x1a\x2b\x00'),
+            ('M',             [b'\x12\x34'], b'\x40\x44\x8d\x00'),
+            ('M',     [b'\x12\x34\x56\x78'], b'\x40\xc4\x8d\x15\x9e\x00'),
+            ('N',             [b'\x12\x34'], b'\x40\x22\x46\x80'),
+            ('N',     [b'\x12\x34\x56\x78'], b'\x40\x62\x46\x8a\xcf\x00'),
         ]
 
         for type_name, decoded, encoded in datas:

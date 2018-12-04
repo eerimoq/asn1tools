@@ -16,8 +16,6 @@ from .per import Type
 from .per import Boolean
 from .per import Real
 from .per import Null
-from .per import BitString
-from .per import OctetString
 from .per import Enumerated
 from .per import ObjectIdentifier
 from .per import Sequence
@@ -164,6 +162,81 @@ class Integer(Type):
 
     def __repr__(self):
         return 'Integer({})'.format(self.name)
+
+
+class BitString(per.BitString):
+
+    def encode(self, data, encoder):
+        data, number_of_bits = data
+
+        if self.has_named_bits:
+            data, number_of_bits = self.rstrip_zeros(data, number_of_bits)
+
+        if self.number_of_bits is None:
+            return self.encode_unbound(data, number_of_bits, encoder)
+        elif self.minimum != self.maximum:
+            encoder.append_non_negative_binary_integer(
+                number_of_bits - self.minimum,
+                self.number_of_bits)
+
+        encoder.append_bits(data, number_of_bits)
+
+    def decode(self, decoder):
+        if self.number_of_bits is None:
+            return self.decode_unbound(decoder)
+        else:
+            number_of_bits = self.minimum
+
+            if self.minimum != self.maximum:
+                number_of_bits += decoder.read_non_negative_binary_integer(
+                    self.number_of_bits)
+
+        value = decoder.read_bits(number_of_bits)
+
+        return (value, number_of_bits)
+
+
+class OctetString(per.OctetString):
+
+    def encode(self, data, encoder):
+        if self.has_extension_marker:
+            if self.minimum <= len(data) <= self.maximum:
+                encoder.append_bit(0)
+            else:
+                encoder.append_bit(1)
+                encoder.align()
+                encoder.append_length_determinant(len(data))
+                encoder.append_bytes(data)
+
+                return
+
+        if self.number_of_bits is None:
+            return self.encode_unbound(data, encoder)
+        elif self.minimum != self.maximum:
+            encoder.append_non_negative_binary_integer(len(data) - self.minimum,
+                                                       self.number_of_bits)
+
+        encoder.append_bytes(data)
+
+    def decode(self, decoder):
+        if self.has_extension_marker:
+            bit = decoder.read_bit()
+
+            if bit:
+                length = decoder.read_length_determinant()
+
+                return decoder.read_bytes(length)
+
+        if self.number_of_bits is None:
+            return self.decode_unbound(decoder)
+        else:
+            length = self.minimum
+
+            if self.minimum != self.maximum:
+                length += decoder.read_non_negative_binary_integer(
+                    self.number_of_bits)
+
+        return decoder.read_bytes(length)
 
 
 class NumericString(KnownMultiplierStringType):

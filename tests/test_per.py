@@ -203,34 +203,36 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "  a BIT STRING, "
             "  b BOOLEAN "
             "} "
+            "H ::= SEQUENCE SIZE (0..2) OF BIT STRING (SIZE(1..255)) "
+            "I ::= SEQUENCE SIZE (0..2) OF BIT STRING (SIZE(1..256)) "
+            "J ::= SEQUENCE SIZE (0..2) OF BIT STRING (SIZE(2..256)) "
+            "K ::= SEQUENCE SIZE (0..2) OF BIT STRING (SIZE(2..257)) "
             "END",
             'per')
 
         datas = [
-            ('A',          (b'\x40', 4), b'\x04\x40'),
+            ('A',                   (b'\x40', 4), b'\x04\x40'),
             ('A',
              (299 * b'\x55' + b'\x54', 2399),
              b'\x89\x5f' + 299 * b'\x55' + b'\x54'),
             ('A',
              (2048 * b'\x55', 16384),
              b'\xc1' + 2048 * b'\x55' + b'\x00'),
-            ('B',      (b'\x12\x80', 9), b'\x12\x80'),
-            ('C',          (b'\x34', 6), b'\x40\x34'),
-            ('D',
-             {'a': True, 'b': (b'\x40', 4)},
-             b'\x80\x04\x40'),
+            ('B',               (b'\x12\x80', 9), b'\x12\x80'),
+            ('C',                   (b'\x34', 6), b'\x40\x34'),
+            ('D', {'a': True, 'b': (b'\x40', 4)}, b'\x80\x04\x40'),
             ('E',
              {'a': True, 'b': (b'\x80', 1), 'c': (b'\x7f\x01', 16)},
              b'\xdf\xc0\x40'),
-            ('F',          (b'\x80', 1), b'\x01\x80'),
-            ('F',          (b'\xe0', 3), b'\x03\xe0'),
-            ('F',          (b'\x01', 8), b'\x08\x01'),
-            ('G',
-             {'a': (b'\x80', 2), 'b': True},
-             b'\x02\xa0'),
-            ('G',
-             {'a': (b'', 0), 'b': True},
-             b'\x00\x80'),
+            ('F',                   (b'\x80', 1), b'\x01\x80'),
+            ('F',                   (b'\xe0', 3), b'\x03\xe0'),
+            ('F',                   (b'\x01', 8), b'\x08\x01'),
+            ('G', {'a': (b'\x80', 2), 'b': True}, b'\x02\xa0'),
+            ('G',     {'a': (b'', 0), 'b': True}, b'\x00\x80'),
+            ('H',                   [(b'\x40', 2)], b'\x40\x40\x40'),
+            ('I',                   [(b'\x40', 2)], b'\x40\x01\x40'),
+            ('J',                   [(b'\x40', 2)], b'\x40\x00\x40'),
+            ('K',                   [(b'\x40', 2)], b'\x40\x00\x40')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -276,6 +278,10 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "J ::= OCTET STRING (SIZE (1..MAX)) "
             "K ::= OCTET STRING (SIZE (MIN..5)) "
             "L ::= OCTET STRING (SIZE (1..2, ...)) "
+            "M ::= SEQUENCE SIZE (0..2) OF OCTET STRING (SIZE(1..255)) "
+            "N ::= SEQUENCE SIZE (0..2) OF OCTET STRING (SIZE(1..256)) "
+            "O ::= SEQUENCE SIZE (0..2) OF OCTET STRING (SIZE(2..256)) "
+            "P ::= SEQUENCE SIZE (0..2) OF OCTET STRING (SIZE(2..257)) "
             "END",
             'per')
 
@@ -310,7 +316,15 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('J',                           b'\x12', b'\x01\x12'),
             ('K',                               b'', b'\x00'),
             ('L',                       b'\x12\x34', b'\x40\x12\x34'),
-            ('L',                   b'\x12\x34\x56', b'\x80\x03\x12\x34\x56')
+            ('L',                   b'\x12\x34\x56', b'\x80\x03\x12\x34\x56'),
+            ('M',                     [b'\x12\x34'], b'\x40\x40\x12\x34'),
+            ('M',             [b'\x12\x34\x56\x78'], b'\x40\xc0\x12\x34\x56\x78'),
+            ('N',                     [b'\x12\x34'], b'\x40\x01\x12\x34'),
+            ('N',             [b'\x12\x34\x56\x78'], b'\x40\x03\x12\x34\x56\x78'),
+            ('O',                 [b'\x12\x34\x56'], b'\x40\x40\x12\x34\x56'),
+            ('O',             [b'\x12\x34\x56\x78'], b'\x40\x80\x12\x34\x56\x78'),
+            ('P',                 [b'\x12\x34\x56'], b'\x40\x01\x12\x34\x56'),
+            ('P',             [b'\x12\x34\x56\x78'], b'\x40\x02\x12\x34\x56\x78')
         ]
 
         for type_name, decoded, encoded in datas:
@@ -2099,9 +2113,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             b'\xa9\x37\x5c\x4e'
         )
 
-        # ToDo: Fix the encoding of lPPPayload.
-        with self.assertRaises(AssertionError):
-            self.assert_encode_decode(ulp, 'ULP-PDU', decoded, encoded)
+        self.assert_encode_decode(ulp, 'ULP-PDU', decoded, encoded)
 
 
 if __name__ == '__main__':
