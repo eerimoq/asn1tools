@@ -681,6 +681,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "} "
             "G ::= SEQUENCE SIZE (1..2, ..., 6..7) OF INTEGER "
             "H ::= SEQUENCE SIZE (1..MAX) OF INTEGER "
+            "I ::= SEQUENCE SIZE (1..10000) OF OCTET STRING "
             "END",
             'per')
 
@@ -709,7 +710,8 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('G',
              6 * [1],
              b'\x80\x06\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01'),
-            ('H',               [1], b'\x01\x01\x01')
+            ('H',               [1], b'\x01\x01\x01'),
+            ('I',   300 * [b'\x56'], b'\x01\x2b' + 300 * b'\x01\x56')
         ]
 
         for type_name, decoded, encoded in datas:

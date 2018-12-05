@@ -2,8 +2,6 @@
 
 """
 
-from datetime import date
-
 from . import DecodeError
 from . import per
 from . import restricted_utc_time_to_datetime
@@ -20,8 +18,6 @@ from .per import Enumerated
 from .per import ObjectIdentifier
 from .per import Sequence
 from .per import Set
-from .per import SequenceOf
-from .per import SetOf
 from .per import Choice
 from .per import UTF8String
 from .per import GeneralString
@@ -111,6 +107,59 @@ class KnownMultiplierStringType(per.KnownMultiplierStringType):
             data.append(self.permitted_alphabet.decode(value))
 
         return bytearray(data).decode('ascii')
+
+
+class ArrayType(per.ArrayType):
+
+    def encode(self, data, encoder):
+        if self.has_extension_marker:
+            if self.minimum <= len(data) <= self.maximum:
+                encoder.append_bit(0)
+            else:
+                encoder.append_bit(1)
+                encoder.append_length_determinant(len(data))
+
+                for entry in data:
+                    self.element_type.encode(entry, encoder)
+
+                return
+
+        if self.number_of_bits is None:
+            return self.encode_unbound(data, encoder)
+        elif self.minimum != self.maximum:
+            encoder.append_non_negative_binary_integer(len(data) - self.minimum,
+                                                       self.number_of_bits)
+
+        for entry in data:
+            self.element_type.encode(entry, encoder)
+
+    def decode(self, decoder):
+        length = None
+
+        if self.has_extension_marker:
+            bit = decoder.read_bit()
+
+            if bit:
+                length = decoder.read_length_determinant()
+
+        if length is not None:
+            pass
+        elif self.number_of_bits is None:
+            return self.decode_unbound(decoder)
+        else:
+            length = self.minimum
+
+            if self.minimum != self.maximum:
+                length += decoder.read_non_negative_binary_integer(
+                    self.number_of_bits)
+
+        decoded = []
+
+        for _ in range(length):
+            decoded_element = self.element_type.decode(decoder)
+            decoded.append(decoded_element)
+
+        return decoded
 
 
 class Integer(Type):
@@ -237,6 +286,38 @@ class OctetString(per.OctetString):
                     self.number_of_bits)
 
         return decoder.read_bytes(length)
+
+
+class SequenceOf(ArrayType):
+
+    def __init__(self,
+                 name,
+                 element_type,
+                 minimum,
+                 maximum,
+                 has_extension_marker):
+        super(SequenceOf, self).__init__(name,
+                                         element_type,
+                                         minimum,
+                                         maximum,
+                                         has_extension_marker,
+                                         'SEQUENCE OF')
+
+
+class SetOf(ArrayType):
+
+    def __init__(self,
+                 name,
+                 element_type,
+                 minimum,
+                 maximum,
+                 has_extension_marker):
+        super(SetOf, self).__init__(name,
+                                    element_type,
+                                    minimum,
+                                    maximum,
+                                    has_extension_marker,
+                                    'SET OF')
 
 
 class NumericString(KnownMultiplierStringType):

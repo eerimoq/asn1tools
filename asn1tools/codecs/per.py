@@ -909,8 +909,10 @@ class ArrayType(Type):
         if self.number_of_bits is None:
             return self.encode_unbound(data, encoder)
         elif self.minimum != self.maximum:
-            encoder.append_non_negative_binary_integer(len(data) - self.minimum,
-                                                       self.number_of_bits)
+            encoder.append_constrained_whole_number(len(data),
+                                                    self.minimum,
+                                                    self.maximum,
+                                                    self.number_of_bits)
 
         for entry in data:
             self.element_type.encode(entry, encoder)
@@ -936,12 +938,12 @@ class ArrayType(Type):
             pass
         elif self.number_of_bits is None:
             return self.decode_unbound(decoder)
+        elif self.minimum != self.maximum:
+            length = decoder.read_constrained_whole_number(self.minimum,
+                                                           self.maximum,
+                                                           self.number_of_bits)
         else:
             length = self.minimum
-
-            if self.minimum != self.maximum:
-                length += decoder.read_non_negative_binary_integer(
-                    self.number_of_bits)
 
         decoded = []
 

@@ -726,6 +726,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "C ::= SEQUENCE SIZE (1..5) OF INTEGER "
             "D ::= SEQUENCE SIZE (1..2, ...) OF INTEGER "
             "E ::= SEQUENCE SIZE (1..2, ..., 6..7) OF INTEGER "
+            "F ::= SEQUENCE SIZE (1..10000) OF OCTET STRING "
             "END",
             'uper')
 
@@ -742,7 +743,8 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('D',            [2, 1], b'\x40\x40\x80\x40\x40'),
             ('E',
              6 * [1],
-             b'\x83\x00\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80')
+             b'\x83\x00\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80'),
+            ('F',   300 * [b'\x56'], b'\x04\xac' + 300 * b'\x05\x58')
         ]
 
         for type_name, decoded, encoded in datas:
