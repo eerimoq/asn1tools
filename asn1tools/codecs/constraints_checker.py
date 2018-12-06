@@ -5,7 +5,6 @@
 import string
 from copy import copy
 
-from ..parser import EXTENSION_MARKER
 from . import ConstraintsError
 from . import compiler
 from . import format_or
@@ -43,12 +42,36 @@ class Type(object):
 
     def __init__(self, name):
         self.name = name
+        self.minimum = 'MIN'
+        self.maximum = 'MAX'
+
+    def set_range(self, minimum, maximum, has_extension_marker):
+        if has_extension_marker:
+            return
+
+        if minimum is None:
+            minimum = 'MIN'
+
+        if maximum is None:
+            maximum = 'MAX'
+
+        self.minimum = minimum
+        self.maximum = maximum
 
     def set_size_range(self, minimum, maximum, has_extension_marker):
-        pass
+        self.set_range(minimum, maximum, has_extension_marker)
 
-    def set_restricted_to_range(self, minimum, maximum, has_extension_marker):
-        pass
+    def set_restricted_to_range(self,
+                                minimum,
+                                maximum,
+                                has_extension_marker):
+        self.set_range(minimum, maximum, has_extension_marker)
+
+    def is_in_range(self, value):
+        minimum_ok = ((self.minimum == 'MIN') or (value >= self.minimum))
+        maximum_ok = ((self.maximum == 'MAX') or (value <= self.maximum))
+
+        return minimum_ok and maximum_ok
 
     def encode(self, data):
         raise NotImplementedError('To be implemented by subclasses.')
@@ -56,7 +79,7 @@ class Type(object):
 
 class String(Type):
 
-    PERMITTED_ALPHABET = ''
+    PERMITTED_ALPHABET = None
 
     def __init__(self,
                  name,
@@ -65,13 +88,7 @@ class String(Type):
                  maximum,
                  has_extension_marker):
         super(String, self).__init__(name)
-
-        if has_extension_marker:
-            self.minimum = None
-            self.maximum = None
-        else:
-            self.minimum = minimum
-            self.maximum = maximum
+        self.set_size_range(minimum, maximum, has_extension_marker)
 
         if permitted_alphabet is None:
             permitted_alphabet = self.PERMITTED_ALPHABET
@@ -79,15 +96,17 @@ class String(Type):
         self.permitted_alphabet = permitted_alphabet
 
     def encode(self, data):
-        if self.minimum is not None:
-            length = len(data)
+        length = len(data)
 
-            if length < self.minimum or length > self.maximum:
-                raise ConstraintsError(
-                    'Expected between {} and {} characters, but got {}.'.format(
-                        self.minimum,
-                        self.maximum,
-                        length))
+        if not self.is_in_range(length):
+            raise ConstraintsError(
+                'Expected between {} and {} characters, but got {}.'.format(
+                    self.minimum,
+                    self.maximum,
+                    length))
+
+        if self.permitted_alphabet is None:
+            return
 
         for character in data:
             if character not in self.permitted_alphabet:
@@ -109,24 +128,9 @@ class Integer(Type):
 
     def __init__(self, name):
         super(Integer, self).__init__(name)
-        self.minimum = 'MIN'
-        self.maximum = 'MAX'
-
-    def set_restricted_to_range(self,
-                                minimum,
-                                maximum,
-                                has_extension_marker):
-        if has_extension_marker:
-            return
-
-        self.minimum = minimum
-        self.maximum = maximum
 
     def encode(self, data):
-        minimum_ok = ((self.minimum == 'MIN') or (data >= self.minimum))
-        maximum_ok = ((self.maximum == 'MAX') or (data <= self.maximum))
-
-        if not minimum_ok or not maximum_ok:
+        if not self.is_in_range(data):
             raise ConstraintsError(
                 'Expected an integer between {} and {}, but got {}.'.format(
                     self.minimum,
@@ -150,21 +154,12 @@ class BitString(Type):
 
     def __init__(self, name, minimum, maximum, has_extension_marker):
         super(BitString, self).__init__(name)
-
-        if has_extension_marker:
-            self.minimum = None
-            self.maximum = None
-        else:
-            self.minimum = minimum
-            self.maximum = maximum
+        self.set_size_range(minimum, maximum, has_extension_marker)
 
     def encode(self, data):
-        if self.minimum is None:
-            return
-
         number_of_bits = data[1]
 
-        if number_of_bits < self.minimum or number_of_bits > self.maximum:
+        if not self.is_in_range(number_of_bits):
             raise ConstraintsError(
                 'Expected between {} and {} bits, but got {}.'.format(
                     self.minimum,
@@ -182,21 +177,12 @@ class Bytes(Type):
 
     def __init__(self, name, minimum, maximum, has_extension_marker):
         super(Bytes, self).__init__(name)
-
-        if has_extension_marker:
-            self.minimum = None
-            self.maximum = None
-        else:
-            self.minimum = minimum
-            self.maximum = maximum
+        self.set_size_range(minimum, maximum, has_extension_marker)
 
     def encode(self, data):
-        if self.minimum is None:
-            return
-
         length = len(data)
 
-        if length < self.minimum or length > self.maximum:
+        if not self.is_in_range(length):
             raise ConstraintsError(
                 'Expected between {} and {} bytes, but got {}.'.format(
                     self.minimum,
@@ -227,24 +213,17 @@ class List(Type):
     def __init__(self, name, element_type, minimum, maximum, has_extension_marker):
         super(List, self).__init__(name)
         self.element_type = element_type
-
-        if has_extension_marker:
-            self.minimum = None
-            self.maximum = None
-        else:
-            self.minimum = minimum
-            self.maximum = maximum
+        self.set_size_range(minimum, maximum, has_extension_marker)
 
     def encode(self, data):
-        if self.minimum is not None:
-            length = len(data)
+        length = len(data)
 
-            if length < self.minimum or length > self.maximum:
-                raise ConstraintsError(
-                    'Expected a list of between {} and {} elements, but got {}.'.format(
-                        self.minimum,
-                        self.maximum,
-                        length))
+        if not self.is_in_range(length):
+            raise ConstraintsError(
+                'Expected a list of between {} and {} elements, but got {}.'.format(
+                    self.minimum,
+                    self.maximum,
+                    length))
 
         for entry in data:
             self.element_type.encode(entry)

@@ -93,6 +93,7 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
             "H ::= INTEGER (MIN..10) "
             "I ::= INTEGER (10..MAX) "
             "J ::= INTEGER (MIN..MAX) "
+            "K ::= INTEGER (1..2 | 4..5) "
             "END")
 
         # Ok.
@@ -113,10 +114,24 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
             ('I',     10),
             ('I',   1000),
             ('J',  -1000),
-            ('J',   1000)
+            ('J',   1000),
+            ('K',   1),
+            ('K',   2)
         ]
 
         self.assert_encode_decode_ok(foo, datas)
+
+        # ToDo: These should be good.
+        datas = [
+            ('K',
+             4,
+             'Expected an integer between 1 and 2, but got 4.'),
+            ('K',
+             5,
+             'Expected an integer between 1 and 2, but got 5.')
+        ]
+
+        self.assert_encode_decode_bad(foo, datas)
 
         # Not ok.
         datas = [
@@ -143,7 +158,11 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
              'Expected an integer between MIN and 10, but got 11.'),
             ('I',
              9,
-             'Expected an integer between 10 and MAX, but got 9.')
+             'Expected an integer between 10 and MAX, but got 9.'),
+            # ToDo: 4..5 are allowed as well.
+            ('K',
+             3,
+             'Expected an integer between 1 and 2, but got 3.')
         ]
 
         self.assert_encode_decode_bad(foo, datas)
@@ -214,13 +233,15 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
             "A ::= OCTET STRING "
             "B ::= OCTET STRING (SIZE (10)) "
             "C ::= OCTET STRING (SIZE (10, ...)) "
+            "D ::= OCTET STRING (SIZE (10..MAX)) "
             "END")
 
         # Ok.
         datas = [
             ('A',  b''),
             ('B',  10 * b'\x23'),
-            ('C',  11 * b'\x23')
+            ('C',  11 * b'\x23'),
+            ('D',  44 * b'\x23')
         ]
 
         self.assert_encode_decode_ok(foo, datas)
@@ -229,7 +250,10 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
         datas = [
             ('B',
              11 * b'\x01',
-             'Expected between 10 and 10 bytes, but got 11.')
+             'Expected between 10 and 10 bytes, but got 11.'),
+            ('D',
+             9 * b'\x01',
+             'Expected between 10 and MAX bytes, but got 9.')
         ]
 
         self.assert_encode_decode_bad(foo, datas)
@@ -276,12 +300,14 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
             "BEGIN "
             "A ::= SEQUENCE (SIZE (2)) OF INTEGER (3..5)"
             "B ::= SEQUENCE (SIZE (2, ...)) OF INTEGER (3..5)"
+            "C ::= SEQUENCE (SIZE (MIN..2)) OF INTEGER (3..5)"
             "END")
 
         # Ok.
         datas = [
             ('A',  [3, 4]),
-            ('B',  [3, 4, 5])
+            ('B',  [3, 4, 5]),
+            ('C',  [3, 4])
         ]
 
         self.assert_encode_decode_ok(foo, datas)
@@ -293,7 +319,10 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
              'Expected a list of between 2 and 2 elements, but got 3.'),
             ('A',
              [3, 6],
-             'Expected an integer between 3 and 5, but got 6.')
+             'Expected an integer between 3 and 5, but got 6.'),
+            ('C',
+             [3, 4, 5],
+             'Expected a list of between MIN and 2 elements, but got 3.')
         ]
 
         self.assert_encode_decode_bad(foo, datas)

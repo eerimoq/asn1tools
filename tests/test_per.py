@@ -866,7 +866,10 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
 
         # Bad value.
         with self.assertRaises(asn1tools.EncodeError) as cm:
-            foo.encode('A', ('b', True), check_types=False)
+            foo.encode('A',
+                       ('b', True),
+                       check_types=False,
+                       check_constraints=False)
 
         self.assertEqual(str(cm.exception), "Expected choice 'a', but got 'b'.")
 
@@ -1055,7 +1058,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
 
         # Bad character 0x19 should raise an exception.
         with self.assertRaises(asn1tools.EncodeError) as cm:
-            foo.encode('A', '\x19')
+            foo.encode('A', '\x19', check_constraints=False)
 
         self.assertEqual(
             str(cm.exception),

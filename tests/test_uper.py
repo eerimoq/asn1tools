@@ -970,7 +970,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         # Bad character 'a' should raise an exception.
         with self.assertRaises(asn1tools.EncodeError) as cm:
-            foo.encode('A', 'a')
+            foo.encode('A', 'a', check_constraints=False)
 
         self.assertEqual(
             str(cm.exception),
@@ -1026,7 +1026,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         # Bad character '[' should raise an exception.
         with self.assertRaises(asn1tools.EncodeError) as cm:
-            foo.encode('A', '[')
+            foo.encode('A', '[', check_constraints=False)
 
         self.assertEqual(
             str(cm.exception),
@@ -1155,7 +1155,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         # Bad character 0x19 should raise an exception.
         with self.assertRaises(asn1tools.EncodeError) as cm:
-            foo.encode('A', '\x19')
+            foo.encode('A', '\x19', check_constraints=False)
 
         self.assertEqual(
             str(cm.exception),
