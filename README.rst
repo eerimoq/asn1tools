@@ -266,7 +266,7 @@ The generate C source subcommand
 Generate C source code from an ASN.1 specification.
 
 NOTE: This subcommand does not yet work! The plan is to add support
-      for the OER and UPER codecs.
+for the OER and UPER codecs.
 
 No dynamic memory is used in the generated code. To achieve this all
 types in the ASN.1 specification must have a known maximum size,
