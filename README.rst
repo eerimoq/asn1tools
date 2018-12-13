@@ -9,7 +9,7 @@ A Python package for `ASN.1`_ parsing, encoding and decoding.
 This project is *under development* and does only support a subset
 of the ASN.1 specification syntax.
 
-Codecs under development:
+Supported codecs:
 
 - Basic Encoding Rules (BER)
 - Distinguished Encoding Rules (DER)
@@ -20,10 +20,9 @@ Codecs under development:
 - Unaligned Packed Encoding Rules (UPER)
 - XML Encoding Rules (XER)
 
-Planned codecs:
+Miscellaneous features:
 
-- Canonical Encoding Rules (CER)
-- Canonical Octet Encoding Rules (COER)
+- `C` source code generator (with lots of restrictions).
 
 Project homepage: https://github.com/eerimoq/asn1tools
 
@@ -265,8 +264,10 @@ The generate C source subcommand
 
 Generate C source code from an ASN.1 specification.
 
-NOTE: This subcommand does not yet work! The plan is to add support
-for the OER and UPER codecs.
+NOTE: This subcommand does not yet work!!! The plan is to add support
+for the OER and UPER codecs, and more specifically the types
+``BOOLEAN``, ``INTEGER``, ``NULL``, ``OCTET STRING``, ``ENUMERATED``,
+``SEQUENCE``, ``SEQUENCE OF``, and ``CHOICE``.
 
 No dynamic memory is used in the generated code. To achieve this all
 types in the ASN.1 specification must have a known maximum size,
