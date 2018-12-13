@@ -27,10 +27,10 @@ from .errors import EncodeError
 from .errors import DecodeError
 from .errors import CompileError
 from .errors import ConstraintsError
-
+from . import c_source
+from .version import __version__
 
 __author__ = 'Erik Moqvist'
-__version__ = '0.137.4'
 
 
 class ArgumentParserError(Error):
@@ -259,6 +259,27 @@ def _do_parse(args):
         fout.write('SPECIFICATION = {}'.format(pformat(parsed)))
 
 
+def _do_generate_c_source(args):
+    name = 'c_source'
+    filename_h = name + '.h'
+    filename_c = name + '.c'
+
+    compiled = compile_files(args.specification,
+                             args.codec)
+    header, source = c_source.generate(compiled,
+                                       args.codec,
+                                       name,
+                                       filename_h)
+
+    with open(filename_h, 'w') as fout:
+        fout.write(header)
+
+    with open(filename_c, 'w') as fout:
+        fout.write(source)
+
+    print('Successfully generated {} and {}.'.format(filename_h, filename_c))
+
+
 def _main():
     parser = argparse.ArgumentParser(
         description='Various ASN.1 utilities.')
@@ -321,6 +342,20 @@ def _main():
     subparser.add_argument('outfile',
                            help='Output file name.')
     subparser.set_defaults(func=_do_parse)
+
+    # The 'generate_c_source' subparser.
+    subparser = subparsers.add_parser(
+        'generate_c_source',
+        description='Generate C source code from given ASN.1 specification.')
+    subparser.add_argument(
+        '-c', '--codec',
+        choices=('oer', ),
+        default='oer',
+        help='Codec to generate code for (default: oer).')
+    subparser.add_argument('specification',
+                           nargs='+',
+                           help='ASN.1 specification as one or more .asn files.')
+    subparser.set_defaults(func=_do_generate_c_source)
 
     args = parser.parse_args()
 

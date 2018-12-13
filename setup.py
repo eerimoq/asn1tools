@@ -7,7 +7,7 @@ import re
 
 def find_version():
     return re.search(r"^__version__ = '(.*)'$",
-                     open('asn1tools/__init__.py', 'r').read(),
+                     open('asn1tools/version.py', 'r').read(),
                      re.MULTILINE).group(1)
 
 

@@ -260,6 +260,24 @@ subcommand, especially for larger ASN.1 specifications.
    }
    >
 
+The generate C source subcommand
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Generate C source code from an ASN.1 specification.
+
+NOTE: This subcommand does not yet work! The plan is to add support
+      for the OER and UPER codecs.
+
+No dynamic memory is used in the generated code. To achieve this all
+types in the ASN.1 specification must have a known maximum size,
+i.e. ``INTEGER (0..7)``, ``OCTET STRING (SIZE(12))``, etc. Also,
+integers must be 64 bits or less.
+
+.. code-block:: text
+
+   > asn1tools generate_c_source --codec oer tests/files/c_source.asn examples/programming_types/programming_types.asn
+   Successfully generated c_source.h and c_source.c.
+
 Contributing
 ============
 

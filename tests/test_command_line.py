@@ -1,5 +1,5 @@
 import os
-import pickle
+import re
 import unittest
 
 try:
@@ -13,6 +13,15 @@ except ImportError:
     from mock import patch
 
 import asn1tools
+
+
+def remove_date_time(string):
+    return re.sub(r' \* This file was generated.*', '', string)
+
+
+def read_file(filename):
+    with open(filename, 'r') as fin:
+        return remove_date_time(fin.read())
 
 
 class Asn1ToolsCommandLineTest(unittest.TestCase):
@@ -664,6 +673,33 @@ exit
         from test_command_line_parse import SPECIFICATION
 
         self.assertEqual(SPECIFICATION, expected_specification)
+
+    def test_command_line_generate_c_source(self):
+        argv = [
+            'asn1tools',
+            'generate_c_source',
+            'tests/files/c_source.asn',
+            'examples/programming_types/programming_types.asn'
+        ]
+
+        filename_h = 'c_source.h'
+        filename_c = 'c_source.c'
+
+        if os.path.exists(filename_h):
+            os.remove(filename_h)
+
+        if os.path.exists(filename_c):
+            os.remove(filename_c)
+
+        with patch('sys.argv', argv):
+            asn1tools._main()
+
+        self.assertEqual(
+            read_file('tests/files/c_source/' + filename_h),
+            read_file(filename_h))
+        self.assertEqual(
+            read_file('tests/files/c_source/' + filename_c),
+            read_file(filename_c))
 
 
 if __name__ == '__main__':
