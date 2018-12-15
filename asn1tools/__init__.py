@@ -261,6 +261,10 @@ def _do_parse(args):
 
 def _do_generate_c_source(args):
     name = 'c_source'
+
+    if args.namespace is not None:
+        name = '{}_{}'.format(args.namespace, name)
+
     filename_h = name + '.h'
     filename_c = name + '.c'
 
@@ -352,6 +356,9 @@ def _main():
         choices=('oer', ),
         default='oer',
         help='Codec to generate code for (default: oer).')
+    subparser.add_argument(
+        '-n', '--namespace',
+        help='Namespace of defines, structs, functions, files, etc.')
     subparser.add_argument('specification',
                            nargs='+',
                            help='ASN.1 specification as one or more .asn files.')

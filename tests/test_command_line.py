@@ -678,12 +678,13 @@ exit
         argv = [
             'asn1tools',
             'generate_c_source',
+            '--namespace', 'oer',
             'tests/files/c_source.asn',
             'examples/programming_types/programming_types.asn'
         ]
 
-        filename_h = 'c_source.h'
-        filename_c = 'c_source.c'
+        filename_h = 'oer_c_source.h'
+        filename_c = 'oer_c_source.c'
 
         if os.path.exists(filename_h):
             os.remove(filename_h)
