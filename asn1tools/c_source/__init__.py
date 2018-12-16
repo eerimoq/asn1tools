@@ -43,8 +43,12 @@ HEADER_FMT = '''\
 #include <stdbool.h>
 #include <unistd.h>
 
+#ifndef ENOMEM
+#    define ENOMEM 12
+#endif
+
 #ifndef EINVAL
-#    define EINVAL -22
+#    define EINVAL 22
 #endif
 
 {structs}
