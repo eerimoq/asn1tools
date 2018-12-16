@@ -93,12 +93,12 @@ SOURCE_FMT = '''\
 
 def generate(compiled,
              codec,
-             name,
+             namespace,
              header_name):
     """Generate C source code from given compiled specification.
 
-    `name` is used as a prefix for all defines, data structures and
-    functions.
+    `namespace` is used as a prefix for all defines, data structures
+    and functions.
 
     `header_name` is the file name of the C header file, which is
     included by the C source file.
@@ -109,10 +109,12 @@ def generate(compiled,
     """
 
     date = time.ctime()
-    include_guard = '{}_H'.format(camel_to_snake_case(name).upper())
+    include_guard = '{}_H'.format(camel_to_snake_case(namespace).upper())
 
     if codec == 'oer':
-        structs, declarations, definitions = oer.generate(compiled)
+        structs, declarations, definitions = oer.generate(
+            compiled,
+            camel_to_snake_case(namespace))
     else:
         raise Exception()
 

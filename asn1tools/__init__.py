@@ -272,7 +272,7 @@ def _do_generate_c_source(args):
                              args.codec)
     header, source = c_source.generate(compiled,
                                        args.codec,
-                                       name,
+                                       args.namespace,
                                        filename_h)
 
     with open(filename_h, 'w') as fout:
