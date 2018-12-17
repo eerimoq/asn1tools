@@ -43,6 +43,10 @@
 #    define EINVAL 22
 #endif
 
+#ifndef EOUTOFDATA
+#    define EOUTOFDATA 500
+#endif
+
 struct oer_c_source_a_t {
     bool a;
     bool b;

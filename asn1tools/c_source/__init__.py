@@ -51,6 +51,10 @@ HEADER_FMT = '''\
 #    define EINVAL 22
 #endif
 
+#ifndef EOUTOFDATA
+#    define EOUTOFDATA 500
+#endif
+
 {structs}
 {declarations}
 #endif
@@ -91,6 +95,7 @@ SOURCE_FMT = '''\
 
 #include "{header}"
 
+{helpers}
 {definitions}\
 '''
 
@@ -116,7 +121,7 @@ def generate(compiled,
     include_guard = '{}_H'.format(camel_to_snake_case(namespace).upper())
 
     if codec == 'oer':
-        structs, declarations, definitions = oer.generate(
+        structs, declarations, helpers, definitions = oer.generate(
             compiled,
             camel_to_snake_case(namespace))
     else:
@@ -131,6 +136,7 @@ def generate(compiled,
     source = SOURCE_FMT.format(version=__version__,
                                date=date,
                                header=header_name,
+                               helpers=helpers,
                                definitions=definitions)
 
     return header, source
