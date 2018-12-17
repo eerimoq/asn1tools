@@ -291,6 +291,54 @@ ssize_t oer_c_source_a_decode(
     return (0);
 }
 
+ssize_t oer_c_source_b_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct oer_c_source_b_t *src_p)
+{
+    return (0);
+}
+
+ssize_t oer_c_source_b_decode(
+    struct oer_c_source_b_t *dst_p,
+    const uint8_t *src_p,
+    size_t size)
+{
+    return (0);
+}
+
+ssize_t oer_c_source_c_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct oer_c_source_c_t *src_p)
+{
+    return (0);
+}
+
+ssize_t oer_c_source_c_decode(
+    struct oer_c_source_c_t *dst_p,
+    const uint8_t *src_p,
+    size_t size)
+{
+    return (0);
+}
+
+ssize_t oer_c_source_d_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct oer_c_source_d_t *src_p)
+{
+    return (0);
+}
+
+ssize_t oer_c_source_d_decode(
+    struct oer_c_source_d_t *dst_p,
+    const uint8_t *src_p,
+    size_t size)
+{
+    return (0);
+}
+
 ssize_t oer_programming_types_bool_encode(
     uint8_t *dst_p,
     size_t size,

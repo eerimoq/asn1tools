@@ -34,4 +34,13 @@ A ::= SEQUENCE {
     l    Bytes  (SIZE(11))
 }
 
+B ::= CHOICE {
+    a    Int8,
+    b    A
+}
+
+C ::= SEQUENCE (SIZE(0..2)) OF B
+
+D ::= C (SIZE(1))
+
 END

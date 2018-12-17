@@ -53,6 +53,13 @@ static void encoder_init(struct encoder_t *self_p,
     self_p->pos = 0;
 }
 
+static void encoder_abort(struct encoder_t *self_p,
+                          ssize_t error)
+{
+    self_p->size = -error;
+    self_p->pos = -error;
+}
+
 static size_t encoder_alloc(struct encoder_t *self_p,
                             size_t size)
 {
@@ -63,8 +70,7 @@ static size_t encoder_alloc(struct encoder_t *self_p,
         self_p->pos += size;
     } else {
         pos = -ENOMEM;
-        self_p->pos = -ENOMEM;
-        self_p->size = -ENOMEM;
+        encoder_abort(self_p, ENOMEM);
     }
 
     return (pos);
@@ -166,6 +172,13 @@ static void decoder_init(struct decoder_t *self_p,
     self_p->pos = 0;
 }
 
+static void decoder_abort(struct decoder_t *self_p,
+                          ssize_t error)
+{
+    self_p->size = -error;
+    self_p->pos = -error;
+}
+
 static size_t decoder_free(struct decoder_t *self_p,
                            size_t size)
 {
@@ -176,8 +189,7 @@ static size_t decoder_free(struct decoder_t *self_p,
         self_p->pos += size;
     } else {
         pos = -EOUTOFDATA;
-        self_p->pos = -EOUTOFDATA;
-        self_p->size = -EOUTOFDATA;
+        decoder_abort(self_p, EOUTOFDATA);
     }
 
     return (pos);
@@ -312,6 +324,54 @@ static void oer_c_source_a_decode_inner(
     decoder_read_bytes(decoder_p,
                        &dst_p->l[0],
                        decoder_read_integer_8(decoder_p));
+}
+
+static void oer_c_source_b_encode_inner(
+    struct encoder_t *encoder_p,
+    const struct oer_c_source_b_t *src_p)
+{
+    switch (src_p->choice) {
+
+    case oer_c_source_b_choice_a_t:
+        encoder_append_integer_8(encoder_p, 0x80);
+        encoder_append_integer_8(encoder_p, src_p->value.a);
+        break;
+
+    case oer_c_source_b_choice_b_t:
+        encoder_append_integer_8(encoder_p, 0x81);
+        oer_c_source_a_encode_inner(encoder_p, &src_p->value.b);
+        break;
+
+    default:
+        encoder_abort(encoder_p, EBADCHOICE);
+        break;
+    }
+}
+
+static void oer_c_source_b_decode_inner(
+    struct decoder_t *decoder_p,
+    struct oer_c_source_b_t *dst_p)
+{
+    uint8_t tag;
+
+    tag = decoder_read_integer_8(decoder_p);
+
+    switch (tag) {
+
+    case 0x80:
+        dst_p->choice = oer_c_source_b_choice_a_t;
+        dst_p->value.a = decoder_read_integer_8(decoder_p);
+        break;
+
+    case 0x81:
+        dst_p->choice = oer_c_source_b_choice_b_t;
+        oer_c_source_a_decode_inner(decoder_p, &dst_p->value.b);
+        break;
+
+    default:
+        decoder_abort(decoder_p, EBADCHOICE);
+        break;
+    }
 }
 
 static void oer_programming_types_bool_encode_inner(
@@ -490,6 +550,32 @@ ssize_t oer_c_source_a_decode(
 
     decoder_init(&decoder, src_p, size);
     oer_c_source_a_decode_inner(&decoder, dst_p);
+
+    return (decoder.pos);
+}
+
+ssize_t oer_c_source_b_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct oer_c_source_b_t *src_p)
+{
+    struct encoder_t encoder;
+
+    encoder_init(&encoder, dst_p, size);
+    oer_c_source_b_encode_inner(&encoder, src_p);
+
+    return (encoder.pos);
+}
+
+ssize_t oer_c_source_b_decode(
+    struct oer_c_source_b_t *dst_p,
+    const uint8_t *src_p,
+    size_t size)
+{
+    struct decoder_t decoder;
+
+    decoder_init(&decoder, src_p, size);
+    oer_c_source_b_decode_inner(&decoder, dst_p);
 
     return (decoder.pos);
 }

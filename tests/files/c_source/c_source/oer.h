@@ -47,6 +47,10 @@
 #    define EOUTOFDATA 500
 #endif
 
+#ifndef EBADCHOICE
+#    define EBADCHOICE 501
+#endif
+
 struct oer_c_source_a_t {
     int8_t a;
     int16_t b;
@@ -60,6 +64,29 @@ struct oer_c_source_a_t {
     double j;
     bool k;
     uint8_t l[11];
+};
+
+enum oer_c_source_b_choice_t {
+    oer_c_source_b_choice_a_t = 0,
+    oer_c_source_b_choice_b_t
+};
+
+struct oer_c_source_b_t {
+    enum oer_c_source_b_choice_t choice;
+    union {
+        int8_t a;
+        struct oer_c_source_a_t b;
+    } value;
+};
+
+struct oer_c_source_c_t {
+    uint8_t length;
+    struct oer_c_source_b_t elements[2];
+};
+
+struct oer_c_source_d_t {
+    uint8_t length;
+    struct oer_c_source_b_t elements[1];
 };
 
 struct oer_programming_types_bool_t {
@@ -113,6 +140,16 @@ ssize_t oer_c_source_a_encode(
 
 ssize_t oer_c_source_a_decode(
     struct oer_c_source_a_t *dst_p,
+    const uint8_t *src_p,
+    size_t size);
+
+ssize_t oer_c_source_b_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct oer_c_source_b_t *src_p);
+
+ssize_t oer_c_source_b_decode(
+    struct oer_c_source_b_t *dst_p,
     const uint8_t *src_p,
     size_t size);
 

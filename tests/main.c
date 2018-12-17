@@ -134,12 +134,110 @@ static void test_oer_c_source_a_decode_error_out_of_data(void)
                                  sizeof(encoded)) == -EOUTOFDATA);
 }
 
+static void test_oer_c_source_b_choice_a(void)
+{
+    uint8_t encoded[2];
+    struct oer_c_source_b_t decoded;
+
+    /* Encode. */
+    decoded.choice = oer_c_source_b_choice_a_t;
+    decoded.value.a = -10;
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(oer_c_source_b_encode(&encoded[0],
+                                 sizeof(encoded),
+                                 &decoded) == sizeof(encoded));
+    assert(memcmp(&encoded[0],
+                  "\x80\xf6",
+                  sizeof(encoded)) == 0);
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(oer_c_source_b_decode(&decoded,
+                                 &encoded[0],
+                                 sizeof(encoded)) == sizeof(encoded));
+
+    assert(decoded.choice == oer_c_source_b_choice_a_t);
+    assert(decoded.value.a == -10);
+}
+
+static void test_oer_c_source_b_choice_b(void)
+{
+    uint8_t encoded[56];
+    struct oer_c_source_b_t decoded;
+
+    /* Encode. */
+    decoded.choice = oer_c_source_b_choice_b_t;
+    decoded.value.b.a = -1;
+    decoded.value.b.b = -2;
+    decoded.value.b.c = -3;
+    decoded.value.b.d = -4;
+    decoded.value.b.e = 1;
+    decoded.value.b.f = 2;
+    decoded.value.b.g = 3;
+    decoded.value.b.h = 4;
+    decoded.value.b.i = 1.0f;
+    decoded.value.b.j = 1.0;
+    decoded.value.b.k = true;
+    memset(&decoded.value.b.l[0], 5, sizeof(decoded.value.b.l));
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(oer_c_source_b_encode(&encoded[0],
+                                 sizeof(encoded),
+                                 &decoded) == sizeof(encoded));
+    assert(memcmp(&encoded[0],
+                  "\x81\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff\xff\xff"
+                  "\xff\xff\xfc\x01\x00\x02\x00\x00\x00\x03\x00\x00\x00"
+                  "\x00\x00\x00\x00\x04\x3f\x80\x00\x00\x3f\xf0\x00\x00"
+                  "\x00\x00\x00\x00\xff\x0b\x05\x05\x05\x05\x05\x05\x05"
+                  "\x05\x05\x05\x05",
+                  sizeof(encoded)) == 0);
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(oer_c_source_b_decode(&decoded,
+                                 &encoded[0],
+                                 sizeof(encoded)) == sizeof(encoded));
+
+    assert(decoded.choice == oer_c_source_b_choice_b_t);
+    assert(decoded.value.b.a == -1);
+    assert(decoded.value.b.b == -2);
+    assert(decoded.value.b.c == -3);
+    assert(decoded.value.b.d == -4);
+    assert(decoded.value.b.e == 1);
+    assert(decoded.value.b.f == 2);
+    assert(decoded.value.b.g == 3);
+    assert(decoded.value.b.h == 4);
+    assert(fequal(decoded.value.b.i, 1.0f));
+    assert(fequal(decoded.value.b.j, 1.0));
+    assert(decoded.value.b.k);
+    assert(memcmp(&decoded.value.b.l[0],
+                  "\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05",
+                  sizeof(decoded.value.b.l)) == 0);
+}
+
+static void test_oer_c_source_b_decode_error_bad_choice(void)
+{
+    /* 0x80 (a) and 0x81 (b) are valid tags in the encoded data. */
+    uint8_t encoded[2] = "\x82\x00";
+    struct oer_c_source_b_t decoded;
+
+    memset(&decoded, 0, sizeof(decoded));
+    assert(oer_c_source_b_decode(&decoded,
+                                 &encoded[0],
+                                 sizeof(encoded)) == -EBADCHOICE);
+}
+
 int main(void)
 {
     test_oer_c_source_a();
     test_oer_c_source_a_decode_spare_data();
     test_oer_c_source_a_encode_error_no_mem();
     test_oer_c_source_a_decode_error_out_of_data();
+
+    test_oer_c_source_b_choice_a();
+    test_oer_c_source_b_choice_b();
+    test_oer_c_source_b_decode_error_bad_choice();
 
     return (0);
 }
