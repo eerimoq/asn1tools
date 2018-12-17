@@ -228,6 +228,64 @@ static void test_oer_c_source_b_decode_error_bad_choice(void)
                                  sizeof(encoded)) == -EBADCHOICE);
 }
 
+static void test_oer_c_source_c_empty(void)
+{
+    uint8_t encoded[2];
+    struct oer_c_source_c_t decoded;
+
+    /* Encode. */
+    decoded.length = 0;
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(oer_c_source_c_encode(&encoded[0],
+                                 sizeof(encoded),
+                                 &decoded) == sizeof(encoded));
+    assert(memcmp(&encoded[0],
+                  "\x01\x00",
+                  sizeof(encoded)) == 0);
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(oer_c_source_c_decode(&decoded,
+                                 &encoded[0],
+                                 sizeof(encoded)) == sizeof(encoded));
+
+    assert(decoded.length == 0);
+}
+
+static void test_oer_c_source_c_2_elements(void)
+{
+    uint8_t encoded[6];
+    struct oer_c_source_c_t decoded;
+
+    /* Encode. */
+    decoded.length = 2;
+    decoded.elements[0].choice = oer_c_source_b_choice_a_t;
+    decoded.elements[0].value.a = -11;
+    decoded.elements[1].choice = oer_c_source_b_choice_a_t;
+    decoded.elements[1].value.a = 13;
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(oer_c_source_c_encode(&encoded[0],
+                                 sizeof(encoded),
+                                 &decoded) == sizeof(encoded));
+    assert(memcmp(&encoded[0],
+                  "\x01\x02\x80\xf5\x80\x0d",
+                  sizeof(encoded)) == 0);
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(oer_c_source_c_decode(&decoded,
+                                 &encoded[0],
+                                 sizeof(encoded)) == sizeof(encoded));
+
+    assert(decoded.length == 2);
+    assert(decoded.elements[0].choice == oer_c_source_b_choice_a_t);
+    assert(decoded.elements[0].value.a == -11);
+    assert(decoded.elements[1].choice == oer_c_source_b_choice_a_t);
+    assert(decoded.elements[1].value.a == 13);
+}
+
 int main(void)
 {
     test_oer_c_source_a();
@@ -238,6 +296,9 @@ int main(void)
     test_oer_c_source_b_choice_a();
     test_oer_c_source_b_choice_b();
     test_oer_c_source_b_decode_error_bad_choice();
+
+    test_oer_c_source_c_empty();
+    test_oer_c_source_c_2_elements();
 
     return (0);
 }

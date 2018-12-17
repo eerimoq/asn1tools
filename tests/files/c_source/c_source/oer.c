@@ -374,6 +374,34 @@ static void oer_c_source_b_decode_inner(
     }
 }
 
+static void oer_c_source_c_encode_inner(
+    struct encoder_t *encoder_p,
+    const struct oer_c_source_c_t *src_p)
+{
+    uint8_t i;
+
+    encoder_append_integer_8(encoder_p, 1);
+    encoder_append_integer_8(encoder_p, src_p->length);
+
+    for (i = 0; i < src_p->length; i++) {
+        oer_c_source_b_encode_inner(encoder_p, &src_p->elements[i]);
+    }
+}
+
+static void oer_c_source_c_decode_inner(
+    struct decoder_t *decoder_p,
+    struct oer_c_source_c_t *dst_p)
+{
+    uint8_t i;
+
+    decoder_read_integer_8(decoder_p);
+    dst_p->length = decoder_read_integer_8(decoder_p);
+
+    for (i = 0; i < dst_p->length; i++) {
+        oer_c_source_b_decode_inner(decoder_p, &dst_p->elements[i]);
+    }
+}
+
 static void oer_programming_types_bool_encode_inner(
     struct encoder_t *encoder_p,
     const struct oer_programming_types_bool_t *src_p)
@@ -576,6 +604,32 @@ ssize_t oer_c_source_b_decode(
 
     decoder_init(&decoder, src_p, size);
     oer_c_source_b_decode_inner(&decoder, dst_p);
+
+    return (decoder.pos);
+}
+
+ssize_t oer_c_source_c_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct oer_c_source_c_t *src_p)
+{
+    struct encoder_t encoder;
+
+    encoder_init(&encoder, dst_p, size);
+    oer_c_source_c_encode_inner(&encoder, src_p);
+
+    return (encoder.pos);
+}
+
+ssize_t oer_c_source_c_decode(
+    struct oer_c_source_c_t *dst_p,
+    const uint8_t *src_p,
+    size_t size)
+{
+    struct decoder_t decoder;
+
+    decoder_init(&decoder, src_p, size);
+    oer_c_source_c_decode_inner(&decoder, dst_p);
 
     return (decoder.pos);
 }

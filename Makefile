@@ -7,8 +7,11 @@ C_SOURCES := \
 	tests/files/c_source/c_source/oer.c
 
 CFLAGS := \
+	-O3 \
+	-std=c99 \
 	-Wall \
 	-Wextra \
+	-Wpedantic \
 	-Wdouble-promotion \
 	-Wfloat-equal \
 	-Wformat=2 \
@@ -35,8 +38,7 @@ test:
 
 .PHONY: test-c
 test-c:
-	$(CC) $(CFLAGS) -Wpedantic -std=c99 -O3 $(C_SOURCES) \
-	    -o main
+	$(CC) $(CFLAGS) $(C_SOURCES) -o main
 	./main
 
 .PHONY: test-sdist
