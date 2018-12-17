@@ -41,6 +41,4 @@ B ::= CHOICE {
 
 C ::= SEQUENCE (SIZE(0..2)) OF B
 
-D ::= C (SIZE(1))
-
 END
