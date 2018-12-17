@@ -35,12 +35,16 @@
 #include <stdbool.h>
 #include <unistd.h>
 
-#ifndef EINVAL
-#    define EINVAL -22
+#ifndef ENOMEM
+#    define ENOMEM 12
 #endif
 
-#ifndef ENOMEM
-#    define ENOMEM -12
+#ifndef EINVAL
+#    define EINVAL 22
+#endif
+
+#ifndef EOUTOFDATA
+#    define EOUTOFDATA 500
 #endif
 
 struct oer_c_source_a_t {

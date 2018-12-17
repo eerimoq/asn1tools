@@ -175,9 +175,9 @@ static size_t decoder_free(struct decoder_t *self_p,
         pos = self_p->pos;
         self_p->pos += size;
     } else {
-        pos = -ENOMEM;
-        self_p->pos = -ENOMEM;
-        self_p->size = -ENOMEM;
+        pos = -EOUTOFDATA;
+        self_p->pos = -EOUTOFDATA;
+        self_p->size = -EOUTOFDATA;
     }
 
     return (pos);
@@ -191,11 +191,12 @@ static void decoder_read_bytes(struct decoder_t *self_p,
 
     pos = decoder_free(self_p, size);
 
-    if (pos < 0) {
-        return;
+    if (pos >= 0) {
+        memcpy(buf_p, &self_p->buf_p[pos], size);
+    } else {
+        memset(buf_p, 0, size);
     }
 
-    memcpy(buf_p, &self_p->buf_p[pos], size);
 }
 
 static uint8_t decoder_read_integer_8(struct decoder_t *self_p)
