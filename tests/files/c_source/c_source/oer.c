@@ -56,8 +56,10 @@ static void encoder_init(struct encoder_t *self_p,
 static void encoder_abort(struct encoder_t *self_p,
                           ssize_t error)
 {
-    self_p->size = -error;
-    self_p->pos = -error;
+    if (self_p->size >= 0) {
+        self_p->size = -error;
+        self_p->pos = -error;
+    }
 }
 
 static size_t encoder_alloc(struct encoder_t *self_p,
@@ -175,8 +177,10 @@ static void decoder_init(struct decoder_t *self_p,
 static void decoder_abort(struct decoder_t *self_p,
                           ssize_t error)
 {
-    self_p->size = -error;
-    self_p->pos = -error;
+    if (self_p->size >= 0) {
+        self_p->size = -error;
+        self_p->pos = -error;
+    }
 }
 
 static size_t decoder_free(struct decoder_t *self_p,
@@ -397,6 +401,10 @@ static void oer_c_source_c_decode_inner(
     decoder_read_integer_8(decoder_p);
     dst_p->length = decoder_read_integer_8(decoder_p);
 
+    if (dst_p->length > 2) {
+        decoder_abort(decoder_p, EBADLENGTH);
+    }
+
     for (i = 0; i < dst_p->length; i++) {
         oer_c_source_b_decode_inner(decoder_p, &dst_p->elements[i]);
     }
@@ -449,6 +457,10 @@ static void oer_c_source_d_decode_inner(
     decoder_read_integer_8(decoder_p);
     dst_p->length = decoder_read_integer_8(decoder_p);
 
+    if (dst_p->length > 10) {
+        decoder_abort(decoder_p, EBADLENGTH);
+    }
+
     for (i = 0; i < dst_p->length; i++) {
         tag = decoder_read_integer_8(decoder_p);
 
@@ -473,6 +485,11 @@ static void oer_c_source_d_decode_inner(
         dst_p->elements[i].a.e.length = decoder_read_integer_8(decoder_p);
         dst_p->elements[i].f.g = decoder_read_integer_8(decoder_p);
         dst_p->elements[i].f.k.length = decoder_read_integer_8(decoder_p);
+
+        if (dst_p->elements[i].f.k.length > 2) {
+            decoder_abort(decoder_p, EBADLENGTH);
+        }
+
         decoder_read_bytes(decoder_p,
                            dst_p->elements[i].f.k.value,
                            dst_p->elements[i].f.k.length);

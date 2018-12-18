@@ -51,6 +51,10 @@
 #    define EBADCHOICE 501
 #endif
 
+#ifndef EBADLENGTH
+#    define EBADLENGTH 502
+#endif
+
 struct oer_c_source_a_t {
     int8_t a;
     int16_t b;

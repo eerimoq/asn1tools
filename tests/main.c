@@ -128,7 +128,6 @@ static void test_oer_c_source_a_decode_error_out_of_data(void)
         "\x05\x05";
     struct oer_c_source_a_t decoded;
 
-    memset(&decoded, 0, sizeof(decoded));
     assert(oer_c_source_a_decode(&decoded,
                                  &encoded[0],
                                  sizeof(encoded)) == -EOUTOFDATA);
@@ -222,7 +221,6 @@ static void test_oer_c_source_b_decode_error_bad_choice(void)
     uint8_t encoded[2] = "\x82\x00";
     struct oer_c_source_b_t decoded;
 
-    memset(&decoded, 0, sizeof(decoded));
     assert(oer_c_source_b_decode(&decoded,
                                  &encoded[0],
                                  sizeof(encoded)) == -EBADCHOICE);
@@ -286,6 +284,16 @@ static void test_oer_c_source_c_2_elements(void)
     assert(decoded.elements[1].value.a == 13);
 }
 
+static void test_oer_c_source_c_decode_error_3_elements(void)
+{
+    uint8_t encoded[8] = "\x01\x03\x80\xf5\x80\x0d\x80\x0e";
+    struct oer_c_source_c_t decoded;
+
+    assert(oer_c_source_c_decode(&decoded,
+                                 &encoded[0],
+                                 sizeof(encoded)) == -EBADLENGTH);
+}
+
 static void test_oer_c_source_d(void)
 {
     uint8_t encoded[9];
@@ -336,6 +344,7 @@ int main(void)
 
     test_oer_c_source_c_empty();
     test_oer_c_source_c_2_elements();
+    test_oer_c_source_c_decode_error_3_elements();
 
     test_oer_c_source_d();
 
