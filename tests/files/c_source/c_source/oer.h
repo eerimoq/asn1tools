@@ -93,10 +93,10 @@ enum oer_c_source_d_a_b_choice_t {
     oer_c_source_d_a_b_choice_d_t
 };
 
-enum oer_c_source_d_f_g_choice_t {
-    oer_c_source_d_f_g_choice_h_t = 0,
-    oer_c_source_d_f_g_choice_i_t,
-    oer_c_source_d_f_g_choice_j_t
+enum oer_c_source_d_f_g_t {
+    oer_c_source_d_f_g_h_t = 0,
+    oer_c_source_d_f_g_i_t,
+    oer_c_source_d_f_g_j_t
 };
 
 struct oer_c_source_d_a_t {
@@ -113,7 +113,7 @@ struct oer_c_source_d_a_t {
 };
 
 struct oer_c_source_d_f_t {
-    enum oer_c_source_d_f_g_choice_t g;
+    enum oer_c_source_d_f_g_t g;
     struct {
         uint8_t length;
         uint8_t value[2];

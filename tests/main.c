@@ -319,7 +319,7 @@ static void test_oer_c_source_d(void)
     decoded.elements[0].a.b.choice = oer_c_source_d_a_b_choice_d_t;
     decoded.elements[0].a.b.value.d = false;
     decoded.elements[0].a.e.length = 3;
-    decoded.elements[0].f.g = oer_c_source_d_f_g_choice_j_t;
+    decoded.elements[0].f.g = oer_c_source_d_f_g_j_t;
     decoded.elements[0].f.k.length = 1;
     decoded.elements[0].f.k.value[0] = 0x54;
 
@@ -341,7 +341,7 @@ static void test_oer_c_source_d(void)
     assert(decoded.elements[0].a.b.choice == oer_c_source_d_a_b_choice_d_t);
     assert(decoded.elements[0].a.b.value.d == false);
     assert(decoded.elements[0].a.e.length == 3);
-    assert(decoded.elements[0].f.g == oer_c_source_d_f_g_choice_j_t);
+    assert(decoded.elements[0].f.g == oer_c_source_d_f_g_j_t);
     assert(decoded.elements[0].f.k.length == 1);
     assert(decoded.elements[0].f.k.value[0] == 0x54);
 }
