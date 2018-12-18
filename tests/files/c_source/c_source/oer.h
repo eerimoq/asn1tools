@@ -84,9 +84,44 @@ struct oer_c_source_c_t {
     struct oer_c_source_b_t elements[2];
 };
 
+enum oer_c_source_d_a_b_choice_t {
+    oer_c_source_d_a_b_choice_c_t = 0,
+    oer_c_source_d_a_b_choice_d_t
+};
+
+enum oer_c_source_d_f_g_choice_t {
+    oer_c_source_d_f_g_choice_h_t = 0,
+    oer_c_source_d_f_g_choice_i_t,
+    oer_c_source_d_f_g_choice_j_t
+};
+
+struct oer_c_source_d_a_t {
+    struct {
+        enum oer_c_source_d_a_b_choice_t choice;
+        union {
+            uint8_t c;
+            bool d;
+        } value;
+    } b;
+    struct {
+        uint8_t length;
+    } e;
+};
+
+struct oer_c_source_d_f_t {
+    enum oer_c_source_d_f_g_choice_t g;
+    struct {
+        uint8_t length;
+        uint8_t value[2];
+    } k;
+};
+
 struct oer_c_source_d_t {
     uint8_t length;
-    struct oer_c_source_b_t elements[1];
+    struct {
+        struct oer_c_source_d_a_t a;
+        struct oer_c_source_d_f_t f;
+    } elements[10];
 };
 
 struct oer_programming_types_bool_t {
@@ -160,6 +195,16 @@ ssize_t oer_c_source_c_encode(
 
 ssize_t oer_c_source_c_decode(
     struct oer_c_source_c_t *dst_p,
+    const uint8_t *src_p,
+    size_t size);
+
+ssize_t oer_c_source_d_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct oer_c_source_d_t *src_p);
+
+ssize_t oer_c_source_d_decode(
+    struct oer_c_source_d_t *dst_p,
     const uint8_t *src_p,
     size_t size);
 

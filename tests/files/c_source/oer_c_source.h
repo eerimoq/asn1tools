@@ -70,6 +70,10 @@ struct oer_c_source_c_t {
 
 };
 
+struct oer_c_source_d_t {
+
+};
+
 struct oer_programming_types_bool_t {
 
 };
@@ -203,6 +207,34 @@ ssize_t oer_c_source_c_encode(
  */
 ssize_t oer_c_source_c_decode(
     struct oer_c_source_c_t *dst_p,
+    const uint8_t *src_p,
+    size_t size);
+
+/**
+ * Encode type D defined in module CSource.
+ *
+ * @param[out] dst_p Buffer to encode into.
+ * @param[in] size Size of dst_p.
+ * @param[in] src_p Data to encode.
+ *
+ * @return Encoded data length or negative error code.
+ */
+ssize_t oer_c_source_d_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct oer_c_source_d_t *src_p);
+
+/**
+ * Decode type D defined in module CSource.
+ *
+ * @param[out] dst_p Decoded data.
+ * @param[in] src_p Data to decode.
+ * @param[in] size Size of src_p.
+ *
+ * @return Number of bytes decoded or negative error code.
+ */
+ssize_t oer_c_source_d_decode(
+    struct oer_c_source_d_t *dst_p,
     const uint8_t *src_p,
     size_t size);
 

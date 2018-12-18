@@ -41,4 +41,21 @@ B ::= CHOICE {
 
 C ::= SEQUENCE (SIZE(0..2)) OF B
 
+D ::= SEQUENCE (SIZE(1..10)) OF SEQUENCE {
+    a SEQUENCE {
+        b CHOICE {
+            c INTEGER (0..1),
+            d BOOLEAN
+        },
+        e SEQUENCE (SIZE(3..4)) OF NULL,
+        f NULL
+    },
+    f SEQUENCE {
+        g ENUMERATED {
+            h, i, j
+        },
+        k OCTET STRING (SIZE(1..2))
+    }
+}
+
 END
