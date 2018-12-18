@@ -133,6 +133,21 @@ static void test_oer_c_source_a_decode_error_out_of_data(void)
                                  sizeof(encoded)) == -EOUTOFDATA);
 }
 
+static void test_oer_c_source_a_decode_error_bad_length(void)
+{
+    uint8_t encoded[55] =
+        "\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff\xff\xff\xff"
+        "\xff\xfc\x01\x00\x02\x00\x00\x00\x03\x00\x00\x00\x00"
+        "\x00\x00\x00\x04\x3f\x80\x00\x00\x3f\xf0\x00\x00\x00"
+        "\x00\x00\x00\xff\x0c\x05\x05\x05\x05\x05\x05\x05\x05"
+        "\x05\x05\x05";
+    struct oer_c_source_a_t decoded;
+
+    assert(oer_c_source_a_decode(&decoded,
+                                 &encoded[0],
+                                 sizeof(encoded)) == -EBADLENGTH);
+}
+
 static void test_oer_c_source_b_choice_a(void)
 {
     uint8_t encoded[2];
@@ -284,7 +299,7 @@ static void test_oer_c_source_c_2_elements(void)
     assert(decoded.elements[1].value.a == 13);
 }
 
-static void test_oer_c_source_c_decode_error_3_elements(void)
+static void test_oer_c_source_c_decode_error_bad_length(void)
 {
     uint8_t encoded[8] = "\x01\x03\x80\xf5\x80\x0d\x80\x0e";
     struct oer_c_source_c_t decoded;
@@ -337,6 +352,7 @@ int main(void)
     test_oer_c_source_a_decode_spare_data();
     test_oer_c_source_a_encode_error_no_mem();
     test_oer_c_source_a_decode_error_out_of_data();
+    test_oer_c_source_a_decode_error_bad_length();
 
     test_oer_c_source_b_choice_a();
     test_oer_c_source_b_choice_b();
@@ -344,7 +360,7 @@ int main(void)
 
     test_oer_c_source_c_empty();
     test_oer_c_source_c_2_elements();
-    test_oer_c_source_c_decode_error_3_elements();
+    test_oer_c_source_c_decode_error_bad_length();
 
     test_oer_c_source_d();
 

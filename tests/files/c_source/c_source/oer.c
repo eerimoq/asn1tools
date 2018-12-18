@@ -314,6 +314,8 @@ static void oer_c_source_a_decode_inner(
     struct decoder_t *decoder_p,
     struct oer_c_source_a_t *dst_p)
 {
+    uint8_t length;
+
     dst_p->a = decoder_read_integer_8(decoder_p);
     dst_p->b = decoder_read_integer_16(decoder_p);
     dst_p->c = decoder_read_integer_32(decoder_p);
@@ -325,9 +327,15 @@ static void oer_c_source_a_decode_inner(
     dst_p->i = decoder_read_float(decoder_p);
     dst_p->j = decoder_read_double(decoder_p);
     dst_p->k = decoder_read_bool(decoder_p);
-    decoder_read_bytes(decoder_p,
-                       &dst_p->l[0],
-                       decoder_read_integer_8(decoder_p));
+    length = decoder_read_integer_8(decoder_p);
+
+    if (length != 11) {
+        decoder_abort(decoder_p, EBADLENGTH);
+
+        return;
+    }
+
+    decoder_read_bytes(decoder_p, &dst_p->l[0], length);
 }
 
 static void oer_c_source_b_encode_inner(
@@ -403,6 +411,8 @@ static void oer_c_source_c_decode_inner(
 
     if (dst_p->length > 2) {
         decoder_abort(decoder_p, EBADLENGTH);
+
+        return;
     }
 
     for (i = 0; i < dst_p->length; i++) {
@@ -459,6 +469,8 @@ static void oer_c_source_d_decode_inner(
 
     if (dst_p->length > 10) {
         decoder_abort(decoder_p, EBADLENGTH);
+
+        return;
     }
 
     for (i = 0; i < dst_p->length; i++) {
@@ -488,6 +500,8 @@ static void oer_c_source_d_decode_inner(
 
         if (dst_p->elements[i].f.k.length > 2) {
             decoder_abort(decoder_p, EBADLENGTH);
+
+            return;
         }
 
         decoder_read_bytes(decoder_p,
