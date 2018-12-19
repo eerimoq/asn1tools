@@ -55,6 +55,14 @@ D ::= SEQUENCE (SIZE(1..10)) OF SEQUENCE {
             h, i, j
         },
         k OCTET STRING (SIZE(1..2))
+    },
+    l SEQUENCE {
+        m BOOLEAN OPTIONAL,
+        n INTEGER (-3..3) DEFAULT 3,
+        o SEQUENCE {
+            p OCTET STRING (SIZE(5)),
+            q BOOLEAN OPTIONAL
+        } OPTIONAL
     }
 }
 

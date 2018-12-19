@@ -134,6 +134,17 @@ struct oer_c_source_d_t {
                 uint8_t value[2];
             } k;
         } f;
+        struct {
+            bool is_m_present;
+            bool m;
+            int8_t n;
+            bool is_o_present;
+            struct {
+                uint8_t p[5];
+                bool is_q_present;
+                bool q;
+            } o;
+        } l;
     } elements[10];
 };
 
