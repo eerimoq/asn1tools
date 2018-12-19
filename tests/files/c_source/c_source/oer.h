@@ -112,19 +112,28 @@ struct oer_c_source_d_a_t {
     } e;
 };
 
-struct oer_c_source_d_f_t {
-    enum oer_c_source_d_f_g_t g;
-    struct {
-        uint8_t length;
-        uint8_t value[2];
-    } k;
-};
-
 struct oer_c_source_d_t {
     uint8_t length;
     struct {
-        struct oer_c_source_d_a_t a;
-        struct oer_c_source_d_f_t f;
+        struct {
+            struct {
+                enum oer_c_source_d_a_b_choice_t choice;
+                union {
+                    uint8_t c;
+                    bool d;
+                } value;
+            } b;
+            struct {
+                uint8_t length;
+            } e;
+        } a;
+        struct {
+            enum oer_c_source_d_f_g_t g;
+            struct {
+                uint8_t length;
+                uint8_t value[2];
+            } k;
+        } f;
     } elements[10];
 };
 

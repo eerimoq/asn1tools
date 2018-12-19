@@ -452,7 +452,7 @@ static void oer_c_source_d_encode_inner(
         encoder_append_integer_8(encoder_p, src_p->elements[i].f.g);
         encoder_append_integer_8(encoder_p, src_p->elements[i].f.k.length);
         encoder_append_bytes(encoder_p,
-                             src_p->elements[i].f.k.value,
+                             &src_p->elements[i].f.k.value[0],
                              src_p->elements[i].f.k.length);
     }
 }
@@ -505,7 +505,7 @@ static void oer_c_source_d_decode_inner(
         }
 
         decoder_read_bytes(decoder_p,
-                           dst_p->elements[i].f.k.value,
+                           &dst_p->elements[i].f.k.value[0],
                            dst_p->elements[i].f.k.length);
     }
 }
