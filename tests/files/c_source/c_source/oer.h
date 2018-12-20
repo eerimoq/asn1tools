@@ -55,6 +55,9 @@
 #    define EBADLENGTH 502
 #endif
 
+/**
+ * Type A in module CSource.
+ */
 struct oer_c_source_a_t {
     int8_t a;
     int16_t b;
@@ -70,6 +73,9 @@ struct oer_c_source_a_t {
     uint8_t l[11];
 };
 
+/**
+ * Type B in module CSource.
+ */
 enum oer_c_source_b_choice_t {
     oer_c_source_b_choice_a_t = 0,
     oer_c_source_b_choice_b_t
@@ -83,11 +89,17 @@ struct oer_c_source_b_t {
     } value;
 };
 
+/**
+ * Type C in module CSource.
+ */
 struct oer_c_source_c_t {
     uint8_t length;
     struct oer_c_source_b_t elements[2];
 };
 
+/**
+ * Type D in module CSource.
+ */
 enum oer_c_source_d_a_b_choice_t {
     oer_c_source_d_a_b_choice_c_t = 0,
     oer_c_source_d_a_b_choice_d_t
@@ -97,19 +109,6 @@ enum oer_c_source_d_f_g_t {
     oer_c_source_d_f_g_h_t = 0,
     oer_c_source_d_f_g_i_t,
     oer_c_source_d_f_g_j_t
-};
-
-struct oer_c_source_d_a_t {
-    struct {
-        enum oer_c_source_d_a_b_choice_t choice;
-        union {
-            uint8_t c;
-            bool d;
-        } value;
-    } b;
-    struct {
-        uint8_t length;
-    } e;
 };
 
 struct oer_c_source_d_t {
@@ -148,195 +147,484 @@ struct oer_c_source_d_t {
     } elements[10];
 };
 
+/**
+ * Type Bool in module ProgrammingTypes.
+ */
 struct oer_programming_types_bool_t {
     bool value;
 };
 
+/**
+ * Type Double in module ProgrammingTypes.
+ */
 struct oer_programming_types_double_t {
     double value;
 };
 
+/**
+ * Type Float in module ProgrammingTypes.
+ */
 struct oer_programming_types_float_t {
     float value;
 };
 
+/**
+ * Type Int16 in module ProgrammingTypes.
+ */
 struct oer_programming_types_int16_t {
     int16_t value;
 };
 
+/**
+ * Type Int32 in module ProgrammingTypes.
+ */
 struct oer_programming_types_int32_t {
     int32_t value;
 };
 
+/**
+ * Type Int64 in module ProgrammingTypes.
+ */
 struct oer_programming_types_int64_t {
     int64_t value;
 };
 
+/**
+ * Type Int8 in module ProgrammingTypes.
+ */
 struct oer_programming_types_int8_t {
     int8_t value;
 };
 
+/**
+ * Type Uint16 in module ProgrammingTypes.
+ */
 struct oer_programming_types_uint16_t {
     uint16_t value;
 };
 
+/**
+ * Type Uint32 in module ProgrammingTypes.
+ */
 struct oer_programming_types_uint32_t {
     uint32_t value;
 };
 
+/**
+ * Type Uint64 in module ProgrammingTypes.
+ */
 struct oer_programming_types_uint64_t {
     uint64_t value;
 };
 
+/**
+ * Type Uint8 in module ProgrammingTypes.
+ */
 struct oer_programming_types_uint8_t {
     uint8_t value;
 };
 
+/**
+ * Encode type A defined in module CSource.
+ *
+ * @param[out] dst_p Buffer to encode into.
+ * @param[in] size Size of dst_p.
+ * @param[in] src_p Data to encode.
+ *
+ * @return Encoded data length or negative error code.
+ */
 ssize_t oer_c_source_a_encode(
     uint8_t *dst_p,
     size_t size,
     const struct oer_c_source_a_t *src_p);
 
+/**
+ * Decode type A defined in module CSource.
+ *
+ * @param[out] dst_p Decoded data.
+ * @param[in] src_p Data to decode.
+ * @param[in] size Size of src_p.
+ *
+ * @return Number of bytes decoded or negative error code.
+ */
 ssize_t oer_c_source_a_decode(
     struct oer_c_source_a_t *dst_p,
     const uint8_t *src_p,
     size_t size);
 
+/**
+ * Encode type B defined in module CSource.
+ *
+ * @param[out] dst_p Buffer to encode into.
+ * @param[in] size Size of dst_p.
+ * @param[in] src_p Data to encode.
+ *
+ * @return Encoded data length or negative error code.
+ */
 ssize_t oer_c_source_b_encode(
     uint8_t *dst_p,
     size_t size,
     const struct oer_c_source_b_t *src_p);
 
+/**
+ * Decode type B defined in module CSource.
+ *
+ * @param[out] dst_p Decoded data.
+ * @param[in] src_p Data to decode.
+ * @param[in] size Size of src_p.
+ *
+ * @return Number of bytes decoded or negative error code.
+ */
 ssize_t oer_c_source_b_decode(
     struct oer_c_source_b_t *dst_p,
     const uint8_t *src_p,
     size_t size);
 
+/**
+ * Encode type C defined in module CSource.
+ *
+ * @param[out] dst_p Buffer to encode into.
+ * @param[in] size Size of dst_p.
+ * @param[in] src_p Data to encode.
+ *
+ * @return Encoded data length or negative error code.
+ */
 ssize_t oer_c_source_c_encode(
     uint8_t *dst_p,
     size_t size,
     const struct oer_c_source_c_t *src_p);
 
+/**
+ * Decode type C defined in module CSource.
+ *
+ * @param[out] dst_p Decoded data.
+ * @param[in] src_p Data to decode.
+ * @param[in] size Size of src_p.
+ *
+ * @return Number of bytes decoded or negative error code.
+ */
 ssize_t oer_c_source_c_decode(
     struct oer_c_source_c_t *dst_p,
     const uint8_t *src_p,
     size_t size);
 
+/**
+ * Encode type D defined in module CSource.
+ *
+ * @param[out] dst_p Buffer to encode into.
+ * @param[in] size Size of dst_p.
+ * @param[in] src_p Data to encode.
+ *
+ * @return Encoded data length or negative error code.
+ */
 ssize_t oer_c_source_d_encode(
     uint8_t *dst_p,
     size_t size,
     const struct oer_c_source_d_t *src_p);
 
+/**
+ * Decode type D defined in module CSource.
+ *
+ * @param[out] dst_p Decoded data.
+ * @param[in] src_p Data to decode.
+ * @param[in] size Size of src_p.
+ *
+ * @return Number of bytes decoded or negative error code.
+ */
 ssize_t oer_c_source_d_decode(
     struct oer_c_source_d_t *dst_p,
     const uint8_t *src_p,
     size_t size);
 
-ssize_t oer_programming_types_bool_encode(
-    uint8_t *dst_p,
-    size_t size,
-    const struct oer_programming_types_bool_t *src_p);
-
+/**
+ * Decode type Bool defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Decoded data.
+ * @param[in] src_p Data to decode.
+ * @param[in] size Size of src_p.
+ *
+ * @return Number of bytes decoded or negative error code.
+ */
 ssize_t oer_programming_types_bool_decode(
     struct oer_programming_types_bool_t *dst_p,
     const uint8_t *src_p,
     size_t size);
 
+/**
+ * Encode type Double defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Buffer to encode into.
+ * @param[in] size Size of dst_p.
+ * @param[in] src_p Data to encode.
+ *
+ * @return Encoded data length or negative error code.
+ */
 ssize_t oer_programming_types_double_encode(
     uint8_t *dst_p,
     size_t size,
     const struct oer_programming_types_double_t *src_p);
 
+/**
+ * Decode type Double defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Decoded data.
+ * @param[in] src_p Data to decode.
+ * @param[in] size Size of src_p.
+ *
+ * @return Number of bytes decoded or negative error code.
+ */
 ssize_t oer_programming_types_double_decode(
     struct oer_programming_types_double_t *dst_p,
     const uint8_t *src_p,
     size_t size);
 
+/**
+ * Encode type Float defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Buffer to encode into.
+ * @param[in] size Size of dst_p.
+ * @param[in] src_p Data to encode.
+ *
+ * @return Encoded data length or negative error code.
+ */
 ssize_t oer_programming_types_float_encode(
     uint8_t *dst_p,
     size_t size,
     const struct oer_programming_types_float_t *src_p);
 
+/**
+ * Decode type Float defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Decoded data.
+ * @param[in] src_p Data to decode.
+ * @param[in] size Size of src_p.
+ *
+ * @return Number of bytes decoded or negative error code.
+ */
 ssize_t oer_programming_types_float_decode(
     struct oer_programming_types_float_t *dst_p,
     const uint8_t *src_p,
     size_t size);
 
+/**
+ * Encode type Int16 defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Buffer to encode into.
+ * @param[in] size Size of dst_p.
+ * @param[in] src_p Data to encode.
+ *
+ * @return Encoded data length or negative error code.
+ */
 ssize_t oer_programming_types_int16_encode(
     uint8_t *dst_p,
     size_t size,
     const struct oer_programming_types_int16_t *src_p);
 
+/**
+ * Decode type Int16 defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Decoded data.
+ * @param[in] src_p Data to decode.
+ * @param[in] size Size of src_p.
+ *
+ * @return Number of bytes decoded or negative error code.
+ */
 ssize_t oer_programming_types_int16_decode(
     struct oer_programming_types_int16_t *dst_p,
     const uint8_t *src_p,
     size_t size);
 
+/**
+ * Encode type Int32 defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Buffer to encode into.
+ * @param[in] size Size of dst_p.
+ * @param[in] src_p Data to encode.
+ *
+ * @return Encoded data length or negative error code.
+ */
 ssize_t oer_programming_types_int32_encode(
     uint8_t *dst_p,
     size_t size,
     const struct oer_programming_types_int32_t *src_p);
 
+/**
+ * Decode type Int32 defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Decoded data.
+ * @param[in] src_p Data to decode.
+ * @param[in] size Size of src_p.
+ *
+ * @return Number of bytes decoded or negative error code.
+ */
 ssize_t oer_programming_types_int32_decode(
     struct oer_programming_types_int32_t *dst_p,
     const uint8_t *src_p,
     size_t size);
 
+/**
+ * Encode type Int64 defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Buffer to encode into.
+ * @param[in] size Size of dst_p.
+ * @param[in] src_p Data to encode.
+ *
+ * @return Encoded data length or negative error code.
+ */
 ssize_t oer_programming_types_int64_encode(
     uint8_t *dst_p,
     size_t size,
     const struct oer_programming_types_int64_t *src_p);
 
+/**
+ * Decode type Int64 defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Decoded data.
+ * @param[in] src_p Data to decode.
+ * @param[in] size Size of src_p.
+ *
+ * @return Number of bytes decoded or negative error code.
+ */
 ssize_t oer_programming_types_int64_decode(
     struct oer_programming_types_int64_t *dst_p,
     const uint8_t *src_p,
     size_t size);
 
+/**
+ * Encode type Int8 defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Buffer to encode into.
+ * @param[in] size Size of dst_p.
+ * @param[in] src_p Data to encode.
+ *
+ * @return Encoded data length or negative error code.
+ */
 ssize_t oer_programming_types_int8_encode(
     uint8_t *dst_p,
     size_t size,
     const struct oer_programming_types_int8_t *src_p);
 
+/**
+ * Decode type Int8 defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Decoded data.
+ * @param[in] src_p Data to decode.
+ * @param[in] size Size of src_p.
+ *
+ * @return Number of bytes decoded or negative error code.
+ */
 ssize_t oer_programming_types_int8_decode(
     struct oer_programming_types_int8_t *dst_p,
     const uint8_t *src_p,
     size_t size);
 
+/**
+ * Encode type Uint16 defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Buffer to encode into.
+ * @param[in] size Size of dst_p.
+ * @param[in] src_p Data to encode.
+ *
+ * @return Encoded data length or negative error code.
+ */
 ssize_t oer_programming_types_uint16_encode(
     uint8_t *dst_p,
     size_t size,
     const struct oer_programming_types_uint16_t *src_p);
 
+/**
+ * Decode type Uint16 defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Decoded data.
+ * @param[in] src_p Data to decode.
+ * @param[in] size Size of src_p.
+ *
+ * @return Number of bytes decoded or negative error code.
+ */
 ssize_t oer_programming_types_uint16_decode(
     struct oer_programming_types_uint16_t *dst_p,
     const uint8_t *src_p,
     size_t size);
 
+/**
+ * Encode type Uint32 defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Buffer to encode into.
+ * @param[in] size Size of dst_p.
+ * @param[in] src_p Data to encode.
+ *
+ * @return Encoded data length or negative error code.
+ */
 ssize_t oer_programming_types_uint32_encode(
     uint8_t *dst_p,
     size_t size,
     const struct oer_programming_types_uint32_t *src_p);
 
+/**
+ * Decode type Uint32 defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Decoded data.
+ * @param[in] src_p Data to decode.
+ * @param[in] size Size of src_p.
+ *
+ * @return Number of bytes decoded or negative error code.
+ */
 ssize_t oer_programming_types_uint32_decode(
     struct oer_programming_types_uint32_t *dst_p,
     const uint8_t *src_p,
     size_t size);
 
+/**
+ * Encode type Uint64 defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Buffer to encode into.
+ * @param[in] size Size of dst_p.
+ * @param[in] src_p Data to encode.
+ *
+ * @return Encoded data length or negative error code.
+ */
 ssize_t oer_programming_types_uint64_encode(
     uint8_t *dst_p,
     size_t size,
     const struct oer_programming_types_uint64_t *src_p);
 
+/**
+ * Decode type Uint64 defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Decoded data.
+ * @param[in] src_p Data to decode.
+ * @param[in] size Size of src_p.
+ *
+ * @return Number of bytes decoded or negative error code.
+ */
 ssize_t oer_programming_types_uint64_decode(
     struct oer_programming_types_uint64_t *dst_p,
     const uint8_t *src_p,
     size_t size);
 
+/**
+ * Encode type Uint8 defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Buffer to encode into.
+ * @param[in] size Size of dst_p.
+ * @param[in] src_p Data to encode.
+ *
+ * @return Encoded data length or negative error code.
+ */
 ssize_t oer_programming_types_uint8_encode(
     uint8_t *dst_p,
     size_t size,
     const struct oer_programming_types_uint8_t *src_p);
 
+/**
+ * Decode type Uint8 defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Decoded data.
+ * @param[in] src_p Data to decode.
+ * @param[in] size Size of src_p.
+ *
+ * @return Number of bytes decoded or negative error code.
+ */
 ssize_t oer_programming_types_uint8_decode(
     struct oer_programming_types_uint8_t *dst_p,
     const uint8_t *src_p,
