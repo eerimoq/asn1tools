@@ -439,6 +439,35 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
 
         self.assert_encode_decode_bad(foo, datas)
 
+    def test_utf8_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= UTF8String "
+            "B ::= UTF8String (SIZE (2..5)) "
+            "END")
+
+        # Ok.
+        datas = [
+            ('A',  'Hello'),
+            ('B',  '12'),
+            ('B',  '12345')
+        ]
+
+        self.assert_encode_decode_ok(foo, datas)
+
+        # Not ok.
+        datas = [
+            ('B',
+             '1',
+             'Expected between 2 and 5 characters, but got 1.'),
+            ('B',
+             '123456',
+             'Expected between 2 and 5 characters, but got 6.')
+        ]
+
+        self.assert_encode_decode_bad(foo, datas)
+
     def test_utc_time(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
