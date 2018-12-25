@@ -693,6 +693,7 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
                 'examples/programming_types/programming_types.asn'
             ], codec))
 
+        # Type A.
         decoded = {
             'a': -1,
             'b': -2,
@@ -737,6 +738,53 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
 
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'A', decoded, encoded)
+
+        # Type D.
+        decoded = [
+            {
+                'a': {
+                    'b': ('c', 0),
+                    'e': [None, None, None],
+                    'f': None
+                },
+                'g': {
+                    'h': 'j',
+                    'l': b'\x54\x55'
+                },
+                'm': {
+                    'n': False,
+                    'o': 2,
+                    'p': {
+                        'q': 5 * b'\x03',
+                        'r': True
+                    }
+                }
+            }
+        ]
+
+        encoded_messages = [
+            b'\x30\x30\x30\x2e\xa0\x0f\xa0\x03\x80\x01\x00\xa1\x06\x05\x00\x05'
+            b'\x00\x05\x00\x82\x00\xa1\x07\x80\x01\x01\x81\x02\x54\x55\xa2\x12'
+            b'\x80\x01\x00\x81\x01\x02\xa2\x0a\x80\x05\x03\x03\x03\x03\x03\x81'
+            b'\x01\xff',
+            b'\x30\x30\x30\x2e\xa0\x0f\xa0\x03\x80\x01\x00\xa1\x06\x05\x00\x05'
+            b'\x00\x05\x00\x82\x00\xa1\x07\x80\x01\x01\x81\x02\x54\x55\xa2\x12'
+            b'\x80\x01\x00\x81\x01\x02\xa2\x0a\x80\x05\x03\x03\x03\x03\x03\x81'
+            b'\x01\xff',
+            b'[{"m":{"p":{"q":"0303030303","r":true},"o":2,"n":false},"g":{"l"'
+            b':"5455","h":"j"},"a":{"b":{"c":0},"e":[null,null,null],"f":null}'
+            b'}]',
+            b'\x01\x01\x80\x00\x01\x03\x01\x02\x54\x55\xe0\x00\x02\x80\x03\x03'
+            b'\x03\x03\x03\xff',
+            b'\x00\xc0\x54\x55\xeb\x03\x03\x03\x03\x03\x80',
+            b'\x00\xd5\x15\x7a\xc0\xc0\xc0\xc0\xc0\xe0',
+            b'<D><SEQUENCE><a><b><c>0</c></b><e><NULL /><NULL /><NULL /></e><f'
+            b' /></a><g><h><j /></h><l>5455</l></g><m><n><false /></n><o>2</o>'
+            b'<p><q>0303030303</q><r><true /></r></p></m></SEQUENCE></D>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'D', decoded, encoded)
 
 
 if __name__ == '__main__':

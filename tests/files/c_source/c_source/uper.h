@@ -74,6 +74,56 @@ struct uper_c_source_a_t {
 };
 
 /**
+ * Type D in module CSource.
+ */
+enum uper_c_source_d_a_b_choice_t {
+    uper_c_source_d_a_b_choice_c_t = 0,
+    uper_c_source_d_a_b_choice_d_t
+};
+
+enum uper_c_source_d_g_h_t {
+    uper_c_source_d_g_h_i_t = 0,
+    uper_c_source_d_g_h_j_t,
+    uper_c_source_d_g_h_k_t
+};
+
+struct uper_c_source_d_t {
+    uint8_t length;
+    struct {
+        struct {
+            struct {
+                enum uper_c_source_d_a_b_choice_t choice;
+                union {
+                    uint8_t c;
+                    bool d;
+                } value;
+            } b;
+            struct {
+                uint8_t length;
+            } e;
+        } a;
+        struct {
+            enum uper_c_source_d_g_h_t h;
+            struct {
+                uint8_t length;
+                uint8_t value[2];
+            } l;
+        } g;
+        struct {
+            bool is_n_present;
+            bool n;
+            int8_t o;
+            bool is_p_present;
+            struct {
+                uint8_t q[5];
+                bool is_r_present;
+                bool r;
+            } p;
+        } m;
+    } elements[10];
+};
+
+/**
  * Encode type A defined in module CSource.
  *
  * @param[out] dst_p Buffer to encode into.
@@ -98,6 +148,34 @@ ssize_t uper_c_source_a_encode(
  */
 ssize_t uper_c_source_a_decode(
     struct uper_c_source_a_t *dst_p,
+    const uint8_t *src_p,
+    size_t size);
+
+/**
+ * Encode type D defined in module CSource.
+ *
+ * @param[out] dst_p Buffer to encode into.
+ * @param[in] size Size of dst_p.
+ * @param[in] src_p Data to encode.
+ *
+ * @return Encoded data length or negative error code.
+ */
+ssize_t uper_c_source_d_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct uper_c_source_d_t *src_p);
+
+/**
+ * Decode type D defined in module CSource.
+ *
+ * @param[out] dst_p Decoded data.
+ * @param[in] src_p Data to decode.
+ * @param[in] size Size of src_p.
+ *
+ * @return Number of bytes decoded or negative error code.
+ */
+ssize_t uper_c_source_d_decode(
+    struct uper_c_source_d_t *dst_p,
     const uint8_t *src_p,
     size_t size);
 

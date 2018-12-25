@@ -228,6 +228,17 @@ static void encoder_append_bool(struct encoder_t *self_p, bool value)
     encoder_append_bit(self_p, value ? 1 : 0);
 }
 
+static void encoder_append_non_negative_binary_integer(struct encoder_t *self_p,
+                                                       uint64_t value,
+                                                       size_t size)
+{
+    size_t i;
+
+    for (i = 0; i < size; i++) {
+        encoder_append_bit(self_p, (value >> (size - i - 1)) & 1);
+    }
+}
+
 static void decoder_init(struct decoder_t *self_p,
                          const uint8_t *buf_p,
                          size_t size)
@@ -408,6 +419,22 @@ static bool decoder_read_bool(struct decoder_t *self_p)
     return (decoder_read_bit(self_p));
 }
 
+static uint64_t decoder_read_non_negative_binary_integer(struct decoder_t *self_p,
+                                                         size_t size)
+{
+    size_t i;
+    uint64_t value;
+
+    value = 0;
+
+    for (i = 0; i < size; i++) {
+        value <<= 1;
+        value |= decoder_read_bit(self_p);
+    }
+
+    return (value);
+}
+
 static void uper_c_source_a_encode_inner(
     struct encoder_t *encoder_p,
     const struct uper_c_source_a_t *src_p)
@@ -444,6 +471,180 @@ static void uper_c_source_a_decode_inner(
     decoder_read_bytes(decoder_p, &dst_p->l[0], 11);
 }
 
+static void uper_c_source_d_encode_inner(
+    struct encoder_t *encoder_p,
+    const struct uper_c_source_d_t *src_p)
+{
+    uint8_t i;
+    uint8_t present_mask;
+
+    encoder_append_non_negative_binary_integer(encoder_p,
+                                               src_p->length - 1,
+                                               4);
+
+    for (i = 0; i < src_p->length; i++) {
+        switch (src_p->elements[i].a.b.choice) {
+
+        case uper_c_source_d_a_b_choice_c_t:
+            encoder_append_non_negative_binary_integer(encoder_p, 0, 1);
+            encoder_append_non_negative_binary_integer(encoder_p,
+                                                       src_p->elements[i].a.b.value.c,
+                                                       1);
+            break;
+
+        case uper_c_source_d_a_b_choice_d_t:
+            encoder_append_non_negative_binary_integer(encoder_p, 1, 1);
+            encoder_append_bool(encoder_p, src_p->elements[i].a.b.value.d);
+            break;
+
+        default:
+            encoder_abort(encoder_p, EBADCHOICE);
+            break;
+        }
+
+        encoder_append_non_negative_binary_integer(encoder_p,
+                                                   src_p->elements[i].a.e.length - 3,
+                                                   1);
+        encoder_append_non_negative_binary_integer(encoder_p,
+                                                   src_p->elements[i].g.h,
+                                                   2);
+        encoder_append_non_negative_binary_integer(encoder_p,
+                                                   src_p->elements[i].g.l.length - 1,
+                                                   1);
+        encoder_append_bytes(encoder_p,
+                             &src_p->elements[i].g.l.value[0],
+                             src_p->elements[i].g.l.length);
+        present_mask = 0;
+
+        if (src_p->elements[i].m.is_n_present) {
+            present_mask |= 0x04;
+        }
+
+        if (src_p->elements[i].m.o != 3) {
+            present_mask |= 0x02;
+        }
+
+        if (src_p->elements[i].m.is_p_present) {
+            present_mask |= 0x01;
+        }
+
+        encoder_append_non_negative_binary_integer(encoder_p,
+                                                   present_mask,
+                                                   3);
+
+        if (src_p->elements[i].m.is_n_present) {
+            encoder_append_bool(encoder_p, src_p->elements[i].m.n);
+        }
+
+        if (src_p->elements[i].m.o != 3) {
+            encoder_append_non_negative_binary_integer(encoder_p,
+                                                       src_p->elements[i].m.o + 3,
+                                                       3);
+        }
+
+        if (src_p->elements[i].m.is_p_present) {
+            present_mask = 0;
+
+            if (src_p->elements[i].m.p.is_r_present) {
+                present_mask |= 0x01;
+            }
+
+            encoder_append_non_negative_binary_integer(encoder_p,
+                                                       present_mask,
+                                                       1);
+            encoder_append_bytes(encoder_p,
+                                 &src_p->elements[i].m.p.q[0],
+                                 5);
+
+            if (src_p->elements[i].m.p.is_r_present) {
+                encoder_append_bool(encoder_p, src_p->elements[i].m.p.r);
+            }
+        }
+    }
+}
+
+static void uper_c_source_d_decode_inner(
+    struct decoder_t *decoder_p,
+    struct uper_c_source_d_t *dst_p)
+{
+    uint8_t i;
+    uint8_t choice;
+    uint8_t present_mask;
+
+    dst_p->length = decoder_read_non_negative_binary_integer(decoder_p, 4);
+    dst_p->length += 1;
+
+    if (dst_p->length > 10) {
+        decoder_abort(decoder_p, EBADLENGTH);
+
+        return;
+    }
+
+    for (i = 0; i < dst_p->length; i++) {
+        choice = decoder_read_non_negative_binary_integer(decoder_p, 1);
+
+        switch (choice) {
+
+        case 0:
+            dst_p->elements[i].a.b.choice = uper_c_source_d_a_b_choice_c_t;
+            dst_p->elements[i].a.b.value.c = decoder_read_non_negative_binary_integer(decoder_p, 1);
+            break;
+
+        case 1:
+            dst_p->elements[i].a.b.choice = uper_c_source_d_a_b_choice_d_t;
+            dst_p->elements[i].a.b.value.d = decoder_read_bool(decoder_p);
+            break;
+
+        default:
+            decoder_abort(decoder_p, EBADCHOICE);
+            break;
+        }
+
+        dst_p->elements[i].a.e.length = decoder_read_non_negative_binary_integer(decoder_p, 1);
+        dst_p->elements[i].a.e.length += 3;
+        dst_p->elements[i].g.h = decoder_read_non_negative_binary_integer(decoder_p, 2);
+        dst_p->elements[i].g.l.length = decoder_read_non_negative_binary_integer(decoder_p, 1);
+        dst_p->elements[i].g.l.length += 1;
+
+        if (dst_p->elements[i].g.l.length > 2) {
+            decoder_abort(decoder_p, EBADLENGTH);
+
+            return;
+        }
+
+        decoder_read_bytes(decoder_p,
+                           &dst_p->elements[i].g.l.value[0],
+                           dst_p->elements[i].g.l.length);
+        present_mask = decoder_read_non_negative_binary_integer(decoder_p, 3);
+        dst_p->elements[i].m.is_n_present = ((present_mask & 0x04) == 0x04);
+
+        if (dst_p->elements[i].m.is_n_present) {
+            dst_p->elements[i].m.n = decoder_read_bool(decoder_p);
+        }
+
+        if ((present_mask & 0x02) == 0x02) {
+            dst_p->elements[i].m.o = decoder_read_non_negative_binary_integer(decoder_p, 3);
+            dst_p->elements[i].m.o -= 3;
+        } else {
+            dst_p->elements[i].m.o = 3;
+        }
+
+        dst_p->elements[i].m.is_p_present = ((present_mask & 0x01) == 0x01);
+
+        if (dst_p->elements[i].m.is_p_present) {
+            present_mask = decoder_read_non_negative_binary_integer(decoder_p, 1);
+            decoder_read_bytes(decoder_p,
+                               &dst_p->elements[i].m.p.q[0],
+                               5);
+            dst_p->elements[i].m.p.is_r_present = ((present_mask & 0x01) == 0x01);
+
+            if (dst_p->elements[i].m.p.is_r_present) {
+                dst_p->elements[i].m.p.r = decoder_read_bool(decoder_p);
+            }
+        }
+    }
+}
+
 ssize_t uper_c_source_a_encode(
     uint8_t *dst_p,
     size_t size,
@@ -466,6 +667,32 @@ ssize_t uper_c_source_a_decode(
 
     decoder_init(&decoder, src_p, size);
     uper_c_source_a_decode_inner(&decoder, dst_p);
+
+    return ((decoder.pos + 7) / 8);
+}
+
+ssize_t uper_c_source_d_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct uper_c_source_d_t *src_p)
+{
+    struct encoder_t encoder;
+
+    encoder_init(&encoder, dst_p, size);
+    uper_c_source_d_encode_inner(&encoder, src_p);
+
+    return ((encoder.pos + 7) / 8);
+}
+
+ssize_t uper_c_source_d_decode(
+    struct uper_c_source_d_t *dst_p,
+    const uint8_t *src_p,
+    size_t size)
+{
+    struct decoder_t decoder;
+
+    decoder_init(&decoder, src_p, size);
+    uper_c_source_d_decode_inner(&decoder, dst_p);
 
     return ((decoder.pos + 7) / 8);
 }

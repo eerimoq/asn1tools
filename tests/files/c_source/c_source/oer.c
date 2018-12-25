@@ -439,49 +439,49 @@ static void oer_c_source_d_encode_inner(
 
         encoder_append_integer_8(encoder_p, 1);
         encoder_append_integer_8(encoder_p, src_p->elements[i].a.e.length);
-        encoder_append_integer_8(encoder_p, src_p->elements[i].f.g);
-        encoder_append_integer_8(encoder_p, src_p->elements[i].f.k.length);
+        encoder_append_integer_8(encoder_p, src_p->elements[i].g.h);
+        encoder_append_integer_8(encoder_p, src_p->elements[i].g.l.length);
         encoder_append_bytes(encoder_p,
-                             &src_p->elements[i].f.k.value[0],
-                             src_p->elements[i].f.k.length);
+                             &src_p->elements[i].g.l.value[0],
+                             src_p->elements[i].g.l.length);
         present_mask = 0;
 
-        if (src_p->elements[i].l.is_m_present) {
+        if (src_p->elements[i].m.is_n_present) {
             present_mask |= 0x80;
         }
 
-        if (src_p->elements[i].l.n != 3) {
+        if (src_p->elements[i].m.o != 3) {
             present_mask |= 0x40;
         }
 
-        if (src_p->elements[i].l.is_o_present) {
+        if (src_p->elements[i].m.is_p_present) {
             present_mask |= 0x20;
         }
 
         encoder_append_integer_8(encoder_p, present_mask);
 
-        if (src_p->elements[i].l.is_m_present) {
-            encoder_append_bool(encoder_p, src_p->elements[i].l.m);
+        if (src_p->elements[i].m.is_n_present) {
+            encoder_append_bool(encoder_p, src_p->elements[i].m.n);
         }
 
-        if (src_p->elements[i].l.n != 3) {
-            encoder_append_integer_8(encoder_p, src_p->elements[i].l.n);
+        if (src_p->elements[i].m.o != 3) {
+            encoder_append_integer_8(encoder_p, src_p->elements[i].m.o);
         }
 
-        if (src_p->elements[i].l.is_o_present) {
+        if (src_p->elements[i].m.is_p_present) {
             present_mask = 0;
 
-            if (src_p->elements[i].l.o.is_q_present) {
+            if (src_p->elements[i].m.p.is_r_present) {
                 present_mask |= 0x80;
             }
 
             encoder_append_integer_8(encoder_p, present_mask);
             encoder_append_bytes(encoder_p,
-                                 &src_p->elements[i].l.o.p[0],
+                                 &src_p->elements[i].m.p.q[0],
                                  5);
 
-            if (src_p->elements[i].l.o.is_q_present) {
-                encoder_append_bool(encoder_p, src_p->elements[i].l.o.q);
+            if (src_p->elements[i].m.p.is_r_present) {
+                encoder_append_bool(encoder_p, src_p->elements[i].m.p.r);
             }
         }
     }
@@ -526,42 +526,42 @@ static void oer_c_source_d_decode_inner(
 
         decoder_read_integer_8(decoder_p);
         dst_p->elements[i].a.e.length = decoder_read_integer_8(decoder_p);
-        dst_p->elements[i].f.g = decoder_read_integer_8(decoder_p);
-        dst_p->elements[i].f.k.length = decoder_read_integer_8(decoder_p);
+        dst_p->elements[i].g.h = decoder_read_integer_8(decoder_p);
+        dst_p->elements[i].g.l.length = decoder_read_integer_8(decoder_p);
 
-        if (dst_p->elements[i].f.k.length > 2) {
+        if (dst_p->elements[i].g.l.length > 2) {
             decoder_abort(decoder_p, EBADLENGTH);
 
             return;
         }
 
         decoder_read_bytes(decoder_p,
-                           &dst_p->elements[i].f.k.value[0],
-                           dst_p->elements[i].f.k.length);
+                           &dst_p->elements[i].g.l.value[0],
+                           dst_p->elements[i].g.l.length);
         present_mask = decoder_read_integer_8(decoder_p);
-        dst_p->elements[i].l.is_m_present = ((present_mask & 0x80) == 0x80);
+        dst_p->elements[i].m.is_n_present = ((present_mask & 0x80) == 0x80);
 
-        if (dst_p->elements[i].l.is_m_present) {
-            dst_p->elements[i].l.m = decoder_read_bool(decoder_p);
+        if (dst_p->elements[i].m.is_n_present) {
+            dst_p->elements[i].m.n = decoder_read_bool(decoder_p);
         }
 
         if ((present_mask & 0x40) == 0x40) {
-            dst_p->elements[i].l.n = decoder_read_integer_8(decoder_p);
+            dst_p->elements[i].m.o = decoder_read_integer_8(decoder_p);
         } else {
-            dst_p->elements[i].l.n = 3;
+            dst_p->elements[i].m.o = 3;
         }
 
-        dst_p->elements[i].l.is_o_present = ((present_mask & 0x20) == 0x20);
+        dst_p->elements[i].m.is_p_present = ((present_mask & 0x20) == 0x20);
 
-        if (dst_p->elements[i].l.is_o_present) {
+        if (dst_p->elements[i].m.is_p_present) {
             present_mask = decoder_read_integer_8(decoder_p);
             decoder_read_bytes(decoder_p,
-                               &dst_p->elements[i].l.o.p[0],
+                               &dst_p->elements[i].m.p.q[0],
                                5);
-            dst_p->elements[i].l.o.is_q_present = ((present_mask & 0x80) == 0x80);
+            dst_p->elements[i].m.p.is_r_present = ((present_mask & 0x80) == 0x80);
 
-            if (dst_p->elements[i].l.o.is_q_present) {
-                dst_p->elements[i].l.o.q = decoder_read_bool(decoder_p);
+            if (dst_p->elements[i].m.p.is_r_present) {
+                dst_p->elements[i].m.p.r = decoder_read_bool(decoder_p);
             }
         }
     }

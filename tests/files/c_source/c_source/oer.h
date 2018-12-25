@@ -105,10 +105,10 @@ enum oer_c_source_d_a_b_choice_t {
     oer_c_source_d_a_b_choice_d_t
 };
 
-enum oer_c_source_d_f_g_t {
-    oer_c_source_d_f_g_h_t = 0,
-    oer_c_source_d_f_g_i_t,
-    oer_c_source_d_f_g_j_t
+enum oer_c_source_d_g_h_t {
+    oer_c_source_d_g_h_i_t = 0,
+    oer_c_source_d_g_h_j_t,
+    oer_c_source_d_g_h_k_t
 };
 
 struct oer_c_source_d_t {
@@ -127,23 +127,23 @@ struct oer_c_source_d_t {
             } e;
         } a;
         struct {
-            enum oer_c_source_d_f_g_t g;
+            enum oer_c_source_d_g_h_t h;
             struct {
                 uint8_t length;
                 uint8_t value[2];
-            } k;
-        } f;
+            } l;
+        } g;
         struct {
-            bool is_m_present;
-            bool m;
-            int8_t n;
-            bool is_o_present;
+            bool is_n_present;
+            bool n;
+            int8_t o;
+            bool is_p_present;
             struct {
-                uint8_t p[5];
-                bool is_q_present;
-                bool q;
-            } o;
-        } l;
+                uint8_t q[5];
+                bool is_r_present;
+                bool r;
+            } p;
+        } m;
     } elements[10];
 };
 

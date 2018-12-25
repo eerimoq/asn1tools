@@ -305,19 +305,19 @@ static void test_oer_c_source_d_all_present(void)
     decoded.elements[0].a.b.choice = oer_c_source_d_a_b_choice_c_t;
     decoded.elements[0].a.b.value.c = 0;
     decoded.elements[0].a.e.length = 3;
-    decoded.elements[0].f.g = oer_c_source_d_f_g_i_t;
-    decoded.elements[0].f.k.length = 2;
-    decoded.elements[0].f.k.value[0] = 0x54;
-    decoded.elements[0].f.k.value[1] = 0x55;
-    decoded.elements[0].l.is_m_present = true;
-    decoded.elements[0].l.m = false;
-    decoded.elements[0].l.n = 2;
-    decoded.elements[0].l.is_o_present = true;
-    memset(&decoded.elements[0].l.o.p[0],
+    decoded.elements[0].g.h = oer_c_source_d_g_h_j_t;
+    decoded.elements[0].g.l.length = 2;
+    decoded.elements[0].g.l.value[0] = 0x54;
+    decoded.elements[0].g.l.value[1] = 0x55;
+    decoded.elements[0].m.is_n_present = true;
+    decoded.elements[0].m.n = false;
+    decoded.elements[0].m.o = 2;
+    decoded.elements[0].m.is_p_present = true;
+    memset(&decoded.elements[0].m.p.q[0],
            3,
-           sizeof(decoded.elements[0].l.o.p));
-    decoded.elements[0].l.o.is_q_present = true;
-    decoded.elements[0].l.o.q = true;
+           sizeof(decoded.elements[0].m.p.q));
+    decoded.elements[0].m.p.is_r_present = true;
+    decoded.elements[0].m.p.r = true;
 
     memset(&encoded[0], 0, sizeof(encoded));
     assert(oer_c_source_d_encode(&encoded[0],
@@ -338,19 +338,19 @@ static void test_oer_c_source_d_all_present(void)
     assert(decoded.elements[0].a.b.choice == oer_c_source_d_a_b_choice_c_t);
     assert(decoded.elements[0].a.b.value.c == 0);
     assert(decoded.elements[0].a.e.length == 3);
-    assert(decoded.elements[0].f.g == oer_c_source_d_f_g_i_t);
-    assert(decoded.elements[0].f.k.length == 2);
-    assert(decoded.elements[0].f.k.value[0] == 0x54);
-    assert(decoded.elements[0].f.k.value[1] == 0x55);
-    assert(decoded.elements[0].l.is_m_present);
-    assert(decoded.elements[0].l.m == false);
-    assert(decoded.elements[0].l.n == 2);
-    assert(decoded.elements[0].l.is_o_present);
-    assert(memcmp(&decoded.elements[0].l.o.p[0],
+    assert(decoded.elements[0].g.h == oer_c_source_d_g_h_j_t);
+    assert(decoded.elements[0].g.l.length == 2);
+    assert(decoded.elements[0].g.l.value[0] == 0x54);
+    assert(decoded.elements[0].g.l.value[1] == 0x55);
+    assert(decoded.elements[0].m.is_n_present);
+    assert(decoded.elements[0].m.n == false);
+    assert(decoded.elements[0].m.o == 2);
+    assert(decoded.elements[0].m.is_p_present);
+    assert(memcmp(&decoded.elements[0].m.p.q[0],
                   "\x03\x03\x03\x03\x03",
-                  sizeof(decoded.elements[0].l.o.p)) == 0);
-    assert(decoded.elements[0].l.o.is_q_present);
-    assert(decoded.elements[0].l.o.q == true);
+                  sizeof(decoded.elements[0].m.p.q)) == 0);
+    assert(decoded.elements[0].m.p.is_r_present);
+    assert(decoded.elements[0].m.p.r == true);
 }
 
 static void test_oer_c_source_d_some_missing(void)
@@ -363,17 +363,17 @@ static void test_oer_c_source_d_some_missing(void)
     decoded.elements[0].a.b.choice = oer_c_source_d_a_b_choice_d_t;
     decoded.elements[0].a.b.value.d = false;
     decoded.elements[0].a.e.length = 3;
-    decoded.elements[0].f.g = oer_c_source_d_f_g_j_t;
-    decoded.elements[0].f.k.length = 1;
-    decoded.elements[0].f.k.value[0] = 0x54;
-    decoded.elements[0].l.is_m_present = false;
+    decoded.elements[0].g.h = oer_c_source_d_g_h_k_t;
+    decoded.elements[0].g.l.length = 1;
+    decoded.elements[0].g.l.value[0] = 0x54;
+    decoded.elements[0].m.is_n_present = false;
     /* Default value 3. */
-    decoded.elements[0].l.n = 3;
-    decoded.elements[0].l.is_o_present = true;
-    memset(&decoded.elements[0].l.o.p[0],
+    decoded.elements[0].m.o = 3;
+    decoded.elements[0].m.is_p_present = true;
+    memset(&decoded.elements[0].m.p.q[0],
            3,
-           sizeof(decoded.elements[0].l.o.p));
-    decoded.elements[0].l.o.is_q_present = false;
+           sizeof(decoded.elements[0].m.p.q));
+    decoded.elements[0].m.p.is_r_present = false;
 
     memset(&encoded[0], 0, sizeof(encoded));
     assert(oer_c_source_d_encode(&encoded[0],
@@ -394,16 +394,16 @@ static void test_oer_c_source_d_some_missing(void)
     assert(decoded.elements[0].a.b.choice == oer_c_source_d_a_b_choice_d_t);
     assert(decoded.elements[0].a.b.value.d == false);
     assert(decoded.elements[0].a.e.length == 3);
-    assert(decoded.elements[0].f.g == oer_c_source_d_f_g_j_t);
-    assert(decoded.elements[0].f.k.length == 1);
-    assert(decoded.elements[0].f.k.value[0] == 0x54);
-    assert(!decoded.elements[0].l.is_m_present);
-    assert(decoded.elements[0].l.n == 3);
-    assert(decoded.elements[0].l.is_o_present);
-    assert(memcmp(&decoded.elements[0].l.o.p[0],
+    assert(decoded.elements[0].g.h == oer_c_source_d_g_h_k_t);
+    assert(decoded.elements[0].g.l.length == 1);
+    assert(decoded.elements[0].g.l.value[0] == 0x54);
+    assert(!decoded.elements[0].m.is_n_present);
+    assert(decoded.elements[0].m.o == 3);
+    assert(decoded.elements[0].m.is_p_present);
+    assert(memcmp(&decoded.elements[0].m.p.q[0],
                   "\x03\x03\x03\x03\x03",
-                  sizeof(decoded.elements[0].l.o.p)) == 0);
-    assert(!decoded.elements[0].l.o.is_q_present);
+                  sizeof(decoded.elements[0].m.p.q)) == 0);
+    assert(!decoded.elements[0].m.p.is_r_present);
 }
 
 static void test_oer(void)
@@ -446,8 +446,8 @@ static void test_uper_c_source_a(void)
 
     memset(&encoded[0], 0, sizeof(encoded));
     assert(uper_c_source_a_encode(&encoded[0],
-                                 sizeof(encoded),
-                                 &decoded) == sizeof(encoded));
+                                  sizeof(encoded),
+                                  &decoded) == sizeof(encoded));
     assert(memcmp(&encoded[0],
                   "\x7f\x7f\xfe\x7f\xff\xff\xfd\x7f\xff\xff\xff\xff\xff"
                   "\xff\xfc\x01\x00\x02\x00\x00\x00\x03\x00\x00\x00\x00"
@@ -458,8 +458,8 @@ static void test_uper_c_source_a(void)
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
     assert(uper_c_source_a_decode(&decoded,
-                                 &encoded[0],
-                                 sizeof(encoded)) == sizeof(encoded));
+                                  &encoded[0],
+                                  sizeof(encoded)) == sizeof(encoded));
 
     assert(decoded.a == -1);
     assert(decoded.b == -2);
@@ -477,9 +477,67 @@ static void test_uper_c_source_a(void)
                   sizeof(decoded.l)) == 0);
 }
 
+static void test_uper_c_source_d_all_present(void)
+{
+    uint8_t encoded[10];
+    struct uper_c_source_d_t decoded;
+
+    /* Encode. */
+    decoded.length = 1;
+    decoded.elements[0].a.b.choice = uper_c_source_d_a_b_choice_c_t;
+    decoded.elements[0].a.b.value.c = 0;
+    decoded.elements[0].a.e.length = 3;
+    decoded.elements[0].g.h = uper_c_source_d_g_h_j_t;
+    decoded.elements[0].g.l.length = 2;
+    decoded.elements[0].g.l.value[0] = 0x54;
+    decoded.elements[0].g.l.value[1] = 0x55;
+    decoded.elements[0].m.is_n_present = true;
+    decoded.elements[0].m.n = false;
+    decoded.elements[0].m.o = 2;
+    decoded.elements[0].m.is_p_present = true;
+    memset(&decoded.elements[0].m.p.q[0],
+           3,
+           sizeof(decoded.elements[0].m.p.q));
+    decoded.elements[0].m.p.is_r_present = true;
+    decoded.elements[0].m.p.r = true;
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(uper_c_source_d_encode(&encoded[0],
+                                  sizeof(encoded),
+                                  &decoded) == sizeof(encoded));
+    assert(memcmp(&encoded[0],
+                  "\x00\xd5\x15\x7a\xc0\xc0\xc0\xc0\xc0\xe0",
+                  sizeof(encoded)) == 0);
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(uper_c_source_d_decode(&decoded,
+                                  &encoded[0],
+                                  sizeof(encoded)) == sizeof(encoded));
+
+    assert(decoded.length == 1);
+    assert(decoded.elements[0].a.b.choice == uper_c_source_d_a_b_choice_c_t);
+    assert(decoded.elements[0].a.b.value.c == 0);
+    assert(decoded.elements[0].a.e.length == 3);
+    assert(decoded.elements[0].g.h == uper_c_source_d_g_h_j_t);
+    assert(decoded.elements[0].g.l.length == 2);
+    assert(decoded.elements[0].g.l.value[0] == 0x54);
+    assert(decoded.elements[0].g.l.value[1] == 0x55);
+    assert(decoded.elements[0].m.is_n_present);
+    assert(decoded.elements[0].m.n == false);
+    assert(decoded.elements[0].m.o == 2);
+    assert(decoded.elements[0].m.is_p_present);
+    assert(memcmp(&decoded.elements[0].m.p.q[0],
+                  "\x03\x03\x03\x03\x03",
+                  sizeof(decoded.elements[0].m.p.q)) == 0);
+    assert(decoded.elements[0].m.p.is_r_present);
+    assert(decoded.elements[0].m.p.r == true);
+}
+
 static void test_uper(void)
 {
     test_uper_c_source_a();
+    test_uper_c_source_d_all_present();
 }
 
 int main(void)
