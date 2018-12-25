@@ -5,6 +5,7 @@
 #include <math.h>
 
 #include "files/c_source/c_source/oer.h"
+#include "files/c_source/c_source/uper.h"
 
 static bool fequal(double v1, double v2)
 {
@@ -13,7 +14,7 @@ static bool fequal(double v1, double v2)
 
 static void test_oer_c_source_a(void)
 {
-    uint8_t encoded[55];
+    uint8_t encoded[54];
     struct oer_c_source_a_t decoded;
 
     /* Encode. */
@@ -38,8 +39,8 @@ static void test_oer_c_source_a(void)
                   "\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff\xff\xff\xff"
                   "\xff\xfc\x01\x00\x02\x00\x00\x00\x03\x00\x00\x00\x00"
                   "\x00\x00\x00\x04\x3f\x80\x00\x00\x3f\xf0\x00\x00\x00"
-                  "\x00\x00\x00\xff\x0b\x05\x05\x05\x05\x05\x05\x05\x05"
-                  "\x05\x05\x05",
+                  "\x00\x00\x00\xff\x05\x05\x05\x05\x05\x05\x05\x05\x05"
+                  "\x05\x05",
                   sizeof(encoded)) == 0);
 
     /* Decode. */
@@ -66,18 +67,18 @@ static void test_oer_c_source_a(void)
 
 static void test_oer_c_source_a_decode_spare_data(void)
 {
-    uint8_t encoded[56] =
+    uint8_t encoded[55] =
         "\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff\xff\xff\xff"
         "\xff\xfc\x01\x00\x02\x00\x00\x00\x03\x00\x00\x00\x00"
         "\x00\x00\x00\x04\x3f\x80\x00\x00\x3f\xf0\x00\x00\x00"
-        "\x00\x00\x00\xff\x0b\x05\x05\x05\x05\x05\x05\x05\x05"
-        "\x05\x05\x05\x00";
+        "\x00\x00\x00\xff\x05\x05\x05\x05\x05\x05\x05\x05\x05"
+        "\x05\x05\x00";
     struct oer_c_source_a_t decoded;
 
     memset(&decoded, 0, sizeof(decoded));
     assert(oer_c_source_a_decode(&decoded,
                                  &encoded[0],
-                                 sizeof(encoded)) == 55);
+                                 sizeof(encoded)) == 54);
 
     assert(decoded.a == -1);
     assert(decoded.b == -2);
@@ -97,7 +98,7 @@ static void test_oer_c_source_a_decode_spare_data(void)
 
 static void test_oer_c_source_a_encode_error_no_mem(void)
 {
-    uint8_t encoded[54];
+    uint8_t encoded[53];
     struct oer_c_source_a_t decoded;
 
     decoded.a = -1;
@@ -120,32 +121,17 @@ static void test_oer_c_source_a_encode_error_no_mem(void)
 
 static void test_oer_c_source_a_decode_error_out_of_data(void)
 {
-    uint8_t encoded[54] =
+    uint8_t encoded[53] =
         "\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff\xff\xff\xff"
         "\xff\xfc\x01\x00\x02\x00\x00\x00\x03\x00\x00\x00\x00"
         "\x00\x00\x00\x04\x3f\x80\x00\x00\x3f\xf0\x00\x00\x00"
-        "\x00\x00\x00\xff\x0b\x05\x05\x05\x05\x05\x05\x05\x05"
-        "\x05\x05";
+        "\x00\x00\x00\xff\x05\x05\x05\x05\x05\x05\x05\x05\x05"
+        "\x05";
     struct oer_c_source_a_t decoded;
 
     assert(oer_c_source_a_decode(&decoded,
                                  &encoded[0],
                                  sizeof(encoded)) == -EOUTOFDATA);
-}
-
-static void test_oer_c_source_a_decode_error_bad_length(void)
-{
-    uint8_t encoded[55] =
-        "\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff\xff\xff\xff"
-        "\xff\xfc\x01\x00\x02\x00\x00\x00\x03\x00\x00\x00\x00"
-        "\x00\x00\x00\x04\x3f\x80\x00\x00\x3f\xf0\x00\x00\x00"
-        "\x00\x00\x00\xff\x0c\x05\x05\x05\x05\x05\x05\x05\x05"
-        "\x05\x05\x05";
-    struct oer_c_source_a_t decoded;
-
-    assert(oer_c_source_a_decode(&decoded,
-                                 &encoded[0],
-                                 sizeof(encoded)) == -EBADLENGTH);
 }
 
 static void test_oer_c_source_b_choice_a(void)
@@ -177,7 +163,7 @@ static void test_oer_c_source_b_choice_a(void)
 
 static void test_oer_c_source_b_choice_b(void)
 {
-    uint8_t encoded[56];
+    uint8_t encoded[55];
     struct oer_c_source_b_t decoded;
 
     /* Encode. */
@@ -203,8 +189,8 @@ static void test_oer_c_source_b_choice_b(void)
                   "\x81\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff\xff\xff"
                   "\xff\xff\xfc\x01\x00\x02\x00\x00\x00\x03\x00\x00\x00"
                   "\x00\x00\x00\x00\x04\x3f\x80\x00\x00\x3f\xf0\x00\x00"
-                  "\x00\x00\x00\x00\xff\x0b\x05\x05\x05\x05\x05\x05\x05"
-                  "\x05\x05\x05\x05",
+                  "\x00\x00\x00\x00\xff\x05\x05\x05\x05\x05\x05\x05\x05"
+                  "\x05\x05\x05",
                   sizeof(encoded)) == 0);
 
     /* Decode. */
@@ -420,13 +406,12 @@ static void test_oer_c_source_d_some_missing(void)
     assert(!decoded.elements[0].l.o.is_q_present);
 }
 
-int main(void)
+static void test_oer(void)
 {
     test_oer_c_source_a();
     test_oer_c_source_a_decode_spare_data();
     test_oer_c_source_a_encode_error_no_mem();
     test_oer_c_source_a_decode_error_out_of_data();
-    test_oer_c_source_a_decode_error_bad_length();
 
     test_oer_c_source_b_choice_a();
     test_oer_c_source_b_choice_b();
@@ -438,6 +423,69 @@ int main(void)
 
     test_oer_c_source_d_all_present();
     test_oer_c_source_d_some_missing();
+}
+
+static void test_uper_c_source_a(void)
+{
+    uint8_t encoded[50];
+    struct uper_c_source_a_t decoded;
+
+    /* Encode. */
+    decoded.a = -1;
+    decoded.b = -2;
+    decoded.c = -3;
+    decoded.d = -4;
+    decoded.e = 1;
+    decoded.f = 2;
+    decoded.g = 3;
+    decoded.h = 4;
+    decoded.i = 1.0f;
+    decoded.j = 1.0;
+    decoded.k = true;
+    memset(&decoded.l[0], 5, sizeof(decoded.l));
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(uper_c_source_a_encode(&encoded[0],
+                                 sizeof(encoded),
+                                 &decoded) == sizeof(encoded));
+    assert(memcmp(&encoded[0],
+                  "\x7f\x7f\xfe\x7f\xff\xff\xfd\x7f\xff\xff\xff\xff\xff"
+                  "\xff\xfc\x01\x00\x02\x00\x00\x00\x03\x00\x00\x00\x00"
+                  "\x00\x00\x00\x04\x03\x80\x00\x01\x03\x80\x00\x01\x82"
+                  "\x82\x82\x82\x82\x82\x82\x82\x82\x82\x82\x80",
+                  sizeof(encoded)) == 0);
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(uper_c_source_a_decode(&decoded,
+                                 &encoded[0],
+                                 sizeof(encoded)) == sizeof(encoded));
+
+    assert(decoded.a == -1);
+    assert(decoded.b == -2);
+    assert(decoded.c == -3);
+    assert(decoded.d == -4);
+    assert(decoded.e == 1);
+    assert(decoded.f == 2);
+    assert(decoded.g == 3);
+    assert(decoded.h == 4);
+    assert(fequal(decoded.i, 1.0f));
+    assert(fequal(decoded.j, 1.0));
+    assert(decoded.k);
+    assert(memcmp(&decoded.l[0],
+                  "\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05",
+                  sizeof(decoded.l)) == 0);
+}
+
+static void test_uper(void)
+{
+    test_uper_c_source_a();
+}
+
+int main(void)
+{
+    test_oer();
+    test_uper();
 
     return (0);
 }

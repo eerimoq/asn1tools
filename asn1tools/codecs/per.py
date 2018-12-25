@@ -307,21 +307,19 @@ class Encoder(object):
                                         maximum,
                                         number_of_bits):
         _range = (maximum - minimum + 1)
+        value -= minimum
 
         if _range <= 255:
-            self.append_non_negative_binary_integer(value - minimum,
-                                                    number_of_bits)
+            self.append_non_negative_binary_integer(value, number_of_bits)
         elif _range == 256:
             self.align_always()
-            self.append_non_negative_binary_integer(value - minimum, 8)
+            self.append_non_negative_binary_integer(value, 8)
         elif _range <= 65536:
             self.align_always()
-            self.append_non_negative_binary_integer(value - minimum, 16)
+            self.append_non_negative_binary_integer(value, 16)
         else:
-            number_of_bits = size_as_number_of_bytes(value) * 8
             self.align_always()
-            self.append_non_negative_binary_integer(value - minimum,
-                                                    number_of_bits)
+            self.append_non_negative_binary_integer(value, number_of_bits)
 
     def append_unconstrained_whole_number(self, value):
         number_of_bits = value.bit_length()
@@ -1029,13 +1027,14 @@ class Integer(Type):
             if self.number_of_indefinite_bits is None:
                 number_of_bits = self.number_of_bits
             else:
-                number_of_bytes = size_as_number_of_bytes(data)
+                number_of_bytes = size_as_number_of_bytes(data - self.minimum)
                 number_of_bits = 8 * number_of_bytes
                 encoder.append_constrained_whole_number(
                     number_of_bytes - 1,
                     0,
-                    self.number_of_indefinite_bits,
+                    2 ** self.number_of_indefinite_bits,
                     self.number_of_indefinite_bits)
+                encoder.align()
 
             encoder.append_constrained_whole_number(data,
                                                     self.minimum,
@@ -1057,12 +1056,13 @@ class Integer(Type):
             if self.number_of_indefinite_bits is None:
                 number_of_bits = self.number_of_bits
             else:
-                number_of_bits = decoder.read_constrained_whole_number(
+                number_of_bytes = decoder.read_constrained_whole_number(
                     0,
-                    self.number_of_indefinite_bits,
+                    2 ** self.number_of_indefinite_bits,
                     self.number_of_indefinite_bits)
-                number_of_bits += 1
-                number_of_bits *= 8
+                number_of_bytes += 1
+                number_of_bits = (8 * number_of_bytes)
+                decoder.align()
 
             return decoder.read_constrained_whole_number(self.minimum,
                                                          self.maximum,
@@ -1204,6 +1204,9 @@ class OctetString(Type):
 
     def __init__(self, name, minimum, maximum, has_extension_marker):
         super(OctetString, self).__init__(name, 'OCTET STRING')
+        self.set_size_range(minimum, maximum, has_extension_marker)
+
+    def set_size_range(self, minimum, maximum, has_extension_marker):
         self.minimum = minimum
         self.maximum = maximum
         self.has_extension_marker = has_extension_marker

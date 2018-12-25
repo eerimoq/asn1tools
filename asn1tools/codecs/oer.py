@@ -771,7 +771,9 @@ class OctetString(Type):
                                           'OCTET STRING',
                                           Tag.OCTET_STRING)
         self.number_of_bytes = None
+        self.set_size_range(minimum, maximum, has_extension_marker)
 
+    def set_size_range(self, minimum, maximum, has_extension_marker):
         if minimum is not None or maximum is not None:
             if not has_extension_marker:
                 if minimum == maximum:

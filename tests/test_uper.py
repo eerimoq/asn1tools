@@ -60,6 +60,11 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "  a G (7..7) "
             "} "
             "I ::= INTEGER (5..99, ..., 101..105) "
+            "J ::= SEQUENCE { "
+            "    a BOOLEAN, "
+            "    b INTEGER (-10000..704000000000000001), "
+            "    c BOOLEAN "
+            "} "
             "END",
             'uper')
 
@@ -91,7 +96,10 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('F', {'a': 4, 'b': 40, 'c': 400}, b''),
             ('G',                           7, b'\x80'),
             ('H',                    {'a': 7}, b''),
-            ('I',                         103, b'\x80\xb3\x80')
+            ('I',                         103, b'\x80\xb3\x80'),
+            ('J',
+             {'a': True, 'b': 0, 'c': True},
+             b'\x80\x00\x00\x00\x00\x01\x38\x84')
         ]
 
         for type_name, decoded, encoded in datas:

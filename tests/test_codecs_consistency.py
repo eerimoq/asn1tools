@@ -661,6 +661,83 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
 
                 self.assertEqual(str(cm.exception), message)
 
+    def test_programming_types(self):
+        specs = []
+
+        for codec in CODECS:
+            specs.append(asn1tools.compile_files(
+                'examples/programming_types/programming_types.asn',
+                codec))
+
+        decoded = 1
+
+        encoded_messages = [
+            b'\x02\x01\x01',
+            b'\x02\x01\x01',
+            b'1',
+            b'\x00\x00\x00\x01',
+            b'\xc0\x80\x00\x00\x01',
+            b'\x80\x00\x00\x01',
+            b'<Int32>1</Int32>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'Int32', decoded, encoded)
+
+    def test_c_source(self):
+        specs = []
+
+        for codec in CODECS:
+            specs.append(asn1tools.compile_files([
+                'tests/files/c_source.asn',
+                'examples/programming_types/programming_types.asn'
+            ], codec))
+
+        decoded = {
+            'a': -1,
+            'b': -2,
+            'c': -3,
+            'd': -4,
+            'e': 1,
+            'f': 2,
+            'g': 3,
+            'h': 4,
+            'i': 1.0,
+            'j': 1.0,
+            'k': True,
+            'l': 11 * b'\x05'
+        }
+
+        encoded_messages = [
+            b'\x30\x32\x80\x01\xff\x81\x01\xfe\x82\x01\xfd\x83\x01\xfc\x84\x01'
+            b'\x01\x85\x01\x02\x86\x01\x03\x87\x01\x04\x88\x03\x80\x00\x01\x89'
+            b'\x03\x80\x00\x01\x8a\x01\xff\x8b\x0b\x05\x05\x05\x05\x05\x05\x05'
+            b'\x05\x05\x05\x05',
+            b'\x30\x32\x80\x01\xff\x81\x01\xfe\x82\x01\xfd\x83\x01\xfc\x84\x01'
+            b'\x01\x85\x01\x02\x86\x01\x03\x87\x01\x04\x88\x03\x80\x00\x01\x89'
+            b'\x03\x80\x00\x01\x8a\x01\xff\x8b\x0b\x05\x05\x05\x05\x05\x05\x05'
+            b'\x05\x05\x05\x05',
+            b'{"i":1.0,"e":1,"l":"0505050505050505050505","f":2,"j":1.0,"k'
+            b'":true,"a":-1,"h":4,"b":-2,"d":-4,"c":-3,"g":3}',
+            b'\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff\xff\xff\xff\xff\xfc\x01'
+            b'\x00\x02\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x04\x3f\x80'
+            b'\x00\x00\x3f\xf0\x00\x00\x00\x00\x00\x00\xff\x05\x05\x05\x05\x05'
+            b'\x05\x05\x05\x05\x05\x05',
+            b'\x7f\x7f\xfe\xc0\x7f\xff\xff\xfd\xe0\x7f\xff\xff\xff\xff\xff\xff'
+            b'\xfc\x01\x00\x02\x00\x03\x00\x04\x03\x80\x00\x01\x03\x80\x00\x01'
+            b'\x80\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05',
+            b'\x7f\x7f\xfe\x7f\xff\xff\xfd\x7f\xff\xff\xff\xff\xff\xff\xfc\x01'
+            b'\x00\x02\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x04\x03\x80'
+            b'\x00\x01\x03\x80\x00\x01\x82\x82\x82\x82\x82\x82\x82\x82\x82\x82'
+            b'\x82\x80',
+            b'<A><a>-1</a><b>-2</b><c>-3</c><d>-4</d><e>1</e><f>2</f><g>3</g><'
+            b'h>4</h><i>1.0E0</i><j>1.0E0</j><k><true /></k><l>050505050505050'
+            b'5050505</l></A>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'A', decoded, encoded)
+
 
 if __name__ == '__main__':
     unittest.main()

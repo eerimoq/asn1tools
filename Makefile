@@ -4,7 +4,8 @@ endif
 
 C_SOURCES := \
 	tests/main.c \
-	tests/files/c_source/c_source/oer.c
+	tests/files/c_source/c_source/oer.c \
+	tests/files/c_source/c_source/uper.c
 
 CFLAGS := \
 	-O3 \

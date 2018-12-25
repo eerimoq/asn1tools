@@ -86,6 +86,11 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "P ::= INTEGER (0..2147483647) "
             "Q ::= INTEGER (0..4294967295) "
             "R ::= INTEGER (0..4294967296) "
+            "S ::= SEQUENCE { "
+            "    a BOOLEAN, "
+            "    b INTEGER (-10000..704000000000000001), "
+            "    c BOOLEAN "
+            "} "
             "END",
             'per')
 
@@ -145,7 +150,10 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('P',                 16777216, b'\xc0\x01\x00\x00\x00'),
             ('P',                100000000, b'\xc0\x05\xf5\xe1\x00'),
             ('Q',               4294967295, b'\xc0\xff\xff\xff\xff'),
-            ('R',               4294967296, b'\x80\x01\x00\x00\x00\x00')
+            ('R',               4294967296, b'\x80\x01\x00\x00\x00\x00'),
+            ('S',
+             {'a': True, 'b': 0, 'c': True},
+             b'\x90\x27\x10\x80')
         ]
 
         for type_name, decoded, encoded in datas:
