@@ -976,6 +976,48 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             str(cm.exception),
             "String size extension is not yet implemented.")
 
+    def test_printable_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "D ::= SEQUENCE { "
+            "    a BOOLEAN, "
+            "    b PrintableString (SIZE (36)), "
+            "    c BOOLEAN "
+            "} "
+            "E ::= SEQUENCE { "
+            "    a BOOLEAN, "
+            "    b PrintableString (SIZE (0..22)), "
+            "    c BOOLEAN "
+            "} "
+            "F ::= SEQUENCE { "
+            "    a BOOLEAN, "
+            "    b PrintableString, "
+            "    c BOOLEAN "
+            "} "
+            "END",
+            'per')
+
+        datas = [
+            ('D',
+             {'a': True, 'b': 12 * '123', 'c': True},
+             b'\x80\x31\x32\x33\x31\x32\x33\x31\x32\x33\x31\x32\x33\x31\x32\x33'
+             b'\x31\x32\x33\x31\x32\x33\x31\x32\x33\x31\x32\x33\x31\x32\x33\x31'
+             b'\x32\x33\x31\x32\x33\x80'),
+            ('E',
+             {'a': True, 'b': '', 'c': True},
+             b'\x82'),
+            ('E',
+             {'a': True, 'b': '1', 'c': True},
+             b'\x84\x31\x80'),
+            ('F',
+             {'a': True, 'b': '123', 'c': True},
+             b'\x80\x03\x31\x32\x33\x80')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_ia5_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "

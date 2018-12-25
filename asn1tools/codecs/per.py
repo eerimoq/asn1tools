@@ -581,7 +581,7 @@ class KnownMultiplierStringType(Type):
                                                     self.maximum,
                                                     self.number_of_bits)
 
-            if self.maximum > 1:
+            if self.maximum > 1 and len(encoded) > 0:
                 encoder.align()
         elif self.maximum * self.bits_per_character > 16:
             encoder.align()
@@ -616,7 +616,7 @@ class KnownMultiplierStringType(Type):
                                                                self.maximum,
                                                                self.number_of_bits)
 
-                if self.maximum > 1:
+                if self.maximum > 1 and length > 0:
                     decoder.align()
             elif self.maximum * self.bits_per_character > 16:
                 decoder.align()

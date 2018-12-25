@@ -1008,6 +1008,21 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "A ::= PrintableString "
             "B ::= PrintableString (SIZE (16)) "
             "C ::= PrintableString (SIZE (0..31)) "
+            "D ::= SEQUENCE { "
+            "    a BOOLEAN, "
+            "    b PrintableString (SIZE (36)), "
+            "    c BOOLEAN "
+            "} "
+            "E ::= SEQUENCE { "
+            "    a BOOLEAN, "
+            "    b PrintableString (SIZE (0..22)), "
+            "    c BOOLEAN "
+            "} "
+            "F ::= SEQUENCE { "
+            "    a BOOLEAN, "
+            "    b PrintableString, "
+            "    c BOOLEAN "
+            "} "
             "END",
             'uper')
 
@@ -1026,7 +1041,17 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
              '0123456789abcdef',
              b'\x60\xc5\x93\x36\x8d\x5b\x37\x70\xe7\x0e\x2c\x79\x32\xe6'),
             ('C',                 '', b'\x00'),
-            ('C',                '2', b'\x0b\x20')
+            ('C',                '2', b'\x0b\x20'),
+            ('D',
+             {'a': True, 'b': 12 * '123', 'c': True},
+             b'\xb1\x64\xcd\x8b\x26\x6c\x59\x33\x62\xc9\x9b\x16\x4c\xd8\xb2\x66'
+             b'\xc5\x93\x36\x2c\x99\xb1\x64\xcd\x8b\x26\x6c\x59\x33\x62\xc9\x9c'),
+            ('E',
+             {'a': True, 'b': '', 'c': True},
+             b'\x82'),
+            ('F',
+             {'a': True, 'b': '123', 'c': True},
+             b'\x81\xb1\x64\xce')
         ]
 
         for type_name, decoded, encoded in datas:
