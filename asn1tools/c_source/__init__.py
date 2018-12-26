@@ -55,6 +55,14 @@ HEADER_FMT = '''\
 #    define EOUTOFDATA 500
 #endif
 
+#ifndef EBADCHOICE
+#    define EBADCHOICE 501
+#endif
+
+#ifndef EBADLENGTH
+#    define EBADLENGTH 502
+#endif
+
 {structs}
 {declarations}
 #endif

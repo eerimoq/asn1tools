@@ -70,7 +70,26 @@ struct uper_c_source_a_t {
     float i;
     double j;
     bool k;
-    uint8_t l[11];
+    struct {
+        uint8_t value[11];
+    } l;
+};
+
+/**
+ * Type B in module CSource.
+ */
+enum uper_c_source_b_choice_t {
+    uper_c_source_b_choice_a_t = 0,
+    uper_c_source_b_choice_b_t,
+    uper_c_source_b_choice_c_t
+};
+
+struct uper_c_source_b_t {
+    enum uper_c_source_b_choice_t choice;
+    union {
+        int8_t a;
+        struct uper_c_source_a_t b;
+    } value;
 };
 
 /**
@@ -115,7 +134,9 @@ struct uper_c_source_d_t {
             int8_t o;
             bool is_p_present;
             struct {
-                uint8_t q[5];
+                struct {
+                    uint8_t value[5];
+                } q;
                 bool is_r_present;
                 bool r;
             } p;
@@ -148,6 +169,34 @@ ssize_t uper_c_source_a_encode(
  */
 ssize_t uper_c_source_a_decode(
     struct uper_c_source_a_t *dst_p,
+    const uint8_t *src_p,
+    size_t size);
+
+/**
+ * Encode type B defined in module CSource.
+ *
+ * @param[out] dst_p Buffer to encode into.
+ * @param[in] size Size of dst_p.
+ * @param[in] src_p Data to encode.
+ *
+ * @return Encoded data length or negative error code.
+ */
+ssize_t uper_c_source_b_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct uper_c_source_b_t *src_p);
+
+/**
+ * Decode type B defined in module CSource.
+ *
+ * @param[out] dst_p Decoded data.
+ * @param[in] src_p Data to decode.
+ * @param[in] size Size of src_p.
+ *
+ * @return Number of bytes decoded or negative error code.
+ */
+ssize_t uper_c_source_b_decode(
+    struct uper_c_source_b_t *dst_p,
     const uint8_t *src_p,
     size_t size);
 

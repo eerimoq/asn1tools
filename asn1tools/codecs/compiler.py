@@ -194,6 +194,8 @@ class Compiler(object):
                 compiled_type = self.process_type(type_name,
                                                   type_descriptor,
                                                   module_name)
+                compiled_type.type_name = type_name
+                compiled_type.module_name = module_name
                 compiled_open_types = self.compile_open_types(type_name,
                                                               type_descriptor,
                                                               module_name)
@@ -579,6 +581,8 @@ class Compiler(object):
                 *self.lookup_type_descriptor(
                     type_name,
                     module_name))
+            compiled.type_name = type_name
+            compiled.module_name = module_name
             self.types_backtrace_pop()
             self.set_compiled_type(name,
                                    type_name,

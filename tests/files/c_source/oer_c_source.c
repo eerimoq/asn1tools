@@ -355,22 +355,6 @@ ssize_t oer_programming_types_bool_decode(
     return (0);
 }
 
-ssize_t oer_programming_types_bytes_encode(
-    uint8_t *dst_p,
-    size_t size,
-    const struct oer_programming_types_bytes_t *src_p)
-{
-    return (0);
-}
-
-ssize_t oer_programming_types_bytes_decode(
-    struct oer_programming_types_bytes_t *dst_p,
-    const uint8_t *src_p,
-    size_t size)
-{
-    return (0);
-}
-
 ssize_t oer_programming_types_double_encode(
     uint8_t *dst_p,
     size_t size,
@@ -461,22 +445,6 @@ ssize_t oer_programming_types_int8_encode(
 
 ssize_t oer_programming_types_int8_decode(
     struct oer_programming_types_int8_t *dst_p,
-    const uint8_t *src_p,
-    size_t size)
-{
-    return (0);
-}
-
-ssize_t oer_programming_types_string_encode(
-    uint8_t *dst_p,
-    size_t size,
-    const struct oer_programming_types_string_t *src_p)
-{
-    return (0);
-}
-
-ssize_t oer_programming_types_string_decode(
-    struct oer_programming_types_string_t *dst_p,
     const uint8_t *src_p,
     size_t size)
 {

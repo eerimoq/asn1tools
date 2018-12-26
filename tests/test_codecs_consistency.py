@@ -739,6 +739,71 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'A', decoded, encoded)
 
+        # Type B, choice a.
+        decoded = ('a', -10)
+
+        encoded_messages = [
+            b'\x80\x01\xf6',
+            b'\x80\x01\xf6',
+            b'{"a": -10}',
+            b'\x80\xf6',
+            b'\x00\x76',
+            b'\x1d\x80',
+            b'<B><a>-10</a></B>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'B', decoded, encoded)
+
+        # Type B, choice b.
+        decoded = (
+            'b',
+            {
+                'a': -1,
+                'b': -2,
+                'c': -3,
+                'd': -4,
+                'e': 1,
+                'f': 2,
+                'g': 3,
+                'h': 4,
+                'i': 1.0,
+                'j': 1.0,
+                'k': True,
+                'l': 11 * b'\x05'
+            }
+        )
+
+        encoded_messages = [
+            b'\xa1\x32\x80\x01\xff\x81\x01\xfe\x82\x01\xfd\x83\x01\xfc\x84\x01'
+            b'\x01\x85\x01\x02\x86\x01\x03\x87\x01\x04\x88\x03\x80\x00\x01\x89'
+            b'\x03\x80\x00\x01\x8a\x01\xff\x8b\x0b\x05\x05\x05\x05\x05\x05\x05'
+            b'\x05\x05\x05\x05',
+            b'\xa1\x32\x80\x01\xff\x81\x01\xfe\x82\x01\xfd\x83\x01\xfc\x84\x01'
+            b'\x01\x85\x01\x02\x86\x01\x03\x87\x01\x04\x88\x03\x80\x00\x01\x89'
+            b'\x03\x80\x00\x01\x8a\x01\xff\x8b\x0b\x05\x05\x05\x05\x05\x05\x05'
+            b'\x05\x05\x05\x05',
+            b'{"b":{"a":-1,"f":2,"i":1.0,"h":4,"j":1.0,"e":1,"d":-4,"b":-2,"c"'
+            b':-3,"g":3,"k":true,"l":"0505050505050505050505"}}',
+            b'\x81\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff\xff\xff\xff\xff\xfc'
+            b'\x01\x00\x02\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x04\x3f'
+            b'\x80\x00\x00\x3f\xf0\x00\x00\x00\x00\x00\x00\xff\x05\x05\x05\x05'
+            b'\x05\x05\x05\x05\x05\x05\x05',
+            b'\x40\x7f\x7f\xfe\xc0\x7f\xff\xff\xfd\xe0\x7f\xff\xff\xff\xff\xff'
+            b'\xff\xfc\x01\x00\x02\x00\x03\x00\x04\x03\x80\x00\x01\x03\x80\x00'
+            b'\x01\x80\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05',
+            b'\x5f\xdf\xff\x9f\xff\xff\xff\x5f\xff\xff\xff\xff\xff\xff\xff\x00'
+            b'\x40\x00\x80\x00\x00\x00\xc0\x00\x00\x00\x00\x00\x00\x01\x00\xe0'
+            b'\x00\x00\x40\xe0\x00\x00\x60\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0'
+            b'\xa0\xa0',
+            b'<B><b><a>-1</a><b>-2</b><c>-3</c><d>-4</d><e>1</e><f>2</f><g>3</'
+            b'g><h>4</h><i>1.0E0</i><j>1.0E0</j><k><true /></k><l>050505050505'
+            b'0505050505</l></b></B>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'B', decoded, encoded)
+
         # Type D.
         decoded = [
             {

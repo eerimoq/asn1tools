@@ -2426,8 +2426,8 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             rfc5280.decode('Certificate', encoded)
 
         self.assertEqual(str(cm.exception),
-                         "tbsCertificate: issuer: Expected SEQUENCE with tag "
-                         "'30' at offset 150, but got '31'.")
+                         "tbsCertificate: issuer: Expected AttributeTypeAndValue "
+                         "with tag '30' at offset 150, but got '31'.")
 
     def test_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn')

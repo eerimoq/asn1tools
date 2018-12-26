@@ -70,7 +70,9 @@ struct oer_c_source_a_t {
     float i;
     double j;
     bool k;
-    uint8_t l[11];
+    struct {
+        uint8_t value[11];
+    } l;
 };
 
 /**
@@ -78,7 +80,8 @@ struct oer_c_source_a_t {
  */
 enum oer_c_source_b_choice_t {
     oer_c_source_b_choice_a_t = 0,
-    oer_c_source_b_choice_b_t
+    oer_c_source_b_choice_b_t,
+    oer_c_source_b_choice_c_t
 };
 
 struct oer_c_source_b_t {
@@ -139,7 +142,9 @@ struct oer_c_source_d_t {
             int8_t o;
             bool is_p_present;
             struct {
-                uint8_t q[5];
+                struct {
+                    uint8_t value[5];
+                } q;
                 bool is_r_present;
                 bool r;
             } p;

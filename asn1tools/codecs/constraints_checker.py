@@ -68,10 +68,19 @@ class Type(object):
         self.set_range(minimum, maximum, has_extension_marker)
 
     def is_in_range(self, value):
-        minimum_ok = ((self.minimum == 'MIN') or (value >= self.minimum))
-        maximum_ok = ((self.maximum == 'MAX') or (value <= self.maximum))
+        minimum_ok = (not self.has_lower_bound()) or (value >= self.minimum)
+        maximum_ok = (not self.has_upper_bound()) or (value <= self.maximum)
 
         return minimum_ok and maximum_ok
+
+    def has_lower_bound(self):
+        return self.minimum != 'MIN'
+
+    def has_upper_bound(self):
+        return self.maximum != 'MAX'
+
+    def is_bound(self):
+        return self.has_lower_bound() and self.has_upper_bound()
 
     def encode(self, data):
         raise NotImplementedError('To be implemented by subclasses.')

@@ -36,7 +36,8 @@ A ::= SEQUENCE {
 
 B ::= CHOICE {
     a    Int8,
-    b    A
+    b    A,
+    c    NULL
 }
 
 C ::= SEQUENCE (SIZE(0..2)) OF B

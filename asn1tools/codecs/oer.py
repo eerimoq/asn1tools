@@ -284,6 +284,7 @@ class Type(object):
     def __init__(self, name, type_name, number, flags=0):
         self.name = name
         self.type_name = type_name
+        self.module_name = None
 
         if number is None:
             self.tag = None
