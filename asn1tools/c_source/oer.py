@@ -546,8 +546,6 @@ class _Generator(object):
         return lines
 
     def generate_type_declaration(self, compiled_type):
-        module_name_snake = camel_to_snake_case(self.module_name)
-        type_name_snake = camel_to_snake_case(self.type_name)
         type_ = compiled_type.type
         checker = compiled_type.constraints_checker.type
         lines = []
@@ -589,29 +587,23 @@ class _Generator(object):
             TYPE_DECLARATION_FMT.format(namespace=self.namespace,
                                         module_name=self.module_name,
                                         type_name=self.type_name,
-                                        module_name_snake=module_name_snake,
-                                        type_name_snake=type_name_snake,
+                                        module_name_snake=self.module_name_snake,
+                                        type_name_snake=self.type_name_snake,
                                         helper_types='\n'.join(self.helper_lines),
                                         members='\n'.join(lines))
         ]
 
     def generate_declaration(self):
-        module_name_snake = camel_to_snake_case(self.module_name)
-        type_name_snake = camel_to_snake_case(self.type_name)
-
         return DECLARATION_FMT.format(namespace=self.namespace,
                                       module_name=self.module_name,
                                       type_name=self.type_name,
-                                      module_name_snake=module_name_snake,
-                                      type_name_snake=type_name_snake)
+                                      module_name_snake=self.module_name_snake,
+                                      type_name_snake=self.type_name_snake)
 
-    def generate_definition(self):
-        module_name_snake = camel_to_snake_case(self.module_name)
-        type_name_snake = camel_to_snake_case(self.type_name)
-
+    def generate_definition(self, compiled_type):
         return DEFINITION_FMT.format(namespace=self.namespace,
-                                     module_name_snake=module_name_snake,
-                                     type_name_snake=type_name_snake)
+                                     module_name_snake=self.module_name_snake,
+                                     type_name_snake=self.type_name_snake)
 
     def generate(self, compiled):
         structs = []
@@ -634,7 +626,7 @@ class _Generator(object):
                 declaration = self.generate_declaration()
                 declarations.append(declaration)
 
-                definition = self.generate_definition()
+                definition = self.generate_definition(compiled_type)
                 definitions.append(definition)
 
         structs = '\n'.join(structs)
