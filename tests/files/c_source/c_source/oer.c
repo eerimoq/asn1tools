@@ -53,6 +53,11 @@ static void encoder_init(struct encoder_t *self_p,
     self_p->pos = 0;
 }
 
+static ssize_t encoder_get_result(struct encoder_t *self_p)
+{
+    return (self_p->pos);
+}
+
 static void encoder_abort(struct encoder_t *self_p,
                           ssize_t error)
 {
@@ -172,6 +177,11 @@ static void decoder_init(struct decoder_t *self_p,
     self_p->buf_p = buf_p;
     self_p->size = size;
     self_p->pos = 0;
+}
+
+static ssize_t decoder_get_result(struct decoder_t *self_p)
+{
+    return (self_p->pos);
 }
 
 static void decoder_abort(struct decoder_t *self_p,
@@ -740,7 +750,7 @@ ssize_t oer_c_source_a_encode(
     encoder_init(&encoder, dst_p, size);
     oer_c_source_a_encode_inner(&encoder, src_p);
 
-    return (encoder.pos);
+    return (encoder_get_result(&encoder));
 }
 
 ssize_t oer_c_source_a_decode(
@@ -753,7 +763,7 @@ ssize_t oer_c_source_a_decode(
     decoder_init(&decoder, src_p, size);
     oer_c_source_a_decode_inner(&decoder, dst_p);
 
-    return (decoder.pos);
+    return (decoder_get_result(&decoder));
 }
 
 ssize_t oer_c_source_b_encode(
@@ -766,7 +776,7 @@ ssize_t oer_c_source_b_encode(
     encoder_init(&encoder, dst_p, size);
     oer_c_source_b_encode_inner(&encoder, src_p);
 
-    return (encoder.pos);
+    return (encoder_get_result(&encoder));
 }
 
 ssize_t oer_c_source_b_decode(
@@ -779,7 +789,7 @@ ssize_t oer_c_source_b_decode(
     decoder_init(&decoder, src_p, size);
     oer_c_source_b_decode_inner(&decoder, dst_p);
 
-    return (decoder.pos);
+    return (decoder_get_result(&decoder));
 }
 
 ssize_t oer_c_source_c_encode(
@@ -792,7 +802,7 @@ ssize_t oer_c_source_c_encode(
     encoder_init(&encoder, dst_p, size);
     oer_c_source_c_encode_inner(&encoder, src_p);
 
-    return (encoder.pos);
+    return (encoder_get_result(&encoder));
 }
 
 ssize_t oer_c_source_c_decode(
@@ -805,7 +815,7 @@ ssize_t oer_c_source_c_decode(
     decoder_init(&decoder, src_p, size);
     oer_c_source_c_decode_inner(&decoder, dst_p);
 
-    return (decoder.pos);
+    return (decoder_get_result(&decoder));
 }
 
 ssize_t oer_c_source_d_encode(
@@ -818,7 +828,7 @@ ssize_t oer_c_source_d_encode(
     encoder_init(&encoder, dst_p, size);
     oer_c_source_d_encode_inner(&encoder, src_p);
 
-    return (encoder.pos);
+    return (encoder_get_result(&encoder));
 }
 
 ssize_t oer_c_source_d_decode(
@@ -831,7 +841,7 @@ ssize_t oer_c_source_d_decode(
     decoder_init(&decoder, src_p, size);
     oer_c_source_d_decode_inner(&decoder, dst_p);
 
-    return (decoder.pos);
+    return (decoder_get_result(&decoder));
 }
 
 ssize_t oer_programming_types_bool_encode(
@@ -844,7 +854,7 @@ ssize_t oer_programming_types_bool_encode(
     encoder_init(&encoder, dst_p, size);
     oer_programming_types_bool_encode_inner(&encoder, src_p);
 
-    return (encoder.pos);
+    return (encoder_get_result(&encoder));
 }
 
 ssize_t oer_programming_types_bool_decode(
@@ -857,7 +867,7 @@ ssize_t oer_programming_types_bool_decode(
     decoder_init(&decoder, src_p, size);
     oer_programming_types_bool_decode_inner(&decoder, dst_p);
 
-    return (decoder.pos);
+    return (decoder_get_result(&decoder));
 }
 
 ssize_t oer_programming_types_double_encode(
@@ -870,7 +880,7 @@ ssize_t oer_programming_types_double_encode(
     encoder_init(&encoder, dst_p, size);
     oer_programming_types_double_encode_inner(&encoder, src_p);
 
-    return (encoder.pos);
+    return (encoder_get_result(&encoder));
 }
 
 ssize_t oer_programming_types_double_decode(
@@ -883,7 +893,7 @@ ssize_t oer_programming_types_double_decode(
     decoder_init(&decoder, src_p, size);
     oer_programming_types_double_decode_inner(&decoder, dst_p);
 
-    return (decoder.pos);
+    return (decoder_get_result(&decoder));
 }
 
 ssize_t oer_programming_types_float_encode(
@@ -896,7 +906,7 @@ ssize_t oer_programming_types_float_encode(
     encoder_init(&encoder, dst_p, size);
     oer_programming_types_float_encode_inner(&encoder, src_p);
 
-    return (encoder.pos);
+    return (encoder_get_result(&encoder));
 }
 
 ssize_t oer_programming_types_float_decode(
@@ -909,7 +919,7 @@ ssize_t oer_programming_types_float_decode(
     decoder_init(&decoder, src_p, size);
     oer_programming_types_float_decode_inner(&decoder, dst_p);
 
-    return (decoder.pos);
+    return (decoder_get_result(&decoder));
 }
 
 ssize_t oer_programming_types_int16_encode(
@@ -922,7 +932,7 @@ ssize_t oer_programming_types_int16_encode(
     encoder_init(&encoder, dst_p, size);
     oer_programming_types_int16_encode_inner(&encoder, src_p);
 
-    return (encoder.pos);
+    return (encoder_get_result(&encoder));
 }
 
 ssize_t oer_programming_types_int16_decode(
@@ -935,7 +945,7 @@ ssize_t oer_programming_types_int16_decode(
     decoder_init(&decoder, src_p, size);
     oer_programming_types_int16_decode_inner(&decoder, dst_p);
 
-    return (decoder.pos);
+    return (decoder_get_result(&decoder));
 }
 
 ssize_t oer_programming_types_int32_encode(
@@ -948,7 +958,7 @@ ssize_t oer_programming_types_int32_encode(
     encoder_init(&encoder, dst_p, size);
     oer_programming_types_int32_encode_inner(&encoder, src_p);
 
-    return (encoder.pos);
+    return (encoder_get_result(&encoder));
 }
 
 ssize_t oer_programming_types_int32_decode(
@@ -961,7 +971,7 @@ ssize_t oer_programming_types_int32_decode(
     decoder_init(&decoder, src_p, size);
     oer_programming_types_int32_decode_inner(&decoder, dst_p);
 
-    return (decoder.pos);
+    return (decoder_get_result(&decoder));
 }
 
 ssize_t oer_programming_types_int64_encode(
@@ -974,7 +984,7 @@ ssize_t oer_programming_types_int64_encode(
     encoder_init(&encoder, dst_p, size);
     oer_programming_types_int64_encode_inner(&encoder, src_p);
 
-    return (encoder.pos);
+    return (encoder_get_result(&encoder));
 }
 
 ssize_t oer_programming_types_int64_decode(
@@ -987,7 +997,7 @@ ssize_t oer_programming_types_int64_decode(
     decoder_init(&decoder, src_p, size);
     oer_programming_types_int64_decode_inner(&decoder, dst_p);
 
-    return (decoder.pos);
+    return (decoder_get_result(&decoder));
 }
 
 ssize_t oer_programming_types_int8_encode(
@@ -1000,7 +1010,7 @@ ssize_t oer_programming_types_int8_encode(
     encoder_init(&encoder, dst_p, size);
     oer_programming_types_int8_encode_inner(&encoder, src_p);
 
-    return (encoder.pos);
+    return (encoder_get_result(&encoder));
 }
 
 ssize_t oer_programming_types_int8_decode(
@@ -1013,7 +1023,7 @@ ssize_t oer_programming_types_int8_decode(
     decoder_init(&decoder, src_p, size);
     oer_programming_types_int8_decode_inner(&decoder, dst_p);
 
-    return (decoder.pos);
+    return (decoder_get_result(&decoder));
 }
 
 ssize_t oer_programming_types_uint16_encode(
@@ -1026,7 +1036,7 @@ ssize_t oer_programming_types_uint16_encode(
     encoder_init(&encoder, dst_p, size);
     oer_programming_types_uint16_encode_inner(&encoder, src_p);
 
-    return (encoder.pos);
+    return (encoder_get_result(&encoder));
 }
 
 ssize_t oer_programming_types_uint16_decode(
@@ -1039,7 +1049,7 @@ ssize_t oer_programming_types_uint16_decode(
     decoder_init(&decoder, src_p, size);
     oer_programming_types_uint16_decode_inner(&decoder, dst_p);
 
-    return (decoder.pos);
+    return (decoder_get_result(&decoder));
 }
 
 ssize_t oer_programming_types_uint32_encode(
@@ -1052,7 +1062,7 @@ ssize_t oer_programming_types_uint32_encode(
     encoder_init(&encoder, dst_p, size);
     oer_programming_types_uint32_encode_inner(&encoder, src_p);
 
-    return (encoder.pos);
+    return (encoder_get_result(&encoder));
 }
 
 ssize_t oer_programming_types_uint32_decode(
@@ -1065,7 +1075,7 @@ ssize_t oer_programming_types_uint32_decode(
     decoder_init(&decoder, src_p, size);
     oer_programming_types_uint32_decode_inner(&decoder, dst_p);
 
-    return (decoder.pos);
+    return (decoder_get_result(&decoder));
 }
 
 ssize_t oer_programming_types_uint64_encode(
@@ -1078,7 +1088,7 @@ ssize_t oer_programming_types_uint64_encode(
     encoder_init(&encoder, dst_p, size);
     oer_programming_types_uint64_encode_inner(&encoder, src_p);
 
-    return (encoder.pos);
+    return (encoder_get_result(&encoder));
 }
 
 ssize_t oer_programming_types_uint64_decode(
@@ -1091,7 +1101,7 @@ ssize_t oer_programming_types_uint64_decode(
     decoder_init(&decoder, src_p, size);
     oer_programming_types_uint64_decode_inner(&decoder, dst_p);
 
-    return (decoder.pos);
+    return (decoder_get_result(&decoder));
 }
 
 ssize_t oer_programming_types_uint8_encode(
@@ -1104,7 +1114,7 @@ ssize_t oer_programming_types_uint8_encode(
     encoder_init(&encoder, dst_p, size);
     oer_programming_types_uint8_encode_inner(&encoder, src_p);
 
-    return (encoder.pos);
+    return (encoder_get_result(&encoder));
 }
 
 ssize_t oer_programming_types_uint8_decode(
@@ -1117,5 +1127,5 @@ ssize_t oer_programming_types_uint8_decode(
     decoder_init(&decoder, src_p, size);
     oer_programming_types_uint8_decode_inner(&decoder, dst_p);
 
-    return (decoder.pos);
+    return (decoder_get_result(&decoder));
 }
