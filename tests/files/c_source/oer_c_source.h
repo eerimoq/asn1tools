@@ -103,6 +103,17 @@ struct oer_c_source_c_t {
 /**
  * Type D in module CSource.
  */
+enum oer_c_source_d_a_b_choice_t {
+    oer_c_source_d_a_b_choice_c_t,
+    oer_c_source_d_a_b_choice_d_t
+};
+
+enum oer_c_source_d_g_h_t {
+    oer_c_source_d_g_h_i_t,
+    oer_c_source_d_g_h_j_t,
+    oer_c_source_d_g_h_k_t
+};
+
 struct oer_c_source_d_t {
     uint8_t length;
     struct {

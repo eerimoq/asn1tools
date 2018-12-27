@@ -79,7 +79,7 @@ struct oer_c_source_a_t {
  * Type B in module CSource.
  */
 enum oer_c_source_b_choice_t {
-    oer_c_source_b_choice_a_t = 0,
+    oer_c_source_b_choice_a_t,
     oer_c_source_b_choice_b_t,
     oer_c_source_b_choice_c_t
 };
@@ -104,12 +104,12 @@ struct oer_c_source_c_t {
  * Type D in module CSource.
  */
 enum oer_c_source_d_a_b_choice_t {
-    oer_c_source_d_a_b_choice_c_t = 0,
+    oer_c_source_d_a_b_choice_c_t,
     oer_c_source_d_a_b_choice_d_t
 };
 
 enum oer_c_source_d_g_h_t {
-    oer_c_source_d_g_h_i_t = 0,
+    oer_c_source_d_g_h_i_t,
     oer_c_source_d_g_h_j_t,
     oer_c_source_d_g_h_k_t
 };
@@ -340,6 +340,20 @@ ssize_t oer_c_source_d_decode(
     struct oer_c_source_d_t *dst_p,
     const uint8_t *src_p,
     size_t size);
+
+/**
+ * Encode type Bool defined in module ProgrammingTypes.
+ *
+ * @param[out] dst_p Buffer to encode into.
+ * @param[in] size Size of dst_p.
+ * @param[in] src_p Data to encode.
+ *
+ * @return Encoded data length or negative error code.
+ */
+ssize_t oer_programming_types_bool_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct oer_programming_types_bool_t *src_p);
 
 /**
  * Decode type Bool defined in module ProgrammingTypes.

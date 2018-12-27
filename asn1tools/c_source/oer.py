@@ -351,6 +351,7 @@ class _Generator(object):
         self.members_backtrace = []
         self.module_name = None
         self.type_name = None
+        self.helper_lines = []
 
     @property
     def module_name_snake(self):
@@ -459,8 +460,21 @@ class _Generator(object):
             '}'
         ]
 
-    def format_enumerated(self):
-        return ['enum {}_t'.format(self.location)]
+    def format_enumerated(self, type_):
+        lines = ['enum {}_t'.format(self.location)]
+
+        values = [
+            '    {}_{}_t'.format(self.location, value)
+            for value in type_.value_to_data.values()
+        ]
+        self.helper_lines += [
+            'enum {}_t {{'.format(self.location)
+        ] + [value + ',' for value in values[:-1]] + values[-1:] + [
+            '};',
+            ''
+        ]
+
+        return lines
 
     def format_choice(self, type_, checker):
         lines = []
@@ -478,10 +492,11 @@ class _Generator(object):
             choices.append('    {}_choice_{}_t'.format(self.location,
                                                        member.name))
 
-        enum_lines = [
+        self.helper_lines += [
             'enum {}_choice_t {{'.format(self.location)
         ] + [choice + ',' for choice in choices[:-1]] + choices[-1:] + [
-            '};'
+            '};',
+            ''
         ]
 
         lines = [
@@ -493,7 +508,7 @@ class _Generator(object):
 
         lines = ['struct {'] + _indent_lines(lines) + ['}']
 
-        return enum_lines, lines
+        return lines
 
     def format_user_type(self, type_name, module_name):
         module_name_snake = camel_to_snake_case(module_name)
@@ -520,11 +535,11 @@ class _Generator(object):
         elif isinstance(type_, oer.Sequence):
             lines = self.format_sequence(type_, checker)
         elif isinstance(type_, oer.Choice):
-            lines = self.format_choice(type_, checker)[1]
+            lines = self.format_choice(type_, checker)
         elif isinstance(type_, oer.SequenceOf):
             lines = self.format_sequence_of(type_, checker)
         elif isinstance(type_, oer.Enumerated):
-            lines = self.format_enumerated()
+            lines = self.format_enumerated(type_)
         else:
             raise NotImplementedError(type_)
 
@@ -536,7 +551,7 @@ class _Generator(object):
         type_ = compiled_type.type
         checker = compiled_type.constraints_checker.type
         lines = []
-        helper_lines = []
+        self.helper_lines = []
 
         try:
             if isinstance(type_, oer.Integer):
@@ -549,9 +564,8 @@ class _Generator(object):
                 lines = self.format_sequence(type_, checker)[1:-1]
                 lines = _dedent_lines(lines)
             elif isinstance(type_, oer.Choice):
-                enum_lines, lines = self.format_choice(type_, checker)
+                lines = self.format_choice(type_, checker)
                 lines = _dedent_lines(lines[1:-1])
-                helper_lines += enum_lines + ['', '']
             elif isinstance(type_, oer.SequenceOf):
                 lines = self.format_sequence_of(type_, checker)[1:-1]
                 lines = _dedent_lines(lines)
@@ -568,13 +582,16 @@ class _Generator(object):
 
         lines = _indent_lines(lines)
 
+        if self.helper_lines:
+            self.helper_lines.append('')
+
         return [
             TYPE_DECLARATION_FMT.format(namespace=self.namespace,
                                         module_name=self.module_name,
                                         type_name=self.type_name,
                                         module_name_snake=module_name_snake,
                                         type_name_snake=type_name_snake,
-                                        helper_types='\n'.join(helper_lines),
+                                        helper_types='\n'.join(self.helper_lines),
                                         members='\n'.join(lines))
         ]
 
