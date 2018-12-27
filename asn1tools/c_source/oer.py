@@ -52,12 +52,14 @@ static void {namespace}_{module_name_snake}_{type_name_snake}_encode_inner(
     struct encoder_t *encoder_p,
     const struct {namespace}_{module_name_snake}_{type_name_snake}_t *src_p)
 {{
+{encode_body}\
 }}
 
 static void {namespace}_{module_name_snake}_{type_name_snake}_decode_inner(
     struct decoder_t *decoder_p,
     struct {namespace}_{module_name_snake}_{type_name_snake}_t *dst_p)
 {{
+{decode_body}\
 }}
 '''
 
@@ -650,12 +652,69 @@ class _Generator(object):
                                       module_name_snake=self.module_name_snake,
                                       type_name_snake=self.type_name_snake)
 
+    def format_integer_inner(self, checker):
+        type_name = _format_type_name(checker.minimum, checker.maximum)
+
+        length = {
+            'int8_t': 8,
+            'uint8_t': 8,
+            'int16_t': 16,
+            'uint16_t': 16,
+            'int32_t': 32,
+            'uint32_t': 32,
+            'int64_t': 64,
+            'uint64_t': 64
+        }[type_name]
+
+        return (
+            [
+                'encoder_append_integer_{}(encoder_p, src_p->value);'.format(length)
+            ],
+            [
+                'dst_p->value = decoder_read_integer_{}(decoder_p);'.format(length)
+            ]
+        )
+
+    def format_boolean_inner(self):
+        return (
+            ['encoder_append_bool(encoder_p, src_p->value);'],
+            ['dst_p->value = decoder_read_bool(decoder_p);']
+        )
+
+    def format_real_inner(self):
+        return (
+            ['encoder_append_float(encoder_p, src_p->value);'],
+            ['dst_p->value = decoder_read_float(decoder_p);']
+        )
+
     def generate_definition_inner(self, compiled_type):
+        type_ = compiled_type.type
+        checker = compiled_type.constraints_checker.type
+        encode_lines = []
+        decode_lines = []
+
+        if isinstance(type_, oer.Integer):
+            encode_lines, decode_lines = self.format_integer_inner(checker)
+        elif isinstance(type_, oer.Boolean):
+            encode_lines, decode_lines = self.format_boolean_inner()
+        elif isinstance(type_, oer.Real):
+            encode_lines, decode_lines = self.format_real_inner()
+        else:
+            print(type_)
+
+        encode_lines = _indent_lines(encode_lines)
+        decode_lines = _indent_lines(decode_lines)
+
+        encode_lines.append('')
+        decode_lines.append('')
+
         return DEFINITION_INNER_FMT.format(namespace=self.namespace,
                                            module_name_snake=self.module_name_snake,
-                                           type_name_snake=self.type_name_snake)
+                                           type_name_snake=self.type_name_snake,
+                                           encode_body='\n'.join(encode_lines),
+                                           decode_body='\n'.join(decode_lines))
 
-    def generate_definition(self, compiled_type):
+    def generate_definition(self):
         return DEFINITION_FMT.format(namespace=self.namespace,
                                      module_name_snake=self.module_name_snake,
                                      type_name_snake=self.type_name_snake)
@@ -685,7 +744,7 @@ class _Generator(object):
                 definition_inner = self.generate_definition_inner(compiled_type)
                 definitions_inner.append(definition_inner)
 
-                definition = self.generate_definition(compiled_type)
+                definition = self.generate_definition()
                 definitions.append(definition)
 
         type_declarations = '\n'.join(type_declarations)
