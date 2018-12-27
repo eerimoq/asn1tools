@@ -2,6 +2,8 @@
 
 """
 
+import struct
+
 from .utils import camel_to_snake_case
 from ..codecs import oer
 from ..errors import Error
@@ -389,7 +391,17 @@ def is_user_type(type_):
 
 
 def _indent_lines(lines):
-    return [4 * ' ' + line for line in lines]
+    indented_lines = []
+
+    for line in lines:
+        if line:
+            indented_line = 4 * ' ' + line
+        else:
+            indented_line = line
+
+        indented_lines.append(indented_line)
+
+    return indented_lines
 
 
 def _dedent_lines(lines):
@@ -400,7 +412,8 @@ class _Generator(object):
 
     def __init__(self, namespace):
         self.namespace = namespace
-        self.members_backtrace = []
+        self.asn1_members_backtrace = []
+        self.c_members_backtrace = []
         self.module_name = None
         self.type_name = None
         self.helper_lines = []
@@ -419,16 +432,30 @@ class _Generator(object):
                                      self.module_name_snake,
                                      self.type_name_snake)
 
-        if self.members_backtrace:
-            location += '_{}'.format('_'.join(self.members_backtrace))
+        if self.asn1_members_backtrace:
+            location += '_{}'.format('_'.join(self.asn1_members_backtrace))
 
         return location
 
     def members_backtrace_push(self, member_name):
-        self.members_backtrace.append(member_name)
+        self.asn1_members_backtrace_push(member_name)
+        self.c_members_backtrace_push(member_name)
 
     def members_backtrace_pop(self):
-        self.members_backtrace.pop()
+        self.asn1_members_backtrace_pop()
+        self.c_members_backtrace_pop()
+
+    def asn1_members_backtrace_push(self, member_name):
+        self.asn1_members_backtrace.append(member_name)
+
+    def asn1_members_backtrace_pop(self):
+        self.asn1_members_backtrace.pop()
+
+    def c_members_backtrace_push(self, member_name):
+        self.c_members_backtrace.append(member_name)
+
+    def c_members_backtrace_pop(self):
+        self.c_members_backtrace.pop()
 
     def get_member_checker(self, checker, name):
         for member in checker.members:
@@ -653,8 +680,8 @@ class _Generator(object):
                                       type_name_snake=self.type_name_snake)
 
     def inner_location(self):
-        if self.members_backtrace:
-            return '.'.join(self.members_backtrace)
+        if self.c_members_backtrace:
+            return '.'.join(self.c_members_backtrace)
         else:
             return 'value'
 
@@ -742,39 +769,92 @@ class _Generator(object):
             ]
         )
 
-    def format_user_type_inner(self, type_, checker):
-        return ['user encode'], ['user decode']
+    def format_user_type_inner(self, type_name, module_name):
+        module_name_snake = camel_to_snake_case(module_name)
+        type_name_snake = camel_to_snake_case(type_name)
+        encode_lines = [
+            '{}_{}_{}_encode_inner(encoder_p, &src_p->{});'.format(
+                self.namespace,
+                module_name_snake,
+                type_name_snake,
+                self.inner_location())
+        ]
+        decode_lines = [
+            '{}_{}_{}_decode_inner(decoder_p, &dst_p->{});'.format(
+                self.namespace,
+                module_name_snake,
+                type_name_snake,
+                self.inner_location())
+        ]
+
+        return encode_lines, decode_lines
 
     def format_choice_inner(self, type_, checker):
+        encode_lines = []
+        decode_lines = []
+
+        for member in type_.root_members:
+            member_checker = self.get_member_checker(checker,
+                                                     member.name)
+
+            self.asn1_members_backtrace_push(member.name)
+            self.c_members_backtrace_push('value')
+            self.c_members_backtrace_push(member.name)
+
+            try:
+                choice_encode_lines, choice_decode_lines = self.format_type_inner(
+                    member,
+                    member_checker)
+            finally:
+                self.asn1_members_backtrace_pop()
+                self.c_members_backtrace_pop()
+                self.c_members_backtrace_pop()
+
+            tag = struct.unpack('B', member.tag)[0]
+
+            encode_lines += [
+                'case {}_choice_{}_t:'.format(self.location, member.name),
+                '    encoder_append_integer_8(encoder_p, 0x{:02x});'.format(tag)
+            ]
+            encode_lines += _indent_lines(choice_encode_lines)
+            encode_lines += ['    break;', '']
+
+            decode_lines += [
+                'case 0x{:02x}:'.format(tag),
+                '    dst_p->choice = {}_choice_{}_t;'.format(self.location,
+                                                             member.name)
+            ]
+            decode_lines += _indent_lines(choice_decode_lines)
+            decode_lines += ['    break;', '']
+
+        if self.c_members_backtrace:
+            choice = '{}.choice'.format(self.inner_location())
+        else:
+            choice = 'choice'
+
         encode_lines = [
-            'switch (src_p->choice) {',
-            '',
+            'switch (src_p->{}) {{'.format(choice),
+            ''
+        ] + encode_lines + [
             'default:',
             '    encoder_abort(encoder_p, EBADCHOICE);',
+            '    break;',
             '}'
         ]
+
         decode_lines = [
             'uint8_t tag;',
             '',
             'tag = decoder_read_integer_8(decoder_p);',
             '',
             'switch (tag) {',
-            '',
+            ''
+        ] + decode_lines + [
             'default:',
             '    decoder_abort(decoder_p, EBADCHOICE);',
             '    break;',
             '}'
         ]
-
-        #for member in type_.root_members:
-        #    member_checker = self.get_member_checker(checker,
-        #                                             member.name)
-        #    choice_lines = self.format_type(member, member_checker)
-        #
-        #    if choice_lines:
-        #        choice_lines[-1] += ' {};'.format(member.name)
-        #
-        #    lines += choice_lines
 
         return encode_lines, decode_lines
 
@@ -782,7 +862,43 @@ class _Generator(object):
         return ['enumerated encode'], ['enumerated decode']
 
     def format_sequence_of_inner(self, type_, checker):
-        return ['sequence of encode'], ['sequence of decode']
+        self.c_members_backtrace_push('elements[i]')
+
+        try:
+            encode_lines, decode_lines = self.format_type_inner(
+                type_.element_type,
+                checker.element_type)
+        finally:
+            self.c_members_backtrace_pop()
+
+        encode_lines = [
+            'uint8_t i;',
+            '',
+            'encoder_append_integer_8(encoder_p, 1);',
+            'encoder_append_integer_8(encoder_p, src_p->length);',
+            '',
+            'for (i = 0; i < src_p->length; i++) {',
+        ] + _indent_lines(encode_lines) + [
+            '}'
+        ]
+        decode_lines = [
+            'uint8_t i;',
+            '',
+            'decoder_read_integer_8(decoder_p);',
+            'dst_p->length = decoder_read_integer_8(decoder_p);',
+            '',
+            'if (dst_p->length > {}) {{'.format(checker.maximum),
+            '    decoder_abort(decoder_p, EBADLENGTH);',
+            '',
+            '    return;',
+            '}',
+            '',
+            'for (i = 0; i < dst_p->length; i++) {'
+        ] + _indent_lines(decode_lines) + [
+            '}'
+        ]
+
+        return encode_lines, decode_lines
 
     def format_type_inner(self, type_, checker):
         if isinstance(type_, oer.Integer):
@@ -821,6 +937,8 @@ class _Generator(object):
             encode_lines, decode_lines = self.format_real_inner()
         elif isinstance(type_, oer.Sequence):
             encode_lines, decode_lines = self.format_sequence_inner(type_, checker)
+        elif isinstance(type_, oer.SequenceOf):
+            encode_lines, decode_lines = self.format_sequence_of_inner(type_, checker)
         elif isinstance(type_, oer.Choice):
             encode_lines, decode_lines = self.format_choice_inner(type_, checker)
         else:

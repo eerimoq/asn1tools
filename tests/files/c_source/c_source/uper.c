@@ -546,8 +546,8 @@ static void uper_c_source_d_encode_inner(
     const struct uper_c_source_d_t *src_p)
 {
     uint8_t i;
-    uint8_t m_present_mask;
-    uint8_t m_p_present_mask;
+    uint8_t present_mask;
+    uint8_t present_mask_2;
 
     encoder_append_non_negative_binary_integer(encoder_p,
                                                src_p->length - 1,
@@ -585,22 +585,22 @@ static void uper_c_source_d_encode_inner(
         encoder_append_bytes(encoder_p,
                              &src_p->elements[i].g.l.value[0],
                              src_p->elements[i].g.l.length);
-        m_present_mask = 0;
+        present_mask = 0;
 
         if (src_p->elements[i].m.is_n_present) {
-            m_present_mask |= 0x04;
+            present_mask |= 0x04;
         }
 
         if (src_p->elements[i].m.o != 3) {
-            m_present_mask |= 0x02;
+            present_mask |= 0x02;
         }
 
         if (src_p->elements[i].m.is_p_present) {
-            m_present_mask |= 0x01;
+            present_mask |= 0x01;
         }
 
         encoder_append_non_negative_binary_integer(encoder_p,
-                                                   m_present_mask,
+                                                   present_mask,
                                                    3);
 
         if (src_p->elements[i].m.is_n_present) {
@@ -614,14 +614,14 @@ static void uper_c_source_d_encode_inner(
         }
 
         if (src_p->elements[i].m.is_p_present) {
-            m_p_present_mask = 0;
+            present_mask_2 = 0;
 
             if (src_p->elements[i].m.p.is_r_present) {
-                m_p_present_mask |= 0x01;
+                present_mask_2 |= 0x01;
             }
 
             encoder_append_non_negative_binary_integer(encoder_p,
-                                                       m_p_present_mask,
+                                                       present_mask_2,
                                                        1);
             encoder_append_bytes(encoder_p,
                                  &src_p->elements[i].m.p.q.value[0],
@@ -640,8 +640,8 @@ static void uper_c_source_d_decode_inner(
 {
     uint8_t i;
     uint8_t choice;
-    uint8_t m_present_mask;
-    uint8_t m_p_present_mask;
+    uint8_t present_mask;
+    uint8_t present_mask_2;
 
     dst_p->length = decoder_read_non_negative_binary_integer(decoder_p, 4);
     dst_p->length += 1;
@@ -687,15 +687,15 @@ static void uper_c_source_d_decode_inner(
         decoder_read_bytes(decoder_p,
                            &dst_p->elements[i].g.l.value[0],
                            dst_p->elements[i].g.l.length);
-        m_present_mask = decoder_read_non_negative_binary_integer(decoder_p, 3);
-        dst_p->elements[i].m.is_n_present = ((m_present_mask & 0x04) == 0x04);
-        dst_p->elements[i].m.is_p_present = ((m_present_mask & 0x01) == 0x01);
+        present_mask = decoder_read_non_negative_binary_integer(decoder_p, 3);
+        dst_p->elements[i].m.is_n_present = ((present_mask & 0x04) == 0x04);
+        dst_p->elements[i].m.is_p_present = ((present_mask & 0x01) == 0x01);
 
         if (dst_p->elements[i].m.is_n_present) {
             dst_p->elements[i].m.n = decoder_read_bool(decoder_p);
         }
 
-        if ((m_present_mask & 0x02) == 0x02) {
+        if ((present_mask & 0x02) == 0x02) {
             dst_p->elements[i].m.o = decoder_read_non_negative_binary_integer(decoder_p, 3);
             dst_p->elements[i].m.o -= 3;
         } else {
@@ -703,8 +703,8 @@ static void uper_c_source_d_decode_inner(
         }
 
         if (dst_p->elements[i].m.is_p_present) {
-            m_p_present_mask = decoder_read_non_negative_binary_integer(decoder_p, 1);
-            dst_p->elements[i].m.p.is_r_present = ((m_p_present_mask & 0x01) == 0x01);
+            present_mask_2 = decoder_read_non_negative_binary_integer(decoder_p, 1);
+            dst_p->elements[i].m.p.is_r_present = ((present_mask_2 & 0x01) == 0x01);
             decoder_read_bytes(decoder_p,
                                &dst_p->elements[i].m.p.q.value[0],
                                5);
@@ -713,6 +713,247 @@ static void uper_c_source_d_decode_inner(
                 dst_p->elements[i].m.p.r = decoder_read_bool(decoder_p);
             }
         }
+    }
+}
+
+static void uper_c_source_e_encode_inner(
+    struct encoder_t *encoder_p,
+    const struct uper_c_source_e_t *src_p)
+{
+    switch (src_p->a.choice) {
+
+    case uper_c_source_e_a_choice_b_t:
+        encoder_append_non_negative_binary_integer(encoder_p, 0, 0);
+
+        switch (src_p->a.value.b.choice) {
+
+        case uper_c_source_e_a_b_choice_c_t:
+            encoder_append_non_negative_binary_integer(encoder_p, 0, 0);
+            encoder_append_bool(encoder_p, src_p->a.value.b.value.c);
+            break;
+
+        default:
+            encoder_abort(encoder_p, EBADCHOICE);
+            break;
+        }
+        break;
+
+    default:
+        encoder_abort(encoder_p, EBADCHOICE);
+        break;
+    }
+}
+
+static void uper_c_source_e_decode_inner(
+    struct decoder_t *decoder_p,
+    struct uper_c_source_e_t *dst_p)
+{
+    uint8_t tag;
+    uint8_t tag_2;
+
+    tag = decoder_read_non_negative_binary_integer(decoder_p, 0);
+
+    switch (tag) {
+
+    case 0:
+        dst_p->a.choice = uper_c_source_e_a_choice_b_t;
+        tag_2 = decoder_read_non_negative_binary_integer(decoder_p, 0);
+
+        switch (tag_2) {
+
+        case 0:
+            dst_p->a.value.b.choice = uper_c_source_e_a_b_choice_c_t;
+            dst_p->a.value.b.value.c = decoder_read_bool(decoder_p);
+            break;
+
+        default:
+            decoder_abort(decoder_p, EBADCHOICE);
+            break;
+        }
+        break;
+
+    default:
+        decoder_abort(decoder_p, EBADCHOICE);
+        break;
+    }
+}
+
+static void uper_c_source_f_encode_inner(
+    struct encoder_t *encoder_p,
+    const struct uper_c_source_f_t *src_p)
+{
+    uint8_t i;
+    uint8_t i_2;
+
+    encoder_append_non_negative_binary_integer(encoder_p,
+                                               src_p->length - 1,
+                                               1);
+
+    for (i = 0; i < src_p->length; i++) {
+        for (i_2 = 0; i_2 < 1; i_2++) {
+            encoder_append_bool(encoder_p, src_p->elements[i].elements[i_2]);
+        }
+    }
+}
+
+static void uper_c_source_f_decode_inner(
+    struct decoder_t *decoder_p,
+    struct uper_c_source_f_t *dst_p)
+{
+    uint8_t i;
+    uint8_t i_2;
+
+    dst_p->length = decoder_read_non_negative_binary_integer(decoder_p, 1);
+    dst_p->length += 1;
+
+    if (dst_p->length > 2) {
+        decoder_abort(decoder_p, EBADLENGTH);
+
+        return;
+    }
+
+    for (i = 0; i < dst_p->length; i++) {
+        for (i_2 = 0; i_2 < 1; i_2++) {
+            dst_p->elements[i].elements[i_2] = decoder_read_bool(decoder_p);
+        }
+    }
+}
+
+static void uper_c_source_g_encode_inner(
+    struct encoder_t *encoder_p,
+    const struct uper_c_source_g_t *src_p)
+{
+    uint16_t present_mask;
+
+    present_mask = 0;
+
+    if (src_p->is_a_present) {
+        present_mask |= 0x0100;
+    }
+
+    if (src_p->is_b_present) {
+        present_mask |= 0x0080;
+    }
+
+    if (src_p->is_c_present) {
+        present_mask |= 0x0040;
+    }
+
+    if (src_p->is_d_present) {
+        present_mask |= 0x0020;
+    }
+
+    if (src_p->is_e_present) {
+        present_mask |= 0x0010;
+    }
+
+    if (src_p->is_f_present) {
+        present_mask |= 0x0008;
+    }
+
+    if (src_p->is_g_present) {
+        present_mask |= 0x0004;
+    }
+
+    if (src_p->is_h_present) {
+        present_mask |= 0x0002;
+    }
+
+    if (src_p->is_i_present) {
+        present_mask |= 0x0001;
+    }
+
+    encoder_append_non_negative_binary_integer(encoder_p, present_mask, 9);
+
+    if (src_p->is_a_present) {
+        encoder_append_bool(encoder_p, src_p->a);
+    }
+
+    if (src_p->is_b_present) {
+        encoder_append_bool(encoder_p, src_p->b);
+    }
+
+    if (src_p->is_c_present) {
+        encoder_append_bool(encoder_p, src_p->c);
+    }
+
+    if (src_p->is_d_present) {
+        encoder_append_bool(encoder_p, src_p->d);
+    }
+
+    if (src_p->is_e_present) {
+        encoder_append_bool(encoder_p, src_p->e);
+    }
+
+    if (src_p->is_f_present) {
+        encoder_append_bool(encoder_p, src_p->f);
+    }
+
+    if (src_p->is_g_present) {
+        encoder_append_bool(encoder_p, src_p->g);
+    }
+
+    if (src_p->is_h_present) {
+        encoder_append_bool(encoder_p, src_p->h);
+    }
+
+    if (src_p->is_i_present) {
+        encoder_append_bool(encoder_p, src_p->i);
+    }
+}
+
+static void uper_c_source_g_decode_inner(
+    struct decoder_t *decoder_p,
+    struct uper_c_source_g_t *dst_p)
+{
+    uint16_t present_mask;
+
+    present_mask = decoder_read_non_negative_binary_integer(decoder_p, 9);
+
+    dst_p->is_a_present = ((present_mask & 0x0100) == 0x0100);
+    dst_p->is_b_present = ((present_mask & 0x0080) == 0x0080);
+    dst_p->is_c_present = ((present_mask & 0x0040) == 0x0040);
+    dst_p->is_d_present = ((present_mask & 0x0020) == 0x0020);
+    dst_p->is_e_present = ((present_mask & 0x0010) == 0x0010);
+    dst_p->is_f_present = ((present_mask & 0x0008) == 0x0008);
+    dst_p->is_g_present = ((present_mask & 0x0004) == 0x0004);
+    dst_p->is_h_present = ((present_mask & 0x0002) == 0x0002);
+    dst_p->is_i_present = ((present_mask & 0x0001) == 0x0001);
+
+    if (dst_p->is_a_present) {
+        dst_p->a = decoder_read_bool(decoder_p);
+    }
+
+    if (dst_p->is_b_present) {
+        dst_p->b = decoder_read_bool(decoder_p);
+    }
+
+    if (dst_p->is_c_present) {
+        dst_p->c = decoder_read_bool(decoder_p);
+    }
+
+    if (dst_p->is_d_present) {
+        dst_p->d = decoder_read_bool(decoder_p);
+    }
+
+    if (dst_p->is_e_present) {
+        dst_p->e = decoder_read_bool(decoder_p);
+    }
+
+    if (dst_p->is_f_present) {
+        dst_p->f = decoder_read_bool(decoder_p);
+    }
+
+    if (dst_p->is_g_present) {
+        dst_p->g = decoder_read_bool(decoder_p);
+    }
+
+    if (dst_p->is_h_present) {
+        dst_p->h = decoder_read_bool(decoder_p);
+    }
+
+    if (dst_p->is_i_present) {
+        dst_p->i = decoder_read_bool(decoder_p);
     }
 }
 
@@ -790,6 +1031,84 @@ ssize_t uper_c_source_d_decode(
 
     decoder_init(&decoder, src_p, size);
     uper_c_source_d_decode_inner(&decoder, dst_p);
+
+    return (decoder_get_result(&decoder));
+}
+
+ssize_t uper_c_source_e_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct uper_c_source_e_t *src_p)
+{
+    struct encoder_t encoder;
+
+    encoder_init(&encoder, dst_p, size);
+    uper_c_source_e_encode_inner(&encoder, src_p);
+
+    return (encoder_get_result(&encoder));
+}
+
+ssize_t uper_c_source_e_decode(
+    struct uper_c_source_e_t *dst_p,
+    const uint8_t *src_p,
+    size_t size)
+{
+    struct decoder_t decoder;
+
+    decoder_init(&decoder, src_p, size);
+    uper_c_source_e_decode_inner(&decoder, dst_p);
+
+    return (decoder_get_result(&decoder));
+}
+
+ssize_t uper_c_source_f_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct uper_c_source_f_t *src_p)
+{
+    struct encoder_t encoder;
+
+    encoder_init(&encoder, dst_p, size);
+    uper_c_source_f_encode_inner(&encoder, src_p);
+
+    return (encoder_get_result(&encoder));
+}
+
+ssize_t uper_c_source_f_decode(
+    struct uper_c_source_f_t *dst_p,
+    const uint8_t *src_p,
+    size_t size)
+{
+    struct decoder_t decoder;
+
+    decoder_init(&decoder, src_p, size);
+    uper_c_source_f_decode_inner(&decoder, dst_p);
+
+    return (decoder_get_result(&decoder));
+}
+
+ssize_t uper_c_source_g_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct uper_c_source_g_t *src_p)
+{
+    struct encoder_t encoder;
+
+    encoder_init(&encoder, dst_p, size);
+    uper_c_source_g_encode_inner(&encoder, src_p);
+
+    return (encoder_get_result(&encoder));
+}
+
+ssize_t uper_c_source_g_decode(
+    struct uper_c_source_g_t *dst_p,
+    const uint8_t *src_p,
+    size_t size)
+{
+    struct decoder_t decoder;
+
+    decoder_init(&decoder, src_p, size);
+    uper_c_source_g_decode_inner(&decoder, dst_p);
 
     return (decoder_get_result(&decoder));
 }

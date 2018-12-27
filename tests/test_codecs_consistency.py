@@ -851,6 +851,55 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'D', decoded, encoded)
 
+        # Type E.
+        decoded = {'a': ('b', ('c', True))}
+
+        encoded_messages = [
+            b'\x30\x07\xa0\x05\xa0\x03\x80\x01\xff',
+            b'\x30\x07\xa0\x05\xa0\x03\x80\x01\xff',
+            b'{"a": {"b": {"c": true}}}',
+            b'\x80\x80\xff',
+            b'\x80',
+            b'\x80',
+            b'<E><a><b><c><true /></c></b></a></E>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'E', decoded, encoded)
+
+        # Type F.
+        decoded = [[False], [True]]
+
+        encoded_messages = [
+            b'0\n0\x03\x01\x01\x000\x03\x01\x01\xff',
+            b'0\n0\x03\x01\x01\x000\x03\x01\x01\xff',
+            b'[[false], [true]]',
+            b'\x01\x02\x01\x01\x00\x01\x01\xff',
+            b'\xa0',
+            b'\xa0',
+            b'<F><SEQUENCE_OF><false /></SEQUENCE_OF><SEQUENCE_OF><true /></SE'
+            b'QUENCE_OF></F>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'F', decoded, encoded)
+
+        # Type G.
+        decoded = {'a': True, 'i': True}
+
+        encoded_messages = [
+            b'\x30\x06\x80\x01\xff\x88\x01\xff',
+            b'\x30\x06\x80\x01\xff\x88\x01\xff',
+            b'{"a": true, "i": true}',
+            b'\x80\x80\xff\xff',
+            b'\x80\xe0',
+            b'\x80\xe0',
+            b'<G><a><true /></a><i><true /></i></G>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'G', decoded, encoded)
+
 
 if __name__ == '__main__':
     unittest.main()
