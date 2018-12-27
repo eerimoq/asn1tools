@@ -47,13 +47,32 @@ ssize_t {namespace}_{module_name_snake}_{type_name_snake}_decode(
     size_t size);
 '''
 
+DEFINITION_INNER_FMT = '''\
+static void {namespace}_{module_name_snake}_{type_name_snake}_encode_inner(
+    struct encoder_t *encoder_p,
+    const struct {namespace}_{module_name_snake}_{type_name_snake}_t *src_p)
+{{
+}}
+
+static void {namespace}_{module_name_snake}_{type_name_snake}_decode_inner(
+    struct decoder_t *decoder_p,
+    struct {namespace}_{module_name_snake}_{type_name_snake}_t *dst_p)
+{{
+}}
+'''
+
 DEFINITION_FMT = '''\
 ssize_t {namespace}_{module_name_snake}_{type_name_snake}_encode(
     uint8_t *dst_p,
     size_t size,
     const struct {namespace}_{module_name_snake}_{type_name_snake}_t *src_p)
 {{
-    return (0);
+    struct encoder_t encoder;
+
+    encoder_init(&encoder, dst_p, size);
+    {namespace}_{module_name_snake}_{type_name_snake}_encode_inner(&encoder, src_p);
+
+    return (encoder_get_result(&encoder));
 }}
 
 ssize_t {namespace}_{module_name_snake}_{type_name_snake}_decode(
@@ -61,7 +80,12 @@ ssize_t {namespace}_{module_name_snake}_{type_name_snake}_decode(
     const uint8_t *src_p,
     size_t size)
 {{
-    return (0);
+    struct decoder_t decoder;
+
+    decoder_init(&decoder, src_p, size);
+    {namespace}_{module_name_snake}_{type_name_snake}_decode_inner(&decoder, dst_p);
+
+    return (decoder_get_result(&decoder));
 }}
 '''
 
@@ -87,6 +111,20 @@ static void encoder_init(struct encoder_t *self_p,
     self_p->pos = 0;
 }
 
+static ssize_t encoder_get_result(struct encoder_t *self_p)
+{
+    return (self_p->pos);
+}
+
+static void encoder_abort(struct encoder_t *self_p,
+                          ssize_t error)
+{
+    if (self_p->size >= 0) {
+        self_p->size = -error;
+        self_p->pos = -error;
+    }
+}
+
 static size_t encoder_alloc(struct encoder_t *self_p,
                             size_t size)
 {
@@ -97,8 +135,7 @@ static size_t encoder_alloc(struct encoder_t *self_p,
         self_p->pos += size;
     } else {
         pos = -ENOMEM;
-        self_p->pos = -ENOMEM;
-        self_p->size = -ENOMEM;
+        encoder_abort(self_p, ENOMEM);
     }
 
     return (pos);
@@ -200,6 +237,20 @@ static void decoder_init(struct decoder_t *self_p,
     self_p->pos = 0;
 }
 
+static ssize_t decoder_get_result(struct decoder_t *self_p)
+{
+    return (self_p->pos);
+}
+
+static void decoder_abort(struct decoder_t *self_p,
+                          ssize_t error)
+{
+    if (self_p->size >= 0) {
+        self_p->size = -error;
+        self_p->pos = -error;
+    }
+}
+
 static size_t decoder_free(struct decoder_t *self_p,
                            size_t size)
 {
@@ -210,8 +261,7 @@ static size_t decoder_free(struct decoder_t *self_p,
         self_p->pos += size;
     } else {
         pos = -EOUTOFDATA;
-        self_p->pos = -EOUTOFDATA;
-        self_p->size = -EOUTOFDATA;
+        decoder_abort(self_p, EOUTOFDATA);
     }
 
     return (pos);
@@ -288,7 +338,7 @@ static float decoder_read_float(struct decoder_t *self_p)
     return (value);
 }
 
-static uint64_t decoder_read_double(struct decoder_t *self_p)
+static double decoder_read_double(struct decoder_t *self_p)
 {
     double value;
     uint64_t i64;
@@ -600,14 +650,20 @@ class _Generator(object):
                                       module_name_snake=self.module_name_snake,
                                       type_name_snake=self.type_name_snake)
 
+    def generate_definition_inner(self, compiled_type):
+        return DEFINITION_INNER_FMT.format(namespace=self.namespace,
+                                           module_name_snake=self.module_name_snake,
+                                           type_name_snake=self.type_name_snake)
+
     def generate_definition(self, compiled_type):
         return DEFINITION_FMT.format(namespace=self.namespace,
                                      module_name_snake=self.module_name_snake,
                                      type_name_snake=self.type_name_snake)
 
     def generate(self, compiled):
-        structs = []
+        type_declarations = []
         declarations = []
+        definitions_inner = []
         definitions = []
 
         for module_name, module in sorted(compiled.modules.items()):
@@ -616,24 +672,27 @@ class _Generator(object):
             for type_name, compiled_type in sorted(module.items()):
                 self.type_name = type_name
 
-                struct = self.generate_type_declaration(compiled_type)
+                type_declaration = self.generate_type_declaration(compiled_type)
 
-                if not struct:
+                if not type_declaration:
                     continue
 
-                structs.extend(struct)
+                type_declarations.extend(type_declaration)
 
                 declaration = self.generate_declaration()
                 declarations.append(declaration)
 
+                definition_inner = self.generate_definition_inner(compiled_type)
+                definitions_inner.append(definition_inner)
+
                 definition = self.generate_definition(compiled_type)
                 definitions.append(definition)
 
-        structs = '\n'.join(structs)
+        type_declarations = '\n'.join(type_declarations)
         declarations = '\n'.join(declarations)
-        definitions = '\n'.join(definitions)
+        definitions = '\n'.join(definitions_inner + definitions)
 
-        return structs, declarations, HELPERS, definitions
+        return type_declarations, declarations, HELPERS, definitions
 
 
 def generate(compiled, namespace):
