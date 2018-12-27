@@ -546,7 +546,8 @@ static void uper_c_source_d_encode_inner(
     const struct uper_c_source_d_t *src_p)
 {
     uint8_t i;
-    uint8_t present_mask;
+    uint8_t m_present_mask;
+    uint8_t m_p_present_mask;
 
     encoder_append_non_negative_binary_integer(encoder_p,
                                                src_p->length - 1,
@@ -584,22 +585,22 @@ static void uper_c_source_d_encode_inner(
         encoder_append_bytes(encoder_p,
                              &src_p->elements[i].g.l.value[0],
                              src_p->elements[i].g.l.length);
-        present_mask = 0;
+        m_present_mask = 0;
 
         if (src_p->elements[i].m.is_n_present) {
-            present_mask |= 0x04;
+            m_present_mask |= 0x04;
         }
 
         if (src_p->elements[i].m.o != 3) {
-            present_mask |= 0x02;
+            m_present_mask |= 0x02;
         }
 
         if (src_p->elements[i].m.is_p_present) {
-            present_mask |= 0x01;
+            m_present_mask |= 0x01;
         }
 
         encoder_append_non_negative_binary_integer(encoder_p,
-                                                   present_mask,
+                                                   m_present_mask,
                                                    3);
 
         if (src_p->elements[i].m.is_n_present) {
@@ -613,14 +614,14 @@ static void uper_c_source_d_encode_inner(
         }
 
         if (src_p->elements[i].m.is_p_present) {
-            present_mask = 0;
+            m_p_present_mask = 0;
 
             if (src_p->elements[i].m.p.is_r_present) {
-                present_mask |= 0x01;
+                m_p_present_mask |= 0x01;
             }
 
             encoder_append_non_negative_binary_integer(encoder_p,
-                                                       present_mask,
+                                                       m_p_present_mask,
                                                        1);
             encoder_append_bytes(encoder_p,
                                  &src_p->elements[i].m.p.q.value[0],
@@ -639,8 +640,8 @@ static void uper_c_source_d_decode_inner(
 {
     uint8_t i;
     uint8_t choice;
-    uint8_t present_mask;
-    bool is_m_o_present;
+    uint8_t m_present_mask;
+    uint8_t m_p_present_mask;
 
     dst_p->length = decoder_read_non_negative_binary_integer(decoder_p, 4);
     dst_p->length += 1;
@@ -686,16 +687,15 @@ static void uper_c_source_d_decode_inner(
         decoder_read_bytes(decoder_p,
                            &dst_p->elements[i].g.l.value[0],
                            dst_p->elements[i].g.l.length);
-        present_mask = decoder_read_non_negative_binary_integer(decoder_p, 3);
-        dst_p->elements[i].m.is_n_present = ((present_mask & 0x04) == 0x04);
-        is_m_o_present = ((present_mask & 0x02) == 0x02);
-        dst_p->elements[i].m.is_p_present = ((present_mask & 0x01) == 0x01);
+        m_present_mask = decoder_read_non_negative_binary_integer(decoder_p, 3);
+        dst_p->elements[i].m.is_n_present = ((m_present_mask & 0x04) == 0x04);
+        dst_p->elements[i].m.is_p_present = ((m_present_mask & 0x01) == 0x01);
 
         if (dst_p->elements[i].m.is_n_present) {
             dst_p->elements[i].m.n = decoder_read_bool(decoder_p);
         }
 
-        if (is_m_o_present) {
+        if ((m_present_mask & 0x02) == 0x02) {
             dst_p->elements[i].m.o = decoder_read_non_negative_binary_integer(decoder_p, 3);
             dst_p->elements[i].m.o -= 3;
         } else {
@@ -703,8 +703,8 @@ static void uper_c_source_d_decode_inner(
         }
 
         if (dst_p->elements[i].m.is_p_present) {
-            present_mask = decoder_read_non_negative_binary_integer(decoder_p, 1);
-            dst_p->elements[i].m.p.is_r_present = ((present_mask & 0x01) == 0x01);
+            m_p_present_mask = decoder_read_non_negative_binary_integer(decoder_p, 1);
+            dst_p->elements[i].m.p.is_r_present = ((m_p_present_mask & 0x01) == 0x01);
             decoder_read_bytes(decoder_p,
                                &dst_p->elements[i].m.p.q.value[0],
                                5);

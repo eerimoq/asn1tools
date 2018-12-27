@@ -652,6 +652,12 @@ class _Generator(object):
                                       module_name_snake=self.module_name_snake,
                                       type_name_snake=self.type_name_snake)
 
+    def inner_location(self):
+        if self.members_backtrace:
+            return '.'.join(self.members_backtrace)
+        else:
+            return 'value'
+
     def format_integer_inner(self, checker):
         type_name = _format_type_name(checker.minimum, checker.maximum)
 
@@ -666,32 +672,146 @@ class _Generator(object):
             'uint64_t': 64
         }[type_name]
 
+        name = self.inner_location()
+
         return (
             [
-                'encoder_append_integer_{}(encoder_p, src_p->value);'.format(length)
+                'encoder_append_integer_{}(encoder_p, src_p->{});'.format(length,
+                                                                          name)
             ],
             [
-                'dst_p->value = decoder_read_integer_{}(decoder_p);'.format(length)
+                'dst_p->{} = decoder_read_integer_{}(decoder_p);'.format(name,
+                                                                         length)
             ]
         )
 
     def format_boolean_inner(self):
+        name = self.inner_location()
+
         return (
-            ['encoder_append_bool(encoder_p, src_p->value);'],
-            ['dst_p->value = decoder_read_bool(decoder_p);']
+            ['encoder_append_bool(encoder_p, src_p->{});'.format(name)],
+            ['dst_p->{} = decoder_read_bool(decoder_p);'.format(name)]
         )
 
     def format_real_inner(self):
+        name = self.inner_location()
+
         return (
-            ['encoder_append_float(encoder_p, src_p->value);'],
-            ['dst_p->value = decoder_read_float(decoder_p);']
+            ['encoder_append_float(encoder_p, src_p->{});'.format(name)],
+            ['dst_p->{} = decoder_read_float(decoder_p);'.format(name)]
         )
+
+    def format_sequence_inner(self, type_, checker):
+        encode_lines = []
+        decode_lines = []
+
+        for member in type_.root_members:
+            member_checker = self.get_member_checker(checker, member.name)
+
+            if member.optional:
+                pass
+
+            self.members_backtrace_push(member.name)
+
+            try:
+                member_encode_lines, member_decode_lines = self.format_type_inner(
+                    member,
+                    member_checker)
+            finally:
+                self.members_backtrace_pop()
+
+            encode_lines += member_encode_lines
+            decode_lines += member_decode_lines
+
+        return encode_lines, decode_lines
+
+    def format_octet_string_inner(self, checker):
+        name = self.inner_location()
+        length = checker.maximum
+
+        return (
+            [
+                'encoder_append_bytes(encoder_p,',
+                '                     &src_p->{}.value[0],'.format(name),
+                '                     {});'.format(length)
+            ],
+            [
+                'decoder_read_bytes(decoder_p,',
+                '                   &dst_p->{}.value[0],'.format(name),
+                '                   {});'.format(length)
+            ]
+        )
+
+    def format_user_type_inner(self, type_, checker):
+        return ['user encode'], ['user decode']
+
+    def format_choice_inner(self, type_, checker):
+        encode_lines = [
+            'switch (src_p->choice) {',
+            '',
+            'default:',
+            '    encoder_abort(encoder_p, EBADCHOICE);',
+            '}'
+        ]
+        decode_lines = [
+            'uint8_t tag;',
+            '',
+            'tag = decoder_read_integer_8(decoder_p);',
+            '',
+            'switch (tag) {',
+            '',
+            'default:',
+            '    decoder_abort(decoder_p, EBADCHOICE);',
+            '    break;',
+            '}'
+        ]
+
+        #for member in type_.root_members:
+        #    member_checker = self.get_member_checker(checker,
+        #                                             member.name)
+        #    choice_lines = self.format_type(member, member_checker)
+        #
+        #    if choice_lines:
+        #        choice_lines[-1] += ' {};'.format(member.name)
+        #
+        #    lines += choice_lines
+
+        return encode_lines, decode_lines
+
+    def format_enumerated_inner(self, type_):
+        return ['enumerated encode'], ['enumerated decode']
+
+    def format_sequence_of_inner(self, type_, checker):
+        return ['sequence of encode'], ['sequence of decode']
+
+    def format_type_inner(self, type_, checker):
+        if isinstance(type_, oer.Integer):
+            return self.format_integer_inner(checker)
+        elif isinstance(type_, oer.Real):
+            return self.format_real_inner()
+        elif isinstance(type_, oer.Null):
+            return [], []
+        elif isinstance(type_, oer.Boolean):
+            return self.format_boolean_inner()
+        elif isinstance(type_, oer.OctetString):
+            return self.format_octet_string_inner(checker)
+        elif is_user_type(type_):
+            return self.format_user_type_inner(type_.type_name,
+                                               type_.module_name)
+        elif isinstance(type_, oer.Sequence):
+            return self.format_sequence_inner(type_, checker)
+        elif isinstance(type_, oer.Choice):
+            return self.format_choice_inner(type_, checker)
+        elif isinstance(type_, oer.SequenceOf):
+            return self.format_sequence_of_inner(type_, checker)
+        elif isinstance(type_, oer.Enumerated):
+            return self.format_enumerated_inner(type_)
+        else:
+            raise NotImplementedError(type_)
 
     def generate_definition_inner(self, compiled_type):
         type_ = compiled_type.type
         checker = compiled_type.constraints_checker.type
-        encode_lines = []
-        decode_lines = []
 
         if isinstance(type_, oer.Integer):
             encode_lines, decode_lines = self.format_integer_inner(checker)
@@ -699,8 +819,14 @@ class _Generator(object):
             encode_lines, decode_lines = self.format_boolean_inner()
         elif isinstance(type_, oer.Real):
             encode_lines, decode_lines = self.format_real_inner()
+        elif isinstance(type_, oer.Sequence):
+            encode_lines, decode_lines = self.format_sequence_inner(type_, checker)
+        elif isinstance(type_, oer.Choice):
+            encode_lines, decode_lines = self.format_choice_inner(type_, checker)
         else:
             print(type_)
+            encode_lines = []
+            decode_lines = []
 
         encode_lines = _indent_lines(encode_lines)
         decode_lines = _indent_lines(decode_lines)
