@@ -2,12 +2,19 @@ ifeq ($(origin CC), default)
 CC = gcc
 endif
 
-C_SOURCES := \
-	tests/main.c \
-	tests/files/c_source/c_source/oer.c \
+OER_EXE = main_oer
+
+UPER_EXE = main_uper
+
+OER_C_SOURCES = \
+	tests/main_oer.c \
+	tests/files/c_source/c_source/oer.c
+
+UPER_C_SOURCES = \
+	tests/main_uper.c \
 	tests/files/c_source/c_source/uper.c
 
-CFLAGS := \
+CFLAGS = \
 	-O3 \
 	-std=c99 \
 	-Wall \
@@ -18,6 +25,8 @@ CFLAGS := \
 	-Wformat=2 \
 	-Wshadow \
 	-Werror
+
+MASSIF_FLAGS = --tool=massif --time-unit=B --stacks=yes
 
 .PHONY: test
 test:
@@ -37,10 +46,26 @@ test:
 	$(MAKE) test-c
 	python3 -m pycodestyle $$(git ls-files "asn1tools/*.py")
 
+.PHONY: test-c-oer
+test-c-oer:
+	$(CC) $(CFLAGS) $(OER_C_SOURCES) -o $(OER_EXE)
+	size $(OER_EXE)
+	rm -f $(OER_EXE).massif
+	valgrind $(MASSIF_FLAGS) --massif-out-file=$(OER_EXE).massif ./$(OER_EXE)
+	ms_print $(OER_EXE).massif
+
+.PHONY: test-c-uper
+test-c-uper:
+	$(CC) $(CFLAGS) $(UPER_C_SOURCES) -o $(UPER_EXE)
+	size $(UPER_EXE)
+	rm -f $(UPER_EXE).massif
+	valgrind $(MASSIF_FLAGS) --massif-out-file=$(UPER_EXE).massif ./$(UPER_EXE)
+	ms_print $(UPER_EXE).massif
+
 .PHONY: test-c
 test-c:
-	$(CC) $(CFLAGS) $(C_SOURCES) -o main
-	./main
+	$(MAKE) test-c-oer
+	$(MAKE) test-c-uper
 
 .PHONY: test-sdist
 test-sdist:
