@@ -5,6 +5,8 @@ python:
   - "3.6"
 
 install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq valgrind -y
   - pip install coveralls
   - pip install -r requirements.txt
 
