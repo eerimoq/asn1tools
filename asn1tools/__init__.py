@@ -353,7 +353,7 @@ def _main():
         description='Generate C source code from given ASN.1 specification.')
     subparser.add_argument(
         '-c', '--codec',
-        choices=('oer', ),
+        choices=('oer', 'uper'),
         default='oer',
         help='Codec to generate code for (default: oer).')
     subparser.add_argument(

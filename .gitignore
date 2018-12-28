@@ -62,3 +62,7 @@ compile_methods_cache
 /*.[hc]
 /main_*
 /massif.*
+v0.9.28.tar.gz
+asn1c-0.9.28/
+main
+main*.massif

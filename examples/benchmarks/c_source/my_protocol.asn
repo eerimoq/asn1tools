@@ -1,0 +1,47 @@
+MyProtocol DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+PDU ::= SEQUENCE {
+    a F,
+    b CHOICE {
+        a A,
+        b B,
+        c C,
+        d D,
+        e E
+    }
+}
+
+A ::= SEQUENCE (SIZE(2..35)) OF B
+
+B ::= CHOICE {
+    a C,
+    b D
+}
+
+C ::= SEQUENCE {
+    a SEQUENCE {
+        a SEQUENCE (SIZE(0..5)) OF F,
+        b BOOLEAN OPTIONAL,
+        c INTEGER (-40..40) DEFAULT 0
+    } OPTIONAL,
+    b G,
+    c CHOICE {
+        a SEQUENCE (SIZE(3)) OF D,
+        b E
+    },
+    d SEQUENCE {
+        a E
+    }
+}
+
+D ::= OCTET STRING (SIZE(1..300))
+
+E ::= BOOLEAN
+
+F ::= INTEGER (-2147483648..2147483647)
+
+G ::= INTEGER (0..4294967295)
+
+END

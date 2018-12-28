@@ -42,8 +42,8 @@ test:
 	env PYTHONPATH=. python3 examples/x509_pem.py
 	env PYTHONPATH=. python3 examples/compact_extensions_uper/main.py
 	env PYTHONPATH=. python3 examples/programming_types/main.py
-	codespell -d $$(git ls-files | grep -v ietf | grep -v 3gpp)
 	$(MAKE) test-c
+	codespell -d $$(git ls-files | grep -v ietf | grep -v 3gpp)
 	python3 -m pycodestyle $$(git ls-files "asn1tools/*.py")
 
 .PHONY: test-c-oer
