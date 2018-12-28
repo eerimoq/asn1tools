@@ -22,7 +22,7 @@ D_constraint(asn_TYPE_descriptor_t *td, const void *sptr,
 	
 	size = st->size;
 	
-	if((size >= 1 && size <= 300)) {
+	if((size >= 1 && size <= 16)) {
 		/* Constraint check succeeded */
 		return 0;
 	} else {
@@ -116,7 +116,7 @@ D_encode_uper(asn_TYPE_descriptor_t *td,
 
 static asn_per_constraints_t asn_PER_type_D_constr_1 GCC_NOTUSED = {
 	{ APC_UNCONSTRAINED,	-1, -1,  0,  0 },
-	{ APC_CONSTRAINED,	 9,  9,  1,  300 }	/* (SIZE(1..300)) */,
+	{ APC_CONSTRAINED,	 4,  4,  1,  16 }	/* (SIZE(1..16)) */,
 	0, 0	/* No PER value map */
 };
 static const ber_tlv_tag_t asn_DEF_D_tags_1[] = {

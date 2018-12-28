@@ -1,4 +1,13 @@
+CFLAGS = -Igenerated -Os
+
+MASSIF_FLAGS = --tool=massif --time-unit=B --stacks=yes --detailed-freq=100
+
 all:
+	gcc $(CFLAGS) generated/*.c main.c -o main
+	size main
+	readelf -s -W main | sort -k3 -n
+	valgrind $(MASSIF_FLAGS) --massif-out-file=main.massif ./main
+	ms_print main.massif
 
 generate:
 	rm -rf generated

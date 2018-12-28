@@ -13,7 +13,7 @@ PDU ::= SEQUENCE {
     }
 }
 
-A ::= SEQUENCE (SIZE(2..35)) OF B
+A ::= SEQUENCE (SIZE(2..5)) OF B
 
 B ::= CHOICE {
     a C,
@@ -36,7 +36,7 @@ C ::= SEQUENCE {
     }
 }
 
-D ::= OCTET STRING (SIZE(1..300))
+D ::= OCTET STRING (SIZE(1..16))
 
 E ::= BOOLEAN
 

@@ -1,7 +1,7 @@
 ASN1C ?= ../asn1c-0.9.28/asn1c/asn1c
 ASN1C_FLAGS = -fcompound-names -fincludes-quoted -gen-PER
 
-CFLAGS = -Igenerated -O3
+CFLAGS = -Igenerated -Os
 
 MASSIF_FLAGS = --tool=massif --time-unit=B --stacks=yes --detailed-freq=100
 
