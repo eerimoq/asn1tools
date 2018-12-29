@@ -546,8 +546,6 @@ static void uper_c_source_d_encode_inner(
     const struct uper_c_source_d_t *src_p)
 {
     uint8_t i;
-    uint8_t present_mask;
-    uint8_t present_mask_2;
 
     encoder_append_non_negative_binary_integer(encoder_p,
                                                src_p->length - 1,
@@ -585,23 +583,9 @@ static void uper_c_source_d_encode_inner(
         encoder_append_bytes(encoder_p,
                              &src_p->elements[i].g.l.value[0],
                              src_p->elements[i].g.l.length);
-        present_mask = 0;
-
-        if (src_p->elements[i].m.is_n_present) {
-            present_mask |= 0x04;
-        }
-
-        if (src_p->elements[i].m.o != 3) {
-            present_mask |= 0x02;
-        }
-
-        if (src_p->elements[i].m.is_p_present) {
-            present_mask |= 0x01;
-        }
-
-        encoder_append_non_negative_binary_integer(encoder_p,
-                                                   present_mask,
-                                                   3);
+        encoder_append_bit(encoder_p, src_p->elements[i].m.is_n_present ? 1 : 0);
+        encoder_append_bit(encoder_p, src_p->elements[i].m.o != 3 ? 1 : 0);
+        encoder_append_bit(encoder_p, src_p->elements[i].m.is_p_present ? 1 : 0);
 
         if (src_p->elements[i].m.is_n_present) {
             encoder_append_bool(encoder_p, src_p->elements[i].m.n);
@@ -614,15 +598,7 @@ static void uper_c_source_d_encode_inner(
         }
 
         if (src_p->elements[i].m.is_p_present) {
-            present_mask_2 = 0;
-
-            if (src_p->elements[i].m.p.is_r_present) {
-                present_mask_2 |= 0x01;
-            }
-
-            encoder_append_non_negative_binary_integer(encoder_p,
-                                                       present_mask_2,
-                                                       1);
+            encoder_append_bit(encoder_p, src_p->elements[i].m.p.is_r_present ? 1 : 0);
             encoder_append_bytes(encoder_p,
                                  &src_p->elements[i].m.p.q.value[0],
                                  5);
@@ -640,8 +616,7 @@ static void uper_c_source_d_decode_inner(
 {
     uint8_t i;
     uint8_t choice;
-    uint8_t present_mask;
-    uint8_t present_mask_2;
+    bool is_o_present;
 
     dst_p->length = decoder_read_non_negative_binary_integer(decoder_p, 4);
     dst_p->length += 1;
@@ -687,15 +662,15 @@ static void uper_c_source_d_decode_inner(
         decoder_read_bytes(decoder_p,
                            &dst_p->elements[i].g.l.value[0],
                            dst_p->elements[i].g.l.length);
-        present_mask = decoder_read_non_negative_binary_integer(decoder_p, 3);
-        dst_p->elements[i].m.is_n_present = ((present_mask & 0x04) == 0x04);
-        dst_p->elements[i].m.is_p_present = ((present_mask & 0x01) == 0x01);
+        dst_p->elements[i].m.is_n_present = (decoder_read_bit(decoder_p) == 1);
+        is_o_present = decoder_read_bit(decoder_p);
+        dst_p->elements[i].m.is_p_present = (decoder_read_bit(decoder_p) == 1);
 
         if (dst_p->elements[i].m.is_n_present) {
             dst_p->elements[i].m.n = decoder_read_bool(decoder_p);
         }
 
-        if ((present_mask & 0x02) == 0x02) {
+        if (is_o_present) {
             dst_p->elements[i].m.o = decoder_read_non_negative_binary_integer(decoder_p, 3);
             dst_p->elements[i].m.o -= 3;
         } else {
@@ -703,8 +678,7 @@ static void uper_c_source_d_decode_inner(
         }
 
         if (dst_p->elements[i].m.is_p_present) {
-            present_mask_2 = decoder_read_non_negative_binary_integer(decoder_p, 1);
-            dst_p->elements[i].m.p.is_r_present = ((present_mask_2 & 0x01) == 0x01);
+            dst_p->elements[i].m.p.is_r_present = (decoder_read_bit(decoder_p) == 1);
             decoder_read_bytes(decoder_p,
                                &dst_p->elements[i].m.p.q.value[0],
                                5);
@@ -823,47 +797,15 @@ static void uper_c_source_g_encode_inner(
     struct encoder_t *encoder_p,
     const struct uper_c_source_g_t *src_p)
 {
-    uint16_t present_mask;
-
-    present_mask = 0;
-
-    if (src_p->is_a_present) {
-        present_mask |= 0x0100;
-    }
-
-    if (src_p->is_b_present) {
-        present_mask |= 0x0080;
-    }
-
-    if (src_p->is_c_present) {
-        present_mask |= 0x0040;
-    }
-
-    if (src_p->is_d_present) {
-        present_mask |= 0x0020;
-    }
-
-    if (src_p->is_e_present) {
-        present_mask |= 0x0010;
-    }
-
-    if (src_p->is_f_present) {
-        present_mask |= 0x0008;
-    }
-
-    if (src_p->is_g_present) {
-        present_mask |= 0x0004;
-    }
-
-    if (src_p->is_h_present) {
-        present_mask |= 0x0002;
-    }
-
-    if (src_p->is_i_present) {
-        present_mask |= 0x0001;
-    }
-
-    encoder_append_non_negative_binary_integer(encoder_p, present_mask, 9);
+    encoder_append_bit(encoder_p, src_p->is_a_present ? 1 : 0);
+    encoder_append_bit(encoder_p, src_p->is_b_present ? 1 : 0);
+    encoder_append_bit(encoder_p, src_p->is_c_present ? 1 : 0);
+    encoder_append_bit(encoder_p, src_p->is_d_present ? 1 : 0);
+    encoder_append_bit(encoder_p, src_p->is_e_present ? 1 : 0);
+    encoder_append_bit(encoder_p, src_p->is_f_present ? 1 : 0);
+    encoder_append_bit(encoder_p, src_p->is_g_present ? 1 : 0);
+    encoder_append_bit(encoder_p, src_p->is_h_present ? 1 : 0);
+    encoder_append_bit(encoder_p, src_p->is_i_present ? 1 : 0);
 
     if (src_p->is_a_present) {
         encoder_append_bool(encoder_p, src_p->a);
@@ -906,19 +848,15 @@ static void uper_c_source_g_decode_inner(
     struct decoder_t *decoder_p,
     struct uper_c_source_g_t *dst_p)
 {
-    uint16_t present_mask;
-
-    present_mask = decoder_read_non_negative_binary_integer(decoder_p, 9);
-
-    dst_p->is_a_present = ((present_mask & 0x0100) == 0x0100);
-    dst_p->is_b_present = ((present_mask & 0x0080) == 0x0080);
-    dst_p->is_c_present = ((present_mask & 0x0040) == 0x0040);
-    dst_p->is_d_present = ((present_mask & 0x0020) == 0x0020);
-    dst_p->is_e_present = ((present_mask & 0x0010) == 0x0010);
-    dst_p->is_f_present = ((present_mask & 0x0008) == 0x0008);
-    dst_p->is_g_present = ((present_mask & 0x0004) == 0x0004);
-    dst_p->is_h_present = ((present_mask & 0x0002) == 0x0002);
-    dst_p->is_i_present = ((present_mask & 0x0001) == 0x0001);
+    dst_p->is_a_present = (decoder_read_bit(decoder_p) == 1);
+    dst_p->is_b_present = (decoder_read_bit(decoder_p) == 1);
+    dst_p->is_c_present = (decoder_read_bit(decoder_p) == 1);
+    dst_p->is_d_present = (decoder_read_bit(decoder_p) == 1);
+    dst_p->is_e_present = (decoder_read_bit(decoder_p) == 1);
+    dst_p->is_f_present = (decoder_read_bit(decoder_p) == 1);
+    dst_p->is_g_present = (decoder_read_bit(decoder_p) == 1);
+    dst_p->is_h_present = (decoder_read_bit(decoder_p) == 1);
+    dst_p->is_i_present = (decoder_read_bit(decoder_p) == 1);
 
     if (dst_p->is_a_present) {
         dst_p->a = decoder_read_bool(decoder_p);
