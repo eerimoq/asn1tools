@@ -485,8 +485,14 @@ class _Generator(object):
 
         return [type_name]
 
-    def format_real(self):
-        return ['float']
+    def format_real(self, type_):
+        if type_.fmt is None:
+            raise Error('REAL not IEEE 754.')
+
+        if type_.fmt == '>f':
+            return ['float']
+        else:
+            return ['double']
 
     def format_boolean(self):
         return ['bool']
@@ -610,7 +616,7 @@ class _Generator(object):
         if isinstance(type_, oer.Integer):
             lines = self.format_integer(checker)
         elif isinstance(type_, oer.Real):
-            lines = self.format_real()
+            lines = self.format_real(type_)
         elif isinstance(type_, oer.Null):
             lines = []
         elif isinstance(type_, oer.Boolean):
@@ -658,7 +664,8 @@ class _Generator(object):
             elif isinstance(type_, oer.OctetString):
                 lines = self.format_octet_string(checker)
             elif isinstance(type_, oer.Real):
-                lines = []
+                lines = self.format_real(type_)
+                lines[0] += ' value;'
             elif isinstance(type_, oer.UTF8String):
                 lines = self.format_utf8_string(checker)
             else:
@@ -729,12 +736,17 @@ class _Generator(object):
             ['dst_p->{} = decoder_read_bool(decoder_p);'.format(name)]
         )
 
-    def format_real_inner(self):
+    def format_real_inner(self, type_):
         name = self.inner_location()
 
+        if type_.fmt == '>f':
+            kind = 'float'
+        else:
+            kind = 'double'
+
         return (
-            ['encoder_append_float(encoder_p, src_p->{});'.format(name)],
-            ['dst_p->{} = decoder_read_float(decoder_p);'.format(name)]
+            ['encoder_append_{}(encoder_p, src_p->{});'.format(kind, name)],
+            ['dst_p->{} = decoder_read_{}(decoder_p);'.format(name, kind)]
         )
 
     def format_sequence_inner(self, type_, checker):
@@ -899,7 +911,7 @@ class _Generator(object):
         if isinstance(type_, oer.Integer):
             return self.format_integer_inner(checker)
         elif isinstance(type_, oer.Real):
-            return self.format_real_inner()
+            return self.format_real_inner(type_)
         elif isinstance(type_, oer.Null):
             return [], []
         elif isinstance(type_, oer.Boolean):
@@ -929,7 +941,7 @@ class _Generator(object):
         elif isinstance(type_, oer.Boolean):
             encode_lines, decode_lines = self.format_boolean_inner()
         elif isinstance(type_, oer.Real):
-            encode_lines, decode_lines = self.format_real_inner()
+            encode_lines, decode_lines = self.format_real_inner(type_)
         elif isinstance(type_, oer.Sequence):
             encode_lines, decode_lines = self.format_sequence_inner(type_, checker)
         elif isinstance(type_, oer.SequenceOf):
