@@ -380,6 +380,10 @@ class _MembersBacktracesContext(object):
             backtrace.pop()
 
 
+def join_lines(lines, suffix):
+    return[line + suffix for line in lines[:-1]] + lines[-1:]
+
+
 def _type_length(length):
     if length <= 8:
         return 8
@@ -452,6 +456,13 @@ class _Generator(object):
 
         return location
 
+    @property
+    def location_inner(self):
+        if self.c_members_backtrace:
+            return '.'.join(self.c_members_backtrace)
+        else:
+            return 'value'
+
     def members_backtrace_push(self, member_name):
         backtraces = [
             self.asn1_members_backtrace,
@@ -475,7 +486,7 @@ class _Generator(object):
             if member.name == name:
                 return member
 
-        raise Exception
+        raise Error('No member checker found for {}.'.format(name))
 
     def format_integer(self, checker):
         if not checker.is_bound():
@@ -561,7 +572,7 @@ class _Generator(object):
         ]
         self.helper_lines += [
             'enum {}_t {{'.format(self.location)
-        ] + [value + ',' for value in values[:-1]] + values[-1:] + [
+        ] + join_lines(values, ',') + [
             '};',
             ''
         ]
@@ -588,7 +599,7 @@ class _Generator(object):
 
         self.helper_lines += [
             'enum {}_choice_t {{'.format(self.location)
-        ] + [choice + ',' for choice in choices[:-1]] + choices[-1:] + [
+        ] + join_lines(choices, ',') + [
             '};',
             ''
         ]
@@ -615,12 +626,12 @@ class _Generator(object):
     def format_type(self, type_, checker):
         if isinstance(type_, oer.Integer):
             lines = self.format_integer(checker)
+        elif isinstance(type_, oer.Boolean):
+            lines = self.format_boolean()
         elif isinstance(type_, oer.Real):
             lines = self.format_real(type_)
         elif isinstance(type_, oer.Null):
             lines = []
-        elif isinstance(type_, oer.Boolean):
-            lines = self.format_boolean()
         elif isinstance(type_, oer.OctetString):
             lines = self.format_octet_string(checker)
         elif is_user_type(type_):
@@ -652,22 +663,22 @@ class _Generator(object):
             elif isinstance(type_, oer.Boolean):
                 lines = self.format_boolean()
                 lines[0] += ' value;'
+            elif isinstance(type_, oer.Real):
+                lines = self.format_real(type_)
+                lines[0] += ' value;'
+            elif isinstance(type_, oer.OctetString):
+                lines = self.format_octet_string(checker)
+            elif isinstance(type_, oer.UTF8String):
+                lines = self.format_utf8_string(checker)
             elif isinstance(type_, oer.Sequence):
                 lines = self.format_sequence(type_, checker)[1:-1]
+                lines = _dedent_lines(lines)
+            elif isinstance(type_, oer.SequenceOf):
+                lines = self.format_sequence_of(type_, checker)[1:-1]
                 lines = _dedent_lines(lines)
             elif isinstance(type_, oer.Choice):
                 lines = self.format_choice(type_, checker)
                 lines = _dedent_lines(lines[1:-1])
-            elif isinstance(type_, oer.SequenceOf):
-                lines = self.format_sequence_of(type_, checker)[1:-1]
-                lines = _dedent_lines(lines)
-            elif isinstance(type_, oer.OctetString):
-                lines = self.format_octet_string(checker)
-            elif isinstance(type_, oer.Real):
-                lines = self.format_real(type_)
-                lines[0] += ' value;'
-            elif isinstance(type_, oer.UTF8String):
-                lines = self.format_utf8_string(checker)
             else:
                 raise NotImplementedError(type_)
         except Error:
@@ -695,12 +706,6 @@ class _Generator(object):
                                       module_name_snake=self.module_name_snake,
                                       type_name_snake=self.type_name_snake)
 
-    def inner_location(self):
-        if self.c_members_backtrace:
-            return '.'.join(self.c_members_backtrace)
-        else:
-            return 'value'
-
     def format_integer_inner(self, checker):
         type_name = _format_type_name(checker.minimum, checker.maximum)
 
@@ -715,38 +720,48 @@ class _Generator(object):
             'uint64_t': 64
         }[type_name]
 
-        name = self.inner_location()
-
         return (
             [
-                'encoder_append_integer_{}(encoder_p, src_p->{});'.format(length,
-                                                                          name)
+                'encoder_append_integer_{}(encoder_p, src_p->{});'.format(
+                    length,
+                    self.location_inner)
             ],
             [
-                'dst_p->{} = decoder_read_integer_{}(decoder_p);'.format(name,
-                                                                         length)
+                'dst_p->{} = decoder_read_integer_{}(decoder_p);'.format(
+                    self.location_inner,
+                    length)
             ]
         )
 
     def format_boolean_inner(self):
-        name = self.inner_location()
-
         return (
-            ['encoder_append_bool(encoder_p, src_p->{});'.format(name)],
-            ['dst_p->{} = decoder_read_bool(decoder_p);'.format(name)]
+            [
+                'encoder_append_bool(encoder_p, src_p->{});'.format(
+                    self.location_inner)
+            ],
+            [
+                'dst_p->{} = decoder_read_bool(decoder_p);'.format(
+                    self.location_inner)
+            ]
         )
 
     def format_real_inner(self, type_):
-        name = self.inner_location()
-
         if type_.fmt == '>f':
-            kind = 'float'
+            c_type = 'float'
         else:
-            kind = 'double'
+            c_type = 'double'
 
         return (
-            ['encoder_append_{}(encoder_p, src_p->{});'.format(kind, name)],
-            ['dst_p->{} = decoder_read_{}(decoder_p);'.format(name, kind)]
+            [
+                'encoder_append_{}(encoder_p, src_p->{});'.format(
+                    c_type,
+                    self.location_inner)
+            ],
+            [
+                'dst_p->{} = decoder_read_{}(decoder_p);'.format(
+                    self.location_inner,
+                    c_type)
+            ]
         )
 
     def format_sequence_inner(self, type_, checker):
@@ -770,38 +785,34 @@ class _Generator(object):
         return encode_lines, decode_lines
 
     def format_octet_string_inner(self, checker):
-        name = self.inner_location()
-        length = checker.maximum
-
         return (
             [
                 'encoder_append_bytes(encoder_p,',
-                '                     &src_p->{}.buf[0],'.format(name),
-                '                     {});'.format(length)
+                '                     &src_p->{}.buf[0],'.format(self.location_inner),
+                '                     {});'.format(checker.maximum)
             ],
             [
                 'decoder_read_bytes(decoder_p,',
-                '                   &dst_p->{}.buf[0],'.format(name),
-                '                   {});'.format(length)
+                '                   &dst_p->{}.buf[0],'.format(self.location_inner),
+                '                   {});'.format(checker.maximum)
             ]
         )
 
     def format_user_type_inner(self, type_name, module_name):
         module_name_snake = camel_to_snake_case(module_name)
         type_name_snake = camel_to_snake_case(type_name)
+        prefix = '{}_{}_{}'.format(self.namespace,
+                                   module_name_snake,
+                                   type_name_snake)
         encode_lines = [
-            '{}_{}_{}_encode_inner(encoder_p, &src_p->{});'.format(
-                self.namespace,
-                module_name_snake,
-                type_name_snake,
-                self.inner_location())
+            '{}_encode_inner(encoder_p, &src_p->{});'.format(
+                prefix,
+                self.location_inner)
         ]
         decode_lines = [
-            '{}_{}_{}_decode_inner(decoder_p, &dst_p->{});'.format(
-                self.namespace,
-                module_name_snake,
-                type_name_snake,
-                self.inner_location())
+            '{}_decode_inner(decoder_p, &dst_p->{});'.format(
+                prefix,
+                self.location_inner)
         ]
 
         return encode_lines, decode_lines
@@ -839,7 +850,7 @@ class _Generator(object):
             decode_lines += ['    break;', '']
 
         if self.c_members_backtrace:
-            choice = '{}.choice'.format(self.inner_location())
+            choice = '{}.choice'.format(self.location_inner)
         else:
             choice = 'choice'
 
