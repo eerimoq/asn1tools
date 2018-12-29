@@ -409,6 +409,28 @@ def _is_user_type(type_):
     return type_.module_name is not None
 
 
+
+def _strip_blank_lines(lines):
+    try:
+        while lines[0] == '':
+            del lines[0]
+
+        while lines[-1] == '':
+            del lines[-1]
+    except IndexError:
+        pass
+
+    stripped = []
+
+    for line in lines:
+        if line == '' and stripped[-1] == '':
+            continue
+
+        stripped.append(line)
+
+    return stripped
+
+
 def _indent_lines(lines):
     indented_lines = []
 
@@ -420,7 +442,7 @@ def _indent_lines(lines):
 
         indented_lines.append(indented_line)
 
-    return indented_lines
+    return _strip_blank_lines(indented_lines)
 
 
 def _dedent_lines(lines):
@@ -460,12 +482,11 @@ class _Generator(object):
 
         return location
 
-    @property
-    def location_inner(self):
+    def location_inner(self, default='value', end=''):
         if self.c_members_backtrace:
-            return '.'.join(self.c_members_backtrace)
+            return '.'.join(self.c_members_backtrace) + end
         else:
-            return 'value'
+            return default
 
     def members_backtrace_push(self, member_name):
         backtraces = [
@@ -768,11 +789,11 @@ class _Generator(object):
             [
                 'encoder_append_integer_{}(encoder_p, src_p->{});'.format(
                     length,
-                    self.location_inner)
+                    self.location_inner())
             ],
             [
                 'dst_p->{} = decoder_read_integer_{}(decoder_p);'.format(
-                    self.location_inner,
+                    self.location_inner(),
                     length)
             ]
         )
@@ -781,11 +802,11 @@ class _Generator(object):
         return (
             [
                 'encoder_append_bool(encoder_p, src_p->{});'.format(
-                    self.location_inner)
+                    self.location_inner())
             ],
             [
                 'dst_p->{} = decoder_read_bool(decoder_p);'.format(
-                    self.location_inner)
+                    self.location_inner())
             ]
         )
 
@@ -799,11 +820,11 @@ class _Generator(object):
             [
                 'encoder_append_{}(encoder_p, src_p->{});'.format(
                     c_type,
-                    self.location_inner)
+                    self.location_inner())
             ],
             [
                 'dst_p->{} = decoder_read_{}(decoder_p);'.format(
-                    self.location_inner,
+                    self.location_inner(),
                     c_type)
             ]
         )
@@ -840,39 +861,22 @@ class _Generator(object):
             for i, member in enumerate(optionals):
                 byte, bit = divmod(i, 8)
                 mask = '0x{:02x}'.format(1 << (7 - bit))
-
-                if self.c_members_backtrace:
-                    encode_lines += [
-                        'if (src_p->{}.is_{}_present) {{'.format(self.location_inner,
-                                                                 member.name),
-                        '    {}[{}] |= {};'.format(unique_present_mask,
-                                                   byte,
-                                                   mask),
-                        '}',
-                        ''
-                    ]
-                    decode_lines.append(
-                        'dst_p->{0}.is_{1}_present = (({2}[{3}] & {4}) == {4});'.format(
-                            self.location_inner,
-                            member.name,
-                            unique_present_mask,
-                            byte,
-                            mask))
-                else:
-                    encode_lines += [
-                        'if (src_p->is_{}_present) {{'.format(member.name),
-                        '    {}[{}] |= {};'.format(unique_present_mask,
-                                                   byte,
-                                                   mask),
-                        '}',
-                        ''
-                    ]
-                    decode_lines.append(
-                        'dst_p->is_{0}_present = (({1}[{2}] & {3}) == {3});'.format(
-                            member.name,
-                            unique_present_mask,
-                            byte,
-                            mask))
+                encode_lines += [
+                    'if (src_p->{}is_{}_present) {{'.format(self.location_inner('', '.'),
+                                                            member.name),
+                    '    {}[{}] |= {};'.format(unique_present_mask,
+                                               byte,
+                                               mask),
+                    '}',
+                    ''
+                ]
+                decode_lines.append(
+                    'dst_p->{0}is_{1}_present = (({2}[{3}] & {4}) == {4});'.format(
+                        self.location_inner('', '.'),
+                        member.name,
+                        unique_present_mask,
+                        byte,
+                        mask))
 
             encode_lines += [
                 'encoder_append_bytes(encoder_p,',
@@ -880,6 +884,7 @@ class _Generator(object):
                 '                     sizeof({}));'.format(unique_present_mask),
                 ''
             ]
+            decode_lines.append('')
 
         for member in type_.root_members:
             member_checker = self.get_member_checker(checker, member.name)
@@ -890,34 +895,22 @@ class _Generator(object):
                     member_checker)
 
             if member.optional:
-                if self.c_members_backtrace:
-                    member_encode_lines = [
-                        'if (src_p->{}.is_{}_present) {{'.format(self.location_inner,
-                                                                 member.name)
-                    ] + _indent_lines(member_encode_lines) + [
-                        '}',
-                        ''
-                    ]
-                    member_decode_lines = [
-                        'if (dst_p->{}.is_{}_present) {{'.format(self.location_inner,
-                                                                 member.name)
-                    ] + _indent_lines(member_decode_lines) + [
-                        '}',
-                        ''
-                    ]
-                else:
-                    member_encode_lines = [
-                        'if (src_p->is_{}_present) {{'.format(member.name)
-                    ] + _indent_lines(member_encode_lines) + [
-                        '}',
-                        ''
-                    ]
-                    member_decode_lines = [
-                        'if (dst_p->is_{}_present) {{'.format(member.name)
-                    ] + _indent_lines(member_decode_lines) + [
-                        '}',
-                        ''
-                    ]
+                member_encode_lines = [
+                    '',
+                    'if (src_p->{}is_{}_present) {{'.format(self.location_inner('', '.'),
+                                                            member.name)
+                ] + _indent_lines(member_encode_lines) + [
+                    '}',
+                    ''
+                ]
+                member_decode_lines = [
+                    '',
+                    'if (dst_p->{}is_{}_present) {{'.format(self.location_inner('', '.'),
+                                                            member.name)
+                ] + _indent_lines(member_decode_lines) + [
+                    '}',
+                    ''
+                ]
 
             encode_lines += member_encode_lines
             decode_lines += member_decode_lines
@@ -928,12 +921,12 @@ class _Generator(object):
         return (
             [
                 'encoder_append_bytes(encoder_p,',
-                '                     &src_p->{}.buf[0],'.format(self.location_inner),
+                '                     &src_p->{}.buf[0],'.format(self.location_inner()),
                 '                     {});'.format(checker.maximum)
             ],
             [
                 'decoder_read_bytes(decoder_p,',
-                '                   &dst_p->{}.buf[0],'.format(self.location_inner),
+                '                   &dst_p->{}.buf[0],'.format(self.location_inner()),
                 '                   {});'.format(checker.maximum)
             ]
         )
@@ -947,12 +940,12 @@ class _Generator(object):
         encode_lines = [
             '{}_encode_inner(encoder_p, &src_p->{});'.format(
                 prefix,
-                self.location_inner)
+                self.location_inner())
         ]
         decode_lines = [
             '{}_decode_inner(decoder_p, &dst_p->{});'.format(
                 prefix,
-                self.location_inner)
+                self.location_inner())
         ]
 
         return encode_lines, decode_lines
@@ -981,37 +974,26 @@ class _Generator(object):
             ]
             encode_lines += _indent_lines(choice_encode_lines)
             encode_lines += ['    break;', '']
-
-            if self.c_members_backtrace:
-                decode_lines += [
-                    'case 0x{:02x}:'.format(tag),
-                    '    dst_p->{}.choice = {}_choice_{}_t;'.format(self.location_inner,
-                                                                    self.location,
-                                                                    member.name)
-                ]
-            else:
-                decode_lines += [
-                    'case 0x{:02x}:'.format(tag),
-                    '    dst_p->choice = {}_choice_{}_t;'.format(self.location,
-                                                                 member.name)
-                ]
-
+            decode_lines += [
+                'case 0x{:02x}:'.format(tag),
+                '    dst_p->{}choice = {}_choice_{}_t;'.format(self.location_inner('', '.'),
+                                                               self.location,
+                                                               member.name)
+            ]
             decode_lines += _indent_lines(choice_decode_lines)
             decode_lines += ['    break;', '']
 
-        if self.c_members_backtrace:
-            choice = '{}.choice'.format(self.location_inner)
-        else:
-            choice = 'choice'
-
+        choice = '{}choice'.format(self.location_inner('', '.'))
         encode_lines = [
+            '',
             'switch (src_p->{}) {{'.format(choice),
             ''
         ] + encode_lines + [
             'default:',
             '    encoder_abort(encoder_p, EBADCHOICE);',
             '    break;',
-            '}'
+            '}',
+            ''
         ]
 
         decode_lines = [
@@ -1023,7 +1005,8 @@ class _Generator(object):
             'default:',
             '    decoder_abort(decoder_p, EBADCHOICE);',
             '    break;',
-            '}'
+            '}',
+            ''
         ]
 
         return encode_lines, decode_lines
@@ -1088,8 +1071,8 @@ class _Generator(object):
                     unique_i=unique_i),
             ] + _indent_lines(decode_lines)
 
-        encode_lines += ['}']
-        decode_lines += ['}']
+        encode_lines += ['}', '']
+        decode_lines += ['}', '']
 
         return encode_lines, decode_lines
 

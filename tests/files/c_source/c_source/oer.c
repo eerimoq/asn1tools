@@ -586,7 +586,9 @@ static void oer_c_source_d_decode_inner(
             decoder_read_bytes(decoder_p,
                                &present_mask_2[0],
                                sizeof(present_mask_2));
+
             dst_p->elements[i].m.p.is_r_present = ((present_mask_2[0] & 0x80) == 0x80);
+
             decoder_read_bytes(decoder_p,
                                &dst_p->elements[i].m.p.q.buf[0],
                                5);
