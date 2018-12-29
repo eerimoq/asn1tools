@@ -830,23 +830,56 @@ class _Generator(object):
 
             encode_lines.append('')
 
-            for i, optional in enumerate(optionals):
+            decode_lines += [
+                'decoder_read_bytes(decoder_p,',
+                '                   &{}[0],'.format(unique_present_mask),
+                '                   sizeof({}));'.format(unique_present_mask),
+                ''
+            ]
+
+            for i, member in enumerate(optionals):
                 byte, bit = divmod(i, 8)
                 mask = '0x{:02x}'.format(1 << (7 - bit))
-                encode_lines += [
-                    'if (src_p->is_{}_present) {{'.format(optional.name),
-                    '    {}[{}] |= {};'.format(unique_present_mask,
-                                               byte,
-                                               mask),
-                    '}',
-                    ''
-                ]
-                decode_lines.append(
-                    'dst_p->is_{0}_present = (({1}[{2}] & {3}) == {3});'.format(
-                        optional.name,
-                        unique_present_mask,
-                        byte,
-                        mask))
+
+                if self.c_members_backtrace:
+                    encode_lines += [
+                        'if (src_p->{}.is_{}_present) {{'.format(self.location_inner,
+                                                                 member.name),
+                        '    {}[{}] |= {};'.format(unique_present_mask,
+                                                   byte,
+                                                   mask),
+                        '}',
+                        ''
+                    ]
+                    decode_lines.append(
+                        'dst_p->{0}.is_{1}_present = (({2}[{3}] & {4}) == {4});'.format(
+                            self.location_inner,
+                            member.name,
+                            unique_present_mask,
+                            byte,
+                            mask))
+                else:
+                    encode_lines += [
+                        'if (src_p->is_{}_present) {{'.format(member.name),
+                        '    {}[{}] |= {};'.format(unique_present_mask,
+                                                   byte,
+                                                   mask),
+                        '}',
+                        ''
+                    ]
+                    decode_lines.append(
+                        'dst_p->is_{0}_present = (({1}[{2}] & {3}) == {3});'.format(
+                            member.name,
+                            unique_present_mask,
+                            byte,
+                            mask))
+
+            encode_lines += [
+                'encoder_append_bytes(encoder_p,',
+                '                     &{}[0],'.format(unique_present_mask),
+                '                     sizeof({}));'.format(unique_present_mask),
+                ''
+            ]
 
         for member in type_.root_members:
             member_checker = self.get_member_checker(checker, member.name)
@@ -857,12 +890,34 @@ class _Generator(object):
                     member_checker)
 
             if member.optional:
-                member_encode_lines = [
-                    'if (src_p->is_{}_present) {{'.format(member.name)
-                ] + _indent_lines(member_encode_lines) + [
-                    '}',
-                    ''
-                ]
+                if self.c_members_backtrace:
+                    member_encode_lines = [
+                        'if (src_p->{}.is_{}_present) {{'.format(self.location_inner,
+                                                                 member.name)
+                    ] + _indent_lines(member_encode_lines) + [
+                        '}',
+                        ''
+                    ]
+                    member_decode_lines = [
+                        'if (dst_p->{}.is_{}_present) {{'.format(self.location_inner,
+                                                                 member.name)
+                    ] + _indent_lines(member_decode_lines) + [
+                        '}',
+                        ''
+                    ]
+                else:
+                    member_encode_lines = [
+                        'if (src_p->is_{}_present) {{'.format(member.name)
+                    ] + _indent_lines(member_encode_lines) + [
+                        '}',
+                        ''
+                    ]
+                    member_decode_lines = [
+                        'if (dst_p->is_{}_present) {{'.format(member.name)
+                    ] + _indent_lines(member_decode_lines) + [
+                        '}',
+                        ''
+                    ]
 
             encode_lines += member_encode_lines
             decode_lines += member_decode_lines
