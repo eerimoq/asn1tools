@@ -15,7 +15,6 @@ IMPORTS
     Float,
     Double,
     Bool,
-    String,
     Bytes
 FROM ProgrammingTypes;
 

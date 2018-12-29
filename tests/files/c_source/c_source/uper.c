@@ -464,7 +464,7 @@ static void uper_c_source_a_encode_inner(
     encoder_append_float(encoder_p, src_p->i);
     encoder_append_double(encoder_p, src_p->j);
     encoder_append_bool(encoder_p, &src_p->k);
-    encoder_append_bytes(encoder_p, &src_p->l.value[0], 11);
+    encoder_append_bytes(encoder_p, &src_p->l.buf[0], 11);
 }
 
 static void uper_c_source_a_decode_inner(
@@ -482,7 +482,7 @@ static void uper_c_source_a_decode_inner(
     dst_p->i = decoder_read_float(decoder_p);
     dst_p->j = decoder_read_double(decoder_p);
     dst_p->k = decoder_read_bool(decoder_p);
-    decoder_read_bytes(decoder_p, &dst_p->l.value[0], 11);
+    decoder_read_bytes(decoder_p, &dst_p->l.buf[0], 11);
 }
 
 static void uper_c_source_b_encode_inner(
@@ -581,7 +581,7 @@ static void uper_c_source_d_encode_inner(
                                                    src_p->elements[i].g.l.length - 1,
                                                    1);
         encoder_append_bytes(encoder_p,
-                             &src_p->elements[i].g.l.value[0],
+                             &src_p->elements[i].g.l.buf[0],
                              src_p->elements[i].g.l.length);
         encoder_append_bit(encoder_p, src_p->elements[i].m.is_n_present ? 1 : 0);
         encoder_append_bit(encoder_p, src_p->elements[i].m.o != 3 ? 1 : 0);
@@ -600,7 +600,7 @@ static void uper_c_source_d_encode_inner(
         if (src_p->elements[i].m.is_p_present) {
             encoder_append_bit(encoder_p, src_p->elements[i].m.p.is_r_present ? 1 : 0);
             encoder_append_bytes(encoder_p,
-                                 &src_p->elements[i].m.p.q.value[0],
+                                 &src_p->elements[i].m.p.q.buf[0],
                                  5);
 
             if (src_p->elements[i].m.p.is_r_present) {
@@ -660,7 +660,7 @@ static void uper_c_source_d_decode_inner(
         }
 
         decoder_read_bytes(decoder_p,
-                           &dst_p->elements[i].g.l.value[0],
+                           &dst_p->elements[i].g.l.buf[0],
                            dst_p->elements[i].g.l.length);
         dst_p->elements[i].m.is_n_present = (decoder_read_bit(decoder_p) == 1);
         is_o_present = decoder_read_bit(decoder_p);
@@ -680,7 +680,7 @@ static void uper_c_source_d_decode_inner(
         if (dst_p->elements[i].m.is_p_present) {
             dst_p->elements[i].m.p.is_r_present = (decoder_read_bit(decoder_p) == 1);
             decoder_read_bytes(decoder_p,
-                               &dst_p->elements[i].m.p.q.value[0],
+                               &dst_p->elements[i].m.p.q.buf[0],
                                5);
 
             if (dst_p->elements[i].m.p.is_r_present) {

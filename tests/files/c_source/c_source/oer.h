@@ -71,7 +71,7 @@ struct oer_c_source_a_t {
     double j;
     bool k;
     struct {
-        uint8_t value[11];
+        uint8_t buf[11];
     } l;
 };
 
@@ -133,7 +133,7 @@ struct oer_c_source_d_t {
             enum oer_c_source_d_g_h_t h;
             struct {
                 uint8_t length;
-                uint8_t value[2];
+                uint8_t buf[2];
             } l;
         } g;
         struct {
@@ -143,7 +143,7 @@ struct oer_c_source_d_t {
             bool is_p_present;
             struct {
                 struct {
-                    uint8_t value[5];
+                    uint8_t buf[5];
                 } q;
                 bool is_r_present;
                 bool r;

@@ -28,7 +28,7 @@ static void test_uper_c_source_a(void)
     decoded.i = 1.0f;
     decoded.j = 1.0;
     decoded.k = true;
-    memset(&decoded.l.value[0], 5, sizeof(decoded.l.value));
+    memset(&decoded.l.buf[0], 5, sizeof(decoded.l.buf));
 
     memset(&encoded[0], 0, sizeof(encoded));
     assert(uper_c_source_a_encode(&encoded[0],
@@ -58,9 +58,9 @@ static void test_uper_c_source_a(void)
     assert(fequal(decoded.i, 1.0f));
     assert(fequal(decoded.j, 1.0));
     assert(decoded.k);
-    assert(memcmp(&decoded.l.value[0],
+    assert(memcmp(&decoded.l.buf[0],
                   "\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05",
-                  sizeof(decoded.l.value)) == 0);
+                  sizeof(decoded.l.buf)) == 0);
 }
 
 static void test_uper_c_source_a_encode_error_no_mem(void)
@@ -79,7 +79,7 @@ static void test_uper_c_source_a_encode_error_no_mem(void)
     decoded.i = 1.0f;
     decoded.j = 1.0;
     decoded.k = true;
-    memset(&decoded.l.value[0], 5, sizeof(decoded.l.value));
+    memset(&decoded.l.buf[0], 5, sizeof(decoded.l.buf));
 
     assert(uper_c_source_a_encode(&encoded[0],
                                   sizeof(encoded),
@@ -145,7 +145,7 @@ static void test_uper_c_source_b_choice_b(void)
     decoded.value.b.i = 1.0f;
     decoded.value.b.j = 1.0;
     decoded.value.b.k = true;
-    memset(&decoded.value.b.l.value[0], 5, sizeof(decoded.value.b.l.value));
+    memset(&decoded.value.b.l.buf[0], 5, sizeof(decoded.value.b.l.buf));
 
     memset(&encoded[0], 0, sizeof(encoded));
     assert(uper_c_source_b_encode(&encoded[0],
@@ -176,9 +176,9 @@ static void test_uper_c_source_b_choice_b(void)
     assert(fequal(decoded.value.b.i, 1.0f));
     assert(fequal(decoded.value.b.j, 1.0));
     assert(decoded.value.b.k);
-    assert(memcmp(&decoded.value.b.l.value[0],
+    assert(memcmp(&decoded.value.b.l.buf[0],
                   "\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05",
-                  sizeof(decoded.value.b.l.value)) == 0);
+                  sizeof(decoded.value.b.l.buf)) == 0);
 }
 
 static void test_uper_c_source_b_decode_error_bad_choice(void)
@@ -203,15 +203,15 @@ static void test_uper_c_source_d_all_present(void)
     decoded.elements[0].a.e.length = 3;
     decoded.elements[0].g.h = uper_c_source_d_g_h_j_t;
     decoded.elements[0].g.l.length = 2;
-    decoded.elements[0].g.l.value[0] = 0x54;
-    decoded.elements[0].g.l.value[1] = 0x55;
+    decoded.elements[0].g.l.buf[0] = 0x54;
+    decoded.elements[0].g.l.buf[1] = 0x55;
     decoded.elements[0].m.is_n_present = true;
     decoded.elements[0].m.n = false;
     decoded.elements[0].m.o = 2;
     decoded.elements[0].m.is_p_present = true;
-    memset(&decoded.elements[0].m.p.q.value[0],
+    memset(&decoded.elements[0].m.p.q.buf[0],
            3,
-           sizeof(decoded.elements[0].m.p.q.value));
+           sizeof(decoded.elements[0].m.p.q.buf));
     decoded.elements[0].m.p.is_r_present = true;
     decoded.elements[0].m.p.r = true;
 
@@ -235,15 +235,15 @@ static void test_uper_c_source_d_all_present(void)
     assert(decoded.elements[0].a.e.length == 3);
     assert(decoded.elements[0].g.h == uper_c_source_d_g_h_j_t);
     assert(decoded.elements[0].g.l.length == 2);
-    assert(decoded.elements[0].g.l.value[0] == 0x54);
-    assert(decoded.elements[0].g.l.value[1] == 0x55);
+    assert(decoded.elements[0].g.l.buf[0] == 0x54);
+    assert(decoded.elements[0].g.l.buf[1] == 0x55);
     assert(decoded.elements[0].m.is_n_present);
     assert(decoded.elements[0].m.n == false);
     assert(decoded.elements[0].m.o == 2);
     assert(decoded.elements[0].m.is_p_present);
-    assert(memcmp(&decoded.elements[0].m.p.q.value[0],
+    assert(memcmp(&decoded.elements[0].m.p.q.buf[0],
                   "\x03\x03\x03\x03\x03",
-                  sizeof(decoded.elements[0].m.p.q.value)) == 0);
+                  sizeof(decoded.elements[0].m.p.q.buf)) == 0);
     assert(decoded.elements[0].m.p.is_r_present);
     assert(decoded.elements[0].m.p.r == true);
 }

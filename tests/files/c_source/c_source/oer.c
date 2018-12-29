@@ -317,7 +317,7 @@ static void oer_c_source_a_encode_inner(
     encoder_append_double(encoder_p, src_p->j);
     encoder_append_bool(encoder_p, src_p->k);
     encoder_append_bytes(encoder_p,
-                         &src_p->l.value[0],
+                         &src_p->l.buf[0],
                          11);
 }
 
@@ -337,7 +337,7 @@ static void oer_c_source_a_decode_inner(
     dst_p->j = decoder_read_double(decoder_p);
     dst_p->k = decoder_read_bool(decoder_p);
     decoder_read_bytes(decoder_p,
-                       &dst_p->l.value[0],
+                       &dst_p->l.buf[0],
                        11);
 }
 
@@ -465,7 +465,7 @@ static void oer_c_source_d_encode_inner(
         encoder_append_integer_8(encoder_p, src_p->elements[i].g.h);
         encoder_append_integer_8(encoder_p, src_p->elements[i].g.l.length);
         encoder_append_bytes(encoder_p,
-                             &src_p->elements[i].g.l.value[0],
+                             &src_p->elements[i].g.l.buf[0],
                              src_p->elements[i].g.l.length);
         present_mask = 0;
 
@@ -500,7 +500,7 @@ static void oer_c_source_d_encode_inner(
 
             encoder_append_integer_8(encoder_p, present_mask_2);
             encoder_append_bytes(encoder_p,
-                                 &src_p->elements[i].m.p.q.value[0],
+                                 &src_p->elements[i].m.p.q.buf[0],
                                  5);
 
             if (src_p->elements[i].m.p.is_r_present) {
@@ -560,7 +560,7 @@ static void oer_c_source_d_decode_inner(
         }
 
         decoder_read_bytes(decoder_p,
-                           &dst_p->elements[i].g.l.value[0],
+                           &dst_p->elements[i].g.l.buf[0],
                            dst_p->elements[i].g.l.length);
         present_mask = decoder_read_integer_8(decoder_p);
         dst_p->elements[i].m.is_n_present = ((present_mask & 0x80) == 0x80);
@@ -580,7 +580,7 @@ static void oer_c_source_d_decode_inner(
             present_mask_2 = decoder_read_integer_8(decoder_p);
             dst_p->elements[i].m.p.is_r_present = ((present_mask_2 & 0x80) == 0x80);
             decoder_read_bytes(decoder_p,
-                               &dst_p->elements[i].m.p.q.value[0],
+                               &dst_p->elements[i].m.p.q.buf[0],
                                5);
 
             if (dst_p->elements[i].m.p.is_r_present) {
