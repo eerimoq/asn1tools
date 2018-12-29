@@ -183,7 +183,6 @@ struct oer_c_source_e_t {
 struct oer_c_source_f_t {
     uint8_t length;
     struct {
-        uint8_t length;
         bool elements[1];
     } elements[2];
 };

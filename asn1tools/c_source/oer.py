@@ -541,12 +541,10 @@ class _Generator(object):
         if lines:
             lines[-1] += ' elements[{}];'.format(checker.maximum)
 
-        return [
-            'struct {',
-            '    uint8_t length;'
-        ] + _indent_lines(lines) + [
-            '}'
-        ]
+        if checker.minimum != checker.maximum:
+            lines = ['uint8_t length;'] + lines
+
+        return ['struct {'] + _indent_lines(lines) + ['}']
 
     def format_enumerated(self, type_):
         lines = ['enum {}_t'.format(self.location)]
