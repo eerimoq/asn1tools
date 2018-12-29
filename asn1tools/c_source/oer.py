@@ -492,7 +492,7 @@ class _Generator(object):
 
         raise Error('No member checker found for {}.'.format(name))
 
-    def add_unique_variable(self, type_, name, variable_lines=None):
+    def add_unique_variable(self, fmt, name, variable_lines=None):
         if name in self.base_variables:
             try:
                 suffix = self.used_suffixes_by_base_variables[name]
@@ -506,7 +506,7 @@ class _Generator(object):
             self.base_variables.add(name)
             unique_name = name
 
-        line = '{} {};'.format(type_, unique_name)
+        line = fmt.format(unique_name)
 
         if variable_lines is None:
             self.encode_variable_lines.append(line)
@@ -518,11 +518,11 @@ class _Generator(object):
 
         return unique_name
 
-    def add_unique_encode_variable(self, type_, name):
-        return self.add_unique_variable(type_, name, 'encode')
+    def add_unique_encode_variable(self, fmt, name):
+        return self.add_unique_variable(fmt, name, 'encode')
 
-    def add_unique_decode_variable(self, type_, name):
-        return self.add_unique_variable(type_, name, 'decode')
+    def add_unique_decode_variable(self, fmt, name):
+        return self.add_unique_variable(fmt, name, 'decode')
 
     def format_integer(self, checker):
         if not checker.is_bound():
@@ -812,16 +812,57 @@ class _Generator(object):
         encode_lines = []
         decode_lines = []
 
+        optionals = [
+            member
+            for member in type_.root_members
+            if member.optional or member.default is not None
+        ]
+
+        present_mask_length = ((len(optionals) + 7) // 8)
+
+        if present_mask_length > 0:
+            fmt = 'uint8_t {{}}[{}];'.format(present_mask_length)
+            unique_present_mask = self.add_unique_variable(fmt, 'present_mask')
+
+            for i in range(present_mask_length):
+                encode_lines.append('{}[{}] = 0;'.format(unique_present_mask,
+                                                         i))
+
+            encode_lines.append('')
+
+            for i, optional in enumerate(optionals):
+                byte, bit = divmod(i, 8)
+                mask = '0x{:02x}'.format(1 << (7 - bit))
+                encode_lines += [
+                    'if (src_p->is_{}_present) {{'.format(optional.name),
+                    '    {}[{}] |= {};'.format(unique_present_mask,
+                                               byte,
+                                               mask),
+                    '}',
+                    ''
+                ]
+                decode_lines.append(
+                    'dst_p->is_{0}_present = (({1}[{2}] & {3}) == {3});'.format(
+                        optional.name,
+                        unique_present_mask,
+                        byte,
+                        mask))
+
         for member in type_.root_members:
             member_checker = self.get_member_checker(checker, member.name)
-
-            if member.optional:
-                pass
 
             with self.members_backtrace_push(member.name):
                 member_encode_lines, member_decode_lines = self.format_type_inner(
                     member,
                     member_checker)
+
+            if member.optional:
+                member_encode_lines = [
+                    'if (src_p->is_{}_present) {{'.format(member.name)
+                ] + _indent_lines(member_encode_lines) + [
+                    '}',
+                    ''
+                ]
 
             encode_lines += member_encode_lines
             decode_lines += member_decode_lines
@@ -864,7 +905,7 @@ class _Generator(object):
     def format_choice_inner(self, type_, checker):
         encode_lines = []
         decode_lines = []
-        unique_tag = self.add_unique_decode_variable('uint8_t', 'tag')
+        unique_tag = self.add_unique_decode_variable('uint8_t {};', 'tag')
 
         for member in type_.root_members:
             member_checker = self.get_member_checker(checker,
@@ -936,10 +977,10 @@ class _Generator(object):
         return ['enumerated encode'], ['enumerated decode']
 
     def format_sequence_of_inner(self, type_, checker):
-        unique_i = self.add_unique_variable('uint8_t', 'i')
+        unique_i = self.add_unique_variable('uint8_t {};', 'i')
 
         if checker.minimum == checker.maximum:
-            unique_length = self.add_unique_decode_variable('uint8_t',
+            unique_length = self.add_unique_decode_variable('uint8_t {};',
                                                             'length')
 
         with self.c_members_backtrace_push('elements[{}]'.format(unique_i)):
@@ -1041,7 +1082,6 @@ class _Generator(object):
         elif isinstance(type_, oer.Choice):
             encode_lines, decode_lines = self.format_choice_inner(type_, checker)
         else:
-            print(type_)
             encode_lines = []
             decode_lines = []
 
