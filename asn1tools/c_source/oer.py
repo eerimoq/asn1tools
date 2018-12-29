@@ -380,7 +380,7 @@ class _MembersBacktracesContext(object):
             backtrace.pop()
 
 
-def join_lines(lines, suffix):
+def _join_lines(lines, suffix):
     return[line + suffix for line in lines[:-1]] + lines[-1:]
 
 
@@ -405,7 +405,7 @@ def _format_type_name(minimum, maximum):
     return type_name
 
 
-def is_user_type(type_):
+def _is_user_type(type_):
     return type_.module_name is not None
 
 
@@ -436,6 +436,8 @@ class _Generator(object):
         self.module_name = None
         self.type_name = None
         self.helper_lines = []
+        self.base_variables = set()
+        self.used_suffixes_by_base_variables = {}
 
     @property
     def module_name_snake(self):
@@ -487,6 +489,22 @@ class _Generator(object):
                 return member
 
         raise Error('No member checker found for {}.'.format(name))
+
+    def make_unique_variable_name(self, name):
+        if name in self.base_variables:
+            try:
+                suffix = self.used_suffixes_by_base_variables[name]
+                suffix += 1
+            except KeyError:
+                suffix = 2
+
+            self.used_suffixes_by_base_variables[name] = suffix
+            unique_name = '{}_{}'.format(name, suffix)
+        else:
+            self.base_variables.add(name)
+            unique_name = name
+
+        return unique_name
 
     def format_integer(self, checker):
         if not checker.is_bound():
@@ -572,7 +590,7 @@ class _Generator(object):
         ]
         self.helper_lines += [
             'enum {}_t {{'.format(self.location)
-        ] + join_lines(values, ',') + [
+        ] + _join_lines(values, ',') + [
             '};',
             ''
         ]
@@ -599,7 +617,7 @@ class _Generator(object):
 
         self.helper_lines += [
             'enum {}_choice_t {{'.format(self.location)
-        ] + join_lines(choices, ',') + [
+        ] + _join_lines(choices, ',') + [
             '};',
             ''
         ]
@@ -634,7 +652,7 @@ class _Generator(object):
             lines = []
         elif isinstance(type_, oer.OctetString):
             lines = self.format_octet_string(checker)
-        elif is_user_type(type_):
+        elif _is_user_type(type_):
             lines = self.format_user_type(type_.type_name,
                                           type_.module_name)
         elif isinstance(type_, oer.Sequence):
@@ -650,11 +668,17 @@ class _Generator(object):
 
         return lines
 
+    def reset_type_declaration(self):
+        self.helper_lines = []
+        self.base_variables = set()
+        self.used_suffixes_by_base_variables = {}
+
     def generate_type_declaration(self, compiled_type):
         type_ = compiled_type.type
         checker = compiled_type.constraints_checker.type
         lines = []
-        self.helper_lines = []
+
+        self.reset_type_declaration()
 
         try:
             if isinstance(type_, oer.Integer):
@@ -884,37 +908,69 @@ class _Generator(object):
         return ['enumerated encode'], ['enumerated decode']
 
     def format_sequence_of_inner(self, type_, checker):
-        with self.c_members_backtrace_push('elements[i]'):
+        unique_i = self.make_unique_variable_name('i')
+
+        with self.c_members_backtrace_push('elements[{}]'.format(unique_i)):
             encode_lines, decode_lines = self.format_type_inner(
                 type_.element_type,
                 checker.element_type)
 
-        encode_lines = [
-            'uint8_t i;',
-            '',
-            'encoder_append_integer_8(encoder_p, 1);',
-            'encoder_append_integer_8(encoder_p, src_p->length);',
-            '',
-            'for (i = 0; i < src_p->length; i++) {',
-        ] + _indent_lines(encode_lines) + [
-            '}'
-        ]
-        decode_lines = [
-            'uint8_t i;',
-            '',
-            'decoder_read_integer_8(decoder_p);',
-            'dst_p->length = decoder_read_integer_8(decoder_p);',
-            '',
-            'if (dst_p->length > {}) {{'.format(checker.maximum),
-            '    decoder_abort(decoder_p, EBADLENGTH);',
-            '',
-            '    return;',
-            '}',
-            '',
-            'for (i = 0; i < dst_p->length; i++) {'
-        ] + _indent_lines(decode_lines) + [
-            '}'
-        ]
+        if checker.minimum == checker.maximum:
+            encode_lines = [
+                'uint8_t {};'.format(unique_i),
+                '',
+                'encoder_append_integer_8(encoder_p, 1);',
+                'encoder_append_integer_8(encoder_p, {});'.format(checker.maximum),
+                '',
+                'for ({unique_i} = 0; {unique_i} < {maximum}; {unique_i}++) {{'.format(
+                    unique_i=unique_i,
+                    maximum=checker.maximum),
+            ] + _indent_lines(encode_lines)
+            decode_lines = [
+                'uint8_t {};'.format(unique_i),
+                'uint8_t length;',
+                '',
+                'decoder_read_integer_8(decoder_p);',
+                'length = decoder_read_integer_8(decoder_p);',
+                '',
+                'if (length > {}) {{'.format(checker.maximum),
+                '    decoder_abort(decoder_p, EBADLENGTH);',
+                '',
+                '    return;',
+                '}',
+                '',
+                'for ({unique_i} = 0; {unique_i} < {maximum}; {unique_i}++) {{'.format(
+                    unique_i=unique_i,
+                    maximum=checker.maximum),
+            ] + _indent_lines(decode_lines)
+        else:
+            encode_lines = [
+                'uint8_t {};'.format(unique_i),
+                '',
+                'encoder_append_integer_8(encoder_p, 1);',
+                'encoder_append_integer_8(encoder_p, src_p->length);',
+                '',
+                'for ({unique_i} = 0; {unique_i} < src_p->length; {unique_i}++) {{'.format(
+                    unique_i=unique_i),
+            ] + _indent_lines(encode_lines)
+            decode_lines = [
+                'uint8_t {};'.format(unique_i),
+                '',
+                'decoder_read_integer_8(decoder_p);',
+                'dst_p->length = decoder_read_integer_8(decoder_p);',
+                '',
+                'if (dst_p->length > {}) {{'.format(checker.maximum),
+                '    decoder_abort(decoder_p, EBADLENGTH);',
+                '',
+                '    return;',
+                '}',
+                '',
+                'for ({unique_i} = 0; {unique_i} < dst_p->length; {unique_i}++) {{'.format(
+                    unique_i=unique_i),
+            ] + _indent_lines(decode_lines)
+
+        encode_lines += ['}']
+        decode_lines += ['}']
 
         return encode_lines, decode_lines
 
@@ -929,7 +985,7 @@ class _Generator(object):
             return self.format_boolean_inner()
         elif isinstance(type_, oer.OctetString):
             return self.format_octet_string_inner(checker)
-        elif is_user_type(type_):
+        elif _is_user_type(type_):
             return self.format_user_type_inner(type_.type_name,
                                                type_.module_name)
         elif isinstance(type_, oer.Sequence):
