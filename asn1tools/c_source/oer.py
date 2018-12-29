@@ -438,6 +438,8 @@ class _Generator(object):
         self.helper_lines = []
         self.base_variables = set()
         self.used_suffixes_by_base_variables = {}
+        self.encode_variable_lines = []
+        self.decode_variable_lines = []
 
     @property
     def module_name_snake(self):
@@ -490,7 +492,7 @@ class _Generator(object):
 
         raise Error('No member checker found for {}.'.format(name))
 
-    def make_unique_variable_name(self, name):
+    def add_unique_variable(self, type_, name, variable_lines=None):
         if name in self.base_variables:
             try:
                 suffix = self.used_suffixes_by_base_variables[name]
@@ -504,7 +506,23 @@ class _Generator(object):
             self.base_variables.add(name)
             unique_name = name
 
+        line = '{} {};'.format(type_, unique_name)
+
+        if variable_lines is None:
+            self.encode_variable_lines.append(line)
+            self.decode_variable_lines.append(line)
+        elif variable_lines == 'encode':
+            self.encode_variable_lines.append(line)
+        else:
+            self.decode_variable_lines.append(line)
+
         return unique_name
+
+    def add_unique_encode_variable(self, type_, name):
+        return self.add_unique_variable(type_, name, 'encode')
+
+    def add_unique_decode_variable(self, type_, name):
+        return self.add_unique_variable(type_, name, 'decode')
 
     def format_integer(self, checker):
         if not checker.is_bound():
@@ -668,17 +686,19 @@ class _Generator(object):
 
         return lines
 
-    def reset_type_declaration(self):
+    def reset(self):
         self.helper_lines = []
         self.base_variables = set()
         self.used_suffixes_by_base_variables = {}
+        self.encode_variable_lines = []
+        self.decode_variable_lines = []
 
     def generate_type_declaration(self, compiled_type):
         type_ = compiled_type.type
         checker = compiled_type.constraints_checker.type
         lines = []
 
-        self.reset_type_declaration()
+        self.reset()
 
         try:
             if isinstance(type_, oer.Integer):
@@ -908,7 +928,7 @@ class _Generator(object):
         return ['enumerated encode'], ['enumerated decode']
 
     def format_sequence_of_inner(self, type_, checker):
-        unique_i = self.make_unique_variable_name('i')
+        unique_i = self.add_unique_variable('uint8_t', 'i')
 
         with self.c_members_backtrace_push('elements[{}]'.format(unique_i)):
             encode_lines, decode_lines = self.format_type_inner(
@@ -917,8 +937,6 @@ class _Generator(object):
 
         if checker.minimum == checker.maximum:
             encode_lines = [
-                'uint8_t {};'.format(unique_i),
-                '',
                 'encoder_append_integer_8(encoder_p, 1);',
                 'encoder_append_integer_8(encoder_p, {});'.format(checker.maximum),
                 '',
@@ -927,7 +945,6 @@ class _Generator(object):
                     maximum=checker.maximum),
             ] + _indent_lines(encode_lines)
             decode_lines = [
-                'uint8_t {};'.format(unique_i),
                 'uint8_t length;',
                 '',
                 'decoder_read_integer_8(decoder_p);',
@@ -945,8 +962,6 @@ class _Generator(object):
             ] + _indent_lines(decode_lines)
         else:
             encode_lines = [
-                'uint8_t {};'.format(unique_i),
-                '',
                 'encoder_append_integer_8(encoder_p, 1);',
                 'encoder_append_integer_8(encoder_p, src_p->length);',
                 '',
@@ -954,8 +969,6 @@ class _Generator(object):
                     unique_i=unique_i),
             ] + _indent_lines(encode_lines)
             decode_lines = [
-                'uint8_t {};'.format(unique_i),
-                '',
                 'decoder_read_integer_8(decoder_p);',
                 'dst_p->length = decoder_read_integer_8(decoder_p);',
                 '',
@@ -1003,6 +1016,8 @@ class _Generator(object):
         type_ = compiled_type.type
         checker = compiled_type.constraints_checker.type
 
+        self.reset()
+
         if isinstance(type_, oer.Integer):
             encode_lines, decode_lines = self.format_integer_inner(checker)
         elif isinstance(type_, oer.Boolean):
@@ -1019,6 +1034,12 @@ class _Generator(object):
             print(type_)
             encode_lines = []
             decode_lines = []
+
+        if self.encode_variable_lines:
+            encode_lines = self.encode_variable_lines + [''] + encode_lines
+
+        if self.decode_variable_lines:
+            decode_lines = self.decode_variable_lines + [''] + decode_lines
 
         encode_lines = _indent_lines(encode_lines)
         decode_lines = _indent_lines(decode_lines)
