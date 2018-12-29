@@ -490,7 +490,7 @@ class _Generator(object):
         return [
             'struct {'
             ] + lines + [
-            '    uint8_t value[{}];'.format(checker.maximum),
+            '    uint8_t buf[{}];'.format(checker.maximum),
             '}'
         ]
 
@@ -759,12 +759,12 @@ class _Generator(object):
         return (
             [
                 'encoder_append_bytes(encoder_p,',
-                '                     &src_p->{}.value[0],'.format(name),
+                '                     &src_p->{}.buf[0],'.format(name),
                 '                     {});'.format(length)
             ],
             [
                 'decoder_read_bytes(decoder_p,',
-                '                   &dst_p->{}.value[0],'.format(name),
+                '                   &dst_p->{}.buf[0],'.format(name),
                 '                   {});'.format(length)
             ]
         )
