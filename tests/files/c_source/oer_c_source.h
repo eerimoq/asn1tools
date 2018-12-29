@@ -155,8 +155,8 @@ struct oer_c_source_d_t {
 /**
  * Type E in module CSource.
  */
-enum oer_c_source_e_a_choice_t {
-    oer_c_source_e_a_choice_c_t
+enum oer_c_source_e_a_b_choice_t {
+    oer_c_source_e_a_b_choice_c_t
 };
 
 enum oer_c_source_e_a_choice_t {
@@ -168,7 +168,7 @@ struct oer_c_source_e_t {
         enum oer_c_source_e_a_choice_t choice;
         union {
             struct {
-                enum oer_c_source_e_a_choice_t choice;
+                enum oer_c_source_e_a_b_choice_t choice;
                 union {
                     bool c;
                 } value;

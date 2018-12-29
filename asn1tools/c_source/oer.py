@@ -365,6 +365,21 @@ static bool decoder_read_bool(struct decoder_t *self_p)
 '''
 
 
+class _MembersBacktracesContext(object):
+
+    def __init__(self, backtraces, member_name):
+        self.backtraces = backtraces
+        self.member_name = member_name
+
+    def __enter__(self):
+        for backtrace in self.backtraces:
+            backtrace.append(self.member_name)
+
+    def __exit__(self, *args):
+        for backtrace in self.backtraces:
+            backtrace.pop()
+
+
 def _type_length(length):
     if length <= 8:
         return 8
@@ -438,24 +453,22 @@ class _Generator(object):
         return location
 
     def members_backtrace_push(self, member_name):
-        self.asn1_members_backtrace_push(member_name)
-        self.c_members_backtrace_push(member_name)
+        backtraces = [
+            self.asn1_members_backtrace,
+            self.c_members_backtrace
+        ]
 
-    def members_backtrace_pop(self):
-        self.asn1_members_backtrace_pop()
-        self.c_members_backtrace_pop()
+        return _MembersBacktracesContext(backtraces, member_name)
 
     def asn1_members_backtrace_push(self, member_name):
-        self.asn1_members_backtrace.append(member_name)
+        backtraces = [self.asn1_members_backtrace]
 
-    def asn1_members_backtrace_pop(self):
-        self.asn1_members_backtrace.pop()
+        return _MembersBacktracesContext(backtraces, member_name)
 
     def c_members_backtrace_push(self, member_name):
-        self.c_members_backtrace.append(member_name)
+        backtraces = [self.c_members_backtrace]
 
-    def c_members_backtrace_pop(self):
-        self.c_members_backtrace.pop()
+        return _MembersBacktracesContext(backtraces, member_name)
 
     def get_member_checker(self, checker, name):
         for member in checker.members:
@@ -509,12 +522,8 @@ class _Generator(object):
             if member.optional:
                 lines += ['bool is_{}_present;'.format(member.name)]
 
-            self.members_backtrace_push(member.name)
-
-            try:
+            with self.members_backtrace_push(member.name):
                 member_lines = self.format_type(member, member_checker)
-            finally:
-                self.members_backtrace_pop()
 
             if member_lines:
                 member_lines[-1] += ' {};'.format(member.name)
@@ -562,7 +571,9 @@ class _Generator(object):
         for member in type_.root_members:
             member_checker = self.get_member_checker(checker,
                                                      member.name)
-            choice_lines = self.format_type(member, member_checker)
+
+            with self.members_backtrace_push(member.name):
+                choice_lines = self.format_type(member, member_checker)
 
             if choice_lines:
                 choice_lines[-1] += ' {};'.format(member.name)
@@ -738,14 +749,10 @@ class _Generator(object):
             if member.optional:
                 pass
 
-            self.members_backtrace_push(member.name)
-
-            try:
+            with self.members_backtrace_push(member.name):
                 member_encode_lines, member_decode_lines = self.format_type_inner(
                     member,
                     member_checker)
-            finally:
-                self.members_backtrace_pop()
 
             encode_lines += member_encode_lines
             decode_lines += member_decode_lines
@@ -797,18 +804,12 @@ class _Generator(object):
             member_checker = self.get_member_checker(checker,
                                                      member.name)
 
-            self.asn1_members_backtrace_push(member.name)
-            self.c_members_backtrace_push('value')
-            self.c_members_backtrace_push(member.name)
-
-            try:
-                choice_encode_lines, choice_decode_lines = self.format_type_inner(
-                    member,
-                    member_checker)
-            finally:
-                self.asn1_members_backtrace_pop()
-                self.c_members_backtrace_pop()
-                self.c_members_backtrace_pop()
+            with self.asn1_members_backtrace_push(member.name):
+                with self.c_members_backtrace_push('value'):
+                    with self.c_members_backtrace_push(member.name):
+                        choice_encode_lines, choice_decode_lines = self.format_type_inner(
+                            member,
+                            member_checker)
 
             tag = struct.unpack('B', member.tag)[0]
 
@@ -862,14 +863,10 @@ class _Generator(object):
         return ['enumerated encode'], ['enumerated decode']
 
     def format_sequence_of_inner(self, type_, checker):
-        self.c_members_backtrace_push('elements[i]')
-
-        try:
+        with self.c_members_backtrace_push('elements[i]'):
             encode_lines, decode_lines = self.format_type_inner(
                 type_.element_type,
                 checker.element_type)
-        finally:
-            self.c_members_backtrace_pop()
 
         encode_lines = [
             'uint8_t i;',
