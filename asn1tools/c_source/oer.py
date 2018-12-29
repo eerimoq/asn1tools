@@ -864,6 +864,7 @@ class _Generator(object):
     def format_choice_inner(self, type_, checker):
         encode_lines = []
         decode_lines = []
+        unique_tag = self.add_unique_decode_variable('uint8_t', 'tag')
 
         for member in type_.root_members:
             member_checker = self.get_member_checker(checker,
@@ -885,11 +886,20 @@ class _Generator(object):
             encode_lines += _indent_lines(choice_encode_lines)
             encode_lines += ['    break;', '']
 
-            decode_lines += [
-                'case 0x{:02x}:'.format(tag),
-                '    dst_p->choice = {}_choice_{}_t;'.format(self.location,
-                                                             member.name)
-            ]
+            if self.c_members_backtrace:
+                decode_lines += [
+                    'case 0x{:02x}:'.format(tag),
+                    '    dst_p->{}.choice = {}_choice_{}_t;'.format(self.location_inner,
+                                                                    self.location,
+                                                                    member.name)
+                ]
+            else:
+                decode_lines += [
+                    'case 0x{:02x}:'.format(tag),
+                    '    dst_p->choice = {}_choice_{}_t;'.format(self.location,
+                                                                 member.name)
+                ]
+
             decode_lines += _indent_lines(choice_decode_lines)
             decode_lines += ['    break;', '']
 
@@ -909,11 +919,9 @@ class _Generator(object):
         ]
 
         decode_lines = [
-            'uint8_t tag;',
+            '{} = decoder_read_integer_8(decoder_p);'.format(unique_tag),
             '',
-            'tag = decoder_read_integer_8(decoder_p);',
-            '',
-            'switch (tag) {',
+            'switch ({}) {{'.format(unique_tag),
             ''
         ] + decode_lines + [
             'default:',
@@ -930,6 +938,10 @@ class _Generator(object):
     def format_sequence_of_inner(self, type_, checker):
         unique_i = self.add_unique_variable('uint8_t', 'i')
 
+        if checker.minimum == checker.maximum:
+            unique_length = self.add_unique_decode_variable('uint8_t',
+                                                            'length')
+
         with self.c_members_backtrace_push('elements[{}]'.format(unique_i)):
             encode_lines, decode_lines = self.format_type_inner(
                 type_.element_type,
@@ -945,12 +957,10 @@ class _Generator(object):
                     maximum=checker.maximum),
             ] + _indent_lines(encode_lines)
             decode_lines = [
-                'uint8_t length;',
-                '',
                 'decoder_read_integer_8(decoder_p);',
-                'length = decoder_read_integer_8(decoder_p);',
+                '{} = decoder_read_integer_8(decoder_p);'.format(unique_length),
                 '',
-                'if (length > {}) {{'.format(checker.maximum),
+                'if ({} > {}) {{'.format(unique_length, checker.maximum),
                 '    decoder_abort(decoder_p, EBADLENGTH);',
                 '',
                 '    return;',
