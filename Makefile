@@ -48,7 +48,7 @@ test:
 
 .PHONY: test-c-oer
 test-c-oer:
-	$(CC) $(CFLAGS) $(OER_C_SOURCES) -o $(OER_EXE)
+	$(CC) $(CFLAGS) -Itests/files/c_source $(OER_C_SOURCES) -o $(OER_EXE)
 	size $(OER_EXE)
 	rm -f $(OER_EXE).massif
 	valgrind $(MASSIF_FLAGS) --massif-out-file=$(OER_EXE).massif ./$(OER_EXE)
