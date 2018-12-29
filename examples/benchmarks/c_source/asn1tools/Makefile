@@ -1,7 +1,3 @@
-CFLAGS = -Igenerated -Os
-
-MASSIF_FLAGS = --tool=massif --time-unit=B --stacks=yes --detailed-freq=100
-
 all:
 	gcc $(CFLAGS) generated/*.c main.c -o main
 	size main
@@ -17,3 +13,5 @@ generate:
 	        python3 -m asn1tools generate_c_source \
 	            --namespace uper --codec uper \
 	            ../../my_protocol.asn
+
+include ../common.mk

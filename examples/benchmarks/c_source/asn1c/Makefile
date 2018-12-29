@@ -1,10 +1,6 @@
 ASN1C ?= ../asn1c-0.9.28/asn1c/asn1c
 ASN1C_FLAGS = -fcompound-names -fincludes-quoted -gen-PER
 
-CFLAGS = -Igenerated -Os
-
-MASSIF_FLAGS = --tool=massif --time-unit=B --stacks=yes --detailed-freq=100
-
 all:
 	gcc $(CFLAGS) generated/*.c main.c -o main
 	size main
@@ -29,3 +25,5 @@ asn1c-0.9.28: v0.9.28.tar.gz
 	    test -f configure || autoreconf -iv && \
 	    ./configure && \
 	    $(MAKE)
+
+include ../common.mk
