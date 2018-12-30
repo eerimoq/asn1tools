@@ -900,6 +900,102 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'G', decoded, encoded)
 
+        # Type H.
+        decoded = None
+
+        encoded_messages = [
+            b'\x05\x00',
+            b'\x05\x00',
+            b'null',
+            b'',
+            b'',
+            b'',
+            b'<H />'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'H', decoded, encoded)
+
+        # Type I.
+        decoded = (
+            b'\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03'
+            b'\x04\x01\x02\x03\x04\x01\x02\x03\x04'
+        )
+
+        encoded_messages = [
+            b'\x04\x18\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03\x04\x01'
+            b'\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03\x04',
+            b'\x04\x18\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03\x04\x01'
+            b'\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03\x04',
+            b'"010203040102030401020304010203040102030401020304"',
+            b'\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03'
+            b'\x04\x01\x02\x03\x04\x01\x02\x03\x04',
+            b'\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03'
+            b'\x04\x01\x02\x03\x04\x01\x02\x03\x04',
+            b'\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03'
+            b'\x04\x01\x02\x03\x04\x01\x02\x03\x04',
+            b'<I>010203040102030401020304010203040102030401020304</I>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'I', decoded, encoded)
+
+        # Type J.
+        decoded = (
+            b'\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03'
+            b'\x04\x01\x02\x03\x04\x01\x02'
+        )
+
+        encoded_messages = [
+            b'\x04\x16\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03\x04\x01'
+            b'\x02\x03\x04\x01\x02\x03\x04\x01\x02',
+            b'\x04\x16\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03\x04\x01'
+            b'\x02\x03\x04\x01\x02\x03\x04\x01\x02',
+            b'"01020304010203040102030401020304010203040102"',
+            b'\x16\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02'
+            b'\x03\x04\x01\x02\x03\x04\x01\x02',
+            b'\x00\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02'
+            b'\x03\x04\x01\x02\x03\x04\x01\x02',
+            b'\x00\x81\x01\x82\x00\x81\x01\x82\x00\x81\x01\x82\x00\x81\x01'
+            b'\x82\x00\x81\x01\x82\x00\x81\x00',
+            b'<J>01020304010203040102030401020304010203040102</J>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'J', decoded, encoded)
+
+        # Type K.
+        decoded = 'a'
+
+        encoded_messages = [
+            b'\x0a\x01\x00',
+            b'\x0a\x01\x00',
+            b'"a"',
+            b'\x00',
+            b'',
+            b'',
+            b'<K><a /></K>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'K', decoded, encoded)
+
+        # Type L.
+        decoded = 260 * b'\xa5'
+
+        encoded_messages = [
+            b'\x04\x82\x01\x04' + 260 * b'\xa5',
+            b'\x04\x82\x01\x04' + 260 * b'\xa5',
+            b'"' + 260 * b'A5' + b'"',
+            b'\x82\x01\x04' + 260 * b'\xa5',
+            b'\x01\x04' + 260 * b'\xa5',
+            b'\x82\x52' + 259 * b'\xd2' + b'\x80',
+            b'<L>' + 260 * b'A5' + b'</L>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'L', decoded, encoded)
+
 
 if __name__ == '__main__':
     unittest.main()
