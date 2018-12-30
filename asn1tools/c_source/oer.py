@@ -233,6 +233,26 @@ static void encoder_append_bool(struct encoder_t *self_p, bool value)
     encoder_append_integer_8(self_p, value ? 255 : 0);
 }
 
+static void encoder_append_length_determinant(struct encoder_t *self_p,
+                                              uint32_t length)
+{
+    if (length < 128) {
+        encoder_append_integer_8(self_p, length);
+    } else if (length < 256) {
+        encoder_append_integer_8(self_p, 0x80 | 1);
+        encoder_append_integer_8(self_p, length);
+    } else if (length < 65536) {
+        encoder_append_integer_8(self_p, 0x80 | 2);
+        encoder_append_integer_16(self_p, length);
+    } else if (length < 16777216) {
+        length |= ((0x80 | 3) << 24);
+        encoder_append_integer_32(self_p, length);
+    } else {
+        encoder_append_integer_8(self_p, 0x80 | 4);
+        encoder_append_integer_32(self_p, length);
+    }
+}
+
 static void decoder_init(struct decoder_t *self_p,
                          const uint8_t *buf_p,
                          size_t size)
@@ -363,6 +383,41 @@ static bool decoder_read_bool(struct decoder_t *self_p)
 
     return (value != 0);
 }
+
+static uint32_t decoder_read_length_determinant(struct decoder_t *self_p)
+{
+    uint32_t length;
+
+    length = decoder_read_integer_8(self_p);
+
+    if (length & 0x80) {
+        switch (length & 0x7f) {
+
+        case 1:
+            length = decoder_read_integer_8(self_p);
+            break;
+
+        case 2:
+            length = decoder_read_integer_16(self_p);
+            break;
+
+        case 3:
+            length = ((decoder_read_integer_8(self_p) << 16)
+                      | decoder_read_integer_16(self_p));
+            break;
+
+        case 4:
+            length = decoder_read_integer_32(self_p);
+            break;
+
+        default:
+            length = 0xffffffff;
+            break;
+        }
+    }
+
+    return (length);
+}
 '''
 
 
@@ -408,7 +463,6 @@ def _format_type_name(minimum, maximum):
 
 def _is_user_type(type_):
     return type_.module_name is not None
-
 
 
 def _strip_blank_lines(lines):
@@ -572,12 +626,16 @@ class _Generator(object):
 
         if checker.minimum == checker.maximum:
             lines = []
-        else:
+        elif checker.maximum < 256:
             lines = ['    uint8_t length;']
+        elif checker.maximum < 65536:
+            lines = ['    uint16_t length;']
+        else:
+            lines = ['    uint32_t length;']
 
         return [
             'struct {'
-            ] + lines + [
+        ] + lines + [
             '    uint8_t buf[{}];'.format(checker.maximum),
             '}'
         ]
@@ -878,8 +936,9 @@ class _Generator(object):
 
                 if member.optional:
                     encode_lines += [
-                        'if (src_p->{}is_{}_present) {{'.format(self.location_inner('', '.'),
-                                                                member.name),
+                        'if (src_p->{}is_{}_present) {{'.format(
+                            self.location_inner('', '.'),
+                            member.name),
                         '    {} |= {};'.format(present_mask, mask),
                         '}',
                         ''
@@ -974,7 +1033,7 @@ class _Generator(object):
                 '                   &dst_p->{}buf[0],'.format(location),
                 '                   {});'.format(checker.maximum)
             ]
-        else:
+        elif checker.maximum < 128:
             encode_lines = [
                 'encoder_append_integer_8(encoder_p, src_p->{}length);'.format(
                     location),
@@ -985,6 +1044,35 @@ class _Generator(object):
             decode_lines = [
                 'dst_p->{}length = decoder_read_integer_8(decoder_p);'.format(
                     location),
+                '',
+                'if (dst_p->{}length > {}) {{'.format(location, checker.maximum),
+                '    decoder_abort(decoder_p, EBADLENGTH);',
+                '',
+                '    return;',
+                '}',
+                '',
+                'decoder_read_bytes(decoder_p,',
+                '                   &dst_p->{}buf[0],'.format(location),
+                '                   dst_p->{}length);'.format(location)
+            ]
+        else:
+            encode_lines = [
+                'encoder_append_length_determinant(encoder_p, src_p->{}length);'.format(
+                    location),
+                'encoder_append_bytes(encoder_p,',
+                '                     &src_p->{}buf[0],'.format(location),
+                '                     src_p->{}length);'.format(location)
+            ]
+            decode_lines = [
+                'dst_p->{}length = decoder_read_length_determinant(decoder_p);'.format(
+                    location),
+                '',
+                'if (dst_p->{}length > {}) {{'.format(location, checker.maximum),
+                '    decoder_abort(decoder_p, EBADLENGTH);',
+                '',
+                '    return;',
+                '}',
+                '',
                 'decoder_read_bytes(decoder_p,',
                 '                   &dst_p->{}buf[0],'.format(location),
                 '                   dst_p->{}length);'.format(location)

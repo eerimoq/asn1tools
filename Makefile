@@ -43,7 +43,7 @@ test:
 	env PYTHONPATH=. python3 examples/compact_extensions_uper/main.py
 	env PYTHONPATH=. python3 examples/programming_types/main.py
 	$(MAKE) test-c
-	codespell -d $$(git ls-files | grep -v ietf | grep -v 3gpp)
+	codespell -d $$(git ls-files | grep -v ietf | grep -v 3gpp | grep -v generated)
 	python3 -m pycodestyle $$(git ls-files "asn1tools/*.py")
 
 .PHONY: test-c-oer

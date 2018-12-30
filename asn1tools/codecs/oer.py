@@ -248,8 +248,6 @@ class Decoder(object):
         if value & 0x80:
             length = (value & 0x7f)
             value = self.read_non_negative_binary_integer(8 * length)
-        else:
-            value &= 0x7f
 
         return value
 
