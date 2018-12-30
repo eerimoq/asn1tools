@@ -265,16 +265,16 @@ static void encoder_append_length_determinant(struct encoder_t *self_p,
     if (length < 128) {
         encoder_append_integer_8(self_p, length);
     } else if (length < 256) {
-        encoder_append_integer_8(self_p, 0x80 | 1);
+        encoder_append_integer_8(self_p, 0x81);
         encoder_append_integer_8(self_p, length);
     } else if (length < 65536) {
-        encoder_append_integer_8(self_p, 0x80 | 2);
+        encoder_append_integer_8(self_p, 0x82);
         encoder_append_integer_16(self_p, length);
     } else if (length < 16777216) {
-        length |= ((0x80 | 3) << 24);
+        length |= (0x83 << 24);
         encoder_append_integer_32(self_p, length);
     } else {
-        encoder_append_integer_8(self_p, 0x80 | 4);
+        encoder_append_integer_8(self_p, 0x84);
         encoder_append_integer_32(self_p, length);
     }
 }\
