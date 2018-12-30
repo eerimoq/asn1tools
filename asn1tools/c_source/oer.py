@@ -661,7 +661,7 @@ class _Generator(object):
 
     def format_real(self, type_):
         if type_.fmt is None:
-            raise Error('REAL not IEEE 754.')
+            raise Error('REAL not IEEE 754 binary32 or binary64.')
 
         if type_.fmt == '>f':
             return ['float']
@@ -813,7 +813,8 @@ class _Generator(object):
         elif isinstance(type_, oer.Enumerated):
             lines = self.format_enumerated(type_)
         else:
-            raise NotImplementedError(type_)
+            raise NotImplementedError(
+                "Unsupported type '{}'.".format(type_.type_name))
 
         return lines
 
@@ -859,7 +860,8 @@ class _Generator(object):
             elif isinstance(type_, oer.Null):
                 lines = []
             else:
-                raise NotImplementedError(type_)
+                raise NotImplementedError(
+                    "Unsupported type '{}'.".format(type_.type_name))
         except Error:
             return []
 

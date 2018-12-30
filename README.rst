@@ -266,16 +266,15 @@ Generate OER or UPER C source code from an ASN.1 specification.
 
 **NOTE**: The UPER generator is not yet implemented!!!
 
-The OER and UPER generators supports the ASN.1 types ``BOOLEAN``,
-``INTEGER``, ``NULL``, ``OCTET STRING``, ``ENUMERATED``, ``SEQUENCE``,
-``SEQUENCE OF``, and ``CHOICE``. The OER generator also supports
-``REAL``.
-
 No dynamic memory is used in the generated code. To achieve this all
 types in the ASN.1 specification must have a known maximum size,
 i.e. ``INTEGER (0..7)``, ``OCTET STRING (SIZE(12))``, etc.
 
-Known limitations:
+Limitations by design:
+
+- Only the types ``BOOLEAN``, ``INTEGER``, ``NULL``, ``OCTET STRING``,
+  ``ENUMERATED``, ``SEQUENCE``, ``SEQUENCE OF``, and ``CHOICE`` are
+  supported. The OER generator also supports ``REAL``.
 
 - All types must have a known maximum size, i.e. ``INTEGER (0..7)``,
   ``OCTET STRING (SIZE(12))``.
@@ -284,6 +283,10 @@ Known limitations:
 
 - ``REAL`` must be IEEE 754 binary32 or binary64. binary32 is
   generated as ``float`` and binary64 as ``double``.
+
+- Recursive types are not supported.
+
+Known limitations:
 
 - Extension additions (``...``) are not yet supported.
 
