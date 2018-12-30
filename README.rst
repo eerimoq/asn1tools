@@ -275,7 +275,7 @@ No dynamic memory is used in the generated code. To achieve this all
 types in the ASN.1 specification must have a known maximum size,
 i.e. ``INTEGER (0..7)``, ``OCTET STRING (SIZE(12))``, etc.
 
-Known lmitations:
+Known limitations:
 
 - All types must have a known maximum size, i.e. ``INTEGER (0..7)``,
   ``OCTET STRING (SIZE(12))``.
