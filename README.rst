@@ -262,22 +262,44 @@ subcommand, especially for larger ASN.1 specifications.
 The generate C source subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Generate C source code from an ASN.1 specification.
+Generate OER or UPER C source code from an ASN.1 specification.
 
-NOTE: This subcommand does not yet work!!! The plan is to add support
-for the OER and UPER codecs, and more specifically the types
-``BOOLEAN``, ``INTEGER``, ``NULL``, ``OCTET STRING``, ``ENUMERATED``,
-``SEQUENCE``, ``SEQUENCE OF``, and ``CHOICE``.
+NOTE: The UPER generator is not yet implemented!!!
+
+The OER and UPER generators supports the ASN.1 types ``BOOLEAN``,
+``INTEGER``, ``NULL``, ``OCTET STRING``, ``ENUMERATED``, ``SEQUENCE``,
+``SEQUENCE OF``, and ``CHOICE``. The OER generator also supports
+``REAL``.
 
 No dynamic memory is used in the generated code. To achieve this all
 types in the ASN.1 specification must have a known maximum size,
 i.e. ``INTEGER (0..7)``, ``OCTET STRING (SIZE(12))``, etc. Also,
 integers must be 64 bits or less.
 
+Known lmitations:
+
+- All types must have a known maximum size, i.e. ``INTEGER (0..7)``,
+  ``OCTET STRING (SIZE(12))``.
+
+- ``REAL`` must be IEEE 754 binary32 or binary64. binary32 is
+  generated as ``float`` and binary64 as ``double``.
+
+- Extension additions (``...``) are not yet supported.
+
+- Named numbers in ``ENUMERATED`` are not yet supported.
+
+- ``CHOICE`` tags longer than one byte are not yet supported.
+
+Below is an example generating OER C source code from two ASN.1
+files.
+
 .. code-block:: text
 
    > asn1tools generate_c_source --codec oer tests/files/c_source.asn examples/programming_types/programming_types.asn
    Successfully generated c_source.h and c_source.c.
+
+See `oer_c_source.h`_ and `oer_c_source.c`_ for the contents of the
+generated files.
 
 Contributing
 ============
@@ -357,3 +379,7 @@ Encodings
 .. _encode: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compiler.Specification.encode
 .. _decode: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compiler.Specification.decode
 .. _examples: https://github.com/eerimoq/asn1tools/tree/master/examples
+
+.. _oer_c_source.h: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/oer_c_source.h
+
+.. _oer_c_source.c: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/oer_c_source.c
