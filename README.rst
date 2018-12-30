@@ -296,8 +296,8 @@ files.
 
 .. code-block:: text
 
-   > asn1tools generate_c_source --codec oer tests/files/c_source.asn examples/programming_types/programming_types.asn
-   Successfully generated c_source.h and c_source.c.
+   > asn1tools generate_c_source --codec oer --namespace oer tests/files/c_source.asn examples/programming_types/programming_types.asn
+   Successfully generated oer_c_source.h and oer_c_source.c.
 
 See `oer_c_source.h`_ and `oer_c_source.c`_ for the contents of the
 generated files.
