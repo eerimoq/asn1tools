@@ -139,7 +139,7 @@ static void test_oer_c_source_b_choice_a(void)
     struct oer_c_source_b_t decoded;
 
     /* Encode. */
-    decoded.choice = oer_c_source_b_choice_a_t;
+    decoded.choice = oer_c_source_b_choice_a_e;
     decoded.value.a = -10;
 
     memset(&encoded[0], 0, sizeof(encoded));
@@ -156,7 +156,7 @@ static void test_oer_c_source_b_choice_a(void)
                                  &encoded[0],
                                  sizeof(encoded)) == sizeof(encoded));
 
-    assert(decoded.choice == oer_c_source_b_choice_a_t);
+    assert(decoded.choice == oer_c_source_b_choice_a_e);
     assert(decoded.value.a == -10);
 }
 
@@ -166,7 +166,7 @@ static void test_oer_c_source_b_choice_b(void)
     struct oer_c_source_b_t decoded;
 
     /* Encode. */
-    decoded.choice = oer_c_source_b_choice_b_t;
+    decoded.choice = oer_c_source_b_choice_b_e;
     decoded.value.b.a = -1;
     decoded.value.b.b = -2;
     decoded.value.b.c = -3;
@@ -198,7 +198,7 @@ static void test_oer_c_source_b_choice_b(void)
                                  &encoded[0],
                                  sizeof(encoded)) == sizeof(encoded));
 
-    assert(decoded.choice == oer_c_source_b_choice_b_t);
+    assert(decoded.choice == oer_c_source_b_choice_b_e);
     assert(decoded.value.b.a == -1);
     assert(decoded.value.b.b == -2);
     assert(decoded.value.b.c == -3);
@@ -259,9 +259,9 @@ static void test_oer_c_source_c_2_elements(void)
 
     /* Encode. */
     decoded.length = 2;
-    decoded.elements[0].choice = oer_c_source_b_choice_a_t;
+    decoded.elements[0].choice = oer_c_source_b_choice_a_e;
     decoded.elements[0].value.a = -11;
-    decoded.elements[1].choice = oer_c_source_b_choice_a_t;
+    decoded.elements[1].choice = oer_c_source_b_choice_a_e;
     decoded.elements[1].value.a = 13;
 
     memset(&encoded[0], 0, sizeof(encoded));
@@ -279,9 +279,9 @@ static void test_oer_c_source_c_2_elements(void)
                                  sizeof(encoded)) == sizeof(encoded));
 
     assert(decoded.length == 2);
-    assert(decoded.elements[0].choice == oer_c_source_b_choice_a_t);
+    assert(decoded.elements[0].choice == oer_c_source_b_choice_a_e);
     assert(decoded.elements[0].value.a == -11);
-    assert(decoded.elements[1].choice == oer_c_source_b_choice_a_t);
+    assert(decoded.elements[1].choice == oer_c_source_b_choice_a_e);
     assert(decoded.elements[1].value.a == 13);
 }
 
@@ -302,10 +302,10 @@ static void test_oer_c_source_d_all_present(void)
 
     /* Encode. */
     decoded.length = 1;
-    decoded.elements[0].a.b.choice = oer_c_source_d_a_b_choice_c_t;
+    decoded.elements[0].a.b.choice = oer_c_source_d_a_b_choice_c_e;
     decoded.elements[0].a.b.value.c = 0;
     decoded.elements[0].a.e.length = 3;
-    decoded.elements[0].g.h = oer_c_source_d_g_h_j_t;
+    decoded.elements[0].g.h = oer_c_source_d_g_h_j_e;
     decoded.elements[0].g.l.length = 2;
     decoded.elements[0].g.l.buf[0] = 0x54;
     decoded.elements[0].g.l.buf[1] = 0x55;
@@ -335,10 +335,10 @@ static void test_oer_c_source_d_all_present(void)
                                  sizeof(encoded)) == sizeof(encoded));
 
     assert(decoded.length == 1);
-    assert(decoded.elements[0].a.b.choice == oer_c_source_d_a_b_choice_c_t);
+    assert(decoded.elements[0].a.b.choice == oer_c_source_d_a_b_choice_c_e);
     assert(decoded.elements[0].a.b.value.c == 0);
     assert(decoded.elements[0].a.e.length == 3);
-    assert(decoded.elements[0].g.h == oer_c_source_d_g_h_j_t);
+    assert(decoded.elements[0].g.h == oer_c_source_d_g_h_j_e);
     assert(decoded.elements[0].g.l.length == 2);
     assert(decoded.elements[0].g.l.buf[0] == 0x54);
     assert(decoded.elements[0].g.l.buf[1] == 0x55);
@@ -360,10 +360,10 @@ static void test_oer_c_source_d_some_missing(void)
 
     /* Encode. */
     decoded.length = 1;
-    decoded.elements[0].a.b.choice = oer_c_source_d_a_b_choice_d_t;
+    decoded.elements[0].a.b.choice = oer_c_source_d_a_b_choice_d_e;
     decoded.elements[0].a.b.value.d = false;
     decoded.elements[0].a.e.length = 3;
-    decoded.elements[0].g.h = oer_c_source_d_g_h_k_t;
+    decoded.elements[0].g.h = oer_c_source_d_g_h_k_e;
     decoded.elements[0].g.l.length = 1;
     decoded.elements[0].g.l.buf[0] = 0x54;
     decoded.elements[0].m.is_n_present = false;
@@ -391,10 +391,10 @@ static void test_oer_c_source_d_some_missing(void)
                                  sizeof(encoded)) == sizeof(encoded));
 
     assert(decoded.length == 1);
-    assert(decoded.elements[0].a.b.choice == oer_c_source_d_a_b_choice_d_t);
+    assert(decoded.elements[0].a.b.choice == oer_c_source_d_a_b_choice_d_e);
     assert(decoded.elements[0].a.b.value.d == false);
     assert(decoded.elements[0].a.e.length == 3);
-    assert(decoded.elements[0].g.h == oer_c_source_d_g_h_k_t);
+    assert(decoded.elements[0].g.h == oer_c_source_d_g_h_k_e);
     assert(decoded.elements[0].g.l.length == 1);
     assert(decoded.elements[0].g.l.buf[0] == 0x54);
     assert(!decoded.elements[0].m.is_n_present);
@@ -412,8 +412,8 @@ static void test_oer_c_source_e(void)
     struct oer_c_source_e_t decoded;
 
     /* Encode. */
-    decoded.a.choice = oer_c_source_e_a_choice_b_t;
-    decoded.a.value.b.choice = oer_c_source_e_a_b_choice_c_t;
+    decoded.a.choice = oer_c_source_e_a_choice_b_e;
+    decoded.a.value.b.choice = oer_c_source_e_a_b_choice_c_e;
     decoded.a.value.b.value.c = true;
 
     memset(&encoded[0], 0, sizeof(encoded));
@@ -430,8 +430,8 @@ static void test_oer_c_source_e(void)
                                  &encoded[0],
                                  sizeof(encoded)) == sizeof(encoded));
 
-    assert(decoded.a.choice == oer_c_source_e_a_choice_b_t);
-    assert(decoded.a.value.b.choice == oer_c_source_e_a_b_choice_c_t);
+    assert(decoded.a.choice == oer_c_source_e_a_choice_b_e);
+    assert(decoded.a.value.b.choice == oer_c_source_e_a_b_choice_c_e);
     assert(decoded.a.value.b.value.c == true);
 }
 

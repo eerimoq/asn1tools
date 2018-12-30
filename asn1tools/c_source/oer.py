@@ -621,14 +621,14 @@ class _Generator(object):
         return ['struct {'] + _indent_lines(lines) + ['}']
 
     def format_enumerated(self, type_):
-        lines = ['enum {}_t'.format(self.location)]
+        lines = ['enum {}_e'.format(self.location)]
 
         values = [
-            '    {}_{}_t'.format(self.location, value)
+            '    {}_{}_e'.format(self.location, value)
             for value in type_.value_to_data.values()
         ]
         self.helper_lines += [
-            'enum {}_t {{'.format(self.location)
+            'enum {}_e {{'.format(self.location)
         ] + _join_lines(values, ',') + [
             '};',
             ''
@@ -651,18 +651,18 @@ class _Generator(object):
                 choice_lines[-1] += ' {};'.format(member.name)
 
             lines += choice_lines
-            choices.append('    {}_choice_{}_t'.format(self.location,
+            choices.append('    {}_choice_{}_e'.format(self.location,
                                                        member.name))
 
         self.helper_lines += [
-            'enum {}_choice_t {{'.format(self.location)
+            'enum {}_choice_e {{'.format(self.location)
         ] + _join_lines(choices, ',') + [
             '};',
             ''
         ]
 
         lines = [
-            'enum {}_choice_t choice;'.format(self.location),
+            'enum {}_choice_e choice;'.format(self.location),
             'union {'
         ] + _indent_lines(lines) + [
             '} value;'
@@ -719,8 +719,6 @@ class _Generator(object):
         checker = compiled_type.constraints_checker.type
         lines = []
 
-        self.reset()
-
         try:
             if isinstance(type_, oer.Integer):
                 lines = self.format_integer(checker)
@@ -731,8 +729,9 @@ class _Generator(object):
             elif isinstance(type_, oer.Real):
                 lines = self.format_real(type_)
                 lines[0] += ' value;'
-            elif isinstance(type_, oer.OctetString):
-                lines = self.format_octet_string(checker)
+            elif isinstance(type_, oer.Enumerated):
+                lines = self.format_enumerated(type_)
+                lines[0] += ' value;'
             elif isinstance(type_, oer.UTF8String):
                 lines = self.format_utf8_string(checker)
             elif isinstance(type_, oer.Sequence):
@@ -744,10 +743,18 @@ class _Generator(object):
             elif isinstance(type_, oer.Choice):
                 lines = self.format_choice(type_, checker)
                 lines = _dedent_lines(lines[1:-1])
+            elif isinstance(type_, oer.OctetString):
+                lines = self.format_octet_string(checker)[1:-1]
+                lines = _dedent_lines(lines)
+            elif isinstance(type_, oer.Null):
+                lines = []
             else:
                 raise NotImplementedError(type_)
         except Error:
             return []
+
+        if not lines:
+            lines = ['uint8_t dummy;']
 
         lines = _indent_lines(lines)
 
@@ -953,33 +960,33 @@ class _Generator(object):
         return encode_lines, decode_lines
 
     def format_octet_string_inner(self, checker):
-        location = self.location_inner()
+        location = self.location_inner('', '.')
 
         if checker.minimum == checker.maximum:
             encode_lines = [
                 'encoder_append_bytes(encoder_p,',
-                '                     &src_p->{}.buf[0],'.format(location),
+                '                     &src_p->{}buf[0],'.format(location),
                 '                     {});'.format(checker.maximum)
             ]
             decode_lines = [
                 'decoder_read_bytes(decoder_p,',
-                '                   &dst_p->{}.buf[0],'.format(location),
+                '                   &dst_p->{}buf[0],'.format(location),
                 '                   {});'.format(checker.maximum)
             ]
         else:
             encode_lines = [
-                'encoder_append_integer_8(encoder_p, src_p->{}.length);'.format(
+                'encoder_append_integer_8(encoder_p, src_p->{}length);'.format(
                     location),
                 'encoder_append_bytes(encoder_p,',
-                '                     &src_p->{}.buf[0],'.format(location),
-                '                     src_p->{}.length);'.format(location)
+                '                     &src_p->{}buf[0],'.format(location),
+                '                     src_p->{}length);'.format(location)
             ]
             decode_lines = [
-                'dst_p->{}.length = decoder_read_integer_8(decoder_p);'.format(
+                'dst_p->{}length = decoder_read_integer_8(decoder_p);'.format(
                     location),
                 'decoder_read_bytes(decoder_p,',
-                '                   &dst_p->{}.buf[0],'.format(location),
-                '                   dst_p->{}.length);'.format(location)
+                '                   &dst_p->{}buf[0],'.format(location),
+                '                   dst_p->{}length);'.format(location)
             ]
 
         return encode_lines, decode_lines
@@ -1032,13 +1039,13 @@ class _Generator(object):
                 'break;'
             ]
             encode_lines += [
-                'case {}_choice_{}_t:'.format(self.location, member.name)
+                'case {}_choice_{}_e:'.format(self.location, member.name)
             ] + _indent_lines(choice_encode_lines) + [
                 ''
             ]
 
             choice_decode_lines = [
-                'dst_p->{} = {}_choice_{}_t;'.format(choice,
+                'dst_p->{} = {}_choice_{}_e;'.format(choice,
                                                      self.location,
                                                      member.name)
             ] + choice_decode_lines + [
@@ -1086,6 +1093,18 @@ class _Generator(object):
             [
                 'dst_p->{} = decoder_read_integer_8(decoder_p);'.format(
                     self.location_inner())
+            ]
+        )
+
+    def format_null_inner(self):
+        return (
+            [
+                '(void)encoder_p;',
+                '(void)src_p;'
+            ],
+            [
+                '(void)decoder_p;',
+                '(void)dst_p;'
             ]
         )
 
@@ -1185,8 +1204,6 @@ class _Generator(object):
         type_ = compiled_type.type
         checker = compiled_type.constraints_checker.type
 
-        self.reset()
-
         if isinstance(type_, oer.Integer):
             encode_lines, decode_lines = self.format_integer_inner(checker)
         elif isinstance(type_, oer.Boolean):
@@ -1199,9 +1216,14 @@ class _Generator(object):
             encode_lines, decode_lines = self.format_sequence_of_inner(type_, checker)
         elif isinstance(type_, oer.Choice):
             encode_lines, decode_lines = self.format_choice_inner(type_, checker)
+        elif isinstance(type_, oer.OctetString):
+            encode_lines, decode_lines = self.format_octet_string_inner(checker)
+        elif isinstance(type_, oer.Enumerated):
+            encode_lines, decode_lines = self.format_enumerated_inner()
+        elif isinstance(type_, oer.Null):
+            encode_lines, decode_lines = self.format_null_inner()
         else:
-            encode_lines = []
-            decode_lines = []
+            encode_lines, decode_lines = [], []
 
         if self.encode_variable_lines:
             encode_lines = self.encode_variable_lines + [''] + encode_lines
@@ -1209,11 +1231,8 @@ class _Generator(object):
         if self.decode_variable_lines:
             decode_lines = self.decode_variable_lines + [''] + decode_lines
 
-        encode_lines = _indent_lines(encode_lines)
-        decode_lines = _indent_lines(decode_lines)
-
-        encode_lines.append('')
-        decode_lines.append('')
+        encode_lines = _indent_lines(encode_lines) + ['']
+        decode_lines = _indent_lines(decode_lines) + ['']
 
         return DEFINITION_INNER_FMT.format(namespace=self.namespace,
                                            module_name_snake=self.module_name_snake,
@@ -1237,6 +1256,7 @@ class _Generator(object):
 
             for type_name, compiled_type in sorted(module.items()):
                 self.type_name = type_name
+                self.reset()
 
                 type_declaration = self.generate_type_declaration(compiled_type)
 

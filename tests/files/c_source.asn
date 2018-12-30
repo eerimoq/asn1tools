@@ -88,4 +88,16 @@ G ::= SEQUENCE {
     i BOOLEAN OPTIONAL
 }
 
+H ::= NULL
+
+I ::= OCTET STRING (SIZE(24))
+
+J ::= OCTET STRING (SIZE(22..23))
+
+K ::= ENUMERATED {
+    a
+}
+
+L ::= OCTET STRING (SIZE(0..500))
+
 END
