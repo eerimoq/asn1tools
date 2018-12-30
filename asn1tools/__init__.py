@@ -260,10 +260,11 @@ def _do_parse(args):
 
 
 def _do_generate_c_source(args):
-    name = 'c_source'
-
-    if args.namespace is not None:
-        name = '{}_{}'.format(args.namespace, name)
+    if args.namespace is None:
+        name = os.path.basename(args.specification[0])
+        name = os.path.splitext(name)[0]
+    else:
+        name = args.namespace
 
     filename_h = name + '.h'
     filename_c = name + '.c'
@@ -272,7 +273,7 @@ def _do_generate_c_source(args):
                              args.codec)
     header, source = c_source.generate(compiled,
                                        args.codec,
-                                       args.namespace,
+                                       name,
                                        filename_h)
 
     with open(filename_h, 'w') as fout:

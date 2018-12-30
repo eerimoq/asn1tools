@@ -30,7 +30,7 @@
 
 #include <string.h>
 
-#include "oer_c_source.h"
+#include "oer.h"
 
 struct encoder_t {
     uint8_t *buf_p;

@@ -683,8 +683,8 @@ exit
             'examples/programming_types/programming_types.asn'
         ]
 
-        filename_h = 'oer_c_source.h'
-        filename_c = 'oer_c_source.c'
+        filename_h = 'oer.h'
+        filename_c = 'oer.c'
 
         if os.path.exists(filename_h):
             os.remove(filename_h)

@@ -4,7 +4,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "files/c_source/oer_c_source.h"
+#include "files/c_source/oer.h"
 
 static bool fequal(double v1, double v2)
 {

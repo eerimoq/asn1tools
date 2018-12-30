@@ -296,11 +296,10 @@ files.
 
 .. code-block:: text
 
-   > asn1tools generate_c_source --codec oer --namespace oer tests/files/c_source.asn examples/programming_types/programming_types.asn
-   Successfully generated oer_c_source.h and oer_c_source.c.
+   > asn1tools generate_c_source --namespace oer tests/files/c_source.asn examples/programming_types/programming_types.asn
+   Successfully generated c_source.h and c_source.c.
 
-See `oer_c_source.h`_ and `oer_c_source.c`_ for the contents of the
-generated files.
+See `oer.h`_ and `oer.c`_ for the contents of the generated files.
 
 Contributing
 ============
@@ -381,6 +380,6 @@ Encodings
 .. _decode: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compiler.Specification.decode
 .. _examples: https://github.com/eerimoq/asn1tools/tree/master/examples
 
-.. _oer_c_source.h: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/oer_c_source.h
+.. _oer.h: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/oer.h
 
-.. _oer_c_source.c: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/oer_c_source.c
+.. _oer.c: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/oer.c

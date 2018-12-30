@@ -4,6 +4,7 @@
 
 import struct
 
+from .utils import canonical
 from .utils import camel_to_snake_case
 from ..codecs import oer
 from ..errors import Error
@@ -452,7 +453,7 @@ def _dedent_lines(lines):
 class _Generator(object):
 
     def __init__(self, namespace):
-        self.namespace = namespace
+        self.namespace = canonical(namespace)
         self.asn1_members_backtrace = []
         self.c_members_backtrace = []
         self.module_name = None
