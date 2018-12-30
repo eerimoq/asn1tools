@@ -5,6 +5,7 @@
 #include <math.h>
 
 #include "files/c_source/oer.h"
+#include "files/c_source/c_source-minus.h"
 
 static bool fequal(double v1, double v2)
 {

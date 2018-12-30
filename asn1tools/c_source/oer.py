@@ -94,7 +94,7 @@ ssize_t {namespace}_{module_name_snake}_{type_name_snake}_decode(
 }}
 '''
 
-HELPERS = '''\
+ENCODER_AND_DECODER_STRUCTS = '''\
 struct encoder_t {
     uint8_t *buf_p;
     ssize_t size;
@@ -106,7 +106,9 @@ struct decoder_t {
     ssize_t size;
     ssize_t pos;
 };
+'''
 
+ENCODER_INIT = '''\
 static void encoder_init(struct encoder_t *self_p,
                          uint8_t *buf_p,
                          size_t size)
@@ -114,13 +116,17 @@ static void encoder_init(struct encoder_t *self_p,
     self_p->buf_p = buf_p;
     self_p->size = size;
     self_p->pos = 0;
-}
+}\
+'''
 
+ENCODER_GET_RESULT = '''
 static ssize_t encoder_get_result(struct encoder_t *self_p)
 {
     return (self_p->pos);
-}
+}\
+'''
 
+ENCODER_ABORT = '''
 static void encoder_abort(struct encoder_t *self_p,
                           ssize_t error)
 {
@@ -128,8 +134,10 @@ static void encoder_abort(struct encoder_t *self_p,
         self_p->size = -error;
         self_p->pos = -error;
     }
-}
+}\
+'''
 
+ENCODER_ALLOC = '''
 static size_t encoder_alloc(struct encoder_t *self_p,
                             size_t size)
 {
@@ -144,8 +152,10 @@ static size_t encoder_alloc(struct encoder_t *self_p,
     }
 
     return (pos);
-}
+}\
+'''
 
+ENCODER_APPEND_BYTES = '''
 static void encoder_append_bytes(struct encoder_t *self_p,
                                  const uint8_t *buf_p,
                                  size_t size)
@@ -159,14 +169,18 @@ static void encoder_append_bytes(struct encoder_t *self_p,
     }
 
     memcpy(&self_p->buf_p[pos], buf_p, size);
-}
+}\
+'''
 
+ENCODER_APPEND_INTEGER_8 = '''
 static void encoder_append_integer_8(struct encoder_t *self_p,
                                      uint8_t value)
 {
     encoder_append_bytes(self_p, &value, sizeof(value));
-}
+}\
+'''
 
+ENCODER_APPEND_INTEGER_16 = '''
 static void encoder_append_integer_16(struct encoder_t *self_p,
                                       uint16_t value)
 {
@@ -176,8 +190,10 @@ static void encoder_append_integer_16(struct encoder_t *self_p,
     buf[1] = value;
 
     encoder_append_bytes(self_p, &buf[0], sizeof(buf));
-}
+}\
+'''
 
+ENCODER_APPEND_INTEGER_32 = '''
 static void encoder_append_integer_32(struct encoder_t *self_p,
                                       uint32_t value)
 {
@@ -189,8 +205,10 @@ static void encoder_append_integer_32(struct encoder_t *self_p,
     buf[3] = value;
 
     encoder_append_bytes(self_p, &buf[0], sizeof(buf));
-}
+}\
+'''
 
+ENCODER_APPEND_INTEGER_64 = '''
 static void encoder_append_integer_64(struct encoder_t *self_p,
                                       uint64_t value)
 {
@@ -206,8 +224,10 @@ static void encoder_append_integer_64(struct encoder_t *self_p,
     buf[7] = value;
 
     encoder_append_bytes(self_p, &buf[0], sizeof(buf));
-}
+}\
+'''
 
+ENCODER_APPEND_FLOAT = '''
 static void encoder_append_float(struct encoder_t *self_p,
                                  float value)
 {
@@ -216,8 +236,10 @@ static void encoder_append_float(struct encoder_t *self_p,
     memcpy(&i32, &value, sizeof(i32));
 
     encoder_append_integer_32(self_p, i32);
-}
+}\
+'''
 
+ENCODER_APPEND_DOUBLE = '''
 static void encoder_append_double(struct encoder_t *self_p,
                                   double value)
 {
@@ -226,13 +248,17 @@ static void encoder_append_double(struct encoder_t *self_p,
     memcpy(&i64, &value, sizeof(i64));
 
     encoder_append_integer_64(self_p, i64);
-}
+}\
+'''
 
+ENCODER_APPEND_BOOL = '''
 static void encoder_append_bool(struct encoder_t *self_p, bool value)
 {
     encoder_append_integer_8(self_p, value ? 255 : 0);
-}
+}\
+'''
 
+ENCODER_APPEND_LENGTH_DETERMINANT = '''
 static void encoder_append_length_determinant(struct encoder_t *self_p,
                                               uint32_t length)
 {
@@ -251,8 +277,10 @@ static void encoder_append_length_determinant(struct encoder_t *self_p,
         encoder_append_integer_8(self_p, 0x80 | 4);
         encoder_append_integer_32(self_p, length);
     }
-}
+}\
+'''
 
+DECODER_INIT = '''
 static void decoder_init(struct decoder_t *self_p,
                          const uint8_t *buf_p,
                          size_t size)
@@ -260,13 +288,17 @@ static void decoder_init(struct decoder_t *self_p,
     self_p->buf_p = buf_p;
     self_p->size = size;
     self_p->pos = 0;
-}
+}\
+'''
 
+DECODER_GET_RESULT = '''
 static ssize_t decoder_get_result(struct decoder_t *self_p)
 {
     return (self_p->pos);
-}
+}\
+'''
 
+DECODER_ABORT = '''
 static void decoder_abort(struct decoder_t *self_p,
                           ssize_t error)
 {
@@ -274,8 +306,10 @@ static void decoder_abort(struct decoder_t *self_p,
         self_p->size = -error;
         self_p->pos = -error;
     }
-}
+}\
+'''
 
+DECODER_FREE = '''
 static size_t decoder_free(struct decoder_t *self_p,
                            size_t size)
 {
@@ -290,8 +324,10 @@ static size_t decoder_free(struct decoder_t *self_p,
     }
 
     return (pos);
-}
+}\
+'''
 
+DECODER_READ_BYTES = '''
 static void decoder_read_bytes(struct decoder_t *self_p,
                                uint8_t *buf_p,
                                size_t size)
@@ -305,9 +341,10 @@ static void decoder_read_bytes(struct decoder_t *self_p,
     } else {
         memset(buf_p, 0, size);
     }
+}\
+'''
 
-}
-
+DECODER_READ_INTEGER_8 = '''
 static uint8_t decoder_read_integer_8(struct decoder_t *self_p)
 {
     uint8_t value;
@@ -315,8 +352,10 @@ static uint8_t decoder_read_integer_8(struct decoder_t *self_p)
     decoder_read_bytes(self_p, &value, sizeof(value));
 
     return (value);
-}
+}\
+'''
 
+DECODER_READ_INTEGER_16 = '''
 static uint16_t decoder_read_integer_16(struct decoder_t *self_p)
 {
     uint8_t buf[2];
@@ -324,8 +363,10 @@ static uint16_t decoder_read_integer_16(struct decoder_t *self_p)
     decoder_read_bytes(self_p, &buf[0], sizeof(buf));
 
     return ((buf[0] << 8) | buf[1]);
-}
+}\
+'''
 
+DECODER_READ_INTEGER_32 = '''
 static uint32_t decoder_read_integer_32(struct decoder_t *self_p)
 {
     uint8_t buf[4];
@@ -333,8 +374,10 @@ static uint32_t decoder_read_integer_32(struct decoder_t *self_p)
     decoder_read_bytes(self_p, &buf[0], sizeof(buf));
 
     return ((buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3]);
-}
+}\
+'''
 
+DECODER_READ_INTEGER_64 = '''
 static uint64_t decoder_read_integer_64(struct decoder_t *self_p)
 {
     uint8_t buf[8];
@@ -349,8 +392,10 @@ static uint64_t decoder_read_integer_64(struct decoder_t *self_p)
             | ((uint64_t)buf[5] << 16)
             | ((uint64_t)buf[6] << 8)
             | (uint64_t)buf[7]);
-}
+}\
+'''
 
+DECODER_READ_FLOAT = '''
 static float decoder_read_float(struct decoder_t *self_p)
 {
     float value;
@@ -361,8 +406,10 @@ static float decoder_read_float(struct decoder_t *self_p)
     memcpy(&value, &i32, sizeof(value));
 
     return (value);
-}
+}\
+'''
 
+DECODER_READ_DOUBLE = '''
 static double decoder_read_double(struct decoder_t *self_p)
 {
     double value;
@@ -373,8 +420,10 @@ static double decoder_read_double(struct decoder_t *self_p)
     memcpy(&value, &i64, sizeof(value));
 
     return (value);
-}
+}\
+'''
 
+DECODER_READ_BOOL = '''
 static bool decoder_read_bool(struct decoder_t *self_p)
 {
     uint8_t value;
@@ -382,8 +431,10 @@ static bool decoder_read_bool(struct decoder_t *self_p)
     value = decoder_read_integer_8(self_p);
 
     return (value != 0);
-}
+}\
+'''
 
+DECODER_READ_LENGTH_DETERMINANT = '''
 static uint32_t decoder_read_length_determinant(struct decoder_t *self_p)
 {
     uint32_t length;
@@ -417,7 +468,7 @@ static uint32_t decoder_read_length_determinant(struct decoder_t *self_p)
     }
 
     return (length);
-}
+}\
 '''
 
 
@@ -1334,6 +1385,44 @@ class _Generator(object):
                                      module_name_snake=self.module_name_snake,
                                      type_name_snake=self.type_name_snake)
 
+    def generate_helpers(self, definitions):
+        helpers = [ENCODER_AND_DECODER_STRUCTS]
+
+        functions = [
+            ('encoder_init(', ENCODER_INIT),
+            ('encoder_get_result(', ENCODER_GET_RESULT),
+            ('encoder_abort(', ENCODER_ABORT),
+            ('encoder_append_bytes(', ENCODER_ALLOC),
+            ('encoder_append_bytes(', ENCODER_APPEND_BYTES),
+            ('encoder_append_integer_8(', ENCODER_APPEND_INTEGER_8),
+            ('encoder_append_integer_16(', ENCODER_APPEND_INTEGER_16),
+            ('encoder_append_integer_32(', ENCODER_APPEND_INTEGER_32),
+            ('encoder_append_integer_64(', ENCODER_APPEND_INTEGER_64),
+            ('encoder_append_float(', ENCODER_APPEND_FLOAT),
+            ('encoder_append_double(', ENCODER_APPEND_DOUBLE),
+            ('encoder_append_bool(', ENCODER_APPEND_BOOL),
+            ('encoder_append_length_determinant(', ENCODER_APPEND_LENGTH_DETERMINANT),
+            ('decoder_init(', DECODER_INIT),
+            ('decoder_get_result(', DECODER_GET_RESULT),
+            ('decoder_abort(', DECODER_ABORT),
+            ('decoder_read_bytes(', DECODER_FREE),
+            ('decoder_read_bytes(', DECODER_READ_BYTES),
+            ('decoder_read_integer_8(', DECODER_READ_INTEGER_8),
+            ('decoder_read_integer_16(', DECODER_READ_INTEGER_16),
+            ('decoder_read_integer_32(', DECODER_READ_INTEGER_32),
+            ('decoder_read_integer_64(', DECODER_READ_INTEGER_64),
+            ('decoder_read_float(', DECODER_READ_FLOAT),
+            ('decoder_read_double(', DECODER_READ_DOUBLE),
+            ('decoder_read_bool(', DECODER_READ_BOOL),
+            ('decoder_read_length_determinant(', DECODER_READ_LENGTH_DETERMINANT)
+        ]
+
+        for pattern, definition in functions:
+            if pattern in definitions:
+                helpers.append(definition)
+
+        return helpers + ['']
+
     def generate(self, compiled):
         type_declarations = []
         declarations = []
@@ -1366,8 +1455,9 @@ class _Generator(object):
         type_declarations = '\n'.join(type_declarations)
         declarations = '\n'.join(declarations)
         definitions = '\n'.join(definitions_inner + definitions)
+        helpers = '\n'.join(self.generate_helpers(definitions))
 
-        return type_declarations, declarations, HELPERS, definitions
+        return type_declarations, declarations, helpers, definitions
 
 
 def generate(compiled, namespace):

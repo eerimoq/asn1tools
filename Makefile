@@ -8,7 +8,8 @@ UPER_EXE = main_uper
 
 OER_C_SOURCES = \
 	tests/main_oer.c \
-	tests/files/c_source/oer.c
+	tests/files/c_source/oer.c \
+	tests/files/c_source/c_source-minus.c
 
 UPER_C_SOURCES = \
 	tests/main_uper.c \
