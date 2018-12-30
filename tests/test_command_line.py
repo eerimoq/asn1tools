@@ -702,6 +702,32 @@ exit
             read_file('tests/files/c_source/' + filename_c),
             read_file(filename_c))
 
+    def test_command_line_generate_c_source_minus(self):
+        argv = [
+            'asn1tools',
+            'generate_c_source',
+            'tests/files/c_source-minus.asn'
+        ]
+
+        filename_h = 'c_source-minus.h'
+        filename_c = 'c_source-minus.c'
+
+        if os.path.exists(filename_h):
+            os.remove(filename_h)
+
+        if os.path.exists(filename_c):
+            os.remove(filename_c)
+
+        with patch('sys.argv', argv):
+            asn1tools._main()
+
+        self.assertEqual(
+            read_file('tests/files/c_source/' + filename_h),
+            read_file(filename_h))
+        self.assertEqual(
+            read_file('tests/files/c_source/' + filename_c),
+            read_file(filename_c))
+
 
 if __name__ == '__main__':
     unittest.main()
