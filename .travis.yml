@@ -26,4 +26,5 @@ script:
   - make -C examples/benchmarks/c_source
 
 after_success:
-  coveralls
+  - coveralls
+  - bash <(curl -s https://codecov.io/bash) -X coveragepy

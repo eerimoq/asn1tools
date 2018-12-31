@@ -25,9 +25,10 @@ CFLAGS = \
 	-Wfloat-equal \
 	-Wformat=2 \
 	-Wshadow \
-	-Werror
-
-MASSIF_FLAGS = --tool=massif --time-unit=B --stacks=yes
+	-Werror \
+	-pg \
+	-fprofile-arcs \
+	-ftest-coverage
 
 .PHONY: test
 test:
@@ -51,17 +52,13 @@ test:
 test-c-oer:
 	$(CC) $(CFLAGS) -Itests/files/c_source $(OER_C_SOURCES) -o $(OER_EXE)
 	size $(OER_EXE)
-	rm -f $(OER_EXE).massif
-	valgrind $(MASSIF_FLAGS) --massif-out-file=$(OER_EXE).massif ./$(OER_EXE)
-	ms_print $(OER_EXE).massif
+	./$(OER_EXE)
 
 .PHONY: test-c-uper
 test-c-uper:
 	$(CC) $(CFLAGS) $(UPER_C_SOURCES) -o $(UPER_EXE)
 	size $(UPER_EXE)
-	rm -f $(UPER_EXE).massif
-	valgrind $(MASSIF_FLAGS) --massif-out-file=$(UPER_EXE).massif ./$(UPER_EXE)
-	ms_print $(UPER_EXE).massif
+	./$(UPER_EXE)
 
 .PHONY: test-c
 test-c:

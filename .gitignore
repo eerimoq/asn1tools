@@ -66,3 +66,6 @@ v0.9.28.tar.gz
 asn1c-0.9.28/
 main
 main*.massif
+*.gcno
+*.gcda
+gmon.out
