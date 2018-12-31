@@ -674,7 +674,7 @@ exit
 
         self.assertEqual(SPECIFICATION, expected_specification)
 
-    def test_command_line_generate_c_source(self):
+    def test_command_line_generate_c_source_oer(self):
         argv = [
             'asn1tools',
             'generate_c_source',
@@ -702,7 +702,7 @@ exit
             read_file('tests/files/c_source/' + filename_c),
             read_file(filename_c))
 
-    def test_command_line_generate_c_source_minus(self):
+    def test_command_line_generate_c_source_oer_minus(self):
         argv = [
             'asn1tools',
             'generate_c_source',
@@ -711,6 +711,35 @@ exit
 
         filename_h = 'c_source-minus.h'
         filename_c = 'c_source-minus.c'
+
+        if os.path.exists(filename_h):
+            os.remove(filename_h)
+
+        if os.path.exists(filename_c):
+            os.remove(filename_c)
+
+        with patch('sys.argv', argv):
+            asn1tools._main()
+
+        self.assertEqual(
+            read_file('tests/files/c_source/' + filename_h),
+            read_file(filename_h))
+        self.assertEqual(
+            read_file('tests/files/c_source/' + filename_c),
+            read_file(filename_c))
+
+    def test_command_line_generate_c_source_uper(self):
+        argv = [
+            'asn1tools',
+            'generate_c_source',
+            '--namespace', 'uper',
+            '--codec', 'uper',
+            'tests/files/c_source.asn',
+            'examples/programming_types/programming_types.asn'
+        ]
+
+        filename_h = 'uper.h'
+        filename_c = 'uper.c'
 
         if os.path.exists(filename_h):
             os.remove(filename_h)

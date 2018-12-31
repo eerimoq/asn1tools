@@ -2,6 +2,7 @@ import time
 
 from ..version import __version__
 from . import oer
+from . import uper
 from .utils import camel_to_snake_case
 
 
@@ -130,6 +131,10 @@ def generate(compiled,
 
     if codec == 'oer':
         structs, declarations, helpers, definitions = oer.generate(
+            compiled,
+            camel_to_snake_case(namespace))
+    elif codec == 'uper':
+        structs, declarations, helpers, definitions = uper.generate(
             compiled,
             camel_to_snake_case(namespace))
     else:
