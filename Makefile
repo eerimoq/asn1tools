@@ -44,6 +44,7 @@ test:
 	env PYTHONPATH=. python3 examples/compact_extensions_uper/main.py
 	env PYTHONPATH=. python3 examples/programming_types/main.py
 	$(MAKE) test-c
+	$(MAKE) -C examples/benchmarks/c_source
 	codespell -d $$(git ls-files | grep -v ietf | grep -v 3gpp | grep -v generated)
 	python3 -m pycodestyle $$(git ls-files "asn1tools/*.py")
 
