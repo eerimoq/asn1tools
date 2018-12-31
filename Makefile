@@ -16,7 +16,6 @@ UPER_C_SOURCES = \
 	tests/files/c_source/c_source/uper.c
 
 CFLAGS = \
-	-O3 \
 	-std=c99 \
 	-Wall \
 	-Wextra \
