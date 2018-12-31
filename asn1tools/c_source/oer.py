@@ -439,7 +439,7 @@ static uint32_t decoder_read_integer(struct decoder_t *self_p,
         break;
 
     case 3:
-        value = (((uint64_t)decoder_read_integer_8(self_p) << 16)
+        value = (((uint32_t)decoder_read_integer_8(self_p) << 16)
                  | decoder_read_integer_16(self_p));
         break;
 

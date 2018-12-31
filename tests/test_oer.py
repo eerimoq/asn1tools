@@ -933,6 +933,29 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
         self.assertEqual(str(cm.exception),
                          "out of data at bit offset 0 (0.0 bytes)")
 
+    def test_c_source(self):
+        files = [
+            'tests/files/c_source.asn',
+            'examples/programming_types/programming_types.asn'
+        ]
+        foo = asn1tools.compile_files(files, 'oer')
+
+        # Type L - decode error bad length.
+        with self.assertRaises(asn1tools.codecs.OutOfDataError):
+            foo.decode('L', b'\x82\x01\xff')
+
+        with self.assertRaises(asn1tools.codecs.OutOfDataError):
+            foo.decode('L', b'\x83\x01\xff\x00')
+
+        with self.assertRaises(asn1tools.codecs.OutOfDataError):
+            foo.decode('L', b'\x84\x01\x00\x01\x00')
+
+        with self.assertRaises(asn1tools.codecs.OutOfDataError):
+            foo.decode('L', b'\x83')
+
+        with self.assertRaises(asn1tools.codecs.OutOfDataError):
+            foo.decode('L', b'\xff\x00')
+
 
 if __name__ == '__main__':
     unittest.main()
