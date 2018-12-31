@@ -1,5 +1,6 @@
 |buildstatus|_
 |coverage|_
+|codecov|_
 
 About
 =====
@@ -375,6 +376,9 @@ Encodings
 
 .. |coverage| image:: https://coveralls.io/repos/github/eerimoq/asn1tools/badge.svg?branch=master
 .. _coverage: https://coveralls.io/github/eerimoq/asn1tools
+
+.. |codecov| image:: https://codecov.io/gh/eerimoq/asn1tools/branch/master/graph/badge.svg
+.. _codecov: https://codecov.io/gh/eerimoq/asn1tools
 
 .. _ASN.1: https://en.wikipedia.org/wiki/Abstract_Syntax_Notation_One
 
