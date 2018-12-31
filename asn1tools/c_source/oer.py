@@ -488,7 +488,7 @@ static uint64_t decoder_read_integer(struct decoder_t *self_p,
         break;
 
     default:
-        value = 0;
+        value = 0xfffffffffffffffful;
         break;
     }
 
