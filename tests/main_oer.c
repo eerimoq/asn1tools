@@ -7,6 +7,8 @@
 #include "files/c_source/oer.h"
 #include "files/c_source/c_source-minus.h"
 
+#define membersof(a) (sizeof(a) / (sizeof((a)[0])))
+
 static bool fequal(double v1, double v2)
 {
     return (fabs(v1 - v2) < 0.000001);
@@ -614,6 +616,71 @@ static void test_oer_c_source_k(void)
 
 static void test_oer_c_source_l(void)
 {
+    struct data_t {
+        uint16_t data_length;
+        uint16_t encoded_length;
+        uint8_t encoded[263];
+    } datas[] = {
+        {
+            .data_length = 0,
+            .encoded_length = 1,
+            .encoded = "\x00"
+        },
+        {
+            .data_length = 127,
+            .encoded_length = 128,
+            .encoded =
+            "\x7f\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5"
+        },
+        {
+            .data_length = 128,
+            .encoded_length = 130,
+            .encoded =
+            "\x81\x80\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5"
+        },
+        {
+            .data_length = 260,
+            .encoded_length = 263,
+            .encoded =
+            "\x82\x01\x04\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+        }
+    };
     uint8_t encoded[263];
     struct oer_c_source_l_t decoded;
     uint8_t data[260] =
@@ -633,45 +700,76 @@ static void test_oer_c_source_l(void)
         "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
         "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
         "\xa5\xa5\xa5\xa5\xa5";
+    unsigned int i;
 
-    /* Encode. */
-    decoded.length = 260;
-    memcpy(&decoded.buf[0], &data[0], sizeof(data));
+    for (i = 0; i < membersof(datas); i++) {
+        /* Encode. */
+        decoded.length = datas[i].data_length;
+        memcpy(&decoded.buf[0], &data[0], decoded.length);
 
-    memset(&encoded[0], 0, sizeof(encoded));
-    assert(oer_c_source_l_encode(&encoded[0],
-                                 sizeof(encoded),
-                                 &decoded) == sizeof(encoded));
-    assert(memcmp(&encoded[0],
-                  "\x82\x01\x04\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5",
-                  sizeof(encoded)) == 0);
+        memset(&encoded[0], 0, sizeof(encoded));
+        assert(oer_c_source_l_encode(&encoded[0],
+                                     sizeof(encoded),
+                                     &decoded) == datas[i].encoded_length);
+        assert(memcmp(&encoded[0],
+                      &datas[i].encoded[0],
+                      datas[i].encoded_length) == 0);
 
-    /* Decode. */
-    memset(&decoded, 0, sizeof(decoded));
-    assert(oer_c_source_l_decode(&decoded,
-                                 &encoded[0],
-                                 sizeof(encoded)) == sizeof(encoded));
+        /* Decode. */
+        memset(&decoded, 0, sizeof(decoded));
+        assert(oer_c_source_l_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)) == datas[i].encoded_length);
 
-    assert(decoded.length == 260);
-    assert(memcmp(&decoded.buf[0], &data[0], sizeof(data)) == 0);
+        assert(decoded.length == datas[i].data_length);
+        assert(memcmp(&decoded.buf[0],
+                      &data[0],
+                      datas[i].data_length) == 0);
+    }
+}
+
+static void test_oer_c_source_l_decode_error_bad_length(void)
+{
+    struct data_t {
+        int res;
+        uint16_t length;
+        uint8_t encoded[16];
+    } datas[] = {
+        {
+            .res = -EBADLENGTH,
+            .length = 3,
+            .encoded = "\x82\x01\xff"
+        },
+        {
+            .res = -EBADLENGTH,
+            .length = 4,
+            .encoded = "\x83\x01\xff\x00"
+        },
+        {
+            .res = -EBADLENGTH,
+            .length = 5,
+            .encoded = "\x84\x01\x00\x01\x00"
+        },
+        {
+            .res = -EOUTOFDATA,
+            .length = 1,
+            .encoded = "\x83"
+        },
+        {
+            .res = -EBADLENGTH,
+            .length = 2,
+            .encoded = "\xff\x00"
+        }
+    };
+    struct oer_c_source_l_t decoded;
+    unsigned int i;
+
+    for (i = 0; i < membersof(datas); i++) {
+        memset(&decoded, 0, sizeof(decoded));
+        assert(oer_c_source_l_decode(&decoded,
+                                     &datas[i].encoded[0],
+                                     datas[i].length) == datas[i].res);
+    }
 }
 
 static void test_oer_c_source_o(void)
@@ -752,6 +850,7 @@ int main(void)
     test_oer_c_source_j();
     test_oer_c_source_k();
     test_oer_c_source_l();
+    test_oer_c_source_l_decode_error_bad_length();
     test_oer_c_source_o();
 
     return (0);

@@ -229,7 +229,7 @@ static void encoder_append_integer_64(struct encoder_t *self_p,
 
 ENCODER_APPEND_INTEGER = '''
 static void encoder_append_integer(struct encoder_t *self_p,
-                                   uint64_t value,
+                                   uint32_t value,
                                    uint8_t number_of_bytes)
 {
     switch (number_of_bytes) {
@@ -247,28 +247,8 @@ static void encoder_append_integer(struct encoder_t *self_p,
         encoder_append_integer_16(self_p, value);
         break;
 
-    case 4:
-        encoder_append_integer_32(self_p, value);
-        break;
-
-    case 5:
-        encoder_append_integer_8(self_p, value >> 32);
-        encoder_append_integer_32(self_p, value);
-        break;
-
-    case 6:
-        encoder_append_integer_16(self_p, value >> 32);
-        encoder_append_integer_32(self_p, value);
-        break;
-
-    case 7:
-        encoder_append_integer_8(self_p, value >> 48);
-        encoder_append_integer_16(self_p, value >> 32);
-        encoder_append_integer_32(self_p, value);
-        break;
-
     default:
-        encoder_append_integer_64(self_p, value);
+        encoder_append_integer_32(self_p, value);
         break;
     }
 }\
@@ -443,10 +423,10 @@ static uint64_t decoder_read_integer_64(struct decoder_t *self_p)
 '''
 
 DECODER_READ_INTEGER = '''
-static uint64_t decoder_read_integer(struct decoder_t *self_p,
+static uint32_t decoder_read_integer(struct decoder_t *self_p,
                                      uint8_t number_of_bytes)
 {
-    uint64_t value;
+    uint32_t value;
 
     switch (number_of_bytes) {
 
@@ -467,28 +447,8 @@ static uint64_t decoder_read_integer(struct decoder_t *self_p,
         value = decoder_read_integer_32(self_p);
         break;
 
-    case 5:
-        value = (((uint64_t)decoder_read_integer_8(self_p) << 32)
-                 | decoder_read_integer_32(self_p));
-        break;
-
-    case 6:
-        value = (((uint64_t)decoder_read_integer_16(self_p) << 32)
-                 | decoder_read_integer_32(self_p));
-        break;
-
-    case 7:
-        value = (((uint64_t)decoder_read_integer_8(self_p) << 48)
-                 | ((uint64_t)decoder_read_integer_16(self_p) << 32)
-                 | decoder_read_integer_32(self_p));
-        break;
-
-    case 8:
-        value = decoder_read_integer_64(self_p);
-        break;
-
     default:
-        value = 0xfffffffffffffffful;
+        value = 0xffffffff;
         break;
     }
 
@@ -828,8 +788,6 @@ class _Generator(object):
             lines = []
         elif checker.maximum < 256:
             lines = ['    uint8_t length;']
-        elif checker.maximum < 65536:
-            lines = ['    uint16_t length;']
         else:
             lines = ['    uint32_t length;']
 
@@ -878,8 +836,6 @@ class _Generator(object):
             length_lines = []
         elif checker.maximum < 256:
             length_lines = ['uint8_t length;']
-        elif checker.maximum < 65536:
-            length_lines = ['uint16_t length;']
         else:
             length_lines = ['uint32_t length;']
 
