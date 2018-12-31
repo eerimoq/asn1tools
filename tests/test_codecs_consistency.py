@@ -996,6 +996,22 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'L', decoded, encoded)
 
+        # Type O.
+        decoded = 260 * [True]
+
+        encoded_messages = [
+            b'\x30\x82\x03\x0c' + 260 * b'\x01\x01\xff',
+            b'\x30\x82\x03\x0c' + 260 * b'\x01\x01\xff',
+            b'[' + 259 * b'true,' + b'true]',
+            b'\x02\x01\x04' + 260 * b'\xff',
+            b'\x01\x03' + 32 * b'\xff' + b'\xf0',
+            b'\x81' + 32 * b'\xff' + b'\xf8',
+            b'<O>' + 260 * b'<true />' + b'</O>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'O', decoded, encoded)
+
 
 if __name__ == '__main__':
     unittest.main()

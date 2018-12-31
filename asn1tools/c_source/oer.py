@@ -227,6 +227,53 @@ static void encoder_append_integer_64(struct encoder_t *self_p,
 }\
 '''
 
+ENCODER_APPEND_INTEGER = '''
+static void encoder_append_integer(struct encoder_t *self_p,
+                                   uint64_t value,
+                                   uint8_t number_of_bytes)
+{
+    switch (number_of_bytes) {
+
+    case 1:
+        encoder_append_integer_8(self_p, value);
+        break;
+
+    case 2:
+        encoder_append_integer_16(self_p, value);
+        break;
+
+    case 3:
+        encoder_append_integer_8(self_p, value >> 16);
+        encoder_append_integer_16(self_p, value);
+        break;
+
+    case 4:
+        encoder_append_integer_32(self_p, value);
+        break;
+
+    case 5:
+        encoder_append_integer_8(self_p, value >> 32);
+        encoder_append_integer_32(self_p, value);
+        break;
+
+    case 6:
+        encoder_append_integer_16(self_p, value >> 32);
+        encoder_append_integer_32(self_p, value);
+        break;
+
+    case 7:
+        encoder_append_integer_8(self_p, value >> 48);
+        encoder_append_integer_16(self_p, value >> 32);
+        encoder_append_integer_32(self_p, value);
+        break;
+
+    default:
+        encoder_append_integer_64(self_p, value);
+        break;
+    }
+}\
+'''
+
 ENCODER_APPEND_FLOAT = '''
 static void encoder_append_float(struct encoder_t *self_p,
                                  float value)
@@ -395,6 +442,60 @@ static uint64_t decoder_read_integer_64(struct decoder_t *self_p)
 }\
 '''
 
+DECODER_READ_INTEGER = '''
+static uint64_t decoder_read_integer(struct decoder_t *self_p,
+                                     uint8_t number_of_bytes)
+{
+    uint64_t value;
+
+    switch (number_of_bytes) {
+
+    case 1:
+        value = decoder_read_integer_8(self_p);
+        break;
+
+    case 2:
+        value = decoder_read_integer_16(self_p);
+        break;
+
+    case 3:
+        value = (((uint64_t)decoder_read_integer_8(self_p) << 16)
+                 | decoder_read_integer_16(self_p));
+        break;
+
+    case 4:
+        value = decoder_read_integer_32(self_p);
+        break;
+
+    case 5:
+        value = (((uint64_t)decoder_read_integer_8(self_p) << 32)
+                 | decoder_read_integer_32(self_p));
+        break;
+
+    case 6:
+        value = (((uint64_t)decoder_read_integer_16(self_p) << 32)
+                 | decoder_read_integer_32(self_p));
+        break;
+
+    case 7:
+        value = (((uint64_t)decoder_read_integer_8(self_p) << 48)
+                 | ((uint64_t)decoder_read_integer_16(self_p) << 32)
+                 | decoder_read_integer_32(self_p));
+        break;
+
+    case 8:
+        value = decoder_read_integer_64(self_p);
+        break;
+
+    default:
+        value = 0;
+        break;
+    }
+
+    return (value);
+}\
+'''
+
 DECODER_READ_FLOAT = '''
 static float decoder_read_float(struct decoder_t *self_p)
 {
@@ -555,6 +656,45 @@ def _dedent_lines(lines):
     return [line[4:] for line in lines]
 
 
+class _UserType(object):
+
+    def __init__(self,
+                 type_name,
+                 module_name,
+                 type_declaration,
+                 declaration,
+                 definition_inner,
+                 definition,
+                 used_user_types):
+        self.type_name = type_name
+        self.module_name = module_name
+        self.type_declaration = type_declaration
+        self.declaration = declaration
+        self.definition_inner = definition_inner
+        self.definition = definition
+        self.used_user_types = used_user_types
+
+
+def sort_user_types_by_used_user_types(user_types):
+    reversed_sorted_user_types = []
+
+    for user_type in user_types:
+        user_type_name_tuple = (user_type.type_name, user_type.module_name)
+
+        # Insert first in the reversed list if there are no types
+        # using this type.
+        insert_index = 0
+
+        for i, reversed_sorted_user_type in enumerate(reversed_sorted_user_types, 1):
+            if user_type_name_tuple in reversed_sorted_user_type.used_user_types:
+                if i > insert_index:
+                    insert_index = i
+
+        reversed_sorted_user_types.insert(insert_index, user_type)
+
+    return reversed(reversed_sorted_user_types)
+
+
 class _Generator(object):
 
     def __init__(self, namespace):
@@ -568,6 +708,15 @@ class _Generator(object):
         self.used_suffixes_by_base_variables = {}
         self.encode_variable_lines = []
         self.decode_variable_lines = []
+        self.used_user_types = []
+
+    def reset_type(self):
+        self.helper_lines = []
+        self.base_variables = set()
+        self.used_suffixes_by_base_variables = {}
+        self.encode_variable_lines = []
+        self.decode_variable_lines = []
+        self.used_user_types = []
 
     @property
     def module_name_snake(self):
@@ -725,10 +874,16 @@ class _Generator(object):
         if lines:
             lines[-1] += ' elements[{}];'.format(checker.maximum)
 
-        if checker.minimum != checker.maximum:
-            lines = ['uint8_t length;'] + lines
+        if checker.minimum == checker.maximum:
+            length_lines = []
+        elif checker.maximum < 256:
+            length_lines = ['uint8_t length;']
+        elif checker.maximum < 65536:
+            length_lines = ['uint16_t length;']
+        else:
+            length_lines = ['uint32_t length;']
 
-        return ['struct {'] + _indent_lines(lines) + ['}']
+        return ['struct {'] + _indent_lines(length_lines + lines) + ['}']
 
     def format_enumerated(self, type_):
         lines = ['enum {}_e'.format(self.location)]
@@ -786,6 +941,8 @@ class _Generator(object):
         module_name_snake = camel_to_snake_case(module_name)
         type_name_snake = camel_to_snake_case(type_name)
 
+        self.used_user_types.append((type_name, module_name))
+
         return ['struct {}_{}_{}_t'.format(self.namespace,
                                            module_name_snake,
                                            type_name_snake)]
@@ -817,13 +974,6 @@ class _Generator(object):
                 "Unsupported type '{}'.".format(type_.type_name))
 
         return lines
-
-    def reset(self):
-        self.helper_lines = []
-        self.base_variables = set()
-        self.used_suffixes_by_base_variables = {}
-        self.encode_variable_lines = []
-        self.decode_variable_lines = []
 
     def generate_type_declaration(self, compiled_type):
         type_ = compiled_type.type
@@ -1251,7 +1401,12 @@ class _Generator(object):
         )
 
     def format_sequence_of_inner(self, type_, checker):
-        unique_i = self.add_unique_variable('uint8_t {};', 'i')
+        unique_number_of_length_bytes = self.add_unique_decode_variable(
+            'uint8_t {};',
+            'number_of_length_bytes')
+        unique_i = self.add_unique_variable(
+            '{} {{}};'.format(_format_type_name(0, checker.maximum)),
+            'i')
 
         if checker.minimum == checker.maximum:
             unique_length = self.add_unique_decode_variable('uint8_t {};',
@@ -1272,10 +1427,13 @@ class _Generator(object):
                     maximum=checker.maximum),
             ] + _indent_lines(encode_lines)
             decode_lines = [
-                'decoder_read_integer_8(decoder_p);',
+                '{} = decoder_read_integer_8(decoder_p);'.format(
+                    unique_number_of_length_bytes),
                 '{} = decoder_read_integer_8(decoder_p);'.format(unique_length),
                 '',
-                'if ({} > {}) {{'.format(unique_length, checker.maximum),
+                'if (({} != 1) || ({} > {})) {{'.format(unique_number_of_length_bytes,
+                                                        unique_length,
+                                                        checker.maximum),
                 '    decoder_abort(decoder_p, EBADLENGTH);',
                 '',
                 '    return;',
@@ -1286,19 +1444,26 @@ class _Generator(object):
                     maximum=checker.maximum),
             ] + _indent_lines(decode_lines)
         else:
+            number_of_length_bytes = (checker.maximum.bit_length() + 7) // 8
             encode_lines = [
-                'encoder_append_integer_8(encoder_p, 1);',
-                'encoder_append_integer_8(encoder_p, src_p->{}length);'.format(
+                'encoder_append_integer_8(encoder_p, {});'.format(
+                    number_of_length_bytes),
+                'encoder_append_integer(encoder_p,',
+                '                       src_p->{}length,'.format(
                     self.location_inner('', '.')),
+                '                       {});'.format(number_of_length_bytes),
                 '',
                 'for ({ui} = 0; {ui} < src_p->{loc}length; {ui}++) {{'.format(
                     ui=unique_i,
                     loc=self.location_inner('', '.')),
             ] + _indent_lines(encode_lines)
             decode_lines = [
-                'decoder_read_integer_8(decoder_p);',
-                'dst_p->{}length = decoder_read_integer_8(decoder_p);'.format(
+                '{} = decoder_read_integer_8(decoder_p);'.format(
+                    unique_number_of_length_bytes),
+                'dst_p->{}length = decoder_read_integer('.format(
                     self.location_inner('', '.')),
+                '    decoder_p,',
+                '    {});'.format(unique_number_of_length_bytes),
                 '',
                 'if (dst_p->{}length > {}) {{'.format(self.location_inner('', '.'),
                                                       checker.maximum),
@@ -1400,6 +1565,7 @@ class _Generator(object):
             ('encoder_append_integer_16(', ENCODER_APPEND_INTEGER_16),
             ('encoder_append_integer_32(', ENCODER_APPEND_INTEGER_32),
             ('encoder_append_integer_64(', ENCODER_APPEND_INTEGER_64),
+            ('encoder_append_integer(', ENCODER_APPEND_INTEGER),
             ('encoder_append_float(', ENCODER_APPEND_FLOAT),
             ('encoder_append_double(', ENCODER_APPEND_DOUBLE),
             ('encoder_append_bool(', ENCODER_APPEND_BOOL),
@@ -1413,6 +1579,7 @@ class _Generator(object):
             ('decoder_read_integer_16(', DECODER_READ_INTEGER_16),
             ('decoder_read_integer_32(', DECODER_READ_INTEGER_32),
             ('decoder_read_integer_64(', DECODER_READ_INTEGER_64),
+            ('decoder_read_integer(', DECODER_READ_INTEGER),
             ('decoder_read_float(', DECODER_READ_FLOAT),
             ('decoder_read_double(', DECODER_READ_DOUBLE),
             ('decoder_read_bool(', DECODER_READ_BOOL),
@@ -1426,33 +1593,45 @@ class _Generator(object):
         return helpers + ['']
 
     def generate(self, compiled):
-        type_declarations = []
-        declarations = []
-        definitions_inner = []
-        definitions = []
+        user_types = []
 
         for module_name, module in sorted(compiled.modules.items()):
             self.module_name = module_name
 
             for type_name, compiled_type in sorted(module.items()):
                 self.type_name = type_name
-                self.reset()
+                self.reset_type()
 
                 type_declaration = self.generate_type_declaration(compiled_type)
 
                 if not type_declaration:
                     continue
 
-                type_declarations.extend(type_declaration)
-
                 declaration = self.generate_declaration()
-                declarations.append(declaration)
-
                 definition_inner = self.generate_definition_inner(compiled_type)
-                definitions_inner.append(definition_inner)
-
                 definition = self.generate_definition()
-                definitions.append(definition)
+
+                user_type = _UserType(type_name,
+                                      module_name,
+                                      type_declaration,
+                                      declaration,
+                                      definition_inner,
+                                      definition,
+                                      self.used_user_types)
+                user_types.append(user_type)
+
+        user_types = sort_user_types_by_used_user_types(user_types)
+
+        type_declarations = []
+        declarations = []
+        definitions_inner = []
+        definitions = []
+
+        for user_type in user_types:
+            type_declarations.extend(user_type.type_declaration)
+            declarations.append(user_type.declaration)
+            definitions_inner.append(user_type.definition_inner)
+            definitions.append(user_type.definition)
 
         type_declarations = '\n'.join(type_declarations)
         declarations = '\n'.join(declarations)

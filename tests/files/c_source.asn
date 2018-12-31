@@ -100,4 +100,23 @@ K ::= ENUMERATED {
 
 L ::= OCTET STRING (SIZE(0..500))
 
+M ::= SEQUENCE {
+    a K,
+    b N
+}
+
+N ::= SEQUENCE {
+    a K,
+    b A,
+    c O
+}
+
+O ::= SEQUENCE (SIZE(1..260)) OF BOOLEAN
+
+P ::= SEQUENCE {
+    a A,
+    b M,
+    c F
+}
+
 END

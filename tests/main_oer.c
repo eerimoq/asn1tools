@@ -674,6 +674,58 @@ static void test_oer_c_source_l(void)
     assert(memcmp(&decoded.buf[0], &data[0], sizeof(data)) == 0);
 }
 
+static void test_oer_c_source_o(void)
+{
+    int i;
+    uint8_t encoded[263];
+    struct oer_c_source_o_t decoded;
+
+    /* Encode. */
+    decoded.length = 260;
+
+    for (i = 0; i < 260; i++) {
+        decoded.elements[i] = true;
+    }
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(oer_c_source_o_encode(&encoded[0],
+                                 sizeof(encoded),
+                                 &decoded) == sizeof(encoded));
+    assert(memcmp(&encoded[0],
+                  "\x02\x01\x04\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff",
+                  sizeof(encoded)) == 0);
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(oer_c_source_o_decode(&decoded,
+                                 &encoded[0],
+                                 sizeof(encoded)) == sizeof(encoded));
+
+    assert(decoded.length == 260);
+
+    for (i = 0; i < 260; i++) {
+        assert(decoded.elements[i] == true);
+    }
+}
+
 int main(void)
 {
     test_oer_c_source_a();
@@ -700,6 +752,7 @@ int main(void)
     test_oer_c_source_j();
     test_oer_c_source_k();
     test_oer_c_source_l();
+    test_oer_c_source_o();
 
     return (0);
 }
