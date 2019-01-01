@@ -291,17 +291,21 @@ Known limitations:
 
 - Named numbers in ``ENUMERATED`` are not yet supported.
 
-- ``CHOICE`` tags longer than one byte are not yet supported.
+- ``CHOICE`` tags longer than one byte are not yet supported. Only
+  applies to OER.
 
-Below is an example generating OER C source code from two ASN.1
-files.
+Below is an example generating OER and UPER C source code from an
+ASN.1 file.
 
 .. code-block:: text
 
-   > asn1tools generate_c_source --namespace oer tests/files/c_source.asn examples/programming_types/programming_types.asn
-   Successfully generated c_source.h and c_source.c.
+   > asn1tools generate_c_source --namespace oer tests/files/c_source.asn
+   Successfully generated oer.h and oer.c.
+   > asn1tools generate_c_source --codec uper --namespace uper tests/files/c_source.asn
+   Successfully generated uper.h and uper.c.
 
-See `oer.h`_ and `oer.c`_ for the contents of the generated files.
+See `oer.h`_, `oer.c`_, `uper.h`_ and `uper.c`_ for the contents of
+the generated files.
 
 Contributing
 ============
@@ -388,3 +392,7 @@ Encodings
 .. _oer.h: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/oer.h
 
 .. _oer.c: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/oer.c
+
+.. _uper.h: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/uper.h
+
+.. _uper.c: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/uper.c
