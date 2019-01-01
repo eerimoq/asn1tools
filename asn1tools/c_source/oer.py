@@ -8,6 +8,11 @@ from .utils import TYPE_DECLARATION_FMT
 from .utils import DECLARATION_FMT
 from .utils import DEFINITION_INNER_FMT
 from .utils import DEFINITION_FMT
+from .utils import ENCODER_AND_DECODER_STRUCTS
+from .utils import ENCODER_ABORT
+from .utils import DECODER_ABORT
+from .utils import UserType
+from .utils import MembersBacktracesContext
 from .utils import canonical
 from .utils import camel_to_snake_case
 from .utils import join_lines
@@ -18,20 +23,6 @@ from .utils import dedent_lines
 from ..codecs import oer
 from ..errors import Error
 
-
-ENCODER_AND_DECODER_STRUCTS = '''\
-struct encoder_t {
-    uint8_t *buf_p;
-    ssize_t size;
-    ssize_t pos;
-};
-
-struct decoder_t {
-    const uint8_t *buf_p;
-    ssize_t size;
-    ssize_t pos;
-};
-'''
 
 ENCODER_INIT = '''\
 static void encoder_init(struct encoder_t *self_p,
@@ -48,17 +39,6 @@ ENCODER_GET_RESULT = '''
 static ssize_t encoder_get_result(struct encoder_t *self_p)
 {
     return (self_p->pos);
-}\
-'''
-
-ENCODER_ABORT = '''
-static void encoder_abort(struct encoder_t *self_p,
-                          ssize_t error)
-{
-    if (self_p->size >= 0) {
-        self_p->size = -error;
-        self_p->pos = -error;
-    }
 }\
 '''
 
@@ -247,17 +227,6 @@ DECODER_GET_RESULT = '''
 static ssize_t decoder_get_result(struct decoder_t *self_p)
 {
     return (self_p->pos);
-}\
-'''
-
-DECODER_ABORT = '''
-static void decoder_abort(struct decoder_t *self_p,
-                          ssize_t error)
-{
-    if (self_p->size >= 0) {
-        self_p->size = -error;
-        self_p->pos = -error;
-    }
 }\
 '''
 
@@ -458,40 +427,6 @@ static uint32_t decoder_read_length_determinant(struct decoder_t *self_p)
 '''
 
 
-class _MembersBacktracesContext(object):
-
-    def __init__(self, backtraces, member_name):
-        self.backtraces = backtraces
-        self.member_name = member_name
-
-    def __enter__(self):
-        for backtrace in self.backtraces:
-            backtrace.append(self.member_name)
-
-    def __exit__(self, *args):
-        for backtrace in self.backtraces:
-            backtrace.pop()
-
-
-class _UserType(object):
-
-    def __init__(self,
-                 type_name,
-                 module_name,
-                 type_declaration,
-                 declaration,
-                 definition_inner,
-                 definition,
-                 used_user_types):
-        self.type_name = type_name
-        self.module_name = module_name
-        self.type_declaration = type_declaration
-        self.declaration = declaration
-        self.definition_inner = definition_inner
-        self.definition = definition
-        self.used_user_types = used_user_types
-
-
 def sort_user_types_by_used_user_types(user_types):
     reversed_sorted_user_types = []
 
@@ -566,17 +501,17 @@ class _Generator(object):
             self.c_members_backtrace
         ]
 
-        return _MembersBacktracesContext(backtraces, member_name)
+        return MembersBacktracesContext(backtraces, member_name)
 
     def asn1_members_backtrace_push(self, member_name):
         backtraces = [self.asn1_members_backtrace]
 
-        return _MembersBacktracesContext(backtraces, member_name)
+        return MembersBacktracesContext(backtraces, member_name)
 
     def c_members_backtrace_push(self, member_name):
         backtraces = [self.c_members_backtrace]
 
-        return _MembersBacktracesContext(backtraces, member_name)
+        return MembersBacktracesContext(backtraces, member_name)
 
     def get_member_checker(self, checker, name):
         for member in checker.members:
@@ -1424,13 +1359,13 @@ class _Generator(object):
                 definition_inner = self.generate_definition_inner(compiled_type)
                 definition = self.generate_definition()
 
-                user_type = _UserType(type_name,
-                                      module_name,
-                                      type_declaration,
-                                      declaration,
-                                      definition_inner,
-                                      definition,
-                                      self.used_user_types)
+                user_type = UserType(type_name,
+                                     module_name,
+                                     type_declaration,
+                                     declaration,
+                                     definition_inner,
+                                     definition,
+                                     self.used_user_types)
                 user_types.append(user_type)
 
         user_types = sort_user_types_by_used_user_types(user_types)

@@ -85,6 +85,76 @@ ssize_t {namespace}_{module_name_snake}_{type_name_snake}_decode(
 }}
 '''
 
+ENCODER_AND_DECODER_STRUCTS = '''\
+struct encoder_t {
+    uint8_t *buf_p;
+    ssize_t size;
+    ssize_t pos;
+};
+
+struct decoder_t {
+    const uint8_t *buf_p;
+    ssize_t size;
+    ssize_t pos;
+};
+'''
+
+ENCODER_ABORT = '''
+static void encoder_abort(struct encoder_t *self_p,
+                          ssize_t error)
+{
+    if (self_p->size >= 0) {
+        self_p->size = -error;
+        self_p->pos = -error;
+    }
+}\
+'''
+
+DECODER_ABORT = '''
+static void decoder_abort(struct decoder_t *self_p,
+                          ssize_t error)
+{
+    if (self_p->size >= 0) {
+        self_p->size = -error;
+        self_p->pos = -error;
+    }
+}\
+'''
+
+
+class MembersBacktracesContext(object):
+
+    def __init__(self, backtraces, member_name):
+        self.backtraces = backtraces
+        self.member_name = member_name
+
+    def __enter__(self):
+        for backtrace in self.backtraces:
+            backtrace.append(self.member_name)
+
+    def __exit__(self, *args):
+        for backtrace in self.backtraces:
+            backtrace.pop()
+
+
+class UserType(object):
+
+    def __init__(self,
+                 type_name,
+                 module_name,
+                 type_declaration,
+                 declaration,
+                 definition_inner,
+                 definition,
+                 used_user_types):
+        self.type_name = type_name
+        self.module_name = module_name
+        self.type_declaration = type_declaration
+        self.declaration = declaration
+        self.definition_inner = definition_inner
+        self.definition = definition
+        self.used_user_types = used_user_types
+
 
 def canonical(value):
     """Replace anything but 'a-z', 'A-Z' and '0-9' with '_'.
