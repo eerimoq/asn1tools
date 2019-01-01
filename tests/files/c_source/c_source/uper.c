@@ -71,8 +71,8 @@ static void encoder_abort(struct encoder_t *self_p,
     }
 }
 
-static size_t encoder_alloc(struct encoder_t *self_p,
-                            size_t size)
+static ssize_t encoder_alloc(struct encoder_t *self_p,
+                             size_t size)
 {
     ssize_t pos;
 
@@ -245,8 +245,8 @@ static void decoder_abort(struct decoder_t *self_p,
     }
 }
 
-static size_t decoder_free(struct decoder_t *self_p,
-                           size_t size)
+static ssize_t decoder_free(struct decoder_t *self_p,
+                            size_t size)
 {
     ssize_t pos;
 
@@ -413,7 +413,7 @@ static void uper_c_source_a_encode_inner(
     encoder_append_uint16(encoder_p, src_p->f);
     encoder_append_uint32(encoder_p, src_p->g);
     encoder_append_uint64(encoder_p, src_p->h);
-    encoder_append_bool(encoder_p, &src_p->i);
+    encoder_append_bool(encoder_p, src_p->i);
     encoder_append_bytes(encoder_p,
                          &src_p->j.buf[0],
                          11);
@@ -499,9 +499,10 @@ static void uper_c_source_c_encode_inner(
 {
     uint8_t i;
 
-    encoder_append_non_negative_binary_integer(encoder_p,
-                                               src_p->length,
-                                               2);
+    encoder_append_non_negative_binary_integer(
+        encoder_p,
+        src_p->length - 0,
+        2);
 
     for (i = 0; i < src_p->length; i++) {
         uper_c_source_b_encode_inner(encoder_p, &src_p->elements[i]);
@@ -517,6 +518,7 @@ static void uper_c_source_c_decode_inner(
     dst_p->length = decoder_read_non_negative_binary_integer(
         decoder_p,
         2);
+    dst_p->length += 0;
 
     if (dst_p->length > 2) {
         decoder_abort(decoder_p, EBADLENGTH);
@@ -534,10 +536,12 @@ static void uper_c_source_d_encode_inner(
     const struct uper_c_source_d_t *src_p)
 {
     uint8_t i;
+    uint8_t i_2;
 
-    encoder_append_non_negative_binary_integer(encoder_p,
-                                               src_p->length - 1,
-                                               4);
+    encoder_append_non_negative_binary_integer(
+        encoder_p,
+        src_p->length - 1,
+        4);
 
     for (i = 0; i < src_p->length; i++) {
         switch (src_p->elements[i].a.b.choice) {
@@ -559,15 +563,21 @@ static void uper_c_source_d_encode_inner(
             break;
         }
 
-        encoder_append_non_negative_binary_integer(encoder_p,
-                                                   src_p->elements[i].a.e.length - 3,
-                                                   1);
+        encoder_append_non_negative_binary_integer(
+            encoder_p,
+            src_p->elements[i].a.e.length - 3,
+            1);
+
+        for (i_2 = 0; i_2 < src_p->elements[i].a.e.length; i_2++) {
+        }
+
         encoder_append_non_negative_binary_integer(encoder_p,
                                                    src_p->elements[i].g.h,
                                                    2);
-        encoder_append_non_negative_binary_integer(encoder_p,
-                                                   src_p->elements[i].g.l.length - 1,
-                                                   1);
+        encoder_append_non_negative_binary_integer(
+            encoder_p,
+            src_p->elements[i].g.l.length - 1,
+            1);
         encoder_append_bytes(encoder_p,
                              &src_p->elements[i].g.l.buf[0],
                              src_p->elements[i].g.l.length);
@@ -580,9 +590,10 @@ static void uper_c_source_d_encode_inner(
         }
 
         if (src_p->elements[i].m.o != 3) {
-            encoder_append_non_negative_binary_integer(encoder_p,
-                                                       src_p->elements[i].m.o + 3,
-                                                       3);
+            encoder_append_non_negative_binary_integer(
+                encoder_p,
+                src_p->elements[i].m.o + 3,
+                3);
         }
 
         if (src_p->elements[i].m.is_p_present) {
@@ -605,6 +616,7 @@ static void uper_c_source_d_decode_inner(
     uint8_t i;
     uint8_t choice;
     bool is_o_present;
+    uint8_t i_2;
 
     dst_p->length = decoder_read_non_negative_binary_integer(decoder_p, 4);
     dst_p->length += 1;
@@ -635,10 +647,24 @@ static void uper_c_source_d_decode_inner(
             break;
         }
 
-        dst_p->elements[i].a.e.length = decoder_read_non_negative_binary_integer(decoder_p, 1);
+        dst_p->elements[i].a.e.length = decoder_read_non_negative_binary_integer(
+            decoder_p,
+            1);
         dst_p->elements[i].a.e.length += 3;
+
+        if (dst_p->elements[i].a.e.length > 4) {
+            decoder_abort(decoder_p, EBADLENGTH);
+
+            return;
+        }
+
+        for (i_2 = 0; i_2 < dst_p->elements[i].a.e.length; i_2++) {
+        }
+
         dst_p->elements[i].g.h = decoder_read_non_negative_binary_integer(decoder_p, 2);
-        dst_p->elements[i].g.l.length = decoder_read_non_negative_binary_integer(decoder_p, 1);
+        dst_p->elements[i].g.l.length = decoder_read_non_negative_binary_integer(
+            decoder_p,
+            1);
         dst_p->elements[i].g.l.length += 1;
 
         if (dst_p->elements[i].g.l.length > 2) {
@@ -698,6 +724,7 @@ static void uper_c_source_e_encode_inner(
             encoder_abort(encoder_p, EBADCHOICE);
             break;
         }
+
         break;
 
     default:
@@ -710,18 +737,18 @@ static void uper_c_source_e_decode_inner(
     struct decoder_t *decoder_p,
     struct uper_c_source_e_t *dst_p)
 {
-    uint8_t tag;
-    uint8_t tag_2;
+    uint8_t choice;
+    uint8_t choice_2;
 
-    tag = decoder_read_non_negative_binary_integer(decoder_p, 0);
+    choice = decoder_read_non_negative_binary_integer(decoder_p, 0);
 
-    switch (tag) {
+    switch (choice) {
 
     case 0:
         dst_p->a.choice = uper_c_source_e_a_choice_b_e;
-        tag_2 = decoder_read_non_negative_binary_integer(decoder_p, 0);
+        choice_2 = decoder_read_non_negative_binary_integer(decoder_p, 0);
 
-        switch (tag_2) {
+        switch (choice_2) {
 
         case 0:
             dst_p->a.value.b.choice = uper_c_source_e_a_b_choice_c_e;
@@ -732,6 +759,7 @@ static void uper_c_source_e_decode_inner(
             decoder_abort(decoder_p, EBADCHOICE);
             break;
         }
+
         break;
 
     default:
@@ -747,9 +775,10 @@ static void uper_c_source_f_encode_inner(
     uint8_t i;
     uint8_t i_2;
 
-    encoder_append_non_negative_binary_integer(encoder_p,
-                                               src_p->length - 1,
-                                               1);
+    encoder_append_non_negative_binary_integer(
+        encoder_p,
+        src_p->length - 1,
+        1);
 
     for (i = 0; i < src_p->length; i++) {
         for (i_2 = 0; i_2 < 1; i_2++) {
@@ -765,7 +794,9 @@ static void uper_c_source_f_decode_inner(
     uint8_t i;
     uint8_t i_2;
 
-    dst_p->length = decoder_read_non_negative_binary_integer(decoder_p, 1);
+    dst_p->length = decoder_read_non_negative_binary_integer(
+        decoder_p,
+        1);
     dst_p->length += 1;
 
     if (dst_p->length > 2) {
@@ -921,9 +952,10 @@ static void uper_c_source_j_encode_inner(
     struct encoder_t *encoder_p,
     const struct uper_c_source_j_t *src_p)
 {
-    encoder_append_non_negative_binary_integer(encoder_p,
-                                               src_p->length - 22,
-                                               1);
+    encoder_append_non_negative_binary_integer(
+        encoder_p,
+        src_p->length - 22,
+        1);
     encoder_append_bytes(encoder_p,
                          &src_p->buf[0],
                          src_p->length);
@@ -933,7 +965,9 @@ static void uper_c_source_j_decode_inner(
     struct decoder_t *decoder_p,
     struct uper_c_source_j_t *dst_p)
 {
-    dst_p->length = decoder_read_non_negative_binary_integer(decoder_p, 1);
+    dst_p->length = decoder_read_non_negative_binary_integer(
+        decoder_p,
+        1);
     dst_p->length += 22;
 
     if (dst_p->length > 23) {
@@ -951,26 +985,24 @@ static void uper_c_source_k_encode_inner(
     struct encoder_t *encoder_p,
     const struct uper_c_source_k_t *src_p)
 {
-    (void)encoder_p;
-    (void)src_p;
+    encoder_append_non_negative_binary_integer(encoder_p, src_p->value, 0);
 }
 
 static void uper_c_source_k_decode_inner(
     struct decoder_t *decoder_p,
     struct uper_c_source_k_t *dst_p)
 {
-    (void)decoder_p;
-
-    dst_p->value = uper_c_source_k_a_e;
+    dst_p->value = decoder_read_non_negative_binary_integer(decoder_p, 0);
 }
 
 static void uper_c_source_l_encode_inner(
     struct encoder_t *encoder_p,
     const struct uper_c_source_l_t *src_p)
 {
-    encoder_append_non_negative_binary_integer(encoder_p,
-                                               src_p->length,
-                                               9);
+    encoder_append_non_negative_binary_integer(
+        encoder_p,
+        src_p->length - 0,
+        9);
     encoder_append_bytes(encoder_p,
                          &src_p->buf[0],
                          src_p->length);
@@ -980,7 +1012,9 @@ static void uper_c_source_l_decode_inner(
     struct decoder_t *decoder_p,
     struct uper_c_source_l_t *dst_p)
 {
-    dst_p->length = decoder_read_non_negative_binary_integer(decoder_p, 9);
+    dst_p->length = decoder_read_non_negative_binary_integer(
+        decoder_p,
+        9);
     dst_p->length += 0;
 
     if (dst_p->length > 500) {

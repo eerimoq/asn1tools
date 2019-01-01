@@ -273,8 +273,8 @@ static void decoder_abort(struct decoder_t *self_p,
 '''
 
 DECODER_FREE = '''
-static size_t decoder_free(struct decoder_t *self_p,
-                           size_t size)
+static ssize_t decoder_free(struct decoder_t *self_p,
+                            size_t size)
 {
     ssize_t pos;
 
@@ -847,28 +847,18 @@ class _Generator(object):
 
     def format_integer_inner(self, checker):
         type_name = format_type_name(checker.minimum, checker.maximum)
-
-        length = {
-            'int8_t': 8,
-            'uint8_t': 8,
-            'int16_t': 16,
-            'uint16_t': 16,
-            'int32_t': 32,
-            'uint32_t': 32,
-            'int64_t': 64,
-            'uint64_t': 64
-        }[type_name]
+        suffix = type_name[:-2]
 
         return (
             [
-                'encoder_append_integer_{}(encoder_p, src_p->{});'.format(
-                    length,
+                'encoder_append_{}(encoder_p, src_p->{});'.format(
+                    suffix,
                     self.location_inner())
             ],
             [
-                'dst_p->{} = decoder_read_integer_{}(decoder_p);'.format(
+                'dst_p->{} = decoder_read_{}(decoder_p);'.format(
                     self.location_inner(),
-                    length)
+                    suffix)
             ]
         )
 
@@ -891,73 +881,16 @@ class _Generator(object):
         encode_lines = []
         decode_lines = []
 
-        optionals = [
-            member
-            for member in type_.root_members
-            if member.optional or member.default is not None
-        ]
-
-        present_mask_length = ((len(optionals) + 7) // 8)
-        member_name_to_mask = {}
-        member_name_to_present_mask = {}
-
-        if present_mask_length > 0:
-            fmt = 'uint8_t {{}}[{}];'.format(present_mask_length)
-            unique_present_mask = self.add_unique_variable(fmt, 'present_mask')
-
-            for i in range(present_mask_length):
-                encode_lines.append('{}[{}] = 0;'.format(unique_present_mask,
-                                                         i))
-
-            encode_lines.append('')
-
-            decode_lines += [
-                'decoder_read_bytes(decoder_p,',
-                '                   &{}[0],'.format(unique_present_mask),
-                '                   sizeof({}));'.format(unique_present_mask),
-                ''
-            ]
-
-            for i, member in enumerate(optionals):
-                byte, bit = divmod(i, 8)
-                mask = '0x{:02x}'.format(1 << (7 - bit))
-                member_name_to_mask[member.name] = mask
-                present_mask = '{}[{}]'.format(unique_present_mask,
-                                               byte)
-                member_name_to_present_mask[member.name] = present_mask
-
-                if member.optional:
-                    encode_lines += [
-                        'if (src_p->{}is_{}_present) {{'.format(
-                            self.location_inner('', '.'),
-                            member.name),
-                        '    {} |= {};'.format(present_mask, mask),
-                        '}',
-                        ''
-                    ]
-                    decode_lines.append(
-                        'dst_p->{0}is_{1}_present = (({2} & {3}) == {3});'.format(
-                            self.location_inner('', '.'),
-                            member.name,
-                            present_mask,
-                            mask))
-                else:
-                    encode_lines += [
-                        'if (src_p->{}{} != {}) {{'.format(self.location_inner('', '.'),
-                                                           member.name,
-                                                           member.default),
-                        '    {} |= {};'.format(present_mask, mask),
-                        '}',
-                        ''
-                    ]
-
-            encode_lines += [
-                'encoder_append_bytes(encoder_p,',
-                '                     &{}[0],'.format(unique_present_mask),
-                '                     sizeof({}));'.format(unique_present_mask),
-                ''
-            ]
-            decode_lines.append('')
+        for member in type_.root_members:
+            if member.optional:
+                name = '{}is_{}_present'.format(self.location_inner('', '.'),
+                                                member.name)
+                encode_lines.append(
+                    'encoder_append_bit(encoder_p, src_p->{} ? 1 : 0);'.format(
+                        name))
+                decode_lines.append(
+                    'dst_p->{} = (decoder_read_bit(decoder_p) == 1);'.format(
+                        name))
 
         for member in type_.root_members:
             member_checker = self.get_member_checker(checker, member.name)
@@ -985,33 +918,13 @@ class _Generator(object):
                     '}',
                     ''
                 ]
-            elif member.default is not None:
-                name = '{}{}'.format(location, member.name)
-                member_encode_lines = [
-                    '',
-                    'if (src_p->{} != {}) {{'.format(name, member.default)
-                ] + indent_lines(member_encode_lines) + [
-                    '}',
-                    ''
-                ]
-                mask = member_name_to_mask[member.name]
-                present_mask = member_name_to_present_mask[member.name]
-                member_decode_lines = [
-                    '',
-                    'if (({0} & {1}) == {1}) {{'.format(present_mask, mask)
-                ] + indent_lines(member_decode_lines) + [
-                    '} else {',
-                    '    dst_p->{} = {};'.format(name, member.default),
-                    '}',
-                    ''
-                ]
 
             encode_lines += member_encode_lines
             decode_lines += member_decode_lines
 
         return encode_lines, decode_lines
 
-    def format_octet_string_inner(self, checker):
+    def format_octet_string_inner(self, type_, checker):
         location = self.location_inner('', '.')
 
         if checker.minimum == checker.maximum:
@@ -1025,39 +938,22 @@ class _Generator(object):
                 '                   &dst_p->{}buf[0],'.format(location),
                 '                   {});'.format(checker.maximum)
             ]
-        elif checker.maximum < 128:
-            encode_lines = [
-                'encoder_append_integer_8(encoder_p, src_p->{}length);'.format(
-                    location),
-                'encoder_append_bytes(encoder_p,',
-                '                     &src_p->{}buf[0],'.format(location),
-                '                     src_p->{}length);'.format(location)
-            ]
-            decode_lines = [
-                'dst_p->{}length = decoder_read_integer_8(decoder_p);'.format(
-                    location),
-                '',
-                'if (dst_p->{}length > {}) {{'.format(location, checker.maximum),
-                '    decoder_abort(decoder_p, EBADLENGTH);',
-                '',
-                '    return;',
-                '}',
-                '',
-                'decoder_read_bytes(decoder_p,',
-                '                   &dst_p->{}buf[0],'.format(location),
-                '                   dst_p->{}length);'.format(location)
-            ]
         else:
             encode_lines = [
-                'encoder_append_length_determinant(encoder_p, src_p->{}length);'.format(
-                    location),
+                'encoder_append_non_negative_binary_integer(',
+                '    encoder_p,',
+                '    src_p->{}length - {},'.format(location, checker.minimum),
+                '    {});'.format(type_.number_of_bits),
                 'encoder_append_bytes(encoder_p,',
                 '                     &src_p->{}buf[0],'.format(location),
                 '                     src_p->{}length);'.format(location)
             ]
             decode_lines = [
-                'dst_p->{}length = decoder_read_length_determinant(decoder_p);'.format(
+                'dst_p->{}length = decoder_read_non_negative_binary_integer('.format(
                     location),
+                '    decoder_p,',
+                '    {});'.format(type_.number_of_bits),
+                'dst_p->{}length += {};'.format(location, checker.minimum),
                 '',
                 'if (dst_p->{}length > {}) {{'.format(location, checker.maximum),
                 '    decoder_abort(decoder_p, EBADLENGTH);',
@@ -1094,7 +990,7 @@ class _Generator(object):
     def format_choice_inner(self, type_, checker):
         encode_lines = []
         decode_lines = []
-        unique_tag = self.add_unique_decode_variable('uint8_t {};', 'tag')
+        unique_choice = self.add_unique_decode_variable('uint8_t {};', 'choice')
         choice = '{}choice'.format(self.location_inner('', '.'))
 
         for member in type_.root_index_to_member.values():
@@ -1108,10 +1004,12 @@ class _Generator(object):
                             member,
                             member_checker)
 
-            tag = type_.root_name_to_index[member.name]
+            index = type_.root_name_to_index[member.name]
 
             choice_encode_lines = [
-                'encoder_append_integer_8(encoder_p, 0x{:02x});'.format(tag)
+                'encoder_append_non_negative_binary_integer(encoder_p, {}, {});'.format(
+                    index,
+                    type_.root_number_of_bits)
             ] + choice_encode_lines + [
                 'break;'
             ]
@@ -1129,7 +1027,7 @@ class _Generator(object):
                 'break;'
             ]
             decode_lines += [
-                'case 0x{:02x}:'.format(tag)
+                'case {}:'.format(index)
             ] + indent_lines(choice_decode_lines) + [
                 ''
             ]
@@ -1147,9 +1045,11 @@ class _Generator(object):
         ]
 
         decode_lines = [
-            '{} = decoder_read_integer_8(decoder_p);'.format(unique_tag),
+            '{} = decoder_read_non_negative_binary_integer(decoder_p, {});'.format(
+                unique_choice,
+                type_.root_number_of_bits),
             '',
-            'switch ({}) {{'.format(unique_tag),
+            'switch ({}) {{'.format(unique_choice),
             ''
         ] + decode_lines + [
             'default:',
@@ -1164,12 +1064,12 @@ class _Generator(object):
     def format_enumerated_inner(self):
         return (
             [
-                'encoder_append_integer_8(encoder_p, src_p->{});'.format(
-                    self.location_inner())
+                'encoder_append_non_negative_binary_integer(encoder_p, '
+                'src_p->{});'.format(self.location_inner())
             ],
             [
-                'dst_p->{} = decoder_read_integer_8(decoder_p);'.format(
-                    self.location_inner())
+                'dst_p->{} = decoder_read_non_negative_binary_integer('
+                'decoder_p);'.format(self.location_inner())
             ]
         )
 
@@ -1190,10 +1090,6 @@ class _Generator(object):
             '{} {{}};'.format(format_type_name(0, checker.maximum)),
             'i')
 
-        if checker.minimum == checker.maximum:
-            unique_length = self.add_unique_decode_variable('uint8_t {};',
-                                                            'length')
-
         with self.c_members_backtrace_push('elements[{}]'.format(unique_i)):
             encode_lines, decode_lines = self.format_type_inner(
                 type_.element_type,
@@ -1201,22 +1097,11 @@ class _Generator(object):
 
         if checker.minimum == checker.maximum:
             encode_lines = [
-                'encoder_append_integer_8(encoder_p, 1);',
-                'encoder_append_integer_8(encoder_p, {});'.format(checker.maximum),
-                '',
                 'for ({ui} = 0; {ui} < {maximum}; {ui}++) {{'.format(
                     ui=unique_i,
                     maximum=checker.maximum),
             ] + indent_lines(encode_lines)
             decode_lines = [
-                '{} = decoder_read_integer_8(decoder_p);'.format(unique_length),
-                '',
-                'if ({} > {}) {{'.format(unique_length, checker.maximum),
-                '    decoder_abort(decoder_p, EBADLENGTH);',
-                '',
-                '    return;',
-                '}',
-                '',
                 'for ({ui} = 0; {ui} < {maximum}; {ui}++) {{'.format(
                     ui=unique_i,
                     maximum=checker.maximum),
@@ -1238,6 +1123,8 @@ class _Generator(object):
                     self.location_inner('', '.')),
                 '    decoder_p,',
                 '    {});'.format(type_.number_of_bits),
+                'dst_p->{}length += {};'.format(self.location_inner('', '.'),
+                                                checker.minimum),
                 '',
                 'if (dst_p->{}length > {}) {{'.format(self.location_inner('', '.'),
                                                       checker.maximum),
@@ -1266,7 +1153,7 @@ class _Generator(object):
         elif isinstance(type_, uper.Boolean):
             return self.format_boolean_inner()
         elif isinstance(type_, uper.OctetString):
-            return self.format_octet_string_inner(checker)
+            return self.format_octet_string_inner(type_, checker)
         elif is_user_type(type_):
             return self.format_user_type_inner(type_.type_name,
                                                type_.module_name)
@@ -1298,7 +1185,7 @@ class _Generator(object):
         elif isinstance(type_, uper.Choice):
             encode_lines, decode_lines = self.format_choice_inner(type_, checker)
         elif isinstance(type_, uper.OctetString):
-            encode_lines, decode_lines = self.format_octet_string_inner(checker)
+            encode_lines, decode_lines = self.format_octet_string_inner(type_, checker)
         elif isinstance(type_, uper.Enumerated):
             encode_lines, decode_lines = self.format_enumerated_inner()
         elif isinstance(type_, uper.Null):
@@ -1335,7 +1222,7 @@ class _Generator(object):
             ('encoder_abort(', ENCODER_ABORT),
             ('encoder_append_bit(', ENCODER_ALLOC),
             ('encoder_append_bit(', ENCODER_APPEND_BIT),
-            ('encoder_append_bits(', ENCODER_APPEND_BITS),
+            ('encoder_append_bytes(', ENCODER_APPEND_BITS),
             ('encoder_append_bytes(', ENCODER_APPEND_BYTES),
             ('encoder_append_uint8(', ENCODER_APPEND_UINT8),
             ('encoder_append_uint16(', ENCODER_APPEND_UINT16),
@@ -1355,7 +1242,7 @@ class _Generator(object):
             ('decoder_abort(', DECODER_ABORT),
             ('decoder_read_bit(', DECODER_FREE),
             ('decoder_read_bit(', DECODER_READ_BIT),
-            ('decoder_read_bits(', DECODER_READ_BITS),
+            ('decoder_read_bytes(', DECODER_READ_BITS),
             ('decoder_read_bytes(', DECODER_READ_BYTES),
             ('decoder_read_uint8(', DECODER_READ_UINT8),
             ('decoder_read_uint16(', DECODER_READ_UINT16),

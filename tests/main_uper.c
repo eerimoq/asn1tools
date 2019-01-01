@@ -4,7 +4,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "files/c_source/c_source/uper.h"
+#include "uper.h"
 
 static void test_uper_c_source_a(void)
 {

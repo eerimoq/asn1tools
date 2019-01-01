@@ -16,6 +16,7 @@ UPER_C_SOURCES = \
 	tests/files/c_source/c_source/uper.c
 
 CFLAGS = \
+	-Itests/files/c_source \
 	-std=c99 \
 	-Wall \
 	-Wextra \
@@ -50,7 +51,7 @@ test:
 
 .PHONY: test-c-oer
 test-c-oer:
-	$(CC) $(CFLAGS) -Itests/files/c_source $(OER_C_SOURCES) -o $(OER_EXE)
+	$(CC) $(CFLAGS) $(OER_C_SOURCES) -o $(OER_EXE)
 	size $(OER_EXE)
 	./$(OER_EXE)
 
