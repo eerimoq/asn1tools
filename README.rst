@@ -307,6 +307,15 @@ Below is an example generating OER and UPER C source code from
 See `oer.h`_, `oer.c`_, `uper.h`_ and `uper.c`_ for the contents of
 the generated files.
 
+Other OER and/or UPER C code generators:
+
+- https://github.com/vlm/asn1c
+
+- https://github.com/ttsiodras/asn1scc
+
+See the `benchmark example`_ for a comparsion of `asn1c`, `asn1scc`
+and `asn1tools`.
+
 Contributing
 ============
 
@@ -398,3 +407,5 @@ Encodings
 .. _uper.h: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/uper.h
 
 .. _uper.c: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/uper.c
+
+.. _benchmark example: https://github.com/eerimoq/asn1tools/blob/master/examples/benchmarks/c_source
