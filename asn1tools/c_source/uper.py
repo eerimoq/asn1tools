@@ -1,98 +1,21 @@
-"""Basic Octet Encoding Rules (UPER) codec generator.
+"""Unaligned Packed Encoding Rules (UPER) C source code codec generator.
 
 """
 
-import struct
-
+from .utils import TYPE_DECLARATION_FMT
+from .utils import DECLARATION_FMT
+from .utils import DEFINITION_INNER_FMT
+from .utils import DEFINITION_FMT
 from .utils import canonical
 from .utils import camel_to_snake_case
+from .utils import join_lines
+from .utils import format_type_name
+from .utils import is_user_type
+from .utils import indent_lines
+from .utils import dedent_lines
 from ..codecs import uper
 from ..errors import Error
 
-
-TYPE_DECLARATION_FMT = '''\
-/**
- * Type {type_name} in module {module_name}.
- */
-{helper_types}\
-struct {namespace}_{module_name_snake}_{type_name_snake}_t {{
-{members}
-}};
-'''
-
-DECLARATION_FMT = '''\
-/**
- * Encode type {type_name} defined in module {module_name}.
- *
- * @param[out] dst_p Buffer to encode into.
- * @param[in] size Size of dst_p.
- * @param[in] src_p Data to encode.
- *
- * @return Encoded data length or negative error code.
- */
-ssize_t {namespace}_{module_name_snake}_{type_name_snake}_encode(
-    uint8_t *dst_p,
-    size_t size,
-    const struct {namespace}_{module_name_snake}_{type_name_snake}_t *src_p);
-
-/**
- * Decode type {type_name} defined in module {module_name}.
- *
- * @param[out] dst_p Decoded data.
- * @param[in] src_p Data to decode.
- * @param[in] size Size of src_p.
- *
- * @return Number of bytes decoded or negative error code.
- */
-ssize_t {namespace}_{module_name_snake}_{type_name_snake}_decode(
-    struct {namespace}_{module_name_snake}_{type_name_snake}_t *dst_p,
-    const uint8_t *src_p,
-    size_t size);
-'''
-
-DEFINITION_INNER_FMT = '''\
-static void {namespace}_{module_name_snake}_{type_name_snake}_encode_inner(
-    struct encoder_t *encoder_p,
-    const struct {namespace}_{module_name_snake}_{type_name_snake}_t *src_p)
-{{
-{encode_body}\
-}}
-
-static void {namespace}_{module_name_snake}_{type_name_snake}_decode_inner(
-    struct decoder_t *decoder_p,
-    struct {namespace}_{module_name_snake}_{type_name_snake}_t *dst_p)
-{{
-{decode_body}\
-}}
-'''
-
-DEFINITION_FMT = '''\
-ssize_t {namespace}_{module_name_snake}_{type_name_snake}_encode(
-    uint8_t *dst_p,
-    size_t size,
-    const struct {namespace}_{module_name_snake}_{type_name_snake}_t *src_p)
-{{
-    struct encoder_t encoder;
-
-    encoder_init(&encoder, dst_p, size);
-    {namespace}_{module_name_snake}_{type_name_snake}_encode_inner(&encoder, src_p);
-
-    return (encoder_get_result(&encoder));
-}}
-
-ssize_t {namespace}_{module_name_snake}_{type_name_snake}_decode(
-    struct {namespace}_{module_name_snake}_{type_name_snake}_t *dst_p,
-    const uint8_t *src_p,
-    size_t size)
-{{
-    struct decoder_t decoder;
-
-    decoder_init(&decoder, src_p, size);
-    {namespace}_{module_name_snake}_{type_name_snake}_decode_inner(&decoder, dst_p);
-
-    return (decoder_get_result(&decoder));
-}}
-'''
 
 ENCODER_AND_DECODER_STRUCTS = '''\
 struct encoder_t {
@@ -549,74 +472,6 @@ class _MembersBacktracesContext(object):
             backtrace.pop()
 
 
-def _join_lines(lines, suffix):
-    return[line + suffix for line in lines[:-1]] + lines[-1:]
-
-
-def _type_length(length):
-    if length <= 8:
-        return 8
-    elif length <= 16:
-        return 16
-    elif length <= 32:
-        return 32
-    else:
-        return 64
-
-
-def _format_type_name(minimum, maximum):
-    length = _type_length((maximum - minimum).bit_length())
-    type_name = 'int{}_t'.format(length)
-
-    if minimum >= 0:
-        type_name = 'u' + type_name
-
-    return type_name
-
-
-def _is_user_type(type_):
-    return type_.module_name is not None
-
-
-def _strip_blank_lines(lines):
-    try:
-        while lines[0] == '':
-            del lines[0]
-
-        while lines[-1] == '':
-            del lines[-1]
-    except IndexError:
-        pass
-
-    stripped = []
-
-    for line in lines:
-        if line == '' and stripped[-1] == '':
-            continue
-
-        stripped.append(line)
-
-    return stripped
-
-
-def _indent_lines(lines):
-    indented_lines = []
-
-    for line in lines:
-        if line:
-            indented_line = 4 * ' ' + line
-        else:
-            indented_line = line
-
-        indented_lines.append(indented_line)
-
-    return _strip_blank_lines(indented_lines)
-
-
-def _dedent_lines(lines):
-    return [line[4:] for line in lines]
-
-
 class _UserType(object):
 
     def __init__(self,
@@ -765,7 +620,7 @@ class _Generator(object):
         if not checker.is_bound():
             raise Error('INTEGER not fixed size.')
 
-        type_name = _format_type_name(checker.minimum, checker.maximum)
+        type_name = format_type_name(checker.minimum, checker.maximum)
 
         return [type_name]
 
@@ -816,7 +671,7 @@ class _Generator(object):
 
             lines += member_lines
 
-        return ['struct {'] + _indent_lines(lines) + ['}']
+        return ['struct {'] + indent_lines(lines) + ['}']
 
     def format_sequence_of(self, type_, checker):
         if not checker.is_bound():
@@ -834,7 +689,7 @@ class _Generator(object):
         else:
             length_lines = ['uint32_t length;']
 
-        return ['struct {'] + _indent_lines(length_lines + lines) + ['}']
+        return ['struct {'] + indent_lines(length_lines + lines) + ['}']
 
     def format_enumerated(self, type_):
         lines = ['enum {}_e'.format(self.location)]
@@ -845,7 +700,7 @@ class _Generator(object):
         ]
         self.helper_lines += [
             'enum {}_e {{'.format(self.location)
-        ] + _join_lines(values, ',') + [
+        ] + join_lines(values, ',') + [
             '};',
             ''
         ]
@@ -872,7 +727,7 @@ class _Generator(object):
 
         self.helper_lines += [
             'enum {}_choice_e {{'.format(self.location)
-        ] + _join_lines(choices, ',') + [
+        ] + join_lines(choices, ',') + [
             '};',
             ''
         ]
@@ -880,11 +735,11 @@ class _Generator(object):
         lines = [
             'enum {}_choice_e choice;'.format(self.location),
             'union {'
-        ] + _indent_lines(lines) + [
+        ] + indent_lines(lines) + [
             '} value;'
         ]
 
-        lines = ['struct {'] + _indent_lines(lines) + ['}']
+        lines = ['struct {'] + indent_lines(lines) + ['}']
 
         return lines
 
@@ -909,7 +764,7 @@ class _Generator(object):
             lines = []
         elif isinstance(type_, uper.OctetString):
             lines = self.format_octet_string(checker)
-        elif _is_user_type(type_):
+        elif is_user_type(type_):
             lines = self.format_user_type(type_.type_name,
                                           type_.module_name)
         elif isinstance(type_, uper.Sequence):
@@ -947,16 +802,16 @@ class _Generator(object):
                 lines = self.format_utf8_string(checker)
             elif isinstance(type_, uper.Sequence):
                 lines = self.format_sequence(type_, checker)[1:-1]
-                lines = _dedent_lines(lines)
+                lines = dedent_lines(lines)
             elif isinstance(type_, uper.SequenceOf):
                 lines = self.format_sequence_of(type_, checker)[1:-1]
-                lines = _dedent_lines(lines)
+                lines = dedent_lines(lines)
             elif isinstance(type_, uper.Choice):
                 lines = self.format_choice(type_, checker)
-                lines = _dedent_lines(lines[1:-1])
+                lines = dedent_lines(lines[1:-1])
             elif isinstance(type_, uper.OctetString):
                 lines = self.format_octet_string(checker)[1:-1]
-                lines = _dedent_lines(lines)
+                lines = dedent_lines(lines)
             elif isinstance(type_, uper.Null):
                 lines = []
             else:
@@ -968,7 +823,7 @@ class _Generator(object):
         if not lines:
             lines = ['uint8_t dummy;']
 
-        lines = _indent_lines(lines)
+        lines = indent_lines(lines)
 
         if self.helper_lines:
             self.helper_lines.append('')
@@ -991,7 +846,7 @@ class _Generator(object):
                                       type_name_snake=self.type_name_snake)
 
     def format_integer_inner(self, checker):
-        type_name = _format_type_name(checker.minimum, checker.maximum)
+        type_name = format_type_name(checker.minimum, checker.maximum)
 
         length = {
             'int8_t': 8,
@@ -1119,14 +974,14 @@ class _Generator(object):
                 member_encode_lines = [
                     '',
                     'if (src_p->{}) {{'.format(is_present)
-                ] + _indent_lines(member_encode_lines) + [
+                ] + indent_lines(member_encode_lines) + [
                     '}',
                     ''
                 ]
                 member_decode_lines = [
                     '',
                     'if (dst_p->{}) {{'.format(is_present)
-                ] + _indent_lines(member_decode_lines) + [
+                ] + indent_lines(member_decode_lines) + [
                     '}',
                     ''
                 ]
@@ -1135,7 +990,7 @@ class _Generator(object):
                 member_encode_lines = [
                     '',
                     'if (src_p->{} != {}) {{'.format(name, member.default)
-                ] + _indent_lines(member_encode_lines) + [
+                ] + indent_lines(member_encode_lines) + [
                     '}',
                     ''
                 ]
@@ -1144,7 +999,7 @@ class _Generator(object):
                 member_decode_lines = [
                     '',
                     'if (({0} & {1}) == {1}) {{'.format(present_mask, mask)
-                ] + _indent_lines(member_decode_lines) + [
+                ] + indent_lines(member_decode_lines) + [
                     '} else {',
                     '    dst_p->{} = {};'.format(name, member.default),
                     '}',
@@ -1262,7 +1117,7 @@ class _Generator(object):
             ]
             encode_lines += [
                 'case {}_choice_{}_e:'.format(self.location, member.name)
-            ] + _indent_lines(choice_encode_lines) + [
+            ] + indent_lines(choice_encode_lines) + [
                 ''
             ]
 
@@ -1275,7 +1130,7 @@ class _Generator(object):
             ]
             decode_lines += [
                 'case 0x{:02x}:'.format(tag)
-            ] + _indent_lines(choice_decode_lines) + [
+            ] + indent_lines(choice_decode_lines) + [
                 ''
             ]
 
@@ -1332,7 +1187,7 @@ class _Generator(object):
 
     def format_sequence_of_inner(self, type_, checker):
         unique_i = self.add_unique_variable(
-            '{} {{}};'.format(_format_type_name(0, checker.maximum)),
+            '{} {{}};'.format(format_type_name(0, checker.maximum)),
             'i')
 
         if checker.minimum == checker.maximum:
@@ -1352,7 +1207,7 @@ class _Generator(object):
                 'for ({ui} = 0; {ui} < {maximum}; {ui}++) {{'.format(
                     ui=unique_i,
                     maximum=checker.maximum),
-            ] + _indent_lines(encode_lines)
+            ] + indent_lines(encode_lines)
             decode_lines = [
                 '{} = decoder_read_integer_8(decoder_p);'.format(unique_length),
                 '',
@@ -1365,7 +1220,7 @@ class _Generator(object):
                 'for ({ui} = 0; {ui} < {maximum}; {ui}++) {{'.format(
                     ui=unique_i,
                     maximum=checker.maximum),
-            ] + _indent_lines(decode_lines)
+            ] + indent_lines(decode_lines)
         else:
             encode_lines = [
                 'encoder_append_non_negative_binary_integer(',
@@ -1377,7 +1232,7 @@ class _Generator(object):
                 'for ({ui} = 0; {ui} < src_p->{loc}length; {ui}++) {{'.format(
                     ui=unique_i,
                     loc=self.location_inner('', '.')),
-            ] + _indent_lines(encode_lines)
+            ] + indent_lines(encode_lines)
             decode_lines = [
                 'dst_p->{}length = decoder_read_non_negative_binary_integer('.format(
                     self.location_inner('', '.')),
@@ -1394,7 +1249,7 @@ class _Generator(object):
                 'for ({ui} = 0; {ui} < dst_p->{loc}length; {ui}++) {{'.format(
                     loc=self.location_inner('', '.'),
                     ui=unique_i),
-            ] + _indent_lines(decode_lines)
+            ] + indent_lines(decode_lines)
 
         encode_lines += ['}', '']
         decode_lines += ['}', '']
@@ -1412,7 +1267,7 @@ class _Generator(object):
             return self.format_boolean_inner()
         elif isinstance(type_, uper.OctetString):
             return self.format_octet_string_inner(checker)
-        elif _is_user_type(type_):
+        elif is_user_type(type_):
             return self.format_user_type_inner(type_.type_name,
                                                type_.module_name)
         elif isinstance(type_, uper.Sequence):
@@ -1457,8 +1312,8 @@ class _Generator(object):
         if self.decode_variable_lines:
             decode_lines = self.decode_variable_lines + [''] + decode_lines
 
-        encode_lines = _indent_lines(encode_lines) + ['']
-        decode_lines = _indent_lines(decode_lines) + ['']
+        encode_lines = indent_lines(encode_lines) + ['']
+        decode_lines = indent_lines(decode_lines) + ['']
 
         return DEFINITION_INNER_FMT.format(namespace=self.namespace,
                                            module_name_snake=self.module_name_snake,
