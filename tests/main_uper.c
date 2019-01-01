@@ -298,6 +298,58 @@ static void test_uper_c_source_d_all_present(void)
     assert(decoded.elements[0].m.p.r == true);
 }
 
+static void test_uper_c_source_d_some_missing(void)
+{
+    uint8_t encoded[8];
+    struct uper_c_source_d_t decoded;
+
+    /* Encode. */
+    decoded.length = 1;
+    decoded.elements[0].a.b.choice = uper_c_source_d_a_b_choice_d_e;
+    decoded.elements[0].a.b.value.d = false;
+    decoded.elements[0].a.e.length = 3;
+    decoded.elements[0].g.h = uper_c_source_d_g_h_k_e;
+    decoded.elements[0].g.l.length = 1;
+    decoded.elements[0].g.l.buf[0] = 0x54;
+    decoded.elements[0].m.is_n_present = false;
+    /* Default value 3. */
+    decoded.elements[0].m.o = 3;
+    decoded.elements[0].m.is_p_present = true;
+    memset(&decoded.elements[0].m.p.q.buf[0],
+           3,
+           sizeof(decoded.elements[0].m.p.q.buf));
+    decoded.elements[0].m.p.is_r_present = false;
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(uper_c_source_d_encode(&encoded[0],
+                                 sizeof(encoded),
+                                 &decoded) == sizeof(encoded));
+    assert(memcmp(&encoded[0],
+                  "\x09\x15\x08\x0c\x0c\x0c\x0c\x0c",
+                  sizeof(encoded)) == 0);
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(uper_c_source_d_decode(&decoded,
+                                 &encoded[0],
+                                 sizeof(encoded)) == sizeof(encoded));
+
+    assert(decoded.length == 1);
+    assert(decoded.elements[0].a.b.choice == uper_c_source_d_a_b_choice_d_e);
+    assert(decoded.elements[0].a.b.value.d == false);
+    assert(decoded.elements[0].a.e.length == 3);
+    assert(decoded.elements[0].g.h == uper_c_source_d_g_h_k_e);
+    assert(decoded.elements[0].g.l.length == 1);
+    assert(decoded.elements[0].g.l.buf[0] == 0x54);
+    assert(!decoded.elements[0].m.is_n_present);
+    assert(decoded.elements[0].m.o == 3);
+    assert(decoded.elements[0].m.is_p_present);
+    assert(memcmp(&decoded.elements[0].m.p.q.buf[0],
+                  "\x03\x03\x03\x03\x03",
+                  sizeof(decoded.elements[0].m.p.q.buf)) == 0);
+    assert(!decoded.elements[0].m.p.is_r_present);
+}
+
 static void test_uper_c_source_e(void)
 {
     uint8_t encoded[1];
@@ -401,6 +453,24 @@ static void test_uper_c_source_g(void)
     assert(decoded.i == true);
 }
 
+static void test_uper_c_source_h(void)
+{
+    uint8_t encoded[1];
+    struct uper_c_source_h_t decoded;
+
+    /* Encode. */
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(uper_c_source_h_encode(&encoded[0],
+                                  sizeof(encoded),
+                                  &decoded) == 0);
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(uper_c_source_h_decode(&decoded,
+                                  &encoded[0],
+                                  sizeof(encoded)) == 0);
+}
+
 int main(void)
 {
     test_uper_c_source_a();
@@ -416,10 +486,12 @@ int main(void)
     test_uper_c_source_c_decode_error_bad_length();
 
     test_uper_c_source_d_all_present();
+    test_uper_c_source_d_some_missing();
 
     test_uper_c_source_e();
     test_uper_c_source_f();
     test_uper_c_source_g();
+    test_uper_c_source_h();
 
     return (0);
 }

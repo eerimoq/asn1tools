@@ -870,6 +870,42 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'D', decoded, encoded)
 
+        # Type D - some missing.
+        decoded = [
+            {
+                'a': {
+                    'b': ('d', False),
+                    'e': [None, None, None],
+                    'f': None
+                },
+                'g': {
+                    'h': 'k',
+                    'l': b'\x54'
+                },
+                'm': {
+                    'o': 3,
+                    'p': {
+                        'q': 5 * b'\x03'
+                    }
+                }
+            }
+        ]
+
+        encoded_messages = [
+            b'\x30\x26\x30\x24\xa0\x0f\xa0\x03\x81\x01\x00\xa1\x06\x05\x00\x05\x00\x05\x00\x82\x00\xa1\x06\x80\x01\x02\x81\x01\x54\xa2\x09\xa2\x07\x80\x05\x03\x03\x03\x03\x03',
+            b'\x30\x26\x30\x24\xa0\x0f\xa0\x03\x81\x01\x00\xa1\x06\x05\x00\x05\x00\x05\x00\x82\x00\xa1\x06\x80\x01\x02\x81\x01\x54\xa2\x09\xa2\x07\x80\x05\x03\x03\x03\x03\x03',
+            b'[{"a":{"b":{"d":false},"e":[null,null,null],"f":null},"g":{"h":"k","l":"54"},"m":{"o":3,"p":{"q":"0303030303"}}}]',
+            b'\x01\x01\x81\x00\x01\x03\x02\x01\x54\x20\x00\x03\x03\x03\x03\x03',
+            b'\x09\x00\x54\x20\x03\x03\x03\x03\x03',
+            b'\x09\x15\x08\x0c\x0c\x0c\x0c\x0c',
+            b'<D><SEQUENCE><a><b><d><false /></d></b><e><NULL /><NULL /><NULL '
+            b'/></e><f /></a><g><h><k /></h><l>54</l></g><m><o>3</o><p><q>0303'
+            b'030303</q></p></m></SEQUENCE></D>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'D', decoded, encoded)
+
         # Type E.
         decoded = {'a': ('b', ('c', True))}
 
