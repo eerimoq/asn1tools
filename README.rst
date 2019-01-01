@@ -23,7 +23,7 @@ Supported codecs:
 
 Miscellaneous features:
 
-- `C` source code generator (with lots of restrictions).
+- `C` source code generator (with lots of limitations).
 
 Project homepage: https://github.com/eerimoq/asn1tools
 
