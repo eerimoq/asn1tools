@@ -40,7 +40,7 @@ D ::= SEQUENCE (SIZE(1..10)) OF SEQUENCE {
     },
     m SEQUENCE {
         n BOOLEAN OPTIONAL,
-        o INTEGER (-3..3) DEFAULT 3,
+        o INTEGER (-2..4) DEFAULT 3,
         p SEQUENCE {
             q OCTET STRING (SIZE(5)),
             r BOOLEAN OPTIONAL

@@ -16,22 +16,22 @@ asn1tools:
 
 .. code-block::
 
-      text    data     bss     dec     hex filename
-      5401     608       8    6017    1781 main
+   text    data     bss     dec     hex	filename
+   5569     608       8    6185    1829	main
 
 asn1scc:
 
 .. code-block::
 
-      text    data     bss     dec     hex filename
-     12153     608       8   12769    31e1 main
+   text    data     bss     dec     hex filename
+  12153     608       8   12769    31e1 main
 
 asn1c:
 
 .. code-block::
 
-      text    data     bss     dec     hex filename
-     70834    5408      80   76322   12a22 main
+   text    data     bss     dec     hex filename
+  70834    5408      80   76322   12a22 main
 
 Runtime memory usage
 --------------------

@@ -13,7 +13,7 @@ OER_C_SOURCES = \
 
 UPER_C_SOURCES = \
 	tests/main_uper.c \
-	tests/files/c_source/c_source/uper.c
+	tests/files/c_source/uper.c
 
 CFLAGS = \
 	-Itests/files/c_source \

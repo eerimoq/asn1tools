@@ -845,22 +845,39 @@ class _Generator(object):
                                       module_name_snake=self.module_name_snake,
                                       type_name_snake=self.type_name_snake)
 
-    def format_integer_inner(self, checker):
+    def format_integer_inner(self, type_, checker):
         type_name = format_type_name(checker.minimum, checker.maximum)
         suffix = type_name[:-2]
+        location = self.location_inner()
 
-        return (
-            [
-                'encoder_append_{}(encoder_p, src_p->{});'.format(
-                    suffix,
-                    self.location_inner())
-            ],
-            [
-                'dst_p->{} = decoder_read_{}(decoder_p);'.format(
-                    self.location_inner(),
-                    suffix)
-            ]
-        )
+        if (type_.number_of_bits % 8) == 0:
+            return (
+                [
+                    'encoder_append_{}(encoder_p, src_p->{});'.format(
+                        suffix,
+                        location)
+                ],
+                [
+                    'dst_p->{} = decoder_read_{}(decoder_p);'.format(location,
+                                                                     suffix)
+                ]
+            )
+        else:
+            return (
+                [
+                    'encoder_append_non_negative_binary_integer(',
+                    '    encoder_p,',
+                    '    src_p->{} - {},'.format(location, checker.minimum),
+                    '    {});'.format(type_.number_of_bits)
+                ],
+                [
+                    'dst_p->{} = decoder_read_non_negative_binary_integer('.format(
+                        location),
+                    '    decoder_p,',
+                    '    {});'.format(type_.number_of_bits),
+                    'dst_p->{} += {};'.format(location, checker.minimum)
+                ]
+            )
 
     def format_boolean_inner(self):
         return (
@@ -880,6 +897,7 @@ class _Generator(object):
     def format_sequence_inner(self, type_, checker):
         encode_lines = []
         decode_lines = []
+        member_name_to_is_present = {}
 
         for member in type_.root_members:
             if member.optional:
@@ -891,6 +909,18 @@ class _Generator(object):
                 decode_lines.append(
                     'dst_p->{} = (decoder_read_bit(decoder_p) == 1);'.format(
                         name))
+            elif member.default is not None:
+                unique_is_present = self.add_unique_decode_variable('bool {};',
+                                                                    'is_present')
+                member_name_to_is_present[member.name] = unique_is_present
+                encode_lines.append(
+                    'encoder_append_bit(encoder_p, src_p->{}{} != {} ? 1 : 0);'.format(
+                        self.location_inner('', '.'),
+                        member.name,
+                        member.default))
+                decode_lines.append(
+                    '{} = (decoder_read_bit(decoder_p) == 1);'.format(
+                        unique_is_present))
 
         for member in type_.root_members:
             member_checker = self.get_member_checker(checker, member.name)
@@ -915,6 +945,25 @@ class _Generator(object):
                     '',
                     'if (dst_p->{}) {{'.format(is_present)
                 ] + indent_lines(member_decode_lines) + [
+                    '}',
+                    ''
+                ]
+            elif member.default is not None:
+                name = '{}{}'.format(location, member.name)
+                member_encode_lines = [
+                    '',
+                    'if (src_p->{} != {}) {{'.format(name, member.default)
+                ] + indent_lines(member_encode_lines) + [
+                    '}',
+                    ''
+                ]
+                is_present = member_name_to_is_present[member.name]
+                member_decode_lines = [
+                    '',
+                    'if ({}) {{'.format(is_present)
+                ] + indent_lines(member_decode_lines) + [
+                    '} else {',
+                    '    dst_p->{} = {};'.format(name, member.default),
                     '}',
                     ''
                 ]
@@ -1061,15 +1110,17 @@ class _Generator(object):
 
         return encode_lines, decode_lines
 
-    def format_enumerated_inner(self):
+    def format_enumerated_inner(self, type_):
         return (
             [
                 'encoder_append_non_negative_binary_integer(encoder_p, '
-                'src_p->{});'.format(self.location_inner())
+                'src_p->{}, {});'.format(self.location_inner(),
+                                         type_.root_number_of_bits)
             ],
             [
                 'dst_p->{} = decoder_read_non_negative_binary_integer('
-                'decoder_p);'.format(self.location_inner())
+                'decoder_p, {});'.format(self.location_inner(),
+                                         type_.root_number_of_bits)
             ]
         )
 
@@ -1145,7 +1196,7 @@ class _Generator(object):
 
     def format_type_inner(self, type_, checker):
         if isinstance(type_, uper.Integer):
-            return self.format_integer_inner(checker)
+            return self.format_integer_inner(type_, checker)
         elif isinstance(type_, uper.Real):
             return self.format_real_inner()
         elif isinstance(type_, uper.Null):
@@ -1164,7 +1215,7 @@ class _Generator(object):
         elif isinstance(type_, uper.SequenceOf):
             return self.format_sequence_of_inner(type_, checker)
         elif isinstance(type_, uper.Enumerated):
-            return self.format_enumerated_inner()
+            return self.format_enumerated_inner(type_)
         else:
             raise NotImplementedError(type_)
 
@@ -1173,7 +1224,7 @@ class _Generator(object):
         checker = compiled_type.constraints_checker.type
 
         if isinstance(type_, uper.Integer):
-            encode_lines, decode_lines = self.format_integer_inner(checker)
+            encode_lines, decode_lines = self.format_integer_inner(type_, checker)
         elif isinstance(type_, uper.Boolean):
             encode_lines, decode_lines = self.format_boolean_inner()
         elif isinstance(type_, uper.Real):
@@ -1187,7 +1238,7 @@ class _Generator(object):
         elif isinstance(type_, uper.OctetString):
             encode_lines, decode_lines = self.format_octet_string_inner(type_, checker)
         elif isinstance(type_, uper.Enumerated):
-            encode_lines, decode_lines = self.format_enumerated_inner()
+            encode_lines, decode_lines = self.format_enumerated_inner(type_)
         elif isinstance(type_, uper.Null):
             encode_lines, decode_lines = self.format_null_inner()
         else:

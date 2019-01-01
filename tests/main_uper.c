@@ -270,7 +270,7 @@ static void test_uper_c_source_d_all_present(void)
                                   sizeof(encoded),
                                   &decoded) == sizeof(encoded));
     assert(memcmp(&encoded[0],
-                  "\x00\xd5\x15\x7a\xc0\xc0\xc0\xc0\xc0\xe0",
+                  "\x00\xd5\x15\x7a\x40\xc0\xc0\xc0\xc0\xe0",
                   sizeof(encoded)) == 0);
 
     /* Decode. */

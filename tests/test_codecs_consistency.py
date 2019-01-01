@@ -860,8 +860,8 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             b'}]',
             b'\x01\x01\x80\x00\x01\x03\x01\x02\x54\x55\xe0\x00\x02\x80\x03\x03'
             b'\x03\x03\x03\xff',
-            b'\x00\xc0\x54\x55\xeb\x03\x03\x03\x03\x03\x80',
-            b'\x00\xd5\x15\x7a\xc0\xc0\xc0\xc0\xc0\xe0',
+            b'\x00\xc0\x54\x55\xe9\x03\x03\x03\x03\x03\x80',
+            b'\x00\xd5\x15\x7a\x40\xc0\xc0\xc0\xc0\xe0',
             b'<D><SEQUENCE><a><b><c>0</c></b><e><NULL /><NULL /><NULL /></e><f'
             b' /></a><g><h><j /></h><l>5455</l></g><m><n><false /></n><o>2</o>'
             b'<p><q>0303030303</q><r><true /></r></p></m></SEQUENCE></D>'

@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "uper_c_source.h"
+#include "uper.h"
 
 int main()
 {
@@ -15,17 +15,17 @@ int main()
     struct uper_my_protocol_pdu_t decoded;
 
     decoded.a = 12345678;
-    decoded.b.choice = uper_my_protocol_pdu_b_choice_a_t;
+    decoded.b.choice = uper_my_protocol_pdu_b_choice_a_e;
     decoded.b.value.a.length = 2;
 
     /* First element. */
-    decoded.b.value.a.elements[0].choice = uper_my_protocol_b_choice_a_t;
+    decoded.b.value.a.elements[0].choice = uper_my_protocol_b_choice_a_e;
     decoded.b.value.a.elements[0].value.a.is_a_present = true;
     decoded.b.value.a.elements[0].value.a.a.a.length = 0;
     decoded.b.value.a.elements[0].value.a.a.is_b_present = false;
     decoded.b.value.a.elements[0].value.a.a.c = 0;
     decoded.b.value.a.elements[0].value.a.b = 4294967295;
-    decoded.b.value.a.elements[0].value.a.c.choice = uper_my_protocol_c_c_choice_a_t;
+    decoded.b.value.a.elements[0].value.a.c.choice = uper_my_protocol_c_c_choice_a_e;
     decoded.b.value.a.elements[0].value.a.c.value.a.elements[0].length = 3;
     memcpy(&decoded.b.value.a.elements[0].value.a.c.value.a.elements[0].buf[0],
            "\x00\x01\x02",
@@ -41,7 +41,7 @@ int main()
     decoded.b.value.a.elements[0].value.a.d.a = true;
 
     /* Second element. */
-    decoded.b.value.a.elements[1].choice = uper_my_protocol_b_choice_b_t;
+    decoded.b.value.a.elements[1].choice = uper_my_protocol_b_choice_b_e;
     decoded.b.value.a.elements[1].value.b.length = 16;
     memcpy(&decoded.b.value.a.elements[1].value.b.buf[0],
            "\x5a\x5a\x5a\x5a\x5a\x5a\x5a\x5a\x5a\x5a\x5a\x5a\x5a\x5a\x5a\x5a",
