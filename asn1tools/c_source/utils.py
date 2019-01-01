@@ -1,5 +1,7 @@
 import re
 
+from ..errors import Error
+
 
 TYPE_DECLARATION_FMT = '''\
 /**
@@ -154,6 +156,255 @@ class UserType(object):
         self.definition_inner = definition_inner
         self.definition = definition
         self.used_user_types = used_user_types
+
+
+class Generator(object):
+
+    def __init__(self, namespace):
+        self.namespace = canonical(namespace)
+        self.asn1_members_backtrace = []
+        self.c_members_backtrace = []
+        self.module_name = None
+        self.type_name = None
+        self.helper_lines = []
+        self.base_variables = set()
+        self.used_suffixes_by_base_variables = {}
+        self.encode_variable_lines = []
+        self.decode_variable_lines = []
+        self.used_user_types = []
+
+    def reset_type(self):
+        self.helper_lines = []
+        self.base_variables = set()
+        self.used_suffixes_by_base_variables = {}
+        self.encode_variable_lines = []
+        self.decode_variable_lines = []
+        self.used_user_types = []
+
+    @property
+    def module_name_snake(self):
+        return camel_to_snake_case(self.module_name)
+
+    @property
+    def type_name_snake(self):
+        return camel_to_snake_case(self.type_name)
+
+    @property
+    def location(self):
+        location = '{}_{}_{}'.format(self.namespace,
+                                     self.module_name_snake,
+                                     self.type_name_snake)
+
+        if self.asn1_members_backtrace:
+            location += '_{}'.format('_'.join(self.asn1_members_backtrace))
+
+        return location
+
+    def location_inner(self, default='value', end=''):
+        if self.c_members_backtrace:
+            return '.'.join(self.c_members_backtrace) + end
+        else:
+            return default
+
+    def members_backtrace_push(self, member_name):
+        backtraces = [
+            self.asn1_members_backtrace,
+            self.c_members_backtrace
+        ]
+
+        return MembersBacktracesContext(backtraces, member_name)
+
+    def asn1_members_backtrace_push(self, member_name):
+        backtraces = [self.asn1_members_backtrace]
+
+        return MembersBacktracesContext(backtraces, member_name)
+
+    def c_members_backtrace_push(self, member_name):
+        backtraces = [self.c_members_backtrace]
+
+        return MembersBacktracesContext(backtraces, member_name)
+
+    def get_member_checker(self, checker, name):
+        for member in checker.members:
+            if member.name == name:
+                return member
+
+        raise Error('No member checker found for {}.'.format(name))
+
+    def add_unique_variable(self, fmt, name, variable_lines=None):
+        if name in self.base_variables:
+            try:
+                suffix = self.used_suffixes_by_base_variables[name]
+                suffix += 1
+            except KeyError:
+                suffix = 2
+
+            self.used_suffixes_by_base_variables[name] = suffix
+            unique_name = '{}_{}'.format(name, suffix)
+        else:
+            self.base_variables.add(name)
+            unique_name = name
+
+        line = fmt.format(unique_name)
+
+        if variable_lines is None:
+            self.encode_variable_lines.append(line)
+            self.decode_variable_lines.append(line)
+        elif variable_lines == 'encode':
+            self.encode_variable_lines.append(line)
+        else:
+            self.decode_variable_lines.append(line)
+
+        return unique_name
+
+    def add_unique_encode_variable(self, fmt, name):
+        return self.add_unique_variable(fmt, name, 'encode')
+
+    def add_unique_decode_variable(self, fmt, name):
+        return self.add_unique_variable(fmt, name, 'decode')
+
+    def format_integer(self, checker):
+        if not checker.is_bound():
+            raise Error('INTEGER not fixed size.')
+
+        type_name = format_type_name(checker.minimum, checker.maximum)
+
+        return [type_name]
+
+    def format_boolean(self):
+        return ['bool']
+
+    def format_octet_string(self, checker):
+        if not checker.has_upper_bound():
+            raise Error('OCTET STRING has no maximum length.')
+
+        if checker.minimum == checker.maximum:
+            lines = []
+        elif checker.maximum < 256:
+            lines = ['    uint8_t length;']
+        else:
+            lines = ['    uint32_t length;']
+
+        return [
+            'struct {'
+        ] + lines + [
+            '    uint8_t buf[{}];'.format(checker.maximum),
+            '}'
+        ]
+
+    def format_utf8_string(self, checker):
+        if not checker.has_upper_bound():
+            raise Error('UTF8String has no maximum length.')
+
+        raise NotImplementedError
+
+    def format_sequence(self, type_, checker):
+        lines = []
+
+        for member in type_.root_members:
+            member_checker = self.get_member_checker(checker, member.name)
+
+            if member.optional:
+                lines += ['bool is_{}_present;'.format(member.name)]
+
+            with self.members_backtrace_push(member.name):
+                member_lines = self.format_type(member, member_checker)
+
+            if member_lines:
+                member_lines[-1] += ' {};'.format(member.name)
+
+            lines += member_lines
+
+        return ['struct {'] + indent_lines(lines) + ['}']
+
+    def format_sequence_of(self, type_, checker):
+        if not checker.is_bound():
+            raise Error('SEQUENCE OF has no maximum length.')
+
+        lines = self.format_type(type_.element_type, checker.element_type)
+
+        if lines:
+            lines[-1] += ' elements[{}];'.format(checker.maximum)
+
+        if checker.minimum == checker.maximum:
+            length_lines = []
+        elif checker.maximum < 256:
+            length_lines = ['uint8_t length;']
+        else:
+            length_lines = ['uint32_t length;']
+
+        return ['struct {'] + indent_lines(length_lines + lines) + ['}']
+
+    def format_enumerated(self, type_):
+        lines = ['enum {}_e'.format(self.location)]
+
+        values = [
+            '    {}_{}_e'.format(self.location, value)
+            for value in self.get_enumerated_values(type_)
+        ]
+        self.helper_lines += [
+            'enum {}_e {{'.format(self.location)
+        ] + join_lines(values, ',') + [
+            '};',
+            ''
+        ]
+
+        return lines
+
+    def format_choice(self, type_, checker):
+        lines = []
+        choices = []
+
+        for member in self.get_choice_members(type_):
+            member_checker = self.get_member_checker(checker,
+                                                     member.name)
+
+            with self.members_backtrace_push(member.name):
+                choice_lines = self.format_type(member, member_checker)
+
+            if choice_lines:
+                choice_lines[-1] += ' {};'.format(member.name)
+
+            lines += choice_lines
+            choices.append('    {}_choice_{}_e'.format(self.location,
+                                                       member.name))
+
+        self.helper_lines += [
+            'enum {}_choice_e {{'.format(self.location)
+        ] + join_lines(choices, ',') + [
+            '};',
+            ''
+        ]
+
+        lines = [
+            'enum {}_choice_e choice;'.format(self.location),
+            'union {'
+        ] + indent_lines(lines) + [
+            '} value;'
+        ]
+
+        lines = ['struct {'] + indent_lines(lines) + ['}']
+
+        return lines
+
+    def format_user_type(self, type_name, module_name):
+        module_name_snake = camel_to_snake_case(module_name)
+        type_name_snake = camel_to_snake_case(type_name)
+
+        self.used_user_types.append((type_name, module_name))
+
+        return ['struct {}_{}_{}_t'.format(self.namespace,
+                                           module_name_snake,
+                                           type_name_snake)]
+
+    def format_type(self, type_, checker):
+        raise NotImplementedError('To be implemented by subclasses.')
+
+    def get_enumerated_values(self, type_):
+        raise NotImplementedError('To be implemented by subclasses.')
+
+    def get_choice_members(self, type_):
+        raise NotImplementedError('To be implemented by subclasses.')
 
 
 def canonical(value):
