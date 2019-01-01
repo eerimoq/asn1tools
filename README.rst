@@ -265,8 +265,6 @@ The generate C source subcommand
 
 Generate OER or UPER C source code from an ASN.1 specification.
 
-**NOTE**: The UPER generator is not yet implemented!!!
-
 No dynamic memory is used in the generated code. To achieve this all
 types in the ASN.1 specification must have a known maximum size,
 i.e. ``INTEGER (0..7)``, ``OCTET STRING (SIZE(12))``, etc.
