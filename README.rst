@@ -294,8 +294,8 @@ Known limitations:
 - ``CHOICE`` tags longer than one byte are not yet supported. Only
   applies to OER.
 
-Below is an example generating OER and UPER C source code from an
-ASN.1 file.
+Below is an example generating OER and UPER C source code from
+`tests/files/c_source.asn`_.
 
 .. code-block:: text
 
@@ -388,6 +388,8 @@ Encodings
 .. _encode: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compiler.Specification.encode
 .. _decode: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compiler.Specification.decode
 .. _examples: https://github.com/eerimoq/asn1tools/tree/master/examples
+
+.. _tests/files/c_source.asn: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source.asn
 
 .. _oer.h: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/oer.h
 
