@@ -734,8 +734,7 @@ exit
             'generate_c_source',
             '--namespace', 'uper',
             '--codec', 'uper',
-            'tests/files/c_source.asn',
-            'examples/programming_types/programming_types.asn'
+            'tests/files/c_source.asn'
         ]
 
         filename_h = 'uper.h'

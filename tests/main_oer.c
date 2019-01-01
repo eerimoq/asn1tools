@@ -16,7 +16,7 @@ static bool fequal(double v1, double v2)
 
 static void test_oer_c_source_a(void)
 {
-    uint8_t encoded[54];
+    uint8_t encoded[42];
     struct oer_c_source_a_t decoded;
 
     /* Encode. */
@@ -28,10 +28,8 @@ static void test_oer_c_source_a(void)
     decoded.f = 2;
     decoded.g = 3;
     decoded.h = 4;
-    decoded.i = 1.0f;
-    decoded.j = 1.0;
-    decoded.k = true;
-    memset(&decoded.l.buf[0], 5, sizeof(decoded.l.buf));
+    decoded.i = true;
+    memset(&decoded.j.buf[0], 5, sizeof(decoded.j.buf));
 
     memset(&encoded[0], 0, sizeof(encoded));
     assert(oer_c_source_a_encode(&encoded[0],
@@ -40,9 +38,8 @@ static void test_oer_c_source_a(void)
     assert(memcmp(&encoded[0],
                   "\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff\xff\xff\xff"
                   "\xff\xfc\x01\x00\x02\x00\x00\x00\x03\x00\x00\x00\x00"
-                  "\x00\x00\x00\x04\x3f\x80\x00\x00\x3f\xf0\x00\x00\x00"
-                  "\x00\x00\x00\xff\x05\x05\x05\x05\x05\x05\x05\x05\x05"
-                  "\x05\x05",
+                  "\x00\x00\x00\x04\xff\x05\x05\x05\x05\x05\x05\x05\x05"
+                  "\x05\x05\x05",
                   sizeof(encoded)) == 0);
 
     /* Decode. */
@@ -59,28 +56,25 @@ static void test_oer_c_source_a(void)
     assert(decoded.f == 2);
     assert(decoded.g == 3);
     assert(decoded.h == 4);
-    assert(fequal(decoded.i, 1.0f));
-    assert(fequal(decoded.j, 1.0));
-    assert(decoded.k);
-    assert(memcmp(&decoded.l.buf[0],
+    assert(decoded.i);
+    assert(memcmp(&decoded.j.buf[0],
                   "\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05",
-                  sizeof(decoded.l.buf)) == 0);
+                  sizeof(decoded.j.buf)) == 0);
 }
 
 static void test_oer_c_source_a_decode_spare_data(void)
 {
-    uint8_t encoded[55] =
+    uint8_t encoded[43] =
         "\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff\xff\xff\xff"
         "\xff\xfc\x01\x00\x02\x00\x00\x00\x03\x00\x00\x00\x00"
-        "\x00\x00\x00\x04\x3f\x80\x00\x00\x3f\xf0\x00\x00\x00"
-        "\x00\x00\x00\xff\x05\x05\x05\x05\x05\x05\x05\x05\x05"
-        "\x05\x05\x00";
+        "\x00\x00\x00\x04\xff\x05\x05\x05\x05\x05\x05\x05\x05"
+        "\x05\x05\x05\x00";
     struct oer_c_source_a_t decoded;
 
     memset(&decoded, 0, sizeof(decoded));
     assert(oer_c_source_a_decode(&decoded,
                                  &encoded[0],
-                                 sizeof(encoded)) == 54);
+                                 sizeof(encoded)) == 42);
 
     assert(decoded.a == -1);
     assert(decoded.b == -2);
@@ -90,17 +84,15 @@ static void test_oer_c_source_a_decode_spare_data(void)
     assert(decoded.f == 2);
     assert(decoded.g == 3);
     assert(decoded.h == 4);
-    assert(fequal(decoded.i, 1.0f));
-    assert(fequal(decoded.j, 1.0));
-    assert(decoded.k);
-    assert(memcmp(&decoded.l.buf[0],
+    assert(decoded.i);
+    assert(memcmp(&decoded.j.buf[0],
                   "\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05",
-                  sizeof(decoded.l.buf)) == 0);
+                  sizeof(decoded.j.buf)) == 0);
 }
 
 static void test_oer_c_source_a_encode_error_no_mem(void)
 {
-    uint8_t encoded[53];
+    uint8_t encoded[41];
     struct oer_c_source_a_t decoded;
 
     decoded.a = -1;
@@ -111,10 +103,8 @@ static void test_oer_c_source_a_encode_error_no_mem(void)
     decoded.f = 2;
     decoded.g = 3;
     decoded.h = 4;
-    decoded.i = 1.0f;
-    decoded.j = 1.0;
-    decoded.k = true;
-    memset(&decoded.l.buf[0], 5, sizeof(decoded.l.buf));
+    decoded.i = true;
+    memset(&decoded.j.buf[0], 5, sizeof(decoded.j.buf));
 
     assert(oer_c_source_a_encode(&encoded[0],
                                  sizeof(encoded),
@@ -123,12 +113,11 @@ static void test_oer_c_source_a_encode_error_no_mem(void)
 
 static void test_oer_c_source_a_decode_error_out_of_data(void)
 {
-    uint8_t encoded[53] =
+    uint8_t encoded[41] =
         "\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff\xff\xff\xff"
         "\xff\xfc\x01\x00\x02\x00\x00\x00\x03\x00\x00\x00\x00"
-        "\x00\x00\x00\x04\x3f\x80\x00\x00\x3f\xf0\x00\x00\x00"
-        "\x00\x00\x00\xff\x05\x05\x05\x05\x05\x05\x05\x05\x05"
-        "\x05";
+        "\x00\x00\x00\x04\xff\x05\x05\x05\x05\x05\x05\x05\x05"
+        "\x05\x05";
     struct oer_c_source_a_t decoded;
 
     assert(oer_c_source_a_decode(&decoded,
@@ -165,7 +154,7 @@ static void test_oer_c_source_b_choice_a(void)
 
 static void test_oer_c_source_b_choice_b(void)
 {
-    uint8_t encoded[55];
+    uint8_t encoded[43];
     struct oer_c_source_b_t decoded;
 
     /* Encode. */
@@ -178,10 +167,8 @@ static void test_oer_c_source_b_choice_b(void)
     decoded.value.b.f = 2;
     decoded.value.b.g = 3;
     decoded.value.b.h = 4;
-    decoded.value.b.i = 1.0f;
-    decoded.value.b.j = 1.0;
-    decoded.value.b.k = true;
-    memset(&decoded.value.b.l.buf[0], 5, sizeof(decoded.value.b.l.buf));
+    decoded.value.b.i = true;
+    memset(&decoded.value.b.j.buf[0], 5, sizeof(decoded.value.b.j.buf));
 
     memset(&encoded[0], 0, sizeof(encoded));
     assert(oer_c_source_b_encode(&encoded[0],
@@ -190,9 +177,8 @@ static void test_oer_c_source_b_choice_b(void)
     assert(memcmp(&encoded[0],
                   "\x81\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff\xff\xff"
                   "\xff\xff\xfc\x01\x00\x02\x00\x00\x00\x03\x00\x00\x00"
-                  "\x00\x00\x00\x00\x04\x3f\x80\x00\x00\x3f\xf0\x00\x00"
-                  "\x00\x00\x00\x00\xff\x05\x05\x05\x05\x05\x05\x05\x05"
-                  "\x05\x05\x05",
+                  "\x00\x00\x00\x00\x04\xff\x05\x05\x05\x05\x05\x05\x05"
+                  "\x05\x05\x05\x05",
                   sizeof(encoded)) == 0);
 
     /* Decode. */
@@ -210,12 +196,10 @@ static void test_oer_c_source_b_choice_b(void)
     assert(decoded.value.b.f == 2);
     assert(decoded.value.b.g == 3);
     assert(decoded.value.b.h == 4);
-    assert(fequal(decoded.value.b.i, 1.0f));
-    assert(fequal(decoded.value.b.j, 1.0));
-    assert(decoded.value.b.k);
-    assert(memcmp(&decoded.value.b.l.buf[0],
+    assert(decoded.value.b.i);
+    assert(memcmp(&decoded.value.b.j.buf[0],
                   "\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05",
-                  sizeof(decoded.value.b.l.buf)) == 0);
+                  sizeof(decoded.value.b.j.buf)) == 0);
 }
 
 static void test_oer_c_source_b_decode_error_bad_choice(void)
@@ -824,6 +808,56 @@ static void test_oer_c_source_o(void)
     }
 }
 
+static void test_oer_programming_types_float(void)
+{
+    uint8_t encoded[4];
+    struct oer_programming_types_float_t decoded;
+
+    /* Encode. */
+    decoded.value = 1.0f;
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(oer_programming_types_float_encode(&encoded[0],
+                                              sizeof(encoded),
+                                              &decoded) == sizeof(encoded));
+    assert(memcmp(&encoded[0],
+                  "\x3f\x80\x00\x00",
+                  sizeof(encoded)) == 0);
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(oer_programming_types_float_decode(&decoded,
+                                              &encoded[0],
+                                              sizeof(encoded)) == sizeof(encoded));
+
+    assert(fequal(decoded.value, 1.0f));
+}
+
+static void test_oer_programming_types_double(void)
+{
+    uint8_t encoded[8];
+    struct oer_programming_types_double_t decoded;
+
+    /* Encode. */
+    decoded.value = 1.0;
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(oer_programming_types_double_encode(&encoded[0],
+                                               sizeof(encoded),
+                                               &decoded) == sizeof(encoded));
+    assert(memcmp(&encoded[0],
+                  "\x3f\xf0\x00\x00\x00\x00\x00\x00",
+                  sizeof(encoded)) == 0);
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(oer_programming_types_double_decode(&decoded,
+                                               &encoded[0],
+                                               sizeof(encoded)) == sizeof(encoded));
+
+    assert(fequal(decoded.value, 1.0));
+}
+
 int main(void)
 {
     test_oer_c_source_a();
@@ -852,6 +886,9 @@ int main(void)
     test_oer_c_source_l();
     test_oer_c_source_l_decode_error_bad_length();
     test_oer_c_source_o();
+
+    test_oer_programming_types_float();
+    test_oer_programming_types_double();
 
     return (0);
 }

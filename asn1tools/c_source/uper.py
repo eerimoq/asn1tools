@@ -1331,9 +1331,6 @@ class _Generator(object):
         )
 
     def format_sequence_of_inner(self, type_, checker):
-        unique_number_of_length_bytes = self.add_unique_decode_variable(
-            'uint8_t {};',
-            'number_of_length_bytes')
         unique_i = self.add_unique_variable(
             '{} {{}};'.format(_format_type_name(0, checker.maximum)),
             'i')
@@ -1357,13 +1354,9 @@ class _Generator(object):
                     maximum=checker.maximum),
             ] + _indent_lines(encode_lines)
             decode_lines = [
-                '{} = decoder_read_integer_8(decoder_p);'.format(
-                    unique_number_of_length_bytes),
                 '{} = decoder_read_integer_8(decoder_p);'.format(unique_length),
                 '',
-                'if (({} != 1) || ({} > {})) {{'.format(unique_number_of_length_bytes,
-                                                        unique_length,
-                                                        checker.maximum),
+                'if ({} > {}) {{'.format(unique_length, checker.maximum),
                 '    decoder_abort(decoder_p, EBADLENGTH);',
                 '',
                 '    return;',
@@ -1374,26 +1367,22 @@ class _Generator(object):
                     maximum=checker.maximum),
             ] + _indent_lines(decode_lines)
         else:
-            number_of_length_bytes = (checker.maximum.bit_length() + 7) // 8
             encode_lines = [
-                'encoder_append_integer_8(encoder_p, {});'.format(
-                    number_of_length_bytes),
-                'encoder_append_integer(encoder_p,',
-                '                       src_p->{}length,'.format(
-                    self.location_inner('', '.')),
-                '                       {});'.format(number_of_length_bytes),
+                'encoder_append_non_negative_binary_integer(',
+                '    encoder_p,',
+                '    src_p->{}length - {},'.format(self.location_inner('', '.'),
+                                                   checker.minimum),
+                '    {});'.format(type_.number_of_bits),
                 '',
                 'for ({ui} = 0; {ui} < src_p->{loc}length; {ui}++) {{'.format(
                     ui=unique_i,
                     loc=self.location_inner('', '.')),
             ] + _indent_lines(encode_lines)
             decode_lines = [
-                '{} = decoder_read_integer_8(decoder_p);'.format(
-                    unique_number_of_length_bytes),
-                'dst_p->{}length = decoder_read_integer('.format(
+                'dst_p->{}length = decoder_read_non_negative_binary_integer('.format(
                     self.location_inner('', '.')),
                 '    decoder_p,',
-                '    {});'.format(unique_number_of_length_bytes),
+                '    {});'.format(type_.number_of_bits),
                 '',
                 'if (dst_p->{}length > {}) {{'.format(self.location_inner('', '.'),
                                                       checker.maximum),
@@ -1489,6 +1478,7 @@ class _Generator(object):
             ('encoder_init(', ENCODER_INIT),
             ('encoder_get_result(', ENCODER_GET_RESULT),
             ('encoder_abort(', ENCODER_ABORT),
+            ('encoder_append_bit(', ENCODER_ALLOC),
             ('encoder_append_bit(', ENCODER_APPEND_BIT),
             ('encoder_append_bits(', ENCODER_APPEND_BITS),
             ('encoder_append_bytes(', ENCODER_APPEND_BYTES),
@@ -1508,7 +1498,7 @@ class _Generator(object):
             ('decoder_init(', DECODER_INIT),
             ('decoder_get_result(', DECODER_GET_RESULT),
             ('decoder_abort(', DECODER_ABORT),
-            ('decoder_free(', DECODER_FREE),
+            ('decoder_read_bit(', DECODER_FREE),
             ('decoder_read_bit(', DECODER_READ_BIT),
             ('decoder_read_bits(', DECODER_READ_BITS),
             ('decoder_read_bytes(', DECODER_READ_BYTES),

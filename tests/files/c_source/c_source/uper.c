@@ -29,7 +29,7 @@
  */
 
 #include <string.h>
-#include <stdio.h>
+
 #include "uper.h"
 
 struct encoder_t {
@@ -200,36 +200,6 @@ static void encoder_append_int64(struct encoder_t *self_p,
 {
     value += 9223372036854775808ul;
     encoder_append_uint64(self_p, (uint64_t)value);
-}
-
-static void encoder_append_float(struct encoder_t *self_p,
-                                 float value)
-{
-    (void)value;
-
-    uint8_t buf[4];
-
-    buf[0] = 0x03;
-    buf[1] = 0x80;
-    buf[2] = 0x00;
-    buf[3] = 0x01;
-
-    encoder_append_bytes(self_p, &buf[0], sizeof(buf));
-}
-
-static void encoder_append_double(struct encoder_t *self_p,
-                                  double value)
-{
-    (void)value;
-
-    uint8_t buf[4];
-
-    buf[0] = 0x03;
-    buf[1] = 0x80;
-    buf[2] = 0x00;
-    buf[3] = 0x01;
-
-    encoder_append_bytes(self_p, &buf[0], sizeof(buf));
 }
 
 static void encoder_append_bool(struct encoder_t *self_p, bool value)
@@ -410,24 +380,6 @@ static int64_t decoder_read_int64(struct decoder_t *self_p)
     return (value);
 }
 
-static float decoder_read_float(struct decoder_t *self_p)
-{
-    uint8_t buf[4];
-
-    decoder_read_bytes(self_p, &buf[0], sizeof(buf));
-
-    return (1.0f);
-}
-
-static double decoder_read_double(struct decoder_t *self_p)
-{
-    uint8_t buf[4];
-
-    decoder_read_bytes(self_p, &buf[0], sizeof(buf));
-
-    return (1.0);
-}
-
 static bool decoder_read_bool(struct decoder_t *self_p)
 {
     return (decoder_read_bit(self_p));
@@ -461,10 +413,10 @@ static void uper_c_source_a_encode_inner(
     encoder_append_uint16(encoder_p, src_p->f);
     encoder_append_uint32(encoder_p, src_p->g);
     encoder_append_uint64(encoder_p, src_p->h);
-    encoder_append_float(encoder_p, src_p->i);
-    encoder_append_double(encoder_p, src_p->j);
-    encoder_append_bool(encoder_p, &src_p->k);
-    encoder_append_bytes(encoder_p, &src_p->l.buf[0], 11);
+    encoder_append_bool(encoder_p, &src_p->i);
+    encoder_append_bytes(encoder_p,
+                         &src_p->j.buf[0],
+                         11);
 }
 
 static void uper_c_source_a_decode_inner(
@@ -479,10 +431,10 @@ static void uper_c_source_a_decode_inner(
     dst_p->f = decoder_read_uint16(decoder_p);
     dst_p->g = decoder_read_uint32(decoder_p);
     dst_p->h = decoder_read_uint64(decoder_p);
-    dst_p->i = decoder_read_float(decoder_p);
-    dst_p->j = decoder_read_double(decoder_p);
-    dst_p->k = decoder_read_bool(decoder_p);
-    decoder_read_bytes(decoder_p, &dst_p->l.buf[0], 11);
+    dst_p->i = decoder_read_bool(decoder_p);
+    decoder_read_bytes(decoder_p,
+                       &dst_p->j.buf[0],
+                       11);
 }
 
 static void uper_c_source_b_encode_inner(
@@ -491,17 +443,17 @@ static void uper_c_source_b_encode_inner(
 {
     switch (src_p->choice) {
 
-    case uper_c_source_b_choice_a_t:
+    case uper_c_source_b_choice_a_e:
         encoder_append_non_negative_binary_integer(encoder_p, 0, 2);
         encoder_append_int8(encoder_p, src_p->value.a);
         break;
 
-    case uper_c_source_b_choice_b_t:
+    case uper_c_source_b_choice_b_e:
         encoder_append_non_negative_binary_integer(encoder_p, 1, 2);
         uper_c_source_a_encode_inner(encoder_p, &src_p->value.b);
         break;
 
-    case uper_c_source_b_choice_c_t:
+    case uper_c_source_b_choice_c_e:
         encoder_append_non_negative_binary_integer(encoder_p, 2, 2);
         break;
 
@@ -522,22 +474,58 @@ static void uper_c_source_b_decode_inner(
     switch (choice) {
 
     case 0:
-        dst_p->choice = uper_c_source_b_choice_a_t;
+        dst_p->choice = uper_c_source_b_choice_a_e;
         dst_p->value.a = decoder_read_int8(decoder_p);
         break;
 
     case 1:
-        dst_p->choice = uper_c_source_b_choice_b_t;
+        dst_p->choice = uper_c_source_b_choice_b_e;
         uper_c_source_a_decode_inner(decoder_p, &dst_p->value.b);
         break;
 
     case 2:
-        dst_p->choice = uper_c_source_b_choice_c_t;
+        dst_p->choice = uper_c_source_b_choice_c_e;
         break;
 
     default:
         decoder_abort(decoder_p, EBADCHOICE);
         break;
+    }
+}
+
+static void uper_c_source_c_encode_inner(
+    struct encoder_t *encoder_p,
+    const struct uper_c_source_c_t *src_p)
+{
+    uint8_t i;
+
+    encoder_append_non_negative_binary_integer(encoder_p,
+                                               src_p->length,
+                                               2);
+
+    for (i = 0; i < src_p->length; i++) {
+        uper_c_source_b_encode_inner(encoder_p, &src_p->elements[i]);
+    }
+}
+
+static void uper_c_source_c_decode_inner(
+    struct decoder_t *decoder_p,
+    struct uper_c_source_c_t *dst_p)
+{
+    uint8_t i;
+
+    dst_p->length = decoder_read_non_negative_binary_integer(
+        decoder_p,
+        2);
+
+    if (dst_p->length > 2) {
+        decoder_abort(decoder_p, EBADLENGTH);
+
+        return;
+    }
+
+    for (i = 0; i < dst_p->length; i++) {
+        uper_c_source_b_decode_inner(decoder_p, &dst_p->elements[i]);
     }
 }
 
@@ -554,14 +542,14 @@ static void uper_c_source_d_encode_inner(
     for (i = 0; i < src_p->length; i++) {
         switch (src_p->elements[i].a.b.choice) {
 
-        case uper_c_source_d_a_b_choice_c_t:
+        case uper_c_source_d_a_b_choice_c_e:
             encoder_append_non_negative_binary_integer(encoder_p, 0, 1);
             encoder_append_non_negative_binary_integer(encoder_p,
                                                        src_p->elements[i].a.b.value.c,
                                                        1);
             break;
 
-        case uper_c_source_d_a_b_choice_d_t:
+        case uper_c_source_d_a_b_choice_d_e:
             encoder_append_non_negative_binary_integer(encoder_p, 1, 1);
             encoder_append_bool(encoder_p, src_p->elements[i].a.b.value.d);
             break;
@@ -633,12 +621,12 @@ static void uper_c_source_d_decode_inner(
         switch (choice) {
 
         case 0:
-            dst_p->elements[i].a.b.choice = uper_c_source_d_a_b_choice_c_t;
+            dst_p->elements[i].a.b.choice = uper_c_source_d_a_b_choice_c_e;
             dst_p->elements[i].a.b.value.c = decoder_read_non_negative_binary_integer(decoder_p, 1);
             break;
 
         case 1:
-            dst_p->elements[i].a.b.choice = uper_c_source_d_a_b_choice_d_t;
+            dst_p->elements[i].a.b.choice = uper_c_source_d_a_b_choice_d_e;
             dst_p->elements[i].a.b.value.d = decoder_read_bool(decoder_p);
             break;
 
@@ -696,12 +684,12 @@ static void uper_c_source_e_encode_inner(
 {
     switch (src_p->a.choice) {
 
-    case uper_c_source_e_a_choice_b_t:
+    case uper_c_source_e_a_choice_b_e:
         encoder_append_non_negative_binary_integer(encoder_p, 0, 0);
 
         switch (src_p->a.value.b.choice) {
 
-        case uper_c_source_e_a_b_choice_c_t:
+        case uper_c_source_e_a_b_choice_c_e:
             encoder_append_non_negative_binary_integer(encoder_p, 0, 0);
             encoder_append_bool(encoder_p, src_p->a.value.b.value.c);
             break;
@@ -730,13 +718,13 @@ static void uper_c_source_e_decode_inner(
     switch (tag) {
 
     case 0:
-        dst_p->a.choice = uper_c_source_e_a_choice_b_t;
+        dst_p->a.choice = uper_c_source_e_a_choice_b_e;
         tag_2 = decoder_read_non_negative_binary_integer(decoder_p, 0);
 
         switch (tag_2) {
 
         case 0:
-            dst_p->a.value.b.choice = uper_c_source_e_a_b_choice_c_t;
+            dst_p->a.value.b.choice = uper_c_source_e_a_b_choice_c_e;
             dst_p->a.value.b.value.c = decoder_read_bool(decoder_p);
             break;
 
@@ -895,6 +883,207 @@ static void uper_c_source_g_decode_inner(
     }
 }
 
+static void uper_c_source_h_encode_inner(
+    struct encoder_t *encoder_p,
+    const struct uper_c_source_h_t *src_p)
+{
+    (void)encoder_p;
+    (void)src_p;
+}
+
+static void uper_c_source_h_decode_inner(
+    struct decoder_t *decoder_p,
+    struct uper_c_source_h_t *dst_p)
+{
+    (void)decoder_p;
+    (void)dst_p;
+}
+
+static void uper_c_source_i_encode_inner(
+    struct encoder_t *encoder_p,
+    const struct uper_c_source_i_t *src_p)
+{
+    encoder_append_bytes(encoder_p,
+                         &src_p->buf[0],
+                         24);
+}
+
+static void uper_c_source_i_decode_inner(
+    struct decoder_t *decoder_p,
+    struct uper_c_source_i_t *dst_p)
+{
+    decoder_read_bytes(decoder_p,
+                       &dst_p->buf[0],
+                       24);
+}
+
+static void uper_c_source_j_encode_inner(
+    struct encoder_t *encoder_p,
+    const struct uper_c_source_j_t *src_p)
+{
+    encoder_append_non_negative_binary_integer(encoder_p,
+                                               src_p->length - 22,
+                                               1);
+    encoder_append_bytes(encoder_p,
+                         &src_p->buf[0],
+                         src_p->length);
+}
+
+static void uper_c_source_j_decode_inner(
+    struct decoder_t *decoder_p,
+    struct uper_c_source_j_t *dst_p)
+{
+    dst_p->length = decoder_read_non_negative_binary_integer(decoder_p, 1);
+    dst_p->length += 22;
+
+    if (dst_p->length > 23) {
+        decoder_abort(decoder_p, EBADLENGTH);
+
+        return;
+    }
+
+    decoder_read_bytes(decoder_p,
+                       &dst_p->buf[0],
+                       dst_p->length);
+}
+
+static void uper_c_source_k_encode_inner(
+    struct encoder_t *encoder_p,
+    const struct uper_c_source_k_t *src_p)
+{
+    (void)encoder_p;
+    (void)src_p;
+}
+
+static void uper_c_source_k_decode_inner(
+    struct decoder_t *decoder_p,
+    struct uper_c_source_k_t *dst_p)
+{
+    (void)decoder_p;
+
+    dst_p->value = uper_c_source_k_a_e;
+}
+
+static void uper_c_source_l_encode_inner(
+    struct encoder_t *encoder_p,
+    const struct uper_c_source_l_t *src_p)
+{
+    encoder_append_non_negative_binary_integer(encoder_p,
+                                               src_p->length,
+                                               9);
+    encoder_append_bytes(encoder_p,
+                         &src_p->buf[0],
+                         src_p->length);
+}
+
+static void uper_c_source_l_decode_inner(
+    struct decoder_t *decoder_p,
+    struct uper_c_source_l_t *dst_p)
+{
+    dst_p->length = decoder_read_non_negative_binary_integer(decoder_p, 9);
+    dst_p->length += 0;
+
+    if (dst_p->length > 500) {
+        decoder_abort(decoder_p, EBADLENGTH);
+
+        return;
+    }
+
+    decoder_read_bytes(decoder_p,
+                       &dst_p->buf[0],
+                       dst_p->length);
+}
+
+static void uper_c_source_o_encode_inner(
+    struct encoder_t *encoder_p,
+    const struct uper_c_source_o_t *src_p)
+{
+    uint16_t i;
+
+    encoder_append_non_negative_binary_integer(
+        encoder_p,
+        src_p->length - 1,
+        9);
+
+    for (i = 0; i < src_p->length; i++) {
+        encoder_append_bool(encoder_p, src_p->elements[i]);
+    }
+}
+
+static void uper_c_source_o_decode_inner(
+    struct decoder_t *decoder_p,
+    struct uper_c_source_o_t *dst_p)
+{
+    uint16_t i;
+
+    dst_p->length = decoder_read_non_negative_binary_integer(
+        decoder_p,
+        9);
+    dst_p->length += 1;
+
+    if (dst_p->length > 260) {
+        decoder_abort(decoder_p, EBADLENGTH);
+
+        return;
+    }
+
+    for (i = 0; i < dst_p->length; i++) {
+        dst_p->elements[i] = decoder_read_bool(decoder_p);
+    }
+}
+
+static void uper_c_source_n_encode_inner(
+    struct encoder_t *encoder_p,
+    const struct uper_c_source_n_t *src_p)
+{
+    uper_c_source_k_encode_inner(encoder_p, &src_p->a);
+    uper_c_source_a_encode_inner(encoder_p, &src_p->b);
+    uper_c_source_o_encode_inner(encoder_p, &src_p->c);
+}
+
+static void uper_c_source_n_decode_inner(
+    struct decoder_t *decoder_p,
+    struct uper_c_source_n_t *dst_p)
+{
+    uper_c_source_k_decode_inner(decoder_p, &dst_p->a);
+    uper_c_source_a_decode_inner(decoder_p, &dst_p->b);
+    uper_c_source_o_decode_inner(decoder_p, &dst_p->c);
+}
+
+static void uper_c_source_m_encode_inner(
+    struct encoder_t *encoder_p,
+    const struct uper_c_source_m_t *src_p)
+{
+    uper_c_source_k_encode_inner(encoder_p, &src_p->a);
+    uper_c_source_n_encode_inner(encoder_p, &src_p->b);
+}
+
+static void uper_c_source_m_decode_inner(
+    struct decoder_t *decoder_p,
+    struct uper_c_source_m_t *dst_p)
+{
+    uper_c_source_k_decode_inner(decoder_p, &dst_p->a);
+    uper_c_source_n_decode_inner(decoder_p, &dst_p->b);
+}
+
+static void uper_c_source_p_encode_inner(
+    struct encoder_t *encoder_p,
+    const struct uper_c_source_p_t *src_p)
+{
+    uper_c_source_a_encode_inner(encoder_p, &src_p->a);
+    uper_c_source_m_encode_inner(encoder_p, &src_p->b);
+    uper_c_source_f_encode_inner(encoder_p, &src_p->c);
+}
+
+static void uper_c_source_p_decode_inner(
+    struct decoder_t *decoder_p,
+    struct uper_c_source_p_t *dst_p)
+{
+    uper_c_source_a_decode_inner(decoder_p, &dst_p->a);
+    uper_c_source_m_decode_inner(decoder_p, &dst_p->b);
+    uper_c_source_f_decode_inner(decoder_p, &dst_p->c);
+}
+
 ssize_t uper_c_source_a_encode(
     uint8_t *dst_p,
     size_t size,
@@ -943,6 +1132,32 @@ ssize_t uper_c_source_b_decode(
 
     decoder_init(&decoder, src_p, size);
     uper_c_source_b_decode_inner(&decoder, dst_p);
+
+    return (decoder_get_result(&decoder));
+}
+
+ssize_t uper_c_source_c_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct uper_c_source_c_t *src_p)
+{
+    struct encoder_t encoder;
+
+    encoder_init(&encoder, dst_p, size);
+    uper_c_source_c_encode_inner(&encoder, src_p);
+
+    return (encoder_get_result(&encoder));
+}
+
+ssize_t uper_c_source_c_decode(
+    struct uper_c_source_c_t *dst_p,
+    const uint8_t *src_p,
+    size_t size)
+{
+    struct decoder_t decoder;
+
+    decoder_init(&decoder, src_p, size);
+    uper_c_source_c_decode_inner(&decoder, dst_p);
 
     return (decoder_get_result(&decoder));
 }
@@ -1047,6 +1262,240 @@ ssize_t uper_c_source_g_decode(
 
     decoder_init(&decoder, src_p, size);
     uper_c_source_g_decode_inner(&decoder, dst_p);
+
+    return (decoder_get_result(&decoder));
+}
+
+ssize_t uper_c_source_h_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct uper_c_source_h_t *src_p)
+{
+    struct encoder_t encoder;
+
+    encoder_init(&encoder, dst_p, size);
+    uper_c_source_h_encode_inner(&encoder, src_p);
+
+    return (encoder_get_result(&encoder));
+}
+
+ssize_t uper_c_source_h_decode(
+    struct uper_c_source_h_t *dst_p,
+    const uint8_t *src_p,
+    size_t size)
+{
+    struct decoder_t decoder;
+
+    decoder_init(&decoder, src_p, size);
+    uper_c_source_h_decode_inner(&decoder, dst_p);
+
+    return (decoder_get_result(&decoder));
+}
+
+ssize_t uper_c_source_i_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct uper_c_source_i_t *src_p)
+{
+    struct encoder_t encoder;
+
+    encoder_init(&encoder, dst_p, size);
+    uper_c_source_i_encode_inner(&encoder, src_p);
+
+    return (encoder_get_result(&encoder));
+}
+
+ssize_t uper_c_source_i_decode(
+    struct uper_c_source_i_t *dst_p,
+    const uint8_t *src_p,
+    size_t size)
+{
+    struct decoder_t decoder;
+
+    decoder_init(&decoder, src_p, size);
+    uper_c_source_i_decode_inner(&decoder, dst_p);
+
+    return (decoder_get_result(&decoder));
+}
+
+ssize_t uper_c_source_j_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct uper_c_source_j_t *src_p)
+{
+    struct encoder_t encoder;
+
+    encoder_init(&encoder, dst_p, size);
+    uper_c_source_j_encode_inner(&encoder, src_p);
+
+    return (encoder_get_result(&encoder));
+}
+
+ssize_t uper_c_source_j_decode(
+    struct uper_c_source_j_t *dst_p,
+    const uint8_t *src_p,
+    size_t size)
+{
+    struct decoder_t decoder;
+
+    decoder_init(&decoder, src_p, size);
+    uper_c_source_j_decode_inner(&decoder, dst_p);
+
+    return (decoder_get_result(&decoder));
+}
+
+ssize_t uper_c_source_k_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct uper_c_source_k_t *src_p)
+{
+    struct encoder_t encoder;
+
+    encoder_init(&encoder, dst_p, size);
+    uper_c_source_k_encode_inner(&encoder, src_p);
+
+    return (encoder_get_result(&encoder));
+}
+
+ssize_t uper_c_source_k_decode(
+    struct uper_c_source_k_t *dst_p,
+    const uint8_t *src_p,
+    size_t size)
+{
+    struct decoder_t decoder;
+
+    decoder_init(&decoder, src_p, size);
+    uper_c_source_k_decode_inner(&decoder, dst_p);
+
+    return (decoder_get_result(&decoder));
+}
+
+ssize_t uper_c_source_l_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct uper_c_source_l_t *src_p)
+{
+    struct encoder_t encoder;
+
+    encoder_init(&encoder, dst_p, size);
+    uper_c_source_l_encode_inner(&encoder, src_p);
+
+    return (encoder_get_result(&encoder));
+}
+
+ssize_t uper_c_source_l_decode(
+    struct uper_c_source_l_t *dst_p,
+    const uint8_t *src_p,
+    size_t size)
+{
+    struct decoder_t decoder;
+
+    decoder_init(&decoder, src_p, size);
+    uper_c_source_l_decode_inner(&decoder, dst_p);
+
+    return (decoder_get_result(&decoder));
+}
+
+ssize_t uper_c_source_o_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct uper_c_source_o_t *src_p)
+{
+    struct encoder_t encoder;
+
+    encoder_init(&encoder, dst_p, size);
+    uper_c_source_o_encode_inner(&encoder, src_p);
+
+    return (encoder_get_result(&encoder));
+}
+
+ssize_t uper_c_source_o_decode(
+    struct uper_c_source_o_t *dst_p,
+    const uint8_t *src_p,
+    size_t size)
+{
+    struct decoder_t decoder;
+
+    decoder_init(&decoder, src_p, size);
+    uper_c_source_o_decode_inner(&decoder, dst_p);
+
+    return (decoder_get_result(&decoder));
+}
+
+ssize_t uper_c_source_n_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct uper_c_source_n_t *src_p)
+{
+    struct encoder_t encoder;
+
+    encoder_init(&encoder, dst_p, size);
+    uper_c_source_n_encode_inner(&encoder, src_p);
+
+    return (encoder_get_result(&encoder));
+}
+
+ssize_t uper_c_source_n_decode(
+    struct uper_c_source_n_t *dst_p,
+    const uint8_t *src_p,
+    size_t size)
+{
+    struct decoder_t decoder;
+
+    decoder_init(&decoder, src_p, size);
+    uper_c_source_n_decode_inner(&decoder, dst_p);
+
+    return (decoder_get_result(&decoder));
+}
+
+ssize_t uper_c_source_m_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct uper_c_source_m_t *src_p)
+{
+    struct encoder_t encoder;
+
+    encoder_init(&encoder, dst_p, size);
+    uper_c_source_m_encode_inner(&encoder, src_p);
+
+    return (encoder_get_result(&encoder));
+}
+
+ssize_t uper_c_source_m_decode(
+    struct uper_c_source_m_t *dst_p,
+    const uint8_t *src_p,
+    size_t size)
+{
+    struct decoder_t decoder;
+
+    decoder_init(&decoder, src_p, size);
+    uper_c_source_m_decode_inner(&decoder, dst_p);
+
+    return (decoder_get_result(&decoder));
+}
+
+ssize_t uper_c_source_p_encode(
+    uint8_t *dst_p,
+    size_t size,
+    const struct uper_c_source_p_t *src_p)
+{
+    struct encoder_t encoder;
+
+    encoder_init(&encoder, dst_p, size);
+    uper_c_source_p_encode_inner(&encoder, src_p);
+
+    return (encoder_get_result(&encoder));
+}
+
+ssize_t uper_c_source_p_decode(
+    struct uper_c_source_p_t *dst_p,
+    const uint8_t *src_p,
+    size_t size)
+{
+    struct decoder_t decoder;
+
+    decoder_init(&decoder, src_p, size);
+    uper_c_source_p_decode_inner(&decoder, dst_p);
 
     return (decoder_get_result(&decoder));
 }
