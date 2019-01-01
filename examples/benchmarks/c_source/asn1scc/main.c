@@ -14,7 +14,7 @@ int main()
     int res;
     uint8_t encoded[40];
     PDU decoded;
-    BitStream bit_stream ;
+    BitStream bit_stream;
 
     decoded.a = 12345678;
     decoded.b.kind = PDU_b_a_PRESENT;
