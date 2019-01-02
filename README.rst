@@ -315,7 +315,7 @@ Other OER and/or UPER C code generators:
 
 - https://github.com/ttsiodras/asn1scc
 
-See the `benchmark example`_ for a comparsion of `asn1c`, `asn1scc`
+See the `benchmark example`_ for a comparison of `asn1c`, `asn1scc`
 and `asn1tools`.
 
 Contributing

@@ -935,8 +935,7 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
 
     def test_c_source(self):
         files = [
-            'tests/files/c_source.asn',
-            'examples/programming_types/programming_types.asn'
+            'tests/files/c_source/c_source.asn'
         ]
         foo = asn1tools.compile_files(files, 'oer')
 

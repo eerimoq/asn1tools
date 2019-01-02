@@ -12,13 +12,10 @@ from .utils import DECODER_ABORT
 from .utils import UserType
 from .utils import Generator
 from .utils import camel_to_snake_case
-from .utils import join_lines
-from .utils import format_type_name
 from .utils import is_user_type
 from .utils import indent_lines
 from .utils import dedent_lines
 from ..codecs import uper
-from ..errors import Error
 
 
 ENCODER_INIT = '''\
@@ -479,7 +476,7 @@ class _Generator(Generator):
         elif isinstance(type_, uper.Enumerated):
             lines = self.format_enumerated(type_)
         else:
-            raise NotImplementedError(
+            raise self.error(
                 "Unsupported type '{}'.".format(type_.type_name))
 
         return lines
@@ -489,39 +486,36 @@ class _Generator(Generator):
         checker = compiled_type.constraints_checker.type
         lines = []
 
-        try:
-            if isinstance(type_, uper.Integer):
-                lines = self.format_integer(checker)
-                lines[0] += ' value;'
-            elif isinstance(type_, uper.Boolean):
-                lines = self.format_boolean()
-                lines[0] += ' value;'
-            elif isinstance(type_, uper.Real):
-                lines = self.format_real()
-            elif isinstance(type_, uper.Enumerated):
-                lines = self.format_enumerated(type_)
-                lines[0] += ' value;'
-            elif isinstance(type_, uper.UTF8String):
-                lines = self.format_utf8_string(checker)
-            elif isinstance(type_, uper.Sequence):
-                lines = self.format_sequence(type_, checker)[1:-1]
-                lines = dedent_lines(lines)
-            elif isinstance(type_, uper.SequenceOf):
-                lines = self.format_sequence_of(type_, checker)[1:-1]
-                lines = dedent_lines(lines)
-            elif isinstance(type_, uper.Choice):
-                lines = self.format_choice(type_, checker)
-                lines = dedent_lines(lines[1:-1])
-            elif isinstance(type_, uper.OctetString):
-                lines = self.format_octet_string(checker)[1:-1]
-                lines = dedent_lines(lines)
-            elif isinstance(type_, uper.Null):
-                lines = []
-            else:
-                raise NotImplementedError(
-                    "Unsupported type '{}'.".format(type_.type_name))
-        except Error:
-            return []
+        if isinstance(type_, uper.Integer):
+            lines = self.format_integer(checker)
+            lines[0] += ' value;'
+        elif isinstance(type_, uper.Boolean):
+            lines = self.format_boolean()
+            lines[0] += ' value;'
+        elif isinstance(type_, uper.Real):
+            lines = self.format_real()
+        elif isinstance(type_, uper.Enumerated):
+            lines = self.format_enumerated(type_)
+            lines[0] += ' value;'
+        elif isinstance(type_, uper.UTF8String):
+            lines = self.format_utf8_string(checker)
+        elif isinstance(type_, uper.Sequence):
+            lines = self.format_sequence(type_, checker)[1:-1]
+            lines = dedent_lines(lines)
+        elif isinstance(type_, uper.SequenceOf):
+            lines = self.format_sequence_of(type_, checker)[1:-1]
+            lines = dedent_lines(lines)
+        elif isinstance(type_, uper.Choice):
+            lines = self.format_choice(type_, checker)
+            lines = dedent_lines(lines[1:-1])
+        elif isinstance(type_, uper.OctetString):
+            lines = self.format_octet_string(checker)[1:-1]
+            lines = dedent_lines(lines)
+        elif isinstance(type_, uper.Null):
+            lines = []
+        else:
+            raise self.error(
+                "Unsupported type '{}'.".format(type_.type_name))
 
         if not lines:
             lines = ['uint8_t dummy;']
@@ -549,7 +543,7 @@ class _Generator(Generator):
                                       type_name_snake=self.type_name_snake)
 
     def format_integer_inner(self, type_, checker):
-        type_name = format_type_name(checker.minimum, checker.maximum)
+        type_name = self.format_type_name(checker.minimum, checker.maximum)
         suffix = type_name[:-2]
         location = self.location_inner()
 
@@ -841,7 +835,7 @@ class _Generator(Generator):
 
     def format_sequence_of_inner(self, type_, checker):
         unique_i = self.add_unique_variable(
-            '{} {{}};'.format(format_type_name(0, checker.maximum)),
+            '{} {{}};'.format(self.format_type_name(0, checker.maximum)),
             'i')
 
         with self.c_members_backtrace_push('elements[{}]'.format(unique_i)):
@@ -922,7 +916,7 @@ class _Generator(Generator):
         elif isinstance(type_, uper.Enumerated):
             return self.format_enumerated_inner(type_)
         else:
-            raise NotImplementedError(type_)
+            raise self.error(type_)
 
     def generate_definition_inner(self, compiled_type):
         type_ = compiled_type.type

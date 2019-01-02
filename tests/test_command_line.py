@@ -680,7 +680,7 @@ exit
             'generate_c_source',
             '--namespace', 'oer',
             'tests/files/c_source/c_source.asn',
-            'examples/programming_types/programming_types.asn'
+            'tests/files/c_source/programming_types.asn'
         ]
 
         filename_h = 'oer.h'
@@ -706,7 +706,7 @@ exit
         argv = [
             'asn1tools',
             'generate_c_source',
-            'tests/files/c_source-minus.asn'
+            'tests/files/c_source/c_source-minus.asn'
         ]
 
         filename_h = 'c_source-minus.h'

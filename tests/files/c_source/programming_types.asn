@@ -1,0 +1,43 @@
+--
+-- Types often found in programming languages.
+--
+
+ProgrammingTypes DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+Int8 ::= INTEGER (-128..127)
+
+Int16 ::= INTEGER (-32768..32767)
+
+Int32 ::= INTEGER (-2147483648..2147483647)
+
+Int64 ::= INTEGER (-9223372036854775808..9223372036854775807)
+
+Uint8 ::= INTEGER (0..255)
+
+Uint16 ::= INTEGER (0..65535)
+
+Uint32 ::= INTEGER (0..4294967295)
+
+Uint64 ::= INTEGER (0..18446744073709551615)
+
+-- Single-precision (32 bits) floating point number, also known as
+-- binary32.
+Float ::= REAL (WITH COMPONENTS {
+                    mantissa (-16777215..16777215),
+                    base (2),
+                    exponent (-149..104)
+                })
+
+-- Double-precision (64 bits) floating point number, also known as
+-- binary64.
+Double ::= REAL (WITH COMPONENTS {
+                     mantissa (-9007199254740991..9007199254740991),
+                     base (2),
+                     exponent (-1074..971)
+                 })
+
+Bool ::= BOOLEAN
+
+END

@@ -14,8 +14,6 @@ from .utils import DECODER_ABORT
 from .utils import UserType
 from .utils import Generator
 from .utils import camel_to_snake_case
-from .utils import join_lines
-from .utils import format_type_name
 from .utils import is_user_type
 from .utils import indent_lines
 from .utils import dedent_lines
@@ -450,7 +448,7 @@ class _Generator(Generator):
 
     def format_real(self, type_):
         if type_.fmt is None:
-            raise Error('REAL not IEEE 754 binary32 or binary64.')
+            raise self.error('REAL not IEEE 754 binary32 or binary64.')
 
         if type_.fmt == '>f':
             return ['float']
@@ -486,7 +484,7 @@ class _Generator(Generator):
         elif isinstance(type_, oer.Enumerated):
             lines = self.format_enumerated(type_)
         else:
-            raise NotImplementedError(
+            raise self.error(
                 "Unsupported type '{}'.".format(type_.type_name))
 
         return lines
@@ -496,40 +494,37 @@ class _Generator(Generator):
         checker = compiled_type.constraints_checker.type
         lines = []
 
-        try:
-            if isinstance(type_, oer.Integer):
-                lines = self.format_integer(checker)
-                lines[0] += ' value;'
-            elif isinstance(type_, oer.Boolean):
-                lines = self.format_boolean()
-                lines[0] += ' value;'
-            elif isinstance(type_, oer.Real):
-                lines = self.format_real(type_)
-                lines[0] += ' value;'
-            elif isinstance(type_, oer.Enumerated):
-                lines = self.format_enumerated(type_)
-                lines[0] += ' value;'
-            elif isinstance(type_, oer.UTF8String):
-                lines = self.format_utf8_string(checker)
-            elif isinstance(type_, oer.Sequence):
-                lines = self.format_sequence(type_, checker)[1:-1]
-                lines = dedent_lines(lines)
-            elif isinstance(type_, oer.SequenceOf):
-                lines = self.format_sequence_of(type_, checker)[1:-1]
-                lines = dedent_lines(lines)
-            elif isinstance(type_, oer.Choice):
-                lines = self.format_choice(type_, checker)
-                lines = dedent_lines(lines[1:-1])
-            elif isinstance(type_, oer.OctetString):
-                lines = self.format_octet_string(checker)[1:-1]
-                lines = dedent_lines(lines)
-            elif isinstance(type_, oer.Null):
-                lines = []
-            else:
-                raise NotImplementedError(
-                    "Unsupported type '{}'.".format(type_.type_name))
-        except Error:
-            return []
+        if isinstance(type_, oer.Integer):
+            lines = self.format_integer(checker)
+            lines[0] += ' value;'
+        elif isinstance(type_, oer.Boolean):
+            lines = self.format_boolean()
+            lines[0] += ' value;'
+        elif isinstance(type_, oer.Real):
+            lines = self.format_real(type_)
+            lines[0] += ' value;'
+        elif isinstance(type_, oer.Enumerated):
+            lines = self.format_enumerated(type_)
+            lines[0] += ' value;'
+        elif isinstance(type_, oer.UTF8String):
+            lines = self.format_utf8_string(checker)
+        elif isinstance(type_, oer.Sequence):
+            lines = self.format_sequence(type_, checker)[1:-1]
+            lines = dedent_lines(lines)
+        elif isinstance(type_, oer.SequenceOf):
+            lines = self.format_sequence_of(type_, checker)[1:-1]
+            lines = dedent_lines(lines)
+        elif isinstance(type_, oer.Choice):
+            lines = self.format_choice(type_, checker)
+            lines = dedent_lines(lines[1:-1])
+        elif isinstance(type_, oer.OctetString):
+            lines = self.format_octet_string(checker)[1:-1]
+            lines = dedent_lines(lines)
+        elif isinstance(type_, oer.Null):
+            lines = []
+        else:
+            raise self.error(
+                "Unsupported type '{}'.".format(type_.type_name))
 
         if not lines:
             lines = ['uint8_t dummy;']
@@ -557,7 +552,7 @@ class _Generator(Generator):
                                       type_name_snake=self.type_name_snake)
 
     def format_integer_inner(self, checker):
-        type_name = format_type_name(checker.minimum, checker.maximum)
+        type_name = self.format_type_name(checker.minimum, checker.maximum)
 
         length = {
             'int8_t': 8,
@@ -836,7 +831,7 @@ class _Generator(Generator):
                             member_checker)
 
             if len(member.tag) != 1:
-                raise NotImplementedError(
+                raise self.error(
                     'CHOICE tags of more than one byte are not yet supported.')
 
             tag = struct.unpack('B', member.tag)[0]
@@ -921,7 +916,7 @@ class _Generator(Generator):
             'uint8_t {};',
             'number_of_length_bytes')
         unique_i = self.add_unique_variable(
-            '{} {{}};'.format(format_type_name(0, checker.maximum)),
+            '{} {{}};'.format(self.format_type_name(0, checker.maximum)),
             'i')
 
         if checker.minimum == checker.maximum:
@@ -1021,7 +1016,7 @@ class _Generator(Generator):
         elif isinstance(type_, oer.Enumerated):
             return self.format_enumerated_inner()
         else:
-            raise NotImplementedError(type_)
+            raise self.error(str(type_))
 
     def generate_definition_inner(self, compiled_type):
         type_ = compiled_type.type

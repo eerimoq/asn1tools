@@ -189,6 +189,27 @@ class Generator(object):
     def type_name_snake(self):
         return camel_to_snake_case(self.type_name)
 
+    def type_length(self, length):
+        if length <= 8:
+            return 8
+        elif length <= 16:
+            return 16
+        elif length <= 32:
+            return 32
+        elif length <= 64:
+            return 64
+        else:
+            raise self.error('Type does not fit in 64 bits.')
+
+    def format_type_name(self, minimum, maximum):
+        length = self.type_length((maximum - minimum).bit_length())
+        type_name = 'int{}_t'.format(length)
+
+        if minimum >= 0:
+            type_name = 'u' + type_name
+
+        return type_name
+
     @property
     def location(self):
         location = '{}_{}_{}'.format(self.namespace,
@@ -205,6 +226,14 @@ class Generator(object):
             return '.'.join(self.c_members_backtrace) + end
         else:
             return default
+
+    def location_error(self):
+        location = '{}.{}'.format(self.module_name, self.type_name)
+
+        if self.asn1_members_backtrace:
+            location += '.{}'.format('.'.join(self.asn1_members_backtrace))
+
+        return location
 
     def members_backtrace_push(self, member_name):
         backtraces = [
@@ -263,11 +292,17 @@ class Generator(object):
     def add_unique_decode_variable(self, fmt, name):
         return self.add_unique_variable(fmt, name, 'decode')
 
-    def format_integer(self, checker):
-        if not checker.is_bound():
-            raise Error('INTEGER not fixed size.')
+    def error(self, message):
+        return Error('{}: {}'.format(self.location_error(), message))
 
-        type_name = format_type_name(checker.minimum, checker.maximum)
+    def format_integer(self, checker):
+        if not checker.has_lower_bound():
+            raise self.error('INTEGER has no minimum value.')
+
+        if not checker.has_upper_bound():
+            raise self.error('INTEGER has no maximum value.')
+
+        type_name = self.format_type_name(checker.minimum, checker.maximum)
 
         return [type_name]
 
@@ -276,7 +311,7 @@ class Generator(object):
 
     def format_octet_string(self, checker):
         if not checker.has_upper_bound():
-            raise Error('OCTET STRING has no maximum length.')
+            raise self.error('OCTET STRING has no maximum length.')
 
         if checker.minimum == checker.maximum:
             lines = []
@@ -291,12 +326,6 @@ class Generator(object):
             '    uint8_t buf[{}];'.format(checker.maximum),
             '}'
         ]
-
-    def format_utf8_string(self, checker):
-        if not checker.has_upper_bound():
-            raise Error('UTF8String has no maximum length.')
-
-        raise NotImplementedError
 
     def format_sequence(self, type_, checker):
         lines = []
@@ -319,7 +348,7 @@ class Generator(object):
 
     def format_sequence_of(self, type_, checker):
         if not checker.is_bound():
-            raise Error('SEQUENCE OF has no maximum length.')
+            raise self.error('SEQUENCE OF has no maximum length.')
 
         lines = self.format_type(type_.element_type, checker.element_type)
 
@@ -426,27 +455,6 @@ def camel_to_snake_case(value):
 
 def join_lines(lines, suffix):
     return[line + suffix for line in lines[:-1]] + lines[-1:]
-
-
-def type_length(length):
-    if length <= 8:
-        return 8
-    elif length <= 16:
-        return 16
-    elif length <= 32:
-        return 32
-    else:
-        return 64
-
-
-def format_type_name(minimum, maximum):
-    length = type_length((maximum - minimum).bit_length())
-    type_name = 'int{}_t'.format(length)
-
-    if minimum >= 0:
-        type_name = 'u' + type_name
-
-    return type_name
 
 
 def is_user_type(type_):
