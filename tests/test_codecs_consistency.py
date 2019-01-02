@@ -689,7 +689,7 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
 
         for codec in CODECS:
             specs.append(asn1tools.compile_files([
-                'tests/files/c_source.asn',
+                'tests/files/c_source/c_source.asn',
                 'examples/programming_types/programming_types.asn'
             ], codec))
 

@@ -679,7 +679,7 @@ exit
             'asn1tools',
             'generate_c_source',
             '--namespace', 'oer',
-            'tests/files/c_source.asn',
+            'tests/files/c_source/c_source.asn',
             'examples/programming_types/programming_types.asn'
         ]
 
@@ -734,7 +734,7 @@ exit
             'generate_c_source',
             '--namespace', 'uper',
             '--codec', 'uper',
-            'tests/files/c_source.asn'
+            'tests/files/c_source/c_source.asn'
         ]
 
         filename_h = 'uper.h'
