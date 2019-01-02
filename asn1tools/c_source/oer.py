@@ -5,9 +5,7 @@
 import struct
 
 from .utils import TYPE_DECLARATION_FMT
-from .utils import DECLARATION_FMT
 from .utils import DEFINITION_INNER_FMT
-from .utils import DEFINITION_FMT
 from .utils import ENCODER_AND_DECODER_STRUCTS
 from .utils import ENCODER_ABORT
 from .utils import DECODER_ABORT
@@ -18,7 +16,6 @@ from .utils import is_user_type
 from .utils import indent_lines
 from .utils import dedent_lines
 from ..codecs import oer
-from ..errors import Error
 
 
 ENCODER_INIT = '''\
@@ -228,8 +225,8 @@ static ssize_t decoder_get_result(struct decoder_t *self_p)
 '''
 
 DECODER_FREE = '''
-static size_t decoder_free(struct decoder_t *self_p,
-                           size_t size)
+static ssize_t decoder_free(struct decoder_t *self_p,
+                            size_t size)
 {
     ssize_t pos;
 
@@ -541,13 +538,6 @@ class _Generator(Generator):
                                         helper_types='\n'.join(self.helper_lines),
                                         members='\n'.join(lines))
         ]
-
-    def generate_declaration(self):
-        return DECLARATION_FMT.format(namespace=self.namespace,
-                                      module_name=self.module_name,
-                                      type_name=self.type_name,
-                                      module_name_snake=self.module_name_snake,
-                                      type_name_snake=self.type_name_snake)
 
     def format_integer_inner(self, checker):
         type_name = self.format_type_name(checker.minimum, checker.maximum)
@@ -1055,11 +1045,6 @@ class _Generator(Generator):
                                            type_name_snake=self.type_name_snake,
                                            encode_body='\n'.join(encode_lines),
                                            decode_body='\n'.join(decode_lines))
-
-    def generate_definition(self):
-        return DEFINITION_FMT.format(namespace=self.namespace,
-                                     module_name_snake=self.module_name_snake,
-                                     type_name_snake=self.type_name_snake)
 
     def generate_helpers(self, definitions):
         helpers = [ENCODER_AND_DECODER_STRUCTS]

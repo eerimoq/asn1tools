@@ -3,9 +3,7 @@
 """
 
 from .utils import TYPE_DECLARATION_FMT
-from .utils import DECLARATION_FMT
 from .utils import DEFINITION_INNER_FMT
-from .utils import DEFINITION_FMT
 from .utils import ENCODER_AND_DECODER_STRUCTS
 from .utils import ENCODER_ABORT
 from .utils import DECODER_ABORT
@@ -533,13 +531,6 @@ class _Generator(Generator):
                                         members='\n'.join(lines))
         ]
 
-    def generate_declaration(self):
-        return DECLARATION_FMT.format(namespace=self.namespace,
-                                      module_name=self.module_name,
-                                      type_name=self.type_name,
-                                      module_name_snake=self.module_name_snake,
-                                      type_name_snake=self.type_name_snake)
-
     def format_integer_inner(self, type_, checker):
         type_name = self.format_type_name(checker.minimum, checker.maximum)
         suffix = type_name[:-2]
@@ -955,11 +946,6 @@ class _Generator(Generator):
                                            type_name_snake=self.type_name_snake,
                                            encode_body='\n'.join(encode_lines),
                                            decode_body='\n'.join(decode_lines))
-
-    def generate_definition(self):
-        return DEFINITION_FMT.format(namespace=self.namespace,
-                                     module_name_snake=self.module_name_snake,
-                                     type_name_snake=self.type_name_snake)
 
     def generate_helpers(self, definitions):
         helpers = [ENCODER_AND_DECODER_STRUCTS]

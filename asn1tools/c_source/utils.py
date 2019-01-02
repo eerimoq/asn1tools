@@ -426,6 +426,18 @@ class Generator(object):
                                            module_name_snake,
                                            type_name_snake)]
 
+    def generate_declaration(self):
+        return DECLARATION_FMT.format(namespace=self.namespace,
+                                      module_name=self.module_name,
+                                      type_name=self.type_name,
+                                      module_name_snake=self.module_name_snake,
+                                      type_name_snake=self.type_name_snake)
+
+    def generate_definition(self):
+        return DEFINITION_FMT.format(namespace=self.namespace,
+                                     module_name_snake=self.module_name_snake,
+                                     type_name_snake=self.type_name_snake)
+
     def format_type(self, type_, checker):
         raise NotImplementedError('To be implemented by subclasses.')
 
