@@ -506,8 +506,6 @@ class _Generator(Generator):
         elif isinstance(type_, oer.Enumerated):
             lines = self.format_enumerated(type_)
             lines[0] += ' value;'
-        elif isinstance(type_, oer.UTF8String):
-            lines = self.format_utf8_string(checker)
         elif isinstance(type_, oer.Sequence):
             lines = self.format_sequence(type_, checker)[1:-1]
             lines = dedent_lines(lines)
