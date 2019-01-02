@@ -269,6 +269,19 @@ No dynamic memory is used in the generated code. To achieve this all
 types in the ASN.1 specification must have a known maximum size,
 i.e. ``INTEGER (0..7)``, ``OCTET STRING (SIZE(12))``, etc.
 
+Below is an example generating OER and UPER C source code from
+`tests/files/c_source.asn`_.
+
+.. code-block:: text
+
+   > asn1tools generate_c_source --namespace oer tests/files/c_source.asn
+   Successfully generated oer.h and oer.c.
+   > asn1tools generate_c_source --codec uper --namespace uper tests/files/c_source.asn
+   Successfully generated uper.h and uper.c.
+
+See `oer.h`_, `oer.c`_, `uper.h`_ and `uper.c`_ for the contents of
+the generated files.
+
 Limitations by design:
 
 - Only the types ``BOOLEAN``, ``INTEGER``, ``NULL``, ``OCTET STRING``,
@@ -287,25 +300,14 @@ Limitations by design:
 
 Known limitations:
 
-- Extension additions (``...``) are not yet supported.
+- Extension additions (``...``) are not yet supported. See
+  `compact_extensions_uper`_ for how to make UPER ``CHOICE`` and
+  ``SEQUENCE`` extendable without using ``...``.
 
 - Named numbers in ``ENUMERATED`` are not yet supported.
 
 - ``CHOICE`` tags longer than one byte are not yet supported. Only
   applies to OER.
-
-Below is an example generating OER and UPER C source code from
-`tests/files/c_source.asn`_.
-
-.. code-block:: text
-
-   > asn1tools generate_c_source --namespace oer tests/files/c_source.asn
-   Successfully generated oer.h and oer.c.
-   > asn1tools generate_c_source --codec uper --namespace uper tests/files/c_source.asn
-   Successfully generated uper.h and uper.c.
-
-See `oer.h`_, `oer.c`_, `uper.h`_ and `uper.c`_ for the contents of
-the generated files.
 
 Other OER and/or UPER C code generators:
 
@@ -409,3 +411,5 @@ Encodings
 .. _uper.c: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/uper.c
 
 .. _benchmark example: https://github.com/eerimoq/asn1tools/blob/master/examples/benchmarks/c_source
+
+.. _compact_extensions_uper: https://github.com/eerimoq/asn1tools/blob/master/examples/compact_extensions_uper
