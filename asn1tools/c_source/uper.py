@@ -851,11 +851,13 @@ class _Generator(Generator):
 
         if checker.minimum == checker.maximum:
             encode_lines = [
+                '',
                 'for ({ui} = 0; {ui} < {maximum}; {ui}++) {{'.format(
                     ui=unique_i,
                     maximum=checker.maximum),
             ] + indent_lines(encode_lines)
             decode_lines = [
+                '',
                 'for ({ui} = 0; {ui} < {maximum}; {ui}++) {{'.format(
                     ui=unique_i,
                     maximum=checker.maximum),
