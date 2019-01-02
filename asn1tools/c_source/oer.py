@@ -472,11 +472,11 @@ class _Generator(Generator):
             lines = self.format_real(type_)
         elif isinstance(type_, oer.Null):
             lines = []
-        elif isinstance(type_, oer.OctetString):
-            lines = self.format_octet_string(checker)
         elif is_user_type(type_):
             lines = self.format_user_type(type_.type_name,
                                           type_.module_name)
+        elif isinstance(type_, oer.OctetString):
+            lines = self.format_octet_string(checker)
         elif isinstance(type_, oer.Sequence):
             lines = self.format_sequence(type_, checker)
         elif isinstance(type_, oer.Choice):
@@ -1007,11 +1007,11 @@ class _Generator(Generator):
             return [], []
         elif isinstance(type_, oer.Boolean):
             return self.format_boolean_inner()
-        elif isinstance(type_, oer.OctetString):
-            return self.format_octet_string_inner(checker)
         elif is_user_type(type_):
             return self.format_user_type_inner(type_.type_name,
                                                type_.module_name)
+        elif isinstance(type_, oer.OctetString):
+            return self.format_octet_string_inner(checker)
         elif isinstance(type_, oer.Sequence):
             return self.format_sequence_inner(type_, checker)
         elif isinstance(type_, oer.Choice):

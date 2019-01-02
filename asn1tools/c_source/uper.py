@@ -465,11 +465,11 @@ class _Generator(Generator):
             lines = self.format_real()
         elif isinstance(type_, uper.Null):
             lines = []
-        elif isinstance(type_, uper.OctetString):
-            lines = self.format_octet_string(checker)
         elif is_user_type(type_):
             lines = self.format_user_type(type_.type_name,
                                           type_.module_name)
+        elif isinstance(type_, uper.OctetString):
+            lines = self.format_octet_string(checker)
         elif isinstance(type_, uper.Sequence):
             lines = self.format_sequence(type_, checker)
         elif isinstance(type_, uper.Choice):
@@ -908,11 +908,11 @@ class _Generator(Generator):
             return [], []
         elif isinstance(type_, uper.Boolean):
             return self.format_boolean_inner()
-        elif isinstance(type_, uper.OctetString):
-            return self.format_octet_string_inner(type_, checker)
         elif is_user_type(type_):
             return self.format_user_type_inner(type_.type_name,
                                                type_.module_name)
+        elif isinstance(type_, uper.OctetString):
+            return self.format_octet_string_inner(type_, checker)
         elif isinstance(type_, uper.Sequence):
             return self.format_sequence_inner(type_, checker)
         elif isinstance(type_, uper.Choice):

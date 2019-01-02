@@ -6,32 +6,32 @@ Benchmark of generated C source code from asn1c and asn1tools.
 Executable size
 ---------------
 
-The `asn1c` executable is a lot bigger because it contains encode and
-decode functions for all codecs, not only uper as for `asn1tools` and
-`asn1scc`. There is no `asn1c` option to only generate uper
-code. `asn1c` also supports more ASN.1 construts and uses dynamic
-memory.
+The `asn1c` executable is a lot bigger than `asn1tools` and `asn1scc`
+because it contains encode and decode functions for all codecs, not
+only uper as for `asn1tools` and `asn1scc`. There is no `asn1c` option
+to only generate uper code. `asn1c` also supports more ASN.1 construts
+and uses dynamic memory.
 
 asn1tools:
 
 .. code-block::
 
    text    data     bss     dec     hex	filename
-   5569     608       8    6185    1829	main
+   5242     552       8    5802    16aa	main
 
 asn1scc:
 
 .. code-block::
 
-   text    data     bss     dec     hex filename
-  12153     608       8   12769    31e1 main
+   text    data     bss     dec     hex	filename
+  11938     552       8   12498    30d2	main
 
 asn1c:
 
 .. code-block::
 
-   text    data     bss     dec     hex filename
-  70834    5408      80   76322   12a22 main
+   text    data     bss     dec     hex	filename
+  63622    4896      80   68598   10bf6	main
 
 Runtime memory usage
 --------------------
