@@ -306,9 +306,6 @@ Known limitations:
 
 - Named numbers in ``ENUMERATED`` are not yet supported.
 
-- ``CHOICE`` tags longer than one byte are not yet supported. Only
-  applies to OER.
-
 Other OER and/or UPER C code generators:
 
 - https://github.com/vlm/asn1c

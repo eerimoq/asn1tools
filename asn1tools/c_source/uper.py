@@ -725,7 +725,11 @@ class _Generator(Generator):
     def format_choice_inner(self, type_, checker):
         encode_lines = []
         decode_lines = []
-        unique_choice = self.add_unique_decode_variable('uint8_t {};', 'choice')
+        choice_variable_type = self.format_type_name(0,
+                                                     max(type_.root_index_to_member))
+        unique_choice = self.add_unique_decode_variable(
+            '{} {{}};'.format(choice_variable_type),
+            'choice')
         choice = '{}choice'.format(self.location_inner('', '.'))
 
         for member in type_.root_index_to_member.values():

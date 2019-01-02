@@ -471,6 +471,56 @@ static void test_uper_c_source_h(void)
                                   sizeof(encoded)) == 0);
 }
 
+static void test_uper_c_source_q_c256(void)
+{
+    uint8_t encoded[2];
+    struct uper_c_source_q_t decoded;
+
+    /* Encode. */
+    decoded.choice = uper_c_source_q_choice_c256_e;
+    decoded.value.c256 = true;
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(uper_c_source_q_encode(&encoded[0],
+                                  sizeof(encoded),
+                                  &decoded) == sizeof(encoded));
+    assert(memcmp(&encoded[0], "\x7f\xc0", 2) == 0);
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(uper_c_source_q_decode(&decoded,
+                                  &encoded[0],
+                                  sizeof(encoded)) == sizeof(encoded));
+
+    assert(decoded.choice == uper_c_source_q_choice_c256_e);
+    assert(decoded.value.c256 == true);
+}
+
+static void test_uper_c_source_q_c257(void)
+{
+    uint8_t encoded[2];
+    struct uper_c_source_q_t decoded;
+
+    /* Encode. */
+    decoded.choice = uper_c_source_q_choice_c257_e;
+    decoded.value.c257 = true;
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(uper_c_source_q_encode(&encoded[0],
+                                  sizeof(encoded),
+                                  &decoded) == sizeof(encoded));
+    assert(memcmp(&encoded[0], "\x80\x40", 2) == 0);
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(uper_c_source_q_decode(&decoded,
+                                  &encoded[0],
+                                  sizeof(encoded)) == sizeof(encoded));
+
+    assert(decoded.choice == uper_c_source_q_choice_c257_e);
+    assert(decoded.value.c257 == true);
+}
+
 int main(void)
 {
     test_uper_c_source_a();
@@ -492,6 +542,8 @@ int main(void)
     test_uper_c_source_f();
     test_uper_c_source_g();
     test_uper_c_source_h();
+    test_uper_c_source_q_c256();
+    test_uper_c_source_q_c257();
 
     return (0);
 }

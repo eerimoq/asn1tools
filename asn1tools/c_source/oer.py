@@ -2,7 +2,7 @@
 
 """
 
-import struct
+import bitstruct
 
 from .utils import TYPE_DECLARATION_FMT
 from .utils import DEFINITION_INNER_FMT
@@ -804,7 +804,7 @@ class _Generator(Generator):
     def format_choice_inner(self, type_, checker):
         encode_lines = []
         decode_lines = []
-        unique_tag = self.add_unique_decode_variable('uint8_t {};', 'tag')
+        unique_tag = self.add_unique_decode_variable('uint32_t {};', 'tag')
         choice = '{}choice'.format(self.location_inner('', '.'))
 
         for member in type_.root_members:
@@ -818,14 +818,20 @@ class _Generator(Generator):
                             member,
                             member_checker)
 
-            if len(member.tag) != 1:
-                raise self.error(
-                    'CHOICE tags of more than one byte are not yet supported.')
+            tag_length = len(member.tag)
 
-            tag = struct.unpack('B', member.tag)[0]
+            if tag_length > 4:
+                raise self.error(
+                    'CHOICE tags of more than four bytes are not yet supported.')
+
+            tag = bitstruct.unpack('u{}'.format(8 * tag_length),
+                                   member.tag)[0]
+            tag = '0x{{:0{}x}}'.format(2 * tag_length).format(tag)
 
             choice_encode_lines = [
-                'encoder_append_integer_8(encoder_p, 0x{:02x});'.format(tag)
+                'encoder_append_integer(encoder_p, {}, {});'.format(
+                    tag,
+                    tag_length)
             ] + choice_encode_lines + [
                 'break;'
             ]
@@ -843,7 +849,7 @@ class _Generator(Generator):
                 'break;'
             ]
             decode_lines += [
-                'case 0x{:02x}:'.format(tag)
+                'case {}:'.format(tag)
             ] + indent_lines(choice_decode_lines) + [
                 ''
             ]
