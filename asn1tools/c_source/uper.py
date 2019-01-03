@@ -19,7 +19,7 @@ static void encoder_init(struct encoder_t *self_p,
                          size_t size)
 {
     self_p->buf_p = buf_p;
-    self_p->size = (8 * size);
+    self_p->size = (8 * (ssize_t)size);
     self_p->pos = 0;
 }\
 '''
@@ -43,7 +43,7 @@ static ssize_t encoder_alloc(struct encoder_t *self_p,
 
     if (self_p->pos + (ssize_t)size <= self_p->size) {
         pos = self_p->pos;
-        self_p->pos += size;
+        self_p->pos += (ssize_t)size;
     } else {
         pos = -ENOMEM;
         encoder_abort(self_p, ENOMEM);
@@ -89,8 +89,8 @@ static void encoder_append_bytes(struct encoder_t *self_p,
         return;
     }
 
-    byte_pos = (pos / 8);
-    pos_in_byte = (pos % 8);
+    byte_pos = ((size_t)pos / 8);
+    pos_in_byte = ((size_t)pos % 8);
 
     if (pos_in_byte == 0) {
         memcpy(&self_p->buf_p[byte_pos], buf_p, size);
@@ -193,8 +193,12 @@ ENCODER_APPEND_INT64 = '''
 static void encoder_append_int64(struct encoder_t *self_p,
                                  int64_t value)
 {
-    value += 9223372036854775808ul;
-    encoder_append_uint64(self_p, (uint64_t)value);
+    uint64_t u64_value;
+
+    u64_value = (uint64_t)value;
+    u64_value += 9223372036854775808ul;
+
+    encoder_append_uint64(self_p, u64_value);
 }\
 '''
 
@@ -224,7 +228,7 @@ static void decoder_init(struct decoder_t *self_p,
                          size_t size)
 {
     self_p->buf_p = buf_p;
-    self_p->size = (8 * size);
+    self_p->size = (8 * (ssize_t)size);
     self_p->pos = 0;
 }\
 '''
@@ -248,7 +252,7 @@ static ssize_t decoder_free(struct decoder_t *self_p,
 
     if (self_p->pos + (ssize_t)size <= self_p->size) {
         pos = self_p->pos;
-        self_p->pos += size;
+        self_p->pos += (ssize_t)size;
     } else {
         pos = -EOUTOFDATA;
         decoder_abort(self_p, EOUTOFDATA);
@@ -292,8 +296,8 @@ static void decoder_read_bytes(struct decoder_t *self_p,
         return;
     }
 
-    byte_pos = (pos / 8);
-    pos_in_byte = (pos % 8);
+    byte_pos = ((size_t)pos / 8);
+    pos_in_byte = ((size_t)pos % 8);
 
     if (pos_in_byte == 0) {
         memcpy(buf_p, &self_p->buf_p[byte_pos], size);
@@ -335,7 +339,10 @@ static uint32_t decoder_read_uint32(struct decoder_t *self_p)
 
     decoder_read_bytes(self_p, &buf[0], sizeof(buf));
 
-    return ((buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3]);
+    return (((uint32_t)buf[0] << 24)
+            | ((uint32_t)buf[1] << 16)
+            | ((uint32_t)buf[2] << 8)
+            | (uint32_t)buf[3]);
 }\
 '''
 
@@ -396,12 +403,12 @@ static int32_t decoder_read_int32(struct decoder_t *self_p)
 DECODER_READ_INT64 = '''
 static int64_t decoder_read_int64(struct decoder_t *self_p)
 {
-    int64_t value;
+    uint64_t value;
 
-    value = (int64_t)decoder_read_uint64(self_p);
+    value = decoder_read_uint64(self_p);
     value -= 9223372036854775808ul;
 
-    return (value);
+    return ((int64_t)value);
 }\
 '''
 
@@ -423,7 +430,7 @@ static uint64_t decoder_read_non_negative_binary_integer(struct decoder_t *self_
 
     for (i = 0; i < size; i++) {
         value <<= 1;
-        value |= decoder_read_bit(self_p);
+        value |= (uint64_t)decoder_read_bit(self_p);
     }
 
     return (value);
@@ -544,7 +551,7 @@ class _Generator(Generator):
                 [
                     'encoder_append_non_negative_binary_integer(',
                     '    encoder_p,',
-                    '    src_p->{} - {},'.format(location, checker.minimum),
+                    '    (uint64_t)(src_p->{} - {}),'.format(location, checker.minimum),
                     '    {});'.format(type_.number_of_bits)
                 ],
                 [
@@ -629,7 +636,7 @@ class _Generator(Generator):
             encode_lines = [
                 'encoder_append_non_negative_binary_integer(',
                 '    encoder_p,',
-                '    src_p->{}length - {},'.format(location, checker.minimum),
+                '    src_p->{}length - {}u,'.format(location, checker.minimum),
                 '    {});'.format(type_.number_of_bits),
                 'encoder_append_bytes(encoder_p,',
                 '                     &src_p->{}buf[0],'.format(location),
@@ -799,7 +806,7 @@ class _Generator(Generator):
             first_encode_lines = [
                 'encoder_append_non_negative_binary_integer(',
                 '    encoder_p,',
-                '    src_p->{}length - {},'.format(location, checker.minimum),
+                '    src_p->{}length - {}u,'.format(location, checker.minimum),
                 '    {});'.format(type_.number_of_bits),
                 '',
                 'for ({0} = 0; {0} < src_p->{1}length; {0}++) {{'.format(

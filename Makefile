@@ -23,6 +23,7 @@ CFLAGS = \
 	-Wpedantic \
 	-Wdouble-promotion \
 	-Wfloat-equal \
+	-Wsign-conversion \
 	-Wformat=2 \
 	-Wshadow \
 	-Werror \
