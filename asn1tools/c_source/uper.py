@@ -76,25 +76,33 @@ static void encoder_append_bit(struct encoder_t *self_p,
 }\
 '''
 
-ENCODER_APPEND_BITS = '''
-static void encoder_append_bits(struct encoder_t *self_p,
-                                const uint8_t *buf_p,
-                                size_t number_of_bits)
-{
-    size_t i;
-
-    for (i = 0; i < number_of_bits; i++) {
-        encoder_append_bit(self_p, (buf_p[i / 8] >> (7 - (i % 8))) & 1);
-    }
-}\
-'''
-
 ENCODER_APPEND_BYTES = '''
 static void encoder_append_bytes(struct encoder_t *self_p,
                                  const uint8_t *buf_p,
                                  size_t size)
 {
-    encoder_append_bits(self_p, buf_p, 8 * size);
+    size_t i;
+    ssize_t pos;
+    size_t byte_pos;
+    size_t pos_in_byte;
+
+    pos = encoder_alloc(self_p, 8 * size);
+
+    if (pos < 0) {
+        return;
+    }
+
+    byte_pos = (pos / 8);
+    pos_in_byte = (pos % 8);
+
+    if (pos_in_byte == 0) {
+        memcpy(&self_p->buf_p[byte_pos], buf_p, size);
+    } else {
+        for (i = 0; i < size; i++) {
+            self_p->buf_p[byte_pos + i] |= (buf_p[i] >> pos_in_byte);
+            self_p->buf_p[byte_pos + i + 1] = (buf_p[i] << (8 - pos_in_byte));
+        }
+    }
 }\
 '''
 
@@ -271,27 +279,33 @@ static int decoder_read_bit(struct decoder_t *self_p)
 }\
 '''
 
-DECODER_READ_BITS = '''
-static void decoder_read_bits(struct decoder_t *self_p,
-                              uint8_t *buf_p,
-                              size_t number_of_bits)
-{
-    size_t i;
-
-    memset(buf_p, 0, number_of_bits / 8);
-
-    for (i = 0; i < number_of_bits; i++) {
-        buf_p[i / 8] |= (decoder_read_bit(self_p) << (7 - (i % 8)));
-    }
-}\
-'''
-
 DECODER_READ_BYTES = '''
 static void decoder_read_bytes(struct decoder_t *self_p,
                                uint8_t *buf_p,
                                size_t size)
 {
-    decoder_read_bits(self_p, buf_p, 8 * size);
+    size_t i;
+    ssize_t pos;
+    size_t byte_pos;
+    size_t pos_in_byte;
+
+    pos = decoder_free(self_p, 8 * size);
+
+    if (pos < 0) {
+        return;
+    }
+
+    byte_pos = (pos / 8);
+    pos_in_byte = (pos % 8);
+
+    if (pos_in_byte == 0) {
+        memcpy(buf_p, &self_p->buf_p[byte_pos], size);
+    } else {
+        for (i = 0; i < size; i++) {
+            buf_p[i] = (self_p->buf_p[byte_pos + i] << pos_in_byte);
+            buf_p[i] |= (self_p->buf_p[byte_pos + i + 1] >> (8 - pos_in_byte));
+        }
+    }
 }\
 '''
 
@@ -960,7 +974,6 @@ class _Generator(Generator):
             ('encoder_abort(', ENCODER_ABORT),
             ('encoder_append_bit(', ENCODER_ALLOC),
             ('encoder_append_bit(', ENCODER_APPEND_BIT),
-            ('encoder_append_bytes(', ENCODER_APPEND_BITS),
             ('encoder_append_bytes(', ENCODER_APPEND_BYTES),
             ('encoder_append_uint8(', ENCODER_APPEND_UINT8),
             ('encoder_append_uint16(', ENCODER_APPEND_UINT16),
@@ -980,7 +993,6 @@ class _Generator(Generator):
             ('decoder_abort(', DECODER_ABORT),
             ('decoder_read_bit(', DECODER_FREE),
             ('decoder_read_bit(', DECODER_READ_BIT),
-            ('decoder_read_bytes(', DECODER_READ_BITS),
             ('decoder_read_bytes(', DECODER_READ_BYTES),
             ('decoder_read_uint8(', DECODER_READ_UINT8),
             ('decoder_read_uint16(', DECODER_READ_UINT16),
