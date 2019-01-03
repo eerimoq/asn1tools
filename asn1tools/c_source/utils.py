@@ -189,20 +189,50 @@ class Generator(object):
     def type_name_snake(self):
         return camel_to_snake_case(self.type_name)
 
-    def type_length(self, length):
-        if length <= 8:
-            return 8
-        elif length <= 16:
-            return 16
-        elif length <= 32:
-            return 32
-        elif length <= 64:
-            return 64
+    def type_length(self, minimum, maximum):
+        # Make sure it fits in 64 bits.
+        if minimum < -9223372036854775808:
+            raise self.error(
+                '{} does not fit in int64_t.'.format(minimum))
+        elif maximum > 18446744073709551615:
+            raise self.error(
+                '{} does not fit in uint64_t.'.format(maximum))
+        elif minimum < 0 and maximum > 9223372036854775807:
+            raise self.error(
+                '{} does not fit in int64_t.'.format(maximum))
+
+        # Calculate the number of bytes needed.
+        if minimum < -4294967296:
+            minimum_length = 64
+        elif minimum < -65536:
+            minimum_length = 32
+        elif minimum < -256:
+            minimum_length = 16
+        elif minimum < 0:
+            minimum_length = 8
         else:
-            raise self.error('Type does not fit in 64 bits.')
+            minimum_length = 0
+
+        if maximum > 4294967295:
+            maximum_length = 64
+        elif maximum > 65535:
+            maximum_length = 32
+        elif maximum > 255:
+            maximum_length = 16
+        elif maximum > 0:
+            maximum_length = 8
+        else:
+            maximum_length = 0
+
+        if minimum_length == maximum_length == 0:
+            length = 8
+        else:
+            length = max(minimum_length, maximum_length)
+
+        return length
 
     def format_type_name(self, minimum, maximum):
-        length = self.type_length((maximum - minimum).bit_length())
+        length = self.type_length(minimum, maximum)
         type_name = 'int{}_t'.format(length)
 
         if minimum >= 0:

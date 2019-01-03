@@ -6,6 +6,8 @@
 
 #include "uper.h"
 
+#define membersof(a) (sizeof(a) / (sizeof((a)[0])))
+
 static void test_uper_c_source_a(void)
 {
     uint8_t encoded[42];
@@ -521,6 +523,326 @@ static void test_uper_c_source_q_c257(void)
     assert(decoded.value.c257 == true);
 }
 
+static void test_uper_c_source_r(void)
+{
+    struct data_t {
+        int8_t decoded;
+        uint8_t encoded[1];
+    } datas[] = {
+        {
+            .decoded = -1,
+            .encoded = "\x00"
+        },
+        {
+            .decoded = 0,
+            .encoded = "\x80"
+        }
+    };
+    uint8_t encoded[1];
+    struct uper_c_source_r_t decoded;
+    unsigned int i;
+
+    for (i = 0; i < membersof(datas); i++) {
+        /* Encode. */
+        decoded.value = datas[i].decoded;
+
+        memset(&encoded[0], 0, sizeof(encoded));
+        assert(uper_c_source_r_encode(&encoded[0],
+                                      sizeof(encoded),
+                                      &decoded) == sizeof(encoded));
+        assert(memcmp(&encoded[0],
+                      &datas[i].encoded[0],
+                      sizeof(encoded)) == 0);
+
+        /* Decode. */
+        memset(&decoded, 0, sizeof(decoded));
+        assert(uper_c_source_r_decode(&decoded,
+                                      &encoded[0],
+                                      sizeof(encoded)) == sizeof(encoded));
+
+        assert(decoded.value == datas[i].decoded);
+    }
+}
+
+static void test_uper_c_source_s(void)
+{
+    struct data_t {
+        int8_t decoded;
+        uint8_t encoded[1];
+    } datas[] = {
+        {
+            .decoded = -2,
+            .encoded = "\x00"
+        },
+        {
+            .decoded = 1,
+            .encoded = "\xc0"
+        }
+    };
+    uint8_t encoded[1];
+    struct uper_c_source_s_t decoded;
+    unsigned int i;
+
+    for (i = 0; i < membersof(datas); i++) {
+        /* Encode. */
+        decoded.value = datas[i].decoded;
+
+        memset(&encoded[0], 0, sizeof(encoded));
+        assert(uper_c_source_s_encode(&encoded[0],
+                                      sizeof(encoded),
+                                      &decoded) == sizeof(encoded));
+        assert(memcmp(&encoded[0],
+                      &datas[i].encoded[0],
+                      sizeof(encoded)) == 0);
+
+        /* Decode. */
+        memset(&decoded, 0, sizeof(decoded));
+        assert(uper_c_source_s_decode(&decoded,
+                                      &encoded[0],
+                                      sizeof(encoded)) == sizeof(encoded));
+
+        assert(decoded.value == datas[i].decoded);
+    }
+}
+
+static void test_uper_c_source_t(void)
+{
+    struct data_t {
+        int8_t decoded;
+        uint8_t encoded[1];
+    } datas[] = {
+        {
+            .decoded = -1,
+            .encoded = "\x00"
+        },
+        {
+            .decoded = 2,
+            .encoded = "\xc0"
+        }
+    };
+    uint8_t encoded[1];
+    struct uper_c_source_t_t decoded;
+    unsigned int i;
+
+    for (i = 0; i < membersof(datas); i++) {
+        /* Encode. */
+        decoded.value = datas[i].decoded;
+
+        memset(&encoded[0], 0, sizeof(encoded));
+        assert(uper_c_source_t_encode(&encoded[0],
+                                      sizeof(encoded),
+                                      &decoded) == sizeof(encoded));
+        assert(memcmp(&encoded[0],
+                      &datas[i].encoded[0],
+                      sizeof(encoded)) == 0);
+
+        /* Decode. */
+        memset(&decoded, 0, sizeof(decoded));
+        assert(uper_c_source_t_decode(&decoded,
+                                      &encoded[0],
+                                      sizeof(encoded)) == sizeof(encoded));
+
+        assert(decoded.value == datas[i].decoded);
+    }
+}
+
+static void test_uper_c_source_u(void)
+{
+    struct data_t {
+        int8_t decoded;
+        uint8_t encoded[1];
+    } datas[] = {
+        {
+            .decoded = -64,
+            .encoded = "\x00"
+        }
+    };
+    uint8_t encoded[1];
+    struct uper_c_source_u_t decoded;
+    unsigned int i;
+
+    for (i = 0; i < membersof(datas); i++) {
+        /* Encode. */
+        decoded.value = datas[i].decoded;
+
+        memset(&encoded[0], 0, sizeof(encoded));
+        assert(uper_c_source_u_encode(&encoded[0],
+                                      sizeof(encoded),
+                                      &decoded) == sizeof(encoded));
+        assert(memcmp(&encoded[0],
+                      &datas[i].encoded[0],
+                      sizeof(encoded)) == 0);
+
+        /* Decode. */
+        memset(&decoded, 0, sizeof(decoded));
+        assert(uper_c_source_u_decode(&decoded,
+                                      &encoded[0],
+                                      sizeof(encoded)) == sizeof(encoded));
+
+        assert(decoded.value == datas[i].decoded);
+    }
+}
+
+static void test_uper_c_source_v(void)
+{
+    struct data_t {
+        int8_t decoded;
+        uint8_t encoded[1];
+    } datas[] = {
+        {
+            .decoded = -128,
+            .encoded = "\x00"
+        }
+    };
+    uint8_t encoded[1];
+    struct uper_c_source_v_t decoded;
+    unsigned int i;
+
+    for (i = 0; i < membersof(datas); i++) {
+        /* Encode. */
+        decoded.value = datas[i].decoded;
+
+        memset(&encoded[0], 0, sizeof(encoded));
+        assert(uper_c_source_v_encode(&encoded[0],
+                                      sizeof(encoded),
+                                      &decoded) == sizeof(encoded));
+        assert(memcmp(&encoded[0],
+                      &datas[i].encoded[0],
+                      sizeof(encoded)) == 0);
+
+        /* Decode. */
+        memset(&decoded, 0, sizeof(decoded));
+        assert(uper_c_source_v_decode(&decoded,
+                                      &encoded[0],
+                                      sizeof(encoded)) == sizeof(encoded));
+
+        assert(decoded.value == datas[i].decoded);
+    }
+}
+
+static void test_uper_c_source_w(void)
+{
+    struct data_t {
+        int16_t decoded;
+        uint8_t encoded[2];
+    } datas[] = {
+        {
+            .decoded = -1,
+            .encoded = "\x00\x00"
+        },
+        {
+            .decoded = 510,
+            .encoded = "\xff\x80"
+        }
+    };
+    uint8_t encoded[2];
+    struct uper_c_source_w_t decoded;
+    unsigned int i;
+
+    for (i = 0; i < membersof(datas); i++) {
+        /* Encode. */
+        decoded.value = datas[i].decoded;
+
+        memset(&encoded[0], 0, sizeof(encoded));
+        assert(uper_c_source_w_encode(&encoded[0],
+                                      sizeof(encoded),
+                                      &decoded) == sizeof(encoded));
+        assert(memcmp(&encoded[0],
+                      &datas[i].encoded[0],
+                      sizeof(encoded)) == 0);
+
+        /* Decode. */
+        memset(&decoded, 0, sizeof(decoded));
+        assert(uper_c_source_w_decode(&decoded,
+                                      &encoded[0],
+                                      sizeof(encoded)) == sizeof(encoded));
+
+        assert(decoded.value == datas[i].decoded);
+    }
+}
+
+static void test_uper_c_source_x(void)
+{
+    struct data_t {
+        int16_t decoded;
+        uint8_t encoded[2];
+    } datas[] = {
+        {
+            .decoded = -2,
+            .encoded = "\x00\x00"
+        },
+        {
+            .decoded = 510,
+            .encoded = "\x80\x00"
+        }
+    };
+    uint8_t encoded[2];
+    struct uper_c_source_x_t decoded;
+    unsigned int i;
+
+    for (i = 0; i < membersof(datas); i++) {
+        /* Encode. */
+        decoded.value = datas[i].decoded;
+
+        memset(&encoded[0], 0, sizeof(encoded));
+        assert(uper_c_source_x_encode(&encoded[0],
+                                      sizeof(encoded),
+                                      &decoded) == sizeof(encoded));
+        assert(memcmp(&encoded[0],
+                      &datas[i].encoded[0],
+                      sizeof(encoded)) == 0);
+
+        /* Decode. */
+        memset(&decoded, 0, sizeof(decoded));
+        assert(uper_c_source_x_decode(&decoded,
+                                      &encoded[0],
+                                      sizeof(encoded)) == sizeof(encoded));
+
+        assert(decoded.value == datas[i].decoded);
+    }
+}
+
+static void test_uper_c_source_y(void)
+{
+    struct data_t {
+        uint16_t decoded;
+        uint8_t encoded[2];
+    } datas[] = {
+        {
+            .decoded = 10000,
+            .encoded = "\x00\x00"
+        },
+        {
+            .decoded = 10512,
+            .encoded = "\x80\x00"
+        }
+    };
+    uint8_t encoded[2];
+    struct uper_c_source_y_t decoded;
+    unsigned int i;
+
+    for (i = 0; i < membersof(datas); i++) {
+        /* Encode. */
+        decoded.value = datas[i].decoded;
+
+        memset(&encoded[0], 0, sizeof(encoded));
+        assert(uper_c_source_y_encode(&encoded[0],
+                                      sizeof(encoded),
+                                      &decoded) == sizeof(encoded));
+        assert(memcmp(&encoded[0],
+                      &datas[i].encoded[0],
+                      sizeof(encoded)) == 0);
+
+        /* Decode. */
+        memset(&decoded, 0, sizeof(decoded));
+        assert(uper_c_source_y_decode(&decoded,
+                                      &encoded[0],
+                                      sizeof(encoded)) == sizeof(encoded));
+
+        assert(decoded.value == datas[i].decoded);
+    }
+}
+
 int main(void)
 {
     test_uper_c_source_a();
@@ -544,6 +866,14 @@ int main(void)
     test_uper_c_source_h();
     test_uper_c_source_q_c256();
     test_uper_c_source_q_c257();
+    test_uper_c_source_r();
+    test_uper_c_source_s();
+    test_uper_c_source_t();
+    test_uper_c_source_u();
+    test_uper_c_source_v();
+    test_uper_c_source_w();
+    test_uper_c_source_x();
+    test_uper_c_source_y();
 
     return (0);
 }

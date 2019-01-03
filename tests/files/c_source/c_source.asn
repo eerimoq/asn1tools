@@ -361,4 +361,27 @@ Q ::= CHOICE {
     c257 BOOLEAN
 }
 
+-- 1 bit signed
+R ::= INTEGER (-1..0)
+
+-- 2 bits signed
+S ::= INTEGER (-2..1)
+
+T ::= INTEGER (-1..2)
+
+-- 7 bits signed
+U ::= INTEGER (-64..63)
+
+-- 8 bits signed
+V ::= INTEGER (-128..127)
+
+-- 9 bits signed
+W ::= INTEGER (-1..510)
+
+-- 10 bits signed
+X ::= INTEGER (-2..510)
+
+-- 10 bits unsigned
+Y ::= INTEGER (10000..10512)
+
 END

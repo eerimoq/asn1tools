@@ -494,6 +494,7 @@ static uint32_t decoder_read_tag(struct decoder_t *self_p)
 }\
 '''
 
+
 class _Generator(Generator):
 
     def format_real(self, type_):

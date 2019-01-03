@@ -89,7 +89,7 @@ class Asn1ToolsCSourceTest(unittest.TestCase):
             self.assertEqual(str(cm.exception),
                              "Foo.A: INTEGER has no maximum value.")
 
-    def test_compile_error_integer_over_64_bits(self):
+    def test_compile_error_unsigned_integer_over_64_bits(self):
         for codec, module in CODECS_AND_MODULES:
             foo = asn1tools.compile_string(
                 'Foo DEFINITIONS AUTOMATIC TAGS ::= BEGIN '
@@ -101,7 +101,35 @@ class Asn1ToolsCSourceTest(unittest.TestCase):
                 module.generate(foo, 'foo')
 
             self.assertEqual(str(cm.exception),
-                             "Foo.A: Type does not fit in 64 bits.")
+                             "Foo.A: 18446744073709551616 does not fit in uint64_t.")
+
+    def test_compile_error_unsigned_integer_over_64_signed_bits(self):
+        for codec, module in CODECS_AND_MODULES:
+            foo = asn1tools.compile_string(
+                'Foo DEFINITIONS AUTOMATIC TAGS ::= BEGIN '
+                '    A ::= INTEGER (-1..9223372036854775808) '
+                'END',
+                codec)
+
+            with self.assertRaises(asn1tools.errors.Error) as cm:
+                module.generate(foo, 'foo')
+
+            self.assertEqual(str(cm.exception),
+                             "Foo.A: 9223372036854775808 does not fit in int64_t.")
+
+    def test_compile_error_signed_integer_over_64_bits(self):
+        for codec, module in CODECS_AND_MODULES:
+            foo = asn1tools.compile_string(
+                'Foo DEFINITIONS AUTOMATIC TAGS ::= BEGIN '
+                '    A ::= INTEGER (-9223372036854775809..0) '
+                'END',
+                codec)
+
+            with self.assertRaises(asn1tools.errors.Error) as cm:
+                module.generate(foo, 'foo')
+
+            self.assertEqual(str(cm.exception),
+                             "Foo.A: -9223372036854775809 does not fit in int64_t.")
 
     def test_compile_error_octet_string_no_size(self):
         for codec, module in CODECS_AND_MODULES:

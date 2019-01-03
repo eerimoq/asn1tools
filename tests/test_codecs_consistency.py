@@ -1099,6 +1099,224 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'Q', decoded, encoded)
 
+        # Type R.
+        decoded = -1
+
+        encoded_messages = [
+            b'\x02\x01\xff',
+            b'\x02\x01\xff',
+            b'-1',
+            b'\xff',
+            b'\x00',
+            b'\x00',
+            b'<R>-1</R>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'R', decoded, encoded)
+
+        decoded = 0
+
+        encoded_messages = [
+            b'\x02\x01\x00',
+            b'\x02\x01\x00',
+            b'0',
+            b'\x00',
+            b'\x80',
+            b'\x80',
+            b'<R>0</R>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'R', decoded, encoded)
+
+        # Type S.
+        decoded = -2
+
+        encoded_messages = [
+            b'\x02\x01\xfe',
+            b'\x02\x01\xfe',
+            b'-2',
+            b'\xfe',
+            b'\x00',
+            b'\x00',
+            b'<S>-2</S>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'S', decoded, encoded)
+
+        decoded = 1
+
+        encoded_messages = [
+            b'\x02\x01\x01',
+            b'\x02\x01\x01',
+            b'1',
+            b'\x01',
+            b'\xc0',
+            b'\xc0',
+            b'<S>1</S>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'S', decoded, encoded)
+
+        # Type T.
+        decoded = -1
+
+        encoded_messages = [
+            b'\x02\x01\xff',
+            b'\x02\x01\xff',
+            b'-1',
+            b'\xff',
+            b'\x00',
+            b'\x00',
+            b'<T>-1</T>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'T', decoded, encoded)
+
+        decoded = 2
+
+        encoded_messages = [
+            b'\x02\x01\x02',
+            b'\x02\x01\x02',
+            b'2',
+            b'\x02',
+            b'\xc0',
+            b'\xc0',
+            b'<T>2</T>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'T', decoded, encoded)
+
+        # Type U.
+        decoded = -64
+
+        encoded_messages = [
+            b'\x02\x01\xc0',
+            b'\x02\x01\xc0',
+            b'-64',
+            b'\xc0',
+            b'\x00',
+            b'\x00',
+            b'<U>-64</U>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'U', decoded, encoded)
+
+        # Type V.
+        decoded = -128
+
+        encoded_messages = [
+            b'\x02\x01\x80',
+            b'\x02\x01\x80',
+            b'-128',
+            b'\x80',
+            b'\x00',
+            b'\x00',
+            b'<V>-128</V>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'V', decoded, encoded)
+
+        # Type W.
+        decoded = -1
+
+        encoded_messages = [
+            b'\x02\x01\xff',
+            b'\x02\x01\xff',
+            b'-1',
+            b'\xff\xff',
+            b'\x00\x00',
+            b'\x00\x00',
+            b'<W>-1</W>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'W', decoded, encoded)
+
+        decoded = 510
+
+        encoded_messages = [
+            b'\x02\x02\x01\xfe',
+            b'\x02\x02\x01\xfe',
+            b'510',
+            b'\x01\xfe',
+            b'\x01\xff',
+            b'\xff\x80',
+            b'<W>510</W>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'W', decoded, encoded)
+
+        # Type X.
+        decoded = -2
+
+        encoded_messages = [
+            b'\x02\x01\xfe',
+            b'\x02\x01\xfe',
+            b'-2',
+            b'\xff\xfe',
+            b'\x00\x00',
+            b'\x00\x00',
+            b'<X>-2</X>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'X', decoded, encoded)
+
+        decoded = 510
+
+        encoded_messages = [
+            b'\x02\x02\x01\xfe',
+            b'\x02\x02\x01\xfe',
+            b'510',
+            b'\x01\xfe',
+            b'\x02\x00',
+            b'\x80\x00',
+            b'<X>510</X>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'X', decoded, encoded)
+
+        # Type Y.
+        decoded = 10000
+
+        encoded_messages = [
+            b'\x02\x02\x27\x10',
+            b'\x02\x02\x27\x10',
+            b'10000',
+            b'\x27\x10',
+            b'\x00\x00',
+            b'\x00\x00',
+            b'<Y>10000</Y>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'Y', decoded, encoded)
+
+        decoded = 10512
+
+        encoded_messages = [
+            b'\x02\x02\x29\x10',
+            b'\x02\x02\x29\x10',
+            b'10512',
+            b'\x29\x10',
+            b'\x02\x00',
+            b'\x80\x00',
+            b'<Y>10512</Y>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'Y', decoded, encoded)
+
 
 if __name__ == '__main__':
     unittest.main()
