@@ -1485,7 +1485,14 @@ class Choice(Type):
         index_to_member, name_to_index = self.create_maps(root_members)
         self.root_index_to_member = index_to_member
         self.root_name_to_index = name_to_index
-        self.root_number_of_bits = integer_as_number_of_bits(len(root_members) - 1)
+        self.maximum = (len(root_members) - 1)
+        self.root_number_of_bits = integer_as_number_of_bits(self.maximum)
+
+        if self.maximum <= 65535:
+            self.number_of_indefinite_bits = None
+        else:
+            number_of_bits = ((self.root_number_of_bits + 7) // 8 - 1).bit_length()
+            self.number_of_indefinite_bits = number_of_bits
 
         # Optional additions.
         if additions is None:
@@ -1541,11 +1548,28 @@ class Choice(Type):
                     data[0]))
 
         if len(self.root_index_to_member) > 1:
-            encoder.append_non_negative_binary_integer(index,
-                                                       self.root_number_of_bits)
+            self.encode_root_index(index, encoder)
 
         member = self.root_index_to_member[index]
         self.encode_member(member, data[1], encoder)
+
+    def encode_root_index(self, index, encoder):
+        if self.number_of_indefinite_bits is None:
+            number_of_bits = self.root_number_of_bits
+        else:
+            number_of_bytes = size_as_number_of_bytes(index)
+            number_of_bits = 8 * number_of_bytes
+            encoder.append_constrained_whole_number(
+                number_of_bytes - 1,
+                0,
+                2 ** self.number_of_indefinite_bits,
+                self.number_of_indefinite_bits)
+            encoder.align()
+
+        encoder.append_constrained_whole_number(index,
+                                                0,
+                                                self.maximum,
+                                                number_of_bits)
 
     def encode_additions(self, data, encoder):
         try:
@@ -1586,8 +1610,7 @@ class Choice(Type):
 
     def decode_root(self, decoder):
         if len(self.root_index_to_member) > 1:
-            index = decoder.read_non_negative_binary_integer(
-                self.root_number_of_bits)
+            index = self.decode_root_index(decoder)
         else:
             index = 0
 
@@ -1600,6 +1623,22 @@ class Choice(Type):
                     index))
 
         return (member.name, member.decode(decoder))
+
+    def decode_root_index(self, decoder):
+        if self.number_of_indefinite_bits is None:
+            number_of_bits = self.root_number_of_bits
+        else:
+            number_of_bytes = decoder.read_constrained_whole_number(
+                0,
+                2 ** self.number_of_indefinite_bits,
+                self.number_of_indefinite_bits)
+            number_of_bytes += 1
+            number_of_bits = (8 * number_of_bytes)
+            decoder.align()
+
+        return decoder.read_constrained_whole_number(0,
+                                                     self.maximum,
+                                                     number_of_bits)
 
     def decode_additions(self, decoder):
         index = decoder.read_normally_small_non_negative_whole_number()

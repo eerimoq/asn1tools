@@ -18,7 +18,6 @@ from .per import Enumerated
 from .per import ObjectIdentifier
 from .per import Sequence
 from .per import Set
-from .per import Choice
 from .per import UTF8String
 from .per import GeneralString
 from .per import BMPString
@@ -318,6 +317,15 @@ class SetOf(ArrayType):
                                     maximum,
                                     has_extension_marker,
                                     'SET OF')
+
+
+class Choice(per.Choice):
+
+    def encode_root_index(self, index, encoder):
+        encoder.append_non_negative_binary_integer(index, self.root_number_of_bits)
+
+    def decode_root_index(self, decoder):
+        return decoder.read_non_negative_binary_integer(self.root_number_of_bits)
 
 
 class NumericString(KnownMultiplierStringType):

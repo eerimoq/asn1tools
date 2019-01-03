@@ -1075,7 +1075,7 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             b'\x9f\x81\x7f\x01\xff',
             b'{"c256": true}',
             b'\xbf\x81\x7f\xff',
-            b'\x7f\xc0', # b'\x00\xff\x80',
+            b'\x00\xff\x80',
             b'\x7f\xc0',
             b'<Q><c256><true /></c256></Q>'
         ]
@@ -1091,7 +1091,7 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             b'\x9f\x82\x00\x01\xff',
             b'{"c257": true}',
             b'\xbf\x82\x00\xff',
-            b'\x80\x40', # b'\x01\x00\x80',
+            b'\x01\x00\x80',
             b'\x80\x40',
             b'<Q><c257><true /></c257></Q>'
         ]
