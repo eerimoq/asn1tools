@@ -476,6 +476,27 @@ static uint32_t decoder_read_length_determinant(struct decoder_t *self_p)
 }\
 '''
 
+DECODER_READ_TAG = '''
+static uint32_t decoder_read_tag(struct decoder_t *self_p)
+{
+    uint32_t tag;
+
+    tag = decoder_read_uint8(self_p);
+
+    if ((tag & 0x3fu) == 0x3fu) {
+        while (true) {
+            tag <<= 8;
+            tag |= (uint32_t)decoder_read_uint8(self_p);
+
+            if ((tag & 0x80u) == 0) {
+                break;
+            }
+        }
+    }
+
+    return (tag);
+}\
+'''
 
 class _Generator(Generator):
 
@@ -829,7 +850,7 @@ class _Generator(Generator):
         ]
 
         decode_lines = [
-            '{} = decoder_read_uint8(decoder_p);'.format(unique_tag),
+            '{} = decoder_read_tag(decoder_p);'.format(unique_tag),
             '',
             'switch ({}) {{'.format(unique_tag),
             ''
@@ -1059,7 +1080,8 @@ class _Generator(Generator):
             ('decoder_read_float(', DECODER_READ_FLOAT),
             ('decoder_read_double(', DECODER_READ_DOUBLE),
             ('decoder_read_bool(', DECODER_READ_BOOL),
-            ('decoder_read_length_determinant(', DECODER_READ_LENGTH_DETERMINANT)
+            ('decoder_read_length_determinant(', DECODER_READ_LENGTH_DETERMINANT),
+            ('decoder_read_tag(', DECODER_READ_TAG)
         ]
 
         for patterns, definition in functions:

@@ -808,6 +808,56 @@ static void test_oer_c_source_o(void)
     }
 }
 
+static void test_oer_c_source_q_c256(void)
+{
+    uint8_t encoded[4];
+    struct oer_c_source_q_t decoded;
+
+    /* Encode. */
+    decoded.choice = oer_c_source_q_choice_c256_e;
+    decoded.value.c256 = true;
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(oer_c_source_q_encode(&encoded[0],
+                                 sizeof(encoded),
+                                 &decoded) == sizeof(encoded));
+    assert(memcmp(&encoded[0], "\xbf\x81\x7f\xff", 4) == 0);
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(oer_c_source_q_decode(&decoded,
+                                 &encoded[0],
+                                 sizeof(encoded)) == sizeof(encoded));
+
+    assert(decoded.choice == oer_c_source_q_choice_c256_e);
+    assert(decoded.value.c256 == true);
+}
+
+static void test_oer_c_source_q_c257(void)
+{
+    uint8_t encoded[4];
+    struct oer_c_source_q_t decoded;
+
+    /* Encode. */
+    decoded.choice = oer_c_source_q_choice_c257_e;
+    decoded.value.c257 = true;
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(oer_c_source_q_encode(&encoded[0],
+                                 sizeof(encoded),
+                                 &decoded) == sizeof(encoded));
+    assert(memcmp(&encoded[0], "\xbf\x82\x00\xff", 4) == 0);
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(oer_c_source_q_decode(&decoded,
+                                 &encoded[0],
+                                 sizeof(encoded)) == sizeof(encoded));
+
+    assert(decoded.choice == oer_c_source_q_choice_c257_e);
+    assert(decoded.value.c257 == true);
+}
+
 static void test_oer_programming_types_float(void)
 {
     uint8_t encoded[4];
@@ -886,9 +936,12 @@ int main(void)
     test_oer_c_source_l();
     test_oer_c_source_l_decode_error_bad_length();
     test_oer_c_source_o();
+    test_oer_c_source_q_c256();
+    test_oer_c_source_q_c257();
 
     test_oer_programming_types_float();
     test_oer_programming_types_double();
+
 
     return (0);
 }
