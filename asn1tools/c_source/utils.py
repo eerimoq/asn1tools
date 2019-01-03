@@ -124,7 +124,7 @@ static void decoder_abort(struct decoder_t *self_p,
 '''
 
 
-class MembersBacktracesContext(object):
+class _MembersBacktracesContext(object):
 
     def __init__(self, backtraces, member_name):
         self.backtraces = backtraces
@@ -139,7 +139,7 @@ class MembersBacktracesContext(object):
             backtrace.pop()
 
 
-class UserType(object):
+class _UserType(object):
 
     def __init__(self,
                  type_name,
@@ -241,17 +241,17 @@ class Generator(object):
             self.c_members_backtrace
         ]
 
-        return MembersBacktracesContext(backtraces, member_name)
+        return _MembersBacktracesContext(backtraces, member_name)
 
     def asn1_members_backtrace_push(self, member_name):
         backtraces = [self.asn1_members_backtrace]
 
-        return MembersBacktracesContext(backtraces, member_name)
+        return _MembersBacktracesContext(backtraces, member_name)
 
     def c_members_backtrace_push(self, member_name):
         backtraces = [self.c_members_backtrace]
 
-        return MembersBacktracesContext(backtraces, member_name)
+        return _MembersBacktracesContext(backtraces, member_name)
 
     def get_member_checker(self, checker, name):
         for member in checker.members:
@@ -426,6 +426,30 @@ class Generator(object):
                                            module_name_snake,
                                            type_name_snake)]
 
+    def generate_type_declaration(self, compiled_type):
+        type_ = compiled_type.type
+        checker = compiled_type.constraints_checker.type
+
+        lines = self.generate_type_declaration_process(type_, checker)
+
+        if not lines:
+            lines = ['uint8_t dummy;']
+
+        lines = indent_lines(lines)
+
+        if self.helper_lines:
+            self.helper_lines.append('')
+
+        return [
+            TYPE_DECLARATION_FMT.format(namespace=self.namespace,
+                                        module_name=self.module_name,
+                                        type_name=self.type_name,
+                                        module_name_snake=self.module_name_snake,
+                                        type_name_snake=self.type_name_snake,
+                                        helper_types='\n'.join(self.helper_lines),
+                                        members='\n'.join(lines))
+        ]
+
     def generate_declaration(self):
         return DECLARATION_FMT.format(namespace=self.namespace,
                                       module_name=self.module_name,
@@ -438,6 +462,74 @@ class Generator(object):
                                      module_name_snake=self.module_name_snake,
                                      type_name_snake=self.type_name_snake)
 
+    def generate_definition_inner(self, compiled_type):
+        encode_lines, decode_lines = self.generate_definition_inner_process(
+            compiled_type.type,
+            compiled_type.constraints_checker.type)
+
+        if self.encode_variable_lines:
+            encode_lines = self.encode_variable_lines + [''] + encode_lines
+
+        if self.decode_variable_lines:
+            decode_lines = self.decode_variable_lines + [''] + decode_lines
+
+        encode_lines = indent_lines(encode_lines) + ['']
+        decode_lines = indent_lines(decode_lines) + ['']
+
+        return DEFINITION_INNER_FMT.format(namespace=self.namespace,
+                                           module_name_snake=self.module_name_snake,
+                                           type_name_snake=self.type_name_snake,
+                                           encode_body='\n'.join(encode_lines),
+                                           decode_body='\n'.join(decode_lines))
+
+    def generate(self, compiled):
+        user_types = []
+
+        for module_name, module in sorted(compiled.modules.items()):
+            self.module_name = module_name
+
+            for type_name, compiled_type in sorted(module.items()):
+                self.type_name = type_name
+                self.reset_type()
+
+                type_declaration = self.generate_type_declaration(compiled_type)
+
+                if not type_declaration:
+                    continue
+
+                declaration = self.generate_declaration()
+                definition_inner = self.generate_definition_inner(compiled_type)
+                definition = self.generate_definition()
+
+                user_type = _UserType(type_name,
+                                      module_name,
+                                      type_declaration,
+                                      declaration,
+                                      definition_inner,
+                                      definition,
+                                      self.used_user_types)
+                user_types.append(user_type)
+
+        user_types = sort_user_types_by_used_user_types(user_types)
+
+        type_declarations = []
+        declarations = []
+        definitions_inner = []
+        definitions = []
+
+        for user_type in user_types:
+            type_declarations.extend(user_type.type_declaration)
+            declarations.append(user_type.declaration)
+            definitions_inner.append(user_type.definition_inner)
+            definitions.append(user_type.definition)
+
+        type_declarations = '\n'.join(type_declarations)
+        declarations = '\n'.join(declarations)
+        definitions = '\n'.join(definitions_inner + definitions)
+        helpers = '\n'.join(self.generate_helpers(definitions))
+
+        return type_declarations, declarations, helpers, definitions
+
     def format_type(self, type_, checker):
         raise NotImplementedError('To be implemented by subclasses.')
 
@@ -445,6 +537,15 @@ class Generator(object):
         raise NotImplementedError('To be implemented by subclasses.')
 
     def get_choice_members(self, type_):
+        raise NotImplementedError('To be implemented by subclasses.')
+
+    def generate_type_declaration_process(self, type_, checker):
+        raise NotImplementedError('To be implemented by subclasses.')
+
+    def generate_definition_inner_process(self, type_, checker):
+        raise NotImplementedError('To be implemented by subclasses.')
+
+    def generate_helpers(self, definitions):
         raise NotImplementedError('To be implemented by subclasses.')
 
 
@@ -510,3 +611,23 @@ def indent_lines(lines):
 
 def dedent_lines(lines):
     return [line[4:] for line in lines]
+
+
+def sort_user_types_by_used_user_types(user_types):
+    reversed_sorted_user_types = []
+
+    for user_type in user_types:
+        user_type_name_tuple = (user_type.type_name, user_type.module_name)
+
+        # Insert first in the reversed list if there are no types
+        # using this type.
+        insert_index = 0
+
+        for i, reversed_sorted_user_type in enumerate(reversed_sorted_user_types, 1):
+            if user_type_name_tuple in reversed_sorted_user_type.used_user_types:
+                if i > insert_index:
+                    insert_index = i
+
+        reversed_sorted_user_types.insert(insert_index, user_type)
+
+    return reversed(reversed_sorted_user_types)

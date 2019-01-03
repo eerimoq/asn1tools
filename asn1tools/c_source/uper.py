@@ -2,12 +2,9 @@
 
 """
 
-from .utils import TYPE_DECLARATION_FMT
-from .utils import DEFINITION_INNER_FMT
 from .utils import ENCODER_AND_DECODER_STRUCTS
 from .utils import ENCODER_ABORT
 from .utils import DECODER_ABORT
-from .utils import UserType
 from .utils import Generator
 from .utils import camel_to_snake_case
 from .utils import is_user_type
@@ -434,26 +431,6 @@ static uint64_t decoder_read_non_negative_binary_integer(struct decoder_t *self_
 '''
 
 
-def sort_user_types_by_used_user_types(user_types):
-    reversed_sorted_user_types = []
-
-    for user_type in user_types:
-        user_type_name_tuple = (user_type.type_name, user_type.module_name)
-
-        # Insert first in the reversed list if there are no types
-        # using this type.
-        insert_index = 0
-
-        for i, reversed_sorted_user_type in enumerate(reversed_sorted_user_types, 1):
-            if user_type_name_tuple in reversed_sorted_user_type.used_user_types:
-                if i > insert_index:
-                    insert_index = i
-
-        reversed_sorted_user_types.insert(insert_index, user_type)
-
-    return reversed(reversed_sorted_user_types)
-
-
 class _Generator(Generator):
 
     def format_real(self):
@@ -493,11 +470,7 @@ class _Generator(Generator):
 
         return lines
 
-    def generate_type_declaration(self, compiled_type):
-        type_ = compiled_type.type
-        checker = compiled_type.constraints_checker.type
-        lines = []
-
+    def generate_type_declaration_process(self, type_, checker):
         if isinstance(type_, uper.Integer):
             lines = self.format_integer(checker)
             lines[0] += ' value;'
@@ -527,23 +500,29 @@ class _Generator(Generator):
             raise self.error(
                 "Unsupported type '{}'.".format(type_.type_name))
 
-        if not lines:
-            lines = ['uint8_t dummy;']
+        return lines
 
-        lines = indent_lines(lines)
-
-        if self.helper_lines:
-            self.helper_lines.append('')
-
-        return [
-            TYPE_DECLARATION_FMT.format(namespace=self.namespace,
-                                        module_name=self.module_name,
-                                        type_name=self.type_name,
-                                        module_name_snake=self.module_name_snake,
-                                        type_name_snake=self.type_name_snake,
-                                        helper_types='\n'.join(self.helper_lines),
-                                        members='\n'.join(lines))
-        ]
+    def generate_definition_inner_process(self, type_, checker):
+        if isinstance(type_, uper.Integer):
+            return self.format_integer_inner(type_, checker)
+        elif isinstance(type_, uper.Boolean):
+            return self.format_boolean_inner()
+        elif isinstance(type_, uper.Real):
+            return self.format_real_inner()
+        elif isinstance(type_, uper.Sequence):
+            return self.format_sequence_inner(type_, checker)
+        elif isinstance(type_, uper.SequenceOf):
+            return self.format_sequence_of_inner(type_, checker)
+        elif isinstance(type_, uper.Choice):
+            return self.format_choice_inner(type_, checker)
+        elif isinstance(type_, uper.OctetString):
+            return self.format_octet_string_inner(type_, checker)
+        elif isinstance(type_, uper.Enumerated):
+            return self.format_enumerated_inner(type_)
+        elif isinstance(type_, uper.Null):
+            return self.format_null_inner()
+        else:
+            return [], []
 
     def format_integer_inner(self, type_, checker):
         type_name = self.format_type_name(checker.minimum, checker.maximum)
@@ -925,46 +904,6 @@ class _Generator(Generator):
         else:
             raise self.error(type_)
 
-    def generate_definition_inner(self, compiled_type):
-        type_ = compiled_type.type
-        checker = compiled_type.constraints_checker.type
-
-        if isinstance(type_, uper.Integer):
-            encode_lines, decode_lines = self.format_integer_inner(type_, checker)
-        elif isinstance(type_, uper.Boolean):
-            encode_lines, decode_lines = self.format_boolean_inner()
-        elif isinstance(type_, uper.Real):
-            encode_lines, decode_lines = self.format_real_inner()
-        elif isinstance(type_, uper.Sequence):
-            encode_lines, decode_lines = self.format_sequence_inner(type_, checker)
-        elif isinstance(type_, uper.SequenceOf):
-            encode_lines, decode_lines = self.format_sequence_of_inner(type_, checker)
-        elif isinstance(type_, uper.Choice):
-            encode_lines, decode_lines = self.format_choice_inner(type_, checker)
-        elif isinstance(type_, uper.OctetString):
-            encode_lines, decode_lines = self.format_octet_string_inner(type_, checker)
-        elif isinstance(type_, uper.Enumerated):
-            encode_lines, decode_lines = self.format_enumerated_inner(type_)
-        elif isinstance(type_, uper.Null):
-            encode_lines, decode_lines = self.format_null_inner()
-        else:
-            encode_lines, decode_lines = [], []
-
-        if self.encode_variable_lines:
-            encode_lines = self.encode_variable_lines + [''] + encode_lines
-
-        if self.decode_variable_lines:
-            decode_lines = self.decode_variable_lines + [''] + decode_lines
-
-        encode_lines = indent_lines(encode_lines) + ['']
-        decode_lines = indent_lines(decode_lines) + ['']
-
-        return DEFINITION_INNER_FMT.format(namespace=self.namespace,
-                                           module_name_snake=self.module_name_snake,
-                                           type_name_snake=self.type_name_snake,
-                                           encode_body='\n'.join(encode_lines),
-                                           decode_body='\n'.join(decode_lines))
-
     def generate_helpers(self, definitions):
         helpers = [ENCODER_AND_DECODER_STRUCTS]
 
@@ -1014,54 +953,6 @@ class _Generator(Generator):
                 helpers.append(definition)
 
         return helpers + ['']
-
-    def generate(self, compiled):
-        user_types = []
-
-        for module_name, module in sorted(compiled.modules.items()):
-            self.module_name = module_name
-
-            for type_name, compiled_type in sorted(module.items()):
-                self.type_name = type_name
-                self.reset_type()
-
-                type_declaration = self.generate_type_declaration(compiled_type)
-
-                if not type_declaration:
-                    continue
-
-                declaration = self.generate_declaration()
-                definition_inner = self.generate_definition_inner(compiled_type)
-                definition = self.generate_definition()
-
-                user_type = UserType(type_name,
-                                     module_name,
-                                     type_declaration,
-                                     declaration,
-                                     definition_inner,
-                                     definition,
-                                     self.used_user_types)
-                user_types.append(user_type)
-
-        user_types = sort_user_types_by_used_user_types(user_types)
-
-        type_declarations = []
-        declarations = []
-        definitions_inner = []
-        definitions = []
-
-        for user_type in user_types:
-            type_declarations.extend(user_type.type_declaration)
-            declarations.append(user_type.declaration)
-            definitions_inner.append(user_type.definition_inner)
-            definitions.append(user_type.definition)
-
-        type_declarations = '\n'.join(type_declarations)
-        declarations = '\n'.join(declarations)
-        definitions = '\n'.join(definitions_inner + definitions)
-        helpers = '\n'.join(self.generate_helpers(definitions))
-
-        return type_declarations, declarations, helpers, definitions
 
 
 def generate(compiled, namespace):
