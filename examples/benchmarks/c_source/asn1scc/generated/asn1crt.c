@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <math.h>
 #include <float.h>
-
+#include <stdio.h>
 #include "asn1crt.h"
 
 #ifndef INFINITY

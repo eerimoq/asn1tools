@@ -16,8 +16,9 @@ static void *alloc(size_t size)
     return (buf_p);
 }
 
-int main()
+int main(int argc, const char *argv[])
 {
+    int i;
     int res;
     asn_enc_rval_t encrv;
     asn_dec_rval_t decrv;
@@ -73,31 +74,33 @@ int main()
     res = ASN_SEQUENCE_ADD(&decoded_p->b.choice.a, b_p);
     assert(res == 0);
 
-    /* Encode the PDU. */
-    encrv = uper_encode_to_buffer(&asn_DEF_PDU,
-                                  decoded_p,
-                                  &encoded[0],
-                                  sizeof(encoded));
-    assert((encrv.encoded + 7) / 8 == sizeof(encoded));
-    assert(memcmp(&encoded[0],
-                  "\x80\xbc\x61\x4e\x02\x0f\xff\xff\xff\xf1\x00\x00\x81\x18"
-                  "\x00\x08\x10\x1a\x00\x00\x81\x01\x82\x7e\xb4\xb4\xb4\xb4"
-                  "\xb4\xb4\xb4\xb4\xb4\xb4\xb4\xb4\xb4\xb4\xb4\xb4",
-                  sizeof(encoded)) == 0);
+    for (i = 0; i < atoi(argv[1]); i++) {
+        /* Encode the PDU. */
+        encrv = uper_encode_to_buffer(&asn_DEF_PDU,
+                                      decoded_p,
+                                      &encoded[0],
+                                      sizeof(encoded));
+        assert((encrv.encoded + 7) / 8 == sizeof(encoded));
+        assert(memcmp(&encoded[0],
+                      "\x80\xbc\x61\x4e\x02\x0f\xff\xff\xff\xf1\x00\x00\x81\x18"
+                      "\x00\x08\x10\x1a\x00\x00\x81\x01\x82\x7e\xb4\xb4\xb4\xb4"
+                      "\xb4\xb4\xb4\xb4\xb4\xb4\xb4\xb4\xb4\xb4\xb4\xb4",
+                      sizeof(encoded)) == 0);
 
-    ASN_STRUCT_FREE(asn_DEF_PDU, decoded_p);
+        ASN_STRUCT_FREE(asn_DEF_PDU, decoded_p);
 
-    /* Decode the PDU. */
-    decoded_p = NULL;
-    decrv = uper_decode_complete(NULL,
-                                 &asn_DEF_PDU,
-                                 (void **)&decoded_p,
-                                 &encoded[0],
-                                 sizeof(encoded));
-    assert(decrv.consumed == sizeof(encoded));
+        /* Decode the PDU. */
+        decoded_p = NULL;
+        decrv = uper_decode_complete(NULL,
+                                     &asn_DEF_PDU,
+                                     (void **)&decoded_p,
+                                     &encoded[0],
+                                     sizeof(encoded));
+        assert(decrv.consumed == sizeof(encoded));
 
-    /* Just a sanity check that decoding was performed. */
-    assert(decoded_p->a == 12345678);
+        /* Just a sanity check that decoding was performed. */
+        assert(decoded_p->a == 12345678);
+    }
 
     ASN_STRUCT_FREE(asn_DEF_PDU, decoded_p);
 

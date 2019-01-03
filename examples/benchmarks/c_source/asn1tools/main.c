@@ -8,8 +8,9 @@
 
 #include "uper.h"
 
-int main()
+int main(int argc, const char *argv[])
 {
+    int i;
     int res;
     uint8_t encoded[40];
     struct uper_my_protocol_pdu_t decoded;
@@ -47,26 +48,28 @@ int main()
            "\x5a\x5a\x5a\x5a\x5a\x5a\x5a\x5a\x5a\x5a\x5a\x5a\x5a\x5a\x5a\x5a",
            16);
 
-    /* Encode the PDU. */
-    res = uper_my_protocol_pdu_encode(&encoded[0],
-                                      sizeof(encoded),
-                                      &decoded);
-    assert(res == sizeof(encoded));
-    assert(memcmp(&encoded[0],
-                  "\x80\xbc\x61\x4e\x02\x0f\xff\xff\xff\xf1\x00\x00\x81\x18"
-                  "\x00\x08\x10\x1a\x00\x00\x81\x01\x82\x7e\xb4\xb4\xb4\xb4"
-                  "\xb4\xb4\xb4\xb4\xb4\xb4\xb4\xb4\xb4\xb4\xb4\xb4",
-                  sizeof(encoded)) == 0);
+    for (i = 0; i < atoi(argv[1]); i++) {
+        /* Encode the PDU. */
+        res = uper_my_protocol_pdu_encode(&encoded[0],
+                                          sizeof(encoded),
+                                          &decoded);
+        assert(res == sizeof(encoded));
+        assert(memcmp(&encoded[0],
+                      "\x80\xbc\x61\x4e\x02\x0f\xff\xff\xff\xf1\x00\x00\x81\x18"
+                      "\x00\x08\x10\x1a\x00\x00\x81\x01\x82\x7e\xb4\xb4\xb4\xb4"
+                      "\xb4\xb4\xb4\xb4\xb4\xb4\xb4\xb4\xb4\xb4\xb4\xb4",
+                      sizeof(encoded)) == 0);
 
-    /* Decode the PDU. */
-    memset(&decoded, 0, sizeof(decoded));
-    res = uper_my_protocol_pdu_decode(&decoded,
-                                      &encoded[0],
-                                      sizeof(encoded));
-    assert(res == sizeof(encoded));
+        /* Decode the PDU. */
+        memset(&decoded, 0, sizeof(decoded));
+        res = uper_my_protocol_pdu_decode(&decoded,
+                                          &encoded[0],
+                                          sizeof(encoded));
+        assert(res == sizeof(encoded));
 
-    /* Just a sanity check that decoding was performed. */
-    assert(decoded.a == 12345678);
+        /* Just a sanity check that decoding was performed. */
+        assert(decoded.a == 12345678);
+    }
 
     return (0);
 }

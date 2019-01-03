@@ -1,9 +1,12 @@
 all:
-	gcc $(CFLAGS) generated/*.c main.c -o main
+	gcc $(CFLAGS) $(OPT_SIZE) generated/*.c main.c -o main
 	size main
 	readelf -s -W main | sort -k3 -n
-	valgrind $(MASSIF_FLAGS) --massif-out-file=main.massif ./main
+	valgrind $(MASSIF_FLAGS) --massif-out-file=main.massif ./main 1
 	ms_print main.massif
+	time ./main $(ENCODE_DECODE_ITERATIONS)
+	gcc $(CFLAGS) $(OPT_SPEED) generated/*.c main.c -o main
+	time ./main $(ENCODE_DECODE_ITERATIONS)
 
 generate:
 	rm -rf generated
