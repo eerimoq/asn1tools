@@ -444,31 +444,29 @@ class _Generator(Generator):
 
     def format_type(self, type_, checker):
         if isinstance(type_, uper.Integer):
-            lines = self.format_integer(checker)
+            return self.format_integer(checker)
         elif isinstance(type_, uper.Boolean):
-            lines = self.format_boolean()
+            return self.format_boolean()
         elif isinstance(type_, uper.Real):
-            lines = self.format_real()
+            return self.format_real()
         elif isinstance(type_, uper.Null):
-            lines = []
+            return []
         elif is_user_type(type_):
-            lines = self.format_user_type(type_.type_name,
-                                          type_.module_name)
+            return self.format_user_type(type_.type_name,
+                                         type_.module_name)
         elif isinstance(type_, uper.OctetString):
-            lines = self.format_octet_string(checker)
+            return self.format_octet_string(checker)
         elif isinstance(type_, uper.Sequence):
-            lines = self.format_sequence(type_, checker)
+            return self.format_sequence(type_, checker)
         elif isinstance(type_, uper.Choice):
-            lines = self.format_choice(type_, checker)
+            return self.format_choice(type_, checker)
         elif isinstance(type_, uper.SequenceOf):
-            lines = self.format_sequence_of(type_, checker)
+            return self.format_sequence_of(type_, checker)
         elif isinstance(type_, uper.Enumerated):
-            lines = self.format_enumerated(type_)
+            return self.format_enumerated(type_)
         else:
             raise self.error(
                 "Unsupported type '{}'.".format(type_.type_name))
-
-        return lines
 
     def generate_type_declaration_process(self, type_, checker):
         if isinstance(type_, uper.Integer):
@@ -602,50 +600,11 @@ class _Generator(Generator):
                         unique_is_present))
 
         for member in type_.root_members:
-            member_checker = self.get_member_checker(checker, member.name)
-
-            with self.members_backtrace_push(member.name):
-                member_encode_lines, member_decode_lines = self.format_type_inner(
-                    member,
-                    member_checker)
-
-            location = self.location_inner('', '.')
-
-            if member.optional:
-                is_present = '{}is_{}_present'.format(location, member.name)
-                member_encode_lines = [
-                    '',
-                    'if (src_p->{}) {{'.format(is_present)
-                ] + indent_lines(member_encode_lines) + [
-                    '}',
-                    ''
-                ]
-                member_decode_lines = [
-                    '',
-                    'if (dst_p->{}) {{'.format(is_present)
-                ] + indent_lines(member_decode_lines) + [
-                    '}',
-                    ''
-                ]
-            elif member.default is not None:
-                name = '{}{}'.format(location, member.name)
-                member_encode_lines = [
-                    '',
-                    'if (src_p->{} != {}) {{'.format(name, member.default)
-                ] + indent_lines(member_encode_lines) + [
-                    '}',
-                    ''
-                ]
-                is_present = member_name_to_is_present[member.name]
-                member_decode_lines = [
-                    '',
-                    'if ({}) {{'.format(is_present)
-                ] + indent_lines(member_decode_lines) + [
-                    '} else {',
-                    '    dst_p->{} = {};'.format(name, member.default),
-                    '}',
-                    ''
-                ]
+            (member_encode_lines,
+             member_decode_lines) = self.format_sequence_inner_member(
+                 member,
+                 checker,
+                 member_name_to_is_present)
 
             encode_lines += member_encode_lines
             decode_lines += member_decode_lines
@@ -718,10 +677,9 @@ class _Generator(Generator):
     def format_choice_inner(self, type_, checker):
         encode_lines = []
         decode_lines = []
-        choice_variable_type = self.format_type_name(0,
-                                                     max(type_.root_index_to_member))
+        type_name = self.format_type_name(0, max(type_.root_index_to_member))
         unique_choice = self.add_unique_decode_variable(
-            '{} {{}};'.format(choice_variable_type),
+            '{} {{}};'.format(type_name),
             'choice')
         choice = '{}choice'.format(self.location_inner('', '.'))
 
@@ -820,9 +778,9 @@ class _Generator(Generator):
         )
 
     def format_sequence_of_inner(self, type_, checker):
-        unique_i = self.add_unique_variable(
-            '{} {{}};'.format(self.format_type_name(0, checker.maximum)),
-            'i')
+        type_name = self.format_type_name(0, checker.maximum)
+        unique_i = self.add_unique_variable('{} {{}};'.format(type_name),
+                                            'i')
 
         with self.c_members_backtrace_push('elements[{}]'.format(unique_i)):
             encode_lines, decode_lines = self.format_type_inner(
@@ -830,52 +788,44 @@ class _Generator(Generator):
                 checker.element_type)
 
         if checker.minimum == checker.maximum:
-            encode_lines = [
+            first_encode_lines = first_decode_lines = [
                 '',
-                'for ({ui} = 0; {ui} < {maximum}; {ui}++) {{'.format(
-                    ui=unique_i,
-                    maximum=checker.maximum),
-            ] + indent_lines(encode_lines)
-            decode_lines = [
-                '',
-                'for ({ui} = 0; {ui} < {maximum}; {ui}++) {{'.format(
-                    ui=unique_i,
-                    maximum=checker.maximum),
-            ] + indent_lines(decode_lines)
+                'for ({0} = 0; {0} < {1}; {0}++) {{'.format(
+                    unique_i,
+                    checker.maximum)
+            ]
         else:
-            encode_lines = [
+            location = self.location_inner('', '.')
+            first_encode_lines = [
                 'encoder_append_non_negative_binary_integer(',
                 '    encoder_p,',
-                '    src_p->{}length - {},'.format(self.location_inner('', '.'),
-                                                   checker.minimum),
+                '    src_p->{}length - {},'.format(location, checker.minimum),
                 '    {});'.format(type_.number_of_bits),
                 '',
-                'for ({ui} = 0; {ui} < src_p->{loc}length; {ui}++) {{'.format(
-                    ui=unique_i,
-                    loc=self.location_inner('', '.')),
-            ] + indent_lines(encode_lines)
-            decode_lines = [
+                'for ({0} = 0; {0} < src_p->{1}length; {0}++) {{'.format(
+                    unique_i,
+                    location)
+            ]
+            first_decode_lines = [
                 'dst_p->{}length = decoder_read_non_negative_binary_integer('.format(
-                    self.location_inner('', '.')),
+                    location),
                 '    decoder_p,',
                 '    {});'.format(type_.number_of_bits),
-                'dst_p->{}length += {};'.format(self.location_inner('', '.'),
-                                                checker.minimum),
+                'dst_p->{}length += {};'.format(location, checker.minimum),
                 '',
-                'if (dst_p->{}length > {}) {{'.format(self.location_inner('', '.'),
-                                                      checker.maximum),
+                'if (dst_p->{}length > {}) {{'.format(location, checker.maximum),
                 '    decoder_abort(decoder_p, EBADLENGTH);',
                 '',
                 '    return;',
                 '}',
                 '',
-                'for ({ui} = 0; {ui} < dst_p->{loc}length; {ui}++) {{'.format(
-                    loc=self.location_inner('', '.'),
-                    ui=unique_i),
-            ] + indent_lines(decode_lines)
+                'for ({0} = 0; {0} < dst_p->{1}length; {0}++) {{'.format(
+                    unique_i,
+                    location)
+            ]
 
-        encode_lines += ['}', '']
-        decode_lines += ['}', '']
+        encode_lines = first_encode_lines + indent_lines(encode_lines) + ['}', '']
+        decode_lines = first_decode_lines + indent_lines(decode_lines) + ['}', '']
 
         return encode_lines, decode_lines
 

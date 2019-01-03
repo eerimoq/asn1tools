@@ -437,31 +437,29 @@ class _Generator(Generator):
 
     def format_type(self, type_, checker):
         if isinstance(type_, oer.Integer):
-            lines = self.format_integer(checker)
+            return self.format_integer(checker)
         elif isinstance(type_, oer.Boolean):
-            lines = self.format_boolean()
+            return self.format_boolean()
         elif isinstance(type_, oer.Real):
-            lines = self.format_real(type_)
+            return self.format_real(type_)
         elif isinstance(type_, oer.Null):
-            lines = []
+            return []
         elif is_user_type(type_):
-            lines = self.format_user_type(type_.type_name,
-                                          type_.module_name)
+            return self.format_user_type(type_.type_name,
+                                         type_.module_name)
         elif isinstance(type_, oer.OctetString):
-            lines = self.format_octet_string(checker)
+            return self.format_octet_string(checker)
         elif isinstance(type_, oer.Sequence):
-            lines = self.format_sequence(type_, checker)
+            return self.format_sequence(type_, checker)
         elif isinstance(type_, oer.Choice):
-            lines = self.format_choice(type_, checker)
+            return self.format_choice(type_, checker)
         elif isinstance(type_, oer.SequenceOf):
-            lines = self.format_sequence_of(type_, checker)
+            return self.format_sequence_of(type_, checker)
         elif isinstance(type_, oer.Enumerated):
-            lines = self.format_enumerated(type_)
+            return self.format_enumerated(type_)
         else:
             raise self.error(
                 "Unsupported type '{}'.".format(type_.type_name))
-
-        return lines
 
     def generate_type_declaration_process(self, type_, checker):
         if isinstance(type_, oer.Integer):
@@ -565,8 +563,7 @@ class _Generator(Generator):
         ]
 
         present_mask_length = ((len(optionals) + 7) // 8)
-        member_name_to_mask = {}
-        member_name_to_present_mask = {}
+        default_condition_by_member_name = {}
 
         if present_mask_length > 0:
             fmt = 'uint8_t {{}}[{}];'.format(present_mask_length)
@@ -588,10 +585,10 @@ class _Generator(Generator):
             for i, member in enumerate(optionals):
                 byte, bit = divmod(i, 8)
                 mask = '0x{:02x}'.format(1 << (7 - bit))
-                member_name_to_mask[member.name] = mask
                 present_mask = '{}[{}]'.format(unique_present_mask,
                                                byte)
-                member_name_to_present_mask[member.name] = present_mask
+                default_condition = '({0} & {1}) == {1}'.format(present_mask, mask)
+                default_condition_by_member_name[member.name] = default_condition
 
                 if member.optional:
                     encode_lines += [
@@ -627,51 +624,11 @@ class _Generator(Generator):
             decode_lines.append('')
 
         for member in type_.root_members:
-            member_checker = self.get_member_checker(checker, member.name)
-
-            with self.members_backtrace_push(member.name):
-                member_encode_lines, member_decode_lines = self.format_type_inner(
-                    member,
-                    member_checker)
-
-            location = self.location_inner('', '.')
-
-            if member.optional:
-                is_present = '{}is_{}_present'.format(location, member.name)
-                member_encode_lines = [
-                    '',
-                    'if (src_p->{}) {{'.format(is_present)
-                ] + indent_lines(member_encode_lines) + [
-                    '}',
-                    ''
-                ]
-                member_decode_lines = [
-                    '',
-                    'if (dst_p->{}) {{'.format(is_present)
-                ] + indent_lines(member_decode_lines) + [
-                    '}',
-                    ''
-                ]
-            elif member.default is not None:
-                name = '{}{}'.format(location, member.name)
-                member_encode_lines = [
-                    '',
-                    'if (src_p->{} != {}) {{'.format(name, member.default)
-                ] + indent_lines(member_encode_lines) + [
-                    '}',
-                    ''
-                ]
-                mask = member_name_to_mask[member.name]
-                present_mask = member_name_to_present_mask[member.name]
-                member_decode_lines = [
-                    '',
-                    'if (({0} & {1}) == {1}) {{'.format(present_mask, mask)
-                ] + indent_lines(member_decode_lines) + [
-                    '} else {',
-                    '    dst_p->{} = {};'.format(name, member.default),
-                    '}',
-                    ''
-                ]
+            (member_encode_lines,
+             member_decode_lines) = self.format_sequence_inner_member(
+                 member,
+                 checker,
+                 default_condition_by_member_name)
 
             encode_lines += member_encode_lines
             decode_lines += member_decode_lines

@@ -426,6 +426,56 @@ class Generator(object):
                                            module_name_snake,
                                            type_name_snake)]
 
+    def format_sequence_inner_member(self,
+                                     member,
+                                     checker,
+                                     default_condition_by_member_name):
+        member_checker = self.get_member_checker(checker, member.name)
+
+        with self.members_backtrace_push(member.name):
+            encode_lines, decode_lines = self.format_type_inner(
+                member,
+                member_checker)
+
+        location = self.location_inner('', '.')
+
+        if member.optional:
+            is_present = '{}is_{}_present'.format(location, member.name)
+            encode_lines = [
+                '',
+                'if (src_p->{}) {{'.format(is_present)
+            ] + indent_lines(encode_lines) + [
+                '}',
+                ''
+            ]
+            decode_lines = [
+                '',
+                'if (dst_p->{}) {{'.format(is_present)
+            ] + indent_lines(decode_lines) + [
+                '}',
+                ''
+            ]
+        elif member.default is not None:
+            name = '{}{}'.format(location, member.name)
+            encode_lines = [
+                '',
+                'if (src_p->{} != {}) {{'.format(name, member.default)
+            ] + indent_lines(encode_lines) + [
+                '}',
+                ''
+            ]
+            decode_lines = [
+                '',
+                'if ({}) {{'.format(default_condition_by_member_name[member.name])
+            ] + indent_lines(decode_lines) + [
+                '} else {',
+                '    dst_p->{} = {};'.format(name, member.default),
+                '}',
+                ''
+            ]
+
+        return encode_lines, decode_lines
+
     def generate_type_declaration(self, compiled_type):
         type_ = compiled_type.type
         checker = compiled_type.constraints_checker.type
@@ -531,6 +581,9 @@ class Generator(object):
         return type_declarations, declarations, helpers, definitions
 
     def format_type(self, type_, checker):
+        raise NotImplementedError('To be implemented by subclasses.')
+
+    def format_type_inner(self, type_, checker):
         raise NotImplementedError('To be implemented by subclasses.')
 
     def get_enumerated_values(self, type_):
