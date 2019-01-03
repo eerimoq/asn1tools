@@ -484,14 +484,10 @@ static uint32_t decoder_read_tag(struct decoder_t *self_p)
     tag = decoder_read_uint8(self_p);
 
     if ((tag & 0x3fu) == 0x3fu) {
-        while (true) {
+        do {
             tag <<= 8;
             tag |= (uint32_t)decoder_read_uint8(self_p);
-
-            if ((tag & 0x80u) == 0) {
-                break;
-            }
-        }
+        } while ((tag & 0x80u) == 0x80u);
     }
 
     return (tag);
