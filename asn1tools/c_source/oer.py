@@ -372,11 +372,7 @@ static double decoder_read_double(struct decoder_t *self_p)
 DECODER_READ_BOOL = '''
 static bool decoder_read_bool(struct decoder_t *self_p)
 {
-    uint8_t value;
-
-    value = decoder_read_integer_8(self_p);
-
-    return (value != 0);
+    return (decoder_read_integer_8(self_p) != 0);
 }\
 '''
 

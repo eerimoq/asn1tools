@@ -408,7 +408,7 @@ static int64_t decoder_read_int64(struct decoder_t *self_p)
 DECODER_READ_BOOL = '''
 static bool decoder_read_bool(struct decoder_t *self_p)
 {
-    return (decoder_read_bit(self_p));
+    return (decoder_read_bit(self_p) != 0);
 }\
 '''
 
