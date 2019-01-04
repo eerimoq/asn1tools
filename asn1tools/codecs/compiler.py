@@ -477,7 +477,20 @@ class Compiler(object):
                                           module_name))
 
             del type_descriptor['chosen-parameters']
-            type_descriptor['type'] = chosen_parameters[0]
+
+            if parameterized_type_descriptor['type'] == 'SEQUENCE':
+                parameterized_type_descriptor = deepcopy(parameterized_type_descriptor)
+                del parameterized_type_descriptor['parameters']
+
+                for member in parameterized_type_descriptor['members']:
+                    for parameter, chosen_parameter in zip(parameters,
+                                                           chosen_parameters):
+                        if member['type'] == parameter:
+                            member['type'] = chosen_parameter
+
+                type_descriptor.update(parameterized_type_descriptor)
+            else:
+                type_descriptor['type'] = chosen_parameters[0]
 
     def pre_process_parameterization_step_2(self, types):
         """X.683 parameterization pre processing - step 2.

@@ -1,10 +1,16 @@
+import sys
 import json
 import unittest
 from datetime import date
 from datetime import time
 from datetime import datetime
+from copy import deepcopy
 from .utils import Asn1ToolsBaseTest
 import asn1tools
+
+sys.path.append('tests/files')
+
+from parameterization import EXPECTED as PARAMETERIZATION
 
 
 CODECS = ['ber', 'der', 'jer', 'oer', 'per', 'uper', 'xer']
@@ -1316,6 +1322,68 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
 
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'Y', decoded, encoded)
+
+    def test_parameterization(self):
+        specs = []
+
+        for codec in CODECS:
+            specs.append(asn1tools.compile_dict(deepcopy(PARAMETERIZATION),
+                                                codec))
+
+        # A-Boolean.
+        decoded = True
+
+        encoded_messages = [
+            b'\x01\x01\xff',
+            b'\x01\x01\xff',
+            b'true',
+            b'\xff',
+            b'\x80',
+            b'\x80',
+            b'<A-Boolean><true /></A-Boolean>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'A-Boolean', decoded, encoded)
+
+        # A-Integer.
+        decoded = 555
+
+        encoded_messages = [
+            b'\x02\x02\x02\x2b',
+            b'\x02\x02\x02\x2b',
+            b'555',
+            b'\x02\x02\x2b',
+            b'\x02\x02\x2b',
+            b'\x02\x02\x2b',
+            b'<A-Integer>555</A-Integer>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'A-Integer', decoded, encoded)
+
+        # B-BooleanInteger.
+        decoded = {
+            'a': True,
+            'b': -40000
+        }
+
+        encoded_messages = [
+            b'\x30\x0c\xa0\x03\x01\x01\xff\xa1\x05\x02\x03\xff\x63\xc0',
+            b'\x30\x0c\xa0\x03\x01\x01\xff\xa1\x05\x02\x03\xff\x63\xc0',
+            b'{"a": true, "b": -40000}',
+            b'\x80\xff\x03\xff\x63\xc0',
+            b'\xc0\x03\xff\x63\xc0',
+            b'\xc0\xff\xd8\xf0\x00',
+            b'<B-BooleanInteger><a><true /></a><b>-40000</b></B-BooleanInteger>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec,
+                                     codec,
+                                     'B-BooleanInteger',
+                                     decoded,
+                                     encoded)
 
 
 if __name__ == '__main__':

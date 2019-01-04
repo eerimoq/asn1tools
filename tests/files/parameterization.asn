@@ -1,4 +1,4 @@
-Parameterization DEFINITIONS ::=
+Parameterization DEFINITIONS AUTOMATIC TAGS ::=
 
 BEGIN
 
@@ -7,5 +7,12 @@ A {B} ::= B
 A-Boolean ::= A { BOOLEAN }
 
 A-Integer ::= A { INTEGER }
+
+B {A, B} ::= SEQUENCE {
+    a [0] A,
+    b [1] B OPTIONAL
+}
+
+B-BooleanInteger ::= B { BOOLEAN, INTEGER }
     
 END
