@@ -1,0 +1,11 @@
+EXPECTED = {'X683': {'extensibility-implied': False,
+          'imports': {},
+          'object-classes': {},
+          'object-sets': {},
+          'types': {'A': {'type': 'B',
+                          'parameters': ['B']},
+                    'A-Boolean': {'type': 'A',
+                                  'chosen-parameters': ['BOOLEAN']},
+                    'A-Integer': {'type': 'A',
+                                  'chosen-parameters': ['INTEGER']}},
+          'values': {}}}

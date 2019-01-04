@@ -21,6 +21,8 @@ from module_tags_automatic import EXPECTED as MODULE_TAGS_AUTOMATIC
 from module_tags_automatic_pp import EXPECTED as MODULE_TAGS_AUTOMATIC_PP
 from x683 import EXPECTED as X683
 from x683_pp import EXPECTED as X683_PP
+from parameterization import EXPECTED as PARAMETERIZATION
+from parameterization_pp import EXPECTED as PARAMETERIZATION_PP
 from time_types import EXPECTED as TIME_TYPES
 from time_types_pp import EXPECTED as TIME_TYPES_PP
 
@@ -52,8 +54,14 @@ class Asn1ToolsCompileTest(unittest.TestCase):
     def test_pre_process_x683(self):
         actual = asn1tools.pre_process_dict(deepcopy(X683))
 
+        # Todo: Remove expected AssertionError once parameterization
+        # has been implemented.
         with self.assertRaises(AssertionError):
             self.assertEqual(actual, X683_PP)
+
+    def test_pre_process_parameterization(self):
+        actual = asn1tools.pre_process_dict(deepcopy(PARAMETERIZATION))
+        self.assertEqual(actual, PARAMETERIZATION_PP)
 
     def test_pre_process_time_types(self):
         actual = asn1tools.pre_process_dict(deepcopy(TIME_TYPES))
@@ -171,6 +179,41 @@ class Asn1ToolsCompileTest(unittest.TestCase):
                                            {'id': 1, 'question': '???'})
 
         self.assertEqual(encoded, encoded_cached)
+
+    def test_missing_parameterized_type(self):
+        # Todo: Remove expected AssertionError once parameterization
+        # has been implemented.
+        with self.assertRaises(AssertionError):
+            with self.assertRaises(asn1tools.CompileError) as cm:
+                asn1tools.compile_string(
+                    'A DEFINITIONS ::= BEGIN'
+                    '  B ::= NULL '
+                    '  B-Integer ::= B { INTEGER } '
+                    'END ',
+                    'uper')
+            
+            self.assertEqual(str(cm.exception),
+                             "Type 'B' in module 'A' is not parameterized.")
+
+    def test_wrong_parameterized_type_number_of_parameters(self):
+        with self.assertRaises(asn1tools.CompileError) as cm:
+            asn1tools.compile_string(
+                'A DEFINITIONS ::= BEGIN'
+                '  B {C, D} ::= SEQUENCE { '
+                '    a C, '
+                '    b D '
+                '  } '
+                '  B-Integer ::= B { INTEGER } '
+                'END ',
+                'uper')
+
+        # Todo: Remove expected AssertionError once parameterization
+        # has been implemented.
+        with self.assertRaises(AssertionError):
+            self.assertEqual(
+                str(cm.exception),
+                "Parameterized type 'B' in module 'A' takes 2 parameters, "
+                "but 1 are given in type 'B-Integer' in module 'A'.")
 
 
 if __name__ == '__main__':

@@ -219,8 +219,7 @@ class Compiler(object):
         return compiled
 
     def pre_process(self):
-        for module_name in self._specification:
-            module = self._specification[module_name]
+        for module_name, module in self._specification.items():
             types = module['types']
             type_descriptors = types.values()
 
@@ -228,6 +227,12 @@ class Compiler(object):
             self.pre_process_extensibility_implied(module, type_descriptors)
             self.pre_process_tags(module, module_name)
             self.pre_process_default_value(type_descriptors, module_name)
+            self.pre_process_parameterization_step_1(types, module_name)
+
+        for module_name, module in self._specification.items():
+            types = module['types']
+            types = self.pre_process_parameterization_step_2(types)
+            module['types'] = types
 
         return self._specification
 
@@ -435,6 +440,56 @@ class Compiler(object):
 
         mask = bitstruct.pack('u{}'.format(number_of_bits), mask)
         member['default'] = (mask, number_of_bits)
+
+    def pre_process_parameterization_step_1(self, types, module_name):
+        """X.683 parameterization pre processing - step 1.
+
+        """
+
+        # Replace parameters with actual value.
+        for type_name, type_descriptor in types.items():
+            if 'chosen-parameters' not in type_descriptor:
+                continue
+
+            (parameterized_type_descriptor,
+             parameterized_module_name) = self.lookup_type_descriptor(
+                type_descriptor['type'],
+                module_name)
+
+            if 'parameters' not in parameterized_type_descriptor:
+                raise CompileError(
+                    "Type '{}' in module '{}' is not parameterized.".format(
+                        type_descriptor['type'],
+                        parameterized_module_name))
+
+            parameters = parameterized_type_descriptor['parameters']
+            chosen_parameters = type_descriptor['chosen-parameters']
+
+            if len(parameters) != len(chosen_parameters):
+                raise CompileError(
+                    "Parameterized type '{}' in module '{}' takes {} "
+                    "parameters, but {} are given in type '{}' in "
+                    "module '{}'.".format(type_descriptor['type'],
+                                          parameterized_module_name,
+                                          len(parameters),
+                                          len(chosen_parameters),
+                                          type_name,
+                                          module_name))
+
+            del type_descriptor['chosen-parameters']
+            type_descriptor['type'] = chosen_parameters[0]
+
+    def pre_process_parameterization_step_2(self, types):
+        """X.683 parameterization pre processing - step 2.
+
+        """
+
+        # Remove parameterized types as they are no longer needed.
+        return {
+            type_name: type_descriptor
+            for type_name, type_descriptor in types.items()
+            if 'parameters' not in type_descriptor
+        }
 
     def resolve_type_name(self, type_name, module_name):
         """Returns the ASN.1 type name of given type.

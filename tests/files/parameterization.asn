@@ -1,0 +1,11 @@
+Parameterization DEFINITIONS ::=
+
+BEGIN
+
+A {B} ::= B
+
+A-Boolean ::= A { BOOLEAN }
+
+A-Integer ::= A { INTEGER }
+    
+END
