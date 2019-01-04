@@ -384,4 +384,6 @@ X ::= INTEGER (-2..510)
 -- 10 bits unsigned
 Y ::= INTEGER (10000..10512)
 
+Z ::= BOOLEAN
+
 END

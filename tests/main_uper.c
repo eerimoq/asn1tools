@@ -843,6 +843,16 @@ static void test_uper_c_source_y(void)
     }
 }
 
+static void test_uper_c_source_z_decode_error_out_of_data(void)
+{
+    uint8_t encoded[1];
+    struct uper_c_source_z_t decoded;
+
+    assert(uper_c_source_z_decode(&decoded,
+                                  &encoded[0],
+                                  0) == -EOUTOFDATA);
+}
+
 int main(void)
 {
     test_uper_c_source_a();
@@ -874,6 +884,8 @@ int main(void)
     test_uper_c_source_w();
     test_uper_c_source_x();
     test_uper_c_source_y();
+
+    test_uper_c_source_z_decode_error_out_of_data();
 
     return (0);
 }
