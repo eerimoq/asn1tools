@@ -940,6 +940,33 @@ static void test_oer_c_source_y(void)
     }
 }
 
+static void test_oer_c_source_ab(void)
+{
+    uint8_t encoded[3];
+    struct oer_c_source_ab_t decoded;
+
+    /* Encode. */
+    decoded.a = 0;
+    decoded.b = 10300;
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(oer_c_source_ab_encode(&encoded[0],
+                                  sizeof(encoded),
+                                  &decoded) == sizeof(encoded));
+    assert(memcmp(&encoded[0],
+                  "\x00\x28\x3c",
+                  sizeof(encoded)) == 0);
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(oer_c_source_ab_decode(&decoded,
+                                  &encoded[0],
+                                  sizeof(encoded)) == sizeof(encoded));
+
+    assert(decoded.a == 0);
+    assert(decoded.b == 10300);
+}
+
 static void test_oer_programming_types_float(void)
 {
     uint8_t encoded[4];
@@ -1022,10 +1049,10 @@ int main(void)
     test_oer_c_source_q_c257();
     test_oer_c_source_x();
     test_oer_c_source_y();
+    test_oer_c_source_ab();
 
     test_oer_programming_types_float();
     test_oer_programming_types_double();
-
 
     return (0);
 }

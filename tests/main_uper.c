@@ -853,6 +853,33 @@ static void test_uper_c_source_z_decode_error_out_of_data(void)
                                   0) == -EOUTOFDATA);
 }
 
+static void test_uper_c_source_ab(void)
+{
+    uint8_t encoded[2];
+    struct uper_c_source_ab_t decoded;
+
+    /* Encode. */
+    decoded.a = 0;
+    decoded.b = 10300;
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(uper_c_source_ab_encode(&encoded[0],
+                                   sizeof(encoded),
+                                   &decoded) == sizeof(encoded));
+    assert(memcmp(&encoded[0],
+                  "\xa5\x80",
+                  sizeof(encoded)) == 0);
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(uper_c_source_ab_decode(&decoded,
+                                   &encoded[0],
+                                   sizeof(encoded)) == sizeof(encoded));
+
+    assert(decoded.a == 0);
+    assert(decoded.b == 10300);
+}
+
 int main(void)
 {
     test_uper_c_source_a();
@@ -886,6 +913,8 @@ int main(void)
     test_uper_c_source_y();
 
     test_uper_c_source_z_decode_error_out_of_data();
+
+    test_uper_c_source_ab();
 
     return (0);
 }
