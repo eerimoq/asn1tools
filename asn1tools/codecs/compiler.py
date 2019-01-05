@@ -170,6 +170,7 @@ class Compiler(object):
         self._types_backtrace = []
         self.recursive_types = []
         self.compiled = {}
+        self.current_type_descriptor = None
 
     def types_backtrace_push(self, type_name):
         self._types_backtrace.append(type_name)
@@ -227,7 +228,10 @@ class Compiler(object):
             self.pre_process_extensibility_implied(module, type_descriptors)
             self.pre_process_tags(module, module_name)
             self.pre_process_default_value(type_descriptors, module_name)
-            self.pre_process_parameterization_step_1(types, module_name)
+
+        for module_name, module in self._specification.items():
+            self.pre_process_parameterization_step_1(module['types'],
+                                                     module_name)
 
         for module_name, module in self._specification.items():
             types = module['types']
@@ -313,9 +317,19 @@ class Compiler(object):
         module_tags = module.get('tags', 'EXPLICIT')
 
         for type_descriptor in module['types'].values():
+            self.current_type_descriptor = type_descriptor
             self.pre_process_tags_type(type_descriptor,
                                        module_tags,
                                        module_name)
+
+    def is_dummy_reference(self, type_name):
+        if 'parameters' not in self.current_type_descriptor:
+            return False
+
+        if type_name in self.current_type_descriptor['parameters']:
+            return True
+
+        return False
 
     def pre_process_tags_type(self,
                               type_descriptor,
@@ -329,6 +343,8 @@ class Compiler(object):
 
             if 'kind' not in tag:
                 if resolved_type_name == 'CHOICE':
+                    tag['kind'] = 'EXPLICIT'
+                elif self.is_dummy_reference(type_name):
                     tag['kind'] = 'EXPLICIT'
                 elif module_tags in ['IMPLICIT', 'EXPLICIT']:
                     tag['kind'] = module_tags
@@ -446,51 +462,111 @@ class Compiler(object):
 
         """
 
-        # Replace parameters with actual value.
         for type_name, type_descriptor in types.items():
-            if 'chosen-parameters' not in type_descriptor:
+            # Skip if the type is parameterized.
+            if 'parameters' in type_descriptor:
                 continue
 
-            (parameterized_type_descriptor,
-             parameterized_module_name) = self.lookup_type_descriptor(
-                type_descriptor['type'],
+            self.pre_process_parameterization_step_1_type(type_descriptor,
+                                                          type_name,
+                                                          module_name)
+
+    def pre_process_parameterization_step_1_type(self,
+                                                 type_descriptor,
+                                                 type_name,
+                                                 module_name):
+        # SEQUENCE, SET and CHOICE.
+        if 'members' in type_descriptor:
+            for member in type_descriptor['members']:
+                if member == EXTENSION_MARKER:
+                    continue
+
+                self.pre_process_parameterization_step_1_type(member,
+                                                              type_name,
+                                                              module_name)
+
+        # SEQUENCE OF and SET OF.
+        if 'element' in type_descriptor:
+            self.pre_process_parameterization_step_1_type(
+                type_descriptor['element'],
+                type_name,
                 module_name)
 
-            if 'parameters' not in parameterized_type_descriptor:
-                raise CompileError(
-                    "Type '{}' in module '{}' is not parameterized.".format(
-                        type_descriptor['type'],
-                        parameterized_module_name))
+        # Just return if the type is not using a parameterized type.
+        if 'actual-parameters' not in type_descriptor:
+            return
 
-            parameters = parameterized_type_descriptor['parameters']
-            chosen_parameters = type_descriptor['chosen-parameters']
+        (parameterized_type_descriptor,
+         parameterized_module_name) = self.lookup_type_descriptor(
+            type_descriptor['type'],
+            module_name)
 
-            if len(parameters) != len(chosen_parameters):
-                raise CompileError(
-                    "Parameterized type '{}' in module '{}' takes {} "
-                    "parameters, but {} are given in type '{}' in "
-                    "module '{}'.".format(type_descriptor['type'],
-                                          parameterized_module_name,
-                                          len(parameters),
-                                          len(chosen_parameters),
-                                          type_name,
-                                          module_name))
+        if 'parameters' not in parameterized_type_descriptor:
+            raise CompileError(
+                "Type '{}' in module '{}' is not parameterized.".format(
+                    type_descriptor['type'],
+                    parameterized_module_name))
 
-            del type_descriptor['chosen-parameters']
+        dummy_parameters = parameterized_type_descriptor['parameters']
+        actual_parameters = type_descriptor['actual-parameters']
 
-            if parameterized_type_descriptor['type'] == 'SEQUENCE':
-                parameterized_type_descriptor = deepcopy(parameterized_type_descriptor)
-                del parameterized_type_descriptor['parameters']
+        if len(dummy_parameters) != len(actual_parameters):
+            raise CompileError(
+                "Parameterized type '{}' in module '{}' takes {} "
+                "parameters, but {} are given in type '{}' in "
+                "module '{}'.".format(type_descriptor['type'],
+                                      parameterized_module_name,
+                                      len(dummy_parameters),
+                                      len(actual_parameters),
+                                      type_name,
+                                      module_name))
 
-                for member in parameterized_type_descriptor['members']:
-                    for parameter, chosen_parameter in zip(parameters,
-                                                           chosen_parameters):
-                        if member['type'] == parameter:
-                            member['type'] = chosen_parameter
+        parameterized_type_descriptor = deepcopy(parameterized_type_descriptor)
+        del parameterized_type_descriptor['parameters']
 
-                type_descriptor.update(parameterized_type_descriptor)
-            else:
-                type_descriptor['type'] = chosen_parameters[0]
+        if 'members' in parameterized_type_descriptor:
+            for member in parameterized_type_descriptor['members']:
+                if member == EXTENSION_MARKER:
+                    continue
+
+                self.pre_process_parameterization_step_1_type_dummy_to_actual_type(
+                    member,
+                    dummy_parameters,
+                    actual_parameters,
+                    module_name)
+        else:
+            self.pre_process_parameterization_step_1_type_dummy_to_actual_type(
+                parameterized_type_descriptor,
+                dummy_parameters,
+                actual_parameters,
+                module_name)
+
+        type_descriptor.update(parameterized_type_descriptor)
+        del type_descriptor['actual-parameters']
+
+    def pre_process_parameterization_step_1_type_dummy_to_actual_type(
+            self,
+            type_descriptor,
+            dummy_parameters,
+            actual_parameters,
+            module_name):
+        for dummy_parameter, actual_parameter in zip(dummy_parameters,
+                                                     actual_parameters):
+            if type_descriptor['type'] == dummy_parameter:
+                if isinstance(actual_parameter, dict):
+                    type_descriptor.update(actual_parameter)
+                else:
+                    type_descriptor['type'] = actual_parameter
+
+            if 'actual-parameters' in type_descriptor:
+                for i, parameter in enumerate(type_descriptor['actual-parameters']):
+                    if parameter == dummy_parameter:
+                        type_descriptor['actual-parameters'][i] = actual_parameter
+
+        if 'actual-parameters' in type_descriptor:
+            self.pre_process_parameterization_step_1_type(type_descriptor,
+                                                          type_descriptor['type'],
+                                                          module_name)
 
     def pre_process_parameterization_step_2(self, types):
         """X.683 parameterization pre processing - step 2.
@@ -709,7 +785,7 @@ class Compiler(object):
 
         if 'default' in member:
             compiled_member = self.copy(compiled_member)
-            compiled_member.default = member['default']
+            compiled_member.set_default(member['default'])
 
         if 'size' in member:
             compiled_member = self.copy(compiled_member)
@@ -787,6 +863,9 @@ class Compiler(object):
 
     def get_with_components(self, type_descriptor):
         return type_descriptor.get('with-components', None)
+
+    def get_named_numbers(self, type_descriptor):
+        return type_descriptor.get('named-numbers', None)
 
     def is_explicit_tag(self, type_descriptor):
         try:

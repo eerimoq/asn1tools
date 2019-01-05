@@ -51,6 +51,15 @@ class Type(object):
     def set_size_range(self, minimum, maximum, has_extension_marker):
         pass
 
+    def set_default(self, value):
+        self.default = value
+
+    def get_default(self):
+        return self.default
+
+    def has_default(self):
+        return self.default is not None
+
     def encode(self, data):
         raise NotImplementedError('To be implemented by subclasses.')
 
@@ -112,7 +121,7 @@ class MembersType(Type):
                 except EncodeError as e:
                     e.location.append(member.name)
                     raise
-            elif member.optional or member.default is not None:
+            elif member.optional or member.has_default():
                 continue
             else:
                 raise EncodeError(
@@ -137,8 +146,8 @@ class MembersType(Type):
                 values[name] = value
             elif member.optional:
                 pass
-            elif member.default is not None:
-                values[name] = member.default
+            elif member.has_default():
+                values[name] = member.get_default()
 
         return values
 

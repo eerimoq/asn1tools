@@ -73,6 +73,9 @@ class Type(object):
 
         return minimum_ok and maximum_ok
 
+    def set_default(self, value):
+        pass
+
     def has_lower_bound(self):
         return self.minimum != 'MIN'
 

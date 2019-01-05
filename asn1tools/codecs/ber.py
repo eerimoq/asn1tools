@@ -397,8 +397,17 @@ class Type(object):
 
         return end_offset
 
+    def set_default(self, value):
+        self.default = value
+
+    def get_default(self):
+        return self.default
+
     def is_default(self, value):
         return value == self.default
+
+    def has_default(self):
+        return self.default is not None
 
 
 class PrimitiveOrConstructedType(Type):
@@ -553,7 +562,7 @@ class MembersType(Type):
                 raise
         elif member.optional:
             pass
-        elif member.default is None:
+        elif not member.has_default():
             raise EncodeError("{} member '{}' not found in {}.".format(
                 self.__class__.__name__,
                 name,
@@ -618,18 +627,18 @@ class MembersType(Type):
                     value, offset = member.decode(data, offset)
             else:
                 raise IndexError
-        except (DecodeError, IndexError) as e:
+        except (DecodeError, DecodeTagError, IndexError) as e:
             if member.optional:
                 return offset
 
-            if member.default is None:
+            if not member.has_default():
                 if isinstance(e, IndexError):
                     e = DecodeError('out of data at offset {}'.format(offset))
 
                 e.location.append(member.name)
                 raise e
 
-            value = member.default
+            value = member.get_default()
 
         values[member.name] = value
 
@@ -1345,6 +1354,18 @@ class ExplicitTag(Type):
         super(ExplicitTag, self).__init__(name, 'ExplicitTag', None)
         self.inner = inner
 
+    def set_default(self, value):
+        self.inner.set_default(value)
+
+    def get_default(self):
+        return self.inner.get_default()
+
+    def is_default(self, value):
+        return self.inner.is_default(value)
+
+    def has_default(self):
+        return self.inner.has_default()
+
     def set_tag(self, number, flags):
         super(ExplicitTag, self).set_tag(number,
                                          flags | Encoding.CONSTRUCTED)
@@ -1359,10 +1380,11 @@ class ExplicitTag(Type):
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         _, offset = decode_length_definite(data, offset)
+
         return self.inner.decode(data, offset)
 
     def __repr__(self):
-        return 'ExplicitTag()'
+        return 'ExplicitTag({})'.format(self.inner)
 
 
 class Recursive(Type, compiler.Recursive):

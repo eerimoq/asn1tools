@@ -1331,32 +1331,32 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
                                                 codec))
 
         # A-Boolean.
-        decoded = True
+        decoded = {'a': True}
 
         encoded_messages = [
-            b'\x01\x01\xff',
-            b'\x01\x01\xff',
-            b'true',
+            b'\x30\x05\xa0\x03\x01\x01\xff',
+            b'\x30\x05\xa0\x03\x01\x01\xff',
+            b'{"a": true}',
             b'\xff',
             b'\x80',
             b'\x80',
-            b'<A-Boolean><true /></A-Boolean>'
+            b'<A-Boolean><a><true /></a></A-Boolean>'
         ]
-
+        
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'A-Boolean', decoded, encoded)
 
         # A-Integer.
-        decoded = 555
+        decoded = {'a': 555}
 
         encoded_messages = [
-            b'\x02\x02\x02\x2b',
-            b'\x02\x02\x02\x2b',
-            b'555',
+            b'\x30\x06\xa0\x04\x02\x02\x02\x2b',
+            b'\x30\x06\xa0\x04\x02\x02\x02\x2b',
+            b'{"a": 555}',
             b'\x02\x02\x2b',
             b'\x02\x02\x2b',
             b'\x02\x02\x2b',
-            b'<A-Integer>555</A-Integer>'
+            b'<A-Integer><a>555</a></A-Integer>'
         ]
 
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
@@ -1384,6 +1384,67 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
                                      'B-BooleanInteger',
                                      decoded,
                                      encoded)
+
+        # D.
+        decoded = {
+            'a': ('a', {'a': True}),
+            'b': ('c', {'a': {'a': None, 'b': 5}})
+        }
+
+        encoded_messages = [
+            b'\x30\x1c\xa0\x09\xa0\x07\x30\x05\xa0\x03\x01\x01\xff\xa1\x0f\xa0'
+            b'\x0d\xa0\x0b\x30\x09\xa0\x02\x05\x00\xa1\x03\x02\x01\x05',
+            b'\x30\x1c\xa0\x09\xa0\x07\x30\x05\xa0\x03\x01\x01\xff\xa1\x0f\xa0'
+            b'\x0d\xa0\x0b\x30\x09\xa0\x02\x05\x00\xa1\x03\x02\x01\x05',
+            b'{"a": {"a": {"a": true}}, "b": {"c": {"a": {"a": null, "b": 5}}}'
+            b'}',
+            b'\x80\x00\xff\x80\x80\x01\x05',
+            b'\x28\x01\x05',
+            b'\x28\x08\x28',
+            b'<D><a><a><a><true /></a></a></a><b><c><a><a /><b>5</b></a></c></'
+            b'b></D>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'D', decoded, encoded)
+
+        decoded = {
+            'a': ('a', {'a': True}),
+            'b': ('d', {'a': None, 'b': 5})
+        }
+
+        encoded_messages = [
+            b'\x30\x18\xa0\x09\xa0\x07\x30\x05\xa0\x03\x01\x01\xff\xa1\x0b\xa1'
+            b'\x09\xa0\x02\x05\x00\xa1\x03\x02\x01\x05',
+            b'\x30\x18\xa0\x09\xa0\x07\x30\x05\xa0\x03\x01\x01\xff\xa1\x0b\xa1'
+            b'\x09\xa0\x02\x05\x00\xa1\x03\x02\x01\x05',
+            b'{"a": {"a": {"a": true}}, "b": {"d": {"a": null, "b": 5}}}',
+            b'\x80\x00\xff\x81\x80\x01\x05',
+            b'\x38\x01\x05',
+            b'\x38\x08\x28',
+            b'<D><a><a><a><true /></a></a></a><b><d><a /><b>5</b></d></b></D>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'D', decoded, encoded)
+
+        decoded = {
+            'a': ('b', {'a': {'a': True}}),
+            'b': ('d', {'a': None, 'b': 5})
+        }
+
+        encoded_messages = [
+            b'\x30\x1a\xa0\x0b\xa1\x09\xa0\x07\x30\x05\xa0\x03\x01\x01\xff\xa1\x0b\xa1\x09\xa0\x02\x05\x00\xa1\x03\x02\x01\x05',
+            b'\x30\x1a\xa0\x0b\xa1\x09\xa0\x07\x30\x05\xa0\x03\x01\x01\xff\xa1\x0b\xa1\x09\xa0\x02\x05\x00\xa1\x03\x02\x01\x05',
+            b'{"a": {"b": {"a": {"a": true}}}, "b": {"d": {"a": null, "b": 5}}}',
+            b'\x81\x00\x00\xff\x81\x80\x01\x05',
+            b'\x9c\x01\x05',
+            b'\x9c\x04\x14',
+            b'<D><a><b><a><a><true /></a></a></b></a><b><d><a /><b>5</b></d></b></D>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'D', decoded, encoded)
 
 
 if __name__ == '__main__':

@@ -71,8 +71,17 @@ class Type(object):
 
         return end_offset
 
+    def set_default(self, value):
+        self.default = value
+
+    def get_default(self):
+        return self.default
+
     def is_default(self, value):
         return value == self.default
+
+    def has_default(self):
+        return self.default is not None
 
 
 class StringType(Type):

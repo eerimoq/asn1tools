@@ -37,6 +37,9 @@ class Type(object):
     def set_size_range(self, minimum, maximum, has_extension_marker):
         pass
 
+    def set_default(self, value):
+        pass
+
     def encode(self, data):
         if not isinstance(data, self.TYPE):
             raise EncodeError(

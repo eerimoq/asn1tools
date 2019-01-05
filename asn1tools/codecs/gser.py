@@ -28,6 +28,12 @@ class Type(object):
     def set_size_range(self, minimum, maximum, has_extension_marker):
         pass
 
+    def set_default(self, value):
+        self.default = value
+
+    def has_default(self):
+        return self.default is not None
+
 
 class MembersType(Type):
 
@@ -57,7 +63,7 @@ class MembersType(Type):
                 encoded_members.append(encoded_member)
             elif member.optional:
                 pass
-            elif member.default is None:
+            elif not member.has_default():
                 raise EncodeError(
                     "{} member '{}' not found in {}.".format(
                         self.__class__.__name__,
