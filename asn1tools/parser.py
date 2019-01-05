@@ -337,7 +337,7 @@ def convert_members(tokens):
         else:
             qualifiers = []
 
-        member = convert_type(member_tokens[2])
+        member = convert_type(member_tokens[2], [])
         member['name'] = member_tokens[0]
 
         if 'OPTIONAL' in qualifiers:
@@ -371,7 +371,7 @@ def convert_sequence_type(_s, _l, tokens):
 def convert_sequence_of_type(_s, _l, tokens):
     converted_type = {
         'type': 'SEQUENCE OF',
-        'element': convert_type(tokens[4]),
+        'element': convert_type(tokens[4], []),
     }
 
     if len(tokens[1]) > 0:
@@ -398,7 +398,7 @@ def convert_set_type(_s, _l, tokens):
 def convert_set_of_type(_s, _l, tokens):
     converted_type = {
         'type': 'SET OF',
-        'element': convert_type(tokens[4])
+        'element': convert_type(tokens[4], [])
     }
 
     if len(tokens[1]) > 0:
@@ -423,9 +423,15 @@ def convert_choice_type(_s, _l, tokens):
 
 
 def convert_defined_type(_s, _l, tokens):
-    return {
+    converted = {
         'type': tokens[0]
     }
+
+    # actual-parameters
+    if len(tokens) == 2:
+        converted.update(tokens[1])
+
+    return converted
 
 
 def convert_integer_type(_s, _l, tokens):
@@ -502,6 +508,32 @@ def convert_any_defined_by_type(_s, _l, tokens):
     }
 
 
+def convert_actual_parameter_list(_s, _l, tokens):
+    tokens = tokens.asList()[0]
+    converted = []
+
+    for parameter in tokens:
+        converted.append(parameter[0][0])
+
+    if converted:
+        converted = {'actual-parameters': converted}
+    else:
+        converted = None
+
+    return converted
+
+
+def convert_parameter_list(_s, _l, tokens):
+    tokens = tokens.asList()
+    # print('list', tokens)
+    if tokens[0]:
+        converted = {'parameters': tokens[0]}
+    else:
+        converted = None
+
+    return converted
+
+
 def convert_null_type(_s, _l, _tokens):
     return {
         'type': 'NULL'
@@ -514,7 +546,8 @@ def convert_boolean_type(_s, _l, _tokens):
     }
 
 
-def convert_type(tokens):
+def convert_type(tokens, parameters):
+    # print('tokens', tokens)
     converted_type, constraints = tokens
 
     restricted_to = []
@@ -538,6 +571,9 @@ def convert_type(tokens):
                 converted_type.update(constraint_tokens[0])
             elif 'with-components' in constraint_tokens[0]:
                 converted_type.update(constraint_tokens[0])
+
+    if isinstance(parameters, dict):
+        converted_type.update(parameters)
 
     if '{' in restricted_to:
         restricted_to = []
@@ -686,10 +722,10 @@ def convert_parameterized_object_class_assignment(_s, _l, tokens):
 
 def convert_parameterized_type_assignment(_s, _l, tokens):
     tokens = tokens.asList()
-    converted_type = convert_type(tokens[3])
+    converted_type = convert_type(tokens[4], tokens[1])
 
     try:
-        tag = convert_tag(tokens[2])
+        tag = convert_tag(tokens[3])
     except ValueError:
         tag = None
 
@@ -978,9 +1014,9 @@ def create_grammar():
     governor = (type_ | defined_object_class)
     param_governor = (governor | dummy_governor)
     parameter = (Optional(param_governor + colon) + dummy_reference)
-    parameter_list = Suppress(Optional(left_brace
-                                       + delimitedList(parameter)
-                                       + right_brace))
+    parameter_list = Group(Optional(Suppress(left_brace)
+                                    + delimitedList(parameter)
+                                    + Suppress(right_brace)))
 
     # X.683: 9. Referencing parameterized definitions
     actual_parameter = Group(type_
@@ -1110,7 +1146,7 @@ def create_grammar():
                     # | defined_object_class
                     | parameterized_object_class)
     parameterized_object_class_assignment = (object_class_reference
-                                             + parameter_list
+                                             + Suppress(parameter_list)
                                              + assign
                                              + object_class)
 
@@ -1139,7 +1175,7 @@ def create_grammar():
                  | object_from_object
                  | parameterized_object)
     parameterized_object_assignment = (object_reference
-                                       + parameter_list
+                                       + Suppress(parameter_list)
                                        + defined_object_class
                                        + Suppress(assign)
                                        + object_)
@@ -1158,7 +1194,7 @@ def create_grammar():
     object_set <<= (left_brace + Group(object_set_spec) + right_brace)
     object_set.setName('"{"')
     parameterized_object_set_assignment = (object_set_reference
-                                           + parameter_list
+                                           + Suppress(parameter_list)
                                            + defined_object_class
                                            - assign
                                            - object_set)
@@ -1584,7 +1620,7 @@ def create_grammar():
                                      - tag
                                      - type_)
     parameterized_value_assignment = (value_reference
-                                      + parameter_list
+                                      + Suppress(parameter_list)
                                       - Group(type_)
                                       - Suppress(assign)
                                       - value)
@@ -1708,6 +1744,8 @@ def create_grammar():
     character_string_type.setParseAction(convert_keyword_type)
     object_class_field_type.setParseAction(convert_keyword_type)
     any_defined_by_type.setParseAction(convert_any_defined_by_type)
+    actual_parameter_list.setParseAction(convert_actual_parameter_list)
+    parameter_list.setParseAction(convert_parameter_list)
 
     return specification
 

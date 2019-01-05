@@ -553,14 +553,11 @@ class Compiler(object):
         for dummy_parameter, actual_parameter in zip(dummy_parameters,
                                                      actual_parameters):
             if type_descriptor['type'] == dummy_parameter:
-                if isinstance(actual_parameter, dict):
-                    type_descriptor.update(actual_parameter)
-                else:
-                    type_descriptor['type'] = actual_parameter
+                type_descriptor.update(actual_parameter)
 
             if 'actual-parameters' in type_descriptor:
                 for i, parameter in enumerate(type_descriptor['actual-parameters']):
-                    if parameter == dummy_parameter:
+                    if parameter['type'] == dummy_parameter:
                         type_descriptor['actual-parameters'][i] = actual_parameter
 
         if 'actual-parameters' in type_descriptor:

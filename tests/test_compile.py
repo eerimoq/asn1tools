@@ -181,19 +181,16 @@ class Asn1ToolsCompileTest(unittest.TestCase):
         self.assertEqual(encoded, encoded_cached)
 
     def test_missing_parameterized_type(self):
-        # Todo: Remove expected AssertionError once parameterization
-        # has been implemented.
-        with self.assertRaises(AssertionError):
-            with self.assertRaises(asn1tools.CompileError) as cm:
-                asn1tools.compile_string(
-                    'A DEFINITIONS ::= BEGIN'
-                    '  B ::= NULL '
-                    '  B-Integer ::= B { INTEGER } '
-                    'END ',
-                    'uper')
-            
-            self.assertEqual(str(cm.exception),
-                             "Type 'B' in module 'A' is not parameterized.")
+        with self.assertRaises(asn1tools.CompileError) as cm:
+            asn1tools.compile_string(
+                'A DEFINITIONS ::= BEGIN'
+                '  B ::= NULL '
+                '  B-Integer ::= B { INTEGER } '
+                'END ',
+                'uper')
+
+        self.assertEqual(str(cm.exception),
+                         "Type 'B' in module 'A' is not parameterized.")
 
     def test_wrong_parameterized_type_number_of_parameters(self):
         with self.assertRaises(asn1tools.CompileError) as cm:
@@ -207,13 +204,10 @@ class Asn1ToolsCompileTest(unittest.TestCase):
                 'END ',
                 'uper')
 
-        # Todo: Remove expected AssertionError once parameterization
-        # has been implemented.
-        with self.assertRaises(AssertionError):
-            self.assertEqual(
-                str(cm.exception),
-                "Parameterized type 'B' in module 'A' takes 2 parameters, "
-                "but 1 are given in type 'B-Integer' in module 'A'.")
+        self.assertEqual(
+            str(cm.exception),
+            "Parameterized type 'B' in module 'A' takes 2 parameters, "
+            "but 1 are given in type 'B-Integer' in module 'A'.")
 
 
 if __name__ == '__main__':
