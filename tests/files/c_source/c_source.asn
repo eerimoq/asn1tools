@@ -12,7 +12,7 @@ A ::= SEQUENCE {
     g INTEGER (0..4294967295),
     h INTEGER (0..18446744073709551615),
     i BOOLEAN,
-    j OCTET STRING (SIZE(11))
+    j OCTET STRING (SIZE (11))
 }
 
 B ::= CHOICE {
@@ -21,28 +21,28 @@ B ::= CHOICE {
     c NULL
 }
 
-C ::= SEQUENCE (SIZE(0..2)) OF B
+C ::= SEQUENCE (SIZE (0..2)) OF B
 
-D ::= SEQUENCE (SIZE(1..10)) OF SEQUENCE {
+D ::= SEQUENCE (SIZE (1..10)) OF SEQUENCE {
     a SEQUENCE {
         b CHOICE {
             c INTEGER (0..1),
             d BOOLEAN
         },
-        e SEQUENCE (SIZE(3..4)) OF NULL,
+        e SEQUENCE (SIZE (3..4)) OF NULL,
         f NULL
     },
     g SEQUENCE {
         h ENUMERATED {
             i, j, k
         },
-        l OCTET STRING (SIZE(1..2))
+        l OCTET STRING (SIZE (1..2))
     },
     m SEQUENCE {
         n BOOLEAN OPTIONAL,
         o INTEGER (-2..4) DEFAULT 3,
         p SEQUENCE {
-            q OCTET STRING (SIZE(5)),
+            q OCTET STRING (SIZE (5)),
             r BOOLEAN OPTIONAL
         } OPTIONAL
     }
@@ -72,15 +72,15 @@ G ::= SEQUENCE {
 
 H ::= NULL
 
-I ::= OCTET STRING (SIZE(24))
+I ::= OCTET STRING (SIZE (24))
 
-J ::= OCTET STRING (SIZE(22..23))
+J ::= OCTET STRING (SIZE (22..23))
 
 K ::= ENUMERATED {
     a
 }
 
-L ::= OCTET STRING (SIZE(0..500))
+L ::= OCTET STRING (SIZE (0..500))
 
 M ::= SEQUENCE {
     a K,
@@ -93,7 +93,7 @@ N ::= SEQUENCE {
     c O
 }
 
-O ::= SEQUENCE (SIZE(1..260)) OF BOOLEAN
+O ::= SEQUENCE (SIZE (1..260)) OF BOOLEAN
 
 P ::= SEQUENCE {
     a A,
