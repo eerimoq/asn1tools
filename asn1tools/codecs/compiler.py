@@ -475,6 +475,11 @@ class Compiler(object):
                                                  type_descriptor,
                                                  type_name,
                                                  module_name):
+        """Recursively find and replace all parameterized types with their
+        actual types.
+
+        """
+
         # SEQUENCE, SET and CHOICE.
         if 'members' in type_descriptor:
             for member in type_descriptor['members']:
@@ -522,34 +527,47 @@ class Compiler(object):
                                       module_name))
 
         parameterized_type_descriptor = deepcopy(parameterized_type_descriptor)
-        del parameterized_type_descriptor['parameters']
 
-        if 'members' in parameterized_type_descriptor:
-            for member in parameterized_type_descriptor['members']:
-                if member == EXTENSION_MARKER:
-                    continue
+        self.pre_process_parameterization_step_1_dummy_to_actual_type(
+            parameterized_type_descriptor,
+            dummy_parameters,
+            actual_parameters,
+            module_name)
 
-                self.pre_process_parameterization_step_1_type_dummy_to_actual_type(
-                    member,
-                    dummy_parameters,
-                    actual_parameters,
-                    module_name)
-        else:
-            self.pre_process_parameterization_step_1_type_dummy_to_actual_type(
-                parameterized_type_descriptor,
-                dummy_parameters,
-                actual_parameters,
-                module_name)
+        self.pre_process_parameterization_step_1_type(
+            parameterized_type_descriptor,
+            type_name,
+            module_name)
 
         type_descriptor.update(parameterized_type_descriptor)
+
+        del type_descriptor['parameters']
         del type_descriptor['actual-parameters']
 
-    def pre_process_parameterization_step_1_type_dummy_to_actual_type(
+    def pre_process_parameterization_step_1_dummy_to_actual_type(
             self,
             type_descriptor,
             dummy_parameters,
             actual_parameters,
             module_name):
+        if 'members' in type_descriptor:
+            for member in type_descriptor['members']:
+                if member == EXTENSION_MARKER:
+                    continue
+
+                self.pre_process_parameterization_step_1_dummy_to_actual_type(
+                    member,
+                    dummy_parameters,
+                    actual_parameters,
+                    module_name)
+        elif 'element' in type_descriptor:
+            self.pre_process_parameterization_step_1_dummy_to_actual_type(
+                type_descriptor['element'],
+                dummy_parameters,
+                actual_parameters,
+                module_name)
+
+        # Replace dummy with actual in current type descriptor.
         for dummy_parameter, actual_parameter in zip(dummy_parameters,
                                                      actual_parameters):
             if type_descriptor['type'] == dummy_parameter:
@@ -559,11 +577,6 @@ class Compiler(object):
                 for i, parameter in enumerate(type_descriptor['actual-parameters']):
                     if parameter['type'] == dummy_parameter:
                         type_descriptor['actual-parameters'][i] = actual_parameter
-
-        if 'actual-parameters' in type_descriptor:
-            self.pre_process_parameterization_step_1_type(type_descriptor,
-                                                          type_descriptor['type'],
-                                                          module_name)
 
     def pre_process_parameterization_step_2(self, types):
         """X.683 parameterization pre processing - step 2.

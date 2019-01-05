@@ -2,7 +2,7 @@ Parameterization DEFINITIONS AUTOMATIC TAGS ::=
 
 BEGIN
 
-A {B} ::= SEQUENCE {
+A { B } ::= SEQUENCE {
     a B
 }
 
@@ -10,14 +10,14 @@ A-Boolean ::= A { BOOLEAN }
 
 A-Integer ::= A { INTEGER }
 
-B {A, B} ::= SEQUENCE {
+B { A, B } ::= SEQUENCE {
     a A,
     b B OPTIONAL
 }
 
 B-BooleanInteger ::= B { BOOLEAN, INTEGER }
 
-C {A} ::= CHOICE {
+C { A } ::= CHOICE {
     a A,
     b B { A, INTEGER }
 }
@@ -29,5 +29,14 @@ D ::= SEQUENCE {
         d B { NULL, INTEGER }
     }
 }
+
+E { A } ::= SEQUENCE (SIZE (0..5)) OF CHOICE {
+    a A,
+    b SEQUENCE {
+        c SEQUENCE OF B { A, BOOLEAN }
+    }
+}
+
+F ::= E { INTEGER }
 
 END

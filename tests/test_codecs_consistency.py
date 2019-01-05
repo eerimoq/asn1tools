@@ -1366,7 +1366,7 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             b'\x80',
             b'<A-Boolean><a><true /></a></A-Boolean>'
         ]
-        
+
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'A-Boolean', decoded, encoded)
 
@@ -1472,6 +1472,25 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
 
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'D', decoded, encoded)
+
+        # F.
+        decoded = [('b', {'c': [{'a': 2, 'b': True}]})]
+
+        encoded_messages = [
+            b'\x30\x10\xa1\x0e\xa0\x0c\x30\x0a\xa0\x03\x02\x01\x02\xa1\x03\x01'
+            b'\x01\xff',
+            b'\x30\x10\xa1\x0e\xa0\x0c\x30\x0a\xa0\x03\x02\x01\x02\xa1\x03\x01'
+            b'\x01\xff',
+            b'[{"b": {"c": [{"a": 2, "b": true}]}}]',
+            b'\x01\x01\x81\x01\x01\x80\x01\x02\xff',
+            b'\x30\x01\x80\x01\x02\x80',
+            b'\x30\x18\x08\x14',
+            b'<F><b><c><SEQUENCE><a>2</a><b><true /></b></SEQUENCE></c></b></'
+            b'F>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'F', decoded, encoded)
 
 
 if __name__ == '__main__':
