@@ -33,7 +33,7 @@ script:
   - env PYTHONPATH=. python examples/compact_extensions_uper/main.py
   - env PYTHONPATH=. python examples/programming_types/main.py
   - make test-c
-  - env FUZZER_EXECUTION_TIME=1 make test-c-fuzzer
+  - env FUZZER_CC=clang-7 FUZZER_EXECUTION_TIME=1 make test-c-fuzzer
   - make -C examples/benchmarks/c_source
 
 after_success:
