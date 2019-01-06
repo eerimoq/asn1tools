@@ -89,7 +89,7 @@ test-c-oer-fuzzer-run:
 	LLVM_PROFILE_FILE="$(FUZZER_OER_EXE).profraw" \
 	    ./$(FUZZER_OER_EXE) \
 	    -max_total_time=$(FUZZER_EXECUTION_TIME) \
-	    -print_final_stats > $(FUZZER_OER_EXE).txt 2>&1
+	    -print_final_stats
 	llvm-profdata merge \
 	    -sparse $(FUZZER_OER_EXE).profraw \
 	    -o $(FUZZER_OER_EXE).profdata
@@ -103,7 +103,7 @@ test-c-uper-fuzzer-run:
 	LLVM_PROFILE_FILE="$(FUZZER_UPER_EXE).profraw" \
 	    ./$(FUZZER_UPER_EXE) \
 	    -max_total_time=$(FUZZER_EXECUTION_TIME) \
-	    -print_final_stats > $(FUZZER_UPER_EXE).txt 2>&1
+	    -print_final_stats
 	llvm-profdata merge \
 	    -sparse $(FUZZER_UPER_EXE).profraw \
 	    -o $(FUZZER_UPER_EXE).profdata

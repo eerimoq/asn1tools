@@ -268,13 +268,14 @@ def _do_generate_c_source(args):
 
     filename_h = name + '.h'
     filename_c = name + '.c'
+    fuzzer_filename_c = name + '_fuzzer.c'
 
     compiled = compile_files(args.specification,
                              args.codec)
-    header, source = c_source.generate(compiled,
-                                       args.codec,
-                                       name,
-                                       filename_h)
+    header, source, fuzzer_source = c_source.generate(compiled,
+                                                      args.codec,
+                                                      name,
+                                                      filename_h)
 
     with open(filename_h, 'w') as fout:
         fout.write(header)
@@ -282,7 +283,14 @@ def _do_generate_c_source(args):
     with open(filename_c, 'w') as fout:
         fout.write(source)
 
-    print('Successfully generated {} and {}.'.format(filename_h, filename_c))
+    print('Successfully generated {} and {}.'.format(filename_h,
+                                                     filename_c))
+
+    if args.generate_fuzzer:
+        with open(fuzzer_filename_c, 'w') as fout:
+            fout.write(fuzzer_source)
+
+        print('Successfully generated {}.'.format(fuzzer_filename_c))
 
 
 def _main():
@@ -360,6 +368,10 @@ def _main():
     subparser.add_argument(
         '-n', '--namespace',
         help='Namespace of defines, structs, functions, files, etc.')
+    subparser.add_argument(
+        '-f', '--generate-fuzzer',
+        action='store_true',
+        help='Also generate fuzzer source code.')
     subparser.add_argument('specification',
                            nargs='+',
                            help='ASN.1 specification as one or more .asn files.')
