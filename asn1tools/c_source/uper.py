@@ -438,6 +438,10 @@ static uint64_t decoder_read_non_negative_binary_integer(struct decoder_t *self_
 '''
 
 
+def does_bits_match_range(number_of_bits, minimum, maximum):
+    return 2 ** number_of_bits == (maximum - minimum + 1)
+
+
 class _Generator(Generator):
 
     def format_real(self):
@@ -647,14 +651,23 @@ class _Generator(Generator):
                     location),
                 '    decoder_p,',
                 '    {});'.format(type_.number_of_bits),
-                'dst_p->{}length += {};'.format(location, checker.minimum),
-                '',
-                'if (dst_p->{}length > {}) {{'.format(location, checker.maximum),
-                '    decoder_abort(decoder_p, EBADLENGTH);',
-                '',
-                '    return;',
-                '}',
-                '',
+                'dst_p->{}length += {};'.format(location, checker.minimum)
+            ]
+
+            if not does_bits_match_range(type_.number_of_bits,
+                                         checker.minimum,
+                                         checker.maximum):
+                decode_lines += [
+                    '',
+                    'if (dst_p->{}length > {}) {{'.format(location, checker.maximum),
+                    '    decoder_abort(decoder_p, EBADLENGTH);',
+                    '',
+                    '    return;',
+                    '}',
+                    ''
+                ]
+
+            decode_lines += [
                 'decoder_read_bytes(decoder_p,',
                 '                   &dst_p->{}buf[0],'.format(location),
                 '                   dst_p->{}length);'.format(location)
@@ -819,13 +832,22 @@ class _Generator(Generator):
                 '    decoder_p,',
                 '    {});'.format(type_.number_of_bits),
                 'dst_p->{}length += {};'.format(location, checker.minimum),
-                '',
-                'if (dst_p->{}length > {}) {{'.format(location, checker.maximum),
-                '    decoder_abort(decoder_p, EBADLENGTH);',
-                '',
-                '    return;',
-                '}',
-                '',
+                ''
+            ]
+
+            if not does_bits_match_range(type_.number_of_bits,
+                                         checker.minimum,
+                                         checker.maximum):
+                first_decode_lines += [
+                    'if (dst_p->{}length > {}) {{'.format(location, checker.maximum),
+                    '    decoder_abort(decoder_p, EBADLENGTH);',
+                    '',
+                    '    return;',
+                    '}',
+                    ''
+                ]
+
+            first_decode_lines += [
                 'for ({0} = 0; {0} < dst_p->{1}length; {0}++) {{'.format(
                     unique_i,
                     location)
