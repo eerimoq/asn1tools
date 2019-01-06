@@ -525,7 +525,7 @@ def convert_actual_parameter_list(_s, _l, tokens):
 
 def convert_parameter_list(_s, _l, tokens):
     tokens = tokens.asList()
-    # print('list', tokens)
+
     if tokens[0]:
         converted = {'parameters': tokens[0]}
     else:
@@ -547,7 +547,6 @@ def convert_boolean_type(_s, _l, _tokens):
 
 
 def convert_type(tokens, parameters):
-    # print('tokens', tokens)
     converted_type, constraints = tokens
 
     restricted_to = []
@@ -1013,7 +1012,7 @@ def create_grammar():
     dummy_governor = dummy_reference
     governor = (type_ | defined_object_class)
     param_governor = (governor | dummy_governor)
-    parameter = (Optional(param_governor + colon) + dummy_reference)
+    parameter = (Suppress(Optional(param_governor + colon)) + dummy_reference)
     parameter_list = Group(Optional(Suppress(left_brace)
                                     + delimitedList(parameter)
                                     + Suppress(right_brace)))

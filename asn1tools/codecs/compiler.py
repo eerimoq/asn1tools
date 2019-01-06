@@ -578,6 +578,41 @@ class Compiler(object):
                     if parameter['type'] == dummy_parameter:
                         type_descriptor['actual-parameters'][i] = actual_parameter
 
+            if 'size' in type_descriptor:
+                actual_size = []
+
+                for item in type_descriptor['size']:
+                    if isinstance(item, tuple):
+                        minimum, maximum = item
+
+                        if minimum == dummy_parameter:
+                            minimum = actual_parameter
+
+                        if maximum == dummy_parameter:
+                            maximum = actual_parameter
+
+                        item = (minimum, maximum)
+                    elif item == dummy_parameter:
+                        item = actual_parameter
+
+                    actual_size.append(item)
+
+                type_descriptor['size'] = actual_size
+
+            if 'restricted-to' in type_descriptor:
+                actual_restricted_to = []
+
+                for minimum, maximum in type_descriptor['restricted-to']:
+                    if minimum == dummy_parameter:
+                        minimum = actual_parameter
+
+                    if maximum == dummy_parameter:
+                        maximum = actual_parameter
+
+                    actual_restricted_to.append((minimum, maximum))
+
+                type_descriptor['restricted-to'] = actual_restricted_to
+
     def pre_process_parameterization_step_2(self, types):
         """X.683 parameterization pre processing - step 2.
 

@@ -1492,6 +1492,38 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'F', decoded, encoded)
 
+        # H.
+        decoded = [True]
+
+        encoded_messages = [
+            b'\x30\x03\x01\x01\xff',
+            b'\x30\x03\x01\x01\xff',
+            b'[true]',
+            b'\x01\x01\xff',
+            b'\x30',
+            b'\x30',
+            b'<H><true /></H>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'H', decoded, encoded)
+
+        # I.
+        decoded = [True]
+
+        encoded_messages = [
+            b'\x30\x03\x01\x01\xff',
+            b'\x30\x03\x01\x01\xff',
+            b'[true]',
+            b'\x01\x01\xff',
+            b'\xc0',
+            b'\xc0',
+            b'<I><true /></I>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'I', decoded, encoded)
+
 
 if __name__ == '__main__':
     unittest.main()
