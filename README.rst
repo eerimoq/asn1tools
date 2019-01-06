@@ -270,7 +270,7 @@ types in the ASN.1 specification must have a known maximum size,
 i.e. ``INTEGER (0..7)``, ``OCTET STRING (SIZE(12))``, etc.
 
 Below is an example generating OER C source code from
-`tests/files/c_source.asn`_.
+`tests/files/c_source/c_source.asn`_.
 
 .. code-block:: text
 
@@ -411,7 +411,7 @@ Encodings
 .. _decode: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compiler.Specification.decode
 .. _examples: https://github.com/eerimoq/asn1tools/tree/master/examples
 
-.. _tests/files/c_source.asn: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/c_source.asn
+.. _tests/files/c_source/c_source.asn: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/c_source.asn
 
 .. _oer.h: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/oer.h
 
