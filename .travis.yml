@@ -4,6 +4,16 @@ python:
   - "2.7"
   - "3.6"
 
+addons:
+  apt:
+    update: true
+    sources:
+      - llvm-toolchain-trusty-7
+      - ubuntu-toolchain-r-test
+    packages:
+      - clang-7
+      - gcc-8
+
 install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq valgrind -y
@@ -23,6 +33,7 @@ script:
   - env PYTHONPATH=. python examples/compact_extensions_uper/main.py
   - env PYTHONPATH=. python examples/programming_types/main.py
   - make test-c
+  - env FUZZER_EXECUTION_TIME=1 make test-c-fuzzer
   - make -C examples/benchmarks/c_source
 
 after_success:

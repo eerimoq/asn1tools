@@ -936,7 +936,7 @@ class _Generator(Generator):
                 'encoder_append_uint(encoder_p,',
                 '                    src_p->{}length,'.format(
                     self.location_inner('', '.')),
-                '                       {});'.format(number_of_length_bytes),
+                '                    {});'.format(number_of_length_bytes),
                 '',
                 'for ({ui} = 0; {ui} < src_p->{loc}length; {ui}++) {{'.format(
                     ui=unique_i,

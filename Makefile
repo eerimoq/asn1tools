@@ -3,18 +3,14 @@ CC = gcc
 endif
 
 OER_EXE = main_oer
-
 UPER_EXE = main_uper
-
 OER_C_SOURCES = \
 	tests/main_oer.c \
 	tests/files/c_source/oer.c \
 	tests/files/c_source/c_source-minus.c
-
 UPER_C_SOURCES = \
 	tests/main_uper.c \
 	tests/files/c_source/uper.c
-
 CFLAGS = \
 	-Itests/files/c_source \
 	-std=c99 \
@@ -31,6 +27,24 @@ CFLAGS = \
 	-fprofile-arcs \
 	-ftest-coverage
 
+FUZZER_CC ?= clang
+FUZZER_OER_EXE = main_oer_fuzzer
+FUZZER_UPER_EXE = main_uper_fuzzer
+FUZZER_OER_C_SOURCES = \
+	tests/main_oer_fuzzer.c \
+	tests/files/c_source/oer.c
+FUZZER_UPER_C_SOURCES = \
+	tests/main_uper_fuzzer.c \
+	tests/files/c_source/uper.c
+FUZZER_CFLAGS = \
+	-fprofile-instr-generate \
+	-fcoverage-mapping \
+	-Itests/files/c_source \
+	-g -fsanitize=address,fuzzer \
+	-fsanitize=signed-integer-overflow \
+	-fno-sanitize-recover=all
+FUZZER_EXECUTION_TIME ?= 30
+
 .PHONY: test
 test:
 	python2 setup.py test
@@ -46,6 +60,7 @@ test:
 	env PYTHONPATH=. python3 examples/compact_extensions_uper/main.py
 	env PYTHONPATH=. python3 examples/programming_types/main.py
 	$(MAKE) test-c
+	env FUZZER_EXECUTION_TIME=1 $(MAKE) test-c-fuzzer
 	$(MAKE) -C examples/benchmarks/c_source
 	codespell -d $$(git ls-files | grep -v ietf | grep -v 3gpp | grep -v generated)
 	python3 -m pycodestyle $$(git ls-files "asn1tools/*.py")
@@ -66,6 +81,47 @@ test-c-uper:
 test-c:
 	$(MAKE) test-c-oer
 	$(MAKE) test-c-uper
+
+.PHONY: test-c-oer-fuzzer-run
+test-c-oer-fuzzer-run:
+	$(FUZZER_CC) $(FUZZER_CFLAGS) $(FUZZER_OER_C_SOURCES) -o $(FUZZER_OER_EXE)
+	rm -f $(FUZZER_OER_EXE).profraw
+	LLVM_PROFILE_FILE="$(FUZZER_OER_EXE).profraw" \
+	    ./$(FUZZER_OER_EXE) \
+	    -max_total_time=$(FUZZER_EXECUTION_TIME) \
+	    -print_final_stats > $(FUZZER_OER_EXE).txt 2>&1
+	llvm-profdata merge \
+	    -sparse $(FUZZER_OER_EXE).profraw \
+	    -o $(FUZZER_OER_EXE).profdata
+	llvm-cov show ./$(FUZZER_OER_EXE) \
+	    -instr-profile=$(FUZZER_OER_EXE).profdata
+
+.PHONY: test-c-uper-fuzzer-run
+test-c-uper-fuzzer-run:
+	$(FUZZER_CC) $(FUZZER_CFLAGS) $(FUZZER_UPER_C_SOURCES) -o $(FUZZER_UPER_EXE)
+	rm -f $(FUZZER_UPER_EXE).profraw
+	LLVM_PROFILE_FILE="$(FUZZER_UPER_EXE).profraw" \
+	    ./$(FUZZER_UPER_EXE) \
+	    -max_total_time=$(FUZZER_EXECUTION_TIME) \
+	    -print_final_stats > $(FUZZER_UPER_EXE).txt 2>&1
+	llvm-profdata merge \
+	    -sparse $(FUZZER_UPER_EXE).profraw \
+	    -o $(FUZZER_UPER_EXE).profdata
+	llvm-cov show ./$(FUZZER_UPER_EXE) \
+	    -instr-profile=$(FUZZER_UPER_EXE).profdata
+
+.PHONY: test-c-fuzzer
+test-c-fuzzer:
+	$(MAKE) test-c-oer-fuzzer-run
+	$(MAKE) test-c-uper-fuzzer-run
+	echo
+	echo "REPORT:"
+	echo
+	llvm-cov report ./$(FUZZER_OER_EXE) \
+	    -instr-profile=$(FUZZER_OER_EXE).profdata
+	echo
+	llvm-cov report ./$(FUZZER_UPER_EXE) \
+	    -instr-profile=$(FUZZER_UPER_EXE).profdata
 
 .PHONY: test-sdist
 test-sdist:
