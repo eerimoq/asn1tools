@@ -411,7 +411,7 @@ Encodings
 .. _decode: http://asn1tools.readthedocs.io/en/latest/#asn1tools.compiler.Specification.decode
 .. _examples: https://github.com/eerimoq/asn1tools/tree/master/examples
 
-.. _tests/files/c_source.asn: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source.asn
+.. _tests/files/c_source.asn: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/c_source.asn
 
 .. _oer.h: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/oer.h
 
