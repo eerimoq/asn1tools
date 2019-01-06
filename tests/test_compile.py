@@ -196,7 +196,7 @@ class Asn1ToolsCompileTest(unittest.TestCase):
         with self.assertRaises(asn1tools.CompileError) as cm:
             asn1tools.compile_string(
                 'A DEFINITIONS ::= BEGIN'
-                '  B {C, D} ::= SEQUENCE { '
+                '  B { C, D } ::= SEQUENCE { '
                 '    a C, '
                 '    b D '
                 '  } '
@@ -208,6 +208,18 @@ class Asn1ToolsCompileTest(unittest.TestCase):
             str(cm.exception),
             "Parameterized type 'B' in module 'A' takes 2 parameters, "
             "but 1 are given in type 'B-Integer' in module 'A'.")
+
+    def test_missing_parameterized_value(self):
+        with self.assertRaises(asn1tools.CompileError) as cm:
+            asn1tools.compile_string(
+                'A DEFINITIONS ::= BEGIN'
+                '  A { a } ::= INTEGER (a..5) '
+                '  B ::= A { missing-value } '
+                'END ',
+                'uper')
+
+        self.assertEqual(str(cm.exception),
+                         "Value 'missing-value' not found in module 'A'.")
 
 
 if __name__ == '__main__':

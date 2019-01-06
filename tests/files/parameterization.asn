@@ -61,4 +61,9 @@ L { INTEGER : a, INTEGER : b } ::= INTEGER (a..b)
 
 M ::= L { 3, 9 }
 
+-- Both value and type parameter.
+N { INTEGER : a, B } ::= B (-5..a)
+
+O ::= N { -2, INTEGER }
+
 END

@@ -115,5 +115,7 @@ EXPECTED = {'Parameterization': {'extensibility-implied': False,
                     'size': [3],
                     'type': 'SEQUENCE OF'},
               'M': {'restricted-to': [(3, 9)],
+                    'type': 'INTEGER'},
+              'O': {'restricted-to': [(-5, -2)],
                     'type': 'INTEGER'}},
     'values': {'i': {'type': 'INTEGER', 'value': 1}}}}
