@@ -269,18 +269,32 @@ No dynamic memory is used in the generated code. To achieve this all
 types in the ASN.1 specification must have a known maximum size,
 i.e. ``INTEGER (0..7)``, ``OCTET STRING (SIZE(12))``, etc.
 
-Below is an example generating OER and UPER C source code from
+Below is an example generating OER C source code from
 `tests/files/c_source.asn`_.
 
 .. code-block:: text
 
-   > asn1tools generate_c_source --namespace oer tests/files/c_source.asn
+   > asn1tools generate_c_source --namespace oer tests/files/c_source/c_source.asn
    Successfully generated oer.h and oer.c.
-   > asn1tools generate_c_source --codec uper --namespace uper tests/files/c_source.asn
+
+The same as above, but generate UPER C source code instead of OER.
+
+.. code-block:: text
+
+   > asn1tools generate_c_source --codec uper --namespace uper tests/files/c_source/c_source.asn
    Successfully generated uper.h and uper.c.
 
-See `oer.h`_, `oer.c`_, `uper.h`_ and `uper.c`_ for the contents of
-the generated files.
+The same as the first example, but also generate fuzz testing C source
+code for `libFuzzer`_.
+
+.. code-block:: text
+
+   > asn1tools generate_c_source --namespace oer --generate-fuzzer tests/files/c_source/c_source.asn
+   Successfully generated oer.h and oer.c.
+   Successfully generated oer_fuzzer.c.
+
+See `oer.h`_, `oer.c`_, `uper.h`_, `uper.c`_ and `oer_fuzzer.c`_ for
+the contents of the generated files.
 
 Limitations by design:
 
@@ -406,6 +420,10 @@ Encodings
 .. _uper.h: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/uper.h
 
 .. _uper.c: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/uper.c
+
+.. _oer_fuzzer.c: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/oer_fuzzer.c
+
+.. _libFuzzer: https://llvm.org/docs/LibFuzzer.html
 
 .. _benchmark example: https://github.com/eerimoq/asn1tools/blob/master/examples/benchmarks/c_source
 
