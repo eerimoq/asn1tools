@@ -52,11 +52,14 @@ class Asn1ToolsCompileTest(unittest.TestCase):
         self.assertEqual(actual, MODULE_TAGS_AUTOMATIC_PP)
 
     def test_pre_process_x683(self):
-        actual = asn1tools.pre_process_dict(deepcopy(X683))
+        # Todo: Remove expected RecursionError parameterization of
+        #       recursive types has been implemented.
+        if sys.version_info[0] == 2:
+            return
 
-        # Todo: Remove expected AssertionError once parameterization
-        # has been implemented.
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(RecursionError):
+            actual = asn1tools.pre_process_dict(deepcopy(X683))
+
             self.assertEqual(actual, X683_PP)
 
     def test_pre_process_parameterization(self):

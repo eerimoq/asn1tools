@@ -58,8 +58,7 @@ class Asn1ToolsParseTest(unittest.TestCase):
         self.parse_and_verify('information_object')
 
     def test_parse_x683(self):
-        with self.assertRaises(AssertionError):
-            self.parse_and_verify('x683')
+        self.parse_and_verify('x683')
 
     def test_parse_x680(self):
         self.parse_and_verify('x680')
