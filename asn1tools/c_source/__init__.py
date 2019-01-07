@@ -225,7 +225,9 @@ static void test_{name}(
     uint8_t encoded[size];
     uint8_t encoded2[size];
     struct {name}_t decoded;
+    struct {name}_t decoded2;
 
+    memset(&decoded, 0, sizeof(decoded));
     res = {name}_decode(
         &decoded,
         encoded_p,
@@ -242,13 +244,19 @@ static void test_{name}(
             __builtin_trap();
         }}
 
+        memset(&decoded2, 0, sizeof(decoded2));
         res2 = {name}_decode(
-            &decoded,
+            &decoded2,
             &encoded[0],
             res);
 
         if (res2 < 0) {{
             printf("Second decode failed with %ld.\\n", res2);
+            __builtin_trap();
+        }}
+
+        if (memcmp(&decoded, &decoded2, sizeof(decoded)) != 0) {{
+            printf("Second decoded data does not match first decoded data.\\n");
             __builtin_trap();
         }}
 
