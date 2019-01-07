@@ -296,8 +296,8 @@ code for `libFuzzer`_.
    Run "make -f oer_fuzzer.mk" to build and run the fuzzer. Requires a
    recent version of clang.
 
-See `oer.h`_, `oer.c`_, `uper.h`_, `uper.c`_ and `oer_fuzzer.c`_ for
-the contents of the generated files.
+See `oer.h`_, `oer.c`_, `uper.h`_, `uper.c`_, `oer_fuzzer.c`_ and
+`oer_fuzzer.mk`_ for the contents of the generated files.
 
 Limitations by design:
 
@@ -425,6 +425,8 @@ Encodings
 .. _uper.c: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/uper.c
 
 .. _oer_fuzzer.c: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/oer_fuzzer.c
+
+.. _oer_fuzzer.mk: https://github.com/eerimoq/asn1tools/blob/master/tests/files/c_source/oer_fuzzer.mk
 
 .. _libFuzzer: https://llvm.org/docs/LibFuzzer.html
 
