@@ -200,7 +200,7 @@ CFLAGS = \\
 \t-g -fsanitize=address,fuzzer \\
 \t-fsanitize=signed-integer-overflow \\
 \t-fno-sanitize-recover=all
-EXECUTION_TIME ?= 30
+EXECUTION_TIME ?= 5
 
 all:
 \t$(CC) $(CFLAGS) $(C_SOURCES) -o $(EXE)
