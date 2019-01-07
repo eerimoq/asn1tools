@@ -300,8 +300,8 @@ def _do_generate_c_source(args):
         print('Successfully generated {} and {}.'.format(fuzzer_filename_c,
                                                          fuzzer_filename_mk))
         print()
-        print('Run "make -f {}" to build and run the fuzzer. Requires a '
-              'recent version of clang.'.format(fuzzer_filename_mk))
+        print('Run "make -f oer_fuzzer.mk" to build and run the fuzzer. Requires a')
+        print('recent version of clang.')
 
 
 def _main():

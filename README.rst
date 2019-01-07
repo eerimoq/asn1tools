@@ -291,7 +291,10 @@ code for `libFuzzer`_.
 
    > asn1tools generate_c_source --namespace oer --generate-fuzzer tests/files/c_source/c_source.asn
    Successfully generated oer.h and oer.c.
-   Successfully generated oer_fuzzer.c.
+   Successfully generated oer_fuzzer.c and oer_fuzzer.mk.
+
+   Run "make -f oer_fuzzer.mk" to build and run the fuzzer. Requires a
+   recent version of clang.
 
 See `oer.h`_, `oer.c`_, `uper.h`_, `uper.c`_ and `oer_fuzzer.c`_ for
 the contents of the generated files.
