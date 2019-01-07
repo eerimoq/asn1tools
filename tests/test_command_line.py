@@ -16,7 +16,7 @@ import asn1tools
 
 
 def remove_date_time(string):
-    return re.sub(r' \* This file was generated.*', '', string)
+    return re.sub(r'.* This file was generated.*', '', string)
 
 
 def read_file(filename):
@@ -687,6 +687,7 @@ exit
         filename_h = 'oer.h'
         filename_c = 'oer.c'
         fuzzer_filename_c = 'oer_fuzzer.c'
+        fuzzer_filename_mk = 'oer_fuzzer.mk'
 
         if os.path.exists(filename_h):
             os.remove(filename_h)
@@ -696,6 +697,9 @@ exit
 
         if os.path.exists(fuzzer_filename_c):
             os.remove(fuzzer_filename_c)
+
+        if os.path.exists(fuzzer_filename_mk):
+            os.remove(fuzzer_filename_mk)
 
         with patch('sys.argv', argv):
             asn1tools._main()
@@ -709,6 +713,9 @@ exit
         self.assertEqual(
             read_file('tests/files/c_source/' + fuzzer_filename_c),
             read_file(fuzzer_filename_c))
+        self.assertEqual(
+            read_file('tests/files/c_source/' + fuzzer_filename_mk),
+            read_file(fuzzer_filename_mk))
 
     def test_command_line_generate_c_source_oer_minus(self):
         argv = [
@@ -720,6 +727,7 @@ exit
         filename_h = 'c_source-minus.h'
         filename_c = 'c_source-minus.c'
         fuzzer_filename_c = 'c_source-minus_fuzzer.c'
+        fuzzer_filename_mk = 'c_source-minus_fuzzer.mk'
 
         if os.path.exists(filename_h):
             os.remove(filename_h)
@@ -729,6 +737,9 @@ exit
 
         if os.path.exists(fuzzer_filename_c):
             os.remove(fuzzer_filename_c)
+
+        if os.path.exists(fuzzer_filename_mk):
+            os.remove(fuzzer_filename_mk)
 
         with patch('sys.argv', argv):
             asn1tools._main()
@@ -740,6 +751,7 @@ exit
             read_file('tests/files/c_source/' + filename_c),
             read_file(filename_c))
         self.assertFalse(os.path.exists(fuzzer_filename_c))
+        self.assertFalse(os.path.exists(fuzzer_filename_mk))
 
     def test_command_line_generate_c_source_uper(self):
         argv = [
@@ -754,6 +766,7 @@ exit
         filename_h = 'uper.h'
         filename_c = 'uper.c'
         fuzzer_filename_c = 'uper_fuzzer.c'
+        fuzzer_filename_mk = 'uper_fuzzer.mk'
 
         if os.path.exists(filename_h):
             os.remove(filename_h)
@@ -763,6 +776,9 @@ exit
 
         if os.path.exists(fuzzer_filename_c):
             os.remove(fuzzer_filename_c)
+
+        if os.path.exists(fuzzer_filename_mk):
+            os.remove(fuzzer_filename_mk)
 
         with patch('sys.argv', argv):
             asn1tools._main()
@@ -776,6 +792,9 @@ exit
         self.assertEqual(
             read_file('tests/files/c_source/' + fuzzer_filename_c),
             read_file(fuzzer_filename_c))
+        self.assertEqual(
+            read_file('tests/files/c_source/' + fuzzer_filename_mk),
+            read_file(fuzzer_filename_mk))
 
 
 if __name__ == '__main__':

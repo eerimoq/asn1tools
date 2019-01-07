@@ -15,6 +15,25 @@ from .utils import dedent_lines
 from ..codecs import oer
 
 
+MINIMUM_UINT_LENGTH = '''
+static uint8_t minimum_uint_length(uint32_t value)
+{
+    uint8_t length;
+
+    if (value < 256) {
+        length = 1;
+    } else if (value < 65536) {
+        length = 2;
+    } else if (value < 16777216) {
+        length = 3;
+    } else {
+        length = 4;
+    }
+
+    return (length);
+}\
+'''
+
 ENCODER_INIT = '''\
 static void encoder_init(struct encoder_t *self_p,
                          uint8_t *buf_p,
@@ -886,7 +905,7 @@ class _Generator(Generator):
         )
 
     def format_sequence_of_inner(self, type_, checker):
-        unique_number_of_length_bytes = self.add_unique_decode_variable(
+        unique_number_of_length_bytes = self.add_unique_variable(
             'uint8_t {};',
             'number_of_length_bytes')
         unique_i = self.add_unique_variable(
@@ -902,10 +921,18 @@ class _Generator(Generator):
                 type_.element_type,
                 checker.element_type)
 
+        location = self.location_inner('', '.')
+
         if checker.minimum == checker.maximum:
             encode_lines = [
-                'encoder_append_uint8(encoder_p, 1);',
-                'encoder_append_uint8(encoder_p, {});'.format(checker.maximum),
+                '{} = minimum_uint_length({});'.format(
+                    unique_number_of_length_bytes,
+                    checker.maximum),
+                'encoder_append_uint8(encoder_p, {});'.format(
+                    unique_number_of_length_bytes),
+                'encoder_append_uint(encoder_p,',
+                '                    {},'.format(checker.maximum),
+                '                    {});'.format(unique_number_of_length_bytes),
                 '',
                 'for ({ui} = 0; {ui} < {maximum}; {ui}++) {{'.format(
                     ui=unique_i,
@@ -929,36 +956,35 @@ class _Generator(Generator):
                     maximum=checker.maximum),
             ] + indent_lines(decode_lines)
         else:
-            number_of_length_bytes = (checker.maximum.bit_length() + 7) // 8
             encode_lines = [
+                '{} = minimum_uint_length(src_p->{}length);'.format(
+                    unique_number_of_length_bytes,
+                    location),
                 'encoder_append_uint8(encoder_p, {});'.format(
-                    number_of_length_bytes),
+                    unique_number_of_length_bytes),
                 'encoder_append_uint(encoder_p,',
-                '                    src_p->{}length,'.format(
-                    self.location_inner('', '.')),
-                '                    {});'.format(number_of_length_bytes),
+                '                    src_p->{}length,'.format(location),
+                '                    {});'.format(unique_number_of_length_bytes),
                 '',
                 'for ({ui} = 0; {ui} < src_p->{loc}length; {ui}++) {{'.format(
                     ui=unique_i,
-                    loc=self.location_inner('', '.')),
+                    loc=location),
             ] + indent_lines(encode_lines)
             decode_lines = [
                 '{} = decoder_read_uint8(decoder_p);'.format(
                     unique_number_of_length_bytes),
-                'dst_p->{}length = decoder_read_uint('.format(
-                    self.location_inner('', '.')),
+                'dst_p->{}length = decoder_read_uint('.format(location),
                 '    decoder_p,',
                 '    {});'.format(unique_number_of_length_bytes),
                 '',
-                'if (dst_p->{}length > {}) {{'.format(self.location_inner('', '.'),
-                                                      checker.maximum),
+                'if (dst_p->{}length > {}) {{'.format(location, checker.maximum),
                 '    decoder_abort(decoder_p, EBADLENGTH);',
                 '',
                 '    return;',
                 '}',
                 '',
                 'for ({ui} = 0; {ui} < dst_p->{loc}length; {ui}++) {{'.format(
-                    loc=self.location_inner('', '.'),
+                    loc=location,
                     ui=unique_i),
             ] + indent_lines(decode_lines)
 
@@ -1018,6 +1044,7 @@ class _Generator(Generator):
         helpers = [ENCODER_AND_DECODER_STRUCTS]
 
         functions = [
+            ('minimum_uint_length(', MINIMUM_UINT_LENGTH),
             ('encoder_init(', ENCODER_INIT),
             ('encoder_get_result(', ENCODER_GET_RESULT),
             ('encoder_abort(', ENCODER_ABORT),

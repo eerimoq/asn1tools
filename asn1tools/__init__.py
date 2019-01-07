@@ -269,13 +269,17 @@ def _do_generate_c_source(args):
     filename_h = name + '.h'
     filename_c = name + '.c'
     fuzzer_filename_c = name + '_fuzzer.c'
+    fuzzer_filename_mk = name + '_fuzzer.mk'
 
     compiled = compile_files(args.specification,
                              args.codec)
-    header, source, fuzzer_source = c_source.generate(compiled,
-                                                      args.codec,
-                                                      name,
-                                                      filename_h)
+    header, source, fuzzer_source, fuzzer_makefile = c_source.generate(
+        compiled,
+        args.codec,
+        name,
+        filename_h,
+        filename_c,
+        fuzzer_filename_c)
 
     with open(filename_h, 'w') as fout:
         fout.write(header)
@@ -290,7 +294,14 @@ def _do_generate_c_source(args):
         with open(fuzzer_filename_c, 'w') as fout:
             fout.write(fuzzer_source)
 
-        print('Successfully generated {}.'.format(fuzzer_filename_c))
+        with open(fuzzer_filename_mk, 'w') as fout:
+            fout.write(fuzzer_makefile)
+
+        print('Successfully generated {} and {}.'.format(fuzzer_filename_c,
+                                                         fuzzer_filename_mk))
+        print()
+        print('Run "make -f {}" to build and run the fuzzer. Requires a '
+              'recent version of clang.'.format(fuzzer_filename_mk))
 
 
 def _main():

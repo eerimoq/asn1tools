@@ -69,3 +69,4 @@ main*.massif
 *.gcno
 *.gcda
 gmon.out
+/*.mk
