@@ -147,6 +147,58 @@ FUZZER_SOURCE_FMT = '''\
 
 #include "{header}"
 
+static void assert_first_encode(ssize_t res)
+{{
+    if (res < 0) {{
+        printf("First encode failed with %ld.\\n", res);
+        __builtin_trap();
+    }}
+}}
+
+static void assert_second_decode(ssize_t res)
+{{
+    if (res < 0) {{
+        printf("Second decode failed with %ld.\\n", res);
+        __builtin_trap();
+    }}
+}}
+
+static void assert_second_decode_data(const void *decoded_p,
+                                      const void *decoded2_p,
+                                      size_t size)
+{{
+    if (memcmp(decoded_p, decoded2_p, size) != 0) {{
+        printf("Second decode data does not match first decoded data.\\n");
+        __builtin_trap();
+    }}
+}}
+
+static void assert_second_encode(ssize_t res, ssize_t res2)
+{{
+    if (res != res2) {{
+        printf("Second encode result %ld does not match first pack "
+               "result %ld.\\n",
+               res,
+               res2);
+        __builtin_trap();
+    }}
+}}
+
+static void assert_second_encode_data(const uint8_t *encoded_p,
+                                      const uint8_t *encoded2_p,
+                                      ssize_t size)
+{{
+    ssize_t i;
+
+    if (memcmp(encoded_p, encoded2_p, size) != 0) {{
+        for (i = 0; i < size; i++) {{
+            printf("[%04ld]: 0x%02x 0x%02x\\n", i, encoded_p[i], encoded2_p[i]);
+        }}
+
+        __builtin_trap();
+    }}
+}}
+
 {tests}
 
 int LLVMFuzzerTestOneInput(const uint8_t *data_p, size_t size)
@@ -239,47 +291,27 @@ static void test_{name}(
             sizeof(encoded),
             &decoded);
 
-        if (res < 0) {{
-            printf("First encode failed with %ld.\\n", res);
-            __builtin_trap();
-        }}
+        assert_first_encode(res);
 
         memset(&decoded2, 0, sizeof(decoded2));
+
         res2 = {name}_decode(
             &decoded2,
             &encoded[0],
             res);
 
-        if (res2 < 0) {{
-            printf("Second decode failed with %ld.\\n", res2);
-            __builtin_trap();
-        }}
-
-        if (memcmp(&decoded, &decoded2, sizeof(decoded)) != 0) {{
-            printf("Second decoded data does not match first decoded data.\\n");
-            __builtin_trap();
-        }}
+        assert_second_decode(res2);
+        assert_second_decode_data(&decoded,
+                                  &decoded2,
+                                  sizeof(decoded));
 
         res2 = {name}_encode(
             &encoded2[0],
             sizeof(encoded2),
             &decoded);
 
-        if (res != res2) {{
-            printf("Second encode result %ld does not match first encode "
-                   "result %ld.\\n",
-                   res,
-                   res2);
-            __builtin_trap();
-        }}
-
-        if (memcmp(&encoded[0], &encoded2[0], res) != 0) {{
-            for (i = 0; i < res; i++) {{
-                printf("[%04ld]: 0x%02x 0x%02x\\n", i, encoded[i], encoded2[i]);
-            }}
-
-            __builtin_trap();
-        }}
+        assert_second_encode(res, res2);
+        assert_second_encode_data(&encoded[0], &encoded2[0], res);
     }}
 }}\
 '''
