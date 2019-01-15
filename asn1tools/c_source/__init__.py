@@ -280,6 +280,7 @@ static void test_{name}(
     struct {name}_t decoded2;
 
     memset(&decoded, 0, sizeof(decoded));
+
     res = {name}_decode(
         &decoded,
         encoded_p,
