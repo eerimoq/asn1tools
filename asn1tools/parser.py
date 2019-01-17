@@ -761,8 +761,15 @@ def convert_imports(_s, _l, tokens):
     if tokens:
         for from_tokens in tokens:
             from_name = from_tokens[2]
+
             LOGGER.debug("Converting imports from '%s'.", from_name)
-            imports[from_name] = from_tokens[0]
+
+            imported = from_tokens[0]
+
+            if from_name in imports:
+                imported = list(set(imports[from_name] + imported))
+
+            imports[from_name] = sorted(imported)
 
     return {'imports': imports}
 

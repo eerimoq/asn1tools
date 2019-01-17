@@ -45,3 +45,22 @@ BEGIN
     andAnotherValue AndAnotherType ::= anotherValue
 
 END
+
+
+D DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+    IMPORTS
+
+        Type
+    FROM B
+
+        anotherValue
+    FROM B;
+
+    AndAnotherType ::= Type
+
+    andAnotherValue AndAnotherType ::= anotherValue
+
+END
