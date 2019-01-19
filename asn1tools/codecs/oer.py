@@ -1299,6 +1299,7 @@ class Compiler(compiler.Compiler):
         return CompiledType(compiled_type)
 
     def compile_type(self, name, type_descriptor, module_name):
+        module_name = type_descriptor.get('module-name', module_name)
         type_name = type_descriptor['type']
 
         if type_name == 'SEQUENCE':

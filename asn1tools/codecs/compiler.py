@@ -532,16 +532,21 @@ class Compiler(object):
             parameterized_type_descriptor,
             dummy_parameters,
             actual_parameters,
-            module_name)
+            parameterized_module_name)
 
         self.pre_process_parameterization_step_1_type(
             parameterized_type_descriptor,
             type_name,
-            module_name)
+            parameterized_module_name)
 
         type_descriptor.update(parameterized_type_descriptor)
 
-        del type_descriptor['parameters']
+        if module_name != parameterized_module_name:
+            type_descriptor['module-name'] = parameterized_module_name
+
+        if 'parameters' in type_descriptor:
+            del type_descriptor['parameters']
+
         del type_descriptor['actual-parameters']
 
     def pre_process_parameterization_step_1_dummy_to_actual_type(

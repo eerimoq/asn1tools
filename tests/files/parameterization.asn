@@ -2,6 +2,13 @@ Parameterization DEFINITIONS AUTOMATIC TAGS ::=
 
 BEGIN
 
+IMPORTS
+
+    B2,
+    D2,
+    E2
+FROM Parameterization2;
+
 -- One parameter.
 A { B } ::= SEQUENCE {
     a B
@@ -65,5 +72,68 @@ M ::= L { 3, 9 }
 N { INTEGER : a, B } ::= B (-5..a)
 
 O ::= N { -2, INTEGER }
+
+-- Multiple parameterized levels.
+P { A } ::= SEQUENCE {
+    a A
+}
+
+Q { A } ::= P { A }
+
+R ::= Q { INTEGER }
+
+-- Use imported type.
+S ::= B2 { BOOLEAN }
+
+A2 ::= BOOLEAN
+
+T ::= D2 { OCTET STRING }
+
+U ::= E2 { INTEGER }
+
+END
+
+
+Parameterization2 DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+IMPORTS
+
+    B3
+FROM Parameterization3;
+
+A2 ::= INTEGER
+
+B2 { A } ::= SEQUENCE {
+    a A,
+    b A2
+}
+
+C2 ::= INTEGER
+
+D2 { A } ::= SEQUENCE {
+    a A,
+    b C2
+}
+
+E2 { A } ::= SEQUENCE {
+    a A,
+    b B3 { A }
+}
+
+END
+
+
+Parameterization3 DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+A3 ::= INTEGER
+
+B3 { A } ::= SEQUENCE {
+    a A,
+    b A3
+}
 
 END

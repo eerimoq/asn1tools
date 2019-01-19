@@ -1566,6 +1566,7 @@ class Compiler(compiler.Compiler):
         return compiled
 
     def compile_type(self, name, type_descriptor, module_name):
+        module_name = type_descriptor.get('module-name', module_name)
         compiled = self.compile_implicit_type(name,
                                               type_descriptor,
                                               module_name)
