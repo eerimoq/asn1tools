@@ -541,8 +541,9 @@ class Compiler(object):
 
         type_descriptor.update(parameterized_type_descriptor)
 
-        if module_name != parameterized_module_name:
-            type_descriptor['module-name'] = parameterized_module_name
+        if 'module-name' not in type_descriptor:
+            if module_name != parameterized_module_name:
+                type_descriptor['module-name'] = parameterized_module_name
 
         if 'parameters' in type_descriptor:
             del type_descriptor['parameters']

@@ -6,7 +6,8 @@ IMPORTS
 
     B2,
     D2,
-    E2
+    E2,
+    F2
 FROM Parameterization2;
 
 -- One parameter.
@@ -91,6 +92,8 @@ T ::= D2 { OCTET STRING }
 
 U ::= E2 { INTEGER }
 
+V ::= F2 { INTEGER }
+
 END
 
 
@@ -100,7 +103,8 @@ BEGIN
 
 IMPORTS
 
-    B3
+    B3,
+    D3
 FROM Parameterization3;
 
 A2 ::= INTEGER
@@ -122,6 +126,8 @@ E2 { A } ::= SEQUENCE {
     b B3 { A }
 }
 
+F2 { A } ::= D3 { A }
+
 END
 
 
@@ -135,5 +141,9 @@ B3 { A } ::= SEQUENCE {
     a A,
     b A3
 }
+
+C3 ::= OCTET STRING
+
+D3 { A } ::= C3 (CONTAINING A)
 
 END
