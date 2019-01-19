@@ -1524,6 +1524,22 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'I', decoded, encoded)
 
+        # S.
+        decoded = {'a': True, 'b': 7}
+
+        encoded_messages = [
+            b'\x30\x08\xa0\x03\x01\x01\xff\x81\x01\x07',
+            b'\x30\x08\xa0\x03\x01\x01\xff\x81\x01\x07',
+            b'{"a": true, "b": 7}',
+            b'\xff\x01\x07',
+            b'\x80\x01\x07',
+            b'\x80\x83\x80',
+            b'<S><a><true /></a><b>7</b></S>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'S', decoded, encoded)
+
 
 if __name__ == '__main__':
     unittest.main()
