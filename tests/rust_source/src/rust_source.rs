@@ -289,71 +289,80 @@ impl<'a> Decoder<'a> {
     }
 }
 
-/// Type A in module RustSource.
-#[derive(Debug, Default, PartialEq)]
-pub struct RustSourceAJ {
-    pub buf: [u8; 11]
-}
+/// Module RustSource.
+pub mod rust_source {
 
-#[derive(Debug, Default, PartialEq)]
-pub struct RustSourceA {
-    pub a: i8,
-    pub b: i16,
-    pub c: i32,
-    pub d: i64,
-    pub e: u8,
-    pub f: u16,
-    pub g: u32,
-    pub h: u64,
-    pub i: bool,
-    pub j: RustSourceAJ
-}
+    /// Type A.
+    pub mod a {
 
-impl RustSourceA {
+        use super::super::{Encoder, Decoder};
 
-    pub fn to_bytes(&mut self, mut dst: &mut [u8]) -> Result<usize, &'static str>
-    {
-        let mut encoder = Encoder::new(&mut dst);
+        #[derive(Debug, Default, PartialEq)]
+        pub struct AJ {
+            pub buf: [u8; 11]
+        }
 
-        self.to_bytes_inner(&mut encoder);
+        #[derive(Debug, Default, PartialEq)]
+        pub struct A {
+            pub a: i8,
+            pub b: i16,
+            pub c: i32,
+            pub d: i64,
+            pub e: u8,
+            pub f: u16,
+            pub g: u32,
+            pub h: u64,
+            pub i: bool,
+            pub j: AJ
+        }
 
-        return encoder.get_result();
-    }
+        impl A {
 
-    pub fn from_bytes(&mut self, src: &[u8]) -> Result<usize, &'static str>
-    {
-        let mut decoder = Decoder::new(&src);
+            pub fn to_bytes(&mut self, mut dst: &mut [u8]) -> Result<usize, &'static str>
+            {
+                let mut encoder = Encoder::new(&mut dst);
 
-        self.from_bytes_inner(&mut decoder);
+                self.to_bytes_inner(&mut encoder);
 
-        return decoder.get_result();
-    }
+                return encoder.get_result();
+            }
 
-    fn to_bytes_inner(&mut self, encoder: &mut Encoder)
-    {
-        encoder.append_i8(self.a);
-        encoder.append_i16(self.b);
-        encoder.append_i32(self.c);
-        encoder.append_i64(self.d);
-        encoder.append_u8(self.e);
-        encoder.append_u16(self.f);
-        encoder.append_u32(self.g);
-        encoder.append_u64(self.h);
-        encoder.append_bool(self.i);
-        encoder.append_bytes(&self.j.buf);
-    }
+            pub fn from_bytes(&mut self, src: &[u8]) -> Result<usize, &'static str>
+            {
+                let mut decoder = Decoder::new(&src);
 
-    fn from_bytes_inner(&mut self, decoder: &mut Decoder)
-    {
-        self.a = decoder.read_i8();
-        self.b = decoder.read_i16();
-        self.c = decoder.read_i32();
-        self.d = decoder.read_i64();
-        self.e = decoder.read_u8();
-        self.f = decoder.read_u16();
-        self.g = decoder.read_u32();
-        self.h = decoder.read_u64();
-        self.i = decoder.read_bool();
-        decoder.read_bytes(&mut self.j.buf);
+                self.from_bytes_inner(&mut decoder);
+
+                return decoder.get_result();
+            }
+
+            fn to_bytes_inner(&mut self, encoder: &mut Encoder)
+            {
+                encoder.append_i8(self.a);
+                encoder.append_i16(self.b);
+                encoder.append_i32(self.c);
+                encoder.append_i64(self.d);
+                encoder.append_u8(self.e);
+                encoder.append_u16(self.f);
+                encoder.append_u32(self.g);
+                encoder.append_u64(self.h);
+                encoder.append_bool(self.i);
+                encoder.append_bytes(&self.j.buf);
+            }
+
+            fn from_bytes_inner(&mut self, decoder: &mut Decoder)
+            {
+                self.a = decoder.read_i8();
+                self.b = decoder.read_i16();
+                self.c = decoder.read_i32();
+                self.d = decoder.read_i64();
+                self.e = decoder.read_u8();
+                self.f = decoder.read_u16();
+                self.g = decoder.read_u32();
+                self.h = decoder.read_u64();
+                self.i = decoder.read_bool();
+                decoder.read_bytes(&mut self.j.buf);
+            }
+        }
     }
 }

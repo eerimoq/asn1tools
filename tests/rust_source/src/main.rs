@@ -1,11 +1,11 @@
 mod rust_source;
 
-use rust_source::{RustSourceA, RustSourceAJ};
+use rust_source::rust_source::a::{A, AJ};
 
 fn test_uper_c_source_a()
 {
     let mut encoded = [0; 42];
-    let mut a: RustSourceA = Default::default();
+    let mut a: A = Default::default();
 
     // Encode.
     a.a = -1;
@@ -34,7 +34,7 @@ fn test_uper_c_source_a()
 
     assert_eq!(a.from_bytes(&encoded).unwrap(), encoded.len());
     assert_eq!(a,
-               RustSourceA {
+               A {
                    a: -1,
                    b: -2,
                    c: -3,
@@ -44,7 +44,7 @@ fn test_uper_c_source_a()
                    g: 3,
                    h: 4,
                    i: true,
-                   j: RustSourceAJ {
+                   j: AJ {
                        buf: [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
                    }
                });
