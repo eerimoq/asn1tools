@@ -71,13 +71,13 @@ impl<'a> Encoder<'a> {
         self.buf[pos as usize / 8] |= value << (7 - (pos % 8));
     }
 
-    fn append_bytes(&mut self, buf: &[u8], size: usize)
+    fn append_bytes(&mut self, buf: &[u8])
     {
         let pos: isize;
         let byte_pos: usize;
         let pos_in_byte: usize;
 
-        pos = self.alloc(8 * size);
+        pos = self.alloc(8 * buf.len());
 
         if pos < 0 {
             return;
@@ -87,11 +87,11 @@ impl<'a> Encoder<'a> {
         pos_in_byte = pos as usize % 8;
 
         if pos_in_byte == 0 {
-            self.buf.get_mut(byte_pos..byte_pos + size)
+            self.buf.get_mut(byte_pos..byte_pos + buf.len())
                 .unwrap()
-                .copy_from_slice(buf.get(0..size).unwrap());
+                .copy_from_slice(buf.get(0..buf.len()).unwrap());
         } else {
-            for i in 0..size {
+            for i in 0..buf.len() {
                 self.buf[byte_pos + i] |= buf[i] >> pos_in_byte;
                 self.buf[byte_pos + i + 1] = buf[i] << (8 - pos_in_byte);
             }
@@ -100,14 +100,13 @@ impl<'a> Encoder<'a> {
 
     fn append_u8(&mut self, value: u8)
     {
-        self.append_bytes(&[value], 1);
+        self.append_bytes(&[value]);
     }
 
     fn append_u16(&mut self, value: u16)
     {
         self.append_bytes(&[(value >> 8) as u8,
-                            value as u8],
-                          2);
+                            value as u8]);
     }
 
     fn append_u32(&mut self, value: u32)
@@ -115,8 +114,7 @@ impl<'a> Encoder<'a> {
         self.append_bytes(&[(value >> 24) as u8,
                             (value >> 16) as u8,
                             (value >> 8) as u8,
-                            value as u8],
-                          4);
+                            value as u8]);
     }
 
     fn append_u64(&mut self, value: u64)
@@ -128,8 +126,7 @@ impl<'a> Encoder<'a> {
                             (value >> 24) as u8,
                             (value >> 16) as u8,
                             (value >> 8) as u8,
-                            value as u8],
-                          8);
+                            value as u8]);
     }
 
     fn append_i8(&mut self, value: i8)
@@ -216,13 +213,13 @@ impl<'a> Decoder<'a> {
         return value;
     }
 
-    fn read_bytes(&mut self, buf: &mut [u8], size: usize)
+    fn read_bytes(&mut self, buf: &mut [u8])
     {
         let pos: isize;
         let byte_pos: usize;
         let pos_in_byte: usize;
 
-        pos = self.free(8 * size);
+        pos = self.free(8 * buf.len());
 
         if pos < 0 {
             return;
@@ -232,11 +229,9 @@ impl<'a> Decoder<'a> {
         pos_in_byte = pos as usize % 8;
 
         if pos_in_byte == 0 {
-            buf.get_mut(..size)
-                .unwrap()
-                .copy_from_slice(self.buf.get(byte_pos..byte_pos + size).unwrap());
+            buf.copy_from_slice(self.buf.get(byte_pos..byte_pos + buf.len()).unwrap());
         } else {
-            for i in 0..size {
+            for i in 0..buf.len() {
                 buf[i] = self.buf[byte_pos + i] << pos_in_byte;
                 buf[i] |= self.buf[byte_pos + i + 1] >> (8 - pos_in_byte);
             }
@@ -247,7 +242,7 @@ impl<'a> Decoder<'a> {
     {
         let mut value = [0; 1];
 
-        self.read_bytes(&mut value, 1);
+        self.read_bytes(&mut value);
 
         return value[0];
     }
@@ -256,7 +251,7 @@ impl<'a> Decoder<'a> {
     {
         let mut buf = [0; 2];
 
-        self.read_bytes(&mut buf, 2);
+        self.read_bytes(&mut buf);
 
         return ((buf[0] as u16) << 8) | (buf[1] as u16);
     }
@@ -265,7 +260,7 @@ impl<'a> Decoder<'a> {
     {
         let mut buf = [0; 4];
 
-        self.read_bytes(&mut buf, 4);
+        self.read_bytes(&mut buf);
 
         return ((buf[0] as u32) << 24)
                | ((buf[1] as u32) << 16)
@@ -277,7 +272,7 @@ impl<'a> Decoder<'a> {
     {
         let mut buf = [0; 8];
 
-        self.read_bytes(&mut buf, 8);
+        self.read_bytes(&mut buf);
 
         return ((buf[0] as u64) << 56)
                | ((buf[1] as u64) << 48)
@@ -366,8 +361,7 @@ impl RustSourceA {
         encoder.append_u32(self.g);
         encoder.append_u64(self.h);
         encoder.append_bool(self.i);
-        encoder.append_bytes(&self.j.buf,
-                             11);
+        encoder.append_bytes(&self.j.buf);
     }
 
     fn from_bytes_inner(&mut self, decoder: &mut Decoder)
@@ -381,7 +375,6 @@ impl RustSourceA {
         self.g = decoder.read_u32();
         self.h = decoder.read_u64();
         self.i = decoder.read_bool();
-        decoder.read_bytes(&mut self.j.buf,
-                           11);
+        decoder.read_bytes(&mut self.j.buf);
     }
 }
