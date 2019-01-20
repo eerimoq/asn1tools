@@ -109,35 +109,21 @@ ENCODER_APPEND_U8 = '''
 ENCODER_APPEND_U16 = '''
     fn append_u16(&mut self, value: u16)
     {
-        self.append_bytes(&[(value >> 8) as u8,
-                            value as u8],
-                          2);
+        self.append_bytes(&value.to_be_bytes(), 2);
     }\
 '''
 
 ENCODER_APPEND_U32 = '''
     fn append_u32(&mut self, value: u32)
     {
-        self.append_bytes(&[(value >> 24) as u8,
-                            (value >> 16) as u8,
-                            (value >> 8) as u8,
-                            value as u8],
-                          4);
+        self.append_bytes(&value.to_be_bytes(), 4);
     }\
 '''
 
 ENCODER_APPEND_U64 = '''
     fn append_u64(&mut self, value: u64)
     {
-        self.append_bytes(&[(value >> 56) as u8,
-                            (value >> 48) as u8,
-                            (value >> 40) as u8,
-                            (value >> 32) as u8,
-                            (value >> 24) as u8,
-                            (value >> 16) as u8,
-                            (value >> 8) as u8,
-                            value as u8],
-                          8);
+        self.append_bytes(&value.to_be_bytes(), 8);
     }\
 '''
 
@@ -276,11 +262,11 @@ DECODER_READ_BYTES = '''
 DECODER_READ_U8 = '''
     fn read_u8(&mut self) -> u8
     {
-        let mut value = [0; 1];
+        let mut buf = [0; 1];
 
-        self.read_bytes(&mut value, 1);
+        self.read_bytes(&mut buf, 1);
 
-        return value[0];
+        return u8::from_be_bytes(buf);
     }\
 '''
 
@@ -291,7 +277,7 @@ DECODER_READ_U16 = '''
 
         self.read_bytes(&mut buf, 2);
 
-        return ((buf[0] as u16) << 8) | (buf[1] as u16);
+        return u16::from_be_bytes(buf);
     }\
 '''
 
@@ -302,10 +288,7 @@ DECODER_READ_U32 = '''
 
         self.read_bytes(&mut buf, 4);
 
-        return ((buf[0] as u32) << 24)
-               | ((buf[1] as u32) << 16)
-               | ((buf[2] as u32) << 8)
-               | (buf[3] as u32);
+        return u32::from_be_bytes(buf);
     }\
 '''
 
@@ -316,14 +299,7 @@ DECODER_READ_U64 = '''
 
         self.read_bytes(&mut buf, 8);
 
-        return ((buf[0] as u64) << 56)
-               | ((buf[1] as u64) << 48)
-               | ((buf[2] as u64) << 40)
-               | ((buf[3] as u64) << 32)
-               | ((buf[4] as u64) << 24)
-               | ((buf[5] as u64) << 16)
-               | ((buf[6] as u64) << 8)
-               | buf[7] as u64;
+        return u64::from_be_bytes(buf);
     }\
 '''
 
