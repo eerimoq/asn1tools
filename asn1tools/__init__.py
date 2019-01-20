@@ -28,7 +28,9 @@ from .errors import DecodeError
 from .errors import CompileError
 from .errors import ConstraintsError
 from . import c_source
+from . import rust_source
 from .version import __version__
+
 
 __author__ = 'Erik Moqvist'
 
@@ -306,6 +308,21 @@ def _do_generate_c_source(args):
         print('recent version of clang.')
 
 
+def _do_generate_rust_source(args):
+    name = os.path.basename(args.specification[0])
+    name = os.path.splitext(name)[0]
+    filename_rs = name + '.rs'
+
+    compiled = compile_files(args.specification,
+                             args.codec)
+    source = rust_source.generate(compiled, args.codec)
+
+    with open(filename_rs, 'w') as fout:
+        fout.write(source)
+
+    print('Successfully generated {}.'.format(filename_rs))
+
+
 def _main():
     parser = argparse.ArgumentParser(
         description='Various ASN.1 utilities.')
@@ -389,6 +406,20 @@ def _main():
                            nargs='+',
                            help='ASN.1 specification as one or more .asn files.')
     subparser.set_defaults(func=_do_generate_c_source)
+
+    # The 'generate_rust_source' subparser.
+    subparser = subparsers.add_parser(
+        'generate_rust_source',
+        description='Generate Rust source code from given ASN.1 specification.')
+    subparser.add_argument(
+        '-c', '--codec',
+        choices=('uper', ),
+        default='uper',
+        help='Codec to generate code for (default: uper).')
+    subparser.add_argument('specification',
+                           nargs='+',
+                           help='ASN.1 specification as one or more .asn files.')
+    subparser.set_defaults(func=_do_generate_rust_source)
 
     args = parser.parse_args()
 

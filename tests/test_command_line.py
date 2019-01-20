@@ -796,6 +796,25 @@ exit
             read_file('tests/files/c_source/' + fuzzer_filename_mk),
             read_file(fuzzer_filename_mk))
 
+    def test_command_line_generate_rust_source_uper(self):
+        argv = [
+            'asn1tools',
+            'generate_rust_source',
+            'tests/files/rust_source/rust_source.asn'
+        ]
+
+        filename_rs = 'rust_source.rs'
+
+        if os.path.exists(filename_rs):
+            os.remove(filename_rs)
+
+        with patch('sys.argv', argv):
+            asn1tools._main()
+
+        self.assertEqual(
+            read_file('tests/files/rust_source/' + filename_rs),
+            read_file(filename_rs))
+
 
 if __name__ == '__main__':
     unittest.main()

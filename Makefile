@@ -123,6 +123,10 @@ test-c-fuzzer:
 	llvm-cov report ./$(FUZZER_UPER_EXE) \
 	    -instr-profile=$(FUZZER_UPER_EXE).profdata
 
+.PHONY: test-rust
+test-rust:
+	cd tests/rust_source && cargo run
+
 .PHONY: test-sdist
 test-sdist:
 	rm -rf dist

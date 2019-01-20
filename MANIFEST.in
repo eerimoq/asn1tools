@@ -1,4 +1,4 @@
 include LICENSE
 include Makefile
 include examples/programming_types/programming_types.asn
-recursive-include tests *.py *.asn *.h *.c *.mk
+recursive-include tests *.py *.asn *.h *.c *.mk *.rs *.toml
