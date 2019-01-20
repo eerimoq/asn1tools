@@ -105,28 +105,17 @@ impl<'a> Encoder<'a> {
 
     fn append_u16(&mut self, value: u16)
     {
-        self.append_bytes(&[(value >> 8) as u8,
-                            value as u8]);
+        self.append_bytes(&value.to_be_bytes());
     }
 
     fn append_u32(&mut self, value: u32)
     {
-        self.append_bytes(&[(value >> 24) as u8,
-                            (value >> 16) as u8,
-                            (value >> 8) as u8,
-                            value as u8]);
+        self.append_bytes(&value.to_be_bytes());
     }
 
     fn append_u64(&mut self, value: u64)
     {
-        self.append_bytes(&[(value >> 56) as u8,
-                            (value >> 48) as u8,
-                            (value >> 40) as u8,
-                            (value >> 32) as u8,
-                            (value >> 24) as u8,
-                            (value >> 16) as u8,
-                            (value >> 8) as u8,
-                            value as u8]);
+        self.append_bytes(&value.to_be_bytes());
     }
 
     fn append_i8(&mut self, value: i8)
@@ -240,11 +229,11 @@ impl<'a> Decoder<'a> {
 
     fn read_u8(&mut self) -> u8
     {
-        let mut value = [0; 1];
+        let mut buf = [0; 1];
 
-        self.read_bytes(&mut value);
+        self.read_bytes(&mut buf);
 
-        return value[0];
+        return u8::from_be_bytes(buf);
     }
 
     fn read_u16(&mut self) -> u16
@@ -253,7 +242,7 @@ impl<'a> Decoder<'a> {
 
         self.read_bytes(&mut buf);
 
-        return ((buf[0] as u16) << 8) | (buf[1] as u16);
+        return u16::from_be_bytes(buf);
     }
 
     fn read_u32(&mut self) -> u32
@@ -262,10 +251,7 @@ impl<'a> Decoder<'a> {
 
         self.read_bytes(&mut buf);
 
-        return ((buf[0] as u32) << 24)
-               | ((buf[1] as u32) << 16)
-               | ((buf[2] as u32) << 8)
-               | (buf[3] as u32);
+        return u32::from_be_bytes(buf);
     }
 
     fn read_u64(&mut self) -> u64
@@ -274,14 +260,7 @@ impl<'a> Decoder<'a> {
 
         self.read_bytes(&mut buf);
 
-        return ((buf[0] as u64) << 56)
-               | ((buf[1] as u64) << 48)
-               | ((buf[2] as u64) << 40)
-               | ((buf[3] as u64) << 32)
-               | ((buf[4] as u64) << 24)
-               | ((buf[5] as u64) << 16)
-               | ((buf[6] as u64) << 8)
-               | buf[7] as u64;
+        return u64::from_be_bytes(buf);
     }
 
     fn read_i8(&mut self) -> i8
