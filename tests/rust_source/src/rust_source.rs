@@ -2,98 +2,88 @@
 
 struct Encoder<'a> {
     buf: &'a mut [u8],
-    size: isize,
-    pos: isize
+    size: usize,
+    pos: usize,
+    error: Option<&'static str>
 }
 
 struct Decoder<'a> {
     buf: &'a[u8],
-    size: isize,
-    pos: isize
+    size: usize,
+    pos: usize,
+    error: Option<&'static str>
 }
 
 impl<'a> Encoder<'a> {
 
     fn new(dst: &'a mut [u8]) -> Encoder {
         Encoder {
-            size: 8 * dst.len() as isize,
+            size: 8 * dst.len(),
             buf: dst,
-            pos: 0
+            pos: 0,
+            error: None
         }
     }
 
     fn get_result(&self) -> Result<usize, &'static str>
     {
-        if self.size >= 0 {
-            return Ok((self.pos as usize + 7) / 8);
+        if self.error.is_none() {
+            return Ok((self.pos + 7) / 8);
         } else {
-            return Err("error");
+            return Err(self.error.unwrap());
         }
     }
 
-    fn abort(&mut self, error: isize)
+    fn abort(&mut self, error: &'static str)
     {
-        if self.size >= 0 {
-            self.size = -error;
-            self.pos = -error;
+        if self.error.is_none() {
+            self.error = Some(error);
         }
     }
 
-    fn alloc(&mut self, size: usize) -> isize
+    fn alloc(&mut self, size: usize) -> Result<usize, ()>
     {
-        let pos: isize;
+        let pos: usize;
 
-        if self.pos + size as isize <= self.size {
+        if self.pos + size <= self.size {
             pos = self.pos;
-            self.pos += size as isize;
+            self.pos += size;
+            Ok(pos)
         } else {
-            pos = -1;
-            self.abort(3);
+            self.abort("Out of memory.");
+            Err(())
         }
-
-        return pos;
     }
 
     fn append_bit(&mut self, value: u8)
     {
-        let pos: isize;
+        if let Ok(pos) = self.alloc(1) {
+            if pos % 8 == 0 {
+                self.buf[pos as usize / 8] = 0;
+            }
 
-        pos = self.alloc(1);
-
-        if pos < 0 {
-            return;
+            self.buf[pos as usize / 8] |= value << (7 - (pos % 8));
         }
-
-        if pos % 8 == 0 {
-            self.buf[pos as usize / 8] = 0;
-        }
-
-        self.buf[pos as usize / 8] |= value << (7 - (pos % 8));
     }
 
     fn append_bytes(&mut self, buf: &[u8])
     {
-        let pos: isize;
         let byte_pos: usize;
         let pos_in_byte: usize;
 
-        pos = self.alloc(8 * buf.len());
+        if let Ok(pos) = self.alloc(8 * buf.len()) {
+            byte_pos = pos as usize / 8;
+            pos_in_byte = pos as usize % 8;
 
-        if pos < 0 {
-            return;
-        }
-
-        byte_pos = pos as usize / 8;
-        pos_in_byte = pos as usize % 8;
-
-        if pos_in_byte == 0 {
-            self.buf.get_mut(byte_pos..byte_pos + buf.len())
-                .unwrap()
-                .copy_from_slice(buf.get(0..buf.len()).unwrap());
-        } else {
-            for i in 0..buf.len() {
-                self.buf[byte_pos + i] |= buf[i] >> pos_in_byte;
-                self.buf[byte_pos + i + 1] = buf[i] << (8 - pos_in_byte);
+            if pos_in_byte == 0 {
+                self.buf.get_mut(byte_pos..byte_pos + buf.len())
+                    .unwrap()
+                    .copy_from_slice(buf.get(0..buf.len()).unwrap());
+            } else {
+                for i in 0..buf.len() {
+                    self.buf[byte_pos + i] |= buf[i] >> pos_in_byte;
+                    self.buf[byte_pos + i + 1] = buf[i] << (8 - pos_in_byte);
+                }
             }
         }
     }
@@ -156,80 +146,68 @@ impl<'a> Decoder<'a> {
     fn new(src: &'a[u8]) -> Decoder {
         Decoder {
             buf: src,
-            size: 8 * src.len() as isize,
-            pos: 0
+            size: 8 * src.len(),
+            pos: 0,
+            error: None
         }
     }
 
     fn get_result(&self) -> Result<usize, &'static str>
     {
-        if self.size >= 0 {
-            return Ok((self.pos as usize + 7) / 8);
+        if self.error.is_none() {
+            return Ok((self.pos + 7) / 8);
         } else {
-            return Err("error");
+            return Err(self.error.unwrap());
         }
     }
 
-    fn abort(&mut self, error: isize)
+    fn abort(&mut self, error: &'static str)
     {
-        if self.size >= 0 {
-            self.size = -error;
-            self.pos = -error;
+        if self.error.is_none() {
+            self.error = Some(error);
         }
     }
 
-    fn free(&mut self, size: usize) -> isize
+    fn free(&mut self, size: usize) -> Result<usize, ()>
     {
-        let pos: isize;
+        let pos: usize;
 
-        if self.pos + size as isize <= self.size {
+        if self.pos + size <= self.size {
             pos = self.pos;
-            self.pos += size as isize;
+            self.pos += size;
+            Ok(pos)
         } else {
-            pos = -1;
-            self.abort(2);
+            self.abort("Out of data.");
+            Err(())
         }
-
-        return pos;
     }
 
     fn read_bit(&mut self) -> u8
     {
-        let pos: isize;
-        let value: u8;
-
-        pos = self.free(1);
-
-        if pos >= 0 {
-            value = (self.buf[pos as usize / 8] >> (7 - (pos % 8))) & 1;
+        if let Ok(pos) = self.free(1) {
+            (self.buf[pos / 8] >> (7 - (pos % 8))) & 1
         } else {
-            value = 0;
+            0
         }
-
-        return value;
     }
 
     fn read_bytes(&mut self, buf: &mut [u8])
     {
-        let pos: isize;
         let byte_pos: usize;
         let pos_in_byte: usize;
 
-        pos = self.free(8 * buf.len());
+        if let Ok(pos) = self.free(8 * buf.len()) {
+            byte_pos = pos as usize / 8;
+            pos_in_byte = pos as usize % 8;
 
-        if pos < 0 {
-            return;
-        }
-
-        byte_pos = pos as usize / 8;
-        pos_in_byte = pos as usize % 8;
-
-        if pos_in_byte == 0 {
-            buf.copy_from_slice(self.buf.get(byte_pos..byte_pos + buf.len()).unwrap());
-        } else {
-            for i in 0..buf.len() {
-                buf[i] = self.buf[byte_pos + i] << pos_in_byte;
-                buf[i] |= self.buf[byte_pos + i + 1] >> (8 - pos_in_byte);
+            if pos_in_byte == 0 {
+                buf.copy_from_slice(
+                    self.buf.get(byte_pos..byte_pos + buf.len()).unwrap());
+            } else {
+                for i in 0..buf.len() {
+                    buf[i] = self.buf[byte_pos + i] << pos_in_byte;
+                    buf[i] |= self.buf[byte_pos + i + 1] >> (8 - pos_in_byte);
+                }
             }
         }
     }
@@ -555,7 +533,7 @@ pub mod rust_source {
                 self.length += 1;
 
                 if self.length > 10 {
-                    decoder.abort(5);
+                    decoder.abort("Bad length.");
 
                     return;
                 }
@@ -573,7 +551,7 @@ pub mod rust_source {
                         },
 
                         _ => {
-                            decoder.abort(4);
+                            decoder.abort("Bad choice.");
 
                             return;
                         }
@@ -591,7 +569,7 @@ pub mod rust_source {
                             2 => DElemGH::K,
 
                             _ => {
-                                decoder.abort(3);
+                                decoder.abort("Bad choice.");
 
                                 return;
                             }
