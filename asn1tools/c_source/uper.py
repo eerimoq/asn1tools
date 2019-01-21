@@ -592,22 +592,22 @@ class _Generator(Generator):
                 name = '{}is_{}_present'.format(self.location_inner('', '.'),
                                                 member.name)
                 encode_lines.append(
-                    'encoder_append_bit(encoder_p, src_p->{} ? 1 : 0);'.format(
+                    'encoder_append_bool(encoder_p, src_p->{});'.format(
                         name))
                 decode_lines.append(
-                    'dst_p->{} = (decoder_read_bit(decoder_p) == 1);'.format(
+                    'dst_p->{} = decoder_read_bool(decoder_p);'.format(
                         name))
             elif member.default is not None:
                 unique_is_present = self.add_unique_decode_variable('bool {};',
                                                                     'is_present')
                 member_name_to_is_present[member.name] = unique_is_present
                 encode_lines.append(
-                    'encoder_append_bit(encoder_p, src_p->{}{} != {} ? 1 : 0);'.format(
+                    'encoder_append_bool(encoder_p, src_p->{}{} != {});'.format(
                         self.location_inner('', '.'),
                         member.name,
                         member.default))
                 decode_lines.append(
-                    '{} = (decoder_read_bit(decoder_p) == 1);'.format(
+                    '{} = decoder_read_bool(decoder_p);'.format(
                         unique_is_present))
 
         for member in type_.root_members:
@@ -884,54 +884,56 @@ class _Generator(Generator):
             raise self.error(type_)
 
     def generate_helpers(self, definitions):
-        helpers = [ENCODER_AND_DECODER_STRUCTS]
+        helpers = []
 
         functions = [
-            ('encoder_init(', ENCODER_INIT),
-            ('encoder_get_result(', ENCODER_GET_RESULT),
-            ('encoder_abort(', ENCODER_ABORT),
-            ('encoder_append_bit(', ENCODER_ALLOC),
-            ('encoder_append_bit(', ENCODER_APPEND_BIT),
-            ('encoder_append_bytes(', ENCODER_APPEND_BYTES),
-            ('encoder_append_uint8(', ENCODER_APPEND_UINT8),
-            ('encoder_append_uint16(', ENCODER_APPEND_UINT16),
-            ('encoder_append_uint32(', ENCODER_APPEND_UINT32),
-            ('encoder_append_uint64(', ENCODER_APPEND_UINT64),
-            ('encoder_append_int8(', ENCODER_APPEND_INT8),
-            ('encoder_append_int16(', ENCODER_APPEND_INT16),
-            ('encoder_append_int32(', ENCODER_APPEND_INT32),
-            ('encoder_append_int64(', ENCODER_APPEND_INT64),
-            ('encoder_append_bool(', ENCODER_APPEND_BOOL),
+            (
+                'decoder_read_non_negative_binary_integer(',
+                DECODER_READ_NON_NEGATIVE_BINARY_INTEGER
+            ),
+            ('decoder_read_bool(', DECODER_READ_BOOL),
+            ('decoder_read_int64(', DECODER_READ_INT64),
+            ('decoder_read_int32(', DECODER_READ_INT32),
+            ('decoder_read_int16(', DECODER_READ_INT16),
+            ('decoder_read_int8(', DECODER_READ_INT8),
+            ('decoder_read_uint64(', DECODER_READ_UINT64),
+            ('decoder_read_uint32(', DECODER_READ_UINT32),
+            ('decoder_read_uint16(', DECODER_READ_UINT16),
+            ('decoder_read_uint8(', DECODER_READ_UINT8),
+            ('decoder_read_bytes(', DECODER_READ_BYTES),
+            ('decoder_read_bit(', DECODER_READ_BIT),
+            ('decoder_free(', DECODER_FREE),
+            ('decoder_abort(', DECODER_ABORT),
+            ('decoder_get_result(', DECODER_GET_RESULT),
+            ('decoder_init(', DECODER_INIT),
             (
                 'encoder_append_non_negative_binary_integer(',
                 ENCODER_APPEND_NON_NEGATIVE_BINARY_INTEGER
             ),
-            ('decoder_init(', DECODER_INIT),
-            ('decoder_get_result(', DECODER_GET_RESULT),
-            ('decoder_abort(', DECODER_ABORT),
-            ('decoder_read_bit(', DECODER_FREE),
-            ('decoder_read_bit(', DECODER_READ_BIT),
-            ('decoder_read_bytes(', DECODER_READ_BYTES),
-            ('decoder_read_uint8(', DECODER_READ_UINT8),
-            ('decoder_read_uint16(', DECODER_READ_UINT16),
-            ('decoder_read_uint32(', DECODER_READ_UINT32),
-            ('decoder_read_uint64(', DECODER_READ_UINT64),
-            ('decoder_read_int8(', DECODER_READ_INT8),
-            ('decoder_read_int16(', DECODER_READ_INT16),
-            ('decoder_read_int32(', DECODER_READ_INT32),
-            ('decoder_read_int64(', DECODER_READ_INT64),
-            ('decoder_read_bool(', DECODER_READ_BOOL),
-            (
-                'decoder_read_non_negative_binary_integer(',
-                DECODER_READ_NON_NEGATIVE_BINARY_INTEGER
-            )
+            ('encoder_append_bool(', ENCODER_APPEND_BOOL),
+            ('encoder_append_int64(', ENCODER_APPEND_INT64),
+            ('encoder_append_int32(', ENCODER_APPEND_INT32),
+            ('encoder_append_int16(', ENCODER_APPEND_INT16),
+            ('encoder_append_int8(', ENCODER_APPEND_INT8),
+            ('encoder_append_uint64(', ENCODER_APPEND_UINT64),
+            ('encoder_append_uint32(', ENCODER_APPEND_UINT32),
+            ('encoder_append_uint16(', ENCODER_APPEND_UINT16),
+            ('encoder_append_uint8(', ENCODER_APPEND_UINT8),
+            ('encoder_append_bytes(', ENCODER_APPEND_BYTES),
+            ('encoder_append_bit(', ENCODER_APPEND_BIT),
+            ('encoder_alloc(', ENCODER_ALLOC),
+            ('encoder_abort(', ENCODER_ABORT),
+            ('encoder_get_result(', ENCODER_GET_RESULT),
+            ('encoder_init(', ENCODER_INIT)
         ]
 
         for pattern, definition in functions:
-            if pattern in definitions:
-                helpers.append(definition)
+            is_in_helpers = any([pattern in helper for helper in helpers])
 
-        return helpers + ['']
+            if pattern in definitions or is_in_helpers:
+                helpers.insert(0, definition)
+
+        return [ENCODER_AND_DECODER_STRUCTS] + helpers + ['']
 
 
 def generate(compiled, namespace):

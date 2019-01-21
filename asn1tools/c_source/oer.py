@@ -1041,83 +1041,56 @@ class _Generator(Generator):
             return [], []
 
     def generate_helpers(self, definitions):
-        helpers = [ENCODER_AND_DECODER_STRUCTS]
+        helpers = []
 
         functions = [
-            ('minimum_uint_length(', MINIMUM_UINT_LENGTH),
-            ('encoder_init(', ENCODER_INIT),
-            ('encoder_get_result(', ENCODER_GET_RESULT),
-            ('encoder_abort(', ENCODER_ABORT),
-            ('encoder_append_bytes(', ENCODER_ALLOC),
-            ('encoder_append_bytes(', ENCODER_APPEND_BYTES),
-            (
-                ['encoder_append_uint8(', 'encoder_append_int8('],
-                ENCODER_APPEND_UINT8
-            ),
-            (
-                ['encoder_append_uint16(', 'encoder_append_int16('],
-                ENCODER_APPEND_UINT16
-            ),
-            (
-                ['encoder_append_uint32(', 'encoder_append_int32('],
-                ENCODER_APPEND_UINT32
-            ),
-            (
-                ['encoder_append_uint64(', 'encoder_append_int64('],
-                ENCODER_APPEND_UINT64
-            ),
-            ('encoder_append_int8(', ENCODER_APPEND_INT8),
-            ('encoder_append_int16(', ENCODER_APPEND_INT16),
-            ('encoder_append_int32(', ENCODER_APPEND_INT32),
-            ('encoder_append_int64(', ENCODER_APPEND_INT64),
-            ('encoder_append_uint(', ENCODER_APPEND_UINT),
-            ('encoder_append_float(', ENCODER_APPEND_FLOAT),
-            ('encoder_append_double(', ENCODER_APPEND_DOUBLE),
-            ('encoder_append_bool(', ENCODER_APPEND_BOOL),
-            ('encoder_append_length_determinant(', ENCODER_APPEND_LENGTH_DETERMINANT),
-            ('decoder_init(', DECODER_INIT),
-            ('decoder_get_result(', DECODER_GET_RESULT),
-            ('decoder_abort(', DECODER_ABORT),
-            ('decoder_read_bytes(', DECODER_FREE),
-            ('decoder_read_bytes(', DECODER_READ_BYTES),
-            (
-                ['decoder_read_uint8(', 'decoder_read_int8('],
-                DECODER_READ_UINT8
-            ),
-            (
-                ['decoder_read_uint16(', 'decoder_read_int16('],
-                DECODER_READ_UINT16
-            ),
-            (
-                ['decoder_read_uint32(', 'decoder_read_int32('],
-                DECODER_READ_UINT32
-            ),
-            (
-                ['decoder_read_uint64(', 'decoder_read_int64('],
-                DECODER_READ_UINT64
-            ),
-            ('decoder_read_int8(', DECODER_READ_INT8),
-            ('decoder_read_int16(', DECODER_READ_INT16),
-            ('decoder_read_int32(', DECODER_READ_INT32),
-            ('decoder_read_int64(', DECODER_READ_INT64),
-            ('decoder_read_uint(', DECODER_READ_UINT),
-            ('decoder_read_float(', DECODER_READ_FLOAT),
-            ('decoder_read_double(', DECODER_READ_DOUBLE),
-            ('decoder_read_bool(', DECODER_READ_BOOL),
+            ('decoder_read_tag(', DECODER_READ_TAG),
             ('decoder_read_length_determinant(', DECODER_READ_LENGTH_DETERMINANT),
-            ('decoder_read_tag(', DECODER_READ_TAG)
+            ('decoder_read_bool(', DECODER_READ_BOOL),
+            ('decoder_read_double(', DECODER_READ_DOUBLE),
+            ('decoder_read_float(', DECODER_READ_FLOAT),
+            ('decoder_read_uint(', DECODER_READ_UINT),
+            ('decoder_read_int64(', DECODER_READ_INT64),
+            ('decoder_read_int32(', DECODER_READ_INT32),
+            ('decoder_read_int16(', DECODER_READ_INT16),
+            ('decoder_read_int8(', DECODER_READ_INT8),
+            ('decoder_read_uint64(', DECODER_READ_UINT64),
+            ('decoder_read_uint32(', DECODER_READ_UINT32),
+            ('decoder_read_uint16(', DECODER_READ_UINT16),
+            ('decoder_read_uint8(', DECODER_READ_UINT8),
+            ('decoder_read_bytes(', DECODER_READ_BYTES),
+            ('decoder_free(', DECODER_FREE),
+            ('decoder_abort(', DECODER_ABORT),
+            ('decoder_get_result(', DECODER_GET_RESULT),
+            ('decoder_init(', DECODER_INIT),
+            ('encoder_append_length_determinant(', ENCODER_APPEND_LENGTH_DETERMINANT),
+            ('encoder_append_bool(', ENCODER_APPEND_BOOL),
+            ('encoder_append_double(', ENCODER_APPEND_DOUBLE),
+            ('encoder_append_float(', ENCODER_APPEND_FLOAT),
+            ('encoder_append_uint(', ENCODER_APPEND_UINT),
+            ('encoder_append_int64(', ENCODER_APPEND_INT64),
+            ('encoder_append_int32(', ENCODER_APPEND_INT32),
+            ('encoder_append_int16(', ENCODER_APPEND_INT16),
+            ('encoder_append_int8(', ENCODER_APPEND_INT8),
+            ('encoder_append_uint64(', ENCODER_APPEND_UINT64),
+            ('encoder_append_uint32(', ENCODER_APPEND_UINT32),
+            ('encoder_append_uint16(', ENCODER_APPEND_UINT16),
+            ('encoder_append_uint8(', ENCODER_APPEND_UINT8),
+            ('encoder_append_bytes(', ENCODER_APPEND_BYTES),
+            ('encoder_alloc(', ENCODER_ALLOC),
+            ('encoder_abort(', ENCODER_ABORT),
+            ('encoder_get_result(', ENCODER_GET_RESULT),
+            ('encoder_init(', ENCODER_INIT),
+            ('minimum_uint_length(', MINIMUM_UINT_LENGTH)
         ]
 
-        for patterns, definition in functions:
-            if isinstance(patterns, str):
-                patterns = [patterns]
+        for pattern, definition in functions:
+            is_in_helpers = any([pattern in helper for helper in helpers])
 
-            for pattern in patterns:
-                if pattern in definitions:
-                    helpers.append(definition)
-                    break
+            if pattern in definitions or is_in_helpers:
+                helpers.insert(0, definition)
 
-        return helpers + ['']
+        return [ENCODER_AND_DECODER_STRUCTS] + helpers + ['']
 
 
 def generate(compiled, namespace):
