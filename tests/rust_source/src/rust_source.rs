@@ -142,6 +142,13 @@ impl<'a> Encoder<'a> {
     {
         self.append_bit(value as u8);
     }
+
+    fn append_non_negative_binary_integer(&mut self, value: u64, size: usize)
+    {
+        for i in 0..size {
+            self.append_bit((value >> (size - i - 1)) as u8 & 1);
+        }
+    }
 }
 
 impl<'a> Decoder<'a> {
@@ -287,6 +294,20 @@ impl<'a> Decoder<'a> {
     {
         return self.read_bit() != 0;
     }
+
+    fn read_non_negative_binary_integer(&mut self, size: usize) -> u64
+    {
+        let mut value: u64;
+
+        value = 0;
+
+        for _ in 0..size {
+            value <<= 1;
+            value |= self.read_bit() as u64;
+        }
+
+        return value;
+    }
 }
 
 /// Module RustSource.
@@ -362,6 +383,258 @@ pub mod rust_source {
                 self.h = decoder.read_u64();
                 self.i = decoder.read_bool();
                 decoder.read_bytes(&mut self.j.buf);
+            }
+        }
+    }
+
+    /// Type D.
+    pub mod d {
+
+        use super::super::{Encoder, Decoder};
+
+        #[derive(Debug, PartialEq, Copy, Clone)]
+        pub enum DElemGH {
+            I,
+            J,
+            K
+        }
+
+        impl Default for DElemGH {
+            fn default() -> Self { DElemGH::I }
+        }
+
+        #[derive(Debug, PartialEq, Copy, Clone)]
+        pub enum DElemAB {
+            C(u8),
+            D(bool)
+        }
+
+        impl Default for DElemAB {
+            fn default() -> Self { DElemAB::C(0) }
+        }
+
+        #[derive(Debug, Default, PartialEq, Copy, Clone)]
+        pub struct DElemAE {
+            pub length: u8
+        }
+
+        #[derive(Debug, Default, PartialEq, Copy, Clone)]
+        pub struct DElemA {
+            pub b: DElemAB,
+            pub e: DElemAE
+        }
+
+        #[derive(Debug, Default, PartialEq, Copy, Clone)]
+        pub struct DElemGL {
+            pub length: u8,
+            pub buf: [u8; 2]
+        }
+
+        #[derive(Debug, Default, PartialEq, Copy, Clone)]
+        pub struct DElemG {
+            pub h: DElemGH,
+            pub l: DElemGL
+        }
+
+        #[derive(Debug, Default, PartialEq, Copy, Clone)]
+        pub struct DElemMPQ {
+            pub buf: [u8; 5]
+        }
+
+        #[derive(Debug, Default, PartialEq, Copy, Clone)]
+        pub struct DElemMP {
+            pub q: DElemMPQ,
+            pub r: Option<bool>
+        }
+
+        #[derive(Debug, Default, PartialEq, Copy, Clone)]
+        pub struct DElemM {
+            pub n: Option<bool>,
+            pub o: i8,
+            pub p: Option<DElemMP>
+        }
+
+        #[derive(Debug, Default, PartialEq, Copy, Clone)]
+        pub struct DElem {
+            pub a: DElemA,
+            pub g: DElemG,
+            pub m: DElemM
+        }
+
+        #[derive(Debug, Default, PartialEq, Copy, Clone)]
+        pub struct D {
+            pub length: u8,
+            pub elements: [DElem; 10]
+        }
+
+        impl D {
+
+            pub fn to_bytes(&mut self, mut dst: &mut [u8]) -> Result<usize, &'static str>
+            {
+                let mut encoder = Encoder::new(&mut dst);
+
+                self.to_bytes_inner(&mut encoder);
+
+                return encoder.get_result();
+            }
+
+            pub fn from_bytes(&mut self, src: &[u8]) -> Result<usize, &'static str>
+            {
+                let mut decoder = Decoder::new(&src);
+
+                self.from_bytes_inner(&mut decoder);
+
+                return decoder.get_result();
+            }
+
+            fn to_bytes_inner(&mut self, encoder: &mut Encoder)
+            {
+                encoder.append_non_negative_binary_integer(
+                    self.length as u64 - 1,
+                    4);
+
+                for i in 0..self.length as usize {
+                    match self.elements[i].a.b {
+
+                        DElemAB::C(value) => {
+                            encoder.append_non_negative_binary_integer(0, 1);
+                            encoder.append_non_negative_binary_integer(
+                                value as u64 - 0,
+                                1);
+                        },
+
+                        DElemAB::D(value) => {
+                            encoder.append_non_negative_binary_integer(1, 1);
+                            encoder.append_bool(value);
+                        }
+                    }
+
+                    encoder.append_non_negative_binary_integer(
+                        self.elements[i].a.e.length as u64 - 3,
+                        1);
+                    encoder.append_non_negative_binary_integer(
+                        self.elements[i].g.h as u64,
+                        2);
+                    encoder.append_non_negative_binary_integer(
+                        self.elements[i].g.l.length as u64 - 1,
+                        1);
+                    encoder.append_bytes(
+                        &mut self.elements[i].g.l.buf[0..self.elements[i].g.l.length as usize]);
+                    encoder.append_bool(self.elements[i].m.n.is_some());
+                    encoder.append_bool(self.elements[i].m.o != 3);
+                    encoder.append_bool(self.elements[i].m.p.is_some());
+
+                    if let Some(value) = self.elements[i].m.n {
+                        encoder.append_bool(value);
+                    }
+
+                    if self.elements[i].m.o != 3 {
+                        encoder.append_non_negative_binary_integer(
+                            (self.elements[i].m.o - -2) as u64,
+                            3);
+                    }
+
+                    if let Some(value) = self.elements[i].m.p {
+                        encoder.append_bool(value.r.is_some());
+                        encoder.append_bytes(&value.q.buf);
+
+                        if let Some(value_2) = value.r {
+                            encoder.append_bool(value_2);
+                        }
+                    }
+                }
+            }
+
+            fn from_bytes_inner(&mut self, decoder: &mut Decoder)
+            {
+                let mut is_present: bool;
+                let mut is_present_2: bool;
+                let mut is_present_3: bool;
+                let mut is_present_4: bool;
+                let mut value: DElemMP = Default::default();
+
+                self.length = decoder.read_non_negative_binary_integer(4) as u8;
+                self.length += 1;
+
+                if self.length > 10 {
+                    decoder.abort(5);
+
+                    return;
+                }
+
+                for i in 0..self.length as usize {
+                    match decoder.read_non_negative_binary_integer(1) {
+
+                        0 => {
+                            self.elements[i].a.b =
+                                DElemAB::C(decoder.read_non_negative_binary_integer(1) as u8 + 0);
+                        },
+
+                        1 => {
+                            self.elements[i].a.b =
+                                DElemAB::D(decoder.read_bool());
+                        },
+
+                        _ => {
+                            decoder.abort(4);
+
+                            return;
+                        }
+                    }
+
+                    self.elements[i].a.e.length =
+                        decoder.read_non_negative_binary_integer(1) as u8;
+                    self.elements[i].a.e.length += 3;
+                    self.elements[i].g.h =
+                        match decoder.read_non_negative_binary_integer(2) {
+                            0 => DElemGH::I,
+                            1 => DElemGH::J,
+                            2 => DElemGH::K,
+                            _ => {
+                                decoder.abort(3);
+
+                                return;
+                            }
+                        };
+                    self.elements[i].g.l.length =
+                        decoder.read_non_negative_binary_integer(1) as u8;
+                    self.elements[i].g.l.length += 1;
+                    decoder.read_bytes(
+                        &mut self.elements[i].g.l.buf[0..self.elements[i].g.l.length as usize]);
+                    is_present = decoder.read_bool();
+                    is_present_2 = decoder.read_bool();
+                    is_present_3 = decoder.read_bool();
+
+                    if is_present {
+                        self.elements[i].m.n = Some(decoder.read_bool());
+                    } else {
+                        self.elements[i].m.n = None;
+                    }
+
+                    if is_present_2 {
+                        self.elements[i].m.o =
+                            decoder.read_non_negative_binary_integer(3) as i8;
+                        self.elements[i].m.o += -2;
+                    } else {
+                        self.elements[i].m.o = 3;
+                    }
+
+                    if is_present_3 {
+                        is_present_4 = decoder.read_bool();
+                        decoder.read_bytes(
+                            &mut value.q.buf);
+
+                        if is_present_4 {
+                            value.r = Some(decoder.read_bool());
+                        } else {
+                            value.r = None;
+                        }
+
+                        self.elements[i].m.p = Some(value);
+                    } else {
+                        self.elements[i].m.p = None;
+                    }
+                }
             }
         }
     }
