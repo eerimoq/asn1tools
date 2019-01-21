@@ -62,14 +62,17 @@ fn test_uper_c_source_d_all_present()
     d.elements[0].g.h = d::DElemGH::J;
     d.elements[0].g.l.length = 2;
     d.elements[0].g.l.buf = [0x54, 0x55];
-    d.elements[0].m.n = Some(false);
+    d.elements[0].m.is_n_present = true;
+    d.elements[0].m.n = false;
     d.elements[0].m.o = 2;
-    d.elements[0].m.p = Some(d::DElemMP {
+    d.elements[0].m.is_p_present = true;
+    d.elements[0].m.p = d::DElemMP {
         q: d::DElemMPQ {
             buf: [3, 3, 3, 3, 3]
         },
-        r: Some(true)
-    });
+        is_r_present: true,
+        r: true
+    };
 
     assert_eq!(d.to_bytes(&mut encoded).unwrap(), encoded.len());
     assert_eq!(encoded[..],
@@ -88,14 +91,17 @@ fn test_uper_c_source_d_all_present()
     assert_eq!(d.elements[0].g.h, d::DElemGH::J);
     assert_eq!(d.elements[0].g.l.length, 2);
     assert_eq!(d.elements[0].g.l.buf, [0x54, 0x55]);
-    assert_eq!(d.elements[0].m.n, Some(false));
+    assert_eq!(d.elements[0].m.is_n_present, true);
+    assert_eq!(d.elements[0].m.n, false);
     assert_eq!(d.elements[0].m.o, 2);
-    assert_eq!(d.elements[0].m.p, Some(d::DElemMP {
+    assert_eq!(d.elements[0].m.is_p_present, true);
+    assert_eq!(d.elements[0].m.p, d::DElemMP {
         q: d::DElemMPQ {
             buf: [3, 3, 3, 3, 3]
         },
-        r: Some(true)
-    }));
+        is_r_present: true,
+        r: true
+    });
 }
 
 fn main() {

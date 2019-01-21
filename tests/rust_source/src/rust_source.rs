@@ -444,14 +444,17 @@ pub mod rust_source {
         #[derive(Debug, Default, PartialEq, Copy, Clone)]
         pub struct DElemMP {
             pub q: DElemMPQ,
-            pub r: Option<bool>
+            pub is_r_present: bool,
+            pub r: bool
         }
 
         #[derive(Debug, Default, PartialEq, Copy, Clone)]
         pub struct DElemM {
-            pub n: Option<bool>,
+            pub is_n_present: bool,
+            pub n: bool,
             pub o: i8,
-            pub p: Option<DElemMP>
+            pub is_p_present: bool,
+            pub p: DElemMP
         }
 
         #[derive(Debug, Default, PartialEq, Copy, Clone)]
@@ -495,7 +498,6 @@ pub mod rust_source {
 
                 for i in 0..self.length as usize {
                     match self.elements[i].a.b {
-
                         DElemAB::C(value) => {
                             encoder.append_non_negative_binary_integer(0, 1);
                             encoder.append_non_negative_binary_integer(
@@ -520,12 +522,12 @@ pub mod rust_source {
                         1);
                     encoder.append_bytes(
                         &mut self.elements[i].g.l.buf[0..self.elements[i].g.l.length as usize]);
-                    encoder.append_bool(self.elements[i].m.n.is_some());
+                    encoder.append_bool(self.elements[i].m.is_n_present);
                     encoder.append_bool(self.elements[i].m.o != 3);
-                    encoder.append_bool(self.elements[i].m.p.is_some());
+                    encoder.append_bool(self.elements[i].m.is_p_present);
 
-                    if let Some(value) = self.elements[i].m.n {
-                        encoder.append_bool(value);
+                    if self.elements[i].m.is_n_present {
+                        encoder.append_bool(self.elements[i].m.n);
                     }
 
                     if self.elements[i].m.o != 3 {
@@ -534,12 +536,12 @@ pub mod rust_source {
                             3);
                     }
 
-                    if let Some(value) = self.elements[i].m.p {
-                        encoder.append_bool(value.r.is_some());
-                        encoder.append_bytes(&value.q.buf);
+                    if self.elements[i].m.is_p_present {
+                        encoder.append_bool(self.elements[i].m.p.is_r_present);
+                        encoder.append_bytes(&self.elements[i].m.p.q.buf);
 
-                        if let Some(value_2) = value.r {
-                            encoder.append_bool(value_2);
+                        if self.elements[i].m.p.is_r_present {
+                            encoder.append_bool(self.elements[i].m.p.r);
                         }
                     }
                 }
@@ -548,10 +550,6 @@ pub mod rust_source {
             fn from_bytes_inner(&mut self, decoder: &mut Decoder)
             {
                 let mut is_present: bool;
-                let mut is_present_2: bool;
-                let mut is_present_3: bool;
-                let mut is_present_4: bool;
-                let mut value: DElemMP = Default::default();
 
                 self.length = decoder.read_non_negative_binary_integer(4) as u8;
                 self.length += 1;
@@ -564,7 +562,6 @@ pub mod rust_source {
 
                 for i in 0..self.length as usize {
                     match decoder.read_non_negative_binary_integer(1) {
-
                         0 => {
                             self.elements[i].a.b =
                                 DElemAB::C(decoder.read_non_negative_binary_integer(1) as u8 + 0);
@@ -588,8 +585,11 @@ pub mod rust_source {
                     self.elements[i].g.h =
                         match decoder.read_non_negative_binary_integer(2) {
                             0 => DElemGH::I,
+
                             1 => DElemGH::J,
+
                             2 => DElemGH::K,
+
                             _ => {
                                 decoder.abort(3);
 
@@ -601,17 +601,15 @@ pub mod rust_source {
                     self.elements[i].g.l.length += 1;
                     decoder.read_bytes(
                         &mut self.elements[i].g.l.buf[0..self.elements[i].g.l.length as usize]);
+                    self.elements[i].m.is_n_present = decoder.read_bool();
                     is_present = decoder.read_bool();
-                    is_present_2 = decoder.read_bool();
-                    is_present_3 = decoder.read_bool();
+                    self.elements[i].m.is_p_present = decoder.read_bool();
 
-                    if is_present {
-                        self.elements[i].m.n = Some(decoder.read_bool());
-                    } else {
-                        self.elements[i].m.n = None;
+                    if self.elements[i].m.is_n_present {
+                        self.elements[i].m.n = decoder.read_bool();
                     }
 
-                    if is_present_2 {
+                    if is_present {
                         self.elements[i].m.o =
                             decoder.read_non_negative_binary_integer(3) as i8;
                         self.elements[i].m.o += -2;
@@ -619,20 +617,14 @@ pub mod rust_source {
                         self.elements[i].m.o = 3;
                     }
 
-                    if is_present_3 {
-                        is_present_4 = decoder.read_bool();
+                    if self.elements[i].m.is_p_present {
+                        self.elements[i].m.p.is_r_present = decoder.read_bool();
                         decoder.read_bytes(
-                            &mut value.q.buf);
+                            &mut self.elements[i].m.p.q.buf);
 
-                        if is_present_4 {
-                            value.r = Some(decoder.read_bool());
-                        } else {
-                            value.r = None;
+                        if self.elements[i].m.p.is_r_present {
+                            self.elements[i].m.p.r = decoder.read_bool();
                         }
-
-                        self.elements[i].m.p = Some(value);
-                    } else {
-                        self.elements[i].m.p = None;
                     }
                 }
             }
