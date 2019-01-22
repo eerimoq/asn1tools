@@ -1,7 +1,6 @@
-mod rust_source;
-
 use rust_source::rust_source::{a, d};
 
+#[test]
 fn test_uper_c_source_a() {
     let mut encoded = [0; 42];
     let mut a: a::A = Default::default();
@@ -49,6 +48,7 @@ fn test_uper_c_source_a() {
                });
 }
 
+#[test]
 fn test_uper_c_source_a_encode_error_no_mem() {
     let mut encoded = [0; 41];
     let mut a: a::A = Default::default();
@@ -67,6 +67,7 @@ fn test_uper_c_source_a_encode_error_no_mem() {
     assert_eq!(a.to_bytes(&mut encoded), Err("Out of memory."));
 }
 
+#[test]
 fn test_uper_c_source_a_decode_error_out_of_data() {
     let encoded = [
         0x7f, 0x7f, 0xfe, 0x7f, 0xff, 0xff, 0xfd, 0x7f, 0xff, 0xff,
@@ -80,6 +81,7 @@ fn test_uper_c_source_a_decode_error_out_of_data() {
     assert_eq!(a.from_bytes(&encoded), Err("Out of data."));
 }
 
+#[test]
 fn test_uper_c_source_d_all_present() {
     let mut encoded = [0; 10];
     let mut d: d::D = Default::default();
@@ -125,6 +127,7 @@ fn test_uper_c_source_d_all_present() {
     assert_eq!(d.elements[0].m.p.r, true);
 }
 
+#[test]
 fn test_uper_c_source_d_some_missing() {
     let mut encoded = [0; 8];
     let mut d: d::D = Default::default();
@@ -165,13 +168,4 @@ fn test_uper_c_source_d_some_missing() {
     assert_eq!(d.elements[0].m.is_p_present, true);
     assert_eq!(d.elements[0].m.p.q.buf, [3, 3, 3, 3, 3]);
     assert_eq!(d.elements[0].m.p.is_r_present, false);
-}
-
-fn main() {
-    test_uper_c_source_a();
-    test_uper_c_source_a_encode_error_no_mem();
-    test_uper_c_source_a_decode_error_out_of_data();
-
-    test_uper_c_source_d_all_present();
-    test_uper_c_source_d_some_missing();
 }
