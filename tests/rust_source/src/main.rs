@@ -2,8 +2,7 @@ mod rust_source;
 
 use rust_source::rust_source::{a, d};
 
-fn test_uper_c_source_a()
-{
+fn test_uper_c_source_a() {
     let mut encoded = [0; 42];
     let mut a: a::A = Default::default();
 
@@ -50,8 +49,7 @@ fn test_uper_c_source_a()
                });
 }
 
-fn test_uper_c_source_d_all_present()
-{
+fn test_uper_c_source_d_all_present() {
     let mut encoded = [0; 10];
     let mut d: d::D = Default::default();
 
@@ -104,8 +102,7 @@ fn test_uper_c_source_d_all_present()
     });
 }
 
-fn main()
-{
+fn main() {
     test_uper_c_source_a();
     test_uper_c_source_d_all_present();
 }
