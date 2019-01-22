@@ -45,31 +45,31 @@ impl {module_name}{type_name} {{
 ENCODER_AND_DECODER_STRUCTS = '''\
 struct Encoder<'a> {
     buf: &'a mut [u8],
-    size: isize,
-    pos: isize
+    size: usize,
+    pos: usize,
+    error: Option<&'static str>
 }
 
 struct Decoder<'a> {
     buf: &'a[u8],
-    size: isize,
-    pos: isize
-}
+    size: usize,
+    pos: usize,
+    error: Option<&'static str>
+}\
 '''
 
 ENCODER_ABORT = '''
-    fn abort(ssize_t error) {
-        if self.size >= 0 {
-            self.size = -error;
-            self.pos = -error;
+    fn abort(&mut self, error: &'static str) {
+        if self.error.is_none() {
+            self.error = Some(error);
         }
     }\
 '''
 
 DECODER_ABORT = '''
-    fn abort(ssize_t error) {
-        if self.size >= 0 {
-            self.size = -error;
-            self.pos = -error;
+    fn abort(&mut self, error: &'static str) {
+        if self.error.is_none() {
+            self.error = Some(error);
         }
     }\
 '''

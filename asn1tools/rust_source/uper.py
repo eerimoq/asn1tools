@@ -15,81 +15,65 @@ from ..codecs import uper
 ENCODER_INIT = '''\
     fn new(dst: &'a mut [u8]) -> Encoder {
         Encoder {
-            size: 8 * dst.len() as isize,
+            size: 8 * dst.len(),
             buf: dst,
-            pos: 0
+            pos: 0,
+            error: None
         }
     }\
 '''
 
 ENCODER_GET_RESULT = '''
     fn get_result(&self) -> Result<usize, &'static str> {
-        if self.size >= 0 {
-            return Ok((self.pos as usize + 7) / 8);
+        if self.error.is_none() {
+            return Ok((self.pos + 7) / 8);
         } else {
-            return Err("error");
+            return Err(self.error.unwrap());
         }
     }
 \
 '''
 
 ENCODER_ALLOC = '''
-    fn alloc(&mut self, size: usize) -> isize {
-        let pos: isize;
-
-        if self.pos + size as isize <= self.size {
-            pos = self.pos;
-            self.pos += size as isize;
+    fn alloc(&mut self, size: usize) -> Result<usize, ()> {
+        if self.pos + size <= self.size {
+            let pos = self.pos;
+            self.pos += size;
+            Ok(pos)
         } else {
-            pos = -1;
-            self.abort(3);
+            self.abort("Out of memory.");
+            Err(())
         }
-
-        return pos;
     }\
 '''
 
 ENCODER_APPEND_BIT = '''
     fn append_bit(&mut self, value: u8) {
-        let pos: isize;
+        if let Ok(pos) = self.alloc(1) {
+            if pos % 8 == 0 {
+                self.buf[pos / 8] = 0;
+            }
 
-        pos = self.alloc(1);
-
-        if pos < 0 {
-            return;
+            self.buf[pos / 8] |= value << (7 - (pos % 8));
         }
-
-        if pos % 8 == 0 {
-            self.buf[pos as usize / 8] = 0;
-        }
-
-        self.buf[pos as usize / 8] |= value << (7 - (pos % 8));
     }\
 '''
 
 ENCODER_APPEND_BYTES = '''
-    fn append_bytes(&mut self, buf: &[u8], size: usize) {
-        let pos: isize;
-        let byte_pos: usize;
-        let pos_in_byte: usize;
+    fn append_bytes(&mut self, buf: &[u8]) {
+        if let Ok(pos) = self.alloc(8 * buf.len()) {
+            let byte_pos = pos / 8;
+            let pos_in_byte = pos % 8;
 
-        pos = self.alloc(8 * size);
-
-        if pos < 0 {
-            return;
-        }
-
-        byte_pos = pos as usize / 8;
-        pos_in_byte = pos as usize % 8;
-
-        if pos_in_byte == 0 {
-            self.buf.get_mut(byte_pos..byte_pos + size)
-                .unwrap()
-                .copy_from_slice(buf.get(0..size).unwrap());
-        } else {
-            for i in 0..size {
-                self.buf[byte_pos + i] |= buf[i] >> pos_in_byte;
-                self.buf[byte_pos + i + 1] = buf[i] << (8 - pos_in_byte);
+            if pos_in_byte == 0 {
+                self.buf.get_mut(byte_pos..byte_pos + buf.len())
+                    .unwrap()
+                    .copy_from_slice(buf.get(0..buf.len()).unwrap());
+            } else {
+                for i in 0..buf.len() {
+                    self.buf[byte_pos + i] |= buf[i] >> pos_in_byte;
+                    self.buf[byte_pos + i + 1] = buf[i] << (8 - pos_in_byte);
+                }
             }
         }
     }\
@@ -97,25 +81,25 @@ ENCODER_APPEND_BYTES = '''
 
 ENCODER_APPEND_U8 = '''
     fn append_u8(&mut self, value: u8) {
-        self.append_bytes(&[value], 1);
+        self.append_bytes(&[value]);
     }\
 '''
 
 ENCODER_APPEND_U16 = '''
     fn append_u16(&mut self, value: u16) {
-        self.append_bytes(&value.to_be_bytes(), 2);
+        self.append_bytes(&value.to_be_bytes());
     }\
 '''
 
 ENCODER_APPEND_U32 = '''
     fn append_u32(&mut self, value: u32) {
-        self.append_bytes(&value.to_be_bytes(), 4);
+        self.append_bytes(&value.to_be_bytes());
     }\
 '''
 
 ENCODER_APPEND_U64 = '''
     fn append_u64(&mut self, value: u64) {
-        self.append_bytes(&value.to_be_bytes(), 8);
+        self.append_bytes(&value.to_be_bytes());
     }\
 '''
 
@@ -150,12 +134,9 @@ ENCODER_APPEND_BOOL = '''
 '''
 
 ENCODER_APPEND_NON_NEGATIVE_BINARY_INTEGER = '''
-    fn append_non_negative_binary_integer(uint64_t value,
-                                          size_t size) {
-        size_t i;
-
-        for (i = 0; i < size; i++) {
-            self.append_bit((value >> (size - i - 1)) & 1);
+    fn append_non_negative_binary_integer(&mut self, value: u64, size: usize) {
+        for i in 0..size {
+            self.append_bit((value >> (size - i - 1)) as u8 & 1);
         }
     }\
 '''
@@ -164,78 +145,60 @@ DECODER_INIT = '''
     fn new(src: &'a[u8]) -> Decoder {
         Decoder {
             buf: src,
-            size: 8 * src.len() as isize,
-            pos: 0
+            size: 8 * src.len(),
+            pos: 0,
+            error: None
         }
     }\
 '''
 
 DECODER_GET_RESULT = '''
     fn get_result(&self) -> Result<usize, &'static str> {
-        if self.size >= 0 {
-            return Ok((self.pos as usize + 7) / 8);
+        if self.error.is_none() {
+            Ok((self.pos + 7) / 8)
         } else {
-            return Err("error");
+            Err(self.error.unwrap())
         }
     }\
 '''
 
 DECODER_FREE = '''
-    fn free(&mut self, size: usize) -> isize {
-        let pos: isize;
-
-        if self.pos + size as isize <= self.size {
-            pos = self.pos;
-            self.pos += size as isize;
+    fn free(&mut self, size: usize) -> Result<usize, ()> {
+        if self.pos + size <= self.size {
+            let pos = self.pos;
+            self.pos += size;
+            Ok(pos)
         } else {
-            pos = -1;
-            self.abort(2);
+            self.abort("Out of data.");
+            Err(())
         }
-
-        return pos;
     }\
 '''
 
 DECODER_READ_BIT = '''
     fn read_bit(&mut self) -> u8 {
-        let pos: isize;
-        let value: u8;
-
-        pos = self.free(1);
-
-        if pos >= 0 {
-            value = (self.buf[pos as usize / 8] >> (7 - (pos % 8))) & 1;
+        if let Ok(pos) = self.free(1) {
+            (self.buf[pos / 8] >> (7 - (pos % 8))) & 1
         } else {
-            value = 0;
+            0
         }
-
-        return value;
     }\
 '''
 
 DECODER_READ_BYTES = '''
-    fn read_bytes(&mut self, buf: &mut [u8], size: usize) {
-        let pos: isize;
-        let byte_pos: usize;
-        let pos_in_byte: usize;
+    fn read_bytes(&mut self, buf: &mut [u8]) {
+        if let Ok(pos) = self.free(8 * buf.len()) {
+            let byte_pos = pos / 8;
+            let pos_in_byte = pos % 8;
 
-        pos = self.free(8 * size);
-
-        if pos < 0 {
-            return;
-        }
-
-        byte_pos = pos as usize / 8;
-        pos_in_byte = pos as usize % 8;
-
-        if pos_in_byte == 0 {
-            buf.get_mut(..size)
-                .unwrap()
-                .copy_from_slice(self.buf.get(byte_pos..byte_pos + size).unwrap());
-        } else {
-            for i in 0..size {
-                buf[i] = self.buf[byte_pos + i] << pos_in_byte;
-                buf[i] |= self.buf[byte_pos + i + 1] >> (8 - pos_in_byte);
+            if pos_in_byte == 0 {
+                buf.copy_from_slice(
+                    self.buf.get(byte_pos..byte_pos + buf.len()).unwrap());
+            } else {
+                for i in 0..buf.len() {
+                    buf[i] = self.buf[byte_pos + i] << pos_in_byte;
+                    buf[i] |= self.buf[byte_pos + i + 1] >> (8 - pos_in_byte);
+                }
             }
         }
     }\
@@ -312,17 +275,15 @@ DECODER_READ_BOOL = '''
 '''
 
 DECODER_READ_NON_NEGATIVE_BINARY_INTEGER = '''
-    fn read_non_negative_binary_integer(size_t size) -> u64 {
-        let value: u64;
+    fn read_non_negative_binary_integer(&mut self, size: usize) -> u64 {
+        let mut value: u64 = 0;
 
-        value = 0;
-
-        for i in 0..size {
+        for _ in 0..size {
             value <<= 1;
-            value |= (uint64_t)self.read_bit();
+            value |= self.read_bit() as u64;
         }
 
-        return value;
+        value
     }\
 '''
 
