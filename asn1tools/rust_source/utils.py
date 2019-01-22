@@ -14,8 +14,9 @@ struct {module_name}{type_name} {{
 DEFINITION_FMT = '''\
 impl {module_name}{type_name} {{
 
-    pub fn to_bytes(&mut self, dst: &mut [u8]) -> Result<usize, &'static str>
-    {{
+    pub fn to_bytes(&mut self,
+                    dst: &mut [u8])
+                    -> Result<usize, &'static str> {{
         let mut encoder = Encoder::new(&mut dst);
 
         self.to_bytes_inner(&mut encoder);
@@ -23,8 +24,7 @@ impl {module_name}{type_name} {{
         return encoder.get_result();
     }}
 
-    pub fn from_bytes(&mut self, src: &[u8]) -> Result<usize, &'static str>
-    {{
+    pub fn from_bytes(&mut self, src: &[u8]) -> Result<usize, &'static str> {{
         let mut decoder = Decoder::new(&src);
 
         self.from_bytes_inner(&mut decoder);
@@ -32,13 +32,11 @@ impl {module_name}{type_name} {{
         return decoder.get_result();
     }}
 
-    fn to_bytes_inner(&mut self, encoder: &mut Encoder)
-    {{
+    fn to_bytes_inner(&mut self, encoder: &mut Encoder) {{
 {encode_body}\
     }}
 
-    fn from_bytes_inner(&mut self, decoder: &mut Decoder)
-    {{
+    fn from_bytes_inner(&mut self, decoder: &mut Decoder) {{
 {decode_body}\
     }}
 }}
@@ -59,8 +57,7 @@ struct Decoder<'a> {
 '''
 
 ENCODER_ABORT = '''
-    fn abort(ssize_t error)
-    {
+    fn abort(ssize_t error) {
         if self.size >= 0 {
             self.size = -error;
             self.pos = -error;
@@ -69,8 +66,7 @@ ENCODER_ABORT = '''
 '''
 
 DECODER_ABORT = '''
-    fn abort(ssize_t error)
-    {
+    fn abort(ssize_t error) {
         if self.size >= 0 {
             self.size = -error;
             self.pos = -error;

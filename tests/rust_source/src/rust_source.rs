@@ -25,8 +25,7 @@ impl<'a> Encoder<'a> {
         }
     }
 
-    fn get_result(&self) -> Result<usize, &'static str>
-    {
+    fn get_result(&self) -> Result<usize, &'static str> {
         if self.error.is_none() {
             return Ok((self.pos + 7) / 8);
         } else {
@@ -34,15 +33,13 @@ impl<'a> Encoder<'a> {
         }
     }
 
-    fn abort(&mut self, error: &'static str)
-    {
+    fn abort(&mut self, error: &'static str) {
         if self.error.is_none() {
             self.error = Some(error);
         }
     }
 
-    fn alloc(&mut self, size: usize) -> Result<usize, ()>
-    {
+    fn alloc(&mut self, size: usize) -> Result<usize, ()> {
         if self.pos + size <= self.size {
             let pos = self.pos;
             self.pos += size;
@@ -53,8 +50,7 @@ impl<'a> Encoder<'a> {
         }
     }
 
-    fn append_bit(&mut self, value: u8)
-    {
+    fn append_bit(&mut self, value: u8) {
         if let Ok(pos) = self.alloc(1) {
             if pos % 8 == 0 {
                 self.buf[pos / 8] = 0;
@@ -64,8 +60,7 @@ impl<'a> Encoder<'a> {
         }
     }
 
-    fn append_bytes(&mut self, buf: &[u8])
-    {
+    fn append_bytes(&mut self, buf: &[u8]) {
         if let Ok(pos) = self.alloc(8 * buf.len()) {
             let byte_pos = pos / 8;
             let pos_in_byte = pos % 8;
@@ -83,53 +78,43 @@ impl<'a> Encoder<'a> {
         }
     }
 
-    fn append_u8(&mut self, value: u8)
-    {
+    fn append_u8(&mut self, value: u8) {
         self.append_bytes(&[value]);
     }
 
-    fn append_u16(&mut self, value: u16)
-    {
+    fn append_u16(&mut self, value: u16) {
         self.append_bytes(&value.to_be_bytes());
     }
 
-    fn append_u32(&mut self, value: u32)
-    {
+    fn append_u32(&mut self, value: u32) {
         self.append_bytes(&value.to_be_bytes());
     }
 
-    fn append_u64(&mut self, value: u64)
-    {
+    fn append_u64(&mut self, value: u64) {
         self.append_bytes(&value.to_be_bytes());
     }
 
-    fn append_i8(&mut self, value: i8)
-    {
+    fn append_i8(&mut self, value: i8) {
         self.append_u8((value as u8).wrapping_add(128));
     }
 
-    fn append_i16(&mut self, value: i16)
-    {
+    fn append_i16(&mut self, value: i16) {
         self.append_u16((value as u16).wrapping_add(32768));
     }
 
-    fn append_i32(&mut self, value: i32)
-    {
+    fn append_i32(&mut self, value: i32) {
         self.append_u32((value as u32).wrapping_add(2147483648));
     }
 
-    fn append_i64(&mut self, value: i64)
-    {
+    fn append_i64(&mut self, value: i64) {
         self.append_u64((value as u64).wrapping_add(9223372036854775808));
     }
 
-    fn append_bool(&mut self, value: bool)
-    {
+    fn append_bool(&mut self, value: bool) {
         self.append_bit(value as u8);
     }
 
-    fn append_non_negative_binary_integer(&mut self, value: u64, size: usize)
-    {
+    fn append_non_negative_binary_integer(&mut self, value: u64, size: usize) {
         for i in 0..size {
             self.append_bit((value >> (size - i - 1)) as u8 & 1);
         }
@@ -147,8 +132,7 @@ impl<'a> Decoder<'a> {
         }
     }
 
-    fn get_result(&self) -> Result<usize, &'static str>
-    {
+    fn get_result(&self) -> Result<usize, &'static str> {
         if self.error.is_none() {
             Ok((self.pos + 7) / 8)
         } else {
@@ -156,15 +140,13 @@ impl<'a> Decoder<'a> {
         }
     }
 
-    fn abort(&mut self, error: &'static str)
-    {
+    fn abort(&mut self, error: &'static str) {
         if self.error.is_none() {
             self.error = Some(error);
         }
     }
 
-    fn free(&mut self, size: usize) -> Result<usize, ()>
-    {
+    fn free(&mut self, size: usize) -> Result<usize, ()> {
         if self.pos + size <= self.size {
             let pos = self.pos;
             self.pos += size;
@@ -175,8 +157,7 @@ impl<'a> Decoder<'a> {
         }
     }
 
-    fn read_bit(&mut self) -> u8
-    {
+    fn read_bit(&mut self) -> u8 {
         if let Ok(pos) = self.free(1) {
             (self.buf[pos / 8] >> (7 - (pos % 8))) & 1
         } else {
@@ -184,8 +165,7 @@ impl<'a> Decoder<'a> {
         }
     }
 
-    fn read_bytes(&mut self, buf: &mut [u8])
-    {
+    fn read_bytes(&mut self, buf: &mut [u8]) {
         if let Ok(pos) = self.free(8 * buf.len()) {
             let byte_pos = pos / 8;
             let pos_in_byte = pos % 8;
@@ -202,8 +182,7 @@ impl<'a> Decoder<'a> {
         }
     }
 
-    fn read_u8(&mut self) -> u8
-    {
+    fn read_u8(&mut self) -> u8 {
         let mut buf = [0; 1];
 
         self.read_bytes(&mut buf);
@@ -211,8 +190,7 @@ impl<'a> Decoder<'a> {
         u8::from_be_bytes(buf)
     }
 
-    fn read_u16(&mut self) -> u16
-    {
+    fn read_u16(&mut self) -> u16 {
         let mut buf = [0; 2];
 
         self.read_bytes(&mut buf);
@@ -220,8 +198,7 @@ impl<'a> Decoder<'a> {
         u16::from_be_bytes(buf)
     }
 
-    fn read_u32(&mut self) -> u32
-    {
+    fn read_u32(&mut self) -> u32 {
         let mut buf = [0; 4];
 
         self.read_bytes(&mut buf);
@@ -229,8 +206,7 @@ impl<'a> Decoder<'a> {
         u32::from_be_bytes(buf)
     }
 
-    fn read_u64(&mut self) -> u64
-    {
+    fn read_u64(&mut self) -> u64 {
         let mut buf = [0; 8];
 
         self.read_bytes(&mut buf);
@@ -238,33 +214,27 @@ impl<'a> Decoder<'a> {
         u64::from_be_bytes(buf)
     }
 
-    fn read_i8(&mut self) -> i8
-    {
+    fn read_i8(&mut self) -> i8 {
         self.read_u8().wrapping_sub(128) as i8
     }
 
-    fn read_i16(&mut self) -> i16
-    {
+    fn read_i16(&mut self) -> i16 {
         self.read_u16().wrapping_sub(32768) as i16
     }
 
-    fn read_i32(&mut self) -> i32
-    {
+    fn read_i32(&mut self) -> i32 {
         self.read_u32().wrapping_sub(2147483648) as i32
     }
 
-    fn read_i64(&mut self) -> i64
-    {
+    fn read_i64(&mut self) -> i64 {
         self.read_u64().wrapping_sub(9223372036854775808) as i64
     }
 
-    fn read_bool(&mut self) -> bool
-    {
+    fn read_bool(&mut self) -> bool {
         self.read_bit() != 0
     }
 
-    fn read_non_negative_binary_integer(&mut self, size: usize) -> u64
-    {
+    fn read_non_negative_binary_integer(&mut self, size: usize) -> u64 {
         let mut value: u64 = 0;
 
         for _ in 0..size {
@@ -305,8 +275,7 @@ pub mod rust_source {
 
         impl A {
 
-            pub fn to_bytes(&mut self, mut dst: &mut [u8]) -> Result<usize, &'static str>
-            {
+            pub fn to_bytes(&mut self, mut dst: &mut [u8]) -> Result<usize, &'static str> {
                 let mut encoder = Encoder::new(&mut dst);
 
                 self.to_bytes_inner(&mut encoder);
@@ -314,8 +283,7 @@ pub mod rust_source {
                 encoder.get_result()
             }
 
-            pub fn from_bytes(&mut self, src: &[u8]) -> Result<usize, &'static str>
-            {
+            pub fn from_bytes(&mut self, src: &[u8]) -> Result<usize, &'static str> {
                 let mut decoder = Decoder::new(&src);
 
                 self.from_bytes_inner(&mut decoder);
@@ -323,8 +291,7 @@ pub mod rust_source {
                 decoder.get_result()
             }
 
-            fn to_bytes_inner(&mut self, encoder: &mut Encoder)
-            {
+            fn to_bytes_inner(&mut self, encoder: &mut Encoder) {
                 encoder.append_i8(self.a);
                 encoder.append_i16(self.b);
                 encoder.append_i32(self.c);
@@ -438,8 +405,8 @@ pub mod rust_source {
 
         impl D {
 
-            pub fn to_bytes(&mut self, mut dst: &mut [u8]) -> Result<usize, &'static str>
-            {
+            pub fn to_bytes(&mut self, mut dst: &mut [u8])
+                            -> Result<usize, &'static str> {
                 let mut encoder = Encoder::new(&mut dst);
 
                 self.to_bytes_inner(&mut encoder);
@@ -447,8 +414,8 @@ pub mod rust_source {
                 encoder.get_result()
             }
 
-            pub fn from_bytes(&mut self, src: &[u8]) -> Result<usize, &'static str>
-            {
+            pub fn from_bytes(&mut self, src: &[u8])
+                              -> Result<usize, &'static str> {
                 let mut decoder = Decoder::new(&src);
 
                 self.from_bytes_inner(&mut decoder);
@@ -456,8 +423,7 @@ pub mod rust_source {
                 decoder.get_result()
             }
 
-            fn to_bytes_inner(&mut self, encoder: &mut Encoder)
-            {
+            fn to_bytes_inner(&mut self, encoder: &mut Encoder) {
                 encoder.append_non_negative_binary_integer(
                     self.length as u64 - 1,
                     4);
@@ -513,8 +479,7 @@ pub mod rust_source {
                 }
             }
 
-            fn from_bytes_inner(&mut self, decoder: &mut Decoder)
-            {
+            fn from_bytes_inner(&mut self, decoder: &mut Decoder) {
                 self.length = decoder.read_non_negative_binary_integer(4) as u8;
                 self.length += 1;
 

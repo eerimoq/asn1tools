@@ -104,7 +104,8 @@ fn test_uper_c_source_d_all_present()
     });
 }
 
-fn main() {
+fn main()
+{
     test_uper_c_source_a();
     test_uper_c_source_d_all_present();
 }

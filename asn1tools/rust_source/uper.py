@@ -23,8 +23,7 @@ ENCODER_INIT = '''\
 '''
 
 ENCODER_GET_RESULT = '''
-    fn get_result(&self) -> Result<usize, &'static str>
-    {
+    fn get_result(&self) -> Result<usize, &'static str> {
         if self.size >= 0 {
             return Ok((self.pos as usize + 7) / 8);
         } else {
@@ -35,8 +34,7 @@ ENCODER_GET_RESULT = '''
 '''
 
 ENCODER_ALLOC = '''
-    fn alloc(&mut self, size: usize) -> isize
-    {
+    fn alloc(&mut self, size: usize) -> isize {
         let pos: isize;
 
         if self.pos + size as isize <= self.size {
@@ -52,8 +50,7 @@ ENCODER_ALLOC = '''
 '''
 
 ENCODER_APPEND_BIT = '''
-    fn append_bit(&mut self, value: u8)
-    {
+    fn append_bit(&mut self, value: u8) {
         let pos: isize;
 
         pos = self.alloc(1);
@@ -71,8 +68,7 @@ ENCODER_APPEND_BIT = '''
 '''
 
 ENCODER_APPEND_BYTES = '''
-    fn append_bytes(&mut self, buf: &[u8], size: usize)
-    {
+    fn append_bytes(&mut self, buf: &[u8], size: usize) {
         let pos: isize;
         let byte_pos: usize;
         let pos_in_byte: usize;
@@ -100,72 +96,62 @@ ENCODER_APPEND_BYTES = '''
 '''
 
 ENCODER_APPEND_U8 = '''
-    fn append_u8(&mut self, value: u8)
-    {
+    fn append_u8(&mut self, value: u8) {
         self.append_bytes(&[value], 1);
     }\
 '''
 
 ENCODER_APPEND_U16 = '''
-    fn append_u16(&mut self, value: u16)
-    {
+    fn append_u16(&mut self, value: u16) {
         self.append_bytes(&value.to_be_bytes(), 2);
     }\
 '''
 
 ENCODER_APPEND_U32 = '''
-    fn append_u32(&mut self, value: u32)
-    {
+    fn append_u32(&mut self, value: u32) {
         self.append_bytes(&value.to_be_bytes(), 4);
     }\
 '''
 
 ENCODER_APPEND_U64 = '''
-    fn append_u64(&mut self, value: u64)
-    {
+    fn append_u64(&mut self, value: u64) {
         self.append_bytes(&value.to_be_bytes(), 8);
     }\
 '''
 
 ENCODER_APPEND_I8 = '''
-    fn append_i8(&mut self, value: i8)
-    {
+    fn append_i8(&mut self, value: i8) {
         self.append_u8((value as u8).wrapping_add(128));
     }\
 '''
 
 ENCODER_APPEND_I16 = '''
-    fn append_i16(&mut self, value: i16)
-    {
+    fn append_i16(&mut self, value: i16) {
         self.append_u16((value as u16).wrapping_add(32768));
     }\
 '''
 
 ENCODER_APPEND_I32 = '''
-    fn append_i32(&mut self, value: i32)
-    {
+    fn append_i32(&mut self, value: i32) {
         self.append_u32((value as u32).wrapping_add(2147483648));
     }\
 '''
 
 ENCODER_APPEND_I64 = '''
-    fn append_i64(&mut self, value: i64)
-    {
+    fn append_i64(&mut self, value: i64) {
         self.append_u64((value as u64).wrapping_add(9223372036854775808));
     }\
 '''
 
 ENCODER_APPEND_BOOL = '''
-    fn append_bool(&mut self, value: bool)
-    {
+    fn append_bool(&mut self, value: bool) {
         self.append_bit(value as u8);
     }\
 '''
 
 ENCODER_APPEND_NON_NEGATIVE_BINARY_INTEGER = '''
     fn append_non_negative_binary_integer(uint64_t value,
-                                          size_t size)
-    {
+                                          size_t size) {
         size_t i;
 
         for (i = 0; i < size; i++) {
@@ -185,8 +171,7 @@ DECODER_INIT = '''
 '''
 
 DECODER_GET_RESULT = '''
-    fn get_result(&self) -> Result<usize, &'static str>
-    {
+    fn get_result(&self) -> Result<usize, &'static str> {
         if self.size >= 0 {
             return Ok((self.pos as usize + 7) / 8);
         } else {
@@ -196,8 +181,7 @@ DECODER_GET_RESULT = '''
 '''
 
 DECODER_FREE = '''
-    fn free(&mut self, size: usize) -> isize
-    {
+    fn free(&mut self, size: usize) -> isize {
         let pos: isize;
 
         if self.pos + size as isize <= self.size {
@@ -213,8 +197,7 @@ DECODER_FREE = '''
 '''
 
 DECODER_READ_BIT = '''
-    fn read_bit(&mut self) -> u8
-    {
+    fn read_bit(&mut self) -> u8 {
         let pos: isize;
         let value: u8;
 
@@ -231,8 +214,7 @@ DECODER_READ_BIT = '''
 '''
 
 DECODER_READ_BYTES = '''
-    fn read_bytes(&mut self, buf: &mut [u8], size: usize)
-    {
+    fn read_bytes(&mut self, buf: &mut [u8], size: usize) {
         let pos: isize;
         let byte_pos: usize;
         let pos_in_byte: usize;
@@ -260,8 +242,7 @@ DECODER_READ_BYTES = '''
 '''
 
 DECODER_READ_U8 = '''
-    fn read_u8(&mut self) -> u8
-    {
+    fn read_u8(&mut self) -> u8 {
         let mut buf = [0; 1];
 
         self.read_bytes(&mut buf, 1);
@@ -271,8 +252,7 @@ DECODER_READ_U8 = '''
 '''
 
 DECODER_READ_U16 = '''
-    fn read_u16(&mut self) -> u16
-    {
+    fn read_u16(&mut self) -> u16 {
         let mut buf = [0; 2];
 
         self.read_bytes(&mut buf, 2);
@@ -282,8 +262,7 @@ DECODER_READ_U16 = '''
 '''
 
 DECODER_READ_U32 = '''
-    fn read_u32(&mut self) -> u32
-    {
+    fn read_u32(&mut self) -> u32 {
         let mut buf = [0; 4];
 
         self.read_bytes(&mut buf, 4);
@@ -293,8 +272,7 @@ DECODER_READ_U32 = '''
 '''
 
 DECODER_READ_U64 = '''
-    fn read_u64(&mut self) -> u64
-    {
+    fn read_u64(&mut self) -> u64 {
         let mut buf = [0; 8];
 
         self.read_bytes(&mut buf, 8);
@@ -304,43 +282,37 @@ DECODER_READ_U64 = '''
 '''
 
 DECODER_READ_I8 = '''
-    fn read_i8(&mut self) -> i8
-    {
+    fn read_i8(&mut self) -> i8 {
         return self.read_u8().wrapping_sub(128) as i8;
     }\
 '''
 
 DECODER_READ_I16 = '''
-    fn read_i16(&mut self) -> i16
-    {
+    fn read_i16(&mut self) -> i16 {
         return self.read_u16().wrapping_sub(32768) as i16;
     }\
 '''
 
 DECODER_READ_I32 = '''
-    fn read_i32(&mut self) -> i32
-    {
+    fn read_i32(&mut self) -> i32 {
         return self.read_u32().wrapping_sub(2147483648) as i32;
     }\
 '''
 
 DECODER_READ_I64 = '''
-    fn read_i64(&mut self) -> i64
-    {
+    fn read_i64(&mut self) -> i64 {
         return self.read_u64().wrapping_sub(9223372036854775808) as i64;
     }\
 '''
 
 DECODER_READ_BOOL = '''
-    fn read_bool(&mut self) -> bool
-    {
+    fn read_bool(&mut self) -> bool {
         return self.read_bit() != 0;
     }\
 '''
 
 DECODER_READ_NON_NEGATIVE_BINARY_INTEGER = '''
-    fn read_non_negative_binary_integer(size_t size) -> u64
-    {
+    fn read_non_negative_binary_integer(size_t size) -> u64 {
         let value: u64;
 
         value = 0;
