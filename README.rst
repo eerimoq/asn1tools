@@ -25,6 +25,11 @@ Miscellaneous features:
 
 - `C` source code generator (with lots of limitations).
 
+Planned features:
+
+- `Rust` source code generator (with lots of limitations).
+- `Python` source code generator.
+
 Project homepage: https://github.com/eerimoq/asn1tools
 
 Documentation: http://asn1tools.readthedocs.org/en/latest
