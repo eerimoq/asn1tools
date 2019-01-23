@@ -1,4 +1,4 @@
-use rust_source::rust_source::{a, d};
+use rust_source::rust_source::{a, b, d};
 
 #[test]
 fn test_uper_c_source_a() {
@@ -79,6 +79,79 @@ fn test_uper_c_source_a_decode_error_out_of_data() {
     let mut a: a::A = Default::default();
 
     assert_eq!(a.from_bytes(&encoded), Err("Out of data."));
+}
+
+#[test]
+fn test_uper_c_source_b_choice_a() {
+    let mut encoded = [0; 2];
+    let mut b;
+
+    // Encode.
+    b = b::B::A(-10);
+
+    assert_eq!(b.to_bytes(&mut encoded).unwrap(), encoded.len());
+    assert_eq!(encoded[..],
+               [
+                   0x1d, 0x80
+               ][..]);
+
+    // Decode.
+    b = Default::default();
+
+    assert_eq!(b.from_bytes(&encoded).unwrap(), encoded.len());
+    assert_eq!(b, b::B::A(-10));
+}
+
+#[test]
+fn test_uper_c_source_b_choice_b() {
+    let mut encoded = [0; 42];
+    let mut b;
+    let mut a: a::A = Default::default();
+
+    // Encode.
+    a.a = -1;
+    a.b = -2;
+    a.c = -3;
+    a.d = -4;
+    a.e = 1;
+    a.f = 2;
+    a.g = 3;
+    a.h = 4;
+    a.i = true;
+    a.j.buf = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5];
+    b = b::B::B(a);
+
+    assert_eq!(b.to_bytes(&mut encoded).unwrap(), encoded.len());
+    assert_eq!(encoded[..],
+               [
+                   0x5f, 0xdf, 0xff, 0x9f, 0xff, 0xff, 0xff, 0x5f, 0xff, 0xff,
+                   0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x40, 0x00, 0x80, 0x00,
+                   0x00, 0x00, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+                   0x20, 0xa0, 0xa0, 0xa0, 0xa0, 0xa0, 0xa0, 0xa0, 0xa0, 0xa0,
+                   0xa0, 0xa0
+               ][..]);
+
+    // Decode.
+    b = Default::default();
+
+    assert_eq!(b.from_bytes(&encoded).unwrap(), encoded.len());
+
+    match b {
+
+        b::B::B(value) => {
+            assert_eq!(value, a);
+        },
+
+        _ => panic!("")
+    }
+}
+
+#[test]
+fn test_uper_c_source_b_decode_error_bad_choice() {
+    let encoded = [0xdd, 0x80];
+    let mut b: b::B = Default::default();
+
+    assert_eq!(b.from_bytes(&encoded), Err("Bad choice."));
 }
 
 #[test]

@@ -81,7 +81,7 @@ ENCODER_APPEND_BYTES = '''
 
 ENCODER_APPEND_U8 = '''
     fn append_u8(&mut self, value: u8) {
-        self.append_bytes(&[value]);
+        self.append_bytes(&value.to_be_bytes());
     }\
 '''
 
