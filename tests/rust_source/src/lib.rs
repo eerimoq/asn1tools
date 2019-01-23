@@ -304,8 +304,7 @@ pub mod rust_source {
                 encoder.append_bytes(&self.j.buf);
             }
 
-            pub fn from_bytes_inner(&mut self, decoder: &mut Decoder)
-            {
+            pub fn from_bytes_inner(&mut self, decoder: &mut Decoder) {
                 self.a = decoder.read_i8();
                 self.b = decoder.read_i16();
                 self.c = decoder.read_i32();
