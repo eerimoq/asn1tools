@@ -5,6 +5,8 @@
 #include <math.h>
 
 #include "uper.h"
+#include "boolean_uper.h"
+#include "octet_string_uper.h"
 
 #define membersof(a) (sizeof(a) / (sizeof((a)[0])))
 

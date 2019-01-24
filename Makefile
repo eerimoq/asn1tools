@@ -10,7 +10,9 @@ OER_C_SOURCES = \
 	tests/files/c_source/c_source-minus.c
 UPER_C_SOURCES = \
 	tests/main_uper.c \
-	tests/files/c_source/uper.c
+	tests/files/c_source/uper.c \
+	tests/files/c_source/boolean_uper.c \
+	tests/files/c_source/octet_string_uper.c
 CFLAGS = \
 	-Itests/files/c_source \
 	-std=c99 \
