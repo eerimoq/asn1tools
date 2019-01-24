@@ -64,6 +64,10 @@ HEADER_FMT = '''\
 #    define EBADLENGTH 502
 #endif
 
+#ifndef EBADENUM
+#    define EBADENUM 503
+#endif
+
 {structs}
 {declarations}
 #endif

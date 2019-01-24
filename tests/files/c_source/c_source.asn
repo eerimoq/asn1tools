@@ -396,4 +396,10 @@ AB ::= AA { R, Y }
 
 AC ::= AA { Q, D }
 
+-- All endoded values valid (1 bit).
+AD ::= ENUMERATED {
+    a,
+    b
+}
+
 END

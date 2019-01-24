@@ -354,6 +354,16 @@ static void test_uper_c_source_d_some_missing(void)
     assert(!decoded.elements[0].m.p.is_r_present);
 }
 
+static void test_uper_c_source_d_decode_error_bad_enum(void)
+{
+    uint8_t encoded[10] = "\x01\xd5\x15\x7a\x40\xc0\xc0\xc0\xc0\xe0";
+    struct uper_c_source_d_t decoded;
+
+    assert(uper_c_source_d_decode(&decoded,
+                                  &encoded[0],
+                                  sizeof(encoded)) == -EBADENUM);
+}
+
 static void test_uper_c_source_e(void)
 {
     uint8_t encoded[1];
@@ -898,6 +908,7 @@ int main(void)
 
     test_uper_c_source_d_all_present();
     test_uper_c_source_d_some_missing();
+    test_uper_c_source_d_decode_error_bad_enum();
 
     test_uper_c_source_e();
     test_uper_c_source_f();

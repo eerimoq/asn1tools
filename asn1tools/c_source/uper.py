@@ -772,18 +772,42 @@ class _Generator(Generator):
         return encode_lines, decode_lines
 
     def format_enumerated_inner(self, type_):
-        return (
-            [
-                'encoder_append_non_negative_binary_integer(encoder_p, '
-                'src_p->{}, {});'.format(self.location_inner(),
-                                         type_.root_number_of_bits)
-            ],
-            [
-                'dst_p->{} = decoder_read_non_negative_binary_integer('
-                'decoder_p, {});'.format(self.location_inner(),
-                                         type_.root_number_of_bits)
+        type_name = self.format_type_name(0, max(type_.root_index_to_data))
+        unique_value = self.add_unique_decode_variable(
+            '{} {{}};'.format(type_name),
+            'value')
+        location = self.location_inner()
+
+        encode_lines = [
+            'encoder_append_non_negative_binary_integer(encoder_p, '
+            'src_p->{}, {});'.format(location,
+                                     type_.root_number_of_bits)
+        ]
+        decode_lines = [
+            '{} = decoder_read_non_negative_binary_integer('
+            'decoder_p, {});'.format(unique_value,
+                                     type_.root_number_of_bits)
+        ]
+
+        if bin(len(self.get_enumerated_values(type_))).count('1') != 1:
+            decode_lines += [
+                '',
+                'if ({} > {}) {{'.format(unique_value,
+                                         len(self.get_enumerated_values(type_)) - 1),
+                '    decoder_abort(decoder_p, EBADENUM);',
+                '',
+                '    return;',
+                '}',
+                ''
             ]
-        )
+
+        decode_lines += [
+            'dst_p->{} = (enum {}_e){};'.format(location,
+                                                self.location,
+                                                unique_value)
+        ]
+
+        return encode_lines, decode_lines
 
     def format_null_inner(self):
         return (
