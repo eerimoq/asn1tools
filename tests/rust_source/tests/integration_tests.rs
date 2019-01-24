@@ -1,3 +1,4 @@
+use rust_source::Error;
 use rust_source::rust_source::{a, b, d};
 
 #[test]
@@ -64,7 +65,7 @@ fn test_uper_c_source_a_encode_error_no_mem() {
     a.i = true;
     a.j.buf = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5];
 
-    assert_eq!(a.to_bytes(&mut encoded), Err("Out of memory."));
+    assert_eq!(a.to_bytes(&mut encoded), Err(Error::OutOfMemory));
 }
 
 #[test]
@@ -78,7 +79,7 @@ fn test_uper_c_source_a_decode_error_out_of_data() {
     ];
     let mut a: a::A = Default::default();
 
-    assert_eq!(a.from_bytes(&encoded), Err("Out of data."));
+    assert_eq!(a.from_bytes(&encoded), Err(Error::OutOfData));
 }
 
 #[test]
@@ -151,7 +152,7 @@ fn test_uper_c_source_b_decode_error_bad_choice() {
     let encoded = [0xdd, 0x80];
     let mut b: b::B = Default::default();
 
-    assert_eq!(b.from_bytes(&encoded), Err("Bad choice."));
+    assert_eq!(b.from_bytes(&encoded), Err(Error::BadChoice));
 }
 
 #[test]
@@ -241,4 +242,14 @@ fn test_uper_c_source_d_some_missing() {
     assert_eq!(d.elements[0].m.is_p_present, true);
     assert_eq!(d.elements[0].m.p.q.buf, [3, 3, 3, 3, 3]);
     assert_eq!(d.elements[0].m.p.is_r_present, false);
+}
+
+#[test]
+fn test_uper_c_source_d_decode_error_bad_enum() {
+    let encoded = [
+        0x01, 0xd5, 0x15, 0x7a, 0x40, 0xc0, 0xc0, 0xc0, 0xc0, 0xe0
+    ];
+    let mut d: d::D = Default::default();
+
+    assert_eq!(d.from_bytes(&encoded), Err(Error::BadEnum));
 }
