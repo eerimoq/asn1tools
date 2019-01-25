@@ -284,23 +284,23 @@ pub mod rust_source {
 
         impl A {
 
-            pub fn to_bytes(&mut self, mut dst: &mut [u8]) -> Result<usize, Error> {
+            pub fn encode(&mut self, mut dst: &mut [u8]) -> Result<usize, Error> {
                 let mut encoder = Encoder::new(&mut dst);
 
-                self.to_bytes_inner(&mut encoder);
+                self.encode_inner(&mut encoder);
 
                 encoder.get_result()
             }
 
-            pub fn from_bytes(&mut self, src: &[u8]) -> Result<usize, Error> {
+            pub fn decode(&mut self, src: &[u8]) -> Result<usize, Error> {
                 let mut decoder = Decoder::new(&src);
 
-                self.from_bytes_inner(&mut decoder);
+                self.decode_inner(&mut decoder);
 
                 decoder.get_result()
             }
 
-            pub fn to_bytes_inner(&mut self, encoder: &mut Encoder) {
+            pub fn encode_inner(&mut self, encoder: &mut Encoder) {
                 encoder.append_i8(self.a);
                 encoder.append_i16(self.b);
                 encoder.append_i32(self.c);
@@ -313,7 +313,7 @@ pub mod rust_source {
                 encoder.append_bytes(&self.j.buf);
             }
 
-            pub fn from_bytes_inner(&mut self, decoder: &mut Decoder) {
+            pub fn decode_inner(&mut self, decoder: &mut Decoder) {
                 self.a = decoder.read_i8();
                 self.b = decoder.read_i16();
                 self.c = decoder.read_i32();
@@ -417,23 +417,23 @@ pub mod rust_source {
 
         impl D {
 
-            pub fn to_bytes(&mut self, mut dst: &mut [u8]) -> Result<usize, Error> {
+            pub fn encode(&mut self, mut dst: &mut [u8]) -> Result<usize, Error> {
                 let mut encoder = Encoder::new(&mut dst);
 
-                self.to_bytes_inner(&mut encoder);
+                self.encode_inner(&mut encoder);
 
                 encoder.get_result()
             }
 
-            pub fn from_bytes(&mut self, src: &[u8]) -> Result<usize, Error> {
+            pub fn decode(&mut self, src: &[u8]) -> Result<usize, Error> {
                 let mut decoder = Decoder::new(&src);
 
-                self.from_bytes_inner(&mut decoder);
+                self.decode_inner(&mut decoder);
 
                 decoder.get_result()
             }
 
-            pub fn to_bytes_inner(&mut self, encoder: &mut Encoder) {
+            pub fn encode_inner(&mut self, encoder: &mut Encoder) {
                 encoder.append_non_negative_binary_integer(
                     self.length as u64 - 1,
                     4);
@@ -489,7 +489,7 @@ pub mod rust_source {
                 }
             }
 
-            pub fn from_bytes_inner(&mut self, decoder: &mut Decoder) {
+            pub fn decode_inner(&mut self, decoder: &mut Decoder) {
                 self.length = decoder.read_non_negative_binary_integer(4) as u8;
                 self.length += 1;
 
@@ -590,25 +590,24 @@ pub mod rust_source {
 
         impl B {
 
-            pub fn to_bytes(&mut self, mut dst: &mut [u8]) -> Result<usize, Error> {
+            pub fn encode(&mut self, mut dst: &mut [u8]) -> Result<usize, Error> {
                 let mut encoder = Encoder::new(&mut dst);
 
-                self.to_bytes_inner(&mut encoder);
+                self.encode_inner(&mut encoder);
 
                 encoder.get_result()
             }
 
-            pub fn from_bytes(&mut self, src: &[u8]) -> Result<usize, Error> {
+            pub fn decode(&mut self, src: &[u8]) -> Result<usize, Error> {
                 let mut decoder = Decoder::new(&src);
 
-                self.from_bytes_inner(&mut decoder);
+                self.decode_inner(&mut decoder);
 
                 decoder.get_result()
             }
 
-            pub fn to_bytes_inner(&mut self, encoder: &mut Encoder) {
+            pub fn encode_inner(&mut self, encoder: &mut Encoder) {
                 match self {
-
                     B::A(value) => {
                         encoder.append_non_negative_binary_integer(0, 2);
                         encoder.append_i8(*value);
@@ -616,7 +615,7 @@ pub mod rust_source {
 
                     B::B(value) => {
                         encoder.append_non_negative_binary_integer(1, 2);
-                        value.to_bytes_inner(encoder);
+                        value.encode_inner(encoder);
                     },
 
                     B::C => {
@@ -625,7 +624,7 @@ pub mod rust_source {
                 }
             }
 
-            pub fn from_bytes_inner(&mut self, decoder: &mut Decoder) {
+            pub fn decode_inner(&mut self, decoder: &mut Decoder) {
                 let choice = decoder.read_non_negative_binary_integer(2);
 
                 match choice {
@@ -637,7 +636,7 @@ pub mod rust_source {
                         *self = B::B(Default::default());
 
                         if let B::B(ref mut a) = self {
-                            a.from_bytes_inner(decoder);
+                            a.decode_inner(decoder);
                         }
                     },
 

@@ -18,7 +18,7 @@ fn test_uper_c_source_a() {
     a.i = true;
     a.j.buf = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5];
 
-    assert_eq!(a.to_bytes(&mut encoded).unwrap(), encoded.len());
+    assert_eq!(a.encode(&mut encoded).unwrap(), encoded.len());
     assert_eq!(encoded[..],
                [
                    0x7f, 0x7f, 0xfe, 0x7f, 0xff, 0xff, 0xfd, 0x7f, 0xff, 0xff,
@@ -31,7 +31,7 @@ fn test_uper_c_source_a() {
     // Decode.
     a = Default::default();
 
-    assert_eq!(a.from_bytes(&encoded).unwrap(), encoded.len());
+    assert_eq!(a.decode(&encoded).unwrap(), encoded.len());
     assert_eq!(a,
                a::A {
                    a: -1,
@@ -65,7 +65,7 @@ fn test_uper_c_source_a_encode_error_no_mem() {
     a.i = true;
     a.j.buf = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5];
 
-    assert_eq!(a.to_bytes(&mut encoded), Err(Error::OutOfMemory));
+    assert_eq!(a.encode(&mut encoded), Err(Error::OutOfMemory));
 }
 
 #[test]
@@ -79,7 +79,7 @@ fn test_uper_c_source_a_decode_error_out_of_data() {
     ];
     let mut a: a::A = Default::default();
 
-    assert_eq!(a.from_bytes(&encoded), Err(Error::OutOfData));
+    assert_eq!(a.decode(&encoded), Err(Error::OutOfData));
 }
 
 #[test]
@@ -90,7 +90,7 @@ fn test_uper_c_source_b_choice_a() {
     // Encode.
     b = b::B::A(-10);
 
-    assert_eq!(b.to_bytes(&mut encoded).unwrap(), encoded.len());
+    assert_eq!(b.encode(&mut encoded).unwrap(), encoded.len());
     assert_eq!(encoded[..],
                [
                    0x1d, 0x80
@@ -99,7 +99,7 @@ fn test_uper_c_source_b_choice_a() {
     // Decode.
     b = Default::default();
 
-    assert_eq!(b.from_bytes(&encoded).unwrap(), encoded.len());
+    assert_eq!(b.decode(&encoded).unwrap(), encoded.len());
     assert_eq!(b, b::B::A(-10));
 }
 
@@ -122,7 +122,7 @@ fn test_uper_c_source_b_choice_b() {
     a.j.buf = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5];
     b = b::B::B(a);
 
-    assert_eq!(b.to_bytes(&mut encoded).unwrap(), encoded.len());
+    assert_eq!(b.encode(&mut encoded).unwrap(), encoded.len());
     assert_eq!(encoded[..],
                [
                    0x5f, 0xdf, 0xff, 0x9f, 0xff, 0xff, 0xff, 0x5f, 0xff, 0xff,
@@ -135,7 +135,7 @@ fn test_uper_c_source_b_choice_b() {
     // Decode.
     b = Default::default();
 
-    assert_eq!(b.from_bytes(&encoded).unwrap(), encoded.len());
+    assert_eq!(b.decode(&encoded).unwrap(), encoded.len());
 
     match b {
 
@@ -152,7 +152,7 @@ fn test_uper_c_source_b_decode_error_bad_choice() {
     let encoded = [0xdd, 0x80];
     let mut b: b::B = Default::default();
 
-    assert_eq!(b.from_bytes(&encoded), Err(Error::BadChoice));
+    assert_eq!(b.decode(&encoded), Err(Error::BadChoice));
 }
 
 #[test]
@@ -175,7 +175,7 @@ fn test_uper_c_source_d_all_present() {
     d.elements[0].m.p.is_r_present = true;
     d.elements[0].m.p.r = true;
 
-    assert_eq!(d.to_bytes(&mut encoded).unwrap(), encoded.len());
+    assert_eq!(d.encode(&mut encoded).unwrap(), encoded.len());
     assert_eq!(encoded[..],
                [
                    0x00, 0xd5, 0x15, 0x7a, 0x40, 0xc0, 0xc0, 0xc0, 0xc0, 0xe0
@@ -184,7 +184,7 @@ fn test_uper_c_source_d_all_present() {
     // Decode.
     d = Default::default();
 
-    assert_eq!(d.from_bytes(&encoded).unwrap(), encoded.len());
+    assert_eq!(d.decode(&encoded).unwrap(), encoded.len());
 
     assert_eq!(d.length, 1);
     assert_eq!(d.elements[0].a.b, d::DElemAB::C(0));
@@ -220,7 +220,7 @@ fn test_uper_c_source_d_some_missing() {
     d.elements[0].m.p.q.buf = [3, 3, 3, 3, 3];
     d.elements[0].m.p.is_r_present = false;
 
-    assert_eq!(d.to_bytes(&mut encoded).unwrap(), encoded.len());
+    assert_eq!(d.encode(&mut encoded).unwrap(), encoded.len());
     assert_eq!(encoded[..],
                [
                    0x09, 0x15, 0x08, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c
@@ -229,7 +229,7 @@ fn test_uper_c_source_d_some_missing() {
     // Decode.
     d = Default::default();
 
-    assert_eq!(d.from_bytes(&encoded).unwrap(), encoded.len());
+    assert_eq!(d.decode(&encoded).unwrap(), encoded.len());
 
     assert_eq!(d.length, 1);
     assert_eq!(d.elements[0].a.b, d::DElemAB::D(false));
@@ -251,5 +251,5 @@ fn test_uper_c_source_d_decode_error_bad_enum() {
     ];
     let mut d: d::D = Default::default();
 
-    assert_eq!(d.from_bytes(&encoded), Err(Error::BadEnum));
+    assert_eq!(d.decode(&encoded), Err(Error::BadEnum));
 }
