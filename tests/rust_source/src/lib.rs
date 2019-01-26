@@ -24,7 +24,6 @@ pub struct Decoder<'a> {
 }
 
 impl<'a> Encoder<'a> {
-
     fn new(dst: &'a mut [u8]) -> Encoder {
         Encoder {
             size: 8 * dst.len(),
@@ -131,7 +130,6 @@ impl<'a> Encoder<'a> {
 }
 
 impl<'a> Decoder<'a> {
-
     fn new(src: &'a[u8]) -> Decoder {
         Decoder {
             buf: src,
@@ -257,10 +255,8 @@ impl<'a> Decoder<'a> {
 
 /// Module RustSource.
 pub mod rust_source {
-
     /// Type A.
     pub mod a {
-
         use super::super::{Error, Encoder, Decoder};
 
         #[derive(Debug, Default, PartialEq, Copy, Clone)]
@@ -283,7 +279,6 @@ pub mod rust_source {
         }
 
         impl A {
-
             pub fn encode(&mut self, mut dst: &mut [u8]) -> Result<usize, Error> {
                 let mut encoder = Encoder::new(&mut dst);
 
@@ -330,7 +325,6 @@ pub mod rust_source {
 
     /// Type D.
     pub mod d {
-
         use super::super::{Error, Encoder, Decoder};
 
         #[derive(Debug, PartialEq, Copy, Clone)]
@@ -416,7 +410,6 @@ pub mod rust_source {
         }
 
         impl D {
-
             pub fn encode(&mut self, mut dst: &mut [u8]) -> Result<usize, Error> {
                 let mut encoder = Encoder::new(&mut dst);
 
@@ -446,7 +439,6 @@ pub mod rust_source {
                                 value as u64 - 0,
                                 1);
                         },
-
                         DElemAB::D(value) => {
                             encoder.append_non_negative_binary_integer(1, 1);
                             encoder.append_bool(value);
@@ -505,12 +497,10 @@ pub mod rust_source {
                             self.elements[i].a.b =
                                 DElemAB::C(decoder.read_non_negative_binary_integer(1) as u8 + 0);
                         },
-
                         1 => {
                             self.elements[i].a.b =
                                 DElemAB::D(decoder.read_bool());
                         },
-
                         _ => {
                             decoder.abort(Error::BadChoice);
 
@@ -524,11 +514,8 @@ pub mod rust_source {
                     self.elements[i].g.h =
                         match decoder.read_non_negative_binary_integer(2) {
                             0 => DElemGH::I,
-
                             1 => DElemGH::J,
-
                             2 => DElemGH::K,
-
                             _ => {
                                 decoder.abort(Error::BadEnum);
 
@@ -572,7 +559,6 @@ pub mod rust_source {
 
     /// Type B.
     pub mod b {
-
         use super::super::{Error, Encoder, Decoder};
 
         #[derive(Debug, PartialEq, Copy, Clone)]
@@ -589,7 +575,6 @@ pub mod rust_source {
         }
 
         impl B {
-
             pub fn encode(&mut self, mut dst: &mut [u8]) -> Result<usize, Error> {
                 let mut encoder = Encoder::new(&mut dst);
 
@@ -612,12 +597,10 @@ pub mod rust_source {
                         encoder.append_non_negative_binary_integer(0, 2);
                         encoder.append_i8(*value);
                     },
-
                     B::B(value) => {
                         encoder.append_non_negative_binary_integer(1, 2);
                         value.encode_inner(encoder);
                     },
-
                     B::C => {
                         encoder.append_non_negative_binary_integer(2, 2);
                     }
@@ -631,7 +614,6 @@ pub mod rust_source {
                     0 => {
                         *self = B::A(decoder.read_i8());
                     },
-
                     1 => {
                         *self = B::B(Default::default());
 
@@ -639,11 +621,9 @@ pub mod rust_source {
                             a.decode_inner(decoder);
                         }
                     },
-
                     2 => {
                         *self = B::C;
                     }
-
                     _ => {
                         decoder.abort(Error::BadChoice);
                     }
