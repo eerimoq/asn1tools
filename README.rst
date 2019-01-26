@@ -28,7 +28,6 @@ Miscellaneous features:
 Planned features:
 
 - `Rust` source code generator (with lots of limitations).
-- `Python` source code generator.
 
 Project homepage: https://github.com/eerimoq/asn1tools
 
