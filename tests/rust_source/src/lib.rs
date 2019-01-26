@@ -626,6 +626,100 @@ pub mod rust_source {
                     }
                     _ => {
                         decoder.abort(Error::BadChoice);
+
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    /// Type E.
+    pub mod e {
+        use super::super::{Error, Encoder, Decoder};
+
+        #[derive(Debug, PartialEq, Copy, Clone)]
+        pub enum EAB {
+            C(bool)
+        }
+
+        impl Default for EAB {
+            fn default() -> Self {
+                EAB::C(bool::default())
+            }
+        }
+
+        #[derive(Debug, PartialEq, Copy, Clone)]
+        pub enum EA {
+            B(EAB)
+        }
+
+        impl Default for EA {
+            fn default() -> Self {
+                EA::B(EAB::default())
+            }
+        }
+
+        #[derive(Debug, Default, PartialEq, Copy, Clone)]
+        pub struct E {
+            pub a: EA
+        }
+
+        impl E {
+            pub fn encode(&mut self, mut dst: &mut [u8]) -> Result<usize, Error> {
+                let mut encoder = Encoder::new(&mut dst);
+
+                self.encode_inner(&mut encoder);
+
+                encoder.get_result()
+            }
+
+            pub fn decode(&mut self, src: &[u8]) -> Result<usize, Error> {
+                let mut decoder = Decoder::new(&src);
+
+                self.decode_inner(&mut decoder);
+
+                decoder.get_result()
+            }
+
+            pub fn encode_inner(&mut self, encoder: &mut Encoder) {
+                match self.a {
+                    EA::B(value) => {
+                        encoder.append_non_negative_binary_integer(0, 0);
+
+                        match value {
+                            EAB::C(value_2) => {
+                                encoder.append_non_negative_binary_integer(0, 0);
+                                encoder.append_bool(value_2);
+                            }
+                        }
+                    }
+                }
+            }
+
+            pub fn decode_inner(&mut self, decoder: &mut Decoder) {
+                let choice = decoder.read_non_negative_binary_integer(0);
+
+                match choice {
+                    0 => {
+                        let EA::B(ref mut b) = self.a;
+                        let choice_2 = decoder.read_non_negative_binary_integer(0);
+
+                        match choice_2 {
+                            0 => {
+                                *b = EAB::C(decoder.read_bool());
+                            },
+                            _ => {
+                                decoder.abort(Error::BadChoice);
+
+                                return;
+                            }
+                        }
+                    },
+                    _ => {
+                        decoder.abort(Error::BadChoice);
+
+                        return;
                     }
                 }
             }

@@ -1,5 +1,5 @@
 use rust_source::Error;
-use rust_source::rust_source::{a, b, d};
+use rust_source::rust_source::{a, b, d, e};
 
 #[test]
 fn test_uper_c_source_a() {
@@ -138,11 +138,9 @@ fn test_uper_c_source_b_choice_b() {
     assert_eq!(b.decode(&encoded).unwrap(), encoded.len());
 
     match b {
-
         b::B::B(value) => {
             assert_eq!(value, a);
         },
-
         _ => panic!("")
     }
 }
@@ -252,4 +250,28 @@ fn test_uper_c_source_d_decode_error_bad_enum() {
     let mut d: d::D = Default::default();
 
     assert_eq!(d.decode(&encoded), Err(Error::BadEnum));
+}
+
+#[test]
+fn test_uper_c_source_e() {
+    let mut encoded = [0; 1];
+    let mut e: e::E = Default::default();
+
+    // Encode.
+    e.a = e::EA::B(e::EAB::C(true));
+
+    assert_eq!(e.encode(&mut encoded).unwrap(), encoded.len());
+    assert_eq!(encoded[..],
+               [
+                   0x80
+               ][..]);
+
+    // Decode.
+    e = Default::default();
+
+    assert_eq!(e.decode(&encoded).unwrap(), encoded.len());
+
+    let e::EA::B(e::EAB::C(value)) = e.a;
+
+    assert_eq!(value, true);
 }
