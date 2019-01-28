@@ -27,8 +27,8 @@ from .errors import EncodeError
 from .errors import DecodeError
 from .errors import CompileError
 from .errors import ConstraintsError
-from . import c_source
-from . import rust_source
+from . source import c
+from . source import rust
 from .version import __version__
 
 
@@ -275,7 +275,7 @@ def _do_generate_c_source(args):
 
     compiled = compile_files(args.specification,
                              args.codec)
-    header, source, fuzzer_source, fuzzer_makefile = c_source.generate(
+    header, source, fuzzer_source, fuzzer_makefile = c.generate(
         compiled,
         args.codec,
         name,
@@ -315,7 +315,7 @@ def _do_generate_rust_source(args):
 
     compiled = compile_files(args.specification,
                              args.codec)
-    source = rust_source.generate(compiled, args.codec)
+    source = rust.generate(compiled, args.codec)
 
     with open(filename_rs, 'w') as fout:
         fout.write(source)

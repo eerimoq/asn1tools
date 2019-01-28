@@ -1,6 +1,6 @@
 import time
 
-from ..version import __version__
+from ...version import __version__
 from . import oer
 from . import uper
 from .utils import camel_to_snake_case

@@ -1,6 +1,6 @@
 import re
 
-from ..errors import Error
+from ...errors import Error
 
 
 TYPE_DECLARATION_FMT = '''\

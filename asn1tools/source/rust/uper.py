@@ -9,7 +9,7 @@ from .utils import Generator
 from .utils import is_user_type
 from .utils import indent_lines
 from .utils import dedent_lines
-from ..codecs import uper
+from ...codecs import uper
 
 
 ENCODER_INIT = '''\

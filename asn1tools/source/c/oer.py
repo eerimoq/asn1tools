@@ -12,7 +12,7 @@ from .utils import camel_to_snake_case
 from .utils import is_user_type
 from .utils import indent_lines
 from .utils import dedent_lines
-from ..codecs import oer
+from ...codecs import oer
 
 
 MINIMUM_UINT_LENGTH = '''
