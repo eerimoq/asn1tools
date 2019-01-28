@@ -15,7 +15,6 @@ A ::= SEQUENCE {
     j OCTET STRING (SIZE (11))
 }
 
-/*
 B ::= CHOICE {
     a INTEGER (-128..127),
     b A,
@@ -396,6 +395,5 @@ AA {Param1, Param2} ::= SEQUENCE {
 AB ::= AA { R, Y }
 
 AC ::= AA { Q, D }
-*/
 
 END

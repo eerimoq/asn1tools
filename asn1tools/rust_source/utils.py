@@ -43,18 +43,27 @@ impl {module_name}{type_name} {{
 '''
 
 ENCODER_AND_DECODER_STRUCTS = '''\
-struct Encoder<'a> {
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum Error {
+    BadChoice,
+    BadEnum,
+    BadLength,
+    OutOfData,
+    OutOfMemory
+}
+
+pub struct Encoder<'a> {
     buf: &'a mut [u8],
     size: usize,
     pos: usize,
-    error: Option<&'static str>
+    error: Option<Error>
 }
 
-struct Decoder<'a> {
+pub struct Decoder<'a> {
     buf: &'a[u8],
     size: usize,
     pos: usize,
-    error: Option<&'static str>
+    error: Option<Error>
 }\
 '''
 
@@ -67,7 +76,7 @@ ENCODER_ABORT = '''
 '''
 
 DECODER_ABORT = '''
-    fn abort(&mut self, error: &'static str) {
+    fn abort(&mut self, error: Error) {
         if self.error.is_none() {
             self.error = Some(error);
         }
