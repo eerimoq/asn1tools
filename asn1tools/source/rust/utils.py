@@ -13,7 +13,6 @@ struct {module_name}{type_name} {{
 
 DEFINITION_FMT = '''\
 impl {module_name}{type_name} {{
-
     pub fn to_bytes(&mut self,
                     dst: &mut [u8])
                     -> Result<usize, &'static str> {{
@@ -64,11 +63,11 @@ pub struct Decoder<'a> {
     size: usize,
     pos: usize,
     error: Option<Error>
-}\
+}
 '''
 
 ENCODER_ABORT = '''
-    fn abort(&mut self, error: &'static str) {
+    fn abort(&mut self, error: Error) {
         if self.error.is_none() {
             self.error = Some(error);
         }

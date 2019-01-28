@@ -64,7 +64,11 @@ test:
 	$(MAKE) test-c
 	env FUZZER_EXECUTION_TIME=1 $(MAKE) test-c-fuzzer
 	$(MAKE) -C examples/benchmarks/c_source
-	codespell -d $$(git ls-files | grep -v ietf | grep -v 3gpp | grep -v generated)
+	codespell -d $$(git ls-files | grep -v ietf \
+	                             | grep -v 3gpp \
+	                             | grep -v generated \
+	                             | grep -v "\\.rs" \
+	                             | grep -v asn1tools/source/rust)
 	python3 -m pycodestyle $$(git ls-files "asn1tools/*.py")
 
 .PHONY: test-c-oer

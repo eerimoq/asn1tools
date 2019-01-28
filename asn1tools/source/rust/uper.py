@@ -24,14 +24,13 @@ ENCODER_INIT = '''\
 '''
 
 ENCODER_GET_RESULT = '''
-    fn get_result(&self) -> Result<usize, &'static str> {
+    fn get_result(&self) -> Result<usize, Error> {
         if self.error.is_none() {
             return Ok((self.pos + 7) / 8);
         } else {
             return Err(self.error.unwrap());
         }
-    }
-\
+    }\
 '''
 
 ENCODER_ALLOC = '''
@@ -41,7 +40,7 @@ ENCODER_ALLOC = '''
             self.pos += size;
             Ok(pos)
         } else {
-            self.abort("Out of memory.");
+            self.abort(Error::OutOfMemory);
             Err(())
         }
     }\
@@ -153,7 +152,7 @@ DECODER_INIT = '''
 '''
 
 DECODER_GET_RESULT = '''
-    fn get_result(&self) -> Result<usize, &'static str> {
+    fn get_result(&self) -> Result<usize, Error> {
         if self.error.is_none() {
             Ok((self.pos + 7) / 8)
         } else {
@@ -169,7 +168,7 @@ DECODER_FREE = '''
             self.pos += size;
             Ok(pos)
         } else {
-            self.abort("Out of data.");
+            self.abort(Error::OutOfData);
             Err(())
         }
     }\
@@ -208,9 +207,9 @@ DECODER_READ_U8 = '''
     fn read_u8(&mut self) -> u8 {
         let mut buf = [0; 1];
 
-        self.read_bytes(&mut buf, 1);
+        self.read_bytes(&mut buf);
 
-        return u8::from_be_bytes(buf);
+        u8::from_be_bytes(buf)
     }\
 '''
 
@@ -218,9 +217,9 @@ DECODER_READ_U16 = '''
     fn read_u16(&mut self) -> u16 {
         let mut buf = [0; 2];
 
-        self.read_bytes(&mut buf, 2);
+        self.read_bytes(&mut buf);
 
-        return u16::from_be_bytes(buf);
+        u16::from_be_bytes(buf)
     }\
 '''
 
@@ -228,9 +227,9 @@ DECODER_READ_U32 = '''
     fn read_u32(&mut self) -> u32 {
         let mut buf = [0; 4];
 
-        self.read_bytes(&mut buf, 4);
+        self.read_bytes(&mut buf);
 
-        return u32::from_be_bytes(buf);
+        u32::from_be_bytes(buf)
     }\
 '''
 
@@ -238,39 +237,39 @@ DECODER_READ_U64 = '''
     fn read_u64(&mut self) -> u64 {
         let mut buf = [0; 8];
 
-        self.read_bytes(&mut buf, 8);
+        self.read_bytes(&mut buf);
 
-        return u64::from_be_bytes(buf);
+        u64::from_be_bytes(buf)
     }\
 '''
 
 DECODER_READ_I8 = '''
     fn read_i8(&mut self) -> i8 {
-        return self.read_u8().wrapping_sub(128) as i8;
+        self.read_u8().wrapping_sub(128) as i8
     }\
 '''
 
 DECODER_READ_I16 = '''
     fn read_i16(&mut self) -> i16 {
-        return self.read_u16().wrapping_sub(32768) as i16;
+        self.read_u16().wrapping_sub(32768) as i16
     }\
 '''
 
 DECODER_READ_I32 = '''
     fn read_i32(&mut self) -> i32 {
-        return self.read_u32().wrapping_sub(2147483648) as i32;
+        self.read_u32().wrapping_sub(2147483648) as i32
     }\
 '''
 
 DECODER_READ_I64 = '''
     fn read_i64(&mut self) -> i64 {
-        return self.read_u64().wrapping_sub(9223372036854775808) as i64;
+        self.read_u64().wrapping_sub(9223372036854775808) as i64
     }\
 '''
 
 DECODER_READ_BOOL = '''
     fn read_bool(&mut self) -> bool {
-        return self.read_bit() != 0;
+        self.read_bit() != 0
     }\
 '''
 
@@ -725,12 +724,12 @@ class _Generator(Generator):
 
         helpers = [
             "impl<'a> Encoder<'a> {",
-            '',
             "    fn new(dst: &'a mut [u8]) -> Encoder {",
             '        Encoder {',
-            '            size: 8 * dst.len() as isize,',
+            '            size: 8 * dst.len(),',
             '            buf: dst,',
-            '            pos: 0',
+            '            pos: 0,',
+            '            error: None',
             '        }',
             '    }'
         ]
@@ -766,12 +765,12 @@ class _Generator(Generator):
 
         helpers = [
             "impl<'a> Decoder<'a> {",
-            '',
             "    fn new(src: &'a[u8]) -> Decoder {",
             '        Decoder {',
             '            buf: src,',
-            '            size: 8 * src.len() as isize,',
-            '            pos: 0',
+            '            size: 8 * src.len(),',
+            '            pos: 0,',
+            '            error: None',
             '        }',
             '    }'
         ]

@@ -1,17 +1,11 @@
-import os
 import unittest
-
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch
 
 import asn1tools
 
 
 CODECS_AND_MODULES = [
-    ('oer', asn1tools.c_source.oer),
-    ('uper', asn1tools.c_source.uper)
+    ('oer', asn1tools.source.c.oer),
+    ('uper', asn1tools.source.c.uper)
 ]
 
 
@@ -195,7 +189,7 @@ class Asn1ToolsCSourceTest(unittest.TestCase):
             'oer')
 
         with self.assertRaises(asn1tools.errors.Error) as cm:
-            asn1tools.c_source.oer.generate(foo, 'foo')
+            asn1tools.source.c.oer.generate(foo, 'foo')
 
         self.assertEqual(str(cm.exception),
                          "Foo.A: REAL not IEEE 754 binary32 or binary64.")
