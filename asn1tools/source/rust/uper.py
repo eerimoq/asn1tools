@@ -341,8 +341,7 @@ class _Generator(Generator):
             lines = self.format_enumerated(type_)
             lines[0] += ' value;'
         elif isinstance(type_, uper.Sequence):
-            lines = self.format_sequence(type_, checker)[1:-1]
-            lines = dedent_lines(lines)
+            lines = self.format_sequence(type_, checker)
         elif isinstance(type_, uper.SequenceOf):
             lines = self.format_sequence_of(type_, checker)[1:-1]
             lines = dedent_lines(lines)
@@ -401,14 +400,15 @@ class _Generator(Generator):
             return (
                 [
                     'encoder.append_non_negative_binary_integer(',
-                    '    (uint64_t)(self.{} - {}),'.format(location, checker.minimum),
+                    '    (self.{} - {}) as u64,'.format(location, checker.minimum),
                     '    {});'.format(type_.number_of_bits)
                 ],
                 [
                     'self.{} = '
-                    'decoder.read_non_negative_binary_integer({});'.format(
+                    'decoder.read_non_negative_binary_integer({}) as {};'.format(
                         location,
-                        type_.number_of_bits),
+                        type_.number_of_bits,
+                        type_name),
                     'self.{} += {};'.format(location, checker.minimum)
                 ]
             )
@@ -471,17 +471,16 @@ class _Generator(Generator):
 
         if checker.minimum == checker.maximum:
             encode_lines = [
-                'encoder.append_bytes(&self.{}buf,'.format(location),
-                '                     {});'.format(checker.maximum)
+                'encoder.append_bytes(&self.{}buf);'.format(location)
             ]
             decode_lines = [
-                'decoder.read_bytes(&mut self.{}buf,'.format(location),
-                '                   {});'.format(checker.maximum)
+                'decoder.read_bytes(&mut self.{}buf);'.format(location)
             ]
         else:
             encode_lines = [
                 'encoder.append_non_negative_binary_integer(',
-                '    self.{}length - {}u,'.format(location, checker.minimum),
+                '    (self.{}length - {}) as u64,'.format(location,
+                                                          checker.minimum),
                 '    {});'.format(type_.number_of_bits),
                 'encoder.append_bytes(&self.{}buf,'.format(location),
                 '                     self.{}length);'.format(location)
@@ -552,8 +551,7 @@ class _Generator(Generator):
             encode_lines += [
                 '    {}_choice_{}_e => {{'.format(self.location, member.name)
             ] + indent_lines(choice_encode_lines, 8) + [
-                '    }',
-                ''
+                '    }'
             ]
 
             choice_decode_lines = [
@@ -564,14 +562,12 @@ class _Generator(Generator):
             decode_lines += [
                 '    {} => {{'.format(index)
             ] + indent_lines(choice_decode_lines, 8) + [
-                '    }',
-                ''
+                '    }'
             ]
 
         encode_lines = [
             '',
-            'match self.{} {{'.format(choice),
-            ''
+            'match self.{} {{'.format(choice)
         ] + encode_lines + [
             '    _ => encoder.abort(EBADCHOICE);',
             '}',
@@ -583,8 +579,7 @@ class _Generator(Generator):
                 unique_choice,
                 type_.root_number_of_bits),
             '',
-            'match {} {{'.format(unique_choice),
-            ''
+            'match {} {{'.format(unique_choice)
         ] + decode_lines + [
             '    _ => decoder.abort(EBADCHOICE);',
             '}',
@@ -634,7 +629,8 @@ class _Generator(Generator):
             location = self.location_inner('', '.')
             first_encode_lines = [
                 'encoder.append_non_negative_binary_integer(',
-                '    self.{}length - {}u,'.format(location, checker.minimum),
+                '    (self.{}length - {}) as u64,'.format(location,
+                                                          checker.minimum),
                 '    {});'.format(type_.number_of_bits),
                 '',
                 'for {} in 0..self.{}length {{'.format(unique_i, location)
@@ -773,7 +769,7 @@ class _Generator(Generator):
             if pattern in definitions:
                 helpers.append(definition)
 
-        return helpers + ['}', '']
+        return helpers + ['}']
 
     def generate_helpers(self, definitions):
         helpers = [ENCODER_AND_DECODER_STRUCTS]

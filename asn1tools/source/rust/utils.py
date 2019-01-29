@@ -5,15 +5,12 @@ from ...errors import Error
 
 TYPE_DECLARATION_FMT = '''\
 /// Type {type_name} in module {module_name}.
-{helper_types}\
-struct {module_name}{type_name} {{
 {members}
-}};
 '''
 
 DEFINITION_FMT = '''
 impl {module_name}{type_name} {{
-    pub fn encode(&mut self, dst: &mut [u8]) -> Result<usize, Error> {{
+    pub fn encode(&mut self, mut dst: &mut [u8]) -> Result<usize, Error> {{
         let mut encoder = Encoder::new(&mut dst);
 
         self.encode_inner(&mut encoder);
@@ -194,12 +191,11 @@ class Generator(object):
 
     @property
     def location(self):
-        location = '{}_{}_{}'.format(self.namespace,
-                                     self.module_name_snake,
-                                     self.type_name_snake)
+        location = '{}{}'.format(self.module_name,
+                                 self.type_name)
 
-        if self.asn1_members_backtrace:
-            location += '_{}'.format('_'.join(self.asn1_members_backtrace))
+        for member in self.asn1_members_backtrace:
+            location += make_camel_case(member)
 
         return location
 
@@ -287,38 +283,57 @@ class Generator(object):
             lines = ['    let length: u32;']
 
         return [
-            'struct {'
+            '#[derive(Debug, Default, PartialEq, Copy, Clone)]',
+            'pub struct {} {{'.format(self.location)
         ] + lines + [
-            '    uint8_t buf[{}];'.format(checker.maximum),
+            '    pub buf: [u8; {}]'.format(checker.maximum),
             '}'
         ]
 
     def format_sequence(self, type_, checker):
+        helper_lines = []
         lines = []
 
         for member in type_.root_members:
             member_checker = self.get_member_checker(checker, member.name)
 
             if member.optional:
-                lines += ['is_{}_present: bool;'.format(member.name)]
+                lines += ['pub is_{}_present: bool,'.format(member.name)]
 
             with self.members_backtrace_push(member.name):
                 member_lines = self.format_type(member, member_checker)
+                member_location = self.location
 
-            if member_lines:
-                # member_lines[-1] += ' {};'.format(member.name)
-                member_lines[-1] = '{}: {};'.format(member.name,
-                                                    member_lines[-1])
+            if not member_lines:
+                continue
+
+            if is_inline_member_lines(member_lines):
+                member_lines[-1] = 'pub {}: {},'.format(member.name,
+                                                        member_lines[-1])
+            else:
+                helper_lines += member_lines + ['']
+                member_lines = ['pub {}: {},'.format(member.name,
+                                                     member_location)]
 
             lines += member_lines
 
-        return ['struct {'] + indent_lines(lines) + ['}']
+        if lines:
+            lines[-1] = lines[-1][:-1]
+
+        return helper_lines + [
+            '#[derive(Debug, Default, PartialEq, Copy, Clone)]',
+            'pub struct {} {{'.format(self.location)
+        ] + indent_lines(lines) + [
+            '}'
+        ]
 
     def format_sequence_of(self, type_, checker):
         if not checker.is_bound():
             raise self.error('SEQUENCE OF has no maximum length.')
 
-        lines = self.format_type(type_.element_type, checker.element_type)
+        with self.asn1_members_backtrace_push('elem'):
+            lines = self.format_type(type_.element_type,
+                                     checker.element_type)
 
         if lines:
             lines[-1] += ' elements[{}];'.format(checker.maximum)
@@ -333,17 +348,22 @@ class Generator(object):
         return ['struct {'] + indent_lines(length_lines + lines) + ['}']
 
     def format_enumerated(self, type_):
-        lines = ['enum {}_e'.format(self.location)]
-
-        values = [
-            '    {}_{}_e'.format(self.location, value)
+        lines = [
+            '#[derive(Debug, PartialEq, Copy, Clone)]',
+            'pub enum {} {{'.format(self.location)
+        ] + [
+            '    {},'.format(make_camel_case(value))
             for value in self.get_enumerated_values(type_)
-        ]
-        self.helper_lines += [
-            'enum {}_e {{'.format(self.location)
-        ] + join_lines(values, ',') + [
-            '};',
-            ''
+        ] + [
+            '}',
+            '',
+            'impl Default for {} {{'.format(self.location),
+            '    fn default() -> Self {',
+            '        {}::{}'.format(self.location,
+                                    self.get_enumerated_values(type_)[0].upper()),
+            '    }',
+            '}'
+
         ]
 
         return lines
@@ -453,15 +473,11 @@ class Generator(object):
         if not lines:
             lines = ['dummy: u8;']
 
-        lines = indent_lines(lines)
-
         if self.helper_lines:
             self.helper_lines.append('')
 
-        return TYPE_DECLARATION_FMT.format(namespace=self.namespace,
-                                           module_name=self.module_name,
+        return TYPE_DECLARATION_FMT.format(module_name=self.module_name,
                                            type_name=self.type_name,
-                                           helper_types='\n'.join(self.helper_lines),
                                            members='\n'.join(lines))
 
     def generate_definition(self, compiled_type):
@@ -552,6 +568,10 @@ def camel_to_snake_case(value):
     return value
 
 
+def make_camel_case(value):
+    return value[0].upper() + value[1:]
+
+
 def join_lines(lines, suffix):
     return[line + suffix for line in lines[:-1]] + lines[-1:]
 
@@ -617,3 +637,7 @@ def sort_user_types_by_used_user_types(user_types):
         reversed_sorted_user_types.insert(insert_index, user_type)
 
     return reversed(reversed_sorted_user_types)
+
+
+def is_inline_member_lines(member_lines):
+    return len(member_lines) == 1

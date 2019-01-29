@@ -317,6 +317,47 @@ impl RustSourceA {
     }
 }
 
+/// Type AB in module RustSource.
+#[derive(Debug, Default, PartialEq, Copy, Clone)]
+pub struct RustSourceAB {
+    pub a: i8,
+    pub b: u16
+}
+
+impl RustSourceAB {
+    pub fn encode(&mut self, mut dst: &mut [u8]) -> Result<usize, Error> {
+        let mut encoder = Encoder::new(&mut dst);
+
+        self.encode_inner(&mut encoder);
+
+        encoder.get_result()
+    }
+
+    pub fn decode(&mut self, src: &[u8]) -> Result<usize, Error> {
+        let mut decoder = Decoder::new(&src);
+
+        self.decode_inner(&mut decoder);
+
+        decoder.get_result()
+    }
+
+    fn encode_inner(&mut self, encoder: &mut Encoder) {
+        encoder.append_non_negative_binary_integer(
+            (self.a - -1) as u64,
+            1);
+        encoder.append_non_negative_binary_integer(
+            (self.b - 10000) as u64,
+            10);
+    }
+
+    fn decode_inner(&mut self, decoder: &mut Decoder) {
+        self.a = decoder.read_non_negative_binary_integer(1) as i8;
+        self.a += -1;
+        self.b = decoder.read_non_negative_binary_integer(10) as u16;
+        self.b += 10000;
+    }
+}
+
 /// Type D in module RustSource.
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum RustSourceDElemGH {
