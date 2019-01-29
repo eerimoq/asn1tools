@@ -4,38 +4,36 @@ from ...errors import Error
 
 
 TYPE_DECLARATION_FMT = '''\
-// Type {type_name} in module {module_name}.
+/// Type {type_name} in module {module_name}.
 {helper_types}\
 struct {module_name}{type_name} {{
 {members}
 }};
 '''
 
-DEFINITION_FMT = '''\
+DEFINITION_FMT = '''
 impl {module_name}{type_name} {{
-    pub fn to_bytes(&mut self,
-                    dst: &mut [u8])
-                    -> Result<usize, &'static str> {{
+    pub fn encode(&mut self, dst: &mut [u8]) -> Result<usize, Error> {{
         let mut encoder = Encoder::new(&mut dst);
 
-        self.to_bytes_inner(&mut encoder);
+        self.encode_inner(&mut encoder);
 
-        return encoder.get_result();
+        encoder.get_result()
     }}
 
-    pub fn from_bytes(&mut self, src: &[u8]) -> Result<usize, &'static str> {{
+    pub fn decode(&mut self, src: &[u8]) -> Result<usize, Error> {{
         let mut decoder = Decoder::new(&src);
 
-        self.from_bytes_inner(&mut decoder);
+        self.decode_inner(&mut decoder);
 
-        return decoder.get_result();
+        decoder.get_result()
     }}
 
-    fn to_bytes_inner(&mut self, encoder: &mut Encoder) {{
+    fn encode_inner(&mut self, encoder: &mut Encoder) {{
 {encode_body}\
     }}
 
-    fn from_bytes_inner(&mut self, decoder: &mut Decoder) {{
+    fn decode_inner(&mut self, decoder: &mut Decoder) {{
 {decode_body}\
     }}
 }}
@@ -51,14 +49,14 @@ pub enum Error {
     OutOfMemory
 }
 
-pub struct Encoder<'a> {
+struct Encoder<'a> {
     buf: &'a mut [u8],
     size: usize,
     pos: usize,
     error: Option<Error>
 }
 
-pub struct Decoder<'a> {
+struct Decoder<'a> {
     buf: &'a[u8],
     size: usize,
     pos: usize,
@@ -103,13 +101,11 @@ class _UserType(object):
     def __init__(self,
                  type_name,
                  module_name,
-                 type_declaration,
-                 definition,
+                 type_code,
                  used_user_types):
         self.type_name = type_name
         self.module_name = module_name
-        self.type_declaration = type_declaration
-        self.definition = definition
+        self.type_code = type_code
         self.used_user_types = used_user_types
 
 
@@ -246,7 +242,7 @@ class Generator(object):
 
         raise Error('No member checker found for {}.'.format(name))
 
-    def add_unique_variable(self, fmt, name, variable_lines=None):
+    def add_unique_variable(self, name):
         if name in self.base_variables:
             try:
                 suffix = self.used_suffixes_by_base_variables[name]
@@ -260,23 +256,7 @@ class Generator(object):
             self.base_variables.add(name)
             unique_name = name
 
-        line = fmt.format(unique_name)
-
-        if variable_lines is None:
-            self.encode_variable_lines.append(line)
-            self.decode_variable_lines.append(line)
-        elif variable_lines == 'encode':
-            self.encode_variable_lines.append(line)
-        else:
-            self.decode_variable_lines.append(line)
-
         return unique_name
-
-    def add_unique_encode_variable(self, fmt, name):
-        return self.add_unique_variable(fmt, name, 'encode')
-
-    def add_unique_decode_variable(self, fmt, name):
-        return self.add_unique_variable(fmt, name, 'decode')
 
     def error(self, message):
         return Error('{}: {}'.format(self.location_error(), message))
@@ -478,13 +458,11 @@ class Generator(object):
         if self.helper_lines:
             self.helper_lines.append('')
 
-        return [
-            TYPE_DECLARATION_FMT.format(namespace=self.namespace,
-                                        module_name=self.module_name,
-                                        type_name=self.type_name,
-                                        helper_types='\n'.join(self.helper_lines),
-                                        members='\n'.join(lines))
-        ]
+        return TYPE_DECLARATION_FMT.format(namespace=self.namespace,
+                                           module_name=self.module_name,
+                                           type_name=self.type_name,
+                                           helper_types='\n'.join(self.helper_lines),
+                                           members='\n'.join(lines))
 
     def generate_definition(self, compiled_type):
         encode_lines, decode_lines = self.generate_definition_inner_process(
@@ -516,33 +494,24 @@ class Generator(object):
                 self.reset_type()
 
                 type_declaration = self.generate_type_declaration(compiled_type)
-
-                if not type_declaration:
-                    continue
-
                 definition = self.generate_definition(compiled_type)
-
                 user_type = _UserType(type_name,
                                       module_name,
-                                      type_declaration,
-                                      definition,
+                                      type_declaration + definition,
                                       self.used_user_types)
                 user_types.append(user_type)
 
         user_types = sort_user_types_by_used_user_types(user_types)
 
-        type_declarations = []
-        definitions = []
+        types_code = []
 
         for user_type in user_types:
-            type_declarations.extend(user_type.type_declaration)
-            definitions.append(user_type.definition)
+            types_code.append(user_type.type_code)
 
-        type_declarations = '\n'.join(type_declarations)
-        definitions = '\n'.join(definitions)
-        helpers = '\n'.join(self.generate_helpers(definitions))
+        types_code = '\n'.join(types_code)
+        helpers = '\n'.join(self.generate_helpers(types_code))
 
-        return type_declarations, helpers, definitions
+        return helpers, types_code
 
     def format_type(self, type_, checker):
         raise NotImplementedError('To be implemented by subclasses.')

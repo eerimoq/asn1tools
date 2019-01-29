@@ -443,8 +443,7 @@ class _Generator(Generator):
                     'self.{} = decoder.read_bit() != 0;'.format(
                         name))
             elif member.default is not None:
-                unique_is_present = self.add_unique_decode_variable('bool {};',
-                                                                    'is_present')
+                unique_is_present = self.add_unique_variable('is_present')
                 member_name_to_is_present[member.name] = unique_is_present
                 encode_lines.append(
                     'encoder.append_bit((self.{}{} != {}) as u8);'.format(
@@ -516,11 +515,11 @@ class _Generator(Generator):
 
     def format_user_type_inner(self):
         encode_lines = [
-            'self.{}.to_bytes_inner(&mut encoder);'.format(
+            'self.{}.encode_inner(&mut encoder);'.format(
                 self.location_inner())
         ]
         decode_lines = [
-            'self.{}.from_bytes_inner(&mut decoder);'.format(
+            'self.{}.decode_inner(&mut decoder);'.format(
                 self.location_inner())
         ]
 
@@ -529,10 +528,7 @@ class _Generator(Generator):
     def format_choice_inner(self, type_, checker):
         encode_lines = []
         decode_lines = []
-        type_name = self.format_type_name(0, max(type_.root_index_to_member))
-        unique_choice = self.add_unique_decode_variable(
-            '{} {{}};'.format(type_name),
-            'choice')
+        unique_choice = self.add_unique_variable('choice')
         choice = '{}choice'.format(self.location_inner('', '.'))
 
         for member in type_.root_index_to_member.values():
@@ -622,9 +618,7 @@ class _Generator(Generator):
         )
 
     def format_sequence_of_inner(self, type_, checker):
-        type_name = self.format_type_name(0, checker.maximum)
-        unique_i = self.add_unique_variable('{} {{}};'.format(type_name),
-                                            'i')
+        unique_i = self.add_unique_variable('i')
 
         with self.c_members_backtrace_push('elements[{}]'.format(unique_i)):
             encode_lines, decode_lines = self.format_type_inner(

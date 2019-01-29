@@ -9,14 +9,14 @@ pub enum Error {
     OutOfMemory
 }
 
-pub struct Encoder<'a> {
+struct Encoder<'a> {
     buf: &'a mut [u8],
     size: usize,
     pos: usize,
     error: Option<Error>
 }
 
-pub struct Decoder<'a> {
+struct Decoder<'a> {
     buf: &'a[u8],
     size: usize,
     pos: usize,
@@ -253,468 +253,444 @@ impl<'a> Decoder<'a> {
     }
 }
 
-/// Module RustSource.
-pub mod rust_source {
-    /// Type A.
-    pub mod a {
-        use super::super::{Error, Encoder, Decoder};
+/// Type A in module RustSource.
+#[derive(Debug, Default, PartialEq, Copy, Clone)]
+pub struct RustSourceAJ {
+    pub buf: [u8; 11]
+}
 
-        #[derive(Debug, Default, PartialEq, Copy, Clone)]
-        pub struct AJ {
-            pub buf: [u8; 11]
-        }
+#[derive(Debug, Default, PartialEq, Copy, Clone)]
+pub struct RustSourceA {
+    pub a: i8,
+    pub b: i16,
+    pub c: i32,
+    pub d: i64,
+    pub e: u8,
+    pub f: u16,
+    pub g: u32,
+    pub h: u64,
+    pub i: bool,
+    pub j: RustSourceAJ
+}
 
-        #[derive(Debug, Default, PartialEq, Copy, Clone)]
-        pub struct A {
-            pub a: i8,
-            pub b: i16,
-            pub c: i32,
-            pub d: i64,
-            pub e: u8,
-            pub f: u16,
-            pub g: u32,
-            pub h: u64,
-            pub i: bool,
-            pub j: AJ
-        }
+impl RustSourceA {
+    pub fn encode(&mut self, mut dst: &mut [u8]) -> Result<usize, Error> {
+        let mut encoder = Encoder::new(&mut dst);
 
-        impl A {
-            pub fn encode(&mut self, mut dst: &mut [u8]) -> Result<usize, Error> {
-                let mut encoder = Encoder::new(&mut dst);
+        self.encode_inner(&mut encoder);
 
-                self.encode_inner(&mut encoder);
+        encoder.get_result()
+    }
 
-                encoder.get_result()
+    pub fn decode(&mut self, src: &[u8]) -> Result<usize, Error> {
+        let mut decoder = Decoder::new(&src);
+
+        self.decode_inner(&mut decoder);
+
+        decoder.get_result()
+    }
+
+    fn encode_inner(&mut self, encoder: &mut Encoder) {
+        encoder.append_i8(self.a);
+        encoder.append_i16(self.b);
+        encoder.append_i32(self.c);
+        encoder.append_i64(self.d);
+        encoder.append_u8(self.e);
+        encoder.append_u16(self.f);
+        encoder.append_u32(self.g);
+        encoder.append_u64(self.h);
+        encoder.append_bool(self.i);
+        encoder.append_bytes(&self.j.buf);
+    }
+
+    fn decode_inner(&mut self, decoder: &mut Decoder) {
+        self.a = decoder.read_i8();
+        self.b = decoder.read_i16();
+        self.c = decoder.read_i32();
+        self.d = decoder.read_i64();
+        self.e = decoder.read_u8();
+        self.f = decoder.read_u16();
+        self.g = decoder.read_u32();
+        self.h = decoder.read_u64();
+        self.i = decoder.read_bool();
+        decoder.read_bytes(&mut self.j.buf);
+    }
+}
+
+/// Type D in module RustSource.
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum RustSourceDElemGH {
+    I,
+    J,
+    K
+}
+
+impl Default for RustSourceDElemGH {
+    fn default() -> Self {
+        RustSourceDElemGH::I
+    }
+}
+
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum RustSourceDElemAB {
+    C(u8),
+    D(bool)
+}
+
+impl Default for RustSourceDElemAB {
+    fn default() -> Self {
+        RustSourceDElemAB::C(u8::default())
+    }
+}
+
+#[derive(Debug, Default, PartialEq, Copy, Clone)]
+pub struct RustSourceDElemAE {
+    pub length: u8
+}
+
+#[derive(Debug, Default, PartialEq, Copy, Clone)]
+pub struct RustSourceDElemA {
+    pub b: RustSourceDElemAB,
+    pub e: RustSourceDElemAE
+}
+
+#[derive(Debug, Default, PartialEq, Copy, Clone)]
+pub struct RustSourceDElemGL {
+    pub length: u8,
+    pub buf: [u8; 2]
+}
+
+#[derive(Debug, Default, PartialEq, Copy, Clone)]
+pub struct RustSourceDElemG {
+    pub h: RustSourceDElemGH,
+    pub l: RustSourceDElemGL
+}
+
+#[derive(Debug, Default, PartialEq, Copy, Clone)]
+pub struct RustSourceDElemMPQ {
+    pub buf: [u8; 5]
+}
+
+#[derive(Debug, Default, PartialEq, Copy, Clone)]
+pub struct RustSourceDElemMP {
+    pub q: RustSourceDElemMPQ,
+    pub is_r_present: bool,
+    pub r: bool
+}
+
+#[derive(Debug, Default, PartialEq, Copy, Clone)]
+pub struct RustSourceDElemM {
+    pub is_n_present: bool,
+    pub n: bool,
+    pub o: i8,
+    pub is_p_present: bool,
+    pub p: RustSourceDElemMP
+}
+
+#[derive(Debug, Default, PartialEq, Copy, Clone)]
+pub struct RustSourceDElem {
+    pub a: RustSourceDElemA,
+    pub g: RustSourceDElemG,
+    pub m: RustSourceDElemM
+}
+
+#[derive(Debug, Default, PartialEq, Copy, Clone)]
+pub struct RustSourceD {
+    pub length: u8,
+    pub elements: [RustSourceDElem; 10]
+}
+
+impl RustSourceD {
+    pub fn encode(&mut self, mut dst: &mut [u8]) -> Result<usize, Error> {
+        let mut encoder = Encoder::new(&mut dst);
+
+        self.encode_inner(&mut encoder);
+
+        encoder.get_result()
+    }
+
+    pub fn decode(&mut self, src: &[u8]) -> Result<usize, Error> {
+        let mut decoder = Decoder::new(&src);
+
+        self.decode_inner(&mut decoder);
+
+        decoder.get_result()
+    }
+
+    fn encode_inner(&mut self, encoder: &mut Encoder) {
+        encoder.append_non_negative_binary_integer(
+            self.length as u64 - 1,
+            4);
+
+        for i in 0..self.length as usize {
+            match self.elements[i].a.b {
+                RustSourceDElemAB::C(value) => {
+                    encoder.append_non_negative_binary_integer(0, 1);
+                    encoder.append_non_negative_binary_integer(
+                        value as u64 - 0,
+                        1);
+                },
+                RustSourceDElemAB::D(value) => {
+                    encoder.append_non_negative_binary_integer(1, 1);
+                    encoder.append_bool(value);
+                }
             }
 
-            pub fn decode(&mut self, src: &[u8]) -> Result<usize, Error> {
-                let mut decoder = Decoder::new(&src);
+            encoder.append_non_negative_binary_integer(
+                self.elements[i].a.e.length as u64 - 3,
+                1);
+            encoder.append_non_negative_binary_integer(
+                self.elements[i].g.h as u64,
+                2);
+            encoder.append_non_negative_binary_integer(
+                self.elements[i].g.l.length as u64 - 1,
+                1);
+            encoder.append_bytes(
+                &mut self.elements[i].g.l.buf[0..self.elements[i].g.l.length as usize]);
+            encoder.append_bool(self.elements[i].m.is_n_present);
+            encoder.append_bool(self.elements[i].m.o != 3);
+            encoder.append_bool(self.elements[i].m.is_p_present);
 
-                self.decode_inner(&mut decoder);
-
-                decoder.get_result()
+            if self.elements[i].m.is_n_present {
+                encoder.append_bool(self.elements[i].m.n);
             }
 
-            pub fn encode_inner(&mut self, encoder: &mut Encoder) {
-                encoder.append_i8(self.a);
-                encoder.append_i16(self.b);
-                encoder.append_i32(self.c);
-                encoder.append_i64(self.d);
-                encoder.append_u8(self.e);
-                encoder.append_u16(self.f);
-                encoder.append_u32(self.g);
-                encoder.append_u64(self.h);
-                encoder.append_bool(self.i);
-                encoder.append_bytes(&self.j.buf);
+            if self.elements[i].m.o != 3 {
+                encoder.append_non_negative_binary_integer(
+                    (self.elements[i].m.o - -2) as u64,
+                    3);
             }
 
-            pub fn decode_inner(&mut self, decoder: &mut Decoder) {
-                self.a = decoder.read_i8();
-                self.b = decoder.read_i16();
-                self.c = decoder.read_i32();
-                self.d = decoder.read_i64();
-                self.e = decoder.read_u8();
-                self.f = decoder.read_u16();
-                self.g = decoder.read_u32();
-                self.h = decoder.read_u64();
-                self.i = decoder.read_bool();
-                decoder.read_bytes(&mut self.j.buf);
+            if self.elements[i].m.is_p_present {
+                encoder.append_bool(self.elements[i].m.p.is_r_present);
+                encoder.append_bytes(&self.elements[i].m.p.q.buf);
+
+                if self.elements[i].m.p.is_r_present {
+                    encoder.append_bool(self.elements[i].m.p.r);
+                }
             }
         }
     }
 
-    /// Type D.
-    pub mod d {
-        use super::super::{Error, Encoder, Decoder};
+    fn decode_inner(&mut self, decoder: &mut Decoder) {
+        self.length = decoder.read_non_negative_binary_integer(4) as u8;
+        self.length += 1;
 
-        #[derive(Debug, PartialEq, Copy, Clone)]
-        pub enum DElemGH {
-            I,
-            J,
-            K
+        if self.length > 10 {
+            decoder.abort(Error::BadLength);
+
+            return;
         }
 
-        impl Default for DElemGH {
-            fn default() -> Self {
-                DElemGH::I
-            }
-        }
-
-        #[derive(Debug, PartialEq, Copy, Clone)]
-        pub enum DElemAB {
-            C(u8),
-            D(bool)
-        }
-
-        impl Default for DElemAB {
-            fn default() -> Self {
-                DElemAB::C(u8::default())
-            }
-        }
-
-        #[derive(Debug, Default, PartialEq, Copy, Clone)]
-        pub struct DElemAE {
-            pub length: u8
-        }
-
-        #[derive(Debug, Default, PartialEq, Copy, Clone)]
-        pub struct DElemA {
-            pub b: DElemAB,
-            pub e: DElemAE
-        }
-
-        #[derive(Debug, Default, PartialEq, Copy, Clone)]
-        pub struct DElemGL {
-            pub length: u8,
-            pub buf: [u8; 2]
-        }
-
-        #[derive(Debug, Default, PartialEq, Copy, Clone)]
-        pub struct DElemG {
-            pub h: DElemGH,
-            pub l: DElemGL
-        }
-
-        #[derive(Debug, Default, PartialEq, Copy, Clone)]
-        pub struct DElemMPQ {
-            pub buf: [u8; 5]
-        }
-
-        #[derive(Debug, Default, PartialEq, Copy, Clone)]
-        pub struct DElemMP {
-            pub q: DElemMPQ,
-            pub is_r_present: bool,
-            pub r: bool
-        }
-
-        #[derive(Debug, Default, PartialEq, Copy, Clone)]
-        pub struct DElemM {
-            pub is_n_present: bool,
-            pub n: bool,
-            pub o: i8,
-            pub is_p_present: bool,
-            pub p: DElemMP
-        }
-
-        #[derive(Debug, Default, PartialEq, Copy, Clone)]
-        pub struct DElem {
-            pub a: DElemA,
-            pub g: DElemG,
-            pub m: DElemM
-        }
-
-        #[derive(Debug, Default, PartialEq, Copy, Clone)]
-        pub struct D {
-            pub length: u8,
-            pub elements: [DElem; 10]
-        }
-
-        impl D {
-            pub fn encode(&mut self, mut dst: &mut [u8]) -> Result<usize, Error> {
-                let mut encoder = Encoder::new(&mut dst);
-
-                self.encode_inner(&mut encoder);
-
-                encoder.get_result()
-            }
-
-            pub fn decode(&mut self, src: &[u8]) -> Result<usize, Error> {
-                let mut decoder = Decoder::new(&src);
-
-                self.decode_inner(&mut decoder);
-
-                decoder.get_result()
-            }
-
-            pub fn encode_inner(&mut self, encoder: &mut Encoder) {
-                encoder.append_non_negative_binary_integer(
-                    self.length as u64 - 1,
-                    4);
-
-                for i in 0..self.length as usize {
-                    match self.elements[i].a.b {
-                        DElemAB::C(value) => {
-                            encoder.append_non_negative_binary_integer(0, 1);
-                            encoder.append_non_negative_binary_integer(
-                                value as u64 - 0,
-                                1);
-                        },
-                        DElemAB::D(value) => {
-                            encoder.append_non_negative_binary_integer(1, 1);
-                            encoder.append_bool(value);
-                        }
-                    }
-
-                    encoder.append_non_negative_binary_integer(
-                        self.elements[i].a.e.length as u64 - 3,
-                        1);
-                    encoder.append_non_negative_binary_integer(
-                        self.elements[i].g.h as u64,
-                        2);
-                    encoder.append_non_negative_binary_integer(
-                        self.elements[i].g.l.length as u64 - 1,
-                        1);
-                    encoder.append_bytes(
-                        &mut self.elements[i].g.l.buf[0..self.elements[i].g.l.length as usize]);
-                    encoder.append_bool(self.elements[i].m.is_n_present);
-                    encoder.append_bool(self.elements[i].m.o != 3);
-                    encoder.append_bool(self.elements[i].m.is_p_present);
-
-                    if self.elements[i].m.is_n_present {
-                        encoder.append_bool(self.elements[i].m.n);
-                    }
-
-                    if self.elements[i].m.o != 3 {
-                        encoder.append_non_negative_binary_integer(
-                            (self.elements[i].m.o - -2) as u64,
-                            3);
-                    }
-
-                    if self.elements[i].m.is_p_present {
-                        encoder.append_bool(self.elements[i].m.p.is_r_present);
-                        encoder.append_bytes(&self.elements[i].m.p.q.buf);
-
-                        if self.elements[i].m.p.is_r_present {
-                            encoder.append_bool(self.elements[i].m.p.r);
-                        }
-                    }
-                }
-            }
-
-            pub fn decode_inner(&mut self, decoder: &mut Decoder) {
-                self.length = decoder.read_non_negative_binary_integer(4) as u8;
-                self.length += 1;
-
-                if self.length > 10 {
-                    decoder.abort(Error::BadLength);
+        for i in 0..self.length as usize {
+            match decoder.read_non_negative_binary_integer(1) {
+                0 => {
+                    self.elements[i].a.b =
+                        RustSourceDElemAB::C(decoder.read_non_negative_binary_integer(1) as u8 + 0);
+                },
+                1 => {
+                    self.elements[i].a.b =
+                        RustSourceDElemAB::D(decoder.read_bool());
+                },
+                _ => {
+                    decoder.abort(Error::BadChoice);
 
                     return;
                 }
-
-                for i in 0..self.length as usize {
-                    match decoder.read_non_negative_binary_integer(1) {
-                        0 => {
-                            self.elements[i].a.b =
-                                DElemAB::C(decoder.read_non_negative_binary_integer(1) as u8 + 0);
-                        },
-                        1 => {
-                            self.elements[i].a.b =
-                                DElemAB::D(decoder.read_bool());
-                        },
-                        _ => {
-                            decoder.abort(Error::BadChoice);
-
-                            return;
-                        }
-                    }
-
-                    self.elements[i].a.e.length =
-                        decoder.read_non_negative_binary_integer(1) as u8;
-                    self.elements[i].a.e.length += 3;
-                    self.elements[i].g.h =
-                        match decoder.read_non_negative_binary_integer(2) {
-                            0 => DElemGH::I,
-                            1 => DElemGH::J,
-                            2 => DElemGH::K,
-                            _ => {
-                                decoder.abort(Error::BadEnum);
-
-                                return;
-                            }
-                        };
-                    self.elements[i].g.l.length =
-                        decoder.read_non_negative_binary_integer(1) as u8;
-                    self.elements[i].g.l.length += 1;
-                    decoder.read_bytes(
-                        &mut self.elements[i].g.l.buf[0..self.elements[i].g.l.length as usize]);
-                    self.elements[i].m.is_n_present = decoder.read_bool();
-                    let is_present = decoder.read_bool();
-                    self.elements[i].m.is_p_present = decoder.read_bool();
-
-                    if self.elements[i].m.is_n_present {
-                        self.elements[i].m.n = decoder.read_bool();
-                    }
-
-                    if is_present {
-                        self.elements[i].m.o =
-                            decoder.read_non_negative_binary_integer(3) as i8;
-                        self.elements[i].m.o += -2;
-                    } else {
-                        self.elements[i].m.o = 3;
-                    }
-
-                    if self.elements[i].m.is_p_present {
-                        self.elements[i].m.p.is_r_present = decoder.read_bool();
-                        decoder.read_bytes(
-                            &mut self.elements[i].m.p.q.buf);
-
-                        if self.elements[i].m.p.is_r_present {
-                            self.elements[i].m.p.r = decoder.read_bool();
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /// Type B.
-    pub mod b {
-        use super::super::{Error, Encoder, Decoder};
-
-        #[derive(Debug, PartialEq, Copy, Clone)]
-        pub enum B {
-            A(i8),
-            B(super::a::A),
-            C
-        }
-
-        impl Default for B {
-            fn default() -> Self {
-                B::A(i8::default())
-            }
-        }
-
-        impl B {
-            pub fn encode(&mut self, mut dst: &mut [u8]) -> Result<usize, Error> {
-                let mut encoder = Encoder::new(&mut dst);
-
-                self.encode_inner(&mut encoder);
-
-                encoder.get_result()
             }
 
-            pub fn decode(&mut self, src: &[u8]) -> Result<usize, Error> {
-                let mut decoder = Decoder::new(&src);
-
-                self.decode_inner(&mut decoder);
-
-                decoder.get_result()
-            }
-
-            pub fn encode_inner(&mut self, encoder: &mut Encoder) {
-                match self {
-                    B::A(value) => {
-                        encoder.append_non_negative_binary_integer(0, 2);
-                        encoder.append_i8(*value);
-                    },
-                    B::B(value) => {
-                        encoder.append_non_negative_binary_integer(1, 2);
-                        value.encode_inner(encoder);
-                    },
-                    B::C => {
-                        encoder.append_non_negative_binary_integer(2, 2);
-                    }
-                }
-            }
-
-            pub fn decode_inner(&mut self, decoder: &mut Decoder) {
-                let choice = decoder.read_non_negative_binary_integer(2);
-
-                match choice {
-                    0 => {
-                        *self = B::A(decoder.read_i8());
-                    },
-                    1 => {
-                        *self = B::B(Default::default());
-
-                        if let B::B(ref mut a) = self {
-                            a.decode_inner(decoder);
-                        }
-                    },
-                    2 => {
-                        *self = B::C;
-                    }
+            self.elements[i].a.e.length =
+                decoder.read_non_negative_binary_integer(1) as u8;
+            self.elements[i].a.e.length += 3;
+            self.elements[i].g.h =
+                match decoder.read_non_negative_binary_integer(2) {
+                    0 => RustSourceDElemGH::I,
+                    1 => RustSourceDElemGH::J,
+                    2 => RustSourceDElemGH::K,
                     _ => {
-                        decoder.abort(Error::BadChoice);
+                        decoder.abort(Error::BadEnum);
 
                         return;
                     }
+                };
+            self.elements[i].g.l.length =
+                decoder.read_non_negative_binary_integer(1) as u8;
+            self.elements[i].g.l.length += 1;
+            decoder.read_bytes(
+                &mut self.elements[i].g.l.buf[0..self.elements[i].g.l.length as usize]);
+            self.elements[i].m.is_n_present = decoder.read_bool();
+            let is_present = decoder.read_bool();
+            self.elements[i].m.is_p_present = decoder.read_bool();
+
+            if self.elements[i].m.is_n_present {
+                self.elements[i].m.n = decoder.read_bool();
+            }
+
+            if is_present {
+                self.elements[i].m.o =
+                    decoder.read_non_negative_binary_integer(3) as i8;
+                self.elements[i].m.o += -2;
+            } else {
+                self.elements[i].m.o = 3;
+            }
+
+            if self.elements[i].m.is_p_present {
+                self.elements[i].m.p.is_r_present = decoder.read_bool();
+                decoder.read_bytes(
+                    &mut self.elements[i].m.p.q.buf);
+
+                if self.elements[i].m.p.is_r_present {
+                    self.elements[i].m.p.r = decoder.read_bool();
                 }
             }
         }
     }
+}
 
-    /// Type E.
-    pub mod e {
-        use super::super::{Error, Encoder, Decoder};
+/// Type B in module RustSource.
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum RustSourceB {
+    A(i8),
+    B(RustSourceA),
+    C
+}
 
-        #[derive(Debug, PartialEq, Copy, Clone)]
-        pub enum EAB {
-            C(bool)
-        }
+impl Default for RustSourceB {
+    fn default() -> Self {
+        RustSourceB::A(i8::default())
+    }
+}
 
-        impl Default for EAB {
-            fn default() -> Self {
-                EAB::C(bool::default())
+impl RustSourceB {
+    pub fn encode(&mut self, mut dst: &mut [u8]) -> Result<usize, Error> {
+        let mut encoder = Encoder::new(&mut dst);
+
+        self.encode_inner(&mut encoder);
+
+        encoder.get_result()
+    }
+
+    pub fn decode(&mut self, src: &[u8]) -> Result<usize, Error> {
+        let mut decoder = Decoder::new(&src);
+
+        self.decode_inner(&mut decoder);
+
+        decoder.get_result()
+    }
+
+    fn encode_inner(&mut self, encoder: &mut Encoder) {
+        match self {
+            RustSourceB::A(value) => {
+                encoder.append_non_negative_binary_integer(0, 2);
+                encoder.append_i8(*value);
+            },
+            RustSourceB::B(value) => {
+                encoder.append_non_negative_binary_integer(1, 2);
+                value.encode_inner(encoder);
+            },
+            RustSourceB::C => {
+                encoder.append_non_negative_binary_integer(2, 2);
             }
         }
+    }
 
-        #[derive(Debug, PartialEq, Copy, Clone)]
-        pub enum EA {
-            B(EAB)
-        }
+    fn decode_inner(&mut self, decoder: &mut Decoder) {
+        let choice = decoder.read_non_negative_binary_integer(2);
 
-        impl Default for EA {
-            fn default() -> Self {
-                EA::B(EAB::default())
+        match choice {
+            0 => {
+                *self = RustSourceB::A(decoder.read_i8());
+            },
+            1 => {
+                *self = RustSourceB::B(Default::default());
+
+                if let RustSourceB::B(ref mut a) = self {
+                    a.decode_inner(decoder);
+                }
+            },
+            2 => {
+                *self = RustSourceB::C;
+            }
+            _ => {
+                decoder.abort(Error::BadChoice);
+
+                return;
             }
         }
+    }
+}
 
-        #[derive(Debug, Default, PartialEq, Copy, Clone)]
-        pub struct E {
-            pub a: EA
-        }
+/// Type E in module RustSource.
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum RustSourceEAB {
+    C(bool)
+}
 
-        impl E {
-            pub fn encode(&mut self, mut dst: &mut [u8]) -> Result<usize, Error> {
-                let mut encoder = Encoder::new(&mut dst);
+impl Default for RustSourceEAB {
+    fn default() -> Self {
+        RustSourceEAB::C(bool::default())
+    }
+}
 
-                self.encode_inner(&mut encoder);
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum RustSourceEA {
+    B(RustSourceEAB)
+}
 
-                encoder.get_result()
-            }
+impl Default for RustSourceEA {
+    fn default() -> Self {
+        RustSourceEA::B(RustSourceEAB::default())
+    }
+}
 
-            pub fn decode(&mut self, src: &[u8]) -> Result<usize, Error> {
-                let mut decoder = Decoder::new(&src);
+#[derive(Debug, Default, PartialEq, Copy, Clone)]
+pub struct RustSourceE {
+    pub a: RustSourceEA
+}
 
-                self.decode_inner(&mut decoder);
+impl RustSourceE {
+    pub fn encode(&mut self, mut dst: &mut [u8]) -> Result<usize, Error> {
+        let mut encoder = Encoder::new(&mut dst);
 
-                decoder.get_result()
-            }
+        self.encode_inner(&mut encoder);
 
-            pub fn encode_inner(&mut self, encoder: &mut Encoder) {
-                match self.a {
-                    EA::B(value) => {
+        encoder.get_result()
+    }
+
+    pub fn decode(&mut self, src: &[u8]) -> Result<usize, Error> {
+        let mut decoder = Decoder::new(&src);
+
+        self.decode_inner(&mut decoder);
+
+        decoder.get_result()
+    }
+
+    fn encode_inner(&mut self, encoder: &mut Encoder) {
+        match self.a {
+            RustSourceEA::B(value) => {
+                encoder.append_non_negative_binary_integer(0, 0);
+
+                match value {
+                    RustSourceEAB::C(value_2) => {
                         encoder.append_non_negative_binary_integer(0, 0);
-
-                        match value {
-                            EAB::C(value_2) => {
-                                encoder.append_non_negative_binary_integer(0, 0);
-                                encoder.append_bool(value_2);
-                            }
-                        }
+                        encoder.append_bool(value_2);
                     }
                 }
             }
+        }
+    }
 
-            pub fn decode_inner(&mut self, decoder: &mut Decoder) {
-                let choice = decoder.read_non_negative_binary_integer(0);
+    fn decode_inner(&mut self, decoder: &mut Decoder) {
+        let choice = decoder.read_non_negative_binary_integer(0);
 
-                match choice {
+        match choice {
+            0 => {
+                let RustSourceEA::B(ref mut b) = self.a;
+                let choice_2 = decoder.read_non_negative_binary_integer(0);
+
+                match choice_2 {
                     0 => {
-                        let EA::B(ref mut b) = self.a;
-                        let choice_2 = decoder.read_non_negative_binary_integer(0);
-
-                        match choice_2 {
-                            0 => {
-                                *b = EAB::C(decoder.read_bool());
-                            },
-                            _ => {
-                                decoder.abort(Error::BadChoice);
-
-                                return;
-                            }
-                        }
+                        *b = RustSourceEAB::C(decoder.read_bool());
                     },
                     _ => {
                         decoder.abort(Error::BadChoice);
@@ -722,6 +698,11 @@ pub mod rust_source {
                         return;
                     }
                 }
+            },
+            _ => {
+                decoder.abort(Error::BadChoice);
+
+                return;
             }
         }
     }
