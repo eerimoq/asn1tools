@@ -530,8 +530,7 @@ impl RustSourceD {
                         RustSourceDElemAB::C(decoder.read_non_negative_binary_integer(1) as u8 + 0);
                 },
                 1 => {
-                    self.elements[i].a.b =
-                        RustSourceDElemAB::D(decoder.read_bool());
+                    self.elements[i].a.b = RustSourceDElemAB::D(decoder.read_bool());
                 },
                 _ => {
                     decoder.abort(Error::BadChoice);
@@ -636,9 +635,7 @@ impl RustSourceB {
     }
 
     fn decode_inner(&mut self, decoder: &mut Decoder) {
-        let choice = decoder.read_non_negative_binary_integer(2);
-
-        match choice {
+        match decoder.read_non_negative_binary_integer(2) {
             0 => {
                 *self = RustSourceB::A(decoder.read_i8());
             },
@@ -722,14 +719,11 @@ impl RustSourceE {
     }
 
     fn decode_inner(&mut self, decoder: &mut Decoder) {
-        let choice = decoder.read_non_negative_binary_integer(0);
-
-        match choice {
+        match decoder.read_non_negative_binary_integer(0) {
             0 => {
                 let RustSourceEA::B(ref mut b) = self.a;
-                let choice_2 = decoder.read_non_negative_binary_integer(0);
 
-                match choice_2 {
+                match decoder.read_non_negative_binary_integer(0) {
                     0 => {
                         *b = RustSourceEAB::C(decoder.read_bool());
                     },

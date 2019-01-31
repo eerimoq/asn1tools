@@ -9,6 +9,7 @@ from .utils import Generator
 from .utils import is_user_type
 from .utils import indent_lines
 from .utils import dedent_lines
+from .utils import make_camel_case
 from ...codecs import uper
 
 
@@ -347,7 +348,6 @@ class _Generator(Generator):
             lines = dedent_lines(lines)
         elif isinstance(type_, uper.Choice):
             lines = self.format_choice(type_, checker)
-            lines = dedent_lines(lines[1:-1])
         elif isinstance(type_, uper.OctetString):
             lines = self.format_octet_string(checker)[1:-1]
             lines = dedent_lines(lines)
@@ -498,7 +498,7 @@ class _Generator(Generator):
                 decode_lines += [
                     '',
                     'if self.{}length > {} {{'.format(location, checker.maximum),
-                    '    decoder.abort(EBADLENGTH);',
+                    '    decoder.abort(Error::BadLength);',
                     '',
                     '    return;',
                     '}',
@@ -535,11 +535,10 @@ class _Generator(Generator):
                                                      member.name)
 
             with self.asn1_members_backtrace_push(member.name):
-                with self.c_members_backtrace_push('value'):
-                    with self.c_members_backtrace_push(member.name):
-                        choice_encode_lines, choice_decode_lines = self.format_type_inner(
-                            member,
-                            member_checker)
+                with self.c_members_backtrace_push(member.name):
+                    choice_encode_lines, choice_decode_lines = self.format_type_inner(
+                        member,
+                        member_checker)
 
             index = type_.root_name_to_index[member.name]
 
@@ -549,39 +548,38 @@ class _Generator(Generator):
                     type_.root_number_of_bits)
             ] + choice_encode_lines
             encode_lines += [
-                '    {}_choice_{}_e => {{'.format(self.location, member.name)
+                '    {}({}) => {{'.format(make_camel_case(member.name),
+                                          unique_choice)
             ] + indent_lines(choice_encode_lines, 8) + [
-                '    }'
+                '    },'
             ]
 
             choice_decode_lines = [
-                'self.{} = {}_choice_{}_e;'.format(choice,
-                                                   self.location,
-                                                   member.name)
+                'self.{} = {}{};'.format(choice,
+                                         self.location,
+                                         make_camel_case(member.name))
             ] + choice_decode_lines
             decode_lines += [
                 '    {} => {{'.format(index)
             ] + indent_lines(choice_decode_lines, 8) + [
-                '    }'
+                '    },'
             ]
 
         encode_lines = [
             '',
-            'match self.{} {{'.format(choice)
+            'match self {'
         ] + encode_lines + [
-            '    _ => encoder.abort(EBADCHOICE);',
+            '    _ => encoder.abort(Error::BadChoice);',
             '}',
             ''
         ]
 
         decode_lines = [
-            '{} = decoder.read_non_negative_binary_integer({});'.format(
-                unique_choice,
-                type_.root_number_of_bits),
             '',
-            'match {} {{'.format(unique_choice)
+            'match decoder.read_non_negative_binary_integer({}) {{'.format(
+                type_.root_number_of_bits)
         ] + decode_lines + [
-            '    _ => decoder.abort(EBADCHOICE);',
+            '    _ => decoder.abort(Error::BadChoice);',
             '}',
             ''
         ]
@@ -649,7 +647,7 @@ class _Generator(Generator):
                                          checker.maximum):
                 first_decode_lines += [
                     'if self.{}length > {} {{'.format(location, checker.maximum),
-                    '    decoder.abort(EBADLENGTH);',
+                    '    decoder.abort(Error::BadLength);',
                     '',
                     '    return;',
                     '}',

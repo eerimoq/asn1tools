@@ -318,7 +318,7 @@ class Generator(object):
             lines += member_lines
 
         if lines:
-            lines[-1] = lines[-1][:-1]
+            lines[-1] = lines[-1].strip(',')
 
         return helper_lines + [
             '#[derive(Debug, Default, PartialEq, Copy, Clone)]',
@@ -369,50 +369,44 @@ class Generator(object):
         return lines
 
     def format_choice(self, type_, checker):
+        helper_lines = []
         lines = []
-        choices = []
 
         for member in self.get_choice_members(type_):
             member_checker = self.get_member_checker(checker,
                                                      member.name)
 
             with self.members_backtrace_push(member.name):
-                choice_lines = self.format_type(member, member_checker)
+                member_lines = self.format_type(member, member_checker)
+                member_location = self.location
 
-            if choice_lines:
-                choice_lines[-1] += ' {};'.format(member.name)
+            if not member_lines:
+                continue
+            
+            if is_inline_member_lines(member_lines):
+                member_lines[-1] = '{}({}),'.format(make_camel_case(member.name),
+                                                    member_lines[-1])
+            else:
+                helper_lines += member_lines + ['']
+                member_lines = ['pub {}: {},'.format(member.name,
+                                                     member_location)]
 
-            lines += choice_lines
-            choices.append('    {}_choice_{}_e'.format(self.location,
-                                                       member.name))
+            lines += member_lines
 
-        self.helper_lines += [
-            'enum {}_choice_e {{'.format(self.location)
-        ] + join_lines(choices, ',') + [
-            '};',
-            ''
-        ]
+        if lines:
+            lines[-1] = lines[-1].strip(',')
 
-        lines = [
-            'enum {}_choice_e choice;'.format(self.location),
-            'union {'
+        return helper_lines + [
+            '#[derive(Debug, PartialEq, Copy, Clone)]',
+            'pub enum {} {{'.format(self.location)
         ] + indent_lines(lines) + [
-            '} value;'
+            '}'
         ]
-
-        lines = ['struct {'] + indent_lines(lines) + ['}']
-
-        return lines
 
     def format_user_type(self, type_name, module_name):
-        module_name_snake = camel_to_snake_case(module_name)
-        type_name_snake = camel_to_snake_case(type_name)
-
         self.used_user_types.append((type_name, module_name))
 
-        return ['struct {}_{}_{}_t'.format(self.namespace,
-                                           module_name_snake,
-                                           type_name_snake)]
+        return ['{}{}'.format(module_name, type_name)]
 
     def format_sequence_inner_member(self,
                                      member,
