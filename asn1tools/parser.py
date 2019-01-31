@@ -171,6 +171,7 @@ class Asn1Parser(Parser):
         object_set_from_objects = Forward()
         defined_value = Forward()
         component_type_lists = Forward()
+        component_type_list = Forward()
         extension_and_exception = Forward()
         optional_extension_marker = Forward()
         additional_element_set_spec = Forward()
@@ -190,7 +191,6 @@ class Asn1Parser(Parser):
         definitive_number_form = Forward()
         version_number = Forward()
         named_number = Forward()
-        intersections = Forward()
         unions = Forward()
 
         # ToDo!
@@ -475,11 +475,6 @@ class Asn1Parser(Parser):
         intersection_mark = choice('^', 'INTERSECTION')
         union_mark = choice('|', 'UNION')
         exclusions = Sequence('EXCEPT', elements)
-        intersection_elements = Sequence(elements, Optional(exclusions))
-        intersections <<= choice(intersection_elements,
-                                 Sequence(intersections,
-                                          intersection_mark,
-                                          intersection_elements))
         unions <<= DelimitedList(elements, delim=choice(union_mark,
                                                         intersection_mark))
         element_set_spec <<= choice(unions, Sequence('ALL', exclusions))
@@ -604,8 +599,9 @@ class Asn1Parser(Parser):
         extension_addition_alternative = choice(extension_addition_alternatives_group,
                                                 named_type)
         extension_addition_alternatives_list = DelimitedList(extension_addition_alternative)
-        extension_addition_alternatives = Optional(
-            Sequence(',', extension_addition_alternatives_list))
+        extension_addition_alternatives = Tag(
+            'ExtensionAdditionAlternatives',
+            Optional(Sequence(',', extension_addition_alternatives_list)))
         root_alternative_type_list = alternative_type_list
         alternative_type_lists = Sequence(
             root_alternative_type_list,
@@ -646,39 +642,46 @@ class Asn1Parser(Parser):
         sequence_value = Sequence('{',
                                   Optional(component_value_list),
                                   '}')
-        component_type = choice(
-            Sequence(named_type,
-                     Optional(choice('OPTIONAL',
-                                     Sequence('DEFAULT', value)))),
-            Sequence('COMPONENTS', 'OF', type_))
+        component_type = Tag('ComponentType',
+                             choice(
+                                 Sequence(named_type,
+                                          Optional(choice('OPTIONAL',
+                                                          Sequence('DEFAULT', value)))),
+                                 Sequence('COMPONENTS', 'OF', type_)))
         version_number <<= Optional(Sequence(number, ':'))
-        extension_addition_group = Sequence('[[',
-                                            version_number,
-                                            DelimitedList(component_type),
-                                            ']]')
-        extension_and_exception <<= Sequence('...', Optional(exception_spec))
+        extension_addition_group = Tag('ExtensionAdditionGroup',
+                                       Sequence('[[',
+                                                version_number,
+                                                component_type_list,
+                                                ']]'))
+        extension_and_exception <<= Tag(
+            'ExtensionAndException',
+            Sequence('...', exception_spec))
         extension_addition = choice(component_type, extension_addition_group)
         extension_addition_list = DelimitedList(extension_addition)
         extension_additions = Optional(Sequence(',', extension_addition_list))
         extension_end_marker = Sequence(',', '...')
-        optional_extension_marker <<= Optional(Sequence(',', '...'))
-        component_type_list = DelimitedList(component_type)
-        root_component_type_list = component_type_list
-        component_type_lists <<= choice(
-            Sequence(root_component_type_list,
-                     Optional(Sequence(',',
-                                       extension_and_exception,
-                                       extension_additions,
-                                       choice(Sequence(extension_end_marker,
-                                                       ',',
-                                                       root_component_type_list),
-                                              optional_extension_marker)))),
-            Sequence(extension_and_exception,
-                     extension_additions,
-                     choice(Sequence(extension_end_marker,
-                                     ',',
-                                     root_component_type_list),
-                            optional_extension_marker)))
+        optional_extension_marker <<= Tag('OptionalExtensionMarker',
+                                          Optional(Sequence(',', '...')))
+        component_type_list <<= DelimitedList(component_type)
+        root_component_type_list = Tag('RootComponentTypeList', component_type_list)
+        component_type_lists <<= Tag(
+            'ComponentTypeLists',
+            choice(
+                Sequence(root_component_type_list,
+                         Optional(Sequence(',',
+                                           extension_and_exception,
+                                           extension_additions,
+                                           choice(Sequence(extension_end_marker,
+                                                           ',',
+                                                           root_component_type_list),
+                                                  optional_extension_marker)))),
+                Sequence(extension_and_exception,
+                         extension_additions,
+                         choice(Sequence(extension_end_marker,
+                                         ',',
+                                         root_component_type_list),
+                                optional_extension_marker))))
         sequence_type = Tag('SequenceType',
                             Sequence('SEQUENCE',
                                      '{',
@@ -799,7 +802,7 @@ class Asn1Parser(Parser):
                               any_defined_by_type,
                               'ANY',
                               'EXTERNAL')
-        named_type <<= Sequence('IDENT', type_)
+        named_type <<= Tag('NamedType', Sequence('IDENT', type_))
         referenced_type = Tag('ReferencedType', type_reference)
         type_ <<= choice(Sequence(choice(builtin_type, referenced_type),
                                   ZeroOrMore(constraint)),
@@ -919,6 +922,7 @@ class Transformer(object):
             for tag, assignment in assignment_list:
                 if tag == 'ParameterizedTypeAssignment':
                     type_name = assignment[0].value
+                    print(type_name)
                     types[type_name] = self.transform_type(assignment[3])
                 elif tag == 'ParameterizedValueAssignment':
                     pass
@@ -949,8 +953,8 @@ class Transformer(object):
             return {
                 'IntegerType': self.transform_integer_type,
                 'BooleanType': self.transform_boolean_type,
-                'SequenceType': self.transform_sequence_type,
-                'SetType': self.transform_set_type,
+                'SequenceType': self.transform_members_type,
+                'SetType': self.transform_members_type,
                 'SequenceOfType': self.transform_sequence_of_type,
                 'SetOfType': self.transform_set_of_type,
                 'CharacterStringType': self.transform_character_string_type,
@@ -988,46 +992,89 @@ class Transformer(object):
 
         return transformed
 
-    def transform_sequence_type(self, type_):
+    def transform_component_type_list(self, component_type_list):
+        transformed = []
+
+        for component_type in component_type_list:
+            component_type = component_type[1]
+            tag = component_type[0][0]
+
+            if tag == 'NamedType':
+                named_type = component_type[0][1]
+                member = {
+                    'name': named_type[0].value
+                }
+
+                member.update(self.transform_type(named_type[1]))
+
+                if len(component_type[1]) > 0:
+                    if isinstance(component_type[1][0], list):
+                        member['default'] = self.transform_value(component_type[1][0][1])
+                    elif component_type[1][0].value == 'OPTIONAL':
+                        member['optional'] = True
+                    else:
+                        raise NotImplementedError(component_type[1][0])
+
+                transformed.append(member)
+            else:
+                raise NotImplementedError(tag)
+
+        return transformed
+
+    def transform_members_type(self, type_):
         members = []
+        type_name = type_[0][1][0].value
         type_members = type_[0][1][2]
 
         if type_members:
-            for type_member in type_members[0][0]:
-                name = type_member[0][0].value
+            tag, value = type_members[0]
 
-                member = {
-                    'name': name
-                }
+            if tag == 'ComponentTypeLists':
+                tag = value[0][0]
 
-                member.update(self.transform_type(type_member[0][1]))
+                if tag == 'RootComponentTypeList':
+                    members += self.transform_component_type_list(value[0][1])
 
-                if len(type_member[1]) > 0:
-                    if isinstance(type_member[1][0], list):
-                        member['default'] = self.transform_value(type_member[1][0][1])
-                    else:
-                        member['optional'] = True
+                    if value[1]:
+                        _, extension_and_exception, extension_additions, rest = value[1][0]
+                        members.append(EXTENSION_MARKER)
 
-                members.append(member)
+                        if extension_and_exception[1][1]:
+                            LOGGER.warning('ExtensionSpec not yet implemented.')
 
-            if type_members[0][1]:
-                members.append(None)
+                        if extension_additions:
+                            extension_addition_list = extension_additions[0][1]
 
-                if type_members[0][1][0][2]:
-                    pprint(type_members[0][1][0][2][0][1][0])
+                            for extension_addition in extension_addition_list:
+                                tag, value = extension_addition
 
-                if type_members[0][1][0][3]:
-                    pprint(type_members[0][1][0][3])
+                                if tag == 'ComponentType':
+                                    raise NotImplementedError(extension_addition)
+                                elif tag == 'ExtensionAdditionGroup':
+                                    _, version_number, component_type_list, _ = value
+
+                                    if version_number:
+                                        LOGGER.warning('VersionNumber not yet implemented.')
+
+                                    members.append(
+                                        self.transform_component_type_list(
+                                            component_type_list))
+                                else:
+                                    raise NotImplementedError(tag)
+
+                        if isinstance(rest, list):
+                            members.append(EXTENSION_MARKER)
+                            members += self.transform_component_type_list(rest[2][1])
+                        elif rest[1]:
+                            members.append(EXTENSION_MARKER)
+                else:
+                    raise NotImplementedError(tag)
+            else:
+                raise NotImplementedError(tag)
 
         return {
-            'type': 'SEQUENCE',
+            'type': type_name,
             'members': members
-        }
-
-    def transform_set_type(self, _type):
-        return {
-            'type': 'SET',
-            'members': []
         }
 
     def transform_sequence_of_type(self, type_):
@@ -1116,17 +1163,22 @@ class Transformer(object):
 
     def transform_choice_type(self, type_):
         members = []
+        alternative_type_lists = type_[0][1][2]
 
-        if type_[0][1][2]:
-            for type_member in type_[0][1][2][0]:
-                name = type_member[0].value
+        if alternative_type_lists:
+            root_alternative_type_list, extension = alternative_type_lists
 
+            for _, named_type in root_alternative_type_list:
+                name = named_type[0].value
                 member = {
                     'name': name
                 }
 
-                member.update(self.transform_type(type_member[1]))
+                member.update(self.transform_type(named_type[1]))
                 members.append(member)
+
+            if extension:
+                raise NotImplementedError(extension)
 
         return {
             'type': 'CHOICE',
@@ -1166,6 +1218,7 @@ class Transformer(object):
         }
 
         if type_[1]:
+            print(transformed, type_[1])
             transformed.update(self.transform_constraint(type_[1][0]))
 
         return transformed
@@ -1181,38 +1234,35 @@ class Transformer(object):
         return transformed
 
     def transform_constraint(self, constraint):
+        """Transform a type constraint, for example (1..2) or (FROM
+        ('a'..'b')).
+
+        """
+
         transformed = {}
         size = []
         restricted_to = []
         from_ = []
         with_components = None
 
-        for item in constraint[1][1][0]:
-            if item[0] == 'SizeConstraint':
-                size += self.transform_size_constraint(item[1][1][1][1])
-            elif item[0] == 'SingleValue':
-                restricted_to.append(self.transform_value(item[1]))
-            elif item[0] == 'PermittedAlphabet':
-                item = item[1][1][1][1][0]
-
-                for value in item:
-                    if value[0] == 'ValueRange':
-                        from_.append((self.transform_value(value[1][0][0]),
-                                      self.transform_value(value[1][2][1])))
-                    else:
-                        raise NotImplementedError(value[0])
-            elif item[0] == 'ValueRange':
-                restricted_to.append((self.transform_value(item[1][0][0]),
-                                      self.transform_value(item[1][2][1])))
-            elif item[0] == 'ElementSetSpec':
-                # ToDo
-                pass
-            elif item[0] == 'InnerTypeConstraint':
-                with_components = self.transform_inner_type_constraint(item[1])
-            elif item[0] == 'ContainedSubtype':
-                pass
+        for tag, value in constraint[1][1][0]:
+            if tag == 'SizeConstraint':
+                size += self.transform_size_constraint(value[1][1][1])
+            elif tag == 'SingleValue':
+                restricted_to.append(self.transform_value(value))
+            elif tag == 'PermittedAlphabet':
+                from_ += self.transform_permitted_alphabet(value)
+            elif tag == 'ValueRange':
+                restricted_to.append((self.transform_value(value[0][0]),
+                                      self.transform_value(value[2][1])))
+            elif tag == 'ElementSetSpec':
+                print(self.transform_element_set_spec(value[1]))
+            elif tag == 'InnerTypeConstraint':
+                with_components = self.transform_inner_type_constraint(value)
+            elif tag == 'ContainedSubtype':
+                LOGGER.warning('ContainedSubtype not yet implemented.')
             else:
-                raise NotImplementedError(item[0])
+                raise NotImplementedError(tag)
 
         if constraint[1][1][1]:
             restricted_to.append(None)
@@ -1230,6 +1280,22 @@ class Transformer(object):
             transformed['with-components'] = with_components
 
         return transformed
+
+    def transform_permitted_alphabet(self, constraint):
+        transformed = []
+
+        for tag, value in constraint[1][1][1][0]:
+            if tag == 'ValueRange':
+                transformed.append((self.transform_value(value[0][0]),
+                                    self.transform_value(value[2][1])))
+            else:
+                raise NotImplementedError(tag)
+
+        return transformed
+
+    def transform_element_set_spec(self, element_set_spec):
+        for element in element_set_spec:
+            print(element)
 
     def transform_inner_type_constraint(self, constraint):
         with_components = []
