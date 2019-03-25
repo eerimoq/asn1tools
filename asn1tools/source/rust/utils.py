@@ -382,7 +382,7 @@ class Generator(object):
 
             if not member_lines:
                 continue
-            
+
             if is_inline_member_lines(member_lines):
                 member_lines[-1] = '{}({}),'.format(make_camel_case(member.name),
                                                     member_lines[-1])

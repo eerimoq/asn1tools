@@ -1120,10 +1120,16 @@ class Null(Type):
 
 class BitString(Type):
 
-    def __init__(self, name, minimum, maximum, has_named_bits):
+    def __init__(self,
+                 name,
+                 has_named_bits,
+                 minimum,
+                 maximum,
+                 has_extension_marker):
         super(BitString, self).__init__(name, 'BIT STRING')
         self.minimum = minimum
         self.maximum = maximum
+        self.has_extension_marker = has_extension_marker
         self.has_named_bits = has_named_bits
 
         if is_unbound(minimum, maximum):
@@ -1154,6 +1160,13 @@ class BitString(Type):
     def encode(self, data, encoder):
         data, number_of_bits = data
 
+        if self.has_extension_marker:
+            if self.minimum <= number_of_bits <= self.maximum:
+                encoder.append_bit(0)
+            else:
+                raise NotImplementedError(
+                    'BIT STRING extension is not yet implemented.')
+
         if self.has_named_bits:
             data, number_of_bits = self.rstrip_zeros(data, number_of_bits)
 
@@ -1177,6 +1190,11 @@ class BitString(Type):
             encoder.append_bits(data[offset // 8:(offset + length + 7) // 8], length)
 
     def decode(self, decoder):
+        if self.has_extension_marker:
+            if decoder.read_bit():
+                raise NotImplementedError(
+                    'BIT STRING extension is not yet implemented.')
+
         if self.number_of_bits is None:
             return self.decode_unbound(decoder)
         else:
@@ -2096,13 +2114,11 @@ class Compiler(compiler.Compiler):
         elif type_name == 'DATE-TIME':
             compiled = DateTime(name)
         elif type_name == 'BIT STRING':
-            minimum, maximum, _ = self.get_size_range(type_descriptor,
-                                                      module_name)
             has_named_bits = ('named-bits' in type_descriptor)
             compiled = BitString(name,
-                                 minimum,
-                                 maximum,
-                                 has_named_bits)
+                                 has_named_bits,
+                                 *self.get_size_range(type_descriptor,
+                                                      module_name))
         elif type_name == 'ANY':
             compiled = Any(name)
         elif type_name == 'ANY DEFINED BY':

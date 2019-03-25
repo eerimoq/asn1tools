@@ -209,6 +209,11 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "R ::= SEQUENCE SIZE (0..2) OF BIT STRING (SIZE(1..256)) "
             "S ::= SEQUENCE SIZE (0..2) OF BIT STRING (SIZE(2..256)) "
             "T ::= SEQUENCE SIZE (0..2) OF BIT STRING (SIZE(2..257)) "
+            "U ::= BIT STRING (SIZE (1..160, ...)) "
+            "V ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b BIT STRING (SIZE (1..160, ...)) "
+            "} "
             "END",
             'uper')
 
@@ -258,7 +263,9 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             ('Q',                   [(b'\x40', 2)], b'\x40\x50'),
             ('R',                   [(b'\x40', 2)], b'\x40\x50'),
             ('S',                   [(b'\x40', 2)], b'\x40\x10'),
-            ('T',                   [(b'\x40', 2)], b'\x40\x10')
+            ('T',                   [(b'\x40', 2)], b'\x40\x10'),
+            ('U',                     (b'\x80', 1), b'\x00\x40'),
+            ('V',   {'a': True, 'b': (b'\xe0', 3)}, b'\x80\xb8')
         ]
 
         for type_name, decoded, encoded in datas:

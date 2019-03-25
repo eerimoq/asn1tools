@@ -215,7 +215,12 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "I ::= SEQUENCE SIZE (0..2) OF BIT STRING (SIZE(1..256)) "
             "J ::= SEQUENCE SIZE (0..2) OF BIT STRING (SIZE(2..256)) "
             "K ::= SEQUENCE SIZE (0..2) OF BIT STRING (SIZE(2..257)) "
-            "END",
+            "L ::= BIT STRING (SIZE (1..160, ...)) "
+            "M ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  b BIT STRING (SIZE (1..160, ...)) "
+            "} "
+           "END",
             'per')
 
         datas = [
@@ -240,7 +245,9 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('H',                   [(b'\x40', 2)], b'\x40\x40\x40'),
             ('I',                   [(b'\x40', 2)], b'\x40\x01\x40'),
             ('J',                   [(b'\x40', 2)], b'\x40\x00\x40'),
-            ('K',                   [(b'\x40', 2)], b'\x40\x00\x40')
+            ('K',                   [(b'\x40', 2)], b'\x40\x00\x40'),
+            ('L',                     (b'\x80', 1), b'\x00\x00\x80'),
+            ('M',   {'a': True, 'b': (b'\xe0', 3)}, b'\x80\x80\xe0')
         ]
 
         for type_name, decoded, encoded in datas:
