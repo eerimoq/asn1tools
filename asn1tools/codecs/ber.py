@@ -6,7 +6,6 @@ import time
 import math
 import binascii
 from copy import copy
-from operator import attrgetter
 import datetime
 
 from ..errors import Error
@@ -1444,6 +1443,12 @@ class CompiledType(compiler.CompiledType):
         return repr(self._type)
 
 
+def get_tag_no_encoding(member):
+    value = (member.tag[0] & ~Encoding.CONSTRUCTED)
+
+    return bytearray([value]) + member.tag[1:]
+
+
 class Compiler(compiler.Compiler):
 
     def process_type(self, type_name, type_descriptor, module_name):
@@ -1617,7 +1622,7 @@ class Compiler(compiler.Compiler):
                                          compiled_members)
 
         if sort_by_tag:
-            compiled_members = sorted(compiled_members, key=attrgetter('tag'))
+            compiled_members = sorted(compiled_members, key=get_tag_no_encoding)
 
         return compiled_members, additions
 

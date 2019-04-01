@@ -697,12 +697,19 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             "  b [1] INTEGER, "
             "  a [0] INTEGER "
             "} "
+            "C ::= SET { "
+            "    a     [0] B, "
+            "    b     [1] OCTET STRING "
+            "} "
             "END",
             'ber')
 
         datas = [
             ('A',     {'a': 3, 'b': 4}, b'\x31\x06\x80\x01\x03\x81\x01\x04'),
-            ('B',     {'a': 3, 'b': 4}, b'\x31\x06\x80\x01\x03\x81\x01\x04')
+            ('B',     {'a': 3, 'b': 4}, b'\x31\x06\x80\x01\x03\x81\x01\x04'),
+            ('C',
+             {'a': {'a': 3, 'b': 4}, 'b': b'\x12'},
+             b'\x31\x0b\xa0\x06\x80\x01\x03\x81\x01\x04\x81\x01\x12')
         ]
 
         for type_name, decoded, encoded in datas:
