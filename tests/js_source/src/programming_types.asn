@@ -1,0 +1,23 @@
+--
+-- Types often found in programming languages.
+--
+
+ProgrammingTypes DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+Int8 ::= INTEGER (-128..127)
+
+Int16 ::= INTEGER (-32768..32767)
+
+Int32 ::= INTEGER (-2147483648..2147483647)
+
+Uint8 ::= INTEGER (0..255)
+
+Uint16 ::= INTEGER (0..65535)
+
+Uint32 ::= INTEGER (0..4294967295)
+
+Bool ::= BOOLEAN
+
+END
