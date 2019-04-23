@@ -1,2 +1,4 @@
-yarn install
-yarn test
+.. code-block:: text
+
+   $ yarn install
+   $ yarn test
