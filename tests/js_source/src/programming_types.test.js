@@ -250,3 +250,18 @@ test('c_source_a', () => {
     expect(c_source_a_encode(decoded)).toEqual(encoded);
     expect(c_source_a_decode(encoded)).toEqual(decoded);
 });
+
+test('c_source_a_decode_error_out_of_data', () => {
+    var encoded = new Uint8Array([
+        0xff,
+        0xff, 0xfe,
+        0xff, 0xff, 0xff, 0xfd,
+        1,
+        0, 2,
+        0, 0, 0, 3,
+        0xff,
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+    ]);
+
+    expect(() => c_source_a_decode(encoded)).toThrow("Out of data.");
+});

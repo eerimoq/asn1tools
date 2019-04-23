@@ -99,7 +99,13 @@ class Decoder {
     }
 
     read_bytes(size) {
-        var data = this.buf.subarray(this.pos, this.pos + size);
+        var end = this.pos + size;
+
+        if (this.buf.length < end) {
+            throw "Out of data.";
+        }
+
+        var data = this.buf.subarray(this.pos, end);
         this.pos += size;
 
         return data;
