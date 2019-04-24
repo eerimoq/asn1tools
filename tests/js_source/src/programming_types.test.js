@@ -1,9 +1,6 @@
 import {
-    c_source_a_encode,
-    c_source_a_decode,
-    c_source_b_encode,
-    c_source_b_decode,
-    c_source_b_choice_a,
+    CSourceA,
+    CSourceB,
     Encoder,
     Decoder
 } from './programming_types';
@@ -229,32 +226,6 @@ test('read_tag', () => {
 });
 
 test('c_source_a', () => {
-    var decoded = {
-        a: -1,
-        b: -2,
-        c: -3,
-        e: 1,
-        f: 2,
-        g: 3,
-        i: true,
-        j: new Uint8Array([5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5])
-    };
-    var encoded = new Uint8Array([
-        0xff,
-        0xff, 0xfe,
-        0xff, 0xff, 0xff, 0xfd,
-        1,
-        0, 2,
-        0, 0, 0, 3,
-        0xff,
-        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
-    ]);
-
-    expect(c_source_a_encode(decoded)).toEqual(encoded);
-    expect(c_source_a_decode(encoded)).toEqual(decoded);
-});
-
-test('c_source_a', () => {
     var message = new CSourceA();
     var decoded = new CSourceA();
     decoded.a = -1;
@@ -307,7 +278,7 @@ test('c_source_a_decode_error_out_of_data', () => {
 test('c_source_b_choice_a', () => {
     var message = new CSourceB();
     var decoded = new CSourceB();
-    decoded.choice = CSourceB.choiceA;
+    decoded.choice = CSourceB.CHOICE_A;
     decoded.value.a = -10;
     var encoded = new Uint8Array([0x80, 0xf6]);
 
@@ -315,4 +286,4 @@ test('c_source_b_choice_a', () => {
     message.fromUint8Array(encoded);
     expect(message.choice).toEqual(decoded.choice);
     expect(message.value.a).toEqual(decoded.value.a);
-}
+});
