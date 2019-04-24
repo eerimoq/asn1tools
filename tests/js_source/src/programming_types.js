@@ -388,7 +388,7 @@ class CSourceB {
             break;
 
         default:
-            throw "Bad tag.";
+            throw "Bad choice.";
         }
     }
 }
