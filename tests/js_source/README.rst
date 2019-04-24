@@ -10,8 +10,8 @@ server replies with the same message.
 
 Requires ``pip3 install websockets``.
 
-First start the servers. The web browser should start automatically
-when running ``yarn start``.
+Start the servers. The web browser should start automatically when
+running ``yarn start``.
 
 .. code-block:: text
 
