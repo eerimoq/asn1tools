@@ -132,7 +132,7 @@ class Decoder {
         var end = this.pos + size;
 
         if (this.buf.length < end) {
-            throw "Out of data.";
+            throw Error("Out of data.");
         }
 
         var data = this.buf.subarray(this.pos, end);
@@ -204,12 +204,12 @@ class Decoder {
             return this.read_uint32();
 
         default:
-            throw "Too big value.";
+            throw Error("Too big value.");
         }
     }
 
     read_bool() {
-        return this.read_uint8() != 0;
+        return this.read_uint8() !== 0;
     }
 
     read_length_determinant() {
@@ -236,7 +236,7 @@ class Decoder {
                 break;
 
             default:
-                throw "Too big value.";
+                throw Error("Too big value.");
             }
         }
 
@@ -246,11 +246,11 @@ class Decoder {
     read_tag() {
         var tag = this.read_uint8();
 
-        if ((tag & 0x3f) == 0x3f) {
+        if ((tag & 0x3f) === 0x3f) {
             do {
                 tag *= 256;
                 tag += this.read_uint8();
-            } while ((tag & 0x80) == 0x80);
+            } while ((tag & 0x80) === 0x80);
         }
 
         return tag;
@@ -364,7 +364,7 @@ class CSourceB {
             break;
 
         default:
-            throw "Bad choice.";
+            throw Error("Bad choice.");
         }
     }
 
@@ -388,7 +388,7 @@ class CSourceB {
             break;
 
         default:
-            throw "Bad choice.";
+            throw Error("Bad choice.");
         }
     }
 }

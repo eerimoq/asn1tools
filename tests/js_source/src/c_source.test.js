@@ -3,7 +3,7 @@ import {
     CSourceB,
     Encoder,
     Decoder
-} from './programming_types';
+} from './c_source';
 
 test('bytes', () => {
     var decoded = new Uint8Array([5, 4, 3]);
