@@ -1,15 +1,15 @@
-The JavaScript client sends a message to the server. The server
-replies with the same message.
+The JavaScript client periodically sends a message to the server. The
+server replies with the same message.
 
 Requires ``pip3 install websockets``.
 
-Start the server.
+First start the server.
 
 .. code-block:: text
 
    $ python3 server.py
 
-Start the client.
+Then start the client.
 
 .. code-block:: text
 
