@@ -18,8 +18,8 @@ async def echo(websocket, _, c_source):
 
 def main():
     c_source = asn1tools.compile_files([
-        '../../tests/js_source/src/c_source.asn',
-        '../../tests/js_source/src/programming_types.asn'
+        'asn1/c_source.asn',
+        'asn1/programming_types.asn'
     ], 'oer')
 
     start_server = websockets.serve(
