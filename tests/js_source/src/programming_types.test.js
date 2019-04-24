@@ -1,6 +1,9 @@
 import {
     c_source_a_encode,
     c_source_a_decode,
+    c_source_b_encode,
+    c_source_b_decode,
+    c_source_b_choice_a,
     Encoder,
     Decoder
 } from './programming_types';
@@ -251,7 +254,42 @@ test('c_source_a', () => {
     expect(c_source_a_decode(encoded)).toEqual(decoded);
 });
 
+test('c_source_a', () => {
+    var message = new CSourceA();
+    var decoded = new CSourceA();
+    decoded.a = -1;
+    decoded.b = -2;
+    decoded.c = -3;
+    decoded.e = 1;
+    decoded.f = 2;
+    decoded.g = 3;
+    decoded.i = true;
+    decoded.j = new Uint8Array([5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]);
+    var encoded = new Uint8Array([
+        0xff,
+        0xff, 0xfe,
+        0xff, 0xff, 0xff, 0xfd,
+        1,
+        0, 2,
+        0, 0, 0, 3,
+        0xff,
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+    ]);
+
+    expect(decoded.toUint8Array()).toEqual(encoded);
+    message.fromUint8Array(encoded);
+    expect(message.a).toEqual(decoded.a);
+    expect(message.b).toEqual(decoded.b);
+    expect(message.c).toEqual(decoded.c);
+    expect(message.e).toEqual(decoded.e);
+    expect(message.f).toEqual(decoded.f);
+    expect(message.g).toEqual(decoded.g);
+    expect(message.i).toEqual(decoded.i);
+    expect(message.j).toEqual(decoded.j);
+});
+
 test('c_source_a_decode_error_out_of_data', () => {
+    var message = new CSourceA();
     var encoded = new Uint8Array([
         0xff,
         0xff, 0xfe,
@@ -263,5 +301,18 @@ test('c_source_a_decode_error_out_of_data', () => {
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5
     ]);
 
-    expect(() => c_source_a_decode(encoded)).toThrow("Out of data.");
+    expect(() => message.fromUint8Array(encoded)).toThrow("Out of data.");
 });
+
+test('c_source_b_choice_a', () => {
+    var message = new CSourceB();
+    var decoded = new CSourceB();
+    decoded.choice = CSourceB.choiceA;
+    decoded.value.a = -10;
+    var encoded = new Uint8Array([0x80, 0xf6]);
+
+    expect(decoded.toUint8Array()).toEqual(encoded);
+    message.fromUint8Array(encoded);
+    expect(message.choice).toEqual(decoded.choice);
+    expect(message.value.a).toEqual(decoded.value.a);
+}
