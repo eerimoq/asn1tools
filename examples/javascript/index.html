@@ -378,7 +378,7 @@
                 message.fromUint8Array(new Uint8Array(event.data));
                 console.log(message);
 
-                if (message.choice == 0) {
+                if (message.choice == CSourceB.CHOICE_A) {
                     appendList("Received: " + message.value.a);
                 }
             };
@@ -392,7 +392,7 @@
             }
 
             var message = new CSourceB();
-            message.choice = 0;
+            message.choice = CSourceB.CHOICE_A;
             message.value.a = 0;
 
             function tick() {
