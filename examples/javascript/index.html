@@ -298,6 +298,9 @@
             }
 
             class CSourceB {
+                static CHOICE_A = 0;
+                static CHOICE_B = 1;
+                static CHOICE_C = 2;
 
                 constructor() {
                     this.choice = null;
@@ -323,17 +326,17 @@
                 encode(encoder) {
                     switch (this.choice) {
 
-                    case 0:
+                    case CSourceB.CHOICE_A:
                         encoder.append_uint(0x80, 1);
                         encoder.append_int8(this.value.a);
                         break;
 
-                    case 1:
+                    case CSourceB.CHOICE_B:
                         encoder.append_uint(0x81, 1);
                         this.value.b.encode(encoder);
                         break;
 
-                    case 2:
+                    case CSourceB.CHOICE_C:
                         encoder.append_uint(0x82, 1);
                         break;
 
@@ -348,17 +351,17 @@
                     switch (tag) {
 
                     case 0x80:
-                        this.choice = 0;
+                        this.choice = CSourceB.CHOICE_A;
                         this.value.a = decoder.read_int8();
                         break;
 
                     case 0x81:
-                        this.choice = 1;
+                        this.choice = CSourceB.CHOICE_B;
                         this.value.b.decode(decoder);
                         break;
 
                     case 0x82:
-                        this.choice = 2;
+                        this.choice = CSourceB.CHOICE_C;
                         break;
 
                     default:
@@ -376,13 +379,17 @@
                 console.log(message);
 
                 if (message.choice == 0) {
-                    var node = document.createElement("li");
-                    var textnode = document.createTextNode(
-                        "Response: " + message.value.a);
-                    node.appendChild(textnode);
-                    document.getElementById("responses").appendChild(node);
+                    appendList("Received: " + message.value.a);
                 }
             };
+
+            function appendList(text) {
+                var node = document.createElement("li");
+                var textnode = document.createTextNode(text);
+                node.appendChild(textnode);
+                document.getElementById("list").appendChild(node);
+                window.scrollTo(0, document.body.scrollHeight);
+            }
 
             var message = new CSourceB();
             message.choice = 0;
@@ -395,13 +402,14 @@
                     message.value.a = -128;
                 }
 
+                appendList("Sending: " + message.value.a);
                 websocket.send(message.toUint8Array());
             }
 
             setInterval(tick, 500);
         </script>
         <div>Sending messages to the server and waiting for responses.</div>
-        <ul id="responses">
+        <ul id="list">
         </ul>
     </body>
 </html>

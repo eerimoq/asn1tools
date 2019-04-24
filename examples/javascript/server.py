@@ -6,7 +6,7 @@ import websockets
 import asn1tools
 
 
-async def echo(websocket, path, c_source):
+async def echo(websocket, _, c_source):
     print('Client connected!')
 
     while True:
