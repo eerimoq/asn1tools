@@ -13,4 +13,10 @@ A ::= SEQUENCE {
     j OCTET STRING (SIZE (11))
 }
 
+B ::= CHOICE {
+    a INTEGER (-128..127),
+    b A,
+    c NULL
+}
+
 END
