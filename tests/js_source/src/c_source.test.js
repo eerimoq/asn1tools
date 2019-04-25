@@ -1,6 +1,7 @@
 import {
     CSourceA,
     CSourceB,
+    CSourceC,
     Encoder,
     Decoder
 } from './c_source';
@@ -317,4 +318,43 @@ test('c_source_b_choice_b_decode_error_bad_choice', () => {
     var encoded = new Uint8Array([0x83, 0x00]);
 
     expect(() => message.fromUint8Array(encoded)).toThrow("Bad choice.");
+});
+
+test('c_source_c_empty', () => {
+    var message = new CSourceC();
+    var decoded = new CSourceC();
+    decoded.elements = []
+    var encoded = new Uint8Array([0x01, 0x00]);
+
+    expect(decoded.toUint8Array()).toEqual(encoded);
+    message.fromUint8Array(encoded);
+    expect(message.elements).toEqual(decoded.elements);
+});
+
+test('c_source_c_2_elements', () => {
+    var message = new CSourceC();
+    var decoded = new CSourceC();
+    var element = new CSourceB();
+    element.choice = CSourceB.CHOICE_A;
+    element.value.a = -11;
+    decoded.elements.push(element)
+    var element = new CSourceB();
+    element.choice = CSourceB.CHOICE_A;
+    element.value.a = 13;
+    decoded.elements.push(element)
+    var encoded = new Uint8Array([0x01, 0x02, 0x80, 0xf5, 0x80, 0x0d]);
+
+    expect(decoded.toUint8Array()).toEqual(encoded);
+    message.fromUint8Array(encoded);
+    expect(message.elements[0].choice).toEqual(decoded.elements[0].choice);
+    expect(message.elements[0].value.a).toEqual(decoded.elements[0].value.a);
+    expect(message.elements[1].choice).toEqual(decoded.elements[1].choice);
+    expect(message.elements[1].value.a).toEqual(decoded.elements[1].value.a);
+});
+
+test('c_source_c_decode_error_bad_length', () => {
+    var message = new CSourceC();
+    var encoded = new Uint8Array([0x01, 0x03, 0x80, 0xf5, 0x80, 0x0d, 0x80, 0x0e]);
+
+    expect(() => message.fromUint8Array(encoded)).toThrow("Bad length.");
 });

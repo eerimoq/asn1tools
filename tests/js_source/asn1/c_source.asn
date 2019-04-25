@@ -19,4 +19,6 @@ B ::= CHOICE {
     c NULL
 }
 
+C ::= SEQUENCE (SIZE (0..2)) OF B
+
 END

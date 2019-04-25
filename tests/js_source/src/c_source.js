@@ -257,6 +257,20 @@ class Decoder {
     }
 }
 
+class Type {
+    toUint8Array() {
+        var encoder = new Encoder();
+
+        this.encode(encoder);
+
+        return encoder.toUint8Array();
+    }
+
+    fromUint8Array(buf) {
+        this.decode(new Decoder(buf));
+    }
+}
+
 function minimum_uint_length(value) {
     var length;
 
@@ -273,8 +287,9 @@ function minimum_uint_length(value) {
     return length;
 }
 
-class CSourceA {
+class CSourceA extends Type {
     constructor() {
+        super();
         this.a = null;
         this.b = null;
         this.c = null;
@@ -283,18 +298,6 @@ class CSourceA {
         this.g = null;
         this.i = null;
         this.j = null;
-    }
-
-    toUint8Array() {
-        var encoder = new Encoder();
-
-        this.encode(encoder);
-
-        return encoder.toUint8Array();
-    }
-
-    fromUint8Array(buf) {
-        this.decode(new Decoder(buf));
     }
 
     encode(encoder) {
@@ -320,30 +323,19 @@ class CSourceA {
     }
 }
 
-class CSourceB {
+class CSourceB extends Type {
     static CHOICE_A = 0;
     static CHOICE_B = 1;
     static CHOICE_C = 2;
 
     constructor() {
+        super();
         this.choice = null;
         this.value = {
             a: null,
             b: new CSourceA(),
             c: null
         };
-    }
-
-    toUint8Array() {
-        var encoder = new Encoder();
-
-        this.encode(encoder);
-
-        return encoder.toUint8Array();
-    }
-
-    fromUint8Array(buf) {
-        this.decode(new Decoder(buf));
     }
 
     encode(encoder) {
@@ -393,9 +385,45 @@ class CSourceB {
     }
 }
 
+class CSourceC extends Type {
+    constructor() {
+        super();
+        this.elements = [];
+    }
+
+    encode(encoder) {
+        var i;
+        var number_of_length_bytes = minimum_uint_length(this.elements.length);
+        encoder.append_uint8(number_of_length_bytes);
+        encoder.append_uint(this.elements.length, number_of_length_bytes);
+
+        for (i = 0; i < this.elements.length; i++) {
+            this.elements[i].encode(encoder);
+        }
+    }
+
+    decode(decoder) {
+        var i;
+        var length = decoder.read_uint(decoder.read_uint8());
+
+        if (length > 2) {
+            throw Error("Bad length.");
+        }
+
+        this.elements = [];
+
+        for (i = 0; i < length; i++) {
+            var element = new CSourceB();
+            element.decode(decoder)
+            this.elements.push(element)
+        }
+    }
+}
+
 export {
     CSourceA,
     CSourceB,
+    CSourceC,
     Encoder,
     Decoder
 };
