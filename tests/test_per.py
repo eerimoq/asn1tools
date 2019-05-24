@@ -220,7 +220,9 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "  a BOOLEAN, "
             "  b BIT STRING (SIZE (1..160, ...)) "
             "} "
-           "END",
+            "N ::= BIT STRING (SIZE(0..65535)) "
+            "O ::= BIT STRING (SIZE(0..65536)) "
+            "END",
             'per')
 
         datas = [
@@ -247,7 +249,9 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             ('J',                   [(b'\x40', 2)], b'\x40\x00\x40'),
             ('K',                   [(b'\x40', 2)], b'\x40\x00\x40'),
             ('L',                     (b'\x80', 1), b'\x00\x00\x80'),
-            ('M',   {'a': True, 'b': (b'\xe0', 3)}, b'\x80\x80\xe0')
+            ('M',   {'a': True, 'b': (b'\xe0', 3)}, b'\x80\x80\xe0'),
+            ('N',                         (b'', 0), b'\x00\x00'),
+            ('O',                         (b'', 0), b'\x00')
         ]
 
         for type_name, decoded, encoded in datas:

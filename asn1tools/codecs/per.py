@@ -32,7 +32,9 @@ from .permitted_alphabet import VISIBLE_STRING
 
 
 def is_unbound(minimum, maximum):
-    return minimum in [None, 'MIN'] or maximum in [None, 'MAX']
+    return ((minimum in [None, 'MIN'])
+            or (maximum in [None, 'MAX'])
+            or (maximum > 65535))
 
 
 def integer_as_number_of_bits(size):

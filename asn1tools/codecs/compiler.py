@@ -454,7 +454,11 @@ class Compiler(object):
             mask >>= lowest_set_bit(mask)
             number_of_bits = len(default) - 2
 
-        mask = bitstruct.pack('u{}'.format(number_of_bits), mask)
+        if number_of_bits > 0:
+            mask = bitstruct.pack('u{}'.format(number_of_bits), mask)
+        else:
+            mask = b''
+
         member['default'] = (mask, number_of_bits)
 
     def pre_process_parameterization_step_1(self, types, module_name):
