@@ -1176,6 +1176,14 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', b'\x01\xd8\x00')
+
+        valid_chars = [v for v in range(65536) if v < 0xd800 or v > 0xdfff]
+        self.assertEqual(str(cm.exception),
+                         "Expected a value in %s, but got %d." % (valid_chars,
+                                                                  0xd800,))
+
     def test_graphic_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "

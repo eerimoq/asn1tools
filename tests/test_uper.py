@@ -1243,13 +1243,20 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             "  a BOOLEAN, "
             "  b BMPString "
             "} "
+            "C ::= SEQUENCE { "
+            "  a BMPString (SIZE(1..128)), "
+            "  b BMPString (SIZE(1..256)) "
+            "} "
             "END",
             'uper')
 
         datas = [
             ('A',                      '', b'\x00'),
             ('A',                   '123', b'\x03\x00\x31\x00\x32\x00\x33'),
-            ('B', {'a': False, 'b': u'K'}, b'\x00\x80\x25\x80')
+            ('B', {'a': False, 'b': u'K'}, b'\x00\x80\x25\x80'),
+            ('C',
+             {'a': '123', 'b': '123'},
+             b'\x04\x00\x62\x00\x64\x00\x66\x04\x00\x62\x00\x64\x00\x66'),
         ]
 
         for type_name, decoded, encoded in datas:
