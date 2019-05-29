@@ -11,6 +11,7 @@ from . import format_or
 from .permitted_alphabet import NUMERIC_STRING
 from .permitted_alphabet import PRINTABLE_STRING
 from .permitted_alphabet import IA5_STRING
+from .permitted_alphabet import BMP_STRING
 from .permitted_alphabet import VISIBLE_STRING
 
 
@@ -287,6 +288,11 @@ class IA5String(String):
     PERMITTED_ALPHABET = IA5_STRING
 
 
+class BMPString(String):
+
+    PERMITTED_ALPHABET = BMP_STRING
+
+
 class VisibleString(String):
 
     PERMITTED_ALPHABET = VISIBLE_STRING
@@ -393,6 +399,11 @@ class Compiler(compiler.Compiler):
                                                             module_name))
         elif type_name == 'IA5String':
             compiled = IA5String(name,
+                                 self.get_permitted_alphabet(type_descriptor),
+                                 *self.get_size_range(type_descriptor,
+                                                      module_name))
+        elif type_name == 'BMPString':
+            compiled = BMPString(name,
                                  self.get_permitted_alphabet(type_descriptor),
                                  *self.get_size_range(type_descriptor,
                                                       module_name))

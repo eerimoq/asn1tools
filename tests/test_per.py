@@ -1157,13 +1157,20 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "  a BOOLEAN, "
             "  b BMPString "
             "} "
+            "C ::= SEQUENCE { "
+            "  a BMPString (SIZE(1..128)), "
+            "  b BMPString (SIZE(1..256)) "
+            "} "
             "END",
             'per')
 
         datas = [
             ('A',     '', b'\x00'),
             ('A',  '123', b'\x03\x00\x31\x00\x32\x00\x33'),
-            ('B', {'a': False, 'b': u'K'}, b'\x00\x01\x00\x4b')
+            ('B', {'a': False, 'b': u'K'}, b'\x00\x01\x00\x4b'),
+            ('C',
+             {'a': '123', 'b': '123'},
+             b'\x04\x001\x002\x003\x02\x001\x002\x003')
         ]
 
         for type_name, decoded, encoded in datas:
