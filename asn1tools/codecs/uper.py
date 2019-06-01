@@ -8,6 +8,8 @@ from . import restricted_utc_time_to_datetime
 from . import restricted_utc_time_from_datetime
 from . import restricted_generalized_time_to_datetime
 from . import restricted_generalized_time_from_datetime
+from .per import to_int
+from .per import to_byte_array
 from .per import integer_as_number_of_bits
 from .per import PermittedAlphabet
 from .per import Type
@@ -30,6 +32,7 @@ from .per import Recursive
 from .permitted_alphabet import NUMERIC_STRING
 from .permitted_alphabet import PRINTABLE_STRING
 from .permitted_alphabet import IA5_STRING
+from .permitted_alphabet import BMP_STRING
 from .permitted_alphabet import VISIBLE_STRING
 
 
@@ -47,6 +50,7 @@ class Decoder(per.Decoder):
 
 class KnownMultiplierStringType(per.KnownMultiplierStringType):
 
+    ENCODING = 'ascii'
     PERMITTED_ALPHABET = ''
 
     def __init__(self,
@@ -67,20 +71,19 @@ class KnownMultiplierStringType(per.KnownMultiplierStringType):
             len(permitted_alphabet) - 1)
 
     def encode(self, data, encoder):
-        encoded = bytearray(data.encode('ascii'))
-
         if self.has_extension_marker:
             encoder.append_bit(0)
 
         if self.number_of_bits is None:
-            return self.encode_unbound(encoded, encoder)
+            return self.encode_unbound(data, encoder)
         elif self.minimum != self.maximum:
-            encoder.append_non_negative_binary_integer(len(encoded) - self.minimum,
+            encoder.append_non_negative_binary_integer(len(data) - self.minimum,
                                                        self.number_of_bits)
 
-        for value in encoded:
+        for value in data:
             encoder.append_non_negative_binary_integer(
-                self.permitted_alphabet.encode(value),
+                self.permitted_alphabet.encode(
+                    to_int(value.encode(self.ENCODING))),
                 self.bits_per_character)
 
     def decode(self, decoder):
@@ -99,13 +102,14 @@ class KnownMultiplierStringType(per.KnownMultiplierStringType):
             if self.minimum != self.maximum:
                 length += decoder.read_non_negative_binary_integer(self.number_of_bits)
 
-        data = []
+        data = bytearray()
 
         for _ in range(length):
             value = decoder.read_non_negative_binary_integer(self.bits_per_character)
-            data.append(self.permitted_alphabet.decode(value))
+            value = self.permitted_alphabet.decode(value)
+            data += to_byte_array(value, self.bits_per_character)
 
-        return bytearray(data).decode('ascii')
+        return data.decode(self.ENCODING)
 
 
 class ArrayType(per.ArrayType):
@@ -366,6 +370,15 @@ class IA5String(KnownMultiplierStringType):
                                            ENCODE_DECODE_MAP)
 
 
+class BMPString(KnownMultiplierStringType):
+
+    ENCODING = 'utf-16-be'
+    ALPHABET = BMP_STRING
+    ENCODE_DECODE_MAP = {ord(v): ord(v) for v in ALPHABET}
+    PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_DECODE_MAP,
+                                           ENCODE_DECODE_MAP)
+
+
 class VisibleString(KnownMultiplierStringType):
 
     ALPHABET = bytearray(VISIBLE_STRING.encode('ascii'))
@@ -542,6 +555,12 @@ class Compiler(per.Compiler):
                                  *self.get_size_range(type_descriptor,
                                                       module_name),
                                  permitted_alphabet=permitted_alphabet)
+        elif type_name == 'BMPString':
+            permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
+            compiled = BMPString(name,
+                                 *self.get_size_range(type_descriptor,
+                                                      module_name),
+                                 permitted_alphabet=permitted_alphabet)
         elif type_name == 'VisibleString':
             permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
             compiled = VisibleString(name,
@@ -554,8 +573,6 @@ class Compiler(per.Compiler):
             compiled = UTF8String(name)
         elif type_name == 'GraphicString':
             compiled = GraphicString(name)
-        elif type_name == 'BMPString':
-            compiled = BMPString(name)
         elif type_name == 'UTCTime':
             compiled = UTCTime(name)
         elif type_name == 'UniversalString':

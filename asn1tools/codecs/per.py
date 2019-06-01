@@ -28,6 +28,7 @@ from .ber import decode_object_identifier
 from .permitted_alphabet import NUMERIC_STRING
 from .permitted_alphabet import PRINTABLE_STRING
 from .permitted_alphabet import IA5_STRING
+from .permitted_alphabet import BMP_STRING
 from .permitted_alphabet import VISIBLE_STRING
 
 
@@ -35,6 +36,31 @@ def is_unbound(minimum, maximum):
     return ((minimum in [None, 'MIN'])
             or (maximum in [None, 'MAX'])
             or (maximum > 65535))
+
+
+def to_int(chars):
+    if isinstance(chars, int):
+        return chars
+
+    num = 0
+    byte_array = bytearray(chars)
+    while len(byte_array) > 0:
+        num <<= 8
+        byte = byte_array.pop(0)
+        num += byte
+
+    return num
+
+
+def to_byte_array(num, number_of_bits):
+    byte_array = bytearray()
+
+    while number_of_bits > 0:
+        byte_array.insert(0, (num & 0xff))
+        num >>= 8
+        number_of_bits -= 8
+
+    return byte_array
 
 
 def integer_as_number_of_bits(size):
@@ -542,6 +568,7 @@ class Type(object):
 
 class KnownMultiplierStringType(Type):
 
+    ENCODING = 'ascii'
     PERMITTED_ALPHABET = PermittedAlphabet({}, {})
 
     def __init__(self,
@@ -576,40 +603,41 @@ class KnownMultiplierStringType(Type):
             self.number_of_bits = integer_as_number_of_bits(size)
 
     def encode(self, data, encoder):
-        encoded = bytearray(data.encode('ascii'))
 
         if self.has_extension_marker:
-            if self.minimum <= len(encoded) <= self.maximum:
+            if self.minimum <= len(data) <= self.maximum:
                 encoder.append_bit(0)
             else:
                 raise NotImplementedError(
                     'String size extension is not yet implemented.')
 
         if self.number_of_bits is None:
-            return self.encode_unbound(encoded, encoder)
+            return self.encode_unbound(data, encoder)
         elif self.minimum != self.maximum:
-            encoder.append_constrained_whole_number(len(encoded),
+            encoder.append_constrained_whole_number(len(data),
                                                     self.minimum,
                                                     self.maximum,
                                                     self.number_of_bits)
 
-            if self.maximum > 1 and len(encoded) > 0:
+            if self.maximum > 1 and len(data) > 0:
                 encoder.align()
         elif self.maximum * self.bits_per_character > 16:
             encoder.align()
 
-        for value in encoded:
+        for value in data:
             encoder.append_non_negative_binary_integer(
-                self.permitted_alphabet.encode(value),
+                self.permitted_alphabet.encode(
+                    to_int(value.encode(self.ENCODING))),
                 self.bits_per_character)
 
-    def encode_unbound(self, encoded, encoder):
+    def encode_unbound(self, data, encoder):
         encoder.align()
 
-        for offset, length in encoder.append_length_determinant_chunks(len(encoded)):
-            for entry in encoded[offset:offset + length]:
+        for offset, length in encoder.append_length_determinant_chunks(len(data)):
+            for entry in data[offset:offset + length]:
                 encoder.append_non_negative_binary_integer(
-                    self.permitted_alphabet.encode(entry),
+                    self.permitted_alphabet.encode(
+                        to_int(entry.encode(self.ENCODING))),
                     self.bits_per_character)
 
     def decode(self, decoder):
@@ -636,25 +664,29 @@ class KnownMultiplierStringType(Type):
             else:
                 length = self.minimum
 
-        data = []
+        data = bytearray()
 
         for _ in range(length):
             value = decoder.read_non_negative_binary_integer(self.bits_per_character)
-            data.append(self.permitted_alphabet.decode(value))
+            value = self.permitted_alphabet.decode(value)
+            data += to_byte_array(value, self.bits_per_character)
 
-        return bytearray(data).decode('ascii')
+        return data.decode(self.ENCODING)
 
     def decode_unbound(self, decoder):
         decoder.align()
-        decoded = []
+        decoded = bytearray()
+        orig_bits_per_character = integer_as_number_of_bits_power_of_two(
+            len(self.ALPHABET) - 1)
 
         for length in decoder.read_length_determinant_chunks():
             for _ in range(length):
                 value = decoder.read_non_negative_binary_integer(
                     self.bits_per_character)
-                decoded.append(self.permitted_alphabet.decode(value))
+                value = self.permitted_alphabet.decode(value)
+                decoded += to_byte_array(value, orig_bits_per_character)
 
-        return bytearray(decoded).decode('ascii')
+        return decoded.decode(self.ENCODING)
 
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__,
@@ -1752,6 +1784,15 @@ class IA5String(KnownMultiplierStringType):
                                            ENCODE_DECODE_MAP)
 
 
+class BMPString(KnownMultiplierStringType):
+
+    ENCODING = 'utf-16-be'
+    ALPHABET = BMP_STRING
+    ENCODE_DECODE_MAP = {ord(v): ord(v) for v in ALPHABET}
+    PERMITTED_ALPHABET = PermittedAlphabet(ENCODE_DECODE_MAP,
+                                           ENCODE_DECODE_MAP)
+
+
 class VisibleString(KnownMultiplierStringType):
 
     ALPHABET = bytearray(VISIBLE_STRING.encode('ascii'))
@@ -1763,12 +1804,6 @@ class VisibleString(KnownMultiplierStringType):
 class GeneralString(StringType):
 
     ENCODING = 'latin-1'
-
-
-class BMPString(StringType):
-
-    ENCODING = 'utf-16-be'
-    LENGTH_MULTIPLIER = 2
 
 
 class GraphicString(StringType):
@@ -2089,6 +2124,12 @@ class Compiler(compiler.Compiler):
                                  *self.get_size_range(type_descriptor,
                                                       module_name),
                                  permitted_alphabet=permitted_alphabet)
+        elif type_name == 'BMPString':
+            permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
+            compiled = BMPString(name,
+                                 *self.get_size_range(type_descriptor,
+                                                      module_name),
+                                 permitted_alphabet=permitted_alphabet)
         elif type_name == 'VisibleString':
             permitted_alphabet = self.get_permitted_alphabet(type_descriptor)
             compiled = VisibleString(name,
@@ -2101,8 +2142,6 @@ class Compiler(compiler.Compiler):
             compiled = UTF8String(name)
         elif type_name == 'GraphicString':
             compiled = GraphicString(name)
-        elif type_name == 'BMPString':
-            compiled = BMPString(name)
         elif type_name == 'UTCTime':
             compiled = UTCTime(name)
         elif type_name == 'UniversalString':

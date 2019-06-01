@@ -1157,17 +1157,32 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "  a BOOLEAN, "
             "  b BMPString "
             "} "
+            "C ::= SEQUENCE { "
+            "  a BMPString (SIZE(1..128)), "
+            "  b BMPString (SIZE(1..256)) "
+            "} "
             "END",
             'per')
 
         datas = [
             ('A',     '', b'\x00'),
             ('A',  '123', b'\x03\x00\x31\x00\x32\x00\x33'),
-            ('B', {'a': False, 'b': u'K'}, b'\x00\x01\x00\x4b')
+            ('B', {'a': False, 'b': u'K'}, b'\x00\x01\x00\x4b'),
+            ('C',
+             {'a': '123', 'b': '123'},
+             b'\x04\x001\x002\x003\x02\x001\x002\x003')
         ]
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', b'\x01\xd8\x00')
+
+        valid_chars = [v for v in range(65536) if v < 0xd800 or v > 0xdfff]
+        self.assertEqual(str(cm.exception),
+                         "Expected a value in %s, but got %d." % (valid_chars,
+                                                                  0xd800,))
 
     def test_graphic_string(self):
         foo = asn1tools.compile_string(

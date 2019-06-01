@@ -11,3 +11,4 @@ pycodestyle
 bitstruct
 diskcache
 humanfriendly
+mock ; python_version < '3.0'

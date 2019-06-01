@@ -584,6 +584,7 @@ def convert_type(tokens, parameters):
         'BIT STRING',
         'OCTET STRING',
         'IA5String',
+        'BMPString',
         'VisibleString',
         'UTF8String',
         'NumericString',
