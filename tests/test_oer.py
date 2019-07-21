@@ -43,10 +43,12 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             "D ::= INTEGER (-2147483648..2147483647) "
             "E ::= INTEGER (-9223372036854775808..9223372036854775807) "
             "F ::= INTEGER (0..255) "
-            "G ::= INTEGER (0..65536) "
-            "H ::= INTEGER (0..4294967296) "
+            "G ::= INTEGER (0..65535) "
+            "H ::= INTEGER (0..4294967295) "
             "I ::= INTEGER (0..18446744073709551615) "
             "J ::= INTEGER (0..18446744073709551616) "
+            "K ::= INTEGER (1..MAX) "
+            "L ::= INTEGER (MIN..0) "
             "END",
             'oer')
 
@@ -60,6 +62,11 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             ('C',             -2, b'\xff\xfe'),
             ('D',             -2, b'\xff\xff\xff\xfe'),
             ('E',             -2, b'\xff\xff\xff\xff\xff\xff\xff\xfe'),
+            ('F',            128, b'\x80'),
+            ('G',            128, b'\x00\x80'),
+            ('G',           1000, b'\x03\xe8'),
+            ('H',            128, b'\x00\x00\x00\x80'),
+            ('I',            128, b'\x00\x00\x00\x00\x00\x00\x00\x80'),
             ('B',              1, b'\x01'),
             ('C',              1, b'\x00\x01'),
             ('D',              1, b'\x00\x00\x00\x01'),
@@ -68,7 +75,12 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             ('C',            127, b'\x00\x7f'),
             ('D',            127, b'\x00\x00\x00\x7f'),
             ('E',            127, b'\x00\x00\x00\x00\x00\x00\x00\x7f'),
-            ('J',              1, b'\x01\x01')
+            ('I',              1, b'\x00\x00\x00\x00\x00\x00\x00\x01'),
+            ('J',              1, b'\x01\x01'),
+            ('K',              1, b'\x01\x01'),
+            ('K',            127, b'\x01\x7f'),
+            ('K',            128, b'\x01\x80'),
+            ('L',           -128, b'\x01\x80')
         ]
 
         for type_name, decoded, encoded in datas:

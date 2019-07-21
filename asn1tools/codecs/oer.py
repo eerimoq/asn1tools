@@ -161,6 +161,12 @@ class Encoder(object):
         self.append_length_determinant(number_of_bytes)
         self.append_non_negative_binary_integer(value, 8 * number_of_bytes)
 
+    def append_unsigned_integer(self, value):
+        number_of_bits = value.bit_length()
+        number_of_bytes = ((number_of_bits + 7) // 8)
+        self.append_length_determinant(number_of_bytes)
+        self.append_non_negative_binary_integer(value, 8 * number_of_bytes)
+
     def __repr__(self):
         return binascii.hexlify(self.as_bytearray()).decode('ascii')
 
@@ -261,6 +267,12 @@ class Decoder(object):
             value -= 1
 
         return value
+
+    def read_unsigned_integer(self):
+        number_of_bytes = self.read_length_determinant()
+        number_of_bits = 8 * number_of_bytes
+
+        return self.read_non_negative_binary_integer(number_of_bits)
 
     def read_tag(self):
         byte = self.read_byte()
@@ -581,9 +593,13 @@ class Integer(Type):
         self.has_extension_marker = False
         self.length = None
         self.fmt = None
+        self.signed = True
 
     def set_restricted_to_range(self, minimum, maximum, has_extension_marker):
         self.has_extension_marker = has_extension_marker
+
+        if minimum != 'MIN':
+            self.signed = (minimum < 0)
 
         if minimum == 'MIN' or maximum == 'MAX' or has_extension_marker:
             return
@@ -617,14 +633,18 @@ class Integer(Type):
     def encode(self, data, encoder):
         if self.fmt:
             encoder.append_bytes(struct.pack(self.fmt, data))
-        else:
+        elif self.signed:
             encoder.append_integer(data)
+        else:
+            encoder.append_unsigned_integer(data)
 
     def decode(self, decoder):
         if self.fmt:
             return struct.unpack(self.fmt, decoder.read_bytes(self.length))[0]
-        else:
+        elif self.signed:
             return decoder.read_integer()
+        else:
+            return decoder.read_unsigned_integer()
 
     def __repr__(self):
         return 'Integer({})'.format(self.name)
