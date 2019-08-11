@@ -22,6 +22,35 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
 
     maxDiff = None
 
+    def test_integer(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= "
+            "BEGIN "
+            "A ::= INTEGER "
+            "END",
+            'der')
+
+        datas = [
+            ('A',     32768, b'\x02\x03\x00\x80\x00'),
+            ('A',     32767, b'\x02\x02\x7f\xff'),
+            ('A',       256, b'\x02\x02\x01\x00'),
+            ('A',       255, b'\x02\x02\x00\xff'),
+            ('A',       128, b'\x02\x02\x00\x80'),
+            ('A',       127, b'\x02\x01\x7f'),
+            ('A',         1, b'\x02\x01\x01'),
+            ('A',         0, b'\x02\x01\x00'),
+            ('A',        -1, b'\x02\x01\xff'),
+            ('A',      -128, b'\x02\x01\x80'),
+            ('A',      -129, b'\x02\x02\xff\x7f'),
+            ('A',      -256, b'\x02\x02\xff\x00'),
+            ('A',    -32768, b'\x02\x02\x80\x00'),
+            ('A',    -32769, b'\x02\x03\xff\x7f\xff'),
+            ('A', 1 << 2048, b'\x02\x82\x01\x01\x01' + 256 * b'\x00')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_external(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
@@ -248,20 +277,6 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
         datas = [
             ('Boolean',                 True, b'\x01\x01\xff'),
             ('Boolean',                False, b'\x01\x01\x00'),
-            ('Integer',                32768, b'\x02\x03\x00\x80\x00'),
-            ('Integer',                32767, b'\x02\x02\x7f\xff'),
-            ('Integer',                  256, b'\x02\x02\x01\x00'),
-            ('Integer',                  255, b'\x02\x02\x00\xff'),
-            ('Integer',                  128, b'\x02\x02\x00\x80'),
-            ('Integer',                  127, b'\x02\x01\x7f'),
-            ('Integer',                    1, b'\x02\x01\x01'),
-            ('Integer',                    0, b'\x02\x01\x00'),
-            ('Integer',                   -1, b'\x02\x01\xff'),
-            ('Integer',                 -128, b'\x02\x01\x80'),
-            ('Integer',                 -129, b'\x02\x02\xff\x7f'),
-            ('Integer',                 -256, b'\x02\x02\xff\x00'),
-            ('Integer',               -32768, b'\x02\x02\x80\x00'),
-            ('Integer',               -32769, b'\x02\x03\xff\x7f\xff'),
             ('Bitstring',       (b'\x80', 1), b'\x03\x02\x07\x80'),
             ('Octetstring',          b'\x00', b'\x04\x01\x00'),
             ('Octetstring',    127 * b'\x55', b'\x04\x7f' + 127 * b'\x55'),

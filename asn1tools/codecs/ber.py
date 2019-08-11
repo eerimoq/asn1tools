@@ -154,7 +154,6 @@ def encode_signed_integer(data):
     else:
         encoded.append(0)
 
-    encoded.append(len(encoded))
     encoded.reverse()
 
     return encoded
@@ -734,7 +733,9 @@ class Integer(Type):
 
     def encode(self, data, encoded):
         encoded.extend(self.tag)
-        encoded.extend(encode_signed_integer(data))
+        value = encode_signed_integer(data)
+        encoded.extend(encode_length_definite(len(value)))
+        encoded.extend(value)
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
@@ -930,7 +931,9 @@ class Enumerated(Type):
                     data))
 
         encoded.extend(self.tag)
-        encoded.extend(encode_signed_integer(value))
+        value = encode_signed_integer(value)
+        encoded.extend(encode_length_definite(len(value)))
+        encoded.extend(value)
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)

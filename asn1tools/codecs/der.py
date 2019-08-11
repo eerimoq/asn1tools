@@ -162,7 +162,9 @@ class Integer(Type):
 
     def encode(self, data, encoded):
         encoded.extend(self.tag)
-        encoded.extend(encode_signed_integer(data))
+        value = encode_signed_integer(data)
+        encoded.extend(encode_length_definite(len(value)))
+        encoded.extend(value)
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
