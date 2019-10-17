@@ -162,7 +162,7 @@ class Encoder(object):
         self.append_non_negative_binary_integer(value, 8 * number_of_bytes)
 
     def append_unsigned_integer(self, value):
-        number_of_bits = value.bit_length()
+        number_of_bits = max(value.bit_length(), 1)
         number_of_bytes = ((number_of_bits + 7) // 8)
         self.append_length_determinant(number_of_bytes)
         self.append_non_negative_binary_integer(value, 8 * number_of_bytes)
@@ -546,13 +546,13 @@ class ArrayType(Type):
         self.element_type = element_type
 
     def encode(self, data, encoder):
-        encoder.append_integer(len(data))
+        encoder.append_unsigned_integer(len(data))
 
         for entry in data:
             self.element_type.encode(entry, encoder)
 
     def decode(self, decoder):
-        length = decoder.read_integer()
+        length = decoder.read_unsigned_integer()
         decoded = []
 
         for _ in range(length):

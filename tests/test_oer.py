@@ -433,6 +433,7 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
             "A ::= SEQUENCE OF INTEGER "
+            "B ::= SEQUENCE (SIZE (129)) OF INTEGER "
             "END",
             'oer')
 
@@ -441,7 +442,8 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             ('A',            [1, 2], b'\x01\x02\x01\x01\x01\x02'),
             ('A',
              1000 * [0],
-             b'\x02\x03\xe8' + 1000 * b'\x01\x00')
+             b'\x02\x03\xe8' + 1000 * b'\x01\x00'),
+            ('B',         129 * [2], b'\x01\x81' + 129 * b'\x01\x02')
         ]
 
         for type_name, decoded, encoded in datas:
