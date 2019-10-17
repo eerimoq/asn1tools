@@ -163,6 +163,7 @@ class Encoder(object):
 
     def append_unsigned_integer(self, value):
         number_of_bits = value.bit_length()
+        number_of_bits = max(number_of_bits, 1)
         number_of_bytes = ((number_of_bits + 7) // 8)
         self.append_length_determinant(number_of_bytes)
         self.append_non_negative_binary_integer(value, 8 * number_of_bytes)
