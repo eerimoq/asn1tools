@@ -505,6 +505,27 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             str(cm.exception),
             "Expected choice member tag '80', but got '81'.")
 
+    def test_choice_default_tags(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= "
+            "BEGIN "
+            "A ::= CHOICE { "
+            "  a CHOICE { "
+            "    aa INTEGER "
+            "  } "
+            "} "
+            "END",
+            'oer')
+
+        datas = [
+            ('A',          ('a', ('aa', 1)), b'\x02\x02\x01\x01')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            # ToDo: This is a bug. Fix it.
+            with self.assertRaises(TypeError):
+                self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_uft8_string(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
