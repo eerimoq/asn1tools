@@ -125,6 +125,36 @@ static void test_oer_c_source_a_decode_error_out_of_data(void)
                                  sizeof(encoded)) == -EOUTOFDATA);
 }
 
+static void test_oer_c_source_ae(void)
+{
+    uint8_t encoded[4];
+    struct oer_c_source_ae_t decoded;
+
+    /* Encode. */
+    decoded.is_a_present = true;
+    decoded.a = true;
+    decoded.b = true;
+    decoded.c = true;
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(oer_c_source_ae_encode(&encoded[0],
+                                 sizeof(encoded),
+                                 &decoded) == sizeof(encoded));
+    assert(memcmp(&encoded[0],
+                  "\x60\xff\xff\x00",
+                  sizeof(encoded)) == 0);
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(oer_c_source_ae_decode(&decoded,
+                                 &encoded[0],
+                                 sizeof(encoded)) == sizeof(encoded));
+
+    assert(decoded.a == true);
+    assert(decoded.b == true);
+    assert(decoded.c == true);
+}
+
 static void test_oer_c_source_b_choice_a(void)
 {
     uint8_t encoded[2];
@@ -1054,6 +1084,8 @@ int main(void)
     test_oer_c_source_x();
     test_oer_c_source_y();
     test_oer_c_source_ab();
+
+    test_oer_c_source_ae();
 
     test_oer_programming_types_float();
     test_oer_programming_types_double();
