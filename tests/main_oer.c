@@ -284,7 +284,7 @@ static void test_oer_c_source_c_decode_error_bad_length(void)
 
 static void test_oer_c_source_d_all_present(void)
 {
-    uint8_t encoded[20];
+    uint8_t encoded[21];
     struct oer_c_source_d_t decoded;
 
     /* Encode. */
@@ -305,14 +305,15 @@ static void test_oer_c_source_d_all_present(void)
            sizeof(decoded.elements[0].m.p.q.buf));
     decoded.elements[0].m.p.is_r_present = true;
     decoded.elements[0].m.p.r = true;
+    decoded.elements[0].m.s = true;
 
     memset(&encoded[0], 0, sizeof(encoded));
     assert(oer_c_source_d_encode(&encoded[0],
                                  sizeof(encoded),
                                  &decoded) == sizeof(encoded));
     assert(memcmp(&encoded[0],
-                  "\x01\x01\x80\x00\x01\x03\x01\x02\x54\x55\xe0\x00\x02\x80"
-                  "\x03\x03\x03\x03\x03\xff",
+                  "\x01\x01\x80\x00\x01\x03\x01\x02\x54\x55\xf0\x00\x02\x80"
+                  "\x03\x03\x03\x03\x03\xff\xff",
                   sizeof(encoded)) == 0);
 
     /* Decode. */
@@ -338,6 +339,7 @@ static void test_oer_c_source_d_all_present(void)
                   sizeof(decoded.elements[0].m.p.q.buf)) == 0);
     assert(decoded.elements[0].m.p.is_r_present);
     assert(decoded.elements[0].m.p.r == true);
+    assert(decoded.elements[0].m.s == true);
 }
 
 static void test_oer_c_source_d_some_missing(void)
@@ -361,6 +363,7 @@ static void test_oer_c_source_d_some_missing(void)
            3,
            sizeof(decoded.elements[0].m.p.q.buf));
     decoded.elements[0].m.p.is_r_present = false;
+    decoded.elements[0].m.s = false;
 
     memset(&encoded[0], 0, sizeof(encoded));
     assert(oer_c_source_d_encode(&encoded[0],
@@ -391,6 +394,7 @@ static void test_oer_c_source_d_some_missing(void)
                   "\x03\x03\x03\x03\x03",
                   sizeof(decoded.elements[0].m.p.q.buf)) == 0);
     assert(!decoded.elements[0].m.p.is_r_present);
+    assert(decoded.elements[0].m.s == false);
 }
 
 static void test_oer_c_source_e(void)
