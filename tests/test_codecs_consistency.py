@@ -1350,6 +1350,47 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'AB', decoded, encoded)
 
+        # AE
+        decoded = {
+            'a': False,
+            'b': True,
+            'c': False
+        }
+
+        encoded_messages = [
+            b'\x30\x06\x80\x01\x00\x82\x01\x00',
+            b'\x30\x06\x80\x01\x00\x82\x01\x00',
+            b'{"a": false, "b": true, "c": false}',
+            b'\x40\x00\x00',
+            b'\x40',
+            b'\x40',
+            b'<AE><a><false /></a><b><true /></b><c><false /></c></AE>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'AE', decoded, encoded)
+
+        # AF
+        decoded = {
+            'a': True,
+            'b': {
+                'c': False
+            }
+        }
+
+        encoded_messages = [
+            b'\x30\x08\x80\x01\xFF\xA1\x03\x80\x01\x00',
+            b'\x30\x08\x80\x01\xFF\xA1\x03\x80\x01\x00',
+            b'{"a": true, "b": {"c":false}}',
+            b'\x80\xFF\x02\x07\x80\x02\x00\x00',
+            b'\xC0\x40\x01\x00',
+            b'\xC0\x40\x40\x00',
+            b'<AF><a><true /></a><b><c><false /></c></b></AF>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'AF', decoded, encoded)
+
     def test_parameterization(self):
         specs = []
 

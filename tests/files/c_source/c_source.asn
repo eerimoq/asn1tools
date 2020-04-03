@@ -412,12 +412,12 @@ AE ::= SEQUENCE {
 }
 
 AF ::= SEQUENCE {
-    a BOOLEAN OPTIONAL,
-    b BOOLEAN DEFAULT TRUE,
-    c BOOLEAN,
+    a BOOLEAN,
     ...,
-    d BOOLEAN,
-    e BOOLEAN OPTIONAL,
+    b SEQUENCE {
+        c BOOLEAN,
+        ...
+    },
     ...
 }
 
