@@ -496,7 +496,8 @@ class Generator(object):
             name = '{}{}'.format(location, member.name)
             encode_lines = [
                 '',
-                'if (src_p->{} != {}) {{'.format(name, self.format_default(member.default))
+                'if (src_p->{} != {}) {{'.format(name,
+                                                 self.format_default(member.default))
             ] + indent_lines(encode_lines) + [
                 '}',
                 ''
