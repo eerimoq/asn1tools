@@ -402,4 +402,22 @@ AD ::= ENUMERATED {
     b
 }
 
+-- Extensibility - with additionals
+AE ::= SEQUENCE {
+    a BOOLEAN OPTIONAL,
+    b BOOLEAN DEFAULT TRUE,
+    c BOOLEAN,
+    ...
+}
+
+AF ::= SEQUENCE {
+    a BOOLEAN OPTIONAL,
+    b BOOLEAN DEFAULT TRUE,
+    c BOOLEAN,
+    ...,
+    d BOOLEAN,
+    e BOOLEAN OPTIONAL,
+    ...
+}
+
 END

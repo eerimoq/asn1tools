@@ -285,6 +285,104 @@ static void test_oer_c_source_ad(
     }
 }
 
+static void test_oer_c_source_ae(
+    const uint8_t *encoded_p,
+    size_t size)
+{
+    ssize_t res;
+    ssize_t res2;
+    ssize_t i;
+    uint8_t encoded[size];
+    uint8_t encoded2[size];
+    struct oer_c_source_ae_t decoded;
+    struct oer_c_source_ae_t decoded2;
+
+    memset(&decoded, 0, sizeof(decoded));
+
+    res = oer_c_source_ae_decode(
+        &decoded,
+        encoded_p,
+        size);
+
+    if (res >= 0) {
+        res = oer_c_source_ae_encode(
+            &encoded[0],
+            sizeof(encoded),
+            &decoded);
+
+        assert_first_encode(res);
+
+        memset(&decoded2, 0, sizeof(decoded2));
+
+        res2 = oer_c_source_ae_decode(
+            &decoded2,
+            &encoded[0],
+            res);
+
+        assert_second_decode(res2);
+        assert_second_decode_data(&decoded,
+                                  &decoded2,
+                                  sizeof(decoded));
+
+        res2 = oer_c_source_ae_encode(
+            &encoded2[0],
+            sizeof(encoded2),
+            &decoded);
+
+        assert_second_encode(res, res2);
+        assert_second_encode_data(&encoded[0], &encoded2[0], res);
+    }
+}
+
+static void test_oer_c_source_af(
+    const uint8_t *encoded_p,
+    size_t size)
+{
+    ssize_t res;
+    ssize_t res2;
+    ssize_t i;
+    uint8_t encoded[size];
+    uint8_t encoded2[size];
+    struct oer_c_source_af_t decoded;
+    struct oer_c_source_af_t decoded2;
+
+    memset(&decoded, 0, sizeof(decoded));
+
+    res = oer_c_source_af_decode(
+        &decoded,
+        encoded_p,
+        size);
+
+    if (res >= 0) {
+        res = oer_c_source_af_encode(
+            &encoded[0],
+            sizeof(encoded),
+            &decoded);
+
+        assert_first_encode(res);
+
+        memset(&decoded2, 0, sizeof(decoded2));
+
+        res2 = oer_c_source_af_decode(
+            &decoded2,
+            &encoded[0],
+            res);
+
+        assert_second_decode(res2);
+        assert_second_decode_data(&decoded,
+                                  &decoded2,
+                                  sizeof(decoded));
+
+        res2 = oer_c_source_af_encode(
+            &encoded2[0],
+            sizeof(encoded2),
+            &decoded);
+
+        assert_second_encode(res, res2);
+        assert_second_encode_data(&encoded[0], &encoded2[0], res);
+    }
+}
+
 static void test_oer_c_source_b(
     const uint8_t *encoded_p,
     size_t size)
@@ -2055,6 +2153,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *data_p, size_t size)
     test_oer_c_source_ab(data_p, size);
     test_oer_c_source_ac(data_p, size);
     test_oer_c_source_ad(data_p, size);
+    test_oer_c_source_ae(data_p, size);
+    test_oer_c_source_af(data_p, size);
     test_oer_c_source_b(data_p, size);
     test_oer_c_source_c(data_p, size);
     test_oer_c_source_d(data_p, size);
