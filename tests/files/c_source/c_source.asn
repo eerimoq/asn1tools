@@ -44,7 +44,8 @@ D ::= SEQUENCE (SIZE (1..10)) OF SEQUENCE {
         p SEQUENCE {
             q OCTET STRING (SIZE (5)),
             r BOOLEAN OPTIONAL
-        } OPTIONAL
+        } OPTIONAL,
+        s BOOLEAN DEFAULT FALSE
     }
 }
 

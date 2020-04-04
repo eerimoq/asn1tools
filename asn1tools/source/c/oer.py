@@ -694,7 +694,8 @@ class _Generator(Generator):
                     encode_lines += [
                         'if (src_p->{}{} != {}) {{'.format(self.location_inner('', '.'),
                                                            member.name,
-                                                           member.default),
+                                                           self.format_default(
+                                                               member.default)),
                         '    {} |= {};'.format(present_mask, mask),
                         '}',
                         ''

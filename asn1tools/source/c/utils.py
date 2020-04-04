@@ -240,6 +240,13 @@ class Generator(object):
 
         return type_name
 
+    @staticmethod
+    def format_default(default):
+        if isinstance(default, bool):
+            return str(default).lower()
+        else:
+            return str(default)
+
     @property
     def location(self):
         location = '{}_{}_{}'.format(self.namespace,
@@ -489,7 +496,8 @@ class Generator(object):
             name = '{}{}'.format(location, member.name)
             encode_lines = [
                 '',
-                'if (src_p->{} != {}) {{'.format(name, member.default)
+                'if (src_p->{} != {}) {{'.format(name,
+                                                 self.format_default(member.default))
             ] + indent_lines(encode_lines) + [
                 '}',
                 ''
@@ -499,7 +507,7 @@ class Generator(object):
                 'if ({}) {{'.format(default_condition_by_member_name[member.name])
             ] + indent_lines(decode_lines) + [
                 '} else {',
-                '    dst_p->{} = {};'.format(name, member.default),
+                '    dst_p->{} = {};'.format(name, self.format_default(member.default)),
                 '}',
                 ''
             ]

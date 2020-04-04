@@ -847,30 +847,32 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
                     'p': {
                         'q': 5 * b'\x03',
                         'r': True
-                    }
+                    },
+                    's': True
                 }
             }
         ]
 
         encoded_messages = [
-            b'\x30\x30\x30\x2e\xa0\x0f\xa0\x03\x80\x01\x00\xa1\x06\x05\x00\x05'
-            b'\x00\x05\x00\x82\x00\xa1\x07\x80\x01\x01\x81\x02\x54\x55\xa2\x12'
+            b'\x30\x33\x30\x31\xa0\x0f\xa0\x03\x80\x01\x00\xa1\x06\x05\x00\x05'
+            b'\x00\x05\x00\x82\x00\xa1\x07\x80\x01\x01\x81\x02\x54\x55\xa2\x15'
             b'\x80\x01\x00\x81\x01\x02\xa2\x0a\x80\x05\x03\x03\x03\x03\x03\x81'
-            b'\x01\xff',
-            b'\x30\x30\x30\x2e\xa0\x0f\xa0\x03\x80\x01\x00\xa1\x06\x05\x00\x05'
-            b'\x00\x05\x00\x82\x00\xa1\x07\x80\x01\x01\x81\x02\x54\x55\xa2\x12'
+            b'\x01\xff\x83\x01\xff',
+            b'\x30\x33\x30\x31\xa0\x0f\xa0\x03\x80\x01\x00\xa1\x06\x05\x00\x05'
+            b'\x00\x05\x00\x82\x00\xa1\x07\x80\x01\x01\x81\x02\x54\x55\xa2\x15'
             b'\x80\x01\x00\x81\x01\x02\xa2\x0a\x80\x05\x03\x03\x03\x03\x03\x81'
-            b'\x01\xff',
-            b'[{"m":{"p":{"q":"0303030303","r":true},"o":2,"n":false},"g":{"l"'
-            b':"5455","h":"j"},"a":{"b":{"c":0},"e":[null,null,null],"f":null}'
-            b'}]',
-            b'\x01\x01\x80\x00\x01\x03\x01\x02\x54\x55\xe0\x00\x02\x80\x03\x03'
-            b'\x03\x03\x03\xff',
-            b'\x00\xc0\x54\x55\xe9\x03\x03\x03\x03\x03\x80',
-            b'\x00\xd5\x15\x7a\x40\xc0\xc0\xc0\xc0\xe0',
+            b'\x01\xff\x83\x01\xff',
+            b'[{"m":{"p":{"q":"0303030303","r":true},"s":true,"o":2,"n":false}'
+            b',"g":{"l":"5455","h":"j"},"a":{"b":{"c":0},"e":[null,null,null],'
+            b'"f":null}}]',
+            b'\x01\x01\x80\x00\x01\x03\x01\x02\x54\x55\xf0\x00\x02\x80\x03\x03'
+            b'\x03\x03\x03\xff\xff',
+            b'\x00\xc0\x54\x55\xf4\x80\x03\x03\x03\x03\x03\xc0',
+            b'\x00\xd5\x15\x7D\x20\x60\x60\x60\x60\x78',
             b'<D><SEQUENCE><a><b><c>0</c></b><e><NULL /><NULL /><NULL /></e><f'
             b' /></a><g><h><j /></h><l>5455</l></g><m><n><false /></n><o>2</o>'
-            b'<p><q>0303030303</q><r><true /></r></p></m></SEQUENCE></D>'
+            b'<p><q>0303030303</q><r><true /></r></p><s><true /></s></m></SEQU'
+            b'ENCE></D>'
         ]
 
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
@@ -892,7 +894,8 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
                     'o': 3,
                     'p': {
                         'q': 5 * b'\x03'
-                    }
+                    },
+                    's': False
                 }
             }
         ]
@@ -905,13 +908,13 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             b'\x00\x05\x00\x82\x00\xa1\x06\x80\x01\x02\x81\x01\x54\xa2\x09\xa2'
             b'\x07\x80\x05\x03\x03\x03\x03\x03',
             b'[{"a":{"b":{"d":false},"e":[null,null,null],"f":null},"g":{"h":"'
-            b'k","l":"54"},"m":{"o":3,"p":{"q":"0303030303"}}}]',
+            b'k","l":"54"},"m":{"o":3,"p":{"q":"0303030303"},"s":false}}]',
             b'\x01\x01\x81\x00\x01\x03\x02\x01\x54\x20\x00\x03\x03\x03\x03\x03',
             b'\x09\x00\x54\x20\x03\x03\x03\x03\x03',
-            b'\x09\x15\x08\x0c\x0c\x0c\x0c\x0c',
+            b'\x09\x15\x08\x06\x06\x06\x06\x06',
             b'<D><SEQUENCE><a><b><d><false /></d></b><e><NULL /><NULL /><NULL '
             b'/></e><f /></a><g><h><k /></h><l>54</l></g><m><o>3</o><p><q>0303'
-            b'030303</q></p></m></SEQUENCE></D>'
+            b'030303</q></p><s><false /></s></m></SEQUENCE></D>'
         ]
 
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):

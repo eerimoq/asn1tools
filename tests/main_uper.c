@@ -268,13 +268,13 @@ static void test_uper_c_source_d_all_present(void)
            sizeof(decoded.elements[0].m.p.q.buf));
     decoded.elements[0].m.p.is_r_present = true;
     decoded.elements[0].m.p.r = true;
+    decoded.elements[0].m.s = true;
 
-    memset(&encoded[0], 0, sizeof(encoded));
     assert(uper_c_source_d_encode(&encoded[0],
                                   sizeof(encoded),
                                   &decoded) == sizeof(encoded));
     assert(memcmp(&encoded[0],
-                  "\x00\xd5\x15\x7a\x40\xc0\xc0\xc0\xc0\xe0",
+                  "\x00\xd5\x15\x7d\x20\x60\x60\x60\x60\x78",
                   sizeof(encoded)) == 0);
 
     /* Decode. */
@@ -300,6 +300,7 @@ static void test_uper_c_source_d_all_present(void)
                   sizeof(decoded.elements[0].m.p.q.buf)) == 0);
     assert(decoded.elements[0].m.p.is_r_present);
     assert(decoded.elements[0].m.p.r == true);
+    assert(decoded.elements[0].m.s == true);
 }
 
 static void test_uper_c_source_d_some_missing(void)
@@ -323,13 +324,14 @@ static void test_uper_c_source_d_some_missing(void)
            3,
            sizeof(decoded.elements[0].m.p.q.buf));
     decoded.elements[0].m.p.is_r_present = false;
+    decoded.elements[0].m.s = false;
 
     memset(&encoded[0], 0, sizeof(encoded));
     assert(uper_c_source_d_encode(&encoded[0],
                                  sizeof(encoded),
                                  &decoded) == sizeof(encoded));
     assert(memcmp(&encoded[0],
-                  "\x09\x15\x08\x0c\x0c\x0c\x0c\x0c",
+                  "\x09\x15\x08\x06\x06\x06\x06\x06",
                   sizeof(encoded)) == 0);
 
     /* Decode. */
@@ -352,6 +354,7 @@ static void test_uper_c_source_d_some_missing(void)
                   "\x03\x03\x03\x03\x03",
                   sizeof(decoded.elements[0].m.p.q.buf)) == 0);
     assert(!decoded.elements[0].m.p.is_r_present);
+    assert(decoded.elements[0].m.p.r == false);
 }
 
 static void test_uper_c_source_d_decode_error_bad_enum(void)
