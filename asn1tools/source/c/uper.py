@@ -587,6 +587,17 @@ class _Generator(Generator):
         decode_lines = []
         member_name_to_is_present = {}
 
+        if type_.additions is not None:
+            encode_lines.append(
+                'encoder_append_bool(encoder_p, {});'.format(
+                    'true' if len(type_.additions) > 0 else 'false'))
+            if len(type_.additions):
+                decode_lines.append('bool extension_is_present;')
+                decode_lines.append(
+                    'extension_is_present = decoder_read_bool(decoder_p);')
+            else:
+                decode_lines.append('decoder_read_bool(decoder_p);')
+
         for member in type_.root_members:
             if member.optional:
                 name = '{}is_{}_present'.format(self.location_inner('', '.'),
@@ -619,6 +630,10 @@ class _Generator(Generator):
 
             encode_lines += member_encode_lines
             decode_lines += member_decode_lines
+
+        if type_.additions is not None and len(type_.additions) > 0:
+            decode_lines.append('if(extension_is_present) {')
+            decode_lines.append('}')
 
         return encode_lines, decode_lines
 

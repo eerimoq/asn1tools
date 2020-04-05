@@ -646,8 +646,9 @@ class _Generator(Generator):
             for member in type_.root_members
             if member.optional or member.default is not None
         ]
+        extension_bit = 1 if type_.additions is not None else 0
 
-        present_mask_length = ((len(optionals) + 7) // 8)
+        present_mask_length = ((len(optionals) + extension_bit + 7) // 8)
         default_condition_by_member_name = {}
 
         if present_mask_length > 0:
@@ -655,8 +656,10 @@ class _Generator(Generator):
             unique_present_mask = self.add_unique_variable(fmt, 'present_mask')
 
             for i in range(present_mask_length):
-                encode_lines.append('{}[{}] = 0;'.format(unique_present_mask,
-                                                         i))
+                val = '0x80' if i == 0 and extension_bit == 1 and \
+                                len(type_.additions) > 0 else '0'
+                encode_lines.append('{}[{}] = {};'.format(unique_present_mask,
+                                                         i, val))
 
             encode_lines.append('')
 
@@ -667,7 +670,7 @@ class _Generator(Generator):
                 ''
             ]
 
-            for i, member in enumerate(optionals):
+            for i, member in enumerate(optionals, start=extension_bit):
                 byte, bit = divmod(i, 8)
                 mask = '0x{:02x}'.format(1 << (7 - bit))
                 present_mask = '{}[{}]'.format(unique_present_mask,

@@ -438,7 +438,7 @@ class MembersType(Type):
         # Presence bit field.
         number_of_additions = len(self.additions)
         number_of_unused_bits = (8 - (number_of_additions % 8))
-        encoder.append_length_determinant(((number_of_additions - 1) >> 3) + 2)
+        encoder.append_length_determinant(((number_of_additions + 7) // 8) + 1)
         encoder.append_non_negative_binary_integer(number_of_unused_bits, 8)
         encoder.append_non_negative_binary_integer(presence_bits,
                                                    number_of_additions)
