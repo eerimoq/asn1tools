@@ -1003,19 +1003,30 @@ static void test_oer_c_source_ae(void)
 
 static void test_oer_c_source_af(void)
 {
-    uint8_t encoded[8];
+    uint8_t encoded[30];
     struct oer_c_source_af_t decoded;
 
     /* Encode. */
     decoded.a = true;
-    decoded.b.c = false;
+    decoded.b.c = true;
+    decoded.b.d = 17;
+    decoded.e = 18;
+    decoded.f = 19;
+    decoded.g = 20;
+    decoded.h = 21;
+    decoded.i = 22;
+    decoded.j = 23;
+    decoded.k = 24;
+    decoded.l = 25;
 
     memset(&encoded[0], 0, sizeof(encoded));
     assert(oer_c_source_af_encode(&encoded[0],
                                   sizeof(encoded),
                                   &decoded) == sizeof(encoded));
     assert(memcmp(&encoded[0],
-                  "\x80\xff\x02\x07\x80\x02\x00\x00",
+                  "\x80\xff\x03\x07\xff\x80\x07\x80\xff\x02\x07\x80\x01\x11"
+                  "\x01\x12\x01\x13\x01\x14\x01\x15\x01\x16\x01\x17\x01\x18"
+                  "\x01\x19",
                   sizeof(encoded)) == 0);
 
     /* Decode. */
@@ -1025,7 +1036,89 @@ static void test_oer_c_source_af(void)
                                   sizeof(encoded)) == sizeof(encoded));
 
     assert(decoded.a == true);
-    assert(decoded.b.c == false);
+    assert(decoded.is_b_addition_present);
+    assert(decoded.b.c == true);
+    assert(decoded.b.is_d_addition_present);
+    assert(decoded.b.d == 17);
+    assert(decoded.is_e_addition_present);
+    assert(decoded.e == 18);
+    assert(decoded.is_f_addition_present);
+    assert(decoded.f == 19);
+    assert(decoded.is_g_addition_present);
+    assert(decoded.g == 20);
+    assert(decoded.is_h_addition_present);
+    assert(decoded.h == 21);
+    assert(decoded.is_i_addition_present);
+    assert(decoded.i == 22);
+    assert(decoded.is_j_addition_present);
+    assert(decoded.j == 23);
+    assert(decoded.is_k_addition_present);
+    assert(decoded.k == 24);
+    assert(decoded.is_l_addition_present);
+    assert(decoded.l == 25);
+}
+
+static void test_oer_c_source_af_past(void)
+{
+    uint8_t encoded[12] = "\x80\xff\x02\x05\xe0\x02\x00\xff\x01\x12\x01\x13";
+    struct oer_c_source_af_t decoded;
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(oer_c_source_af_decode(&decoded,
+                                  &encoded[0],
+                                  sizeof(encoded)) == sizeof(encoded));
+
+    assert(decoded.a == true);
+    assert(decoded.is_b_addition_present);
+    assert(decoded.b.c == true);
+    assert(!decoded.b.is_d_addition_present);
+    assert(decoded.is_e_addition_present);
+    assert(decoded.e == 18);
+    assert(decoded.is_f_addition_present);
+    assert(decoded.f == 19);
+    assert(!decoded.is_g_addition_present);
+    assert(!decoded.is_h_addition_present);
+    assert(!decoded.is_i_addition_present);
+    assert(!decoded.is_j_addition_present);
+    assert(!decoded.is_k_addition_present);
+    assert(!decoded.is_l_addition_present);
+}
+
+static void test_oer_c_source_af_future(void)
+{
+    uint8_t encoded[34] = "\x80\xff\x03\x06\xff\xc0\x09\x80\xff\x02\x06\xc0"
+    "\x01\x11\x01\xab\x01\x12\x01\x13\x01\x14\x01\x15\x01\x16\x01\x17\x01"
+    "\x18\x01\x19\x01\x1a";
+    struct oer_c_source_af_t decoded;
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(oer_c_source_af_decode(&decoded,
+                                  &encoded[0],
+                                  sizeof(encoded)) == sizeof(encoded));
+
+    assert(decoded.a == true);
+    assert(decoded.is_b_addition_present);
+    assert(decoded.b.c == true);
+    assert(decoded.b.is_d_addition_present);
+    assert(decoded.b.d == 17);
+    assert(decoded.is_e_addition_present);
+    assert(decoded.e == 18);
+    assert(decoded.is_f_addition_present);
+    assert(decoded.f == 19);
+    assert(decoded.is_g_addition_present);
+    assert(decoded.g == 20);
+    assert(decoded.is_h_addition_present);
+    assert(decoded.h == 21);
+    assert(decoded.is_i_addition_present);
+    assert(decoded.i == 22);
+    assert(decoded.is_j_addition_present);
+    assert(decoded.j == 23);
+    assert(decoded.is_k_addition_present);
+    assert(decoded.k == 24);
+    assert(decoded.is_l_addition_present);
+    assert(decoded.l == 25);
 }
 
 static void test_oer_programming_types_float(void)
@@ -1114,6 +1207,8 @@ int main(void)
 
     test_oer_c_source_ae();
     test_oer_c_source_af();
+    test_oer_c_source_af_past();
+    test_oer_c_source_af_future();
 
     test_oer_programming_types_float();
     test_oer_programming_types_double();

@@ -329,6 +329,17 @@ class Generator(object):
     def add_unique_decode_variable(self, fmt, name):
         return self.add_unique_variable(fmt, name, 'decode')
 
+    def add_sequence_member(self, member, checker):
+        member_checker = self.get_member_checker(checker, member.name)
+
+        with self.members_backtrace_push(member.name):
+            member_lines = self.format_type(member, member_checker)
+
+        if member_lines:
+            member_lines[-1] += ' {};'.format(member.name)
+
+        return member_lines
+
     def error(self, message):
         return Error('{}: {}'.format(self.location_error(), message))
 
@@ -368,18 +379,17 @@ class Generator(object):
         lines = []
 
         for member in type_.root_members:
-            member_checker = self.get_member_checker(checker, member.name)
 
             if member.optional:
                 lines += ['bool is_{}_present;'.format(member.name)]
 
-            with self.members_backtrace_push(member.name):
-                member_lines = self.format_type(member, member_checker)
+            lines += self.add_sequence_member(member, checker)
 
-            if member_lines:
-                member_lines[-1] += ' {};'.format(member.name)
+        if type_.additions is not None and len(type_.additions) > 0:
+            for addition in type_.additions:
+                lines += ['bool is_{}_addition_present;'.format(addition.name)]
 
-            lines += member_lines
+                lines += self.add_sequence_member(addition, checker)
 
         return ['struct {'] + indent_lines(lines) + ['}']
 
