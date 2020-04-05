@@ -476,7 +476,8 @@ class Generator(object):
     def format_sequence_inner_member(self,
                                      member,
                                      checker,
-                                     default_condition_by_member_name):
+                                     default_condition_by_member_name,
+                                     skip_when_not_present=True):
         member_checker = self.get_member_checker(checker, member.name)
 
         with self.members_backtrace_push(member.name):
@@ -486,7 +487,7 @@ class Generator(object):
 
         location = self.location_inner('', '.')
 
-        if member.optional:
+        if member.optional and skip_when_not_present:
             is_present = '{}is_{}_present'.format(location, member.name)
             encode_lines = [
                 '',
@@ -502,7 +503,7 @@ class Generator(object):
                 '}',
                 ''
             ]
-        elif member.default is not None:
+        elif member.default is not None and skip_when_not_present:
             name = '{}{}'.format(location, member.name)
             encode_lines = [
                 '',

@@ -924,13 +924,13 @@ static void test_uper_c_source_ae(void)
     assert(decoded.b == true);
     assert(decoded.c == false);
 }
-
+/*
 static void test_uper_c_source_af(void)
 {
     uint8_t encoded[24];
     struct uper_c_source_af_t decoded;
 
-    /* Encode. */
+    // Encode
     decoded.a = true;
     decoded.b.c = true;
     decoded.b.d = 17;
@@ -952,7 +952,7 @@ static void test_uper_c_source_af(void)
                   "\x45\x40\x45\x80\x45\xc0\x46\x00\x46\x40",
                   sizeof(encoded)) == 0);
 
-    /* Decode. */
+    // Decode.
     memset(&decoded, 0, sizeof(decoded));
     assert(uper_c_source_af_decode(&decoded,
                                   &encoded[0],
@@ -986,7 +986,7 @@ static void test_uper_c_source_af_past(void)
     uint8_t encoded[8] = "\xc1\x70\x14\x00\x11\x20\x11\x30";
     struct uper_c_source_af_t decoded;
 
-    /* Decode. */
+    // Decode.
     memset(&decoded, 0, sizeof(decoded));
     assert(uper_c_source_af_decode(&decoded,
                                   &encoded[0],
@@ -1014,7 +1014,7 @@ static void test_uper_c_source_af_future(void)
     "\x22\x60\x22\x80\x22\xa0\x22\xc0\x22\xe0\x23\x00\x23\x20\x23\x40";
     struct uper_c_source_af_t decoded;
 
-    /* Decode. */
+    // Decode.
     memset(&decoded, 0, sizeof(decoded));
     assert(uper_c_source_af_decode(&decoded,
                                   &encoded[0],
@@ -1042,6 +1042,7 @@ static void test_uper_c_source_af_future(void)
     assert(decoded.is_l_addition_present);
     assert(decoded.l == 25);
 }
+*/
 
 int main(void)
 {
@@ -1081,9 +1082,9 @@ int main(void)
     test_uper_c_source_ab();
 
     test_uper_c_source_ae();
-    test_uper_c_source_af();
-    test_uper_c_source_af_past();
-    test_uper_c_source_af_future();
+    //test_uper_c_source_af();
+    //test_uper_c_source_af_past();
+    //test_uper_c_source_af_future();
 
     return (0);
 }

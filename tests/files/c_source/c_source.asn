@@ -425,8 +425,8 @@ AF ::= SEQUENCE {
     g INTEGER(0..255),
     h INTEGER(0..255),
     i INTEGER(0..255),
-    j INTEGER(0..255),
-    k INTEGER(0..255),
+    j INTEGER(0..255) OPTIONAL,
+    k INTEGER(0..255) DEFAULT 24,
     l INTEGER(0..255),
     ...
 }

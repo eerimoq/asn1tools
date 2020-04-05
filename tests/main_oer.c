@@ -1010,14 +1010,23 @@ static void test_oer_c_source_af(void)
     decoded.a = true;
     decoded.b.c = true;
     decoded.b.d = 17;
+    decoded.b.is_d_addition_present = true;
     decoded.e = 18;
+    decoded.is_e_addition_present = true;
     decoded.f = 19;
+    decoded.is_f_addition_present = true;
     decoded.g = 20;
+    decoded.is_g_addition_present = true;
     decoded.h = 21;
+    decoded.is_h_addition_present = true;
     decoded.i = 22;
+    decoded.is_i_addition_present = true;
     decoded.j = 23;
+    decoded.is_j_addition_present = true;
     decoded.k = 24;
+    decoded.is_k_addition_present = true;
     decoded.l = 25;
+    decoded.is_l_addition_present = true;
 
     memset(&encoded[0], 0, sizeof(encoded));
     assert(oer_c_source_af_encode(&encoded[0],
