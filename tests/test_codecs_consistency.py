@@ -1374,18 +1374,36 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         decoded = {
             'a': True,
             'b': {
-                'c': False
-            }
+                'c': True,
+                'd': 17
+            },
+            'e': 18,
+            'f': 19,
+            'g': 20,
+            'h': 21,
+            'i': 22,
+            'j': 23,
+            'k': 24,
+            'l': 25,
         }
 
         encoded_messages = [
-            b'\x30\x08\x80\x01\xFF\xA1\x03\x80\x01\x00',
-            b'\x30\x08\x80\x01\xFF\xA1\x03\x80\x01\x00',
-            b'{"a": true, "b": {"c":false}}',
-            b'\x80\xFF\x02\x07\x80\x02\x00\x00',
-            b'\xC0\x40\x01\x00',
-            b'\xC0\x40\x40\x00',
-            b'<AF><a><true /></a><b><c><false /></c></b></AF>'
+            b'\x30\x23\x80\x01\xff\xa1\x06\x80\x01\xff\x81\x01\x11\x82\x01\x12'
+            b'\x83\x01\x13\x84\x01\x14\x85\x01\x15\x86\x01\x16\x87\x01\x17\x88'
+            b'\x01\x18\x89\x01\x19',
+            b'\x30\x23\x80\x01\xff\xA1\x06\x80\x01\xff\x81\x01\x11\x82\x01\x12'
+            b'\x83\x01\x13\x84\x01\x14\x85\x01\x15\x86\x01\x16\x87\x01\x17\x88'
+            b'\x01\x18\x89\x01\x19',
+            b'{"a": true, "b": {"c":true, "d":17}, "e":18, "f":19, "g":20, "h"'
+            b':21, "i":22, "j":23, "k":24, "l":25}',
+            b'\x80\xff\x03\x07\xff\x80\x07\x80\xff\x02\x07\x80\x01\x11\x01\x12'
+            b'\x01\x13\x01\x14\x01\x15\x01\x16\x01\x17\x01\x18\x01\x19',
+            b'\xc4\x7f\xc0\x04\xc0\x40\x01\x11\x01\x12\x01\x13\x01\x14\x01\x15'
+            b'\x01\x16\x01\x17\x01\x18\x01\x19',
+            b'\xc4\x7f\xc1\x30\x10\x11\x10\x00\x44\x80\x44\xc0\x45\x00\x45\x40'
+            b'\x45\x80\x45\xc0\x46\x00\x46\x40',
+            b'<AF><a><true /></a><b><c><true /></c><d>17</d></b><e>18</e><f>19'
+            b'</f><g>20</g><h>21</h><i>22</i><j>23</j><k>24</k><l>25</l></AF>'
         ]
 
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):

@@ -438,7 +438,7 @@ class MembersType(Type):
         # Presence bit field.
         number_of_additions = len(self.additions)
         number_of_unused_bits = (8 - (number_of_additions % 8))
-        encoder.append_length_determinant(number_of_additions + 1)
+        encoder.append_length_determinant(((number_of_additions - 1) >> 3) + 2)
         encoder.append_non_negative_binary_integer(number_of_unused_bits, 8)
         encoder.append_non_negative_binary_integer(presence_bits,
                                                    number_of_additions)
@@ -508,13 +508,15 @@ class MembersType(Type):
     def decode_additions(self, decoder):
         # Presence bit field.
         length = decoder.read_length_determinant()
-        decoder.read_byte()
-        presence_bits = decoder.read_non_negative_binary_integer(length)
+        unused_bits = decoder.read_byte()
+        num_additions = ((length - 1) * 8) - unused_bits
+        presence_bits = decoder.read_non_negative_binary_integer(num_additions)
         decoder.align()
+
         decoded = {}
 
-        for i in range(length):
-            if presence_bits & (1 << (length - i - 1)):
+        for i in range(num_additions):
+            if presence_bits & (1 << (num_additions - i - 1)):
                 member_length = decoder.read_length_determinant()
 
                 if i < len(self.additions):

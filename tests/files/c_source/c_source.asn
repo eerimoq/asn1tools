@@ -416,8 +416,18 @@ AF ::= SEQUENCE {
     ...,
     b SEQUENCE {
         c BOOLEAN,
+        ...,
+        d INTEGER(0..255),
         ...
     },
+    e INTEGER(0..255),
+    f INTEGER(0..255),
+    g INTEGER(0..255),
+    h INTEGER(0..255),
+    i INTEGER(0..255),
+    j INTEGER(0..255),
+    k INTEGER(0..255),
+    l INTEGER(0..255),
     ...
 }
 
