@@ -431,4 +431,25 @@ AF ::= SEQUENCE {
     ...
 }
 
+AG ::= SEQUENCE {
+    a BOOLEAN,
+    ...,
+    b OCTET STRING (SIZE(0..10)),
+    c SEQUENCE (SIZE (1..10)) OF BOOLEAN,
+    d ENUMERATED {
+        e, f, g
+    },
+    h NULL,
+    i REAL (WITH COMPONENTS {
+                     mantissa (-16777215..16777215),
+                     base (2),
+                     exponent (-149..104)
+                 }),
+    j CHOICE {
+        k INTEGER (0..65535),
+        l BOOLEAN
+    },
+    ...
+}
+
 END
