@@ -3,6 +3,7 @@
 """
 
 import bitstruct
+import textwrap
 
 from .utils import ENCODER_AND_DECODER_STRUCTS
 from .utils import ENCODER_ABORT
@@ -721,11 +722,21 @@ class _Generator(Generator):
             fmt = 'uint8_t {{}}[{}];'.format(present_mask_length)
             unique_present_mask = self.add_unique_variable(fmt, 'present_mask')
 
-            for i in range(present_mask_length):
-                val = '0x80' if i == 0 and extension_bit == 1 and \
-                                len(type_.additions) > 0 else '0'
-                encode_lines.append('{}[{}] = {};'.format(unique_present_mask,
-                                                          i, val))
+            start_set_byte = 0
+            if extension_bit == 1 and len(type_.additions) > 0:
+                extension_bit_condition = ' || '.join(
+                    ['src_p->{}is_{}_addition_present'.
+                     format(self.location_inner('', '.'), addition.name)
+                     for addition in type_.additions])
+                if_line = 'if({}) {{'.format(extension_bit_condition)
+                encode_lines.extend(textwrap.wrap(if_line, 120,
+                                                  subsequent_indent=' ' * len('if(')))
+                encode_lines.append('    {}[0] = 0x80;'.format(unique_present_mask))
+                encode_lines.append('}')
+                start_set_byte = 1
+
+            for i in range(start_set_byte, present_mask_length):
+                encode_lines.append('{}[{}] = 0;'.format(unique_present_mask, i))
 
             encode_lines.append('')
 
@@ -792,9 +803,15 @@ class _Generator(Generator):
             additions_encode_lines, additions_decode_lines = \
                 self.format_sequence_additions(type_, checker)
 
-            decode_lines.append('if(({}[0] & 0x80) == 0x80) {{'.format(unique_present_mask))
+            encode_lines.append('')
+            decode_lines.append('')
+            addition_condition = 'if(({}[0] & 0x80) == 0x80) {{'.format(
+                unique_present_mask)
+            encode_lines.append(addition_condition)
+            decode_lines.append(addition_condition)
             encode_lines += indent_lines(additions_encode_lines)
             decode_lines += indent_lines(additions_decode_lines)
+            encode_lines.append('}')
             decode_lines.append('}')
 
         return encode_lines, decode_lines
