@@ -731,6 +731,9 @@ class _Generator(Generator):
                                                   subsequent_indent=' ' * len('if(')))
                 encode_lines.append('    {}[0] = 0x80;'.format(unique_present_mask))
                 encode_lines.append('}')
+                encode_lines.append('else {')
+                encode_lines.append('    {}[0] = 0x0;'.format(unique_present_mask))
+                encode_lines.append('}')
                 start_set_byte = 1
 
             for i in range(start_set_byte, present_mask_length):
@@ -811,6 +814,11 @@ class _Generator(Generator):
             decode_lines += indent_lines(additions_decode_lines)
             encode_lines.append('}')
             decode_lines.append('}')
+            decode_lines.append('else {')
+            for addition in type_.additions:
+                decode_lines.append('    dst_p->{}is_{}_addition_present = false;'
+                                    .format(self.location_inner('', '.'), addition.name))
+            decode_lines.append('}')
 
         return encode_lines, decode_lines
 
@@ -829,8 +837,13 @@ class _Generator(Generator):
                             .format(addition_mask_length + 1))
         unique_addition_length = \
             self.add_unique_decode_variable('uint32_t {};', 'addition_length')
-        decode_lines.append('{} = decoder_read_length_determinant(decoder_p) - 1;'
+        decode_lines.append('{} = decoder_read_length_determinant(decoder_p);'
                             .format(unique_addition_length))
+        decode_lines.append('if({} == 0) {{'.format(unique_addition_length))
+        decode_lines.append('    decoder_abort(decoder_p, EBADLENGTH);')
+        decode_lines.append('    return;')
+        decode_lines.append('}')
+        decode_lines.append('{} -= 1;'.format(unique_addition_length))
 
         encode_lines.append('encoder_append_uint8(encoder_p, {});'
                             .format(addition_mask_unused_bits))
