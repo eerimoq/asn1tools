@@ -784,8 +784,7 @@ class MembersType(Type):
                                        addition_encoder,
                                        encode_default=True)
 
-                if addition_encoder.number_of_bits > 0 or (isinstance(addition, Null)
-                                                           and addition.name in data):
+                if addition_encoder.number_of_bits > 0 or addition.name in data:
                     addition_encoders.append(addition_encoder)
                     presence_bits |= 1
         except EncodeError:
