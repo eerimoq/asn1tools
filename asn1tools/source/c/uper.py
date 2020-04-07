@@ -1,6 +1,7 @@
 """Unaligned Packed Encoding Rules (UPER) C source code codec generator.
 
 """
+import textwrap
 
 from .utils import ENCODER_AND_DECODER_STRUCTS
 from .utils import ENCODER_ABORT
@@ -588,9 +589,15 @@ class _Generator(Generator):
         member_name_to_is_present = {}
 
         if type_.additions is not None:
-            encode_lines.append(
-                'encoder_append_bool(encoder_p, {});'.format(
-                    'true' if len(type_.additions) > 0 else 'false'))
+            if len(type_.additions) > 0:
+                if_line = 'if({}) {{'.format(self.get_addition_present_condition(type_))
+                encode_lines.extend(textwrap.wrap(if_line, 120,
+                                                  subsequent_indent=' ' * len('if(')))
+                encode_lines.append('    encoder_abort(encoder_p, EINVAL);')
+                encode_lines.append('    return;')
+                encode_lines.append('}')
+
+            encode_lines.append('encoder_append_bool(encoder_p, false);')
             if len(type_.additions) > 0:
                 unique_extension_present = \
                     self.add_unique_decode_variable('bool {};', 'extension_is_present')

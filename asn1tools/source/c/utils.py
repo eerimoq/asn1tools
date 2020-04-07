@@ -247,6 +247,11 @@ class Generator(object):
         else:
             return str(default)
 
+    def get_addition_present_condition(self, type_):
+        return ' || '.join(['src_p->{}is_{}_addition_present'.
+                            format(self.location_inner('', '.'), addition.name)
+                            for addition in type_.additions])
+
     @property
     def location(self):
         location = '{}_{}_{}'.format(self.namespace,

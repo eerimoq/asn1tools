@@ -591,9 +591,6 @@ class _Generator(Generator):
             return self.get_encoded_real_length(type_)
         elif isinstance(type_, oer.Null):
             return [0]
-        elif is_user_type(type_):
-            return self.get_encoded_user_type_length(type_.type_name,
-                                                     type_.module_name)
         elif isinstance(type_, oer.OctetString):
             with self.members_backtrace_push(type_.name):
                 return self.get_encoded_octet_string_length(type_, checker)
@@ -729,11 +726,7 @@ class _Generator(Generator):
 
             start_set_byte = 0
             if extension_bit == 1 and len(type_.additions) > 0:
-                extension_bit_condition = ' || '.join(
-                    ['src_p->{}is_{}_addition_present'.
-                     format(self.location_inner('', '.'), addition.name)
-                     for addition in type_.additions])
-                if_line = 'if({}) {{'.format(extension_bit_condition)
+                if_line = 'if({}) {{'.format(self.get_addition_present_condition(type_))
                 encode_lines.extend(textwrap.wrap(if_line, 120,
                                                   subsequent_indent=' ' * len('if(')))
                 encode_lines.append('    {}[0] = 0x80;'.format(unique_present_mask))
@@ -1057,7 +1050,7 @@ class _Generator(Generator):
 
     def get_encoded_octet_string_length(self, type_, checker):
         if checker.minimum == checker.maximum:
-            return [self.get_length_determinant_length(checker.maximum), checker.maximum]
+            return [checker.maximum]
         else:
             location = self.location_inner('', '.')
             src_length = 'src_p->{}length'.format(location)
@@ -1085,12 +1078,6 @@ class _Generator(Generator):
         ]
 
         return encode_lines, decode_lines
-
-    def get_encoded_user_type_length(self, type_name, module_name):
-        prefix = self.get_user_type_prefix(type_name, module_name)
-        return ['{}_encode_length(encoder_p, &src_p->{})'.format(
-                prefix,
-                self.location_inner())]
 
     def format_choice_inner(self, type_, checker):
         encode_lines = []

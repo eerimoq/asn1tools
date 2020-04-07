@@ -449,6 +449,7 @@ AG ::= SEQUENCE {
         k INTEGER (0..65535),
         l BOOLEAN
     },
+    m OCTET STRING(SIZE(5)),
     ...
 }
 

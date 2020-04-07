@@ -924,125 +924,47 @@ static void test_uper_c_source_ae(void)
     assert(decoded.b == true);
     assert(decoded.c == false);
 }
-/*
+
 static void test_uper_c_source_af(void)
 {
     uint8_t encoded[24];
+    uint8_t encoded2[24] = "\xc4\x7f\xc1\x30\x10\x11\x10\x00\x44\x80\x44\xc0"
+                           "\x45\x00\x45\x40\x45\x80\x45\xc0\x46\x00\x46\x40";
     struct uper_c_source_af_t decoded;
 
-    // Encode
+    /* Encode. */
     decoded.a = true;
     decoded.b.c = true;
     decoded.b.d = 17;
+    decoded.b.is_d_addition_present = true;
     decoded.e = 18;
+    decoded.is_e_addition_present = true;
     decoded.f = 19;
+    decoded.is_f_addition_present = true;
     decoded.g = 20;
+    decoded.is_g_addition_present = true;
     decoded.h = 21;
+    decoded.is_h_addition_present = true;
     decoded.i = 22;
+    decoded.is_i_addition_present = true;
     decoded.j = 23;
+    decoded.is_j_addition_present = true;
     decoded.k = 24;
+    decoded.is_k_addition_present = true;
     decoded.l = 25;
+    decoded.is_l_addition_present = true;
 
     memset(&encoded[0], 0, sizeof(encoded));
     assert(uper_c_source_af_encode(&encoded[0],
                                   sizeof(encoded),
-                                  &decoded) == sizeof(encoded));
-    assert(memcmp(&encoded[0],
-                  "\xc4\x7f\xc1\x30\x10\x11\x10\x00\x44\x80\x44\xc0\x45\x00"
-                  "\x45\x40\x45\x80\x45\xc0\x46\x00\x46\x40",
-                  sizeof(encoded)) == 0);
+                                  &decoded) < 0);
 
     // Decode.
     memset(&decoded, 0, sizeof(decoded));
     assert(uper_c_source_af_decode(&decoded,
-                                  &encoded[0],
-                                  sizeof(encoded)) == sizeof(encoded));
-
-    assert(decoded.a == true);
-    assert(decoded.is_b_addition_present);
-    assert(decoded.b.c == true);
-    assert(decoded.b.is_d_addition_present);
-    assert(decoded.b.d == 17);
-    assert(decoded.is_e_addition_present);
-    assert(decoded.e == 18);
-    assert(decoded.is_f_addition_present);
-    assert(decoded.f == 19);
-    assert(decoded.is_g_addition_present);
-    assert(decoded.g == 20);
-    assert(decoded.is_h_addition_present);
-    assert(decoded.h == 21);
-    assert(decoded.is_i_addition_present);
-    assert(decoded.i == 22);
-    assert(decoded.is_j_addition_present);
-    assert(decoded.j == 23);
-    assert(decoded.is_k_addition_present);
-    assert(decoded.k == 24);
-    assert(decoded.is_l_addition_present);
-    assert(decoded.l == 25);
+                                  &encoded2[0],
+                                  sizeof(encoded2)) < 0);
 }
-
-static void test_uper_c_source_af_past(void)
-{
-    uint8_t encoded[8] = "\xc1\x70\x14\x00\x11\x20\x11\x30";
-    struct uper_c_source_af_t decoded;
-
-    // Decode.
-    memset(&decoded, 0, sizeof(decoded));
-    assert(uper_c_source_af_decode(&decoded,
-                                  &encoded[0],
-                                  sizeof(encoded)) == sizeof(encoded));
-
-    assert(decoded.a == true);
-    assert(decoded.is_b_addition_present);
-    assert(decoded.b.c == true);
-    assert(!decoded.b.is_d_addition_present);
-    assert(decoded.is_e_addition_present);
-    assert(decoded.e == 18);
-    assert(decoded.is_f_addition_present);
-    assert(decoded.f == 19);
-    assert(!decoded.is_g_addition_present);
-    assert(!decoded.is_h_addition_present);
-    assert(!decoded.is_i_addition_present);
-    assert(!decoded.is_j_addition_present);
-    assert(!decoded.is_k_addition_present);
-    assert(!decoded.is_l_addition_present);
-}
-
-static void test_uper_c_source_af_future(void)
-{
-    uint8_t encoded[28] = "\xc4\xff\xe0\xd8\x1c\x04\x44\x06\xac\x00\x22\x40"
-    "\x22\x60\x22\x80\x22\xa0\x22\xc0\x22\xe0\x23\x00\x23\x20\x23\x40";
-    struct uper_c_source_af_t decoded;
-
-    // Decode.
-    memset(&decoded, 0, sizeof(decoded));
-    assert(uper_c_source_af_decode(&decoded,
-                                  &encoded[0],
-                                  sizeof(encoded)) == sizeof(encoded));
-
-    assert(decoded.a == true);
-    assert(decoded.is_b_addition_present);
-    assert(decoded.b.c == true);
-    assert(decoded.b.is_d_addition_present);
-    assert(decoded.b.d == 17);
-    assert(decoded.is_e_addition_present);
-    assert(decoded.e == 18);
-    assert(decoded.is_f_addition_present);
-    assert(decoded.f == 19);
-    assert(decoded.is_g_addition_present);
-    assert(decoded.g == 20);
-    assert(decoded.is_h_addition_present);
-    assert(decoded.h == 21);
-    assert(decoded.is_i_addition_present);
-    assert(decoded.i == 22);
-    assert(decoded.is_j_addition_present);
-    assert(decoded.j == 23);
-    assert(decoded.is_k_addition_present);
-    assert(decoded.k == 24);
-    assert(decoded.is_l_addition_present);
-    assert(decoded.l == 25);
-}
-*/
 
 int main(void)
 {
@@ -1082,9 +1004,7 @@ int main(void)
     test_uper_c_source_ab();
 
     test_uper_c_source_ae();
-    //test_uper_c_source_af();
-    //test_uper_c_source_af_past();
-    //test_uper_c_source_af_future();
+    test_uper_c_source_af();
 
     return (0);
 }

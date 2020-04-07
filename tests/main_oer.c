@@ -1132,7 +1132,7 @@ static void test_oer_c_source_af_future(void)
 
 static void test_oer_c_source_ag(void)
 {
-    uint8_t encoded[28];
+    uint8_t encoded[34];
     struct oer_c_source_ag_t decoded;
 
     /* Encode. */
@@ -1154,14 +1154,18 @@ static void test_oer_c_source_ag(void)
     decoded.j.choice = oer_c_source_ag_j_choice_k_e;
     decoded.j.value.k = 60693;
     decoded.is_j_addition_present = true;
+    memcpy(&decoded.m.buf[0], "\xf0\xf1\xf2\xf3\xf4", 5);
+    decoded.is_m_addition_present = true;
 
     memset(&encoded[0], 0, sizeof(encoded));
     assert(oer_c_source_ag_encode(&encoded[0],
                                   sizeof(encoded),
                                   &decoded) == sizeof(encoded));
+
     assert(memcmp(&encoded[0],
-                  "\x80\xff\x02\x02\xfc\x03\x02\x84\x55\x06\x01\x04\xff\x00"
-                  "\xff\x00\x01\x01\x00\x04\x3f\x80\x00\x00\x03\x80\xed\x15",
+                  "\x80\xff\x02\x01\xfe\x03\x02\x84\x55\x06\x01\x04\xff\x00"
+                  "\xff\x00\x01\x01\x00\x04\x3f\x80\x00\x00\x03\x80\xed\x15"
+                  "\x05\xf0\xf1\xf2\xf3\xf4",
                   sizeof(encoded)) == 0);
 
     /* Decode. */
@@ -1189,6 +1193,8 @@ static void test_oer_c_source_ag(void)
     assert(decoded.is_j_addition_present);
     assert(decoded.j.choice == oer_c_source_ag_j_choice_k_e);
     assert(decoded.j.value.k == 60693);
+    assert(decoded.is_m_addition_present);
+    assert(memcmp(&decoded.m.buf[0], "\xf0\xf1\xf2\xf3\xf4", 5) == 0);
 }
 
 static void test_oer_programming_types_float(void)

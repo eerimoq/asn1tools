@@ -315,7 +315,8 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             "E ::= SEQUENCE { "
             "  a BOOLEAN, "
             "  ..., "
-            "  b BOOLEAN "
+            "  b BOOLEAN, "
+            "  c BOOLEAN "
             "} "
             "F ::= SEQUENCE { "
             "  a BOOLEAN, "
@@ -346,6 +347,11 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             "  a E, "
             "  b INTEGER "
             "} "
+            "O ::= SEQUENCE { "
+            "  a BOOLEAN, "
+            "  ..., "
+            "  b NULL "
+            "} "
             "END",
             'oer')
 
@@ -357,8 +363,8 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             ('D',            {'a': True}, b'\x00\xff'),
             ('E',            {'a': True}, b'\x00\xff'),
             ('E',
-             {'a': True, 'b': True},
-             b'\x80\xff\x02\x07\x80\x01\xff'),
+             {'a': True, 'b': True, 'c': True},
+             b'\x80\xff\x02\x06\xc0\x01\xff\x01\xff'),
             ('F',            {'a': True}, b'\x00\xff'),
             ('F',
              {'a': True, 'b': True},
@@ -375,7 +381,10 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             ('L',                     {}, b'\x00'),
             ('N',
              {'a': {'a': True, 'b': True}, 'b': 5},
-             b'\x80\xff\x02\x07\x80\x01\xff\x01\x05')
+             b'\x80\xff\x02\x06\x80\x01\xff\x01\x05'),
+            ('O',
+             {'a': True, 'b': None},
+             b'\x80\xff\x02\x07\x80\x00')
         ]
 
         for type_name, decoded, encoded in datas:
