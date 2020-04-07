@@ -586,7 +586,6 @@ class _Generator(Generator):
         encode_lines = []
         decode_lines = []
         member_name_to_is_present = {}
-        unique_extension_present = ''
 
         if type_.additions is not None:
             encode_lines.append(
@@ -635,6 +634,8 @@ class _Generator(Generator):
 
         if type_.additions is not None and len(type_.additions) > 0:
             decode_lines.append('if({}) {{'.format(unique_extension_present))
+            decode_lines.append('    decoder_abort(decoder_p, EINVAL);')
+            decode_lines.append('    return;')
             decode_lines.append('}')
 
         return encode_lines, decode_lines
