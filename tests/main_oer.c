@@ -1130,6 +1130,67 @@ static void test_oer_c_source_af_future(void)
     assert(decoded.l == 25);
 }
 
+static void test_oer_c_source_ag(void)
+{
+    uint8_t encoded[28];
+    struct oer_c_source_ag_t decoded;
+
+    /* Encode. */
+    decoded.a = true;
+    decoded.b.length = 2;
+    memcpy(&decoded.b.buf[0], "\x84\x55", 2);
+    decoded.is_b_addition_present = true;
+    decoded.c.length = 4;
+    decoded.c.elements[0] = true;
+    decoded.c.elements[1] = false;
+    decoded.c.elements[2] = true;
+    decoded.c.elements[3] = false;
+    decoded.is_c_addition_present = true;
+    decoded.d = oer_c_source_ag_d_f_e;
+    decoded.is_d_addition_present = true;
+    decoded.is_h_addition_present = true;
+    decoded.i = 1.0f;
+    decoded.is_i_addition_present = true;
+    decoded.j.choice = oer_c_source_ag_j_choice_k_e;
+    decoded.j.value.k = 60693;
+    decoded.is_j_addition_present = true;
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(oer_c_source_ag_encode(&encoded[0],
+                                  sizeof(encoded),
+                                  &decoded) == sizeof(encoded));
+    assert(memcmp(&encoded[0],
+                  "\x80\xff\x02\x02\xfc\x03\x02\x84\x55\x06\x01\x04\xff\x00"
+                  "\xff\x00\x01\x01\x00\x04\x3f\x80\x00\x00\x03\x80\xed\x15",
+                  sizeof(encoded)) == 0);
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(oer_c_source_ag_decode(&decoded,
+                                  &encoded[0],
+                                  sizeof(encoded)) == sizeof(encoded));
+
+    assert(decoded.a == true);
+    assert(decoded.is_b_addition_present);
+    assert(decoded.b.length == 2);
+    assert(memcmp(&decoded.b.buf[0], "\x84\x55", 2) == 0);
+    assert(decoded.is_c_addition_present);
+    assert(decoded.c.length == 4);
+    assert(decoded.c.elements[0]);
+    assert(!decoded.c.elements[1]);
+    assert(decoded.c.elements[2]);
+    assert(!decoded.c.elements[3]);
+    assert(decoded.is_d_addition_present);
+    assert(decoded.d == oer_c_source_ag_d_f_e);
+    assert(decoded.is_h_addition_present);
+    assert(decoded.is_i_addition_present);
+    assert(decoded.i >= 1.0f);
+    assert(decoded.i <= 1.0f);
+    assert(decoded.is_j_addition_present);
+    assert(decoded.j.choice == oer_c_source_ag_j_choice_k_e);
+    assert(decoded.j.value.k == 60693);
+}
+
 static void test_oer_programming_types_float(void)
 {
     uint8_t encoded[4];
@@ -1218,6 +1279,7 @@ int main(void)
     test_oer_c_source_af();
     test_oer_c_source_af_past();
     test_oer_c_source_af_future();
+    test_oer_c_source_ag();
 
     test_oer_programming_types_float();
     test_oer_programming_types_double();

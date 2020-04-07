@@ -1409,6 +1409,39 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'AF', decoded, encoded)
 
+        # AG
+        decoded = {
+            'a': True,
+            'b': b'\x84\x55',
+            'c': [True, False, True, False],
+            'd': 'f',
+            'h': None,
+            'i': 1.0,
+            'j': ('k', 60693)
+        }
+
+        encoded_messages = [
+            b'\x30\x26\x80\x01\xff\x81\x02\x84\x55\xa2\x0c\x01\x01\xff\x01\x01'
+            b'\x00\x01\x01\xff\x01\x01\x00\x83\x01\x01\x84\x00\x85\x03\x80\x00'
+            b'\x01\xa6\x05\x80\x03\x00\xed\x15',
+            b'\x30\x26\x80\x01\xff\x81\x02\x84\x55\xa2\x0c\x01\x01\xff\x01\x01'
+            b'\x00\x01\x01\xff\x01\x01\x00\x83\x01\x01\x84\x00\x85\x03\x80\x00'
+            b'\x01\xa6\x05\x80\x03\x00\xed\x15',
+            b'{"a": true, "b": "8455", "c": [true, false, true, false], "d": "f",'
+            b'"h": null, "i": 1.0, "j": {"k": 60693}}',
+            b'\x80\xff\x02\x02\xfc\x03\x02\x84\x55\x06\x01\x04\xff\x00\xff\x00'
+            b'\x01\x01\x00\x04\x3f\x80\x00\x00\x03\x80\xed\x15',
+            b'\xc2\xfe\x03\x20\x84\x55\x01\x3a\x01\x40\x00\x04\x03\x80\x00\x01'
+            b'\x03\x00\xed\x15',
+            b'\xc2\xfe\x06\x50\x8a\xa0\x02\x74\x02\x80\x00\x08\x07\x00\x00\x02'
+            b'\x06\xed\x15\x00',
+            b'<AG><a><true /></a><b>8455</b><c><true /><false /><true /><false />'
+            b'</c><d><f /></d><h /><i>1.0E0</i><j><k>60693</k></j></AG>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'AG', decoded, encoded)
+
     def test_parameterization(self):
         specs = []
 

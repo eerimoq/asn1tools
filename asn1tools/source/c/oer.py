@@ -845,6 +845,10 @@ class _Generator(Generator):
             self.add_unique_decode_variable('uint8_t {};', 'addition_unused_bits')
         decode_lines.append('{} = decoder_read_uint8(decoder_p);'
                             .format(unique_addition_unused_bits))
+        decode_lines.append('if ({} > 7) {{'.format(unique_addition_unused_bits))
+        decode_lines.append('    decoder_abort(decoder_p, EBADLENGTH);')
+        decode_lines.append('    return;')
+        decode_lines.append('}')
         unique_addition_bits = self.add_unique_decode_variable('uint32_t {};',
                                                                'addition_bits')
         decode_lines.append('{} = (({} * 8) - {});'
@@ -893,37 +897,35 @@ class _Generator(Generator):
                 checker,
                 None,
                 skip_when_not_present=False)
-            if len(addition_encode_lines):
-                encode_lines.append('if (src_p->{}is_{}_addition_present) {{'
-                                    .format(self.location_inner('', '.'),
-                                            addition.name))
-                member_checker = self.get_member_checker(checker, addition.name)
-                encoded_lengths = self.get_encoded_type_lengths(addition, member_checker)
-                encode_lines.append('    encoder_append_length_determinant'
-                                    '(encoder_p, {});'
-                                    .format(self.sum_encoded_lengths(encoded_lengths)))
-                encode_lines += indent_lines(addition_encode_lines)
-                encode_lines.append('}')
-            if len(addition_decode_lines):
-                decode_lines.append('dst_p->{location}is_{name}_addition_present = '
-                                    '(({addition_bits} > {current_bit}) && ('
-                                    '({addition_mask}[{index}] & {mask})) == {mask});'
-                                    .format(location=self.location_inner('', '.'),
-                                            name=addition.name,
-                                            addition_bits=unique_addition_bits,
-                                            current_bit=i,
-                                            addition_mask=unique_addition_mask,
-                                            index=byte,
-                                            mask=mask
-                                            ))
-                decode_lines.append('if (dst_p->{location}is_{name}_addition_present) {{'
-                                    .format(location=self.location_inner('', '.'),
-                                            name=addition.name))
-                decode_lines.append('    (void)decoder_read_length_determinant'
-                                    '(decoder_p);')
-                decode_lines += indent_lines(addition_decode_lines)
-                decode_lines.append('}')
-                decode_lines.append('')
+            encode_lines.append('if (src_p->{}is_{}_addition_present) {{'
+                                .format(self.location_inner('', '.'),
+                                        addition.name))
+            member_checker = self.get_member_checker(checker, addition.name)
+            encoded_lengths = self.get_encoded_type_lengths(addition, member_checker)
+            encode_lines.append('    encoder_append_length_determinant'
+                                '(encoder_p, {});'
+                                .format(self.sum_encoded_lengths(encoded_lengths)))
+            encode_lines += indent_lines(addition_encode_lines)
+            encode_lines.append('}')
+            decode_lines.append('dst_p->{location}is_{name}_addition_present = '
+                                '(({addition_bits} > {current_bit}) && ('
+                                '({addition_mask}[{index}] & {mask})) == {mask});'
+                                .format(location=self.location_inner('', '.'),
+                                        name=addition.name,
+                                        addition_bits=unique_addition_bits,
+                                        current_bit=i,
+                                        addition_mask=unique_addition_mask,
+                                        index=byte,
+                                        mask=mask
+                                        ))
+            decode_lines.append('if (dst_p->{location}is_{name}_addition_present) {{'
+                                .format(location=self.location_inner('', '.'),
+                                        name=addition.name))
+            decode_lines.append('    (void)decoder_read_length_determinant'
+                                '(decoder_p);')
+            decode_lines += indent_lines(addition_decode_lines)
+            decode_lines.append('}')
+            decode_lines.append('')
 
         unique_i = self.add_unique_decode_variable('uint32_t {};', 'i')
         unique_tmp_length = self.add_unique_decode_variable('uint32_t {};', 'tmp_length')
@@ -932,7 +934,10 @@ class _Generator(Generator):
                                     addition_bits=unique_addition_bits))
         decode_lines.append('    {} = decoder_read_length_determinant(decoder_p);'
                             .format(unique_tmp_length))
-        decode_lines.append('    decoder_free(decoder_p, {});'.format(unique_tmp_length))
+        decode_lines.append('    if (decoder_free(decoder_p, {}) < 0) {{'
+                            .format(unique_tmp_length))
+        decode_lines.append('        return;')
+        decode_lines.append('    }')
         decode_lines.append('}')
 
         return encode_lines, decode_lines
@@ -985,7 +990,7 @@ class _Generator(Generator):
                 length += length_part
             else:
                 length_strings.append(length_part)
-        if length > 0:
+        if length > 0 or len(length_strings) == 0:
             length_strings.append(str(length))
         return ' + '.join(length_strings)
 
