@@ -1,6 +1,7 @@
 """Basic Octet Encoding Rules (OER) C source code codec generator.
 
 """
+from operator import itemgetter
 
 import bitstruct
 
@@ -526,7 +527,7 @@ class _Generator(Generator):
             return ['double']
 
     def get_enumerated_values(self, type_):
-        return type_.data_to_value.items()
+        return sorted(type_.data_to_value.items(), key=itemgetter(1))
 
     def get_choice_members(self, type_):
         return type_.root_members
