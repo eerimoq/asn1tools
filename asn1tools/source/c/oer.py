@@ -526,7 +526,7 @@ class _Generator(Generator):
             return ['double']
 
     def get_enumerated_values(self, type_):
-        return type_.value_to_data.values()
+        return type_.data_to_value.items()
 
     def get_choice_members(self, type_):
         return type_.root_members

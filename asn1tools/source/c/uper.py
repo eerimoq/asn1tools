@@ -448,7 +448,7 @@ class _Generator(Generator):
         return []
 
     def get_enumerated_values(self, type_):
-        return sorted(type_.root_data_to_index)
+        return sorted(type_.root_data_to_index.items())
 
     def get_choice_members(self, type_):
         return type_.root_index_to_member.values()
