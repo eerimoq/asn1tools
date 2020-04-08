@@ -403,4 +403,54 @@ AD ::= ENUMERATED {
     b
 }
 
+-- Extensibility - with additionals
+AE ::= SEQUENCE {
+    a BOOLEAN OPTIONAL,
+    b BOOLEAN DEFAULT TRUE,
+    c BOOLEAN,
+    ...
+}
+
+AF ::= SEQUENCE {
+    a BOOLEAN,
+    ...,
+    b SEQUENCE {
+        c BOOLEAN,
+        ...,
+        d INTEGER(0..255),
+        ...
+    },
+    e INTEGER(0..255),
+    f INTEGER(0..255),
+    g INTEGER(0..255),
+    h INTEGER(0..255),
+    i INTEGER(0..255),
+    j INTEGER(0..255) OPTIONAL,
+    k INTEGER(0..255) DEFAULT 24,
+    l INTEGER(0..255),
+    ...
+}
+
+AG ::= SEQUENCE {
+    a BOOLEAN,
+    ...,
+    b OCTET STRING (SIZE(0..10)),
+    c SEQUENCE (SIZE (1..10)) OF BOOLEAN,
+    d ENUMERATED {
+        e, f, g
+    },
+    h NULL,
+    i REAL (WITH COMPONENTS {
+                     mantissa (-16777215..16777215),
+                     base (2),
+                     exponent (-149..104)
+                 }),
+    j CHOICE {
+        k INTEGER (0..65535),
+        l BOOLEAN
+    },
+    m OCTET STRING(SIZE(5)),
+    ...
+}
+
 END

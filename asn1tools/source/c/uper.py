@@ -1,6 +1,7 @@
 """Unaligned Packed Encoding Rules (UPER) C source code codec generator.
 
 """
+import textwrap
 
 from .utils import ENCODER_AND_DECODER_STRUCTS
 from .utils import ENCODER_ABORT
@@ -587,6 +588,24 @@ class _Generator(Generator):
         decode_lines = []
         member_name_to_is_present = {}
 
+        if type_.additions is not None:
+            if len(type_.additions) > 0:
+                if_line = 'if({}) {{'.format(self.get_addition_present_condition(type_))
+                encode_lines.extend(textwrap.wrap(if_line, 120,
+                                                  subsequent_indent=' ' * len('if(')))
+                encode_lines.append('    encoder_abort(encoder_p, EINVAL);')
+                encode_lines.append('    return;')
+                encode_lines.append('}')
+
+            encode_lines.append('encoder_append_bool(encoder_p, false);')
+            if len(type_.additions) > 0:
+                unique_extension_present = \
+                    self.add_unique_decode_variable('bool {};', 'extension_is_present')
+                decode_lines.append(
+                    'extension_is_present = decoder_read_bool(decoder_p);')
+            else:
+                decode_lines.append('decoder_read_bool(decoder_p);')
+
         for member in type_.root_members:
             if member.optional:
                 name = '{}is_{}_present'.format(self.location_inner('', '.'),
@@ -619,6 +638,12 @@ class _Generator(Generator):
 
             encode_lines += member_encode_lines
             decode_lines += member_decode_lines
+
+        if type_.additions is not None and len(type_.additions) > 0:
+            decode_lines.append('if({}) {{'.format(unique_extension_present))
+            decode_lines.append('    decoder_abort(decoder_p, EINVAL);')
+            decode_lines.append('    return;')
+            decode_lines.append('}')
 
         return encode_lines, decode_lines
 
