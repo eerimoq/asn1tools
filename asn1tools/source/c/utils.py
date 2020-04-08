@@ -420,8 +420,8 @@ class Generator(object):
         lines = ['enum {}_e'.format(self.location)]
 
         values = [
-            '    {}_{}_e'.format(self.location, value)
-            for value in self.get_enumerated_values(type_)
+            '    {}_{}_e = {}'.format(self.location, name, value)
+            for name, value in self.get_enumerated_values(type_)
         ]
         self.helper_lines += [
             'enum {}_e {{'.format(self.location)

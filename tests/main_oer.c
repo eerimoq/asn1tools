@@ -312,7 +312,7 @@ static void test_oer_c_source_d_all_present(void)
                                  sizeof(encoded),
                                  &decoded) == sizeof(encoded));
     assert(memcmp(&encoded[0],
-                  "\x01\x01\x80\x00\x01\x03\x01\x02\x54\x55\xf0\x00\x02\x80"
+                  "\x01\x01\x80\x00\x01\x03\x04\x02\x54\x55\xf0\x00\x02\x80"
                   "\x03\x03\x03\x03\x03\xff\xff",
                   sizeof(encoded)) == 0);
 
@@ -370,7 +370,7 @@ static void test_oer_c_source_d_some_missing(void)
                                  sizeof(encoded),
                                  &decoded) == sizeof(encoded));
     assert(memcmp(&encoded[0],
-                  "\x01\x01\x81\x00\x01\x03\x02\x01\x54\x20\x00\x03\x03\x03"
+                  "\x01\x01\x81\x00\x01\x03\x05\x01\x54\x20\x00\x03\x03\x03"
                   "\x03\x03",
                   sizeof(encoded)) == 0);
 
