@@ -7,5 +7,8 @@ E DEFINITIONS AUTOMATIC TAGS ::= BEGIN
     E ::= ENUMERATED {a, b, c(0), d, e(25), f, ..., g}
     F ::= ENUMERATED {a, ...}
     G ::= ENUMERATED {a}
+    H ::= ENUMERATED {a(i)}
+
+    i INTEGER ::= 10
 
 END
