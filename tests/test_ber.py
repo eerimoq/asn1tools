@@ -405,6 +405,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('E', 'e', b'\x0a\x01\x19'),
             ('H', 'a', b'\x0a\x01\x0a')
         ]
+
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
