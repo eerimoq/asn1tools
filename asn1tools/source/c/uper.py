@@ -783,6 +783,7 @@ class _Generator(Generator):
                  for data in type_.root_data_to_index.keys()])
         if value_mapping_required:
             encode_lines = ['switch (src_p->{}) {{'.format(location)]
+
             for data, _ in self.get_enumerated_values(type_):
                 encode_lines.append('case {}_{}_e:'.format(self.location, data))
                 encode_lines.append('    {} = {};'.format(unique_value,
@@ -820,6 +821,7 @@ class _Generator(Generator):
 
         if value_mapping_required:
             decode_lines.append('switch ({}) {{'.format(unique_value))
+
             for data, _ in self.get_enumerated_values(type_):
                 decode_lines.append('case {}:'.format(type_.root_data_to_index[data]))
                 decode_lines.append('    dst_p->{} = {}_{}_e;'.format(location,
