@@ -402,7 +402,8 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('E', 'd', b'\x0a\x01\x03'),
             ('E', 'f', b'\x0a\x01\x04'),
             ('E', 'g', b'\x0a\x01\x05'),
-            ('E', 'e', b'\x0a\x01\x19')
+            ('E', 'e', b'\x0a\x01\x19'),
+            ('H', 'a', b'\x0a\x01\x0a')
         ]
 
         for type_name, decoded, encoded in datas:
