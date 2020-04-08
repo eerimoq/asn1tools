@@ -166,7 +166,7 @@ def convert_enum_values(string, location, tokens):
             if not isinstance(item, list):
                 continue
 
-            item_number = int(item[2])
+            item_number = item[2]
 
             if item_number in used_numbers:
                 raise ParseError(
@@ -181,7 +181,7 @@ def convert_enum_values(string, location, tokens):
 
     for token in root:
         if isinstance(token, list):
-            values.append((token[0], int(token[2])))
+            values.append((token[0], token[2]))
         else:
             while number in used_numbers:
                 number += 1
@@ -198,7 +198,7 @@ def convert_enum_values(string, location, tokens):
 
         for token in additional:
             if isinstance(token, list):
-                number = int(token[2])
+                number = token[2]
                 values.append((token[0], number))
             else:
                 if number in used_numbers:

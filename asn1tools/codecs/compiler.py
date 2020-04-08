@@ -881,6 +881,20 @@ class Compiler(object):
 
         return minimum, maximum, has_extension_marker
 
+    def get_enum_values(self, type_descriptor, module_name):
+        """Converts the enum values to ints. Direct conversion if they are already
+        integers, value lookup in case they are constants.
+
+        """
+        enum_values = []
+        for value in type_descriptor['values']:
+            if value != EXTENSION_MARKER and not isinstance(value[1], int):
+                lookup = self.lookup_value(value[1], module_name)
+                enum_values.append((value[0], lookup[0]['value']))
+            else:
+                enum_values.append(value)
+        return enum_values
+
     def get_restricted_to_range(self, type_descriptor, module_name):
         def convert_value(value):
             try:
