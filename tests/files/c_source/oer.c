@@ -622,6 +622,7 @@ static void oer_c_source_d_encode_inner(
         }
 
         enum_length = minimum_uint_length(src_p->elements[i].g.h);
+
         if (src_p->elements[i].g.h > 127) {
             encoder_append_uint8(encoder_p, 0x80 | enum_length);
         }
@@ -745,6 +746,7 @@ static void oer_c_source_d_decode_inner(
         }
 
         enum_length = decoder_read_uint8(decoder_p);
+
         if ((enum_length & 0x80) == 0x80) {
             enum_length &= 0x7f;
             if ((enum_length > 2) || (enum_length == 0)) {
@@ -3430,6 +3432,7 @@ static void oer_c_source_ad_encode_inner(
     uint8_t enum_length;
 
     enum_length = minimum_uint_length(src_p->value);
+
     if (src_p->value > 127) {
         encoder_append_uint8(encoder_p, 0x80 | enum_length);
     }
@@ -3443,6 +3446,7 @@ static void oer_c_source_ad_decode_inner(
     uint8_t enum_length;
 
     enum_length = decoder_read_uint8(decoder_p);
+
     if ((enum_length & 0x80) == 0x80) {
         enum_length &= 0x7f;
         if ((enum_length > 1) || (enum_length == 0)) {
@@ -4502,6 +4506,7 @@ static void oer_c_source_k_encode_inner(
     uint8_t enum_length;
 
     enum_length = minimum_uint_length(src_p->value);
+
     if (src_p->value > 127) {
         encoder_append_uint8(encoder_p, 0x80 | enum_length);
     }
@@ -4515,6 +4520,7 @@ static void oer_c_source_k_decode_inner(
     uint8_t enum_length;
 
     enum_length = decoder_read_uint8(decoder_p);
+
     if ((enum_length & 0x80) == 0x80) {
         enum_length &= 0x7f;
         if ((enum_length > 1) || (enum_length == 0)) {
