@@ -621,10 +621,10 @@ static void oer_c_source_d_encode_inner(
         for (i_2 = 0; i_2 < src_p->elements[i].a.e.length; i_2++) {
         }
 
-        if (src_p->elements[i].g.h > 127) {
-            encoder_append_uint8(encoder_p, 0x80 | 2);
-        }
         enum_length = minimum_uint_length(src_p->elements[i].g.h);
+        if (src_p->elements[i].g.h > 127) {
+            encoder_append_uint8(encoder_p, 0x80 | enum_length);
+        }
         encoder_append_uint(encoder_p, (uint32_t)src_p->elements[i].g.h, enum_length);
         encoder_append_uint8(encoder_p, src_p->elements[i].g.l.length);
         encoder_append_bytes(encoder_p,
@@ -3429,10 +3429,10 @@ static void oer_c_source_ad_encode_inner(
 {
     uint8_t enum_length;
 
-    if (src_p->value > 127) {
-        encoder_append_uint8(encoder_p, 0x80 | 1);
-    }
     enum_length = minimum_uint_length(src_p->value);
+    if (src_p->value > 127) {
+        encoder_append_uint8(encoder_p, 0x80 | enum_length);
+    }
     encoder_append_uint(encoder_p, (uint32_t)src_p->value, enum_length);
 }
 
@@ -3680,8 +3680,8 @@ static void oer_c_source_af_decode_inner(
             return;
         }
         addition_bits = ((addition_length * 8) - addition_unused_bits);
-        decoder_read_bytes(decoder_p, 
-                           addition_mask, 
+        decoder_read_bytes(decoder_p,
+                           addition_mask,
                            (addition_length < 2) ? addition_length : 2);
 
         dst_p->is_b_addition_present = ((addition_bits > 0) && ((addition_mask[0] & 0x80)) == 0x80);
@@ -3706,8 +3706,8 @@ static void oer_c_source_af_decode_inner(
                     return;
                 }
                 addition_bits_2 = ((addition_length_2 * 8) - addition_unused_bits_2);
-                decoder_read_bytes(decoder_p, 
-                                   addition_mask_2, 
+                decoder_read_bytes(decoder_p,
+                                   addition_mask_2,
                                    (addition_length_2 < 1) ? addition_length_2 : 1);
 
                 dst_p->b.is_d_addition_present = ((addition_bits_2 > 0) && ((addition_mask_2[0] & 0x80)) == 0x80);
@@ -3948,8 +3948,8 @@ static void oer_c_source_ag_decode_inner(
             return;
         }
         addition_bits = ((addition_length * 8) - addition_unused_bits);
-        decoder_read_bytes(decoder_p, 
-                           addition_mask, 
+        decoder_read_bytes(decoder_p,
+                           addition_mask,
                            (addition_length < 1) ? addition_length : 1);
 
         dst_p->is_b_addition_present = ((addition_bits > 0) && ((addition_mask[0] & 0x80)) == 0x80);
@@ -4501,10 +4501,10 @@ static void oer_c_source_k_encode_inner(
 {
     uint8_t enum_length;
 
-    if (src_p->value > 127) {
-        encoder_append_uint8(encoder_p, 0x80 | 1);
-    }
     enum_length = minimum_uint_length(src_p->value);
+    if (src_p->value > 127) {
+        encoder_append_uint8(encoder_p, 0x80 | enum_length);
+    }
     encoder_append_uint(encoder_p, (uint32_t)src_p->value, enum_length);
 }
 
