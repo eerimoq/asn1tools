@@ -34,7 +34,7 @@ D ::= SEQUENCE (SIZE (1..10)) OF SEQUENCE {
     },
     g SEQUENCE {
         h ENUMERATED {
-            i, j(4), k(5)
+            i, j(4), k(512)
         },
         l OCTET STRING (SIZE (1..2))
     },

@@ -797,7 +797,7 @@ class _Generator(Generator):
         return encode_lines, decode_lines
 
     def format_enumerated_inner(self, type_):
-        type_name = self.format_type_name(0, max(type_.root_index_to_data))
+        type_name = self.format_type_name(0, max(type_.root_data_to_value.values()))
         unique_value = self.add_unique_variable(
             '{} {{}};'.format(type_name),
             'value')
