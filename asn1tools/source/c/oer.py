@@ -602,6 +602,7 @@ class _Generator(Generator):
         elif isinstance(type_, oer.SequenceOf):
             return self.get_encoded_sequence_of_length(type_, checker)
         elif isinstance(type_, oer.Enumerated):
+            # TODO: This is wrong! Fix me
             return [1]
         else:
             raise self.error(
@@ -1218,19 +1219,19 @@ class _Generator(Generator):
                         '']
 
             length_lines = [
-                               'uint32_t length = 0;',
-                               'switch (src_p->{}) {{'.format(choice)
-                           ] + choice_length_lines + [
-                               'default:',
-                               '    break;',
-                               '}',
-                               'return length;']
+                'uint32_t length = 0;',
+                'switch (src_p->{}) {{'.format(choice)
+            ] + choice_length_lines + [
+                'default:',
+                '    break;',
+                '}',
+                'return length;']
 
             length_lines = [
-                               'static uint32_t {}(const struct {}_t *src_p) {{'.format(
-                                   function_name, self.location)
-                           ] + indent_lines(length_lines) + [
-                               '}']
+                'static uint32_t {}(const struct {}_t *src_p) {{'.format(
+                    function_name, self.location)
+            ] + indent_lines(length_lines) + [
+                '}']
             self.additional_helpers[function_name] = length_lines
 
         return ['{}(src_p)'.format(function_name)]
