@@ -893,11 +893,11 @@ class _Generator(Generator):
         unique_enum_length = self.add_unique_variable('uint8_t {};',
                                                       'enum_length')
         encode_lines += [
-            'if (src_p->{} > 127) {{'.format(self.location_inner()),
-            '    encoder_append_uint8(encoder_p, 0x80 | {});'.format(type_length),
-            '}',
             '{} = minimum_uint_length(src_p->{});'.format(
                 unique_enum_length, self.location_inner()),
+            'if (src_p->{} > 127) {{'.format(self.location_inner()),
+            '    encoder_append_uint8(encoder_p, 0x80 | {});'.format(unique_enum_length),
+            '}',
             'encoder_append_uint(encoder_p, (uint32_t)src_p->{}, {});'.format(
                 self.location_inner(), unique_enum_length)]
         decode_lines += [
