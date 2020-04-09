@@ -895,6 +895,7 @@ class _Generator(Generator):
         encode_lines += [
             '{} = minimum_uint_length(src_p->{});'.format(
                 unique_enum_length, self.location_inner()),
+            '',
             'if (src_p->{} > 127) {{'.format(self.location_inner()),
             '    encoder_append_uint8(encoder_p, 0x80 | {});'.format(unique_enum_length),
             '}',
@@ -902,6 +903,7 @@ class _Generator(Generator):
                 self.location_inner(), unique_enum_length)]
         decode_lines += [
             '{} = decoder_read_uint8(decoder_p);'.format(unique_enum_length),
+            '',
             'if (({} & 0x80) == 0x80) {{'.format(unique_enum_length),
             '    {} &= 0x7f;'.format(unique_enum_length),
             '    if (({length} > {type_length}) || ({length} == 0)) {{'.format(
