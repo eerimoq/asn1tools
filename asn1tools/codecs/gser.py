@@ -571,7 +571,8 @@ class Compiler(compiler.Compiler):
             compiled = Real(name)
         elif type_name == 'ENUMERATED':
             compiled = Enumerated(name,
-                                  type_descriptor['values'],
+                                  self.get_enum_values(type_descriptor,
+                                                       module_name),
                                   self._numeric_enums)
         elif type_name == 'BOOLEAN':
             compiled = Boolean(name)

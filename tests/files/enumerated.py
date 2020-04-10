@@ -29,5 +29,6 @@ EXPECTED = {'E': {'extensibility-implied': False,
                                   None,
                                   ('g', 5)]},
                  'F': {'type': 'ENUMERATED', 'values': [('a', 0), None]},
-                 'G': {'type': 'ENUMERATED', 'values': [('a', 0)]}},
-       'values': {}}}
+                 'G': {'type': 'ENUMERATED', 'values': [('a', 0)]},
+                 'H': {'type': 'ENUMERATED', 'values': [('a', 'i')]}},
+       'values': {'i': {'type': 'INTEGER', 'value': 10}}}}
