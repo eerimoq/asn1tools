@@ -585,23 +585,27 @@ class _Generator(Generator):
 
     def get_encoded_type_lengths(self, type_, checker):
         if isinstance(type_, oer.Integer):
-            return self.get_encoded_integer_length(checker)
+            return self.get_encoded_integer_lengths(checker)
         elif isinstance(type_, oer.Boolean):
             return [1]
         elif isinstance(type_, oer.Real):
-            return self.get_encoded_real_length(type_)
+            return self.get_encoded_real_lengths(type_)
         elif isinstance(type_, oer.Null):
+            return [0]
+        elif is_user_type(type_):
+            # TODO: Implement me!
             return [0]
         elif isinstance(type_, oer.OctetString):
             with self.members_backtrace_push(type_.name):
-                return self.get_encoded_octet_string_length(type_, checker)
+                return self.get_encoded_octet_string_lengths(type_, checker)
         elif isinstance(type_, oer.Sequence):
-            return self.get_encoded_sequence_length(type_, checker)
+            return self.get_encoded_sequence_lengths(type_, checker)
         elif isinstance(type_, oer.Choice):
-            return self.get_encoded_choice_length(type_, checker)
+            return self.get_encoded_choice_lengths(type_, checker)
         elif isinstance(type_, oer.SequenceOf):
-            return self.get_encoded_sequence_of_length(type_, checker)
+            return self.get_encoded_sequence_of_lengths(type_, checker)
         elif isinstance(type_, oer.Enumerated):
+            # TODO: Does not work like this with OER long form enums
             return [1]
         else:
             raise self.error(
@@ -656,7 +660,7 @@ class _Generator(Generator):
             ]
         )
 
-    def get_encoded_integer_length(self, checker):
+    def get_encoded_integer_lengths(self, checker):
         return [self.type_length(checker.minimum, checker.maximum) // 8]
 
     def format_boolean_inner(self):
@@ -691,7 +695,7 @@ class _Generator(Generator):
         )
 
     @staticmethod
-    def get_encoded_real_length(type_):
+    def get_encoded_real_lengths(type_):
         return [4] if type_.fmt == '>f' else [8]
 
     @staticmethod
@@ -957,7 +961,7 @@ class _Generator(Generator):
 
         return encode_lines, decode_lines
 
-    def get_encoded_sequence_length(self, type_, checker):
+    def get_encoded_sequence_lengths(self, type_, checker):
         lengths = []
         optionals = self.get_sequence_optionals(type_)
         extension_bit = self.get_sequence_extension_bit(type_)
@@ -1075,7 +1079,7 @@ class _Generator(Generator):
 
         return encode_lines, decode_lines
 
-    def get_encoded_octet_string_length(self, type_, checker):
+    def get_encoded_octet_string_lengths(self, type_, checker):
         if checker.minimum == checker.maximum:
 
             return [checker.maximum]
@@ -1189,47 +1193,7 @@ class _Generator(Generator):
 
         return encode_lines, decode_lines
 
-    def format_enumerated_inner(self, type_):
-        encode_lines = []
-        decode_lines = []
-
-        max_value = max(type_.value_to_data)
-        type_name = '{}_e'.format(self.location)
-        type_length = self.type_length(0, max_value) // 8
-
-        unique_enum_length = self.add_unique_variable('uint8_t {};',
-                                                      'enum_length')
-        encode_lines += [
-            '{} = minimum_uint_length(src_p->{});'.format(
-                unique_enum_length, self.location_inner()),
-            '',
-            'if (src_p->{} > 127) {{'.format(self.location_inner()),
-            '    encoder_append_uint8(encoder_p, 0x80 | {});'.format(unique_enum_length),
-            '}',
-            'encoder_append_uint(encoder_p, (uint32_t)src_p->{}, {});'.format(
-                self.location_inner(), unique_enum_length)]
-        decode_lines += [
-            '{} = decoder_read_uint8(decoder_p);'.format(unique_enum_length),
-            '',
-            'if (({} & 0x80) == 0x80) {{'.format(unique_enum_length),
-            '    {} &= 0x7f;'.format(unique_enum_length),
-            '    if (({length} > {type_length}) || ({length} == 0)) {{'.format(
-                type_length=type_length, length=unique_enum_length),
-            '        decoder_abort(decoder_p, EBADLENGTH);',
-            '',
-            '        return;',
-            '    }',
-            '    dst_p->{} = (enum {})decoder_read_uint(decoder_p, {});'.format(
-                self.location_inner(), type_name, unique_enum_length),
-            '}',
-            'else {',
-            '    dst_p->{} = (enum {}){};'.format(self.location_inner(), type_name,
-                                                  unique_enum_length),
-            '}']
-
-        return encode_lines, decode_lines
-
-    def get_encoded_choice_length(self, type_, checker):
+    def get_encoded_choice_lengths(self, type_, checker):
         function_name = 'get_choice_{}_length'.format(camel_to_snake_case(type_.name))
 
         if function_name not in self.additional_helpers:
@@ -1275,17 +1239,45 @@ class _Generator(Generator):
 
         return ['{}(src_p)'.format(function_name)]
 
-    def format_enumerated_inner(self):
-        return (
-            [
-                'encoder_append_uint8(encoder_p, src_p->{});'.format(
-                    self.location_inner())
-            ],
-            [
-                'dst_p->{} = decoder_read_uint8(decoder_p);'.format(
-                    self.location_inner())
-            ]
-        )
+    def format_enumerated_inner(self, type_):
+        encode_lines = []
+        decode_lines = []
+
+        max_value = max(type_.value_to_data)
+        type_name = '{}_e'.format(self.location)
+        type_length = self.type_length(0, max_value) // 8
+
+        unique_enum_length = self.add_unique_variable('uint8_t {};',
+                                                      'enum_length')
+        encode_lines += [
+            '{} = minimum_uint_length(src_p->{});'.format(
+                unique_enum_length, self.location_inner()),
+            '',
+            'if (src_p->{} > 127) {{'.format(self.location_inner()),
+            '    encoder_append_uint8(encoder_p, 0x80 | {});'.format(unique_enum_length),
+            '}',
+            'encoder_append_uint(encoder_p, (uint32_t)src_p->{}, {});'.format(
+                self.location_inner(), unique_enum_length)]
+        decode_lines += [
+            '{} = decoder_read_uint8(decoder_p);'.format(unique_enum_length),
+            '',
+            'if (({} & 0x80) == 0x80) {{'.format(unique_enum_length),
+            '    {} &= 0x7f;'.format(unique_enum_length),
+            '    if (({length} > {type_length}) || ({length} == 0)) {{'.format(
+                type_length=type_length, length=unique_enum_length),
+            '        decoder_abort(decoder_p, EBADLENGTH);',
+            '',
+            '        return;',
+            '    }',
+            '    dst_p->{} = (enum {})decoder_read_uint(decoder_p, {});'.format(
+                self.location_inner(), type_name, unique_enum_length),
+            '}',
+            'else {',
+            '    dst_p->{} = (enum {}){};'.format(self.location_inner(), type_name,
+                                                  unique_enum_length),
+            '}']
+
+        return encode_lines, decode_lines
 
     @staticmethod
     def format_null_inner():
@@ -1389,7 +1381,7 @@ class _Generator(Generator):
 
         return encode_lines, decode_lines
 
-    def get_encoded_sequence_of_length(self, type_, checker):
+    def get_encoded_sequence_of_lengths(self, type_, checker):
         inner_lengths = self.get_encoded_type_lengths(type_.element_type,
                                                       checker.element_type)
         inner_length = self.sum_encoded_lengths(inner_lengths)
