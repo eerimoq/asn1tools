@@ -797,23 +797,25 @@ class _Generator(Generator):
         return encode_lines, decode_lines
 
     def format_enumerated_inner(self, type_):
-        type_name = self.format_type_name(0, max(type_.root_index_to_data))
+        type_name = self.format_type_name(0, max(type_.root_data_to_value.values()))
         unique_value = self.add_unique_variable(
             '{} {{}};'.format(type_name),
             'value')
         location = self.location_inner()
 
-        value_mapping_required = \
-            any([type_.root_data_to_index[data] != type_.root_data_to_value[data]
-                 for data in type_.root_data_to_index.keys()])
+        value_mapping_required = any([(type_.root_data_to_index[data]
+                                       != type_.root_data_to_value[data])
+                                      for data in type_.root_data_to_index])
+
         if value_mapping_required:
             encode_lines = ['switch (src_p->{}) {{'.format(location)]
 
             for data, _ in self.get_enumerated_values(type_):
-                encode_lines.append('case {}_{}_e:'.format(self.location, data))
-                encode_lines.append('    {} = {};'.format(unique_value,
-                                                          type_.root_data_to_index[data]))
-                encode_lines.append('    break;')
+                encode_lines += [
+                    'case {}_{}_e:'.format(self.location, data),
+                    '    {} = {};'.format(unique_value, type_.root_data_to_index[data]),
+                    '    break;']
+
             encode_lines += [
                 'default:',
                 '    encoder_abort(encoder_p, EBADENUM);',
@@ -831,8 +833,8 @@ class _Generator(Generator):
                                      type_.root_number_of_bits)
         ]
 
-        if bin(len(self.get_enumerated_values(type_))).count('1') != 1 \
-                and not value_mapping_required:
+        if bin(len(self.get_enumerated_values(type_))).count('1') != 1 and (not
+           value_mapping_required):
             decode_lines += [
                 '',
                 'if ({} > {}) {{'.format(unique_value,

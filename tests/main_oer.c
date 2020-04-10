@@ -344,7 +344,7 @@ static void test_oer_c_source_d_all_present(void)
 
 static void test_oer_c_source_d_some_missing(void)
 {
-    uint8_t encoded[16];
+    uint8_t encoded[18];
     struct oer_c_source_d_t decoded;
 
     /* Encode. */
@@ -369,9 +369,10 @@ static void test_oer_c_source_d_some_missing(void)
     assert(oer_c_source_d_encode(&encoded[0],
                                  sizeof(encoded),
                                  &decoded) == sizeof(encoded));
+
     assert(memcmp(&encoded[0],
-                  "\x01\x01\x81\x00\x01\x03\x05\x01\x54\x20\x00\x03\x03\x03"
-                  "\x03\x03",
+                  "\x01\x01\x81\x00\x01\x03\x82\x02\x00\x01\x54\x20\x00\x03\x03"
+                  "\x03\x03\x03",
                   sizeof(encoded)) == 0);
 
     /* Decode. */

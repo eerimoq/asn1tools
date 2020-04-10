@@ -584,6 +584,7 @@ static void oer_c_source_d_encode_inner(
     uint8_t i;
     uint8_t number_of_length_bytes_2;
     uint8_t i_2;
+    uint8_t enum_length;
     uint8_t present_mask[1];
     uint8_t present_mask_2[1];
 
@@ -620,7 +621,12 @@ static void oer_c_source_d_encode_inner(
         for (i_2 = 0; i_2 < src_p->elements[i].a.e.length; i_2++) {
         }
 
-        encoder_append_uint8(encoder_p, src_p->elements[i].g.h);
+        enum_length = minimum_uint_length(src_p->elements[i].g.h);
+
+        if (src_p->elements[i].g.h > 127) {
+            encoder_append_uint8(encoder_p, 0x80 | enum_length);
+        }
+        encoder_append_uint(encoder_p, (uint32_t)src_p->elements[i].g.h, enum_length);
         encoder_append_uint8(encoder_p, src_p->elements[i].g.l.length);
         encoder_append_bytes(encoder_p,
                              &src_p->elements[i].g.l.buf[0],
@@ -690,6 +696,7 @@ static void oer_c_source_d_decode_inner(
     uint32_t tag;
     uint8_t number_of_length_bytes_2;
     uint8_t i_2;
+    uint8_t enum_length;
     uint8_t present_mask[1];
     uint8_t present_mask_2[1];
 
@@ -738,7 +745,20 @@ static void oer_c_source_d_decode_inner(
         for (i_2 = 0; i_2 < dst_p->elements[i].a.e.length; i_2++) {
         }
 
-        dst_p->elements[i].g.h = decoder_read_uint8(decoder_p);
+        enum_length = decoder_read_uint8(decoder_p);
+
+        if ((enum_length & 0x80) == 0x80) {
+            enum_length &= 0x7f;
+            if ((enum_length > 2) || (enum_length == 0)) {
+                decoder_abort(decoder_p, EBADLENGTH);
+
+                return;
+            }
+            dst_p->elements[i].g.h = (enum oer_c_source_d_g_h_e)decoder_read_uint(decoder_p, enum_length);
+        }
+        else {
+            dst_p->elements[i].g.h = (enum oer_c_source_d_g_h_e)enum_length;
+        }
         dst_p->elements[i].g.l.length = decoder_read_uint8(decoder_p);
 
         if (dst_p->elements[i].g.l.length > 2) {
@@ -3409,14 +3429,36 @@ static void oer_c_source_ad_encode_inner(
     struct encoder_t *encoder_p,
     const struct oer_c_source_ad_t *src_p)
 {
-    encoder_append_uint8(encoder_p, src_p->value);
+    uint8_t enum_length;
+
+    enum_length = minimum_uint_length(src_p->value);
+
+    if (src_p->value > 127) {
+        encoder_append_uint8(encoder_p, 0x80 | enum_length);
+    }
+    encoder_append_uint(encoder_p, (uint32_t)src_p->value, enum_length);
 }
 
 static void oer_c_source_ad_decode_inner(
     struct decoder_t *decoder_p,
     struct oer_c_source_ad_t *dst_p)
 {
-    dst_p->value = decoder_read_uint8(decoder_p);
+    uint8_t enum_length;
+
+    enum_length = decoder_read_uint8(decoder_p);
+
+    if ((enum_length & 0x80) == 0x80) {
+        enum_length &= 0x7f;
+        if ((enum_length > 1) || (enum_length == 0)) {
+            decoder_abort(decoder_p, EBADLENGTH);
+
+            return;
+        }
+        dst_p->value = (enum oer_c_source_ad_e)decoder_read_uint(decoder_p, enum_length);
+    }
+    else {
+        dst_p->value = (enum oer_c_source_ad_e)enum_length;
+    }
 }
 
 static void oer_c_source_ae_encode_inner(
@@ -3642,8 +3684,8 @@ static void oer_c_source_af_decode_inner(
             return;
         }
         addition_bits = ((addition_length * 8) - addition_unused_bits);
-        decoder_read_bytes(decoder_p, 
-                           addition_mask, 
+        decoder_read_bytes(decoder_p,
+                           addition_mask,
                            (addition_length < 2) ? addition_length : 2);
 
         dst_p->is_b_addition_present = ((addition_bits > 0) && ((addition_mask[0] & 0x80)) == 0x80);
@@ -3668,8 +3710,8 @@ static void oer_c_source_af_decode_inner(
                     return;
                 }
                 addition_bits_2 = ((addition_length_2 * 8) - addition_unused_bits_2);
-                decoder_read_bytes(decoder_p, 
-                                   addition_mask_2, 
+                decoder_read_bytes(decoder_p,
+                                   addition_mask_2,
                                    (addition_length_2 < 1) ? addition_length_2 : 1);
 
                 dst_p->b.is_d_addition_present = ((addition_bits_2 > 0) && ((addition_mask_2[0] & 0x80)) == 0x80);
@@ -3904,8 +3946,8 @@ static void oer_c_source_ag_decode_inner(
             return;
         }
         addition_bits = ((addition_length * 8) - addition_unused_bits);
-        decoder_read_bytes(decoder_p, 
-                           addition_mask, 
+        decoder_read_bytes(decoder_p,
+                           addition_mask,
                            (addition_length < 1) ? addition_length : 1);
 
         dst_p->is_b_addition_present = ((addition_bits > 0) && ((addition_mask[0] & 0x80)) == 0x80);
@@ -4443,14 +4485,36 @@ static void oer_c_source_k_encode_inner(
     struct encoder_t *encoder_p,
     const struct oer_c_source_k_t *src_p)
 {
-    encoder_append_uint8(encoder_p, src_p->value);
+    uint8_t enum_length;
+
+    enum_length = minimum_uint_length(src_p->value);
+
+    if (src_p->value > 127) {
+        encoder_append_uint8(encoder_p, 0x80 | enum_length);
+    }
+    encoder_append_uint(encoder_p, (uint32_t)src_p->value, enum_length);
 }
 
 static void oer_c_source_k_decode_inner(
     struct decoder_t *decoder_p,
     struct oer_c_source_k_t *dst_p)
 {
-    dst_p->value = decoder_read_uint8(decoder_p);
+    uint8_t enum_length;
+
+    enum_length = decoder_read_uint8(decoder_p);
+
+    if ((enum_length & 0x80) == 0x80) {
+        enum_length &= 0x7f;
+        if ((enum_length > 1) || (enum_length == 0)) {
+            decoder_abort(decoder_p, EBADLENGTH);
+
+            return;
+        }
+        dst_p->value = (enum oer_c_source_k_e)decoder_read_uint(decoder_p, enum_length);
+    }
+    else {
+        dst_p->value = (enum oer_c_source_k_e)enum_length;
+    }
 }
 
 static void oer_c_source_l_encode_inner(

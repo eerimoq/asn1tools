@@ -96,7 +96,7 @@ enum oer_c_source_d_a_b_choice_e {
 enum oer_c_source_d_g_h_e {
     oer_c_source_d_g_h_i_e = 0,
     oer_c_source_d_g_h_j_e = 4,
-    oer_c_source_d_g_h_k_e = 5
+    oer_c_source_d_g_h_k_e = 512
 };
 
 struct oer_c_source_d_t {

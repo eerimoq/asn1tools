@@ -18,7 +18,8 @@ from . import restricted_utc_time_to_datetime
 from . import restricted_utc_time_from_datetime
 from . import restricted_generalized_time_to_datetime
 from . import restricted_generalized_time_from_datetime
-from .compiler import enum_values_split, enum_values_as_dict
+from .compiler import enum_values_split
+from .compiler import enum_values_as_dict
 from .compiler import clean_bit_string_value
 from .compiler import rstrip_bit_string_zeros
 from .ber import encode_real
@@ -1402,8 +1403,7 @@ class Enumerated(Type):
         if numeric:
             self.root_data_to_value = {k: k for k in enum_values_as_dict(root)}
         else:
-            self.root_data_to_value = \
-                {v: k for k, v in enum_values_as_dict(root).items()}
+            self.root_data_to_value = {v: k for k, v in enum_values_as_dict(root).items()}
 
         # Optional additions.
         if additions is None:
