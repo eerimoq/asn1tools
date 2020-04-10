@@ -596,8 +596,7 @@ class _Generator(Generator):
             # TODO: Implement me!
             return [0]
         elif isinstance(type_, oer.OctetString):
-            with self.members_backtrace_push(type_.name):
-                return self.get_encoded_octet_string_lengths(type_, checker)
+            return self.get_encoded_octet_string_lengths(type_, checker)
         elif isinstance(type_, oer.Sequence):
             return self.get_encoded_sequence_lengths(type_, checker)
         elif isinstance(type_, oer.Choice):
@@ -605,8 +604,7 @@ class _Generator(Generator):
         elif isinstance(type_, oer.SequenceOf):
             return self.get_encoded_sequence_of_lengths(type_, checker)
         elif isinstance(type_, oer.Enumerated):
-            # TODO: Does not work like this with OER long form enums
-            return [1]
+            return self.get_encoded_enumerated_length(type_)
         else:
             raise self.error(
                 "Unsupported type '{}'.".format(type_.type_name))
@@ -1080,15 +1078,16 @@ class _Generator(Generator):
         return encode_lines, decode_lines
 
     def get_encoded_octet_string_lengths(self, type_, checker):
-        if checker.minimum == checker.maximum:
+        with self.members_backtrace_push(type_.name):
+            if checker.minimum == checker.maximum:
 
-            return [checker.maximum]
-        else:
-            location = self.location_inner('', '.')
-            src_length = 'src_p->{}length'.format(location)
+                return [checker.maximum]
+            else:
+                location = self.location_inner('', '.')
+                src_length = 'src_p->{}length'.format(location)
 
-            return ['length_determinant_length({})'.format(src_length),
-                    src_length]
+                return ['length_determinant_length({})'.format(src_length),
+                        src_length]
 
     def get_user_type_prefix(self, type_name, module_name):
         module_name_snake = camel_to_snake_case(module_name)
@@ -1278,6 +1277,11 @@ class _Generator(Generator):
             '}']
 
         return encode_lines, decode_lines
+
+    def get_encoded_enumerated_length(self, type_):
+        with self.members_backtrace_push(type_.name):
+            return ['length_determinant_length((uint32_t)src_p->{})'.format(
+                self.location_inner())]
 
     @staticmethod
     def format_null_inner():
