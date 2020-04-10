@@ -1133,7 +1133,7 @@ static void test_oer_c_source_af_future(void)
 
 static void test_oer_c_source_ag(void)
 {
-    uint8_t encoded[34];
+    uint8_t encoded[36];
     struct oer_c_source_ag_t decoded;
 
     /* Encode. */
@@ -1165,8 +1165,8 @@ static void test_oer_c_source_ag(void)
 
     assert(memcmp(&encoded[0],
                   "\x80\xff\x02\x01\xfe\x03\x02\x84\x55\x06\x01\x04\xff\x00"
-                  "\xff\x00\x01\x01\x00\x04\x3f\x80\x00\x00\x03\x80\xed\x15"
-                  "\x05\xf0\xf1\xf2\xf3\xf4",
+                  "\xff\x00\x03\x82\x01\x00\x00\x04\x3f\x80\x00\x00\x03\x80"
+                  "\xed\x15\x05\xf0\xf1\xf2\xf3\xf4",
                   sizeof(encoded)) == 0);
 
     /* Decode. */
