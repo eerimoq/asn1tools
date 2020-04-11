@@ -1263,6 +1263,7 @@ class _Generator(Generator):
             '',
             'if (({} & 0x80) == 0x80) {{'.format(unique_enum_length),
             '    {} &= 0x7f;'.format(unique_enum_length),
+            '',
             '    if (({length} > {type_length}) || ({length} == 0)) {{'.format(
                 type_length=type_length, length=unique_enum_length),
             '        decoder_abort(decoder_p, EBADLENGTH);',

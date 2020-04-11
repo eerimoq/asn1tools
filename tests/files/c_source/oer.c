@@ -751,6 +751,7 @@ static void oer_c_source_d_decode_inner(
 
         if ((enum_length & 0x80) == 0x80) {
             enum_length &= 0x7f;
+
             if ((enum_length > 2) || (enum_length == 0)) {
                 decoder_abort(decoder_p, EBADLENGTH);
 
@@ -3451,6 +3452,7 @@ static void oer_c_source_ad_decode_inner(
 
     if ((enum_length & 0x80) == 0x80) {
         enum_length &= 0x7f;
+
         if ((enum_length > 1) || (enum_length == 0)) {
             decoder_abort(decoder_p, EBADLENGTH);
 
@@ -3591,8 +3593,8 @@ static void oer_c_source_ah_decode_inner(
             return;
         }
         addition_bits = ((addition_length * 8) - addition_unused_bits);
-        decoder_read_bytes(decoder_p, 
-                           addition_mask, 
+        decoder_read_bytes(decoder_p,
+                           addition_mask,
                            (addition_length < 1) ? addition_length : 1);
         dst_p->is_d_addition_present = ((addition_bits > 0) && ((addition_mask[0] & 0x80)) == 0x80);
 
@@ -3760,8 +3762,8 @@ static void oer_c_source_af_decode_inner(
             return;
         }
         addition_bits = ((addition_length * 8) - addition_unused_bits);
-        decoder_read_bytes(decoder_p, 
-                           addition_mask, 
+        decoder_read_bytes(decoder_p,
+                           addition_mask,
                            (addition_length < 2) ? addition_length : 2);
         dst_p->is_b_addition_present = ((addition_bits > 0) && ((addition_mask[0] & 0x80)) == 0x80);
 
@@ -4013,8 +4015,8 @@ static void oer_c_source_ag_decode_inner(
             return;
         }
         addition_bits = ((addition_length * 8) - addition_unused_bits);
-        decoder_read_bytes(decoder_p, 
-                           addition_mask, 
+        decoder_read_bytes(decoder_p,
+                           addition_mask,
                            (addition_length < 1) ? addition_length : 1);
         dst_p->is_b_addition_present = ((addition_bits > 0) && ((addition_mask[0] & 0x80)) == 0x80);
 
@@ -4591,6 +4593,7 @@ static void oer_c_source_k_decode_inner(
 
     if ((enum_length & 0x80) == 0x80) {
         enum_length &= 0x7f;
+
         if ((enum_length > 1) || (enum_length == 0)) {
             decoder_abort(decoder_p, EBADLENGTH);
 
