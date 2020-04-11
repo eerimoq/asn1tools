@@ -1397,7 +1397,7 @@ class _Generator(Generator):
             return [1,
                     'minimum_uint_length(src_p->{loc}length)'.format(
                         loc=self.location_inner('', '.')),
-                    '(uint32_t)(src_p->{loc}length * {inner_length})'.format(
+                    '(uint32_t)(src_p->{loc}length * ({inner_length}))'.format(
                         loc=self.location_inner('', '.'), inner_length=inner_length)]
 
     def format_type_inner(self, type_, checker):
