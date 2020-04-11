@@ -592,9 +592,6 @@ class _Generator(Generator):
             return self.get_encoded_real_lengths(type_)
         elif isinstance(type_, oer.Null):
             return [0]
-        elif is_user_type(type_):
-            # TODO: Implement me!
-            return [0]
         elif isinstance(type_, oer.OctetString):
             return self.get_encoded_octet_string_lengths(type_, checker)
         elif isinstance(type_, oer.Sequence):
@@ -850,6 +847,7 @@ class _Generator(Generator):
         decode_lines += [
             '{} = decoder_read_length_determinant(decoder_p);'.format(
                 unique_addition_length),
+            '',
             'if({} == 0) {{'.format(unique_addition_length),
             '    decoder_abort(decoder_p, EBADLENGTH);',
             '    return;',
@@ -864,6 +862,7 @@ class _Generator(Generator):
             'uint32_t {};', 'addition_bits')
         decode_lines += [
             '{} = decoder_read_uint8(decoder_p);'.format(unique_addition_unused_bits),
+            '',
             'if ({} > 7) {{'.format(unique_addition_unused_bits),
             '    decoder_abort(decoder_p, EBADLENGTH);',
             '    return;',
@@ -874,32 +873,31 @@ class _Generator(Generator):
         fmt = 'uint8_t {{}}[{}];'.format(addition_mask_length)
         unique_addition_mask = self.add_unique_variable(
             fmt, 'addition_mask')
+
         for i in range(addition_mask_length):
             encode_lines.append('{}[{}] = 0;'.format(unique_addition_mask, i))
+
         for i, addition in enumerate(type_.additions):
             byte, bit = divmod(i, 8)
             mask = '0x{:02x}'.format(1 << (7 - bit))
             addition_mask = '{}[{}]'.format(unique_addition_mask,
                                             byte)
             encode_lines += [
+                '',
                 'if (src_p->{}is_{}_addition_present) {{'.format(
                     self.location_inner('', '.'), addition.name),
                 '    {} |= {};'.format(addition_mask, mask),
                 '}'
             ]
         encode_lines += [
-            '',
             'encoder_append_bytes(encoder_p,',
             '                     &{}[0],'.format(unique_addition_mask),
-            '                     sizeof({}));'.format(unique_addition_mask),
-            ''
-        ]
+            '                     sizeof({}));'.format(unique_addition_mask)]
         decode_lines += [
             'decoder_read_bytes(decoder_p, ',
             '                   {mask}, '.format(mask=unique_addition_mask),
             '                   ({read} < {defined}) ? {read} : {defined});'.format(
-                read=unique_addition_length, defined=addition_mask_length),
-            '']
+                read=unique_addition_length, defined=addition_mask_length)]
 
         for i, addition in enumerate(type_.additions):
             byte, bit = divmod(i, 8)
@@ -915,6 +913,7 @@ class _Generator(Generator):
             member_checker = self.get_member_checker(checker, addition.name)
             encoded_lengths = self.get_encoded_type_lengths(addition, member_checker)
             encode_lines += [
+                '',
                 'if (src_p->{}is_{}_addition_present) {{'
                 .format(self.location_inner('', '.'), addition.name),
                 '    encoder_append_length_determinant(encoder_p, {});'
@@ -934,14 +933,14 @@ class _Generator(Generator):
                     addition_mask=unique_addition_mask,
                     index=byte,
                     mask=mask),
+                '',
                 'if (dst_p->{location}is_{name}_addition_present) {{'.format(
                     location=self.location_inner('', '.'),
                     name=addition.name),
                 '    (void)decoder_read_length_determinant(decoder_p);'
             ] + indent_lines(addition_decode_lines) + [
                 '}',
-                ''
-            ]
+                '']
 
         unique_i = self.add_unique_decode_variable('uint32_t {};', 'i')
         unique_tmp_length = self.add_unique_decode_variable('uint32_t {};', 'tmp_length')
@@ -1222,7 +1221,9 @@ class _Generator(Generator):
 
             length_lines = [
                 'uint32_t length = 0;',
-                'switch (src_p->{}) {{'.format(choice)
+                '',
+                'switch (src_p->{}) {{'.format(choice),
+                ''
             ] + choice_length_lines + [
                 'default:',
                 '    break;',
