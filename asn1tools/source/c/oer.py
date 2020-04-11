@@ -882,17 +882,46 @@ class _Generator(Generator):
 
         return encode_lines, decode_lines
 
-    def format_enumerated_inner(self):
-        return (
-            [
-                'encoder_append_uint8(encoder_p, src_p->{});'.format(
-                    self.location_inner())
-            ],
-            [
-                'dst_p->{} = decoder_read_uint8(decoder_p);'.format(
-                    self.location_inner())
-            ]
-        )
+    def format_enumerated_inner(self, type_):
+        encode_lines = []
+        decode_lines = []
+
+        max_value = max(type_.value_to_data)
+        type_name = '{}_e'.format(self.location)
+        type_length = self.type_length(0, max_value) // 8
+
+        unique_enum_length = self.add_unique_variable('uint8_t {};',
+                                                      'enum_length')
+        encode_lines += [
+            '{} = minimum_uint_length(src_p->{});'.format(
+                unique_enum_length, self.location_inner()),
+            '',
+            'if (src_p->{} > 127) {{'.format(self.location_inner()),
+            '    encoder_append_uint8(encoder_p, 0x80 | {});'.format(unique_enum_length),
+            '}',
+            'encoder_append_uint(encoder_p, (uint32_t)src_p->{}, {});'.format(
+                self.location_inner(), unique_enum_length)]
+        decode_lines += [
+            '{} = decoder_read_uint8(decoder_p);'.format(unique_enum_length),
+            '',
+            'if (({} & 0x80) == 0x80) {{'.format(unique_enum_length),
+            '    {} &= 0x7f;'.format(unique_enum_length),
+            '',
+            '    if (({length} > {type_length}) || ({length} == 0)) {{'.format(
+                type_length=type_length, length=unique_enum_length),
+            '        decoder_abort(decoder_p, EBADLENGTH);',
+            '',
+            '        return;',
+            '    }',
+            '    dst_p->{} = (enum {})decoder_read_uint(decoder_p, {});'.format(
+                self.location_inner(), type_name, unique_enum_length),
+            '}',
+            'else {',
+            '    dst_p->{} = (enum {}){};'.format(self.location_inner(), type_name,
+                                                  unique_enum_length),
+            '}']
+
+        return encode_lines, decode_lines
 
     def format_null_inner(self):
         return (
@@ -1016,7 +1045,7 @@ class _Generator(Generator):
         elif isinstance(type_, oer.SequenceOf):
             return self.format_sequence_of_inner(type_, checker)
         elif isinstance(type_, oer.Enumerated):
-            return self.format_enumerated_inner()
+            return self.format_enumerated_inner(type_)
         else:
             raise self.error(str(type_))
 
@@ -1036,7 +1065,7 @@ class _Generator(Generator):
         elif isinstance(type_, oer.OctetString):
             return self.format_octet_string_inner(checker)
         elif isinstance(type_, oer.Enumerated):
-            return self.format_enumerated_inner()
+            return self.format_enumerated_inner(type_)
         elif isinstance(type_, oer.Null):
             return self.format_null_inner()
         else:
