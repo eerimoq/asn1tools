@@ -848,7 +848,7 @@ class _Generator(Generator):
             '{} = decoder_read_length_determinant(decoder_p);'.format(
                 unique_addition_length),
             '',
-            'if({} == 0) {{'.format(unique_addition_length),
+            'if({} <= 1) {{'.format(unique_addition_length),
             '    decoder_abort(decoder_p, EBADLENGTH);',
             '',
             '    return;',
