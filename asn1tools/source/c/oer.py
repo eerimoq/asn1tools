@@ -850,6 +850,7 @@ class _Generator(Generator):
             '',
             'if({} == 0) {{'.format(unique_addition_length),
             '    decoder_abort(decoder_p, EBADLENGTH);',
+            '',
             '    return;',
             '}',
             '{} -= 1;'.format(unique_addition_length)]
@@ -865,6 +866,7 @@ class _Generator(Generator):
             '',
             'if ({} > 7) {{'.format(unique_addition_unused_bits),
             '    decoder_abort(decoder_p, EBADLENGTH);',
+            '',
             '    return;',
             '}',
             '{} = (({} * 8) - {});'.format(unique_addition_bits, unique_addition_length,
@@ -893,11 +895,41 @@ class _Generator(Generator):
             'encoder_append_bytes(encoder_p,',
             '                     &{}[0],'.format(unique_addition_mask),
             '                     sizeof({}));'.format(unique_addition_mask)]
+
+        unique_i = self.add_unique_decode_variable('uint32_t {};', 'i')
+        unique_tmp_addition_mask = self.add_unique_decode_variable('uint8_t {};',
+                                                                   'tmp_addition_mask')
+        unique_unknown_addition_bits = self.add_unique_decode_variable(
+            'uint32_t {};', 'unknown_addition_bits')
+        unique_mask = self.add_unique_decode_variable('uint8_t {};', 'mask')
+
         decode_lines += [
             'decoder_read_bytes(decoder_p, ',
             '                   {mask}, '.format(mask=unique_addition_mask),
             '                   ({read} < {defined}) ? {read} : {defined});'.format(
-                read=unique_addition_length, defined=addition_mask_length)]
+                read=unique_addition_length, defined=addition_mask_length),
+            '',
+            '{} = {}[{}];'.format(unique_tmp_addition_mask, unique_addition_mask,
+                                  addition_mask_length - 1),
+            '{} = 0x{:02x};'.format(unique_mask, 0x80 >> (len(type_.additions) % 8)),
+            '{} = 0;'.format(unique_unknown_addition_bits),
+            '',
+            'for (i = {}; i < {}; i++) {{'.format(len(type_.additions),
+                                                  unique_addition_bits),
+            '',
+            '    if ({} == 0) {{'.format(unique_mask),
+            '        decoder_read_bytes(decoder_p, &{}, 1);'.format(
+                unique_tmp_addition_mask),
+            '        {} = 0x80;'.format(unique_mask),
+            '    }',
+            '',
+            '    if( ({tmp_addition} & {mask}) == {mask}) {{'.format(
+                tmp_addition=unique_tmp_addition_mask, mask=unique_mask),
+            '        {} += 1;'.format(unique_unknown_addition_bits),
+            '    };',
+            '    {} >>= 1;'.format(unique_mask),
+            '}'
+        ]
 
         for i, addition in enumerate(type_.additions):
             byte, bit = divmod(i, 8)
@@ -942,13 +974,12 @@ class _Generator(Generator):
                 '}',
                 '']
 
-        unique_i = self.add_unique_decode_variable('uint32_t {};', 'i')
         unique_tmp_length = self.add_unique_decode_variable('uint32_t {};', 'tmp_length')
         decode_lines += [
-            'for ({i} = {first_bit}; {i} < {addition_bits}; {i}++) {{'.format(
+            'for ({i} = 0; {i} < {unique_unknown_addition_bits}; {i}++) {{'.format(
                 i=unique_i,
                 first_bit=len(type_.additions),
-                addition_bits=unique_addition_bits),
+                unique_unknown_addition_bits=unique_unknown_addition_bits),
             '    {} = decoder_read_length_determinant(decoder_p);'.format(
                 unique_tmp_length),
             '    if (decoder_free(decoder_p, {}) < 0) {{'.format(unique_tmp_length),
