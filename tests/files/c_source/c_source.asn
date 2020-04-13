@@ -455,4 +455,18 @@ AH ::= SEQUENCE {
     ...
 }
 
+AI ::= SEQUENCE {
+    a AK
+}
+
+AJ ::= SEQUENCE {
+    a ENUMERATED {
+        a-1, a-2
+    }
+}
+
+AK ::= CHOICE {
+    a AJ
+}
+
 END
