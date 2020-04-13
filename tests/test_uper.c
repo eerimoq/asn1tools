@@ -51,7 +51,7 @@ TEST(uper_c_source_a)
     ASSERT_EQ(decoded.f, 2);
     ASSERT_EQ(decoded.g, 3);
     ASSERT_EQ(decoded.h, 4);
-    ASSERT(decoded.i);
+    ASSERT_TRUE(decoded.i);
     ASSERT_MEMORY_EQ(&decoded.j.buf[0],
                      "\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05",
                      sizeof(decoded.j.buf));
@@ -161,7 +161,7 @@ TEST(uper_c_source_b_choice_b)
     ASSERT_EQ(decoded.value.b.f, 2);
     ASSERT_EQ(decoded.value.b.g, 3);
     ASSERT_EQ(decoded.value.b.h, 4);
-    ASSERT(decoded.value.b.i);
+    ASSERT_TRUE(decoded.value.b.i);
     ASSERT_MEMORY_EQ(&decoded.value.b.j.buf[0],
                      "\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05",
                      sizeof(decoded.value.b.j.buf));
@@ -291,14 +291,14 @@ TEST(uper_c_source_d_all_present)
     ASSERT_EQ(decoded.elements[0].g.l.length, 2);
     ASSERT_EQ(decoded.elements[0].g.l.buf[0], 0x54);
     ASSERT_EQ(decoded.elements[0].g.l.buf[1], 0x55);
-    ASSERT(decoded.elements[0].m.is_n_present);
+    ASSERT_TRUE(decoded.elements[0].m.is_n_present);
     ASSERT_EQ(decoded.elements[0].m.n, false);
     ASSERT_EQ(decoded.elements[0].m.o, 2);
-    ASSERT(decoded.elements[0].m.is_p_present);
+    ASSERT_TRUE(decoded.elements[0].m.is_p_present);
     ASSERT_MEMORY_EQ(&decoded.elements[0].m.p.q.buf[0],
                      "\x03\x03\x03\x03\x03",
                      sizeof(decoded.elements[0].m.p.q.buf));
-    ASSERT(decoded.elements[0].m.p.is_r_present);
+    ASSERT_TRUE(decoded.elements[0].m.p.is_r_present);
     ASSERT_EQ(decoded.elements[0].m.p.r, true);
     ASSERT_EQ(decoded.elements[0].m.s, true);
 }
@@ -347,13 +347,13 @@ TEST(uper_c_source_d_some_missing)
     ASSERT_EQ(decoded.elements[0].g.h, uper_c_source_d_g_h_k_e);
     ASSERT_EQ(decoded.elements[0].g.l.length, 1);
     ASSERT_EQ(decoded.elements[0].g.l.buf[0], 0x54);
-    ASSERT(!decoded.elements[0].m.is_n_present);
+    ASSERT_FALSE(decoded.elements[0].m.is_n_present);
     ASSERT_EQ(decoded.elements[0].m.o, 3);
-    ASSERT(decoded.elements[0].m.is_p_present);
+    ASSERT_TRUE(decoded.elements[0].m.is_p_present);
     ASSERT_MEMORY_EQ(&decoded.elements[0].m.p.q.buf[0],
                      "\x03\x03\x03\x03\x03",
                      sizeof(decoded.elements[0].m.p.q.buf));
-    ASSERT(!decoded.elements[0].m.p.is_r_present);
+    ASSERT_FALSE(decoded.elements[0].m.p.is_r_present);
     ASSERT_EQ(decoded.elements[0].m.p.r, false);
 }
 
@@ -457,16 +457,16 @@ TEST(uper_c_source_g)
                                      &encoded[0],
                                      sizeof(encoded)), sizeof(encoded));
 
-    ASSERT(decoded.is_a_present);
+    ASSERT_TRUE(decoded.is_a_present);
     ASSERT_EQ(decoded.a, true);
-    ASSERT(!decoded.is_b_present);
-    ASSERT(!decoded.is_c_present);
-    ASSERT(!decoded.is_d_present);
-    ASSERT(!decoded.is_e_present);
-    ASSERT(!decoded.is_f_present);
-    ASSERT(!decoded.is_g_present);
-    ASSERT(!decoded.is_h_present);
-    ASSERT(decoded.is_i_present);
+    ASSERT_FALSE(decoded.is_b_present);
+    ASSERT_FALSE(decoded.is_c_present);
+    ASSERT_FALSE(decoded.is_d_present);
+    ASSERT_FALSE(decoded.is_e_present);
+    ASSERT_FALSE(decoded.is_f_present);
+    ASSERT_FALSE(decoded.is_g_present);
+    ASSERT_FALSE(decoded.is_h_present);
+    ASSERT_TRUE(decoded.is_i_present);
     ASSERT_EQ(decoded.i, true);
 }
 
@@ -955,13 +955,13 @@ TEST(uper_c_source_af)
     decoded.is_l_addition_present = true;
 
     memset(&encoded[0], 0, sizeof(encoded));
-    ASSERT(uper_c_source_af_encode(&encoded[0],
-                                   sizeof(encoded),
-                                   &decoded) < 0);
+    ASSERT_TRUE(uper_c_source_af_encode(&encoded[0],
+                                        sizeof(encoded),
+                                        &decoded) < 0);
 
     // Decode.
     memset(&decoded, 0, sizeof(decoded));
-    ASSERT(uper_c_source_af_decode(&decoded,
-                                   &encoded2[0],
-                                   sizeof(encoded2)) < 0);
+    ASSERT_TRUE(uper_c_source_af_decode(&decoded,
+                                        &encoded2[0],
+                                        sizeof(encoded2)) < 0);
 }

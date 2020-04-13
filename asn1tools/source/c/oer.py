@@ -951,8 +951,8 @@ class _Generator(Generator):
         unique_mask = self.add_unique_decode_variable('uint8_t {};', 'mask')
 
         decode_lines += [
-            'decoder_read_bytes(decoder_p, ',
-            '                   {mask}, '.format(mask=unique_addition_mask),
+            'decoder_read_bytes(decoder_p,',
+            '                   {mask},'.format(mask=unique_addition_mask),
             '                   ({read} < {defined}) ? {read} : {defined});'.format(
                 read=unique_addition_length, defined=addition_mask_length),
             '',

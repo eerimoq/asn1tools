@@ -56,7 +56,7 @@ TEST(oer_c_source_a)
     ASSERT_EQ(decoded.f, 2);
     ASSERT_EQ(decoded.g, 3);
     ASSERT_EQ(decoded.h, 4);
-    ASSERT(decoded.i);
+    ASSERT_TRUE(decoded.i);
     ASSERT_MEMORY_EQ(&decoded.j.buf[0],
                      "\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05",
                      sizeof(decoded.j.buf));
@@ -84,7 +84,7 @@ TEST(oer_c_source_a_decode_spare_data)
     ASSERT_EQ(decoded.f, 2);
     ASSERT_EQ(decoded.g, 3);
     ASSERT_EQ(decoded.h, 4);
-    ASSERT(decoded.i);
+    ASSERT_TRUE(decoded.i);
     ASSERT_MEMORY_EQ(&decoded.j.buf[0],
                      "\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05",
                      sizeof(decoded.j.buf));
@@ -194,7 +194,7 @@ TEST(oer_c_source_b_choice_b)
     ASSERT_EQ(decoded.value.b.f, 2);
     ASSERT_EQ(decoded.value.b.g, 3);
     ASSERT_EQ(decoded.value.b.h, 4);
-    ASSERT(decoded.value.b.i);
+    ASSERT_TRUE(decoded.value.b.i);
     ASSERT_MEMORY_EQ(&decoded.value.b.j.buf[0],
                      "\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05",
                      sizeof(decoded.value.b.j.buf));
@@ -324,14 +324,14 @@ TEST(oer_c_source_d_all_present)
     ASSERT_EQ(decoded.elements[0].g.l.length, 2);
     ASSERT_EQ(decoded.elements[0].g.l.buf[0], 0x54);
     ASSERT_EQ(decoded.elements[0].g.l.buf[1], 0x55);
-    ASSERT(decoded.elements[0].m.is_n_present);
+    ASSERT_TRUE(decoded.elements[0].m.is_n_present);
     ASSERT_EQ(decoded.elements[0].m.n, false);
     ASSERT_EQ(decoded.elements[0].m.o, 2);
-    ASSERT(decoded.elements[0].m.is_p_present);
+    ASSERT_TRUE(decoded.elements[0].m.is_p_present);
     ASSERT_MEMORY_EQ(&decoded.elements[0].m.p.q.buf[0],
                      "\x03\x03\x03\x03\x03",
                      sizeof(decoded.elements[0].m.p.q.buf));
-    ASSERT(decoded.elements[0].m.p.is_r_present);
+    ASSERT_TRUE(decoded.elements[0].m.p.is_r_present);
     ASSERT_EQ(decoded.elements[0].m.p.r, true);
     ASSERT_EQ(decoded.elements[0].m.s, true);
 }
@@ -382,13 +382,13 @@ TEST(oer_c_source_d_some_missing)
     ASSERT_EQ(decoded.elements[0].g.h, oer_c_source_d_g_h_k_e);
     ASSERT_EQ(decoded.elements[0].g.l.length, 1);
     ASSERT_EQ(decoded.elements[0].g.l.buf[0], 0x54);
-    ASSERT(!decoded.elements[0].m.is_n_present);
+    ASSERT_FALSE(decoded.elements[0].m.is_n_present);
     ASSERT_EQ(decoded.elements[0].m.o, 3);
-    ASSERT(decoded.elements[0].m.is_p_present);
+    ASSERT_TRUE(decoded.elements[0].m.is_p_present);
     ASSERT_MEMORY_EQ(&decoded.elements[0].m.p.q.buf[0],
                      "\x03\x03\x03\x03\x03",
                      sizeof(decoded.elements[0].m.p.q.buf));
-    ASSERT(!decoded.elements[0].m.p.is_r_present);
+    ASSERT_FALSE(decoded.elements[0].m.p.is_r_present);
     ASSERT_EQ(decoded.elements[0].m.s, false);
 }
 
@@ -478,16 +478,16 @@ TEST(oer_c_source_g)
                                     &encoded[0],
                                     sizeof(encoded)), sizeof(encoded));
 
-    ASSERT(decoded.is_a_present);
+    ASSERT_TRUE(decoded.is_a_present);
     ASSERT_EQ(decoded.a, true);
-    ASSERT(!decoded.is_b_present);
-    ASSERT(!decoded.is_c_present);
-    ASSERT(!decoded.is_d_present);
-    ASSERT(!decoded.is_e_present);
-    ASSERT(!decoded.is_f_present);
-    ASSERT(!decoded.is_g_present);
-    ASSERT(!decoded.is_h_present);
-    ASSERT(decoded.is_i_present);
+    ASSERT_FALSE(decoded.is_b_present);
+    ASSERT_FALSE(decoded.is_c_present);
+    ASSERT_FALSE(decoded.is_d_present);
+    ASSERT_FALSE(decoded.is_e_present);
+    ASSERT_FALSE(decoded.is_f_present);
+    ASSERT_FALSE(decoded.is_g_present);
+    ASSERT_FALSE(decoded.is_h_present);
+    ASSERT_TRUE(decoded.is_i_present);
     ASSERT_EQ(decoded.i, true);
 }
 
@@ -1026,25 +1026,25 @@ TEST(oer_c_source_af)
                                      sizeof(encoded)), sizeof(encoded));
 
     ASSERT_EQ(decoded.a, true);
-    ASSERT(decoded.is_b_addition_present);
+    ASSERT_TRUE(decoded.is_b_addition_present);
     ASSERT_EQ(decoded.b.c, true);
-    ASSERT(decoded.b.is_d_addition_present);
+    ASSERT_TRUE(decoded.b.is_d_addition_present);
     ASSERT_EQ(decoded.b.d, 17);
-    ASSERT(decoded.is_e_addition_present);
+    ASSERT_TRUE(decoded.is_e_addition_present);
     ASSERT_EQ(decoded.e, 18);
-    ASSERT(decoded.is_f_addition_present);
+    ASSERT_TRUE(decoded.is_f_addition_present);
     ASSERT_EQ(decoded.f, 19);
-    ASSERT(decoded.is_g_addition_present);
+    ASSERT_TRUE(decoded.is_g_addition_present);
     ASSERT_EQ(decoded.g, 20);
-    ASSERT(decoded.is_h_addition_present);
+    ASSERT_TRUE(decoded.is_h_addition_present);
     ASSERT_EQ(decoded.h, 21);
-    ASSERT(decoded.is_i_addition_present);
+    ASSERT_TRUE(decoded.is_i_addition_present);
     ASSERT_EQ(decoded.i, 22);
-    ASSERT(decoded.is_j_addition_present);
+    ASSERT_TRUE(decoded.is_j_addition_present);
     ASSERT_EQ(decoded.j, 23);
-    ASSERT(decoded.is_k_addition_present);
+    ASSERT_TRUE(decoded.is_k_addition_present);
     ASSERT_EQ(decoded.k, 24);
-    ASSERT(decoded.is_l_addition_present);
+    ASSERT_TRUE(decoded.is_l_addition_present);
     ASSERT_EQ(decoded.l, 25);
 }
 
@@ -1060,19 +1060,19 @@ TEST(oer_c_source_af_past)
                                      sizeof(encoded)), sizeof(encoded));
 
     ASSERT_EQ(decoded.a, true);
-    ASSERT(decoded.is_b_addition_present);
+    ASSERT_TRUE(decoded.is_b_addition_present);
     ASSERT_EQ(decoded.b.c, true);
-    ASSERT(!decoded.b.is_d_addition_present);
-    ASSERT(decoded.is_e_addition_present);
+    ASSERT_FALSE(decoded.b.is_d_addition_present);
+    ASSERT_TRUE(decoded.is_e_addition_present);
     ASSERT_EQ(decoded.e, 18);
-    ASSERT(decoded.is_f_addition_present);
+    ASSERT_TRUE(decoded.is_f_addition_present);
     ASSERT_EQ(decoded.f, 19);
-    ASSERT(!decoded.is_g_addition_present);
-    ASSERT(!decoded.is_h_addition_present);
-    ASSERT(!decoded.is_i_addition_present);
-    ASSERT(!decoded.is_j_addition_present);
-    ASSERT(!decoded.is_k_addition_present);
-    ASSERT(!decoded.is_l_addition_present);
+    ASSERT_FALSE(decoded.is_g_addition_present);
+    ASSERT_FALSE(decoded.is_h_addition_present);
+    ASSERT_FALSE(decoded.is_i_addition_present);
+    ASSERT_FALSE(decoded.is_j_addition_present);
+    ASSERT_FALSE(decoded.is_k_addition_present);
+    ASSERT_FALSE(decoded.is_l_addition_present);
 }
 
 TEST(oer_c_source_af_future)
@@ -1089,25 +1089,25 @@ TEST(oer_c_source_af_future)
                                      sizeof(encoded)), sizeof(encoded));
 
     ASSERT_EQ(decoded.a, true);
-    ASSERT(decoded.is_b_addition_present);
+    ASSERT_TRUE(decoded.is_b_addition_present);
     ASSERT_EQ(decoded.b.c, true);
-    ASSERT(decoded.b.is_d_addition_present);
+    ASSERT_TRUE(decoded.b.is_d_addition_present);
     ASSERT_EQ(decoded.b.d, 17);
-    ASSERT(decoded.is_e_addition_present);
+    ASSERT_TRUE(decoded.is_e_addition_present);
     ASSERT_EQ(decoded.e, 18);
-    ASSERT(decoded.is_f_addition_present);
+    ASSERT_TRUE(decoded.is_f_addition_present);
     ASSERT_EQ(decoded.f, 19);
-    ASSERT(decoded.is_g_addition_present);
+    ASSERT_TRUE(decoded.is_g_addition_present);
     ASSERT_EQ(decoded.g, 20);
-    ASSERT(decoded.is_h_addition_present);
+    ASSERT_TRUE(decoded.is_h_addition_present);
     ASSERT_EQ(decoded.h, 21);
-    ASSERT(decoded.is_i_addition_present);
+    ASSERT_TRUE(decoded.is_i_addition_present);
     ASSERT_EQ(decoded.i, 22);
-    ASSERT(decoded.is_j_addition_present);
+    ASSERT_TRUE(decoded.is_j_addition_present);
     ASSERT_EQ(decoded.j, 23);
-    ASSERT(decoded.is_k_addition_present);
+    ASSERT_TRUE(decoded.is_k_addition_present);
     ASSERT_EQ(decoded.k, 24);
-    ASSERT(decoded.is_l_addition_present);
+    ASSERT_TRUE(decoded.is_l_addition_present);
     ASSERT_EQ(decoded.l, 25);
 }
 
@@ -1156,25 +1156,25 @@ TEST(oer_c_source_ag)
                                      sizeof(encoded)), sizeof(encoded));
 
     ASSERT_EQ(decoded.a, true);
-    ASSERT(decoded.is_b_addition_present);
+    ASSERT_TRUE(decoded.is_b_addition_present);
     ASSERT_EQ(decoded.b.length, 2);
     ASSERT_MEMORY_EQ(&decoded.b.buf[0], "\x84\x55", 2);
-    ASSERT(decoded.is_c_addition_present);
+    ASSERT_TRUE(decoded.is_c_addition_present);
     ASSERT_EQ(decoded.c.length, 4);
-    ASSERT(decoded.c.elements[0]);
-    ASSERT(!decoded.c.elements[1]);
-    ASSERT(decoded.c.elements[2]);
-    ASSERT(!decoded.c.elements[3]);
-    ASSERT(decoded.is_d_addition_present);
+    ASSERT_TRUE(decoded.c.elements[0]);
+    ASSERT_FALSE(decoded.c.elements[1]);
+    ASSERT_TRUE(decoded.c.elements[2]);
+    ASSERT_FALSE(decoded.c.elements[3]);
+    ASSERT_TRUE(decoded.is_d_addition_present);
     ASSERT_EQ(decoded.d, oer_c_source_ag_d_f_e);
-    ASSERT(decoded.is_h_addition_present);
-    ASSERT(decoded.is_i_addition_present);
-    ASSERT(decoded.i >= 1.0f);
-    ASSERT(decoded.i <= 1.0f);
-    ASSERT(decoded.is_j_addition_present);
+    ASSERT_TRUE(decoded.is_h_addition_present);
+    ASSERT_TRUE(decoded.is_i_addition_present);
+    ASSERT_TRUE(decoded.i >= 1.0f);
+    ASSERT_TRUE(decoded.i <= 1.0f);
+    ASSERT_TRUE(decoded.is_j_addition_present);
     ASSERT_EQ(decoded.j.choice, oer_c_source_ag_j_choice_k_e);
     ASSERT_EQ(decoded.j.value.k, 60693);
-    ASSERT(decoded.is_m_addition_present);
+    ASSERT_TRUE(decoded.is_m_addition_present);
     ASSERT_MEMORY_EQ(&decoded.m.buf[0], "\xf0\xf1\xf2\xf3\xf4", 5);
 }
 TEST(oer_c_source_ag_erroneous_data)
@@ -1220,7 +1220,7 @@ TEST(oer_programming_types_float)
                                                  &encoded[0],
                                                  sizeof(encoded)), sizeof(encoded));
 
-    ASSERT(fequal(decoded.value, 1.0f));
+    ASSERT_TRUE(fequal(decoded.value, 1.0f));
 }
 
 TEST(oer_programming_types_double)
@@ -1245,5 +1245,5 @@ TEST(oer_programming_types_double)
                                                   &encoded[0],
                                                   sizeof(encoded)), sizeof(encoded));
 
-    ASSERT(fequal(decoded.value, 1.0));
+    ASSERT_TRUE(fequal(decoded.value, 1.0));
 }

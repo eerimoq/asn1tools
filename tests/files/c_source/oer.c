@@ -3598,8 +3598,8 @@ static void oer_c_source_ah_decode_inner(
             return;
         }
         addition_bits = ((addition_length * 8) - addition_unused_bits);
-        decoder_read_bytes(decoder_p, 
-                           addition_mask, 
+        decoder_read_bytes(decoder_p,
+                           addition_mask,
                            (addition_length < 1) ? addition_length : 1);
 
         tmp_addition_mask = addition_mask[0];
@@ -3796,8 +3796,8 @@ static void oer_c_source_af_decode_inner(
             return;
         }
         addition_bits = ((addition_length * 8) - addition_unused_bits);
-        decoder_read_bytes(decoder_p, 
-                           addition_mask, 
+        decoder_read_bytes(decoder_p,
+                           addition_mask,
                            (addition_length < 2) ? addition_length : 2);
 
         tmp_addition_mask = addition_mask[1];
@@ -4078,8 +4078,8 @@ static void oer_c_source_ag_decode_inner(
             return;
         }
         addition_bits = ((addition_length * 8) - addition_unused_bits);
-        decoder_read_bytes(decoder_p, 
-                           addition_mask, 
+        decoder_read_bytes(decoder_p,
+                           addition_mask,
                            (addition_length < 1) ? addition_length : 1);
 
         tmp_addition_mask = addition_mask[0];
