@@ -722,16 +722,26 @@ def dedent_lines(lines):
 
 
 def topological_sort(graph):
+    """Topological sort algorithm to return a list of keys to a dictionary of lists
+    of dependencies. The returned keys define an order so that all dependent items are
+    in front of the originating item.
+
+    """
     def recurse(node_, path_):
+
         if node_ not in path_:
             edges = graph[node_]
+
             for edge in edges:
+
                 if edge not in path_:
                     path_ = recurse(edge, path_)
             path_ = path_ + [node_]
+
         return path_
 
     path = []
+
     for node in sorted(graph):
         path = recurse(node, path)
 
