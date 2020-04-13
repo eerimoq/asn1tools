@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <string.h>
 #include <math.h>
+#include "nala.h"
 
 #include "uper.h"
 #include "boolean_uper.h"
@@ -10,7 +11,7 @@
 
 #define membersof(a) (sizeof(a) / (sizeof((a)[0])))
 
-static void test_uper_c_source_a(void)
+TEST(uper_c_source_a)
 {
     uint8_t encoded[42];
     struct uper_c_source_a_t decoded;
@@ -57,7 +58,7 @@ static void test_uper_c_source_a(void)
                   sizeof(decoded.j.buf)) == 0);
 }
 
-static void test_uper_c_source_a_encode_error_no_mem(void)
+TEST(uper_c_source_a_encode_error_no_mem)
 {
     uint8_t encoded[41];
     struct uper_c_source_a_t decoded;
@@ -78,7 +79,7 @@ static void test_uper_c_source_a_encode_error_no_mem(void)
                                   &decoded) == -ENOMEM);
 }
 
-static void test_uper_c_source_a_decode_error_out_of_data(void)
+TEST(uper_c_source_a_decode_error_out_of_data)
 {
     uint8_t encoded[41] =
         "\x7f\x7f\xfe\x7f\xff\xff\xfd\x7f\xff\xff\xff\xff\xff\xff\xfc"
@@ -91,7 +92,7 @@ static void test_uper_c_source_a_decode_error_out_of_data(void)
                                   sizeof(encoded)) == -EOUTOFDATA);
 }
 
-static void test_uper_c_source_b_choice_a(void)
+TEST(uper_c_source_b_choice_a)
 {
     uint8_t encoded[2];
     struct uper_c_source_b_t decoded;
@@ -118,7 +119,7 @@ static void test_uper_c_source_b_choice_a(void)
     assert(decoded.value.a == -10);
 }
 
-static void test_uper_c_source_b_choice_b(void)
+TEST(uper_c_source_b_choice_b)
 {
     uint8_t encoded[42];
     struct uper_c_source_b_t decoded;
@@ -167,7 +168,7 @@ static void test_uper_c_source_b_choice_b(void)
                   sizeof(decoded.value.b.j.buf)) == 0);
 }
 
-static void test_uper_c_source_b_decode_error_bad_choice(void)
+TEST(uper_c_source_b_decode_error_bad_choice)
 {
     uint8_t encoded[2] = "\xdd\x80";
     struct uper_c_source_b_t decoded;
@@ -177,7 +178,7 @@ static void test_uper_c_source_b_decode_error_bad_choice(void)
                                   sizeof(encoded)) == -EBADCHOICE);
 }
 
-static void test_uper_c_source_c_empty(void)
+TEST(uper_c_source_c_empty)
 {
     uint8_t encoded[1];
     struct uper_c_source_c_t decoded;
@@ -202,7 +203,7 @@ static void test_uper_c_source_c_empty(void)
     assert(decoded.length == 0);
 }
 
-static void test_uper_c_source_c_2_elements(void)
+TEST(uper_c_source_c_2_elements)
 {
     uint8_t encoded[3];
     struct uper_c_source_c_t decoded;
@@ -235,7 +236,7 @@ static void test_uper_c_source_c_2_elements(void)
     assert(decoded.elements[1].value.a == 13);
 }
 
-static void test_uper_c_source_c_decode_error_bad_length(void)
+TEST(uper_c_source_c_decode_error_bad_length)
 {
     uint8_t encoded[4] = "\xc7\x52\x34\x00";
     struct uper_c_source_c_t decoded;
@@ -245,7 +246,7 @@ static void test_uper_c_source_c_decode_error_bad_length(void)
                                   sizeof(encoded)) == -EBADLENGTH);
 }
 
-static void test_uper_c_source_d_all_present(void)
+TEST(uper_c_source_d_all_present)
 {
     uint8_t encoded[10];
     struct uper_c_source_d_t decoded;
@@ -303,7 +304,7 @@ static void test_uper_c_source_d_all_present(void)
     assert(decoded.elements[0].m.s == true);
 }
 
-static void test_uper_c_source_d_some_missing(void)
+TEST(uper_c_source_d_some_missing)
 {
     uint8_t encoded[8];
     struct uper_c_source_d_t decoded;
@@ -357,7 +358,7 @@ static void test_uper_c_source_d_some_missing(void)
     assert(decoded.elements[0].m.p.r == false);
 }
 
-static void test_uper_c_source_d_decode_error_bad_enum(void)
+TEST(uper_c_source_d_decode_error_bad_enum)
 {
     uint8_t encoded[10] = "\x01\xd5\x15\x7a\x40\xc0\xc0\xc0\xc0\xe0";
     struct uper_c_source_d_t decoded;
@@ -367,7 +368,7 @@ static void test_uper_c_source_d_decode_error_bad_enum(void)
                                   sizeof(encoded)) == -EBADENUM);
 }
 
-static void test_uper_c_source_e(void)
+TEST(uper_c_source_e)
 {
     uint8_t encoded[1];
     struct uper_c_source_e_t decoded;
@@ -396,7 +397,7 @@ static void test_uper_c_source_e(void)
     assert(decoded.a.value.b.value.c == true);
 }
 
-static void test_uper_c_source_f(void)
+TEST(uper_c_source_f)
 {
     uint8_t encoded[1];
     struct uper_c_source_f_t decoded;
@@ -425,7 +426,7 @@ static void test_uper_c_source_f(void)
     assert(decoded.elements[1].elements[0] == true);
 }
 
-static void test_uper_c_source_g(void)
+TEST(uper_c_source_g)
 {
     uint8_t encoded[2];
     struct uper_c_source_g_t decoded;
@@ -470,7 +471,7 @@ static void test_uper_c_source_g(void)
     assert(decoded.i == true);
 }
 
-static void test_uper_c_source_h(void)
+TEST(uper_c_source_h)
 {
     uint8_t encoded[1];
     struct uper_c_source_h_t decoded;
@@ -488,7 +489,7 @@ static void test_uper_c_source_h(void)
                                   sizeof(encoded)) == 0);
 }
 
-static void test_uper_c_source_q_c256(void)
+TEST(uper_c_source_q_c256)
 {
     uint8_t encoded[2];
     struct uper_c_source_q_t decoded;
@@ -513,7 +514,7 @@ static void test_uper_c_source_q_c256(void)
     assert(decoded.value.c256 == true);
 }
 
-static void test_uper_c_source_q_c257(void)
+TEST(uper_c_source_q_c257)
 {
     uint8_t encoded[2];
     struct uper_c_source_q_t decoded;
@@ -538,7 +539,7 @@ static void test_uper_c_source_q_c257(void)
     assert(decoded.value.c257 == true);
 }
 
-static void test_uper_c_source_r(void)
+TEST(uper_c_source_r)
 {
     struct data_t {
         int8_t decoded;
@@ -579,7 +580,7 @@ static void test_uper_c_source_r(void)
     }
 }
 
-static void test_uper_c_source_s(void)
+TEST(uper_c_source_s)
 {
     struct data_t {
         int8_t decoded;
@@ -620,7 +621,7 @@ static void test_uper_c_source_s(void)
     }
 }
 
-static void test_uper_c_source_t(void)
+TEST(uper_c_source_t)
 {
     struct data_t {
         int8_t decoded;
@@ -661,7 +662,7 @@ static void test_uper_c_source_t(void)
     }
 }
 
-static void test_uper_c_source_u(void)
+TEST(uper_c_source_u)
 {
     struct data_t {
         int8_t decoded;
@@ -698,7 +699,7 @@ static void test_uper_c_source_u(void)
     }
 }
 
-static void test_uper_c_source_v(void)
+TEST(uper_c_source_v)
 {
     struct data_t {
         int8_t decoded;
@@ -735,7 +736,7 @@ static void test_uper_c_source_v(void)
     }
 }
 
-static void test_uper_c_source_w(void)
+TEST(uper_c_source_w)
 {
     struct data_t {
         int16_t decoded;
@@ -776,7 +777,7 @@ static void test_uper_c_source_w(void)
     }
 }
 
-static void test_uper_c_source_x(void)
+TEST(uper_c_source_x)
 {
     struct data_t {
         int16_t decoded;
@@ -817,7 +818,7 @@ static void test_uper_c_source_x(void)
     }
 }
 
-static void test_uper_c_source_y(void)
+TEST(uper_c_source_y)
 {
     struct data_t {
         uint16_t decoded;
@@ -858,7 +859,7 @@ static void test_uper_c_source_y(void)
     }
 }
 
-static void test_uper_c_source_z_decode_error_out_of_data(void)
+TEST(uper_c_source_z_decode_error_out_of_data)
 {
     uint8_t encoded[1];
     struct uper_c_source_z_t decoded;
@@ -868,7 +869,7 @@ static void test_uper_c_source_z_decode_error_out_of_data(void)
                                   0) == -EOUTOFDATA);
 }
 
-static void test_uper_c_source_ab(void)
+TEST(uper_c_source_ab)
 {
     uint8_t encoded[2];
     struct uper_c_source_ab_t decoded;
@@ -895,7 +896,7 @@ static void test_uper_c_source_ab(void)
     assert(decoded.b == 10300);
 }
 
-static void test_uper_c_source_ae(void)
+TEST(uper_c_source_ae)
 {
     uint8_t encoded[1];
     struct uper_c_source_ae_t decoded;
@@ -925,7 +926,7 @@ static void test_uper_c_source_ae(void)
     assert(decoded.c == false);
 }
 
-static void test_uper_c_source_af(void)
+TEST(uper_c_source_af)
 {
     uint8_t encoded[24];
     uint8_t encoded2[24] = "\xc4\x7f\xc1\x30\x10\x11\x10\x00\x44\x80\x44\xc0"
@@ -964,47 +965,4 @@ static void test_uper_c_source_af(void)
     assert(uper_c_source_af_decode(&decoded,
                                   &encoded2[0],
                                   sizeof(encoded2)) < 0);
-}
-
-int main(void)
-{
-    test_uper_c_source_a();
-    test_uper_c_source_a_encode_error_no_mem();
-    test_uper_c_source_a_decode_error_out_of_data();
-
-    test_uper_c_source_b_choice_a();
-    test_uper_c_source_b_choice_b();
-    test_uper_c_source_b_decode_error_bad_choice();
-
-    test_uper_c_source_c_empty();
-    test_uper_c_source_c_2_elements();
-    test_uper_c_source_c_decode_error_bad_length();
-
-    test_uper_c_source_d_all_present();
-    test_uper_c_source_d_some_missing();
-    test_uper_c_source_d_decode_error_bad_enum();
-
-    test_uper_c_source_e();
-    test_uper_c_source_f();
-    test_uper_c_source_g();
-    test_uper_c_source_h();
-    test_uper_c_source_q_c256();
-    test_uper_c_source_q_c257();
-    test_uper_c_source_r();
-    test_uper_c_source_s();
-    test_uper_c_source_t();
-    test_uper_c_source_u();
-    test_uper_c_source_v();
-    test_uper_c_source_w();
-    test_uper_c_source_x();
-    test_uper_c_source_y();
-
-    test_uper_c_source_z_decode_error_out_of_data();
-
-    test_uper_c_source_ab();
-
-    test_uper_c_source_ae();
-    test_uper_c_source_af();
-
-    return (0);
 }
