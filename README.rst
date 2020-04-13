@@ -321,8 +321,8 @@ Limitations by design:
 
 Known limitations:
 
-- Extension additions (``...``) are not yet supported. See
-  `compact_extensions_uper`_ for how to make UPER ``CHOICE`` and
+- Extension additions (``...``) are only supported in the OER generator.
+  See `compact_extensions_uper`_ for how to make UPER ``CHOICE`` and
   ``SEQUENCE`` extendable without using ``...``.
 
 - Named numbers in ``ENUMERATED`` are not yet supported.
@@ -388,7 +388,7 @@ Encodings
   <https://www.itu.int/ITU-T/studygroups/com17/languages/X.690-0207.pdf>`_
 
 - `X.691: Specification of Packed Encoding Rules (PER)
-  <https://www.itu.int/ITU-T/studygroups/com17/languages/X.691-0207.pdf>`_
+  <https://www.itu.int/rec/dologin_pub.asp?lang=e&id=T-REC-X.691-201508-I!!PDF-E&type=items>`_
 
 - `X.693: XML Encoding Rules (XER)
   <https://www.itu.int/ITU-T/studygroups/com17/languages/X.693-0112.pdf>`_

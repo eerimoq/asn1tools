@@ -895,6 +895,77 @@ static void test_uper_c_source_ab(void)
     assert(decoded.b == 10300);
 }
 
+static void test_uper_c_source_ae(void)
+{
+    uint8_t encoded[1];
+    struct uper_c_source_ae_t decoded;
+
+    /* Encode. */
+    decoded.is_a_present = true;
+    decoded.a = false;
+    decoded.b = true;
+    decoded.c = false;
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(uper_c_source_ae_encode(&encoded[0],
+                                  sizeof(encoded),
+                                  &decoded) == sizeof(encoded));
+    assert(memcmp(&encoded[0],
+                  "\x40",
+                  sizeof(encoded)) == 0);
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    assert(uper_c_source_ae_decode(&decoded,
+                                  &encoded[0],
+                                  sizeof(encoded)) == sizeof(encoded));
+
+    assert(decoded.a == false);
+    assert(decoded.b == true);
+    assert(decoded.c == false);
+}
+
+static void test_uper_c_source_af(void)
+{
+    uint8_t encoded[24];
+    uint8_t encoded2[24] = "\xc4\x7f\xc1\x30\x10\x11\x10\x00\x44\x80\x44\xc0"
+                           "\x45\x00\x45\x40\x45\x80\x45\xc0\x46\x00\x46\x40";
+    struct uper_c_source_af_t decoded;
+
+    /* Encode. */
+    decoded.a = true;
+    decoded.b.c = true;
+    decoded.b.d = 17;
+    decoded.b.is_d_addition_present = true;
+    decoded.e = 18;
+    decoded.is_e_addition_present = true;
+    decoded.f = 19;
+    decoded.is_f_addition_present = true;
+    decoded.g = 20;
+    decoded.is_g_addition_present = true;
+    decoded.h = 21;
+    decoded.is_h_addition_present = true;
+    decoded.i = 22;
+    decoded.is_i_addition_present = true;
+    decoded.j = 23;
+    decoded.is_j_addition_present = true;
+    decoded.k = 24;
+    decoded.is_k_addition_present = true;
+    decoded.l = 25;
+    decoded.is_l_addition_present = true;
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    assert(uper_c_source_af_encode(&encoded[0],
+                                  sizeof(encoded),
+                                  &decoded) < 0);
+
+    // Decode.
+    memset(&decoded, 0, sizeof(decoded));
+    assert(uper_c_source_af_decode(&decoded,
+                                  &encoded2[0],
+                                  sizeof(encoded2)) < 0);
+}
+
 int main(void)
 {
     test_uper_c_source_a();
@@ -931,6 +1002,9 @@ int main(void)
     test_uper_c_source_z_decode_error_out_of_data();
 
     test_uper_c_source_ab();
+
+    test_uper_c_source_ae();
+    test_uper_c_source_af();
 
     return (0);
 }

@@ -247,6 +247,11 @@ class Generator(object):
         else:
             return str(default)
 
+    def get_addition_present_condition(self, type_):
+        return ' || '.join(['src_p->{}is_{}_addition_present'.
+                            format(self.location_inner('', '.'), addition.name)
+                            for addition in type_.additions])
+
     @property
     def location(self):
         location = '{}_{}_{}'.format(self.namespace,
@@ -329,6 +334,17 @@ class Generator(object):
     def add_unique_decode_variable(self, fmt, name):
         return self.add_unique_variable(fmt, name, 'decode')
 
+    def add_sequence_member(self, member, checker):
+        member_checker = self.get_member_checker(checker, member.name)
+
+        with self.members_backtrace_push(member.name):
+            member_lines = self.format_type(member, member_checker)
+
+        if member_lines:
+            member_lines[-1] += ' {};'.format(member.name)
+
+        return member_lines
+
     def error(self, message):
         return Error('{}: {}'.format(self.location_error(), message))
 
@@ -368,18 +384,17 @@ class Generator(object):
         lines = []
 
         for member in type_.root_members:
-            member_checker = self.get_member_checker(checker, member.name)
 
             if member.optional:
                 lines += ['bool is_{}_present;'.format(member.name)]
 
-            with self.members_backtrace_push(member.name):
-                member_lines = self.format_type(member, member_checker)
+            lines += self.add_sequence_member(member, checker)
 
-            if member_lines:
-                member_lines[-1] += ' {};'.format(member.name)
+        if type_.additions is not None and len(type_.additions) > 0:
+            for addition in type_.additions:
+                lines += ['bool is_{}_addition_present;'.format(addition.name)]
 
-            lines += member_lines
+                lines += self.add_sequence_member(addition, checker)
 
         return ['struct {'] + indent_lines(lines) + ['}']
 
@@ -466,7 +481,8 @@ class Generator(object):
     def format_sequence_inner_member(self,
                                      member,
                                      checker,
-                                     default_condition_by_member_name):
+                                     default_condition_by_member_name,
+                                     skip_when_not_present=True):
         member_checker = self.get_member_checker(checker, member.name)
 
         with self.members_backtrace_push(member.name):
@@ -476,7 +492,7 @@ class Generator(object):
 
         location = self.location_inner('', '.')
 
-        if member.optional:
+        if member.optional and skip_when_not_present:
             is_present = '{}is_{}_present'.format(location, member.name)
             encode_lines = [
                 '',
@@ -492,7 +508,7 @@ class Generator(object):
                 '}',
                 ''
             ]
-        elif member.default is not None:
+        elif member.default is not None and skip_when_not_present:
             name = '{}{}'.format(location, member.name)
             encode_lines = [
                 '',

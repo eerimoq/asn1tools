@@ -1351,6 +1351,101 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'AB', decoded, encoded)
 
+        # AE
+        decoded = {
+            'a': False,
+            'b': True,
+            'c': False
+        }
+
+        encoded_messages = [
+            b'\x30\x06\x80\x01\x00\x82\x01\x00',
+            b'\x30\x06\x80\x01\x00\x82\x01\x00',
+            b'{"a": false, "b": true, "c": false}',
+            b'\x40\x00\x00',
+            b'\x40',
+            b'\x40',
+            b'<AE><a><false /></a><b><true /></b><c><false /></c></AE>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'AE', decoded, encoded)
+
+        # AF
+        decoded = {
+            'a': True,
+            'b': {
+                'c': True,
+                'd': 17
+            },
+            'e': 18,
+            'f': 19,
+            'g': 20,
+            'h': 21,
+            'i': 22,
+            'j': 23,
+            'k': 24,
+            'l': 25,
+        }
+
+        encoded_messages = [
+            b'\x30\x20\x80\x01\xff\xa1\x06\x80\x01\xff\x81\x01\x11\x82\x01\x12'
+            b'\x83\x01\x13\x84\x01\x14\x85\x01\x15\x86\x01\x16\x87\x01\x17'
+            b'\x89\x01\x19',
+            b'\x30\x20\x80\x01\xff\xA1\x06\x80\x01\xff\x81\x01\x11\x82\x01\x12'
+            b'\x83\x01\x13\x84\x01\x14\x85\x01\x15\x86\x01\x16\x87\x01\x17\x89'
+            b'\x01\x19',
+            b'{"a": true, "b": {"c":true, "d":17}, "e":18, "f":19, "g":20, "h"'
+            b':21, "i":22, "j":23, "k":24, "l":25}',
+            b'\x80\xff\x03\x07\xff\x80\x07\x80\xff\x02\x07\x80\x01\x11\x01\x12'
+            b'\x01\x13\x01\x14\x01\x15\x01\x16\x01\x17\x01\x18\x01\x19',
+            b'\xc4\x7f\xc0\x04\xc0\x40\x01\x11\x01\x12\x01\x13\x01\x14\x01\x15'
+            b'\x01\x16\x01\x17\x01\x18\x01\x19',
+            b'\xc4\x7f\xc1\x30\x10\x11\x10\x00\x44\x80\x44\xc0\x45\x00\x45\x40'
+            b'\x45\x80\x45\xc0\x46\x00\x46\x40',
+            b'<AF><a><true /></a><b><c><true /></c><d>17</d></b><e>18</e><f>19'
+            b'</f><g>20</g><h>21</h><i>22</i><j>23</j><k>24</k><l>25</l></AF>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'AF', decoded, encoded)
+
+        # AG
+        decoded = {
+            'a': True,
+            'b': b'\x84\x55',
+            'c': [True, False, True, False],
+            'd': 'f',
+            'h': None,
+            'i': 1.0,
+            'j': ('k', 60693),
+            'm': b'\xf0\xf1\xf2\xf3\xf4'
+        }
+
+        encoded_messages = [
+            b'\x30\x2e\x80\x01\xff\x81\x02\x84\x55\xa2\x0c\x01\x01\xff\x01\x01'
+            b'\x00\x01\x01\xff\x01\x01\x00\x83\x02\x01\x00\x84\x00\x85\x03\x80'
+            b'\x00\x01\xa6\x05\x80\x03\x00\xed\x15\x87\x05\xf0\xf1\xf2\xf3\xf4',
+            b'\x30\x2e\x80\x01\xff\x81\x02\x84\x55\xa2\x0c\x01\x01\xff\x01\x01'
+            b'\x00\x01\x01\xff\x01\x01\x00\x83\x02\x01\x00\x84\x00\x85\x03\x80'
+            b'\x00\x01\xa6\x05\x80\x03\x00\xed\x15\x87\x05\xf0\xf1\xf2\xf3\xf4',
+            b'{"a": true, "b": "8455", "c": [true, false, true, false], "d": "f",'
+            b'"h": null, "i": 1.0, "j": {"k": 60693}, "m": "F0F1F2F3F4"}',
+            b'\x80\xff\x02\x01\xfe\x03\x02\x84\x55\x06\x01\x04\xff\x00\xff\x00'
+            b'\x03\x82\x01\x00\x00\x04\x3f\x80\x00\x00\x03\x80\xed\x15\x05\xf0'
+            b'\xf1\xf2\xf3\xf4',
+            b'\xc3\x7f\x03\x20\x84\x55\x01\x3a\x01\x40\x00\x04\x03\x80\x00\x01'
+            b'\x03\x00\xed\x15\x05\xf0\xf1\xf2\xf3\xf4',
+            b'\xc3\x7f\x03\x28\x45\x50\x01\x3a\x01\x40\x00\x04\x03\x80\x00\x01'
+            b'\x03\x76\x8a\x80\x05\xf0\xf1\xf2\xf3\xf4',
+            b'<AG><a><true /></a><b>8455</b><c><true /><false /><true /><false />'
+            b'</c><d><f /></d><h /><i>1.0E0</i><j><k>60693</k></j><m>F0F1F2F3F4</'
+            b'm></AG>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'AG', decoded, encoded)
+
     def test_parameterization(self):
         specs = []
 
