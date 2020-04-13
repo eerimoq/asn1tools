@@ -414,12 +414,7 @@ AE ::= SEQUENCE {
 AF ::= SEQUENCE {
     a BOOLEAN,
     ...,
-    b SEQUENCE {
-        c BOOLEAN,
-        ...,
-        d INTEGER(0..255),
-        ...
-    },
+    b AH,
     e INTEGER(0..255),
     f INTEGER(0..255),
     g INTEGER(0..255),
@@ -437,7 +432,7 @@ AG ::= SEQUENCE {
     b OCTET STRING (SIZE(0..10)),
     c SEQUENCE (SIZE (1..10)) OF BOOLEAN,
     d ENUMERATED {
-        e, f, g
+        e, f(256), g(65536)
     },
     h NULL,
     i REAL (WITH COMPONENTS {
@@ -450,6 +445,13 @@ AG ::= SEQUENCE {
         l BOOLEAN
     },
     m OCTET STRING(SIZE(5)),
+    ...
+}
+
+AH ::= SEQUENCE {
+    c BOOLEAN,
+    ...,
+    d INTEGER(0..255),
     ...
 }
 
