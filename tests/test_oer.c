@@ -85,9 +85,9 @@ TEST(oer_c_source_a_decode_spare_data)
     ASSERT_EQ(decoded.g, 3);
     ASSERT_EQ(decoded.h, 4);
     ASSERT(decoded.i);
-    ASSERT(memcmp(&decoded.j.buf[0],
-                  "\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05",
-                  sizeof(decoded.j.buf)) == 0);
+    ASSERT_MEMORY_EQ(&decoded.j.buf[0],
+                     "\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05",
+                     sizeof(decoded.j.buf));
 }
 
 TEST(oer_c_source_a_encode_error_no_mem)
@@ -138,9 +138,7 @@ TEST(oer_c_source_b_choice_a)
     ASSERT_EQ(oer_c_source_b_encode(&encoded[0],
                                     sizeof(encoded),
                                     &decoded), sizeof(encoded));
-    ASSERT(memcmp(&encoded[0],
-                  "\x80\xf6",
-                  sizeof(encoded)) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0], "\x80\xf6", sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -174,12 +172,12 @@ TEST(oer_c_source_b_choice_b)
     ASSERT_EQ(oer_c_source_b_encode(&encoded[0],
                                     sizeof(encoded),
                                     &decoded), sizeof(encoded));
-    ASSERT(memcmp(&encoded[0],
-                  "\x81\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff\xff\xff"
-                  "\xff\xff\xfc\x01\x00\x02\x00\x00\x00\x03\x00\x00\x00"
-                  "\x00\x00\x00\x00\x04\xff\x05\x05\x05\x05\x05\x05\x05"
-                  "\x05\x05\x05\x05",
-                  sizeof(encoded)) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x81\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff\xff\xff"
+                     "\xff\xff\xfc\x01\x00\x02\x00\x00\x00\x03\x00\x00\x00"
+                     "\x00\x00\x00\x00\x04\xff\x05\x05\x05\x05\x05\x05\x05"
+                     "\x05\x05\x05\x05",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -197,9 +195,9 @@ TEST(oer_c_source_b_choice_b)
     ASSERT_EQ(decoded.value.b.g, 3);
     ASSERT_EQ(decoded.value.b.h, 4);
     ASSERT(decoded.value.b.i);
-    ASSERT(memcmp(&decoded.value.b.j.buf[0],
-                  "\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05",
-                  sizeof(decoded.value.b.j.buf)) == 0);
+    ASSERT_MEMORY_EQ(&decoded.value.b.j.buf[0],
+                     "\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05",
+                     sizeof(decoded.value.b.j.buf));
 }
 
 TEST(oer_c_source_b_decode_error_bad_choice)
@@ -226,9 +224,7 @@ TEST(oer_c_source_c_empty)
     ASSERT_EQ(oer_c_source_c_encode(&encoded[0],
                                     sizeof(encoded),
                                     &decoded), sizeof(encoded));
-    ASSERT(memcmp(&encoded[0],
-                  "\x01\x00",
-                  sizeof(encoded)) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0], "\x01\x00", sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -255,9 +251,7 @@ TEST(oer_c_source_c_2_elements)
     ASSERT_EQ(oer_c_source_c_encode(&encoded[0],
                                     sizeof(encoded),
                                     &decoded), sizeof(encoded));
-    ASSERT(memcmp(&encoded[0],
-                  "\x01\x02\x80\xf5\x80\x0d",
-                  sizeof(encoded)) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0], "\x01\x02\x80\xf5\x80\x0d", sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -311,10 +305,10 @@ TEST(oer_c_source_d_all_present)
     ASSERT_EQ(oer_c_source_d_encode(&encoded[0],
                                     sizeof(encoded),
                                     &decoded), sizeof(encoded));
-    ASSERT(memcmp(&encoded[0],
-                  "\x01\x01\x80\x00\x01\x03\x04\x02\x54\x55\xf0\x00\x02\x80"
-                  "\x03\x03\x03\x03\x03\xff\xff",
-                  sizeof(encoded)) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x01\x01\x80\x00\x01\x03\x04\x02\x54\x55\xf0\x00\x02\x80"
+                     "\x03\x03\x03\x03\x03\xff\xff",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -334,9 +328,9 @@ TEST(oer_c_source_d_all_present)
     ASSERT_EQ(decoded.elements[0].m.n, false);
     ASSERT_EQ(decoded.elements[0].m.o, 2);
     ASSERT(decoded.elements[0].m.is_p_present);
-    ASSERT(memcmp(&decoded.elements[0].m.p.q.buf[0],
-                  "\x03\x03\x03\x03\x03",
-                  sizeof(decoded.elements[0].m.p.q.buf)) == 0);
+    ASSERT_MEMORY_EQ(&decoded.elements[0].m.p.q.buf[0],
+                     "\x03\x03\x03\x03\x03",
+                     sizeof(decoded.elements[0].m.p.q.buf));
     ASSERT(decoded.elements[0].m.p.is_r_present);
     ASSERT_EQ(decoded.elements[0].m.p.r, true);
     ASSERT_EQ(decoded.elements[0].m.s, true);
@@ -370,10 +364,10 @@ TEST(oer_c_source_d_some_missing)
                                     sizeof(encoded),
                                     &decoded), sizeof(encoded));
 
-    ASSERT(memcmp(&encoded[0],
-                  "\x01\x01\x81\x00\x01\x03\x82\x02\x00\x01\x54\x20\x00\x03\x03"
-                  "\x03\x03\x03",
-                  sizeof(encoded)) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x01\x01\x81\x00\x01\x03\x82\x02\x00\x01\x54\x20\x00\x03\x03"
+                     "\x03\x03\x03",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -391,9 +385,9 @@ TEST(oer_c_source_d_some_missing)
     ASSERT(!decoded.elements[0].m.is_n_present);
     ASSERT_EQ(decoded.elements[0].m.o, 3);
     ASSERT(decoded.elements[0].m.is_p_present);
-    ASSERT(memcmp(&decoded.elements[0].m.p.q.buf[0],
-                  "\x03\x03\x03\x03\x03",
-                  sizeof(decoded.elements[0].m.p.q.buf)) == 0);
+    ASSERT_MEMORY_EQ(&decoded.elements[0].m.p.q.buf[0],
+                     "\x03\x03\x03\x03\x03",
+                     sizeof(decoded.elements[0].m.p.q.buf));
     ASSERT(!decoded.elements[0].m.p.is_r_present);
     ASSERT_EQ(decoded.elements[0].m.s, false);
 }
@@ -412,9 +406,7 @@ TEST(oer_c_source_e)
     ASSERT_EQ(oer_c_source_e_encode(&encoded[0],
                                     sizeof(encoded),
                                     &decoded), sizeof(encoded));
-    ASSERT(memcmp(&encoded[0],
-                  "\x80\x80\xff",
-                  sizeof(encoded)) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0], "\x80\x80\xff", sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -441,9 +433,9 @@ TEST(oer_c_source_f)
     ASSERT_EQ(oer_c_source_f_encode(&encoded[0],
                                     sizeof(encoded),
                                     &decoded), sizeof(encoded));
-    ASSERT(memcmp(&encoded[0],
-                  "\x01\x02\x01\x01\x00\x01\x01\xff",
-                  sizeof(encoded)) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x01\x02\x01\x01\x00\x01\x01\xff",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -478,9 +470,7 @@ TEST(oer_c_source_g)
     ASSERT_EQ(oer_c_source_g_encode(&encoded[0],
                                     sizeof(encoded),
                                     &decoded), sizeof(encoded));
-    ASSERT(memcmp(&encoded[0],
-                  "\x80\x80\xff\xff",
-                  sizeof(encoded)) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0], "\x80\x80\xff\xff", sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -534,9 +524,7 @@ TEST(oer_c_source_i)
     ASSERT_EQ(oer_c_source_i_encode(&encoded[0],
                                     sizeof(encoded),
                                     &decoded), sizeof(encoded));
-    ASSERT(memcmp(&encoded[0],
-                  &data[0],
-                  sizeof(encoded)) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0], &data[0], sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -544,7 +532,7 @@ TEST(oer_c_source_i)
                                     &encoded[0],
                                     sizeof(encoded)), sizeof(encoded));
 
-    ASSERT(memcmp(&decoded.buf[0], &data[0], sizeof(data)) == 0);
+    ASSERT_MEMORY_EQ(&decoded.buf[0], &data[0], sizeof(data));
 }
 
 TEST(oer_c_source_j)
@@ -563,10 +551,10 @@ TEST(oer_c_source_j)
     ASSERT_EQ(oer_c_source_j_encode(&encoded[0],
                                     sizeof(encoded),
                                     &decoded), sizeof(encoded));
-    ASSERT(memcmp(&encoded[0],
-                  "\x16\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03\x04\x01"
-                  "\x02\x03\x04\x01\x02\x03\x04\x01\x02",
-                  sizeof(encoded)) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x16\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03\x04\x01"
+                     "\x02\x03\x04\x01\x02\x03\x04\x01\x02",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -575,7 +563,7 @@ TEST(oer_c_source_j)
                                     sizeof(encoded)), sizeof(encoded));
 
     ASSERT_EQ(decoded.length, sizeof(data));
-    ASSERT(memcmp(&decoded.buf[0], &data[0], sizeof(data)) == 0);
+    ASSERT_MEMORY_EQ(&decoded.buf[0], &data[0], sizeof(data));
 }
 
 TEST(oer_c_source_k)
@@ -590,9 +578,7 @@ TEST(oer_c_source_k)
     ASSERT_EQ(oer_c_source_k_encode(&encoded[0],
                                     sizeof(encoded),
                                     &decoded), sizeof(encoded));
-    ASSERT(memcmp(&encoded[0],
-                  "\x00",
-                  sizeof(encoded)) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0], "\x00", sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -610,65 +596,65 @@ TEST(oer_c_source_l)
         uint16_t encoded_length;
         uint8_t encoded[263];
     } datas[] = {
-                 {
-                  .data_length = 0,
-                  .encoded_length = 1,
-                  .encoded = "\x00"
-                 },
-                 {
-                  .data_length = 127,
-                  .encoded_length = 128,
-                  .encoded =
-                  "\x7f\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5"
-                 },
-                 {
-                  .data_length = 128,
-                  .encoded_length = 130,
-                  .encoded =
-                  "\x81\x80\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5"
-                 },
-                 {
-                  .data_length = 260,
-                  .encoded_length = 263,
-                  .encoded =
-                  "\x82\x01\x04\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                  "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
-                 }
+        {
+            .data_length = 0,
+            .encoded_length = 1,
+            .encoded = "\x00"
+        },
+        {
+            .data_length = 127,
+            .encoded_length = 128,
+            .encoded =
+            "\x7f\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5"
+        },
+        {
+            .data_length = 128,
+            .encoded_length = 130,
+            .encoded =
+            "\x81\x80\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5"
+        },
+        {
+            .data_length = 260,
+            .encoded_length = 263,
+            .encoded =
+            "\x82\x01\x04\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+            "\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
+        }
     };
     uint8_t encoded[263];
     struct oer_c_source_l_t decoded;
@@ -700,9 +686,9 @@ TEST(oer_c_source_l)
         ASSERT_EQ(oer_c_source_l_encode(&encoded[0],
                                         sizeof(encoded),
                                         &decoded), datas[i].encoded_length);
-        ASSERT(memcmp(&encoded[0],
-                      &datas[i].encoded[0],
-                      datas[i].encoded_length) == 0);
+        ASSERT_MEMORY_EQ(&encoded[0],
+                         &datas[i].encoded[0],
+                         datas[i].encoded_length);
 
         /* Decode. */
         memset(&decoded, 0, sizeof(decoded));
@@ -711,9 +697,7 @@ TEST(oer_c_source_l)
                                         sizeof(encoded)), datas[i].encoded_length);
 
         ASSERT_EQ(decoded.length, datas[i].data_length);
-        ASSERT(memcmp(&decoded.buf[0],
-                      &data[0],
-                      datas[i].data_length) == 0);
+        ASSERT_MEMORY_EQ(&decoded.buf[0], &data[0], datas[i].data_length);
     }
 }
 
@@ -724,31 +708,31 @@ TEST(oer_c_source_l_decode_error_bad_length)
         uint16_t length;
         uint8_t encoded[16];
     } datas[] = {
-                 {
-                  .res = -EBADLENGTH,
-                  .length = 3,
-                  .encoded = "\x82\x01\xff"
-                 },
-                 {
-                  .res = -EBADLENGTH,
-                  .length = 4,
-                  .encoded = "\x83\x01\xff\x00"
-                 },
-                 {
-                  .res = -EBADLENGTH,
-                  .length = 5,
-                  .encoded = "\x84\x01\x00\x01\x00"
-                 },
-                 {
-                  .res = -EOUTOFDATA,
-                  .length = 1,
-                  .encoded = "\x83"
-                 },
-                 {
-                  .res = -EBADLENGTH,
-                  .length = 2,
-                  .encoded = "\xff\x00"
-                 }
+        {
+            .res = -EBADLENGTH,
+            .length = 3,
+            .encoded = "\x82\x01\xff"
+        },
+        {
+            .res = -EBADLENGTH,
+            .length = 4,
+            .encoded = "\x83\x01\xff\x00"
+        },
+        {
+            .res = -EBADLENGTH,
+            .length = 5,
+            .encoded = "\x84\x01\x00\x01\x00"
+        },
+        {
+            .res = -EOUTOFDATA,
+            .length = 1,
+            .encoded = "\x83"
+        },
+        {
+            .res = -EBADLENGTH,
+            .length = 2,
+            .encoded = "\xff\x00"
+        }
     };
     struct oer_c_source_l_t decoded;
     unsigned int i;
@@ -778,27 +762,27 @@ TEST(oer_c_source_o)
     ASSERT_EQ(oer_c_source_o_encode(&encoded[0],
                                     sizeof(encoded),
                                     &decoded), sizeof(encoded));
-    ASSERT(memcmp(&encoded[0],
-                  "\x02\x01\x04\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                  "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff",
-                  sizeof(encoded)) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x02\x01\x04\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                     "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                     "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                     "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                     "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                     "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                     "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                     "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                     "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                     "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                     "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                     "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                     "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                     "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                     "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                     "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                     "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                     "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                     "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -826,7 +810,7 @@ TEST(oer_c_source_q_c256)
     ASSERT_EQ(oer_c_source_q_encode(&encoded[0],
                                     sizeof(encoded),
                                     &decoded), sizeof(encoded));
-    ASSERT(memcmp(&encoded[0], "\xbf\x81\x7f\xff", 4) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0], "\xbf\x81\x7f\xff", 4);
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -851,7 +835,7 @@ TEST(oer_c_source_q_c257)
     ASSERT_EQ(oer_c_source_q_encode(&encoded[0],
                                     sizeof(encoded),
                                     &decoded), sizeof(encoded));
-    ASSERT(memcmp(&encoded[0], "\xbf\x82\x00\xff", 4) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0], "\xbf\x82\x00\xff", 4);
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -869,14 +853,14 @@ TEST(oer_c_source_x)
         int16_t decoded;
         uint8_t encoded[2];
     } datas[] = {
-                 {
-                  .decoded = -2,
-                  .encoded = "\xff\xfe"
-                 },
-                 {
-                  .decoded = 510,
-                  .encoded = "\x01\xfe"
-                 }
+        {
+            .decoded = -2,
+            .encoded = "\xff\xfe"
+        },
+        {
+            .decoded = 510,
+            .encoded = "\x01\xfe"
+        }
     };
     uint8_t encoded[2];
     struct oer_c_source_x_t decoded;
@@ -890,9 +874,7 @@ TEST(oer_c_source_x)
         ASSERT_EQ(oer_c_source_x_encode(&encoded[0],
                                         sizeof(encoded),
                                         &decoded), sizeof(encoded));
-        ASSERT(memcmp(&encoded[0],
-                      &datas[i].encoded[0],
-                      sizeof(encoded)) == 0);
+        ASSERT_MEMORY_EQ(&encoded[0], &datas[i].encoded[0], sizeof(encoded));
 
         /* Decode. */
         memset(&decoded, 0, sizeof(decoded));
@@ -910,14 +892,14 @@ TEST(oer_c_source_y)
         uint16_t decoded;
         uint8_t encoded[2];
     } datas[] = {
-                 {
-                  .decoded = 10000,
-                  .encoded = "\x27\x10"
-                 },
-                 {
-                  .decoded = 10512,
-                  .encoded = "\x29\x10"
-                 }
+        {
+            .decoded = 10000,
+            .encoded = "\x27\x10"
+        },
+        {
+            .decoded = 10512,
+            .encoded = "\x29\x10"
+        }
     };
     uint8_t encoded[2];
     struct oer_c_source_y_t decoded;
@@ -931,9 +913,7 @@ TEST(oer_c_source_y)
         ASSERT_EQ(oer_c_source_y_encode(&encoded[0],
                                         sizeof(encoded),
                                         &decoded), sizeof(encoded));
-        ASSERT(memcmp(&encoded[0],
-                      &datas[i].encoded[0],
-                      sizeof(encoded)) == 0);
+        ASSERT_MEMORY_EQ(&encoded[0], &datas[i].encoded[0], sizeof(encoded));
 
         /* Decode. */
         memset(&decoded, 0, sizeof(decoded));
@@ -958,9 +938,7 @@ TEST(oer_c_source_ab)
     ASSERT_EQ(oer_c_source_ab_encode(&encoded[0],
                                      sizeof(encoded),
                                      &decoded), sizeof(encoded));
-    ASSERT(memcmp(&encoded[0],
-                  "\x00\x28\x3c",
-                  sizeof(encoded)) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0], "\x00\x28\x3c", sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -987,9 +965,7 @@ TEST(oer_c_source_ae)
     ASSERT_EQ(oer_c_source_ae_encode(&encoded[0],
                                      sizeof(encoded),
                                      &decoded), sizeof(encoded));
-    ASSERT(memcmp(&encoded[0],
-                  "\x40\x00\x00",
-                  sizeof(encoded)) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0], "\x40\x00\x00", sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -1037,11 +1013,11 @@ TEST(oer_c_source_af)
     ASSERT_EQ(oer_c_source_af_encode(&encoded[0],
                                      sizeof(encoded),
                                      &decoded), sizeof(encoded));
-    ASSERT(memcmp(&encoded[0],
-                  "\x80\xff\x03\x07\xff\x80\x07\x80\xff\x02\x07\x80\x01\x11"
-                  "\x01\x12\x01\x13\x01\x14\x01\x15\x01\x16\x01\x17\x01\x18"
-                  "\x01\x19",
-                  sizeof(encoded)) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x80\xff\x03\x07\xff\x80\x07\x80\xff\x02\x07\x80\x01\x11"
+                     "\x01\x12\x01\x13\x01\x14\x01\x15\x01\x16\x01\x17\x01\x18"
+                     "\x01\x19",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -1167,11 +1143,11 @@ TEST(oer_c_source_ag)
                                      sizeof(encoded),
                                      &decoded), sizeof(encoded));
 
-    ASSERT(memcmp(&encoded[0],
-                  "\x80\xff\x02\x01\xfe\x03\x02\x84\x55\x06\x01\x04\xff\x00"
-                  "\xff\x00\x03\x82\x01\x00\x00\x04\x3f\x80\x00\x00\x03\x80"
-                  "\xed\x15\x05\xf0\xf1\xf2\xf3\xf4",
-                  sizeof(encoded)) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x80\xff\x02\x01\xfe\x03\x02\x84\x55\x06\x01\x04\xff\x00"
+                     "\xff\x00\x03\x82\x01\x00\x00\x04\x3f\x80\x00\x00\x03\x80"
+                     "\xed\x15\x05\xf0\xf1\xf2\xf3\xf4",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -1182,7 +1158,7 @@ TEST(oer_c_source_ag)
     ASSERT_EQ(decoded.a, true);
     ASSERT(decoded.is_b_addition_present);
     ASSERT_EQ(decoded.b.length, 2);
-    ASSERT(memcmp(&decoded.b.buf[0], "\x84\x55", 2) == 0);
+    ASSERT_MEMORY_EQ(&decoded.b.buf[0], "\x84\x55", 2);
     ASSERT(decoded.is_c_addition_present);
     ASSERT_EQ(decoded.c.length, 4);
     ASSERT(decoded.c.elements[0]);
@@ -1199,7 +1175,7 @@ TEST(oer_c_source_ag)
     ASSERT_EQ(decoded.j.choice, oer_c_source_ag_j_choice_k_e);
     ASSERT_EQ(decoded.j.value.k, 60693);
     ASSERT(decoded.is_m_addition_present);
-    ASSERT(memcmp(&decoded.m.buf[0], "\xf0\xf1\xf2\xf3\xf4", 5) == 0);
+    ASSERT_MEMORY_EQ(&decoded.m.buf[0], "\xf0\xf1\xf2\xf3\xf4", 5);
 }
 TEST(oer_c_source_ag_erroneous_data)
 {
@@ -1236,9 +1212,7 @@ TEST(oer_programming_types_float)
     ASSERT_EQ(oer_programming_types_float_encode(&encoded[0],
                                                  sizeof(encoded),
                                                  &decoded), sizeof(encoded));
-    ASSERT(memcmp(&encoded[0],
-                  "\x3f\x80\x00\x00",
-                  sizeof(encoded)) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0], "\x3f\x80\x00\x00", sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -1261,9 +1235,9 @@ TEST(oer_programming_types_double)
     ASSERT_EQ(oer_programming_types_double_encode(&encoded[0],
                                                   sizeof(encoded),
                                                   &decoded), sizeof(encoded));
-    ASSERT(memcmp(&encoded[0],
-                  "\x3f\xf0\x00\x00\x00\x00\x00\x00",
-                  sizeof(encoded)) == 0);
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x3f\xf0\x00\x00\x00\x00\x00\x00",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));

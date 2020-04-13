@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdint.h>
-#include <assert.h>
 #include <string.h>
 #include <math.h>
 #include "nala.h"
@@ -29,33 +28,33 @@ TEST(uper_c_source_a)
     memset(&decoded.j.buf[0], 5, sizeof(decoded.j.buf));
 
     memset(&encoded[0], 0, sizeof(encoded));
-    assert(uper_c_source_a_encode(&encoded[0],
-                                  sizeof(encoded),
-                                  &decoded) == sizeof(encoded));
-    assert(memcmp(&encoded[0],
-                  "\x7f\x7f\xfe\x7f\xff\xff\xfd\x7f\xff\xff\xff\xff\xff\xff\xfc"
-                  "\x01\x00\x02\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x04"
-                  "\x82\x82\x82\x82\x82\x82\x82\x82\x82\x82\x82\x80",
-                  sizeof(encoded)) == 0);
+    ASSERT_EQ(uper_c_source_a_encode(&encoded[0],
+                                     sizeof(encoded),
+                                     &decoded), sizeof(encoded));
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x7f\x7f\xfe\x7f\xff\xff\xfd\x7f\xff\xff\xff\xff\xff\xff\xfc"
+                     "\x01\x00\x02\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x04"
+                     "\x82\x82\x82\x82\x82\x82\x82\x82\x82\x82\x82\x80",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
-    assert(uper_c_source_a_decode(&decoded,
-                                  &encoded[0],
-                                  sizeof(encoded)) == sizeof(encoded));
+    ASSERT_EQ(uper_c_source_a_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), sizeof(encoded));
 
-    assert(decoded.a == -1);
-    assert(decoded.b == -2);
-    assert(decoded.c == -3);
-    assert(decoded.d == -4);
-    assert(decoded.e == 1);
-    assert(decoded.f == 2);
-    assert(decoded.g == 3);
-    assert(decoded.h == 4);
-    assert(decoded.i);
-    assert(memcmp(&decoded.j.buf[0],
-                  "\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05",
-                  sizeof(decoded.j.buf)) == 0);
+    ASSERT_EQ(decoded.a, -1);
+    ASSERT_EQ(decoded.b, -2);
+    ASSERT_EQ(decoded.c, -3);
+    ASSERT_EQ(decoded.d, -4);
+    ASSERT_EQ(decoded.e, 1);
+    ASSERT_EQ(decoded.f, 2);
+    ASSERT_EQ(decoded.g, 3);
+    ASSERT_EQ(decoded.h, 4);
+    ASSERT(decoded.i);
+    ASSERT_MEMORY_EQ(&decoded.j.buf[0],
+                     "\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05",
+                     sizeof(decoded.j.buf));
 }
 
 TEST(uper_c_source_a_encode_error_no_mem)
@@ -74,9 +73,9 @@ TEST(uper_c_source_a_encode_error_no_mem)
     decoded.i = true;
     memset(&decoded.j.buf[0], 5, sizeof(decoded.j.buf));
 
-    assert(uper_c_source_a_encode(&encoded[0],
-                                  sizeof(encoded),
-                                  &decoded) == -ENOMEM);
+    ASSERT_EQ(uper_c_source_a_encode(&encoded[0],
+                                     sizeof(encoded),
+                                     &decoded), -ENOMEM);
 }
 
 TEST(uper_c_source_a_decode_error_out_of_data)
@@ -87,9 +86,9 @@ TEST(uper_c_source_a_decode_error_out_of_data)
         "\x82\x82\x82\x82\x82\x82\x82\x82\x82\x82\x82";
     struct uper_c_source_a_t decoded;
 
-    assert(uper_c_source_a_decode(&decoded,
-                                  &encoded[0],
-                                  sizeof(encoded)) == -EOUTOFDATA);
+    ASSERT_EQ(uper_c_source_a_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), -EOUTOFDATA);
 }
 
 TEST(uper_c_source_b_choice_a)
@@ -102,21 +101,21 @@ TEST(uper_c_source_b_choice_a)
     decoded.value.a = -10;
 
     memset(&encoded[0], 0, sizeof(encoded));
-    assert(uper_c_source_b_encode(&encoded[0],
-                                  sizeof(encoded),
-                                  &decoded) == sizeof(encoded));
-    assert(memcmp(&encoded[0],
-                  "\x1d\x80",
-                  sizeof(encoded)) == 0);
+    ASSERT_EQ(uper_c_source_b_encode(&encoded[0],
+                                     sizeof(encoded),
+                                     &decoded), sizeof(encoded));
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x1d\x80",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
-    assert(uper_c_source_b_decode(&decoded,
-                                  &encoded[0],
-                                  sizeof(encoded)) == sizeof(encoded));
+    ASSERT_EQ(uper_c_source_b_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), sizeof(encoded));
 
-    assert(decoded.choice == uper_c_source_b_choice_a_e);
-    assert(decoded.value.a == -10);
+    ASSERT_EQ(decoded.choice, uper_c_source_b_choice_a_e);
+    ASSERT_EQ(decoded.value.a, -10);
 }
 
 TEST(uper_c_source_b_choice_b)
@@ -138,34 +137,34 @@ TEST(uper_c_source_b_choice_b)
     memset(&decoded.value.b.j.buf[0], 5, sizeof(decoded.value.b.j.buf));
 
     memset(&encoded[0], 0, sizeof(encoded));
-    assert(uper_c_source_b_encode(&encoded[0],
-                                  sizeof(encoded),
-                                  &decoded) == sizeof(encoded));
-    assert(memcmp(&encoded[0],
-                  "\x5f\xdf\xff\x9f\xff\xff\xff\x5f\xff\xff\xff\xff\xff\xff\xff"
-                  "\x00\x40\x00\x80\x00\x00\x00\xc0\x00\x00\x00\x00\x00\x00\x01"
-                  "\x20\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0",
-                  sizeof(encoded)) == 0);
+    ASSERT_EQ(uper_c_source_b_encode(&encoded[0],
+                                     sizeof(encoded),
+                                     &decoded), sizeof(encoded));
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x5f\xdf\xff\x9f\xff\xff\xff\x5f\xff\xff\xff\xff\xff\xff\xff"
+                     "\x00\x40\x00\x80\x00\x00\x00\xc0\x00\x00\x00\x00\x00\x00\x01"
+                     "\x20\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
-    assert(uper_c_source_b_decode(&decoded,
-                                  &encoded[0],
-                                  sizeof(encoded)) == sizeof(encoded));
+    ASSERT_EQ(uper_c_source_b_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), sizeof(encoded));
 
-    assert(decoded.choice == uper_c_source_b_choice_b_e);
-    assert(decoded.value.b.a == -1);
-    assert(decoded.value.b.b == -2);
-    assert(decoded.value.b.c == -3);
-    assert(decoded.value.b.d == -4);
-    assert(decoded.value.b.e == 1);
-    assert(decoded.value.b.f == 2);
-    assert(decoded.value.b.g == 3);
-    assert(decoded.value.b.h == 4);
-    assert(decoded.value.b.i);
-    assert(memcmp(&decoded.value.b.j.buf[0],
-                  "\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05",
-                  sizeof(decoded.value.b.j.buf)) == 0);
+    ASSERT_EQ(decoded.choice, uper_c_source_b_choice_b_e);
+    ASSERT_EQ(decoded.value.b.a, -1);
+    ASSERT_EQ(decoded.value.b.b, -2);
+    ASSERT_EQ(decoded.value.b.c, -3);
+    ASSERT_EQ(decoded.value.b.d, -4);
+    ASSERT_EQ(decoded.value.b.e, 1);
+    ASSERT_EQ(decoded.value.b.f, 2);
+    ASSERT_EQ(decoded.value.b.g, 3);
+    ASSERT_EQ(decoded.value.b.h, 4);
+    ASSERT(decoded.value.b.i);
+    ASSERT_MEMORY_EQ(&decoded.value.b.j.buf[0],
+                     "\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05",
+                     sizeof(decoded.value.b.j.buf));
 }
 
 TEST(uper_c_source_b_decode_error_bad_choice)
@@ -173,9 +172,9 @@ TEST(uper_c_source_b_decode_error_bad_choice)
     uint8_t encoded[2] = "\xdd\x80";
     struct uper_c_source_b_t decoded;
 
-    assert(uper_c_source_b_decode(&decoded,
-                                  &encoded[0],
-                                  sizeof(encoded)) == -EBADCHOICE);
+    ASSERT_EQ(uper_c_source_b_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), -EBADCHOICE);
 }
 
 TEST(uper_c_source_c_empty)
@@ -187,20 +186,20 @@ TEST(uper_c_source_c_empty)
     decoded.length = 0;
 
     memset(&encoded[0], 0, sizeof(encoded));
-    assert(uper_c_source_c_encode(&encoded[0],
-                                  sizeof(encoded),
-                                  &decoded) == sizeof(encoded));
-    assert(memcmp(&encoded[0],
-                  "\x00",
-                  sizeof(encoded)) == 0);
+    ASSERT_EQ(uper_c_source_c_encode(&encoded[0],
+                                     sizeof(encoded),
+                                     &decoded), sizeof(encoded));
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x00",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
-    assert(uper_c_source_c_decode(&decoded,
-                                  &encoded[0],
-                                  sizeof(encoded)) == sizeof(encoded));
+    ASSERT_EQ(uper_c_source_c_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), sizeof(encoded));
 
-    assert(decoded.length == 0);
+    ASSERT_EQ(decoded.length, 0);
 }
 
 TEST(uper_c_source_c_2_elements)
@@ -216,24 +215,24 @@ TEST(uper_c_source_c_2_elements)
     decoded.elements[1].value.a = 13;
 
     memset(&encoded[0], 0, sizeof(encoded));
-    assert(uper_c_source_c_encode(&encoded[0],
-                                  sizeof(encoded),
-                                  &decoded) == sizeof(encoded));
-    assert(memcmp(&encoded[0],
-                  "\x87\x52\x34",
-                  sizeof(encoded)) == 0);
+    ASSERT_EQ(uper_c_source_c_encode(&encoded[0],
+                                     sizeof(encoded),
+                                     &decoded), sizeof(encoded));
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x87\x52\x34",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
-    assert(uper_c_source_c_decode(&decoded,
-                                  &encoded[0],
-                                  sizeof(encoded)) == sizeof(encoded));
+    ASSERT_EQ(uper_c_source_c_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), sizeof(encoded));
 
-    assert(decoded.length == 2);
-    assert(decoded.elements[0].choice == uper_c_source_b_choice_a_e);
-    assert(decoded.elements[0].value.a == -11);
-    assert(decoded.elements[1].choice == uper_c_source_b_choice_a_e);
-    assert(decoded.elements[1].value.a == 13);
+    ASSERT_EQ(decoded.length, 2);
+    ASSERT_EQ(decoded.elements[0].choice, uper_c_source_b_choice_a_e);
+    ASSERT_EQ(decoded.elements[0].value.a, -11);
+    ASSERT_EQ(decoded.elements[1].choice, uper_c_source_b_choice_a_e);
+    ASSERT_EQ(decoded.elements[1].value.a, 13);
 }
 
 TEST(uper_c_source_c_decode_error_bad_length)
@@ -241,9 +240,9 @@ TEST(uper_c_source_c_decode_error_bad_length)
     uint8_t encoded[4] = "\xc7\x52\x34\x00";
     struct uper_c_source_c_t decoded;
 
-    assert(uper_c_source_c_decode(&decoded,
-                                  &encoded[0],
-                                  sizeof(encoded)) == -EBADLENGTH);
+    ASSERT_EQ(uper_c_source_c_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), -EBADLENGTH);
 }
 
 TEST(uper_c_source_d_all_present)
@@ -271,37 +270,37 @@ TEST(uper_c_source_d_all_present)
     decoded.elements[0].m.p.r = true;
     decoded.elements[0].m.s = true;
 
-    assert(uper_c_source_d_encode(&encoded[0],
-                                  sizeof(encoded),
-                                  &decoded) == sizeof(encoded));
-    assert(memcmp(&encoded[0],
-                  "\x00\xd5\x15\x7d\x20\x60\x60\x60\x60\x78",
-                  sizeof(encoded)) == 0);
+    ASSERT_EQ(uper_c_source_d_encode(&encoded[0],
+                                     sizeof(encoded),
+                                     &decoded), sizeof(encoded));
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x00\xd5\x15\x7d\x20\x60\x60\x60\x60\x78",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
-    assert(uper_c_source_d_decode(&decoded,
-                                  &encoded[0],
-                                  sizeof(encoded)) == sizeof(encoded));
+    ASSERT_EQ(uper_c_source_d_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), sizeof(encoded));
 
-    assert(decoded.length == 1);
-    assert(decoded.elements[0].a.b.choice == uper_c_source_d_a_b_choice_c_e);
-    assert(decoded.elements[0].a.b.value.c == 0);
-    assert(decoded.elements[0].a.e.length == 3);
-    assert(decoded.elements[0].g.h == uper_c_source_d_g_h_j_e);
-    assert(decoded.elements[0].g.l.length == 2);
-    assert(decoded.elements[0].g.l.buf[0] == 0x54);
-    assert(decoded.elements[0].g.l.buf[1] == 0x55);
-    assert(decoded.elements[0].m.is_n_present);
-    assert(decoded.elements[0].m.n == false);
-    assert(decoded.elements[0].m.o == 2);
-    assert(decoded.elements[0].m.is_p_present);
-    assert(memcmp(&decoded.elements[0].m.p.q.buf[0],
-                  "\x03\x03\x03\x03\x03",
-                  sizeof(decoded.elements[0].m.p.q.buf)) == 0);
-    assert(decoded.elements[0].m.p.is_r_present);
-    assert(decoded.elements[0].m.p.r == true);
-    assert(decoded.elements[0].m.s == true);
+    ASSERT_EQ(decoded.length, 1);
+    ASSERT_EQ(decoded.elements[0].a.b.choice, uper_c_source_d_a_b_choice_c_e);
+    ASSERT_EQ(decoded.elements[0].a.b.value.c, 0);
+    ASSERT_EQ(decoded.elements[0].a.e.length, 3);
+    ASSERT_EQ(decoded.elements[0].g.h, uper_c_source_d_g_h_j_e);
+    ASSERT_EQ(decoded.elements[0].g.l.length, 2);
+    ASSERT_EQ(decoded.elements[0].g.l.buf[0], 0x54);
+    ASSERT_EQ(decoded.elements[0].g.l.buf[1], 0x55);
+    ASSERT(decoded.elements[0].m.is_n_present);
+    ASSERT_EQ(decoded.elements[0].m.n, false);
+    ASSERT_EQ(decoded.elements[0].m.o, 2);
+    ASSERT(decoded.elements[0].m.is_p_present);
+    ASSERT_MEMORY_EQ(&decoded.elements[0].m.p.q.buf[0],
+                     "\x03\x03\x03\x03\x03",
+                     sizeof(decoded.elements[0].m.p.q.buf));
+    ASSERT(decoded.elements[0].m.p.is_r_present);
+    ASSERT_EQ(decoded.elements[0].m.p.r, true);
+    ASSERT_EQ(decoded.elements[0].m.s, true);
 }
 
 TEST(uper_c_source_d_some_missing)
@@ -328,34 +327,34 @@ TEST(uper_c_source_d_some_missing)
     decoded.elements[0].m.s = false;
 
     memset(&encoded[0], 0, sizeof(encoded));
-    assert(uper_c_source_d_encode(&encoded[0],
-                                 sizeof(encoded),
-                                 &decoded) == sizeof(encoded));
-    assert(memcmp(&encoded[0],
-                  "\x09\x15\x08\x06\x06\x06\x06\x06",
-                  sizeof(encoded)) == 0);
+    ASSERT_EQ(uper_c_source_d_encode(&encoded[0],
+                                     sizeof(encoded),
+                                     &decoded), sizeof(encoded));
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x09\x15\x08\x06\x06\x06\x06\x06",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
-    assert(uper_c_source_d_decode(&decoded,
-                                 &encoded[0],
-                                 sizeof(encoded)) == sizeof(encoded));
+    ASSERT_EQ(uper_c_source_d_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), sizeof(encoded));
 
-    assert(decoded.length == 1);
-    assert(decoded.elements[0].a.b.choice == uper_c_source_d_a_b_choice_d_e);
-    assert(decoded.elements[0].a.b.value.d == false);
-    assert(decoded.elements[0].a.e.length == 3);
-    assert(decoded.elements[0].g.h == uper_c_source_d_g_h_k_e);
-    assert(decoded.elements[0].g.l.length == 1);
-    assert(decoded.elements[0].g.l.buf[0] == 0x54);
-    assert(!decoded.elements[0].m.is_n_present);
-    assert(decoded.elements[0].m.o == 3);
-    assert(decoded.elements[0].m.is_p_present);
-    assert(memcmp(&decoded.elements[0].m.p.q.buf[0],
-                  "\x03\x03\x03\x03\x03",
-                  sizeof(decoded.elements[0].m.p.q.buf)) == 0);
-    assert(!decoded.elements[0].m.p.is_r_present);
-    assert(decoded.elements[0].m.p.r == false);
+    ASSERT_EQ(decoded.length, 1);
+    ASSERT_EQ(decoded.elements[0].a.b.choice, uper_c_source_d_a_b_choice_d_e);
+    ASSERT_EQ(decoded.elements[0].a.b.value.d, false);
+    ASSERT_EQ(decoded.elements[0].a.e.length, 3);
+    ASSERT_EQ(decoded.elements[0].g.h, uper_c_source_d_g_h_k_e);
+    ASSERT_EQ(decoded.elements[0].g.l.length, 1);
+    ASSERT_EQ(decoded.elements[0].g.l.buf[0], 0x54);
+    ASSERT(!decoded.elements[0].m.is_n_present);
+    ASSERT_EQ(decoded.elements[0].m.o, 3);
+    ASSERT(decoded.elements[0].m.is_p_present);
+    ASSERT_MEMORY_EQ(&decoded.elements[0].m.p.q.buf[0],
+                     "\x03\x03\x03\x03\x03",
+                     sizeof(decoded.elements[0].m.p.q.buf));
+    ASSERT(!decoded.elements[0].m.p.is_r_present);
+    ASSERT_EQ(decoded.elements[0].m.p.r, false);
 }
 
 TEST(uper_c_source_d_decode_error_bad_enum)
@@ -363,9 +362,9 @@ TEST(uper_c_source_d_decode_error_bad_enum)
     uint8_t encoded[10] = "\x01\xd5\x15\x7a\x40\xc0\xc0\xc0\xc0\xe0";
     struct uper_c_source_d_t decoded;
 
-    assert(uper_c_source_d_decode(&decoded,
-                                  &encoded[0],
-                                  sizeof(encoded)) == -EBADENUM);
+    ASSERT_EQ(uper_c_source_d_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), -EBADENUM);
 }
 
 TEST(uper_c_source_e)
@@ -379,22 +378,22 @@ TEST(uper_c_source_e)
     decoded.a.value.b.value.c = true;
 
     memset(&encoded[0], 0, sizeof(encoded));
-    assert(uper_c_source_e_encode(&encoded[0],
-                                  sizeof(encoded),
-                                  &decoded) == sizeof(encoded));
-    assert(memcmp(&encoded[0],
-                  "\x80",
-                  sizeof(encoded)) == 0);
+    ASSERT_EQ(uper_c_source_e_encode(&encoded[0],
+                                     sizeof(encoded),
+                                     &decoded), sizeof(encoded));
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x80",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
-    assert(uper_c_source_e_decode(&decoded,
-                                  &encoded[0],
-                                  sizeof(encoded)) == sizeof(encoded));
+    ASSERT_EQ(uper_c_source_e_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), sizeof(encoded));
 
-    assert(decoded.a.choice == uper_c_source_e_a_choice_b_e);
-    assert(decoded.a.value.b.choice == uper_c_source_e_a_b_choice_c_e);
-    assert(decoded.a.value.b.value.c == true);
+    ASSERT_EQ(decoded.a.choice, uper_c_source_e_a_choice_b_e);
+    ASSERT_EQ(decoded.a.value.b.choice, uper_c_source_e_a_b_choice_c_e);
+    ASSERT_EQ(decoded.a.value.b.value.c, true);
 }
 
 TEST(uper_c_source_f)
@@ -408,22 +407,22 @@ TEST(uper_c_source_f)
     decoded.elements[1].elements[0] = true;
 
     memset(&encoded[0], 0, sizeof(encoded));
-    assert(uper_c_source_f_encode(&encoded[0],
-                                  sizeof(encoded),
-                                  &decoded) == sizeof(encoded));
-    assert(memcmp(&encoded[0],
-                  "\xa0",
-                  sizeof(encoded)) == 0);
+    ASSERT_EQ(uper_c_source_f_encode(&encoded[0],
+                                     sizeof(encoded),
+                                     &decoded), sizeof(encoded));
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\xa0",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
-    assert(uper_c_source_f_decode(&decoded,
-                                  &encoded[0],
-                                  sizeof(encoded)) == sizeof(encoded));
+    ASSERT_EQ(uper_c_source_f_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), sizeof(encoded));
 
-    assert(decoded.length == 2);
-    assert(decoded.elements[0].elements[0] == false);
-    assert(decoded.elements[1].elements[0] == true);
+    ASSERT_EQ(decoded.length, 2);
+    ASSERT_EQ(decoded.elements[0].elements[0], false);
+    ASSERT_EQ(decoded.elements[1].elements[0], true);
 }
 
 TEST(uper_c_source_g)
@@ -445,30 +444,30 @@ TEST(uper_c_source_g)
     decoded.i = true;
 
     memset(&encoded[0], 0, sizeof(encoded));
-    assert(uper_c_source_g_encode(&encoded[0],
-                                  sizeof(encoded),
-                                  &decoded) == sizeof(encoded));
-    assert(memcmp(&encoded[0],
-                  "\x80\xe0",
-                  sizeof(encoded)) == 0);
+    ASSERT_EQ(uper_c_source_g_encode(&encoded[0],
+                                     sizeof(encoded),
+                                     &decoded), sizeof(encoded));
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x80\xe0",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
-    assert(uper_c_source_g_decode(&decoded,
-                                  &encoded[0],
-                                  sizeof(encoded)) == sizeof(encoded));
+    ASSERT_EQ(uper_c_source_g_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), sizeof(encoded));
 
-    assert(decoded.is_a_present);
-    assert(decoded.a == true);
-    assert(!decoded.is_b_present);
-    assert(!decoded.is_c_present);
-    assert(!decoded.is_d_present);
-    assert(!decoded.is_e_present);
-    assert(!decoded.is_f_present);
-    assert(!decoded.is_g_present);
-    assert(!decoded.is_h_present);
-    assert(decoded.is_i_present);
-    assert(decoded.i == true);
+    ASSERT(decoded.is_a_present);
+    ASSERT_EQ(decoded.a, true);
+    ASSERT(!decoded.is_b_present);
+    ASSERT(!decoded.is_c_present);
+    ASSERT(!decoded.is_d_present);
+    ASSERT(!decoded.is_e_present);
+    ASSERT(!decoded.is_f_present);
+    ASSERT(!decoded.is_g_present);
+    ASSERT(!decoded.is_h_present);
+    ASSERT(decoded.is_i_present);
+    ASSERT_EQ(decoded.i, true);
 }
 
 TEST(uper_c_source_h)
@@ -478,15 +477,15 @@ TEST(uper_c_source_h)
 
     /* Encode. */
     memset(&encoded[0], 0, sizeof(encoded));
-    assert(uper_c_source_h_encode(&encoded[0],
-                                  sizeof(encoded),
-                                  &decoded) == 0);
+    ASSERT_EQ(uper_c_source_h_encode(&encoded[0],
+                                     sizeof(encoded),
+                                     &decoded), 0);
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
-    assert(uper_c_source_h_decode(&decoded,
-                                  &encoded[0],
-                                  sizeof(encoded)) == 0);
+    ASSERT_EQ(uper_c_source_h_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), 0);
 }
 
 TEST(uper_c_source_q_c256)
@@ -499,19 +498,19 @@ TEST(uper_c_source_q_c256)
     decoded.value.c256 = true;
 
     memset(&encoded[0], 0, sizeof(encoded));
-    assert(uper_c_source_q_encode(&encoded[0],
-                                  sizeof(encoded),
-                                  &decoded) == sizeof(encoded));
-    assert(memcmp(&encoded[0], "\x7f\xc0", 2) == 0);
+    ASSERT_EQ(uper_c_source_q_encode(&encoded[0],
+                                     sizeof(encoded),
+                                     &decoded), sizeof(encoded));
+    ASSERT_MEMORY_EQ(&encoded[0], "\x7f\xc0", 2);
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
-    assert(uper_c_source_q_decode(&decoded,
-                                  &encoded[0],
-                                  sizeof(encoded)) == sizeof(encoded));
+    ASSERT_EQ(uper_c_source_q_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), sizeof(encoded));
 
-    assert(decoded.choice == uper_c_source_q_choice_c256_e);
-    assert(decoded.value.c256 == true);
+    ASSERT_EQ(decoded.choice, uper_c_source_q_choice_c256_e);
+    ASSERT_EQ(decoded.value.c256, true);
 }
 
 TEST(uper_c_source_q_c257)
@@ -524,19 +523,19 @@ TEST(uper_c_source_q_c257)
     decoded.value.c257 = true;
 
     memset(&encoded[0], 0, sizeof(encoded));
-    assert(uper_c_source_q_encode(&encoded[0],
-                                  sizeof(encoded),
-                                  &decoded) == sizeof(encoded));
-    assert(memcmp(&encoded[0], "\x80\x40", 2) == 0);
+    ASSERT_EQ(uper_c_source_q_encode(&encoded[0],
+                                     sizeof(encoded),
+                                     &decoded), sizeof(encoded));
+    ASSERT_MEMORY_EQ(&encoded[0], "\x80\x40", 2);
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
-    assert(uper_c_source_q_decode(&decoded,
-                                  &encoded[0],
-                                  sizeof(encoded)) == sizeof(encoded));
+    ASSERT_EQ(uper_c_source_q_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), sizeof(encoded));
 
-    assert(decoded.choice == uper_c_source_q_choice_c257_e);
-    assert(decoded.value.c257 == true);
+    ASSERT_EQ(decoded.choice, uper_c_source_q_choice_c257_e);
+    ASSERT_EQ(decoded.value.c257, true);
 }
 
 TEST(uper_c_source_r)
@@ -563,20 +562,20 @@ TEST(uper_c_source_r)
         decoded.value = datas[i].decoded;
 
         memset(&encoded[0], 0, sizeof(encoded));
-        assert(uper_c_source_r_encode(&encoded[0],
-                                      sizeof(encoded),
-                                      &decoded) == sizeof(encoded));
-        assert(memcmp(&encoded[0],
-                      &datas[i].encoded[0],
-                      sizeof(encoded)) == 0);
+        ASSERT_EQ(uper_c_source_r_encode(&encoded[0],
+                                         sizeof(encoded),
+                                         &decoded), sizeof(encoded));
+        ASSERT_MEMORY_EQ(&encoded[0],
+                         &datas[i].encoded[0],
+                         sizeof(encoded));
 
         /* Decode. */
         memset(&decoded, 0, sizeof(decoded));
-        assert(uper_c_source_r_decode(&decoded,
-                                      &encoded[0],
-                                      sizeof(encoded)) == sizeof(encoded));
+        ASSERT_EQ(uper_c_source_r_decode(&decoded,
+                                         &encoded[0],
+                                         sizeof(encoded)), sizeof(encoded));
 
-        assert(decoded.value == datas[i].decoded);
+        ASSERT_EQ(decoded.value, datas[i].decoded);
     }
 }
 
@@ -604,20 +603,20 @@ TEST(uper_c_source_s)
         decoded.value = datas[i].decoded;
 
         memset(&encoded[0], 0, sizeof(encoded));
-        assert(uper_c_source_s_encode(&encoded[0],
-                                      sizeof(encoded),
-                                      &decoded) == sizeof(encoded));
-        assert(memcmp(&encoded[0],
-                      &datas[i].encoded[0],
-                      sizeof(encoded)) == 0);
+        ASSERT_EQ(uper_c_source_s_encode(&encoded[0],
+                                         sizeof(encoded),
+                                         &decoded), sizeof(encoded));
+        ASSERT_MEMORY_EQ(&encoded[0],
+                         &datas[i].encoded[0],
+                         sizeof(encoded));
 
         /* Decode. */
         memset(&decoded, 0, sizeof(decoded));
-        assert(uper_c_source_s_decode(&decoded,
-                                      &encoded[0],
-                                      sizeof(encoded)) == sizeof(encoded));
+        ASSERT_EQ(uper_c_source_s_decode(&decoded,
+                                         &encoded[0],
+                                         sizeof(encoded)), sizeof(encoded));
 
-        assert(decoded.value == datas[i].decoded);
+        ASSERT_EQ(decoded.value, datas[i].decoded);
     }
 }
 
@@ -645,20 +644,20 @@ TEST(uper_c_source_t)
         decoded.value = datas[i].decoded;
 
         memset(&encoded[0], 0, sizeof(encoded));
-        assert(uper_c_source_t_encode(&encoded[0],
-                                      sizeof(encoded),
-                                      &decoded) == sizeof(encoded));
-        assert(memcmp(&encoded[0],
-                      &datas[i].encoded[0],
-                      sizeof(encoded)) == 0);
+        ASSERT_EQ(uper_c_source_t_encode(&encoded[0],
+                                         sizeof(encoded),
+                                         &decoded), sizeof(encoded));
+        ASSERT_MEMORY_EQ(&encoded[0],
+                         &datas[i].encoded[0],
+                         sizeof(encoded));
 
         /* Decode. */
         memset(&decoded, 0, sizeof(decoded));
-        assert(uper_c_source_t_decode(&decoded,
-                                      &encoded[0],
-                                      sizeof(encoded)) == sizeof(encoded));
+        ASSERT_EQ(uper_c_source_t_decode(&decoded,
+                                         &encoded[0],
+                                         sizeof(encoded)), sizeof(encoded));
 
-        assert(decoded.value == datas[i].decoded);
+        ASSERT_EQ(decoded.value, datas[i].decoded);
     }
 }
 
@@ -682,20 +681,20 @@ TEST(uper_c_source_u)
         decoded.value = datas[i].decoded;
 
         memset(&encoded[0], 0, sizeof(encoded));
-        assert(uper_c_source_u_encode(&encoded[0],
-                                      sizeof(encoded),
-                                      &decoded) == sizeof(encoded));
-        assert(memcmp(&encoded[0],
-                      &datas[i].encoded[0],
-                      sizeof(encoded)) == 0);
+        ASSERT_EQ(uper_c_source_u_encode(&encoded[0],
+                                         sizeof(encoded),
+                                         &decoded), sizeof(encoded));
+        ASSERT_MEMORY_EQ(&encoded[0],
+                         &datas[i].encoded[0],
+                         sizeof(encoded));
 
         /* Decode. */
         memset(&decoded, 0, sizeof(decoded));
-        assert(uper_c_source_u_decode(&decoded,
-                                      &encoded[0],
-                                      sizeof(encoded)) == sizeof(encoded));
+        ASSERT_EQ(uper_c_source_u_decode(&decoded,
+                                         &encoded[0],
+                                         sizeof(encoded)), sizeof(encoded));
 
-        assert(decoded.value == datas[i].decoded);
+        ASSERT_EQ(decoded.value, datas[i].decoded);
     }
 }
 
@@ -719,20 +718,20 @@ TEST(uper_c_source_v)
         decoded.value = datas[i].decoded;
 
         memset(&encoded[0], 0, sizeof(encoded));
-        assert(uper_c_source_v_encode(&encoded[0],
-                                      sizeof(encoded),
-                                      &decoded) == sizeof(encoded));
-        assert(memcmp(&encoded[0],
-                      &datas[i].encoded[0],
-                      sizeof(encoded)) == 0);
+        ASSERT_EQ(uper_c_source_v_encode(&encoded[0],
+                                         sizeof(encoded),
+                                         &decoded), sizeof(encoded));
+        ASSERT_MEMORY_EQ(&encoded[0],
+                         &datas[i].encoded[0],
+                         sizeof(encoded));
 
         /* Decode. */
         memset(&decoded, 0, sizeof(decoded));
-        assert(uper_c_source_v_decode(&decoded,
-                                      &encoded[0],
-                                      sizeof(encoded)) == sizeof(encoded));
+        ASSERT_EQ(uper_c_source_v_decode(&decoded,
+                                         &encoded[0],
+                                         sizeof(encoded)), sizeof(encoded));
 
-        assert(decoded.value == datas[i].decoded);
+        ASSERT_EQ(decoded.value, datas[i].decoded);
     }
 }
 
@@ -760,20 +759,20 @@ TEST(uper_c_source_w)
         decoded.value = datas[i].decoded;
 
         memset(&encoded[0], 0, sizeof(encoded));
-        assert(uper_c_source_w_encode(&encoded[0],
-                                      sizeof(encoded),
-                                      &decoded) == sizeof(encoded));
-        assert(memcmp(&encoded[0],
-                      &datas[i].encoded[0],
-                      sizeof(encoded)) == 0);
+        ASSERT_EQ(uper_c_source_w_encode(&encoded[0],
+                                         sizeof(encoded),
+                                         &decoded), sizeof(encoded));
+        ASSERT_MEMORY_EQ(&encoded[0],
+                         &datas[i].encoded[0],
+                         sizeof(encoded));
 
         /* Decode. */
         memset(&decoded, 0, sizeof(decoded));
-        assert(uper_c_source_w_decode(&decoded,
-                                      &encoded[0],
-                                      sizeof(encoded)) == sizeof(encoded));
+        ASSERT_EQ(uper_c_source_w_decode(&decoded,
+                                         &encoded[0],
+                                         sizeof(encoded)), sizeof(encoded));
 
-        assert(decoded.value == datas[i].decoded);
+        ASSERT_EQ(decoded.value, datas[i].decoded);
     }
 }
 
@@ -801,20 +800,20 @@ TEST(uper_c_source_x)
         decoded.value = datas[i].decoded;
 
         memset(&encoded[0], 0, sizeof(encoded));
-        assert(uper_c_source_x_encode(&encoded[0],
-                                      sizeof(encoded),
-                                      &decoded) == sizeof(encoded));
-        assert(memcmp(&encoded[0],
-                      &datas[i].encoded[0],
-                      sizeof(encoded)) == 0);
+        ASSERT_EQ(uper_c_source_x_encode(&encoded[0],
+                                         sizeof(encoded),
+                                         &decoded), sizeof(encoded));
+        ASSERT_MEMORY_EQ(&encoded[0],
+                         &datas[i].encoded[0],
+                         sizeof(encoded));
 
         /* Decode. */
         memset(&decoded, 0, sizeof(decoded));
-        assert(uper_c_source_x_decode(&decoded,
-                                      &encoded[0],
-                                      sizeof(encoded)) == sizeof(encoded));
+        ASSERT_EQ(uper_c_source_x_decode(&decoded,
+                                         &encoded[0],
+                                         sizeof(encoded)), sizeof(encoded));
 
-        assert(decoded.value == datas[i].decoded);
+        ASSERT_EQ(decoded.value, datas[i].decoded);
     }
 }
 
@@ -842,20 +841,20 @@ TEST(uper_c_source_y)
         decoded.value = datas[i].decoded;
 
         memset(&encoded[0], 0, sizeof(encoded));
-        assert(uper_c_source_y_encode(&encoded[0],
-                                      sizeof(encoded),
-                                      &decoded) == sizeof(encoded));
-        assert(memcmp(&encoded[0],
-                      &datas[i].encoded[0],
-                      sizeof(encoded)) == 0);
+        ASSERT_EQ(uper_c_source_y_encode(&encoded[0],
+                                         sizeof(encoded),
+                                         &decoded), sizeof(encoded));
+        ASSERT_MEMORY_EQ(&encoded[0],
+                         &datas[i].encoded[0],
+                         sizeof(encoded));
 
         /* Decode. */
         memset(&decoded, 0, sizeof(decoded));
-        assert(uper_c_source_y_decode(&decoded,
-                                      &encoded[0],
-                                      sizeof(encoded)) == sizeof(encoded));
+        ASSERT_EQ(uper_c_source_y_decode(&decoded,
+                                         &encoded[0],
+                                         sizeof(encoded)), sizeof(encoded));
 
-        assert(decoded.value == datas[i].decoded);
+        ASSERT_EQ(decoded.value, datas[i].decoded);
     }
 }
 
@@ -864,9 +863,9 @@ TEST(uper_c_source_z_decode_error_out_of_data)
     uint8_t encoded[1];
     struct uper_c_source_z_t decoded;
 
-    assert(uper_c_source_z_decode(&decoded,
-                                  &encoded[0],
-                                  0) == -EOUTOFDATA);
+    ASSERT_EQ(uper_c_source_z_decode(&decoded,
+                                     &encoded[0],
+                                     0), -EOUTOFDATA);
 }
 
 TEST(uper_c_source_ab)
@@ -879,21 +878,21 @@ TEST(uper_c_source_ab)
     decoded.b = 10300;
 
     memset(&encoded[0], 0, sizeof(encoded));
-    assert(uper_c_source_ab_encode(&encoded[0],
-                                   sizeof(encoded),
-                                   &decoded) == sizeof(encoded));
-    assert(memcmp(&encoded[0],
-                  "\xa5\x80",
-                  sizeof(encoded)) == 0);
+    ASSERT_EQ(uper_c_source_ab_encode(&encoded[0],
+                                      sizeof(encoded),
+                                      &decoded), sizeof(encoded));
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\xa5\x80",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
-    assert(uper_c_source_ab_decode(&decoded,
-                                   &encoded[0],
-                                   sizeof(encoded)) == sizeof(encoded));
+    ASSERT_EQ(uper_c_source_ab_decode(&decoded,
+                                      &encoded[0],
+                                      sizeof(encoded)), sizeof(encoded));
 
-    assert(decoded.a == 0);
-    assert(decoded.b == 10300);
+    ASSERT_EQ(decoded.a, 0);
+    ASSERT_EQ(decoded.b, 10300);
 }
 
 TEST(uper_c_source_ae)
@@ -908,29 +907,29 @@ TEST(uper_c_source_ae)
     decoded.c = false;
 
     memset(&encoded[0], 0, sizeof(encoded));
-    assert(uper_c_source_ae_encode(&encoded[0],
-                                  sizeof(encoded),
-                                  &decoded) == sizeof(encoded));
-    assert(memcmp(&encoded[0],
-                  "\x40",
-                  sizeof(encoded)) == 0);
+    ASSERT_EQ(uper_c_source_ae_encode(&encoded[0],
+                                      sizeof(encoded),
+                                      &decoded), sizeof(encoded));
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x40",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
-    assert(uper_c_source_ae_decode(&decoded,
-                                  &encoded[0],
-                                  sizeof(encoded)) == sizeof(encoded));
+    ASSERT_EQ(uper_c_source_ae_decode(&decoded,
+                                      &encoded[0],
+                                      sizeof(encoded)), sizeof(encoded));
 
-    assert(decoded.a == false);
-    assert(decoded.b == true);
-    assert(decoded.c == false);
+    ASSERT_EQ(decoded.a, false);
+    ASSERT_EQ(decoded.b, true);
+    ASSERT_EQ(decoded.c, false);
 }
 
 TEST(uper_c_source_af)
 {
     uint8_t encoded[24];
     uint8_t encoded2[24] = "\xc4\x7f\xc1\x30\x10\x11\x10\x00\x44\x80\x44\xc0"
-                           "\x45\x00\x45\x40\x45\x80\x45\xc0\x46\x00\x46\x40";
+        "\x45\x00\x45\x40\x45\x80\x45\xc0\x46\x00\x46\x40";
     struct uper_c_source_af_t decoded;
 
     /* Encode. */
@@ -956,13 +955,13 @@ TEST(uper_c_source_af)
     decoded.is_l_addition_present = true;
 
     memset(&encoded[0], 0, sizeof(encoded));
-    assert(uper_c_source_af_encode(&encoded[0],
-                                  sizeof(encoded),
-                                  &decoded) < 0);
+    ASSERT(uper_c_source_af_encode(&encoded[0],
+                                   sizeof(encoded),
+                                   &decoded) < 0);
 
     // Decode.
     memset(&decoded, 0, sizeof(decoded));
-    assert(uper_c_source_af_decode(&decoded,
-                                  &encoded2[0],
-                                  sizeof(encoded2)) < 0);
+    ASSERT(uper_c_source_af_decode(&decoded,
+                                   &encoded2[0],
+                                   sizeof(encoded2)) < 0);
 }
