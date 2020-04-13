@@ -90,7 +90,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             "    a BOOLEAN, "
             "    b INTEGER (-10000..704000000000000001), "
             "    c BOOLEAN "
-            "} "            
+            "} "
             "END",
             'per')
 
