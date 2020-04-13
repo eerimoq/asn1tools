@@ -147,15 +147,13 @@ class _UserType(object):
                  type_declaration,
                  declaration,
                  definition_inner,
-                 definition,
-                 used_user_types):
+                 definition):
         self.type_name = type_name
         self.module_name = module_name
         self.type_declaration = type_declaration
         self.declaration = declaration
         self.definition_inner = definition_inner
         self.definition = definition
-        self.used_user_types = used_user_types
 
 
 class Generator(object):
@@ -587,7 +585,8 @@ class Generator(object):
                                            decode_body='\n'.join(decode_lines))
 
     def generate(self, compiled):
-        user_types = []
+        user_types = {}
+        user_type_dependencies = {}
 
         for module_name, module in sorted(compiled.modules.items()):
             self.module_name = module_name
@@ -610,18 +609,20 @@ class Generator(object):
                                       type_declaration,
                                       declaration,
                                       definition_inner,
-                                      definition,
-                                      self.used_user_types)
-                user_types.append(user_type)
+                                      definition)
+                user_type_name_tuple = (user_type.type_name, user_type.module_name)
+                user_types[user_type_name_tuple] = user_type
+                user_type_dependencies[user_type_name_tuple] = self.used_user_types
 
-        user_types = sort_user_types_by_used_user_types(user_types)
+        user_type_sorted_names = topological_sort(user_type_dependencies)
 
         type_declarations = []
         declarations = []
         definitions_inner = []
         definitions = []
 
-        for user_type in user_types:
+        for user_type_name in user_type_sorted_names:
+            user_type = user_types[user_type_name]
             type_declarations.extend(user_type.type_declaration)
             declarations.append(user_type.declaration)
             definitions_inner.append(user_type.definition_inner)
@@ -720,21 +721,18 @@ def dedent_lines(lines):
     return [line[4:] for line in lines]
 
 
-def sort_user_types_by_used_user_types(user_types):
-    reversed_sorted_user_types = []
+def topological_sort(graph):
+    def recurse(node_, path_):
+        if node_ not in path_:
+            edges = graph[node_]
+            for edge in edges:
+                if edge not in path_:
+                    path_ = recurse(edge, path_)
+            path_ = path_ + [node_]
+        return path_
 
-    for user_type in user_types:
-        user_type_name_tuple = (user_type.type_name, user_type.module_name)
+    path = []
+    for node in sorted(graph):
+        path = recurse(node, path)
 
-        # Insert first in the reversed list if there are no types
-        # using this type.
-        insert_index = 0
-
-        for i, reversed_sorted_user_type in enumerate(reversed_sorted_user_types, 1):
-            if user_type_name_tuple in reversed_sorted_user_type.used_user_types:
-                if i > insert_index:
-                    insert_index = i
-
-        reversed_sorted_user_types.insert(insert_index, user_type)
-
-    return reversed(reversed_sorted_user_types)
+    return path
