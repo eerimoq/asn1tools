@@ -12,4 +12,4 @@ bitstruct
 diskcache
 humanfriendly
 mock ; python_version < '3.0'
-nala ; python_version >= '3.6
+nala ; python_version >= '3.6'
