@@ -15,7 +15,9 @@ from .utils import is_user_type
 from .utils import indent_lines
 from .utils import dedent_lines
 from .utils import canonical
+from .utils import format_default
 from ...codecs import oer
+
 
 LENGTH_DETERMINANT_LENGTH = '''
 static uint32_t length_determinant_length(uint32_t value)
@@ -537,6 +539,73 @@ static uint32_t decoder_read_tag(struct decoder_t *self_p)
 '''
 
 
+def get_encoded_real_lengths(type_):
+    return [4] if type_.fmt == '>f' else [8]
+
+
+def get_sequence_optionals(type_):
+    return [
+        member
+        for member in type_.root_members
+        if member.optional or member.default is not None
+    ]
+
+
+def get_sequence_extension_bit(type_):
+    return 1 if type_.additions is not None else 0
+
+
+def get_sequence_present_mask_length(optionals, extension_bit):
+    return (len(optionals) + extension_bit + 7) // 8
+
+
+def get_length_determinant_length(length):
+    if length < 128:
+        return 1
+    elif length < 256:
+        return 2
+    elif length < 65536:
+        return 3
+    elif length < 1677726:
+        return 4
+    else:
+        return 5
+
+
+def sum_encoded_lengths(lengths):
+    length = 0
+    length_strings = []
+
+    for length_part in lengths:
+
+        if isinstance(length_part, int):
+            length += length_part
+        else:
+            length_strings.append(length_part)
+
+    if length > 0 or len(length_strings) == 0:
+        length_strings.append(str(length))
+
+    return ' + '.join(length_strings)
+
+
+def get_sequence_additions_mask_length(additions):
+    return (len(additions) + 7) // 8
+
+
+def format_null_inner():
+    return (
+        [
+            '(void)encoder_p;',
+            '(void)src_p;'
+        ],
+        [
+            '(void)decoder_p;',
+            '(void)dst_p;'
+        ]
+    )
+
+
 class _Generator(Generator):
 
     def __init__(self, namespace):
@@ -592,7 +661,7 @@ class _Generator(Generator):
         elif isinstance(type_, oer.Boolean):
             return [1]
         elif isinstance(type_, oer.Real):
-            return self.get_encoded_real_lengths(type_)
+            return get_encoded_real_lengths(type_)
         elif isinstance(type_, oer.Null):
             return [0]
         elif isinstance(type_, oer.OctetString):
@@ -692,35 +761,15 @@ class _Generator(Generator):
             ]
         )
 
-    @staticmethod
-    def get_encoded_real_lengths(type_):
-        return [4] if type_.fmt == '>f' else [8]
-
-    @staticmethod
-    def get_sequence_optionals(type_):
-        return [
-            member
-            for member in type_.root_members
-            if member.optional or member.default is not None
-        ]
-
-    @staticmethod
-    def get_sequence_extension_bit(type_):
-        return 1 if type_.additions is not None else 0
-
-    @staticmethod
-    def get_sequence_present_mask_length(optionals, extension_bit):
-        return (len(optionals) + extension_bit + 7) // 8
-
     def format_sequence_inner(self, type_, checker):
         encode_lines = []
         decode_lines = []
 
-        optionals = self.get_sequence_optionals(type_)
-        extension_bit = self.get_sequence_extension_bit(type_)
+        optionals = get_sequence_optionals(type_)
+        extension_bit = get_sequence_extension_bit(type_)
 
-        present_mask_length = self.get_sequence_present_mask_length(optionals,
-                                                                    extension_bit)
+        present_mask_length = get_sequence_present_mask_length(optionals,
+                                                               extension_bit)
         default_condition_by_member_name = {}
 
         if present_mask_length > 0:
@@ -778,7 +827,7 @@ class _Generator(Generator):
                     encode_lines += [
                         'if (src_p->{}{} != {}) {{'.format(self.location_inner('', '.'),
                                                            member.name,
-                                                           self.format_default(
+                                                           format_default(
                                                                member.default)),
                         '    {} |= {};'.format(present_mask, mask),
                         '}',
@@ -804,8 +853,8 @@ class _Generator(Generator):
             decode_lines += member_decode_lines
 
         if type_.additions is not None and len(type_.additions) > 0:
-            additions_encode_lines, additions_decode_lines = \
-                self.format_sequence_additions(type_, checker)
+            additions_encode_lines, additions_decode_lines = (
+                self.format_sequence_additions(type_, checker))
 
             addition_condition = 'if(({}[0] & 0x80) == 0x80) {{'.format(
                 unique_present_mask)
@@ -831,16 +880,11 @@ class _Generator(Generator):
 
         return encode_lines, decode_lines
 
-    @staticmethod
-    def get_sequence_additions_mask_length(additions):
-
-        return (len(additions) + 7) // 8
-
     def format_sequence_additions(self, type_, checker):
         encode_lines = ['']
         decode_lines = ['']
 
-        addition_mask_length = self.get_sequence_additions_mask_length(type_.additions)
+        addition_mask_length = get_sequence_additions_mask_length(type_.additions)
         addition_mask_unused_bits = (addition_mask_length * 8) - len(type_.additions)
 
         encode_lines.append('encoder_append_length_determinant(encoder_p, {});'.format(
@@ -957,7 +1001,7 @@ class _Generator(Generator):
                 'if (src_p->{}is_{}_addition_present) {{'
                 .format(self.location_inner('', '.'), addition.name),
                 '    encoder_append_length_determinant(encoder_p, {});'
-                .format(self.sum_encoded_lengths(encoded_lengths))
+                .format(sum_encoded_lengths(encoded_lengths))
             ] + indent_lines(addition_encode_lines) + [
                 '}'
             ]
@@ -1001,18 +1045,18 @@ class _Generator(Generator):
 
     def get_encoded_sequence_lengths(self, type_, checker):
         lengths = []
-        optionals = self.get_sequence_optionals(type_)
-        extension_bit = self.get_sequence_extension_bit(type_)
+        optionals = get_sequence_optionals(type_)
+        extension_bit = get_sequence_extension_bit(type_)
 
-        lengths.append(self.get_sequence_present_mask_length(optionals,
-                                                             extension_bit))
+        lengths.append(get_sequence_present_mask_length(optionals,
+                                                        extension_bit))
         for member in type_.root_members:
             lengths.extend(self.get_encoded_type_lengths(member, checker))
 
         if type_.additions is not None and len(type_.additions) > 0:
-            additions_mask_length = \
-                self.get_sequence_additions_mask_length(type_.additions)
-            lengths.append(self.get_length_determinant_length(additions_mask_length))
+            additions_mask_length = (
+                get_sequence_additions_mask_length(type_.additions))
+            lengths.append(get_length_determinant_length(additions_mask_length))
             lengths.append(1)
             lengths.append(additions_mask_length)
 
@@ -1020,41 +1064,11 @@ class _Generator(Generator):
                 member_checker = self.get_member_checker(checker, addition.name)
                 additions_lengths = self.get_encoded_type_lengths(addition,
                                                                   member_checker)
-                addition_length = int(self.sum_encoded_lengths(additions_lengths))
-                lengths.append(self.get_length_determinant_length(addition_length))
+                addition_length = int(sum_encoded_lengths(additions_lengths))
+                lengths.append(get_length_determinant_length(addition_length))
                 lengths.extend(additions_lengths)
 
         return lengths
-
-    @staticmethod
-    def get_length_determinant_length(length):
-        if length < 128:
-            return 1
-        elif length < 256:
-            return 2
-        elif length < 65536:
-            return 3
-        elif length < 1677726:
-            return 4
-        else:
-            return 5
-
-    @staticmethod
-    def sum_encoded_lengths(lengths):
-        length = 0
-        length_strings = []
-
-        for length_part in lengths:
-
-            if isinstance(length_part, int):
-                length += length_part
-            else:
-                length_strings.append(length_part)
-
-        if length > 0 or len(length_strings) == 0:
-            length_strings.append(str(length))
-
-        return ' + '.join(length_strings)
 
     def format_octet_string_inner(self, checker):
         location = self.location_inner('', '.')
@@ -1252,7 +1266,7 @@ class _Generator(Generator):
                                     member_checker)
 
                     choice_type_lengths.append(len(member.tag))
-                    choice_type_length = self.sum_encoded_lengths(choice_type_lengths)
+                    choice_type_length = sum_encoded_lengths(choice_type_lengths)
 
                     choice_length_lines += [
                         'case {}_choice_{}_e:'.format(self.location, member.name),
@@ -1325,19 +1339,6 @@ class _Generator(Generator):
         with self.members_backtrace_push(type_.name):
             return ['length_determinant_length((uint32_t)src_p->{})'.format(
                 self.location_inner())]
-
-    @staticmethod
-    def format_null_inner():
-        return (
-            [
-                '(void)encoder_p;',
-                '(void)src_p;'
-            ],
-            [
-                '(void)decoder_p;',
-                '(void)dst_p;'
-            ]
-        )
 
     def format_sequence_of_inner(self, type_, checker):
         unique_number_of_length_bytes = self.add_unique_variable(
@@ -1431,7 +1432,7 @@ class _Generator(Generator):
     def get_encoded_sequence_of_lengths(self, type_, checker):
         inner_lengths = self.get_encoded_type_lengths(type_.element_type,
                                                       checker.element_type)
-        inner_length = self.sum_encoded_lengths(inner_lengths)
+        inner_length = sum_encoded_lengths(inner_lengths)
 
         with self.c_members_backtrace_push(type_.name):
 
@@ -1484,7 +1485,7 @@ class _Generator(Generator):
         elif isinstance(type_, oer.Enumerated):
             return self.format_enumerated_inner(type_)
         elif isinstance(type_, oer.Null):
-            return self.format_null_inner()
+            return format_null_inner()
         else:
             return [], []
 

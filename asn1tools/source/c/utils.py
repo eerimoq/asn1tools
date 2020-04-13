@@ -156,6 +156,13 @@ class _UserType(object):
         self.definition = definition
 
 
+def format_default(default):
+    if isinstance(default, bool):
+        return str(default).lower()
+    else:
+        return str(default)
+
+
 class Generator(object):
 
     def __init__(self, namespace):
@@ -237,13 +244,6 @@ class Generator(object):
             type_name = 'u' + type_name
 
         return type_name
-
-    @staticmethod
-    def format_default(default):
-        if isinstance(default, bool):
-            return str(default).lower()
-        else:
-            return str(default)
 
     def get_addition_present_condition(self, type_):
         return ' || '.join(['src_p->{}is_{}_addition_present'.
@@ -511,7 +511,7 @@ class Generator(object):
             encode_lines = [
                 '',
                 'if (src_p->{} != {}) {{'.format(name,
-                                                 self.format_default(member.default))
+                                                 format_default(member.default))
             ] + indent_lines(encode_lines) + [
                 '}',
                 ''
@@ -521,7 +521,7 @@ class Generator(object):
                 'if ({}) {{'.format(default_condition_by_member_name[member.name])
             ] + indent_lines(decode_lines) + [
                 '} else {',
-                '    dst_p->{} = {};'.format(name, self.format_default(member.default)),
+                '    dst_p->{} = {};'.format(name, format_default(member.default)),
                 '}',
                 ''
             ]
@@ -722,23 +722,23 @@ def dedent_lines(lines):
 
 
 def topological_sort(graph):
-    """Topological sort algorithm to return a list of keys to a dictionary of lists
-    of dependencies. The returned keys define an order so that all dependent items are
-    in front of the originating item.
+    """Topological sort algorithm to return a list of keys to a dictionary
+    of lists of dependencies. The returned keys define an order so
+    that all dependent items are in front of the originating item.
 
     """
-    def recurse(node_, path_):
 
-        if node_ not in path_:
-            edges = graph[node_]
+    def recurse(node, path):
+        if node not in path:
+            edges = graph[node]
 
             for edge in edges:
+                if edge not in path:
+                    path = recurse(edge, path)
 
-                if edge not in path_:
-                    path_ = recurse(edge, path_)
-            path_ = path_ + [node_]
+            path = path + [node]
 
-        return path_
+        return path
 
     path = []
 
