@@ -11,6 +11,7 @@ from .utils import camel_to_snake_case
 from .utils import is_user_type
 from .utils import indent_lines
 from .utils import dedent_lines
+from .utils import canonical
 from ...codecs import uper
 
 
@@ -449,7 +450,8 @@ class _Generator(Generator):
         return []
 
     def get_enumerated_values(self, type_):
-        return sorted(type_.root_data_to_value.items())
+        return sorted([(canonical(data), value)
+                       for data, value in type_.root_data_to_value.items()])
 
     def get_choice_members(self, type_):
         return type_.root_index_to_member.values()
