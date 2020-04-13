@@ -1197,6 +1197,28 @@ static void test_oer_c_source_ag(void)
     assert(decoded.is_m_addition_present);
     assert(memcmp(&decoded.m.buf[0], "\xf0\xf1\xf2\xf3\xf4", 5) == 0);
 }
+static void test_oer_c_source_ag_erroneous_data(void)
+{
+    struct oer_c_source_ag_t decoded;
+
+    // Wrong length determinant, valid unused bits
+    uint8_t encoded[4] = "\x80\xff\xff\x00";
+    assert(oer_c_source_ag_decode(&decoded,
+                                  &encoded[0],
+                                  sizeof(encoded)) == -EOUTOFDATA);
+
+    // Valid length determinant, invalid unused bits
+    uint8_t encoded2[4] = "\x80\xff\x03\x0a";
+    assert(oer_c_source_ag_decode(&decoded,
+                                  &encoded2[0],
+                                  sizeof(encoded2)) == -EBADLENGTH);
+
+    // Invalid addition length of unknown future additions
+    uint8_t encoded3[6] = "\x80\xff\x02\x00\x01\xff";
+    assert(oer_c_source_ag_decode(&decoded,
+                                  &encoded3[0],
+                                  sizeof(encoded3)) == -EOUTOFDATA);
+}
 
 static void test_oer_programming_types_float(void)
 {
@@ -1287,6 +1309,7 @@ int main(void)
     test_oer_c_source_af_past();
     test_oer_c_source_af_future();
     test_oer_c_source_ag();
+    test_oer_c_source_ag_erroneous_data();
 
     test_oer_programming_types_float();
     test_oer_programming_types_double();
