@@ -14,6 +14,7 @@ from .utils import camel_to_snake_case
 from .utils import is_user_type
 from .utils import indent_lines
 from .utils import dedent_lines
+from .utils import canonical
 from ...codecs import oer
 
 LENGTH_DETERMINANT_LENGTH = '''
@@ -552,7 +553,9 @@ class _Generator(Generator):
             return ['double']
 
     def get_enumerated_values(self, type_):
-        return sorted(type_.data_to_value.items(), key=itemgetter(1))
+        return sorted([(canonical(data), value)
+                       for data, value in type_.data_to_value.items()],
+                      key=itemgetter(1))
 
     def get_choice_members(self, type_):
         return type_.root_members
