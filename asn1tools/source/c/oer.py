@@ -920,6 +920,11 @@ class _Generator(Generator):
             '    if ({} == 0) {{'.format(unique_mask),
             '        decoder_read_bytes(decoder_p, &{}, 1);'.format(
                 unique_tmp_addition_mask),
+            '',
+            '        if (decoder_get_result(decoder_p) < 0) {',
+            '',
+            '            return;',
+            '        }',
             '        {} = 0x80;'.format(unique_mask),
             '    }',
             '',
@@ -982,7 +987,9 @@ class _Generator(Generator):
                 unique_unknown_addition_bits=unique_unknown_addition_bits),
             '    {} = decoder_read_length_determinant(decoder_p);'.format(
                 unique_tmp_length),
+            '',
             '    if (decoder_free(decoder_p, {}) < 0) {{'.format(unique_tmp_length),
+            '',
             '        return;',
             '    }',
             '}']
