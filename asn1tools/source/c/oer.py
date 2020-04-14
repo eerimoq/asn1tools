@@ -1307,26 +1307,19 @@ class _Generator(Generator):
         if min_value < 0:
             raise self.error('Negative enumerators are not supported.')
 
-        if max_value <= 127:
-            unique_enum_length = self.add_unique_decode_variable('uint8_t {};',
-                                                                 'enum_length')
-            encode_lines += [
-                'encoder_append_uint8(encoder_p, (uint8_t)src_p->{});'.format(
-                    self.location_inner())]
-        else:
-            unique_enum_length = self.add_unique_variable('uint8_t {};',
-                                                          'enum_length')
-            encode_lines += [
-                '{} = minimum_uint_length(src_p->{});'.format(
-                    unique_enum_length, self.location_inner()),
-                '',
-                'if ((uint32_t)src_p->{0} > 127u) {{'.format(
-                    self.location_inner()),
-                '    encoder_append_uint8(encoder_p, 0x80u | {});'.format(
-                    unique_enum_length),
-                '}',
-                'encoder_append_uint(encoder_p, (uint32_t)src_p->{}, {});'.format(
-                    self.location_inner(), unique_enum_length)]
+        unique_enum_length = self.add_unique_variable('uint8_t {};',
+                                                      'enum_length')
+        encode_lines += [
+            '{} = minimum_uint_length(src_p->{});'.format(
+                unique_enum_length, self.location_inner()),
+            '',
+            'if ((uint32_t)src_p->{0} > 127u) {{'.format(
+                self.location_inner()),
+            '    encoder_append_uint8(encoder_p, 0x80u | {});'.format(
+                unique_enum_length),
+            '}',
+            'encoder_append_uint(encoder_p, (uint32_t)src_p->{}, {});'.format(
+                self.location_inner(), unique_enum_length)]
         decode_lines += [
             '{} = decoder_read_uint8(decoder_p);'.format(unique_enum_length),
             '',
