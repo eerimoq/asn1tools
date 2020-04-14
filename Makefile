@@ -2,33 +2,6 @@ ifeq ($(origin CC), default)
 CC = gcc
 endif
 
-OER_EXE = main_oer
-UPER_EXE = main_uper
-OER_C_SOURCES = \
-	tests/main_oer.c \
-	tests/files/c_source/oer.c \
-	tests/files/c_source/c_source-minus.c
-UPER_C_SOURCES = \
-	tests/main_uper.c \
-	tests/files/c_source/uper.c \
-	tests/files/c_source/boolean_uper.c \
-	tests/files/c_source/octet_string_uper.c
-CFLAGS = \
-	-Itests/files/c_source \
-	-std=c99 \
-	-Wall \
-	-Wextra \
-	-Wpedantic \
-	-Wdouble-promotion \
-	-Wfloat-equal \
-	-Wsign-conversion \
-	-Wformat=2 \
-	-Wshadow \
-	-Werror \
-	-pg \
-	-fprofile-arcs \
-	-ftest-coverage
-
 FUZZER_CC ?= clang
 FUZZER_OER_EXE = main_oer_fuzzer
 FUZZER_UPER_EXE = main_uper_fuzzer
@@ -69,28 +42,15 @@ test:
 .PHONY: codespell
 codespell:
 	codespell -d $$(git ls-files | grep -v ietf \
-	                             | grep -v 3gpp \
-	                             | grep -v generated \
-	                             | grep -v "\\.rs" \
-	                             | grep -v asn1tools/source/rust \
-	                             | grep -v "\.asn")
-
-.PHONY: test-c-oer
-test-c-oer:
-	$(CC) $(CFLAGS) $(OER_C_SOURCES) -o $(OER_EXE)
-	size $(OER_EXE)
-	./$(OER_EXE)
-
-.PHONY: test-c-uper
-test-c-uper:
-	$(CC) $(CFLAGS) $(UPER_C_SOURCES) -o $(UPER_EXE)
-	size $(UPER_EXE)
-	./$(UPER_EXE)
+				     | grep -v 3gpp \
+				     | grep -v generated \
+				     | grep -v "\\.rs" \
+				     | grep -v asn1tools/source/rust \
+				     | grep -v "\.asn")
 
 .PHONY: test-c
 test-c:
-	$(MAKE) test-c-oer
-	$(MAKE) test-c-uper
+	$(MAKE) -C tests
 
 .PHONY: test-c-oer-fuzzer-run
 test-c-oer-fuzzer-run:
