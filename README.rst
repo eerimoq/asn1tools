@@ -1,6 +1,7 @@
 |buildstatus|_
 |coverage|_
 |codecov|_
+|nala|_
 
 About
 =====
@@ -410,6 +411,9 @@ Encodings
 
 .. |codecov| image:: https://codecov.io/gh/eerimoq/asn1tools/branch/master/graph/badge.svg
 .. _codecov: https://codecov.io/gh/eerimoq/asn1tools
+
+.. |nala| image:: https://img.shields.io/badge/nala-test-blue.svg
+.. _nala: https://github.com/eerimoq/nala
 
 .. _ASN.1: https://en.wikipedia.org/wiki/Abstract_Syntax_Notation_One
 
