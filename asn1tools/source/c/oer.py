@@ -262,7 +262,7 @@ static void encoder_append_int(struct encoder_t *self_p,
         break;
 
     case 3:
-        encoder_append_int8(self_p, (int8_t)(value >> 16));
+        encoder_append_uint8(self_p, (uint8_t)((uint32_t)value >> 16));
         encoder_append_int16(self_p, (int16_t)value);
         break;
 
@@ -511,8 +511,8 @@ static int32_t decoder_read_int(struct decoder_t *self_p,
         break;
 
     case 3:
-        value = ((decoder_read_int(self_p, 1) << 16)
-                 | decoder_read_int16(self_p));
+        value = (int32_t)(((uint32_t)decoder_read_uint8(self_p) << 16u)
+                 | decoder_read_uint16(self_p));
         break;
 
     case 4:
@@ -1421,7 +1421,7 @@ class _Generator(Generator):
             '{} = enumerated_value_length(src_p->{});'.format(
                 unique_enum_length, self.location_inner()),
             '',
-            'if ({} != 0) {{'.format(unique_enum_length),
+            'if ({} != 0u) {{'.format(unique_enum_length),
             '    encoder_append_uint8(encoder_p, 0x80u | {});'.format(
                 unique_enum_length),
             '    encoder_append_int(encoder_p, (int32_t)src_p->{}, {});'.format(
