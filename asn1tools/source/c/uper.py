@@ -28,7 +28,7 @@ static void encoder_init(struct encoder_t *self_p,
 '''
 
 ENCODER_GET_RESULT = '''
-static ssize_t encoder_get_result(struct encoder_t *self_p)
+static ssize_t encoder_get_result(const struct encoder_t *self_p)
 {
     if (self_p->size >= 0) {
         return ((self_p->pos + 7) / 8);
@@ -44,7 +44,7 @@ static ssize_t encoder_alloc(struct encoder_t *self_p,
 {
     ssize_t pos;
 
-    if (self_p->pos + (ssize_t)size <= self_p->size) {
+    if ((self_p->pos + (ssize_t)size) <= self_p->size) {
         pos = self_p->pos;
         self_p->pos += (ssize_t)size;
     } else {
@@ -72,7 +72,7 @@ static void encoder_append_bit(struct encoder_t *self_p,
         self_p->buf_p[pos / 8] = 0;
     }
 
-    self_p->buf_p[pos / 8] |= (value << (7 - (pos % 8)));
+    self_p->buf_p[pos / 8] |= (uint8_t)(value << (7 - (pos % 8)));
 }\
 '''
 
@@ -86,21 +86,21 @@ static void encoder_append_bytes(struct encoder_t *self_p,
     size_t byte_pos;
     size_t pos_in_byte;
 
-    pos = encoder_alloc(self_p, 8 * size);
+    pos = encoder_alloc(self_p, 8u * size);
 
     if (pos < 0) {
         return;
     }
 
-    byte_pos = ((size_t)pos / 8);
-    pos_in_byte = ((size_t)pos % 8);
+    byte_pos = ((size_t)pos / 8u);
+    pos_in_byte = ((size_t)pos % 8u);
 
-    if (pos_in_byte == 0) {
-        memcpy(&self_p->buf_p[byte_pos], buf_p, size);
+    if (pos_in_byte == 0u) {
+        (void)memcpy(&self_p->buf_p[byte_pos], buf_p, size);
     } else {
         for (i = 0; i < size; i++) {
             self_p->buf_p[byte_pos + i] |= (buf_p[i] >> pos_in_byte);
-            self_p->buf_p[byte_pos + i + 1] = (buf_p[i] << (8 - pos_in_byte));
+            self_p->buf_p[byte_pos + i + 1] = (buf_p[i] << (8u - pos_in_byte));
         }
     }
 }\
@@ -124,8 +124,8 @@ static void encoder_append_uint16(struct encoder_t *self_p,
 {
     uint8_t buf[2];
 
-    buf[0] = (value >> 8);
-    buf[1] = value;
+    buf[0] = (uint8_t)(value >> 8);
+    buf[1] = (uint8_t)value;
 
     encoder_append_bytes(self_p, &buf[0], sizeof(buf));
 }\
@@ -137,10 +137,10 @@ static void encoder_append_uint32(struct encoder_t *self_p,
 {
     uint8_t buf[4];
 
-    buf[0] = (value >> 24);
-    buf[1] = (value >> 16);
-    buf[2] = (value >> 8);
-    buf[3] = value;
+    buf[0] = (uint8_t)(value >> 24);
+    buf[1] = (uint8_t)(value >> 16);
+    buf[2] = (uint8_t)(value >> 8);
+    buf[3] = (uint8_t)value;
 
     encoder_append_bytes(self_p, &buf[0], sizeof(buf));
 }\
@@ -152,14 +152,14 @@ static void encoder_append_uint64(struct encoder_t *self_p,
 {
     uint8_t buf[8];
 
-    buf[0] = (value >> 56);
-    buf[1] = (value >> 48);
-    buf[2] = (value >> 40);
-    buf[3] = (value >> 32);
-    buf[4] = (value >> 24);
-    buf[5] = (value >> 16);
-    buf[6] = (value >> 8);
-    buf[7] = value;
+    buf[0] = (uint8_t)(value >> 56);
+    buf[1] = (uint8_t)(value >> 48);
+    buf[2] = (uint8_t)(value >> 40);
+    buf[3] = (uint8_t)(value >> 32);
+    buf[4] = (uint8_t)(value >> 24);
+    buf[5] = (uint8_t)(value >> 16);
+    buf[6] = (uint8_t)(value >> 8);
+    buf[7] = (uint8_t)value;
 
     encoder_append_bytes(self_p, &buf[0], sizeof(buf));
 }\
@@ -169,8 +169,7 @@ ENCODER_APPEND_INT8 = '''
 static void encoder_append_int8(struct encoder_t *self_p,
                                 int8_t value)
 {
-    value += 128;
-    encoder_append_uint8(self_p, (uint8_t)value);
+    encoder_append_uint8(self_p, (uint8_t)value + 128);
 }\
 '''
 
@@ -178,8 +177,7 @@ ENCODER_APPEND_INT16 = '''
 static void encoder_append_int16(struct encoder_t *self_p,
                                  int16_t value)
 {
-    value += 32768;
-    encoder_append_uint16(self_p, (uint16_t)value);
+    encoder_append_uint16(self_p, (uint16_t)value + 32768);
 }\
 '''
 
@@ -187,8 +185,7 @@ ENCODER_APPEND_INT32 = '''
 static void encoder_append_int32(struct encoder_t *self_p,
                                  int32_t value)
 {
-    value += 2147483648;
-    encoder_append_uint32(self_p, (uint32_t)value);
+    encoder_append_uint32(self_p, (uint32_t)value + 2147483648);
 }\
 '''
 
@@ -199,7 +196,7 @@ static void encoder_append_int64(struct encoder_t *self_p,
     uint64_t u64_value;
 
     u64_value = (uint64_t)value;
-    u64_value += 9223372036854775808ul;
+    u64_value += 9223372036854775808ull;
 
     encoder_append_uint64(self_p, u64_value);
 }\
@@ -237,7 +234,7 @@ static void decoder_init(struct decoder_t *self_p,
 '''
 
 DECODER_GET_RESULT = '''
-static ssize_t decoder_get_result(struct decoder_t *self_p)
+static ssize_t decoder_get_result(const struct decoder_t *self_p)
 {
     if (self_p->size >= 0) {
         return ((self_p->pos + 7) / 8);
@@ -253,7 +250,7 @@ static ssize_t decoder_free(struct decoder_t *self_p,
 {
     ssize_t pos;
 
-    if (self_p->pos + (ssize_t)size <= self_p->size) {
+    if ((self_p->pos + (ssize_t)size) <= self_p->size) {
         pos = self_p->pos;
         self_p->pos += (ssize_t)size;
     } else {
@@ -293,21 +290,21 @@ static void decoder_read_bytes(struct decoder_t *self_p,
     size_t byte_pos;
     size_t pos_in_byte;
 
-    pos = decoder_free(self_p, 8 * size);
+    pos = decoder_free(self_p, 8u * size);
 
     if (pos < 0) {
         return;
     }
 
-    byte_pos = ((size_t)pos / 8);
-    pos_in_byte = ((size_t)pos % 8);
+    byte_pos = ((size_t)pos / 8u);
+    pos_in_byte = ((size_t)pos % 8u);
 
     if (pos_in_byte == 0) {
-        memcpy(buf_p, &self_p->buf_p[byte_pos], size);
+        (void)memcpy(buf_p, &self_p->buf_p[byte_pos], size);
     } else {
         for (i = 0; i < size; i++) {
             buf_p[i] = (self_p->buf_p[byte_pos + i] << pos_in_byte);
-            buf_p[i] |= (self_p->buf_p[byte_pos + i + 1] >> (8 - pos_in_byte));
+            buf_p[i] |= (self_p->buf_p[byte_pos + i + 1] >> (8u - pos_in_byte));
         }
     }
 }\
@@ -331,7 +328,7 @@ static uint16_t decoder_read_uint16(struct decoder_t *self_p)
 
     decoder_read_bytes(self_p, &buf[0], sizeof(buf));
 
-    return ((buf[0] << 8) | buf[1]);
+    return (((uint16_t)buf[0] << 8) | (uint16_t)buf[1]);
 }\
 '''
 
@@ -409,7 +406,7 @@ static int64_t decoder_read_int64(struct decoder_t *self_p)
     uint64_t value;
 
     value = decoder_read_uint64(self_p);
-    value -= 9223372036854775808ul;
+    value -= 9223372036854775808ull;
 
     return ((int64_t)value);
 }\
@@ -679,7 +676,7 @@ class _Generator(Generator):
                     location),
                 '    decoder_p,',
                 '    {});'.format(type_.number_of_bits),
-                'dst_p->{}length += {};'.format(location, checker.minimum)
+                'dst_p->{}length += {}u;'.format(location, checker.minimum)
             ]
 
             if not does_bits_match_range(type_.number_of_bits,
@@ -687,7 +684,7 @@ class _Generator(Generator):
                                          checker.maximum):
                 decode_lines += [
                     '',
-                    'if (dst_p->{}length > {}) {{'.format(location, checker.maximum),
+                    'if (dst_p->{}length > {}u) {{'.format(location, checker.maximum),
                     '    decoder_abort(decoder_p, EBADLENGTH);',
                     '',
                     '    return;',
@@ -783,8 +780,9 @@ class _Generator(Generator):
         ]
 
         decode_lines = [
-            '{} = decoder_read_non_negative_binary_integer(decoder_p, {});'.format(
+            '{} = ({})decoder_read_non_negative_binary_integer(decoder_p, {});'.format(
                 unique_choice,
+                type_name,
                 type_.root_number_of_bits),
             '',
             'switch ({}) {{'.format(unique_choice),
@@ -840,8 +838,8 @@ class _Generator(Generator):
            value_mapping_required):
             decode_lines += [
                 '',
-                'if ({} > {}) {{'.format(unique_value,
-                                         len(self.get_enumerated_values(type_)) - 1),
+                'if ({} > {}u) {{'.format(unique_value,
+                                          len(self.get_enumerated_values(type_)) - 1),
                 '    decoder_abort(decoder_p, EBADENUM);',
                 '',
                 '    return;',
@@ -918,7 +916,7 @@ class _Generator(Generator):
                     location),
                 '    decoder_p,',
                 '    {});'.format(type_.number_of_bits),
-                'dst_p->{}length += {};'.format(location, checker.minimum),
+                'dst_p->{}length += {}u;'.format(location, checker.minimum),
                 ''
             ]
 
@@ -926,7 +924,7 @@ class _Generator(Generator):
                                          checker.minimum,
                                          checker.maximum):
                 first_decode_lines += [
-                    'if (dst_p->{}length > {}) {{'.format(location, checker.maximum),
+                    'if (dst_p->{}length > {}u) {{'.format(location, checker.maximum),
                     '    decoder_abort(decoder_p, EBADLENGTH);',
                     '',
                     '    return;',
