@@ -2,6 +2,10 @@ ifeq ($(origin CC), default)
 CC = gcc
 endif
 
+C_SOURCES := \
+	tests/files/c_source/oer.c
+	# tests/files/c_source/uper.c
+
 FUZZER_CC ?= clang
 FUZZER_OER_EXE = main_oer_fuzzer
 FUZZER_UPER_EXE = main_uper_fuzzer
@@ -19,6 +23,103 @@ FUZZER_CFLAGS = \
 	-fsanitize=signed-integer-overflow \
 	-fno-sanitize-recover=all
 FUZZER_EXECUTION_TIME ?= 30
+
+CFLAGS := \
+	-Wall \
+	-Wextra \
+	-Wdouble-promotion \
+	-Wfloat-equal \
+	-Wformat=2 \
+	-Wshadow \
+	-Werror
+
+CFLAGS_EXTRA := \
+	-Wduplicated-branches \
+	-Wduplicated-cond \
+	-Wjump-misses-init \
+	-Wlogical-op \
+	-Wnull-dereference \
+	-Wrestrict \
+	-Wconversion \
+	-Wpedantic
+
+CFLAGS_EXTRA_CLANG := \
+	-fsanitize=address \
+	-fsanitize=undefined,nullability \
+	-Warray-bounds-pointer-arithmetic \
+	-Wassign-enum \
+	-Wcast-align \
+	-Wcast-qual \
+	-Wchar-subscripts \
+	-Wcomma \
+	-Wcomment \
+	-Wconditional-uninitialized \
+	-Wdate-time \
+	-Wdocumentation \
+	-Wduplicate-decl-specifier \
+	-Wduplicate-enum \
+	-Wduplicate-method-arg \
+	-Wduplicate-method-match \
+	-Wembedded-directive \
+	-Wempty-translation-unit \
+	-Wexpansion-to-defined \
+	-Wflexible-array-extensions \
+	-Wfloat-conversion \
+	-Wfloat-equal \
+	-Wfloat-overflow-conversion \
+	-Wfloat-zero-conversion \
+	-Wformat-non-iso \
+	-Wformat-nonliteral \
+	-Wformat-pedantic \
+	-Wfour-char-constants \
+	-Wgnu-anonymous-struct \
+	-Wgnu-array-member-paren-init \
+	-Wgnu-auto-type \
+	-Wgnu-binary-literal \
+	-Wgnu-case-range \
+	-Wgnu-complex-integer \
+	-Wgnu-compound-literal-initializer \
+	-Wgnu-conditional-omitted-operand \
+	-Wgnu-designator \
+	-Wgnu-empty-initializer \
+	-Wgnu-empty-struct \
+	-Wgnu-flexible-array-initializer \
+	-Wgnu-flexible-array-union-member \
+	-Wgnu-folding-constant \
+	-Wgnu-imaginary-constant \
+	-Wgnu-include-next \
+	-Wgnu-label-as-value \
+	-Wgnu-redeclared-enum \
+	-Wgnu-statement-expression \
+	-Wgnu-union-cast \
+	-Wgnu-zero-line-directive \
+	-Wgnu-zero-variadic-macro-arguments \
+	-Wheader-hygiene \
+	-Widiomatic-parentheses \
+	-Wimplicit \
+	-Wimplicit-fallthrough \
+	-Wloop-analysis \
+	-Wmethod-signatures \
+	-Wmissing-braces \
+	-Wmissing-field-initializers \
+	-Wnested-anon-types \
+	-Wnewline-eof \
+	-Wnull-pointer-arithmetic \
+	-Woverlength-strings \
+	-Wpointer-arith \
+	-Wsign-compare \
+	-Wtautological-compare \
+	-Wundef \
+	-Wuninitialized \
+	-Wunreachable-code \
+	-Wunreachable-code-aggressive \
+	-Wunused-comparison \
+	-Wunused-const-variable \
+	-Wunused-parameter \
+	-Wunused-variable \
+	-Wvariadic-macros \
+	-Wzero-as-null-pointer-constant \
+	-Wzero-length-array
 
 .PHONY: test
 test:
@@ -50,6 +151,11 @@ codespell:
 
 .PHONY: test-c
 test-c:
+	for f in $(C_SOURCES) ; do \
+	    $(CC) $(CFLAGS) $(CFLAGS_EXTRA) -std=c99 -O3 -c $$f ; \
+	    clang $(CFLAGS) $(CFLAGS_EXTRA_CLANG) -std=c99 -O3 -c $$f ; \
+	done
+
 	$(MAKE) -C tests
 
 .PHONY: test-c-oer-fuzzer-run
