@@ -34,7 +34,7 @@ D ::= SEQUENCE (SIZE (1..10)) OF SEQUENCE {
     },
     g SEQUENCE {
         h ENUMERATED {
-            i, j(4), k(512)
+            i, j(-4), k(512)
         },
         l OCTET STRING (SIZE (1..2))
     },
@@ -377,7 +377,7 @@ U ::= INTEGER (-64..63)
 V ::= INTEGER (-128..127)
 
 -- 9 bits signed
-W ::= INTEGER (-1..510)
+W ::= INTEGER (-129..127)
 
 -- 10 bits signed
 X ::= INTEGER (-2..510)
@@ -432,7 +432,7 @@ AG ::= SEQUENCE {
     b OCTET STRING (SIZE(0..10)),
     c SEQUENCE (SIZE (1..10)) OF BOOLEAN,
     d ENUMERATED {
-        e, f(256), g(65536)
+        e, f(255), g(65536)
     },
     h NULL,
     i REAL (WITH COMPONENTS {

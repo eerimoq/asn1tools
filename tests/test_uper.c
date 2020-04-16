@@ -274,7 +274,7 @@ TEST(uper_c_source_d_all_present)
                                      sizeof(encoded),
                                      &decoded), sizeof(encoded));
     ASSERT_MEMORY_EQ(&encoded[0],
-                     "\x00\xd5\x15\x7d\x20\x60\x60\x60\x60\x78",
+                     "\x00\x55\x15\x7d\x20\x60\x60\x60\x60\x78",
                      sizeof(encoded));
 
     /* Decode. */
@@ -742,12 +742,12 @@ TEST(uper_c_source_w)
         uint8_t encoded[2];
     } datas[] = {
         {
-            .decoded = -1,
+            .decoded = -129,
             .encoded = "\x00\x00"
         },
         {
-            .decoded = 510,
-            .encoded = "\xff\x80"
+            .decoded = 127,
+            .encoded = "\x80\x00"
         }
     };
     uint8_t encoded[2];

@@ -278,7 +278,7 @@ TEST(oer_c_source_c_decode_error_bad_length)
 
 TEST(oer_c_source_d_all_present)
 {
-    uint8_t encoded[21];
+    uint8_t encoded[22];
     struct oer_c_source_d_t decoded;
 
     /* Encode. */
@@ -306,8 +306,8 @@ TEST(oer_c_source_d_all_present)
                                     sizeof(encoded),
                                     &decoded), sizeof(encoded));
     ASSERT_MEMORY_EQ(&encoded[0],
-                     "\x01\x01\x80\x00\x01\x03\x04\x02\x54\x55\xf0\x00\x02\x80"
-                     "\x03\x03\x03\x03\x03\xff\xff",
+                     "\x01\x01\x80\x00\x01\x03\x81\xfc\x02\x54\x55\xf0\x00\x02"
+                     "\x80\x03\x03\x03\x03\x03\xff\xff",
                      sizeof(encoded));
 
     /* Decode. */
@@ -1145,7 +1145,7 @@ TEST(oer_c_source_ag)
 
     ASSERT_MEMORY_EQ(&encoded[0],
                      "\x80\xff\x02\x01\xfe\x03\x02\x84\x55\x06\x01\x04\xff\x00"
-                     "\xff\x00\x03\x82\x01\x00\x00\x04\x3f\x80\x00\x00\x03\x80"
+                     "\xff\x00\x03\x82\x00\xff\x00\x04\x3f\x80\x00\x00\x03\x80"
                      "\xed\x15\x05\xf0\xf1\xf2\xf3\xf4",
                      sizeof(encoded));
 
