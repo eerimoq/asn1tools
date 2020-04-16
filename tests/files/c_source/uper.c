@@ -3376,7 +3376,7 @@ static void uper_c_source_ah_encode_inner(
     struct encoder_t *encoder_p,
     const struct uper_c_source_ah_t *src_p)
 {
-    if(src_p->is_d_addition_present) {
+    if(src_p->is_d_addition_present || src_p->is_e_addition_present) {
         encoder_abort(encoder_p, EINVAL);
         return;
     }

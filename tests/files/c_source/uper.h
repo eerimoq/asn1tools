@@ -697,10 +697,18 @@ struct uper_c_source_ae_t {
 /**
  * Type AH in module CSource.
  */
+enum uper_c_source_ah_e_e {
+    uper_c_source_ah_e_f_e = 0,
+    uper_c_source_ah_e_g_e = 1,
+    uper_c_source_ah_e_h_e = 2
+};
+
 struct uper_c_source_ah_t {
     bool c;
     bool is_d_addition_present;
     uint8_t d;
+    bool is_e_addition_present;
+    enum uper_c_source_ah_e_e e;
 };
 
 /**

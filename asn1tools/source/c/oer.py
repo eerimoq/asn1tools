@@ -663,7 +663,21 @@ def get_enumerated_value_length(value):
         return 4
 
 
-def sum_encoded_lengths(lengths):
+def add_encoded_lengths(lengths):
+    length = 0
+
+    for length_part in lengths:
+
+        if isinstance(length_part, int):
+            length += length_part
+        else:
+            length = None
+            break
+
+    return length
+
+
+def encoded_lengths_as_string(lengths):
     length = 0
     length_strings = []
 
@@ -675,7 +689,7 @@ def sum_encoded_lengths(lengths):
             length_strings.append(length_part)
 
     if length > 0 or len(length_strings) == 0:
-        length_strings.append(str(length))
+        length_strings.append(str(length) + 'u')
 
     return ' + '.join(length_strings)
 
@@ -1092,7 +1106,7 @@ class _Generator(Generator):
                 'if (src_p->{}is_{}_addition_present) {{'
                 .format(self.location_inner('', '.'), addition.name),
                 '    encoder_append_length_determinant(encoder_p, {});'
-                .format(sum_encoded_lengths(encoded_lengths))
+                .format(encoded_lengths_as_string(encoded_lengths))
             ] + indent_lines(addition_encode_lines) + [
                 '}'
             ]
@@ -1155,8 +1169,12 @@ class _Generator(Generator):
                 member_checker = self.get_member_checker(checker, addition.name)
                 additions_lengths = self.get_encoded_type_lengths(addition,
                                                                   member_checker)
-                addition_length = int(sum_encoded_lengths(additions_lengths))
-                lengths.append(get_length_determinant_length(addition_length))
+                addition_length = add_encoded_lengths(additions_lengths)
+                if addition_length is not None:
+                    lengths.append(get_length_determinant_length(addition_length))
+                else:
+                    lengths.append('length_determinant_length({})'.format(
+                        encoded_lengths_as_string(lengths)))
                 lengths.extend(additions_lengths)
 
         return lengths
@@ -1357,7 +1375,7 @@ class _Generator(Generator):
                                     member_checker)
 
                     choice_type_lengths.append(len(member.tag))
-                    choice_type_length = sum_encoded_lengths(choice_type_lengths)
+                    choice_type_length = encoded_lengths_as_string(choice_type_lengths)
 
                     choice_length_lines += [
                         'case {}_choice_{}_e:'.format(self.location, member.name),
@@ -1536,7 +1554,7 @@ class _Generator(Generator):
     def get_encoded_sequence_of_lengths(self, type_, checker):
         inner_lengths = self.get_encoded_type_lengths(type_.element_type,
                                                       checker.element_type)
-        inner_length = sum_encoded_lengths(inner_lengths)
+        inner_length = encoded_lengths_as_string(inner_lengths)
 
         with self.c_members_backtrace_push(type_.name):
 

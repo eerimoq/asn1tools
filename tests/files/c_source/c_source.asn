@@ -452,6 +452,7 @@ AH ::= SEQUENCE {
     c BOOLEAN,
     ...,
     d INTEGER(0..255),
+    e ENUMERATED {f, g, h},
     ...
 }
 
