@@ -980,15 +980,17 @@ TEST(oer_c_source_ae)
 
 TEST(oer_c_source_af)
 {
-    uint8_t encoded[30];
+    uint8_t encoded[32];
     struct oer_c_source_af_t decoded;
 
     /* Encode. */
     decoded.a = true;
     decoded.b.c = true;
-    decoded.b.d = 17;
     decoded.is_b_addition_present = true;
+    decoded.b.d = 17;
     decoded.b.is_d_addition_present = true;
+    decoded.b.e = oer_c_source_ah_e_g_e;
+    decoded.b.is_e_addition_present = true;
     decoded.e = 18;
     decoded.is_e_addition_present = true;
     decoded.f = 19;
@@ -1007,16 +1009,13 @@ TEST(oer_c_source_af)
     decoded.is_l_addition_present = true;
 
     memset(&encoded[0], 0, sizeof(encoded));
-    oer_c_source_af_encode(&encoded[0],
-                           sizeof(encoded),
-                           &decoded);
     ASSERT_EQ(oer_c_source_af_encode(&encoded[0],
                                      sizeof(encoded),
                                      &decoded), sizeof(encoded));
     ASSERT_MEMORY_EQ(&encoded[0],
-                     "\x80\xff\x03\x07\xff\x80\x07\x80\xff\x02\x07\x80\x01\x11"
-                     "\x01\x12\x01\x13\x01\x14\x01\x15\x01\x16\x01\x17\x01\x18"
-                     "\x01\x19",
+                     "\x80\xff\x03\x07\xff\x80\x09\x80\xff\x02\x06\xc0\x01\x11"
+                     "\x01\x01\x01\x12\x01\x13\x01\x14\x01\x15\x01\x16\x01\x17"
+                     "\x01\x18\x01\x19",
                      sizeof(encoded));
 
     /* Decode. */
@@ -1030,6 +1029,8 @@ TEST(oer_c_source_af)
     ASSERT_EQ(decoded.b.c, true);
     ASSERT_TRUE(decoded.b.is_d_addition_present);
     ASSERT_EQ(decoded.b.d, 17);
+    ASSERT_TRUE(decoded.b.is_e_addition_present);
+    ASSERT_EQ(decoded.b.e, oer_c_source_ah_e_g_e);
     ASSERT_TRUE(decoded.is_e_addition_present);
     ASSERT_EQ(decoded.e, 18);
     ASSERT_TRUE(decoded.is_f_addition_present);
@@ -1077,9 +1078,9 @@ TEST(oer_c_source_af_past)
 
 TEST(oer_c_source_af_future)
 {
-    uint8_t encoded[35] = "\x80\xff\x04\x02\xff\xc0\x00\x09\x80\xff\x02\x03"
-        "\xc0\x01\x11\x01\xab\x01\x12\x01\x13\x01\x14\x01\x15\x01\x16\x01\x17\x01"
-        "\x18\x01\x19\x01\x1a";
+    uint8_t encoded[37] = "\x80\xff\x04\x02\xff\xc0\x00\x0b\x80\xff\x02\x03"
+        "\xe0\x01\x11\x01\x01\x01\xab\x01\x12\x01\x13\x01\x14\x01\x15\x01\x16\x01"
+        "\x17\x01\x18\x01\x19\x01\x1a";
     struct oer_c_source_af_t decoded;
 
     /* Decode. */
