@@ -259,7 +259,7 @@ static void encoder_append_length_determinant(struct encoder_t *self_p,
                                               uint32_t length)
 {
     if (length < 128u) {
-        encoder_append_int8(self_p, length);
+        encoder_append_int8(self_p, (int8_t)length);
     } else if (length < 256u) {
         encoder_append_uint8(self_p, 0x81u);
         encoder_append_uint8(self_p, (uint8_t)length);
@@ -343,7 +343,7 @@ static uint16_t decoder_read_uint16(struct decoder_t *self_p)
 
     decoder_read_bytes(self_p, &buf[0], sizeof(buf));
 
-    return (((uint16_t)buf[0] << 8) | (uint16_t)buf[1]);
+    return (uint16_t)(((uint16_t)buf[0] << 8) | (uint16_t)buf[1]);
 }
 
 static uint32_t decoder_read_uint32(struct decoder_t *self_p)
