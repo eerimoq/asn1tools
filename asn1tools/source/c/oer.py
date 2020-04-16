@@ -499,6 +499,7 @@ static int32_t decoder_read_int(struct decoder_t *self_p,
                                 uint8_t number_of_bytes)
 {
     int32_t value;
+    uint32_t tmp;
 
     switch (number_of_bytes) {
 
@@ -511,8 +512,12 @@ static int32_t decoder_read_int(struct decoder_t *self_p,
         break;
 
     case 3:
-        value = (int32_t)(((uint32_t)decoder_read_uint8(self_p) << 16u)
+        tmp = (((uint32_t)decoder_read_uint8(self_p) << 16u)
                  | decoder_read_uint16(self_p));
+        if((tmp & 0x800000u) == 0x800000u) {
+            tmp += 0xff000000u;
+        }
+        value = (int32_t)tmp;
         break;
 
     case 4:

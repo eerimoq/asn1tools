@@ -278,7 +278,7 @@ TEST(oer_c_source_c_decode_error_bad_length)
 
 TEST(oer_c_source_d_all_present)
 {
-    uint8_t encoded[22];
+    uint8_t encoded[24];
     struct oer_c_source_d_t decoded;
 
     /* Encode. */
@@ -306,7 +306,7 @@ TEST(oer_c_source_d_all_present)
                                     sizeof(encoded),
                                     &decoded), sizeof(encoded));
     ASSERT_MEMORY_EQ(&encoded[0],
-                     "\x01\x01\x80\x00\x01\x03\x81\xfc\x02\x54\x55\xf0\x00\x02"
+                     "\x01\x01\x80\x00\x01\x03\x83\xff\x52\x64\x02\x54\x55\xf0\x00\x02"
                      "\x80\x03\x03\x03\x03\x03\xff\xff",
                      sizeof(encoded));
 
