@@ -212,6 +212,31 @@ class Asn1ToolsCSourceTest(unittest.TestCase):
             self.assertEqual(str(cm.exception),
                              "Foo.A.a.b: INTEGER has no minimum value.")
 
+    def test_compile_error_oer_enumerated_min(self):
+        foo = asn1tools.compile_string(
+            'Foo DEFINITIONS AUTOMATIC TAGS ::= BEGIN '
+            '    A ::= ENUMERATED { a(-2147483649) } '
+            'END',
+            'oer')
+
+        with self.assertRaises(asn1tools.errors.Error) as cm:
+            asn1tools.source.c.oer.generate(foo, 'foo')
+
+        self.assertEqual(str(cm.exception),
+                         "Foo.A: -2147483649 does not fit in int32_t.")
+
+    def test_compile_error_oer_enumerated_max(self):
+        foo = asn1tools.compile_string(
+            'Foo DEFINITIONS AUTOMATIC TAGS ::= BEGIN '
+            '    A ::= ENUMERATED { a(2147483649) } '
+            'END',
+            'oer')
+
+        with self.assertRaises(asn1tools.errors.Error) as cm:
+            asn1tools.source.c.oer.generate(foo, 'foo')
+
+        self.assertEqual(str(cm.exception),
+                         "Foo.A: 2147483649 does not fit in int32_t.")
 
 if __name__ == '__main__':
     unittest.main()

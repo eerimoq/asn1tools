@@ -29,7 +29,7 @@ static uint8_t enumerated_value_length(int32_t value)
         length = 1;
     } else if ((value >= -32768) && (value < 32768)) {
         length = 2;
-    } else if ((value >= -8388608) && (value < 16777216)) {
+    } else if ((value >= -8388608) && (value < 8388608)) {
         length = 3;
     } else {
         length = 4;
@@ -317,7 +317,7 @@ static void encoder_append_length_determinant(struct encoder_t *self_p,
         encoder_append_uint8(self_p, 0x82u);
         encoder_append_uint16(self_p, (uint16_t)length);
     } else if (length < 16777216u) {
-        encoder_append_uint32(self_p, length | (0x83uL << 24u));
+        encoder_append_uint32(self_p, length | (0x83u << 24u));
     } else {
         encoder_append_uint8(self_p, 0x84u);
         encoder_append_uint32(self_p, length);
@@ -657,17 +657,6 @@ def get_length_determinant_length(length):
         return 5
 
 
-def get_enumerated_value_length(value):
-    if value in range(-128, 128):
-        return 1
-    elif value in range(-32768, 32768):
-        return 2
-    elif value in range(-8388608, 16777216):
-        return 3
-    else:
-        return 4
-
-
 def add_encoded_lengths(lengths):
     length = 0
 
@@ -694,7 +683,7 @@ def encoded_lengths_as_string(lengths):
             length_strings.append(length_part)
 
     if length > 0 or len(length_strings) == 0:
-        length_strings.append(str(length) + 'uL')
+        length_strings.append(str(length) + 'u')
 
     return ' + '.join(length_strings)
 
@@ -730,6 +719,19 @@ class _Generator(Generator):
             return ['float']
         else:
             return ['double']
+
+    def get_enumerated_value_length(self, value):
+        if value in range(-128, 128):
+            return 1
+        elif value in range(-32768, 32768):
+            return 2
+        elif value in range(-8388608, 8388608):
+            return 3
+        elif value in range(-2147483648, 2147483648):
+            return 4
+        else:
+            raise self.error(
+                '{} does not fit in int32_t.'.format(value))
 
     def get_enumerated_values(self, type_):
         return sorted([(canonical(data), value)
@@ -1423,8 +1425,8 @@ class _Generator(Generator):
         min_value = min(type_.value_to_data)
 
         type_name = '{}_e'.format(self.location)
-        type_length = max(get_enumerated_value_length(min_value),
-                          get_enumerated_value_length(max_value))
+        type_length = max(self.get_enumerated_value_length(min_value),
+                          self.get_enumerated_value_length(max_value))
 
         unique_enum_length = self.add_unique_variable('uint8_t {};',
                                                       'enum_length')
