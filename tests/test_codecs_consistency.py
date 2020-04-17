@@ -1267,6 +1267,9 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             b'<W>510</W>'
         ]
 
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'W', decoded, encoded)
+
         # Type X.
         decoded = -2
 

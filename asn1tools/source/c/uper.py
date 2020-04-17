@@ -545,10 +545,12 @@ class _Generator(Generator):
             return (
                 [
                     'encoder_append_{}(encoder_p, src_p->{});'.format(
-                        suffix, location)
+                        suffix,
+                        location)
                 ],
                 [
-                    'dst_p->{} = decoder_read_{}(decoder_p);'.format(location, suffix)
+                    'dst_p->{} = decoder_read_{}(decoder_p);'.format(location,
+                                                                     suffix)
                 ]
             )
         else:

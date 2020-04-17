@@ -278,6 +278,7 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             ('D',                    'a', b'\x00'),
             ('D',                    'b', b'\x7f'),
             ('E',                    'a', b'\x81\xff'),
+            ('E',                    'b', b'\x82\x04\xd2'),
             ('F',                    'a', b'\x84\xff\x00\x00\x00'),
             ('F',                    'b', b'\x83\x80\x00\x00'),
             ('F',                    'c', b'\x83\xff\x00\x00'),
