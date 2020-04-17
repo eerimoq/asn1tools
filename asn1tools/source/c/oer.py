@@ -792,7 +792,7 @@ class _Generator(Generator):
             start_set_byte = 0
             if extension_bit == 1 and len(type_.additions) > 0:
                 if_line = 'if({}) {{'.format(self.get_addition_present_condition(type_))
-                encode_lines.extend(textwrap.wrap(if_line, 120,
+                encode_lines.extend(textwrap.wrap(if_line, 100,
                                                   subsequent_indent=' ' * len('if(')))
                 encode_lines.append('    {}[0] = 0x80;'.format(unique_present_mask))
                 encode_lines.append('}')
@@ -1009,13 +1009,15 @@ class _Generator(Generator):
 
             member_checker = self.get_member_checker(checker, addition.name)
             encoded_lengths = self.get_encoded_type_lengths(addition, member_checker)
+            encoder_line = 'encoder_append_length_determinant(encoder_p, {});'.format(
+                encoded_lengths_as_string(encoded_lengths))
+            wrapped_encoder_lines = textwrap.wrap(encoder_line, 100,
+                                                  subsequent_indent=' '*4)
             encode_lines += [
                 '',
                 'if (src_p->{}is_{}_addition_present) {{'
-                .format(self.location_inner('', '.'), addition.name),
-                '    encoder_append_length_determinant(encoder_p, {});'
-                .format(encoded_lengths_as_string(encoded_lengths))
-            ] + indent_lines(addition_encode_lines) + [
+                .format(self.location_inner('', '.'), addition.name)
+            ] + indent_lines(wrapped_encoder_lines + addition_encode_lines) + [
                 '}'
             ]
 
@@ -1284,11 +1286,14 @@ class _Generator(Generator):
                                     member_checker)
 
                     choice_type_lengths.append(len(member.tag))
-                    choice_type_length = encoded_lengths_as_string(choice_type_lengths)
+                    length_line = 'length = {};'.format(
+                        encoded_lengths_as_string(choice_type_lengths))
+                    wrapped_length_lines = textwrap.wrap(length_line, 100,
+                                                         subsequent_indent=' '*4)
 
                     choice_length_lines += [
-                        'case {}_choice_{}_e:'.format(self.location, member.name),
-                        '    length = {};'.format(choice_type_length),
+                        'case {}_choice_{}_e:'.format(self.location, member.name)
+                        ] + indent_lines(wrapped_length_lines) + [
                         '    break;',
                         '']
 
