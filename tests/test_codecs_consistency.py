@@ -1240,35 +1240,32 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             self.encode_decode_codec(spec, codec, 'V', decoded, encoded)
 
         # Type W.
-        decoded = -129
+        decoded = -1
 
         encoded_messages = [
-            b'\x02\x02\xff\x7f',
-            b'\x02\x02\xff\x7f',
-            b'-129',
-            b'\xff\x7f',
+            b'\x02\x01\xff',
+            b'\x02\x01\xff',
+            b'-1',
+            b'\xff\xff',
             b'\x00\x00',
             b'\x00\x00',
-            b'<W>-129</W>'
+            b'<W>-1</W>'
         ]
 
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'W', decoded, encoded)
 
-        decoded = 127
+        decoded = 510
 
         encoded_messages = [
-            b'\x02\x01\x7f',
-            b'\x02\x01\x7f',
-            b'127',
-            b'\x00\x7f',
-            b'\x01\x00',
-            b'\x80\x00',
-            b'<W>127</W>'
+            b'\x02\x02\x01\xfe',
+            b'\x02\x02\x01\xfe',
+            b'510',
+            b'\x01\xfe',
+            b'\x01\xff',
+            b'\xff\x80',
+            b'<W>510</W>'
         ]
-
-        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
-            self.encode_decode_codec(spec, codec, 'W', decoded, encoded)
 
         # Type X.
         decoded = -2
@@ -1447,6 +1444,68 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
 
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'AG', decoded, encoded)
+
+        # Type AL.
+        decoded = -129
+
+        encoded_messages = [
+            b'\x02\x02\xff\x7f',
+            b'\x02\x02\xff\x7f',
+            b'-129',
+            b'\xff\x7f',
+            b'\x00\x00',
+            b'\x00\x00',
+            b'<AL>-129</AL>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'AL', decoded, encoded)
+
+        decoded = 127
+
+        encoded_messages = [
+            b'\x02\x01\x7f',
+            b'\x02\x01\x7f',
+            b'127',
+            b'\x00\x7f',
+            b'\x01\x00',
+            b'\x80\x00',
+            b'<AL>127</AL>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'AL', decoded, encoded)
+
+        # Type AM.
+        decoded = -2
+
+        encoded_messages = [
+            b'\x02\x01\xfe',
+            b'\x02\x01\xfe',
+            b'-2',
+            b'\xff\xfe',
+            b'\x00',
+            b'\x00',
+            b'<AM>-2</AM>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'AM', decoded, encoded)
+
+        decoded = 128
+
+        encoded_messages = [
+            b'\x02\x02\x00\x80',
+            b'\x02\x02\x00\x80',
+            b'128',
+            b'\x00\x80',
+            b'\x82',
+            b'\x82',
+            b'<AM>128</AM>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'AM', decoded, encoded)
 
     def test_parameterization(self):
         specs = []

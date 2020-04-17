@@ -377,7 +377,7 @@ U ::= INTEGER (-64..63)
 V ::= INTEGER (-128..127)
 
 -- 9 bits signed
-W ::= INTEGER (-129..127)
+W ::= INTEGER (-1..510)
 
 -- 10 bits signed
 X ::= INTEGER (-2..510)
@@ -397,7 +397,7 @@ AB ::= AA { R, Y }
 
 AC ::= AA { Q, D }
 
--- All endoded values valid (1 bit).
+-- All encoded values valid (1 bit).
 AD ::= ENUMERATED {
     a,
     b
@@ -469,5 +469,9 @@ AJ ::= SEQUENCE {
 AK ::= CHOICE {
     a AJ
 }
+
+AL ::= INTEGER (-129..127)
+
+AM ::= INTEGER (-2..128)
 
 END

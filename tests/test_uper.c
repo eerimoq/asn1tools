@@ -742,12 +742,12 @@ TEST(uper_c_source_w)
         uint8_t encoded[2];
     } datas[] = {
         {
-            .decoded = -129,
+            .decoded = -1,
             .encoded = "\x00\x00"
         },
         {
-            .decoded = 127,
-            .encoded = "\x80\x00"
+            .decoded = 510,
+            .encoded = "\xff\x80"
         }
     };
     uint8_t encoded[2];
@@ -964,4 +964,86 @@ TEST(uper_c_source_af)
     ASSERT_TRUE(uper_c_source_af_decode(&decoded,
                                         &encoded2[0],
                                         sizeof(encoded2)) < 0);
+}
+
+TEST(uper_c_source_al)
+{
+    struct data_t {
+        int16_t decoded;
+        uint8_t encoded[2];
+    } datas[] = {
+        {
+            .decoded = -129,
+            .encoded = "\x00\x00"
+        },
+        {
+            .decoded = 127,
+            .encoded = "\x80\x00"
+        }
+    };
+    uint8_t encoded[2];
+    struct uper_c_source_al_t decoded;
+    unsigned int i;
+
+    for (i = 0; i < membersof(datas); i++) {
+        /* Encode. */
+        decoded.value = datas[i].decoded;
+
+        memset(&encoded[0], 0, sizeof(encoded));
+        ASSERT_EQ(uper_c_source_al_encode(&encoded[0],
+                                         sizeof(encoded),
+                                         &decoded), sizeof(encoded));
+        ASSERT_MEMORY_EQ(&encoded[0],
+                         &datas[i].encoded[0],
+                         sizeof(encoded));
+
+        /* Decode. */
+        memset(&decoded, 0, sizeof(decoded));
+        ASSERT_EQ(uper_c_source_al_decode(&decoded,
+                                         &encoded[0],
+                                         sizeof(encoded)), sizeof(encoded));
+
+        ASSERT_EQ(decoded.value, datas[i].decoded);
+    }
+}
+
+TEST(uper_c_source_am)
+{
+    struct data_t {
+        int16_t decoded;
+        uint8_t encoded[1];
+    } datas[] = {
+        {
+            .decoded = -2,
+            .encoded = "\x00"
+        },
+        {
+            .decoded = 128,
+            .encoded = "\x82"
+        }
+    };
+    uint8_t encoded[1];
+    struct uper_c_source_am_t decoded;
+    unsigned int i;
+
+    for (i = 0; i < membersof(datas); i++) {
+        /* Encode. */
+        decoded.value = datas[i].decoded;
+
+        memset(&encoded[0], 0, sizeof(encoded));
+        ASSERT_EQ(uper_c_source_am_encode(&encoded[0],
+                                         sizeof(encoded),
+                                         &decoded), sizeof(encoded));
+        ASSERT_MEMORY_EQ(&encoded[0],
+                         &datas[i].encoded[0],
+                         sizeof(encoded));
+
+        /* Decode. */
+        memset(&decoded, 0, sizeof(decoded));
+        ASSERT_EQ(uper_c_source_am_decode(&decoded,
+                                         &encoded[0],
+                                         sizeof(encoded)), sizeof(encoded));
+
+        ASSERT_EQ(decoded.value, datas[i].decoded);
+    }
 }
