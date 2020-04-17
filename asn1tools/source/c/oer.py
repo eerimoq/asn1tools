@@ -721,13 +721,13 @@ class _Generator(Generator):
             return ['double']
 
     def get_enumerated_value_length(self, value):
-        if value in range(-128, 128):
+        if -128 <= value < 128:
             return 1
-        elif value in range(-32768, 32768):
+        elif -32768 <= value < 32768:
             return 2
-        elif value in range(-8388608, 8388608):
+        elif -8388608 <= value < 8388608:
             return 3
-        elif value in range(-2147483648, 2147483648):
+        elif -2147483648 <= value < 2147483648:
             return 4
         else:
             raise self.error(
