@@ -1012,7 +1012,7 @@ class _Generator(Generator):
             encoder_line = 'encoder_append_length_determinant(encoder_p, {});'.format(
                 encoded_lengths_as_string(encoded_lengths))
             wrapped_encoder_lines = textwrap.wrap(encoder_line, 100,
-                                                  subsequent_indent=' '*4)
+                                                  subsequent_indent=' ' * 4)
             encode_lines += [
                 '',
                 'if (src_p->{}is_{}_addition_present) {{'
@@ -1289,11 +1289,11 @@ class _Generator(Generator):
                     length_line = 'length = {};'.format(
                         encoded_lengths_as_string(choice_type_lengths))
                     wrapped_length_lines = textwrap.wrap(length_line, 100,
-                                                         subsequent_indent=' '*4)
+                                                         subsequent_indent=' ' * 4)
 
                     choice_length_lines += [
                         'case {}_choice_{}_e:'.format(self.location, member.name)
-                        ] + indent_lines(wrapped_length_lines) + [
+                    ] + indent_lines(wrapped_length_lines) + [
                         '    break;',
                         '']
 
