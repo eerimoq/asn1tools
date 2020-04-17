@@ -34,7 +34,7 @@ D ::= SEQUENCE (SIZE (1..10)) OF SEQUENCE {
     },
     g SEQUENCE {
         h ENUMERATED {
-            i, j(-44444), k(512)
+            i, j(4), k(512)
         },
         l OCTET STRING (SIZE (1..2))
     },
@@ -473,5 +473,8 @@ AK ::= CHOICE {
 AL ::= INTEGER (-129..127)
 
 AM ::= INTEGER (-2..128)
+
+AN ::= ENUMERATED { a(-16777216), b(-8388608), c(-65536), d(-32768), e(-128),
+                    f(0), g(127), h(128), i(32767), j(65536), k(16777216) }
 
 END

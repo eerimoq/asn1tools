@@ -29,7 +29,7 @@ static uint8_t enumerated_value_length(int32_t value)
         length = 1;
     } else if ((value >= -32768) && (value < 32768)) {
         length = 2;
-    } else if ((value >= -16777216) && (value < 16777216)) {
+    } else if ((value >= -8388608) && (value < 16777216)) {
         length = 3;
     } else {
         length = 4;
@@ -662,7 +662,7 @@ def get_enumerated_value_length(value):
         return 1
     elif value in range(-32768, 32768):
         return 2
-    elif value in range(-16777216, 16777216):
+    elif value in range(-8388608, 16777216):
         return 3
     else:
         return 4

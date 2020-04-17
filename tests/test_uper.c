@@ -274,7 +274,7 @@ TEST(uper_c_source_d_all_present)
                                      sizeof(encoded),
                                      &decoded), sizeof(encoded));
     ASSERT_MEMORY_EQ(&encoded[0],
-                     "\x00\x55\x15\x7d\x20\x60\x60\x60\x60\x78",
+                     "\x00\xd5\x15\x7d\x20\x60\x60\x60\x60\x78",
                      sizeof(encoded));
 
     /* Decode. */

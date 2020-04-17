@@ -265,6 +265,8 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             "C ::= ENUMERATED { a(0), b(127) } "
             "D ::= ENUMERATED { a(0), ..., b(127) } "
             "E ::= ENUMERATED { a(-1), b(1234) } "
+            "F ::= ENUMERATED { a(-16777216), b(-8388608), c(-65536), "
+            "d(-32768), e(-128) } "
             "END",
             'oer')
 
@@ -276,7 +278,11 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             ('D',                    'a', b'\x00'),
             ('D',                    'b', b'\x7f'),
             ('E',                    'a', b'\x81\xff'),
-            ('E',                    'b', b'\x82\x04\xd2')
+            ('F',                    'a', b'\x84\xff\x00\x00\x00'),
+            ('F',                    'b', b'\x83\x80\x00\x00'),
+            ('F',                    'c', b'\x83\xff\x00\x00'),
+            ('F',                    'd', b'\x82\x80\x00'),
+            ('F',                    'e', b'\x81\x80'),
         ]
 
         for type_name, decoded, encoded in datas:
