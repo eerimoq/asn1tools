@@ -317,7 +317,7 @@ static void encoder_append_length_determinant(struct encoder_t *self_p,
         encoder_append_uint8(self_p, 0x82u);
         encoder_append_uint16(self_p, (uint16_t)length);
     } else if (length < 16777216u) {
-        encoder_append_uint32(self_p, length | (0x83u << 24u));
+        encoder_append_uint32(self_p, length | (0x83uL << 24u));
     } else {
         encoder_append_uint8(self_p, 0x84u);
         encoder_append_uint32(self_p, length);
@@ -694,7 +694,7 @@ def encoded_lengths_as_string(lengths):
             length_strings.append(length_part)
 
     if length > 0 or len(length_strings) == 0:
-        length_strings.append(str(length) + 'u')
+        length_strings.append(str(length) + 'uL')
 
     return ' + '.join(length_strings)
 
@@ -1466,7 +1466,7 @@ class _Generator(Generator):
 
     def get_encoded_enumerated_length(self, type_):
         with self.members_backtrace_push(type_.name):
-            return ['enumerated_value_length((int32_t)src_p->{})'.format(
+            return ['(uint32_t)enumerated_value_length((int32_t)src_p->{})'.format(
                 self.location_inner()), 1]
 
     def format_sequence_of_inner(self, type_, checker):
@@ -1570,7 +1570,7 @@ class _Generator(Generator):
         with self.c_members_backtrace_push(type_.name):
 
             return [1,
-                    'minimum_uint_length(src_p->{loc}length)'.format(
+                    '(uint32_t)minimum_uint_length(src_p->{loc}length)'.format(
                         loc=self.location_inner('', '.')),
                     '(uint32_t)(src_p->{loc}length * ({inner_length}))'.format(
                         loc=self.location_inner('', '.'), inner_length=inner_length)]
