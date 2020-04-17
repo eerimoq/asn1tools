@@ -432,7 +432,7 @@ AG ::= SEQUENCE {
     b OCTET STRING (SIZE(0..10)),
     c SEQUENCE (SIZE (1..10)) OF BOOLEAN,
     d ENUMERATED {
-        e, f(255), g(65536)
+        e, f(256), g(65536)
     },
     h NULL,
     i REAL (WITH COMPONENTS {
