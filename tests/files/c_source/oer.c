@@ -3839,7 +3839,8 @@ static void oer_c_source_af_encode_inner(
                              sizeof(addition_mask));
 
         if (src_p->is_b_addition_present) {
-            encoder_append_length_determinant(encoder_p, length_determinant_length(7u) + enumerated_value_length((int32_t)src_p->e) + 8u);
+            encoder_append_length_determinant(encoder_p, length_determinant_length(7u) +
+                length_determinant_length((uint32_t)src_p->e) + 8u);
             oer_c_source_ah_encode_inner(encoder_p, &src_p->b);
         }
 
@@ -4095,7 +4096,8 @@ static void oer_c_source_ag_encode_inner(
                              sizeof(addition_mask));
 
         if (src_p->is_b_addition_present) {
-            encoder_append_length_determinant(encoder_p, length_determinant_length(src_p->b.length) + src_p->b.length);
+            encoder_append_length_determinant(encoder_p, length_determinant_length(src_p->b.length) +
+                src_p->b.length);
             encoder_append_uint8(encoder_p, src_p->b.length);
             encoder_append_bytes(encoder_p,
                                  &src_p->b.buf[0],
@@ -4103,7 +4105,8 @@ static void oer_c_source_ag_encode_inner(
         }
 
         if (src_p->is_c_addition_present) {
-            encoder_append_length_determinant(encoder_p, minimum_uint_length(src_p->c.length) + (uint32_t)(src_p->c.length * (1u)) + 1u);
+            encoder_append_length_determinant(encoder_p, minimum_uint_length(src_p->c.length) +
+                (uint32_t)(src_p->c.length * (1u)) + 1u);
             number_of_length_bytes = minimum_uint_length(src_p->c.length);
             encoder_append_uint8(encoder_p, number_of_length_bytes);
             encoder_append_uint(encoder_p,
@@ -4139,6 +4142,7 @@ static void oer_c_source_ag_encode_inner(
 
         if (src_p->is_j_addition_present) {
             encoder_append_length_determinant(encoder_p, get_choice_j_length(src_p));
+
             switch (src_p->j.choice) {
 
             case oer_c_source_ag_j_choice_k_e:

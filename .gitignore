@@ -72,3 +72,4 @@ gmon.out
 /*.mk
 Cargo.lock
 /rust_source.rs
+/*.o
