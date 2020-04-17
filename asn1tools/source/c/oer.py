@@ -1078,6 +1078,7 @@ class _Generator(Generator):
                 additions_lengths = self.get_encoded_type_lengths(addition,
                                                                   member_checker)
                 addition_length = add_encoded_lengths(additions_lengths)
+
                 if addition_length is not None:
                     lengths.append(get_length_determinant_length(addition_length))
                 else:
