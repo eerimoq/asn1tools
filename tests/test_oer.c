@@ -1178,6 +1178,98 @@ TEST(oer_c_source_ag)
     ASSERT_TRUE(decoded.is_m_addition_present);
     ASSERT_MEMORY_EQ(&decoded.m.buf[0], "\xf0\xf1\xf2\xf3\xf4", 5);
 }
+
+TEST(oer_c_source_an)
+{
+    struct data_t {
+        int32_t decoded;
+        uint8_t encoded[5];
+        uint8_t encoded_length;
+    } datas[] = {
+        {
+            .decoded = oer_c_source_an_a_e,
+            .encoded = "\x84\xff\x00\x00\x00",
+            .encoded_length = 5
+        },
+        {
+            .decoded = oer_c_source_an_b_e,
+            .encoded = "\x83\x80\x00\x00",
+            .encoded_length = 4
+        },
+        {
+            .decoded = oer_c_source_an_c_e,
+            .encoded = "\x83\xff\x00\x00",
+            .encoded_length = 4
+        },
+        {
+            .decoded = oer_c_source_an_d_e,
+            .encoded = "\x82\x80\x00",
+            .encoded_length = 3
+        },
+        {
+            .decoded = oer_c_source_an_e_e,
+            .encoded = "\x81\x80",
+            .encoded_length = 2
+        },
+        {
+            .decoded = oer_c_source_an_f_e,
+            .encoded = "\x00",
+            .encoded_length = 1
+        },
+        {
+            .decoded = oer_c_source_an_g_e,
+            .encoded = "\x7f",
+            .encoded_length = 1
+        },
+        {
+            .decoded = oer_c_source_an_h_e,
+            .encoded = "\x82\x00\x80",
+            .encoded_length = 3
+        },
+        {
+            .decoded = oer_c_source_an_i_e,
+            .encoded = "\x82\x7f\xff",
+            .encoded_length = 3
+        },
+        {
+            .decoded = oer_c_source_an_j_e,
+            .encoded = "\x83\x01\x00\x00",
+            .encoded_length = 4
+        },
+        {
+            .decoded = oer_c_source_an_k_e,
+            .encoded = "\x84\x01\x00\x00\x00",
+            .encoded_length = 5
+        },
+    };
+    uint8_t encoded[5];
+    struct oer_c_source_an_t decoded;
+    unsigned int i;
+
+    for (i = 0; i < membersof(datas); i++) {
+        printf("%u\n", i);
+        /* Encode. */
+        decoded.value = datas[i].decoded;
+
+        memset(&encoded[0], 0, sizeof(encoded));
+        ASSERT_EQ(oer_c_source_an_encode(&encoded[0],
+                                         sizeof(encoded),
+                                         &decoded), datas[i].encoded_length);
+        ASSERT_MEMORY_EQ(&encoded[0],
+                         &datas[i].encoded[0],
+                         datas[i].encoded_length);
+
+        /* Decode. */
+        memset(&decoded, 0, sizeof(decoded));
+        ASSERT_EQ(oer_c_source_an_decode(&decoded,
+                                         &encoded[0],
+                                         datas[i].encoded_length),
+                                         datas[i].encoded_length);
+
+        ASSERT_EQ(decoded.value, datas[i].decoded);
+    }
+}
+
 TEST(oer_c_source_ag_erroneous_data)
 {
     struct oer_c_source_ag_t decoded;

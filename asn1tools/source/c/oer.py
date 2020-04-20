@@ -18,6 +18,26 @@ from .utils import canonical
 from .utils import format_default
 from ...codecs import oer
 
+ENUMERATED_VALUE_LENGTH = '''
+static uint8_t enumerated_value_length(int32_t value)
+{
+    uint8_t length;
+
+    if ((value >=0) && (value < 128)) {
+        length = 0;
+    } else if ((value >= -128) && (value < 128)) {
+        length = 1;
+    } else if ((value >= -32768) && (value < 32768)) {
+        length = 2;
+    } else if ((value >= -8388608) && (value < 8388608)) {
+        length = 3;
+    } else {
+        length = 4;
+    }
+
+    return length;
+}\
+'''
 
 LENGTH_DETERMINANT_LENGTH = '''
 static uint32_t length_determinant_length(uint32_t value)
@@ -221,6 +241,33 @@ static void encoder_append_uint(struct encoder_t *self_p,
 
     default:
         encoder_append_uint32(self_p, value);
+        break;
+    }
+}\
+'''
+
+ENCODER_APPEND_INT = '''
+static void encoder_append_int(struct encoder_t *self_p,
+                               int32_t value,
+                               uint8_t number_of_bytes)
+{
+    switch (number_of_bytes) {
+
+    case 1:
+        encoder_append_int8(self_p, (int8_t)value);
+        break;
+
+    case 2:
+        encoder_append_int16(self_p, (int16_t)value);
+        break;
+
+    case 3:
+        encoder_append_uint8(self_p, (uint8_t)((uint32_t)value >> 16));
+        encoder_append_int16(self_p, (int16_t)value);
+        break;
+
+    default:
+        encoder_append_int32(self_p, value);
         break;
     }
 }\
@@ -447,6 +494,45 @@ static uint32_t decoder_read_uint(struct decoder_t *self_p,
 }\
 '''
 
+DECODER_READ_INT = '''
+static int32_t decoder_read_int(struct decoder_t *self_p,
+                                uint8_t number_of_bytes)
+{
+    int32_t value;
+    uint32_t tmp;
+
+    switch (number_of_bytes) {
+
+    case 1:
+        value = decoder_read_int8(self_p);
+        break;
+
+    case 2:
+        value = decoder_read_int16(self_p);
+        break;
+
+    case 3:
+        tmp = (((uint32_t)decoder_read_uint8(self_p) << 16u)
+                 | decoder_read_uint16(self_p));
+        if((tmp & 0x800000u) == 0x800000u) {
+            tmp += 0xff000000u;
+        }
+        value = (int32_t)tmp;
+        break;
+
+    case 4:
+        value = decoder_read_int32(self_p);
+        break;
+
+    default:
+        value = 2147483647;
+        break;
+    }
+
+    return (value);
+}\
+'''
+
 DECODER_READ_FLOAT = '''
 static float decoder_read_float(struct decoder_t *self_p)
 {
@@ -633,6 +719,19 @@ class _Generator(Generator):
             return ['float']
         else:
             return ['double']
+
+    def get_enumerated_value_length(self, value):
+        if -128 <= value < 128:
+            return 1
+        elif -32768 <= value < 32768:
+            return 2
+        elif -8388608 <= value < 8388608:
+            return 3
+        elif -2147483648 <= value < 2147483648:
+            return 4
+        else:
+            raise self.error(
+                '{} does not fit in int32_t.'.format(value))
 
     def get_enumerated_values(self, type_):
         return sorted([(canonical(data), value)
@@ -1326,24 +1425,25 @@ class _Generator(Generator):
         min_value = min(type_.value_to_data)
 
         type_name = '{}_e'.format(self.location)
-        type_length = self.type_length(0, max_value) // 8
-
-        if min_value < 0:
-            raise self.error('Negative enumerators are not supported.')
+        type_length = max(self.get_enumerated_value_length(min_value),
+                          self.get_enumerated_value_length(max_value))
 
         unique_enum_length = self.add_unique_variable('uint8_t {};',
                                                       'enum_length')
         encode_lines += [
-            '{} = minimum_uint_length(src_p->{});'.format(
+            '{} = enumerated_value_length(src_p->{});'.format(
                 unique_enum_length, self.location_inner()),
             '',
-            'if ((uint32_t)src_p->{0} > 127u) {{'.format(
-                self.location_inner()),
+            'if ({} != 0u) {{'.format(unique_enum_length),
             '    encoder_append_uint8(encoder_p, 0x80u | {});'.format(
                 unique_enum_length),
+            '    encoder_append_int(encoder_p, (int32_t)src_p->{}, {});'.format(
+                self.location_inner(), unique_enum_length),
             '}',
-            'encoder_append_uint(encoder_p, (uint32_t)src_p->{}, {});'.format(
-                self.location_inner(), unique_enum_length)]
+            'else {',
+            '    encoder_append_uint8(encoder_p, (uint8_t)src_p->{});'.format(
+                self.location_inner()),
+            '}']
         decode_lines += [
             '{} = decoder_read_uint8(decoder_p);'.format(unique_enum_length),
             '',
@@ -1356,7 +1456,7 @@ class _Generator(Generator):
             '',
             '        return;',
             '    }',
-            '    dst_p->{} = (enum {})decoder_read_uint(decoder_p, {});'.format(
+            '    dst_p->{} = (enum {})decoder_read_int(decoder_p, {});'.format(
                 self.location_inner(), type_name, unique_enum_length),
             '}',
             'else {',
@@ -1368,8 +1468,8 @@ class _Generator(Generator):
 
     def get_encoded_enumerated_length(self, type_):
         with self.members_backtrace_push(type_.name):
-            return ['length_determinant_length((uint32_t)src_p->{})'.format(
-                self.location_inner())]
+            return ['(uint32_t)enumerated_value_length((int32_t)src_p->{})'.format(
+                self.location_inner()), 1]
 
     def format_sequence_of_inner(self, type_, checker):
         unique_number_of_length_bytes = self.add_unique_variable(
@@ -1472,7 +1572,7 @@ class _Generator(Generator):
         with self.c_members_backtrace_push(type_.name):
 
             return [1,
-                    'minimum_uint_length(src_p->{loc}length)'.format(
+                    '(uint32_t)minimum_uint_length(src_p->{loc}length)'.format(
                         loc=self.location_inner('', '.')),
                     '(uint32_t)(src_p->{loc}length * ({inner_length}))'.format(
                         loc=self.location_inner('', '.'), inner_length=inner_length)]
@@ -1533,6 +1633,7 @@ class _Generator(Generator):
             ('decoder_read_bool(', DECODER_READ_BOOL),
             ('decoder_read_double(', DECODER_READ_DOUBLE),
             ('decoder_read_float(', DECODER_READ_FLOAT),
+            ('decoder_read_int(', DECODER_READ_INT),
             ('decoder_read_uint(', DECODER_READ_UINT),
             ('decoder_read_int64(', DECODER_READ_INT64),
             ('decoder_read_int32(', DECODER_READ_INT32),
@@ -1551,6 +1652,7 @@ class _Generator(Generator):
             ('encoder_append_bool(', ENCODER_APPEND_BOOL),
             ('encoder_append_double(', ENCODER_APPEND_DOUBLE),
             ('encoder_append_float(', ENCODER_APPEND_FLOAT),
+            ('encoder_append_int(', ENCODER_APPEND_INT),
             ('encoder_append_uint(', ENCODER_APPEND_UINT),
             ('encoder_append_int64(', ENCODER_APPEND_INT64),
             ('encoder_append_int32(', ENCODER_APPEND_INT32),
@@ -1566,7 +1668,8 @@ class _Generator(Generator):
             ('encoder_get_result(', ENCODER_GET_RESULT),
             ('encoder_init(', ENCODER_INIT),
             ('minimum_uint_length(', MINIMUM_UINT_LENGTH),
-            ('length_determinant_length(', LENGTH_DETERMINANT_LENGTH)
+            ('length_determinant_length(', LENGTH_DETERMINANT_LENGTH),
+            ('enumerated_value_length(', ENUMERATED_VALUE_LENGTH)
         ]
 
         for pattern, definition in functions:

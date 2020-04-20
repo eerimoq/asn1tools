@@ -207,11 +207,11 @@ class Generator(object):
                 '{} does not fit in int64_t.'.format(maximum))
 
         # Calculate the number of bytes needed.
-        if minimum < -4294967296:
+        if minimum < -2147483648:
             minimum_length = 64
-        elif minimum < -65536:
+        elif minimum < -32768:
             minimum_length = 32
-        elif minimum < -256:
+        elif minimum < -128:
             minimum_length = 16
         elif minimum < 0:
             minimum_length = 8

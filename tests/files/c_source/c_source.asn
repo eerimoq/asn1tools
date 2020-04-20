@@ -397,7 +397,7 @@ AB ::= AA { R, Y }
 
 AC ::= AA { Q, D }
 
--- All endoded values valid (1 bit).
+-- All encoded values valid (1 bit).
 AD ::= ENUMERATED {
     a,
     b
@@ -469,5 +469,12 @@ AJ ::= SEQUENCE {
 AK ::= CHOICE {
     a AJ
 }
+
+AL ::= INTEGER (-129..127)
+
+AM ::= INTEGER (-2..128)
+
+AN ::= ENUMERATED { a(-16777216), b(-8388608), c(-65536), d(-32768), e(-128),
+                    f(0), g(127), h(128), i(32767), j(65536), k(16777216) }
 
 END

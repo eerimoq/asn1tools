@@ -539,7 +539,9 @@ class _Generator(Generator):
         suffix = type_name[:-2]
         location = self.location_inner()
 
-        if (type_.number_of_bits % 8) == 0:
+        if (type_.number_of_bits % 8) == 0 and checker.minimum in [0, -128, -32768,
+                                                                   -2147483648,
+                                                                   -9223372036854775808]:
             return (
                 [
                     'encoder_append_{}(encoder_p, src_p->{});'.format(

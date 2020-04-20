@@ -24,7 +24,7 @@ Supported codecs:
 
 Miscellaneous features:
 
-- `C` source code generator (with lots of limitations).
+- `C` source code generator for OER and UPER (with some limitations).
 
 Planned features:
 

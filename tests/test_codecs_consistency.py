@@ -1412,7 +1412,7 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'AF', decoded, encoded)
 
-        # AG
+        # Type AG
         decoded = {
             'a': True,
             'b': b'\x84\x55',
@@ -1447,6 +1447,68 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
 
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'AG', decoded, encoded)
+
+        # Type AL.
+        decoded = -129
+
+        encoded_messages = [
+            b'\x02\x02\xff\x7f',
+            b'\x02\x02\xff\x7f',
+            b'-129',
+            b'\xff\x7f',
+            b'\x00\x00',
+            b'\x00\x00',
+            b'<AL>-129</AL>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'AL', decoded, encoded)
+
+        decoded = 127
+
+        encoded_messages = [
+            b'\x02\x01\x7f',
+            b'\x02\x01\x7f',
+            b'127',
+            b'\x00\x7f',
+            b'\x01\x00',
+            b'\x80\x00',
+            b'<AL>127</AL>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'AL', decoded, encoded)
+
+        # Type AM.
+        decoded = -2
+
+        encoded_messages = [
+            b'\x02\x01\xfe',
+            b'\x02\x01\xfe',
+            b'-2',
+            b'\xff\xfe',
+            b'\x00',
+            b'\x00',
+            b'<AM>-2</AM>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'AM', decoded, encoded)
+
+        decoded = 128
+
+        encoded_messages = [
+            b'\x02\x02\x00\x80',
+            b'\x02\x02\x00\x80',
+            b'128',
+            b'\x00\x80',
+            b'\x82',
+            b'\x82',
+            b'<AM>128</AM>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'AM', decoded, encoded)
 
     def test_parameterization(self):
         specs = []
