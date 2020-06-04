@@ -25,50 +25,50 @@ from .compiler import clean_bit_string_value
 
 
 class Class(object):
-    UNIVERSAL           = 0x00
-    APPLICATION         = 0x40
-    CONTEXT_SPECIFIC    = 0x80
-    PRIVATE             = 0xc0
+    UNIVERSAL        = 0x00
+    APPLICATION      = 0x40
+    CONTEXT_SPECIFIC = 0x80
+    PRIVATE          = 0xc0
 
 
 class Encoding(object):
-    PRIMITIVE           = 0x00
-    CONSTRUCTED         = 0x20
+    PRIMITIVE   = 0x00
+    CONSTRUCTED = 0x20
 
 
 class Tag(object):
-    END_OF_CONTENTS     = 0x00
-    BOOLEAN             = 0x01
-    INTEGER             = 0x02
-    BIT_STRING          = 0x03
-    OCTET_STRING        = 0x04
-    NULL                = 0x05
-    OBJECT_IDENTIFIER   = 0x06
-    OBJECT_DESCRIPTOR   = 0x07
-    EXTERNAL            = 0x08
-    REAL                = 0x09
-    ENUMERATED          = 0x0a
-    EMBEDDED_PDV        = 0x0b
-    UTF8_STRING         = 0x0c
-    RELATIVE_OID        = 0x0d
-    SEQUENCE            = 0x10
-    SET                 = 0x11
-    NUMERIC_STRING      = 0x12
-    PRINTABLE_STRING    = 0x13
-    T61_STRING          = 0x14
-    VIDEOTEX_STRING     = 0x15
-    IA5_STRING          = 0x16
-    UTC_TIME            = 0x17
-    GENERALIZED_TIME    = 0x18
-    GRAPHIC_STRING      = 0x19
-    VISIBLE_STRING      = 0x1a
-    GENERAL_STRING      = 0x1b
-    UNIVERSAL_STRING    = 0x1c
-    CHARACTER_STRING    = 0x1d
-    BMP_STRING          = 0x1e
-    DATE                = 0x1f
-    TIME_OF_DAY         = 0x20
-    DATE_TIME           = 0x21
+    END_OF_CONTENTS   = 0x00
+    BOOLEAN           = 0x01
+    INTEGER           = 0x02
+    BIT_STRING        = 0x03
+    OCTET_STRING      = 0x04
+    NULL              = 0x05
+    OBJECT_IDENTIFIER = 0x06
+    OBJECT_DESCRIPTOR = 0x07
+    EXTERNAL          = 0x08
+    REAL              = 0x09
+    ENUMERATED        = 0x0a
+    EMBEDDED_PDV      = 0x0b
+    UTF8_STRING       = 0x0c
+    RELATIVE_OID      = 0x0d
+    SEQUENCE          = 0x10
+    SET               = 0x11
+    NUMERIC_STRING    = 0x12
+    PRINTABLE_STRING  = 0x13
+    T61_STRING        = 0x14
+    VIDEOTEX_STRING   = 0x15
+    IA5_STRING        = 0x16
+    UTC_TIME          = 0x17
+    GENERALIZED_TIME  = 0x18
+    GRAPHIC_STRING    = 0x19
+    VISIBLE_STRING    = 0x1a
+    GENERAL_STRING    = 0x1b
+    UNIVERSAL_STRING  = 0x1c
+    CHARACTER_STRING  = 0x1d
+    BMP_STRING        = 0x1e
+    DATE              = 0x1f
+    TIME_OF_DAY       = 0x20
+    DATE_TIME         = 0x21
 
 
 EOC_TAG = bytes(2)
@@ -454,7 +454,7 @@ class PrimitiveOrConstructedType(Type):
             segments = []
 
             if length is None:
-                while data[offset:offset + 2] != b'\x00\x00':
+                while data[offset:offset + 2] != EOC_TAG:
                     decoded, offset = self.segment.decode(data, offset)
                     segments.append(decoded)
 
@@ -598,8 +598,11 @@ class MembersType(Type):
                                            offset,
                                            end_offset)
         # Detect end of indefinite length constructed field
-        if end_offset is None and data[offset:offset + 2] == EOC_TAG:
-            end_offset = offset + 2
+        if end_offset is None:
+            if data[offset:offset + 2] == EOC_TAG:
+                end_offset = offset + 2
+            else:
+                raise DecodeError('Could not find end-of-contents tag for indefinite length field')
 
         return values, end_offset
 
@@ -1121,56 +1124,67 @@ class Choice(Type):
 
 
 class UTF8String(StringType):
+
     TAG = Tag.UTF8_STRING
     ENCODING = 'utf-8'
 
 
 class NumericString(StringType):
+
     TAG = Tag.NUMERIC_STRING
     ENCODING = 'ascii'
 
 
 class PrintableString(StringType):
+
     TAG = Tag.PRINTABLE_STRING
     ENCODING = 'ascii'
 
 
 class IA5String(StringType):
+
     TAG = Tag.IA5_STRING
     ENCODING = 'ascii'
 
 
 class VisibleString(StringType):
+
     TAG = Tag.VISIBLE_STRING
     ENCODING = 'ascii'
 
 
 class GeneralString(StringType):
+
     TAG = Tag.GENERAL_STRING
     ENCODING = 'latin-1'
 
 
 class BMPString(StringType):
+
     TAG = Tag.BMP_STRING
     ENCODING = 'utf-16-be'
 
 
 class GraphicString(StringType):
+
     TAG = Tag.GRAPHIC_STRING
     ENCODING = 'latin-1'
 
 
 class UniversalString(StringType):
+
     TAG = Tag.UNIVERSAL_STRING
     ENCODING = 'utf-32-be'
 
 
 class TeletexString(StringType):
+
     TAG = Tag.T61_STRING
     ENCODING = 'iso-8859-1'
 
 
 class ObjectDescriptor(GraphicString):
+
     TAG = Tag.OBJECT_DESCRIPTOR
 
 

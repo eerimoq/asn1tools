@@ -663,6 +663,14 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         # Decode W (nested sequence) with indefinite length and end-of-contents octet
         self.assertEqual(foo.decode('W', b'\x30\x80\x81\x01\x10\x82\x01\x61\xa3\x80\x84\x01\x02\x00\x00\x00\x00'), {'a': 16, 'b': b'a', 'c': {'a': 2}})
 
+        # Test error when EOC tag is missing
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('W', b'\x30\x80\x81\x01\x10\x82\x01\x61\xa3\x80\x84\x01\x02\x00\x00')
+
+        self.assertEqual(
+            str(cm.exception),
+            'Could not find end-of-contents tag for indefinite length field')
+
         # Missing member.
         with self.assertRaises(asn1tools.EncodeError) as cm:
             foo.encode('C', {})
@@ -719,8 +727,15 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
         # Test indefinite length set with end-of-contents tags
-        self.assertEqual(foo.decode('A', b'\x31\x80\x80\x01\x03\x81\x01\x04\x00\x00'), {'a': 3, 'b': 4})
+        self.assertEqual(foo.decode('A', b'\x31\x80\x80\x01\x03\x81\x01\x00\x00\x00'), {'a': 3, 'b': 0})
         self.assertEqual(foo.decode('C', b'\x31\x80\xa0\x80\x80\x01\x03\x81\x01\x04\x00\x00\x81\x01\x12\x00\x00'), {'a': {'a': 3, 'b': 4}, 'b': b'\x12'})
+        # Test error when EOC tag is missing
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('C', b'\x31\x80\xa0\x80\x80\x01\x03\x81\x01\x04\x81\x01\x12\x00\x00')
+
+        self.assertEqual(
+            str(cm.exception),
+            'a: Could not find end-of-contents tag for indefinite length field')
 
     def test_choice(self):
         foo = asn1tools.compile_string(
@@ -887,6 +902,9 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             str(cm.exception),
             "Expected choice member tag '80', but got '81'.")
 
+        # Test indefinite-length choice
+        self.assertEqual(foo.decode('M', b'\xa0\x80\x80\x01\xff\x00\x00'), ('a', ('b', True)))
+
     def test_choice_implicit_tags(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS IMPLICIT TAGS ::= "
@@ -944,6 +962,8 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(foo.decode('B', b'\x24\x03\x04\x01\x12'), ('a', b'\x12'))
         self.assertEqual(foo.decode('B', b'\x04\x01\x12'), ('a', b'\x12'))
+        # Test indefinite length
+        self.assertEqual(foo.decode('K', b'\xa3\x80\xa4\x80\x01\x01\x00\x00\x00\x00\x00'), ('a', ('a', False)))
 
     def test_utf8_string(self):
         foo = asn1tools.compile_string(
