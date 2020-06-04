@@ -476,6 +476,7 @@ class PrimitiveOrConstructedType(Type):
 
 
 class StringType(PrimitiveOrConstructedType):
+
     TAG = None
     ENCODING = None
 
@@ -572,10 +573,9 @@ class MembersType(Type):
         offset = self.decode_tag(data, offset)
 
         if data[offset] == 0x80:
-            # Indefinite length field
-            offset = offset + 1
+            # Indefinite length field.
+            offset += 1
             end_offset = None
-            # raise NotImplementedError('Decode until an end-of-contents tag is not yet implemented.')
         else:
             # Definite length field
             length, offset = decode_length_definite(data, offset)
@@ -585,7 +585,7 @@ class MembersType(Type):
 
         for member in self.root_members:
             # End of indefinite length sequence may be reached at any time, but DecodeError will occur
-            # (instead of usual IndexError) and so further members will be skipped
+            # (instead of usual IndexError) and so further members will be skipped.
             offset = self.decode_member(member,
                                         data,
                                         values,
@@ -597,12 +597,13 @@ class MembersType(Type):
                                            values,
                                            offset,
                                            end_offset)
-        # Detect end of indefinite length constructed field
+
+        # Detect end of indefinite length constructed field.
         if end_offset is None:
             if data[offset:offset + 2] == EOC_TAG:
                 end_offset = offset + 2
             else:
-                raise DecodeError('Could not find end-of-contents tag for indefinite length field')
+                raise DecodeError('Could not find end-of-contents tag for indefinite length field.')
 
         return values, end_offset
 
@@ -628,12 +629,13 @@ class MembersType(Type):
                 values.update(addition_values)
         except DecodeError:
             pass
+
         return offset
 
     def decode_member(self, member, data, values, offset, end_offset):
         try:
             # If reached end of indefinite length field, decode should raise DecodeTagError,
-            # and end of field will be handled in .decode() method
+            # and end of field will be handled in .decode() method.
             if end_offset is None or offset < end_offset:
                 if isinstance(member, AnyDefinedBy):
                     value, offset = member.decode(data, offset, values)
@@ -641,7 +643,6 @@ class MembersType(Type):
                     value, offset = member.decode(data, offset)
             else:
                 raise IndexError
-
         except (DecodeError, DecodeTagError, IndexError) as e:
             if member.optional:
                 return offset
@@ -692,23 +693,22 @@ class ArrayType(Type):
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         if data[offset] == 0x80:
-            offset = offset + 1
-            length = None  # Indicates indefinite field
-            # raise NotImplementedError('Decode until an end-of-contents tag is not yet implemented.')
+            offset += 1
+            length = None  # Indicates indefinite field.
         else:
             length, offset = decode_length_definite(data, offset)
 
         decoded = []
         start_offset = offset
-        # Loop through data until length exceeded or end-of-contents tag reached
-        while 1:
+        # Loop through data until length exceeded or end-of-contents tag reached.
+        while True:
             if length is None:
-                # Find end of indefinite sequence
+                # Find end of indefinite sequence.
                 if data[offset:offset + 2] == EOC_TAG:
                     offset += 2
                     break
             elif (offset - start_offset) >= length:
-                # End of definite length sequence
+                # End of definite length sequence.
                 break
             decoded_element, offset = self.element_type.decode(data, offset)
             decoded.append(decoded_element)
@@ -1407,19 +1407,22 @@ class ExplicitTag(Type):
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
         indefinite = False
+
         if data[offset] == 0x80:
             # Indefinite length field
-            offset = offset + 1
+            offset += 1
             indefinite = True
         else:
             # Definite length field
             length, offset = decode_length_definite(data, offset)
 
         values, end_offset = self.inner.decode(data, offset)
+
         if indefinite:
-            if data[end_offset:end_offset+2] != EOC_TAG:
-                raise DecodeError('Expected End-Of-Contents tag at offset: {}'.format(end_offset))
+            if data[end_offset:end_offset + 2] != EOC_TAG:
+                raise DecodeError('Expected end-of-contents tag at offset: {}.'.format(end_offset))
             end_offset += 2
+
         return values, end_offset
 
     def __repr__(self):
