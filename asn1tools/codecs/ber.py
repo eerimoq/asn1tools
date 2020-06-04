@@ -1417,6 +1417,8 @@ class ExplicitTag(Type):
 
         values, end_offset = self.inner.decode(data, offset)
         if indefinite:
+            if data[end_offset:end_offset+2] != EOC_TAG:
+                raise DecodeError('Expected End-Of-Contents tag at offset: {}'.format(end_offset))
             end_offset += 2
         return values, end_offset
 
