@@ -171,6 +171,8 @@ class Specification(object):
         """Decode given bytes object `data` as given type `name` and return
         the decoded data as a dictionary, along with byte length of the data.
 
+        Use to get length of indefinite-length BER encoded data.
+
         If `check_constraints` is ``True`` all objects in `data` are
         checked against their ASN.1 type constraints. A
         ConstraintsError exception is raised if the constraints are
