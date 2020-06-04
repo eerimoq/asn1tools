@@ -634,8 +634,8 @@ class MembersType(Type):
 
     def decode_member(self, member, data, values, offset, end_offset):
         try:
-            # If reached end of indefinite length field, decode should raise DecodeTagError,
-            # and end of field will be handled in .decode() method.
+            # If reached end of indefinite length field, member.decode will raise DecodeTagError,
+            # and end of field will be handled in MembersType.decode() method.
             if end_offset is None or offset < end_offset:
                 if isinstance(member, AnyDefinedBy):
                     value, offset = member.decode(data, offset, values)

@@ -172,6 +172,7 @@ class Specification(object):
         the decoded data as a dictionary, along with byte length of the data.
 
         Use to get length of indefinite-length BER encoded data.
+        Only works for BER or DER codec
 
         If `check_constraints` is ``True`` all objects in `data` are
         checked against their ASN.1 type constraints. A
@@ -181,8 +182,8 @@ class Specification(object):
         instead allow decoding of values not fulfilling the
         constraints.
 
-        >>> foo.decode('Question', b'0\\x0e\\x02\\x01\\x01\\x16\\x09Is 1+1=3?')
-        {'id': 1, 'question': 'Is 1+1=3?'}
+        >>> foo.decode_with_length('Question', b'0\\x0e\\x02\\x01\\x01\\x16\\x09Is 1+1=3?')
+        ({'id': 1, 'question': 'Is 1+1=3?'}, 16)
 
         """
 
