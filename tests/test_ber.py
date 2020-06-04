@@ -3297,6 +3297,37 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         encoded = b'\x30\x08\xa0\x06\xa0\x04\xa0\x02\x81\x00'
         self.assert_encode_decode(foo, 'A', decoded, encoded)
 
+    def test_decode_with_length(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS IMPLICIT TAGS ::= "
+            "BEGIN "
+            "A ::= INTEGER "            
+            "B ::= SET { "
+            "  b [1] INTEGER, "
+            "  a [0] INTEGER "
+            "} "
+            "C ::= SET { "
+            "    a     [0] B, "
+            "    b     [1] OCTET STRING "
+            "} "
+            "K ::= [3] CHOICE { "
+            "  a [4] CHOICE { "
+            "    a BOOLEAN "
+            "  }, "
+            "  b [5] CHOICE { "
+            "    b INTEGER "
+            "  } "
+            "} "
+            "END")
+        # Test decoding Integer with length
+        self.assertEqual(foo.decode_with_length('A', b'\x02\x03\x00\x80\x00'), (32768, 5))
+        # Test decoding indefinite length CHOICE
+        self.assertEqual(foo.decode_with_length('K', b'\xa3\x80\xa4\x80\x01\x01\x00\x00\x00\x00\x00'), (('a', ('a', False)), 11))
+        # Test decoding definite length CHOICE
+        self.assertEqual(foo.decode_with_length('K', b'\xa3\x05\xa5\x03\x02\x01\x02'), (('b', ('b', 2)), 7))
+        # Test indefinite length set with end-of-contents tags
+        self.assertEqual(foo.decode_with_length('C', b'\x31\x80\xa0\x80\x80\x01\x03\x81\x01\x04\x00\x00\x81\x01\x12\x00\x00'), ({'a': {'a': 3, 'b': 4}, 'b': b'\x12'},17))
+
 
 if __name__ == '__main__':
     unittest.main()
