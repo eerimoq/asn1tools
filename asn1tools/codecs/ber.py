@@ -25,50 +25,53 @@ from .compiler import clean_bit_string_value
 
 
 class Class(object):
-    UNIVERSAL        = 0x00
-    APPLICATION      = 0x40
-    CONTEXT_SPECIFIC = 0x80
-    PRIVATE          = 0xc0
+    UNIVERSAL =         0x00
+    APPLICATION =       0x40
+    CONTEXT_SPECIFIC =  0x80
+    PRIVATE =           0xc0
 
 
 class Encoding(object):
-    PRIMITIVE   = 0x00
-    CONSTRUCTED = 0x20
+    PRIMITIVE =     0x00
+    CONSTRUCTED =   0x20
 
 
 class Tag(object):
-    END_OF_CONTENTS   = 0x00
-    BOOLEAN           = 0x01
-    INTEGER           = 0x02
-    BIT_STRING        = 0x03
-    OCTET_STRING      = 0x04
-    NULL              = 0x05
+    END_OF_CONTENTS =   0x00
+    BOOLEAN =           0x01
+    INTEGER =           0x02
+    BIT_STRING =        0x03
+    OCTET_STRING =      0x04
+    NULL =              0x05
     OBJECT_IDENTIFIER = 0x06
     OBJECT_DESCRIPTOR = 0x07
-    EXTERNAL          = 0x08
-    REAL              = 0x09
-    ENUMERATED        = 0x0a
-    EMBEDDED_PDV      = 0x0b
-    UTF8_STRING       = 0x0c
-    RELATIVE_OID      = 0x0d
-    SEQUENCE          = 0x10
-    SET               = 0x11
-    NUMERIC_STRING    = 0x12
-    PRINTABLE_STRING  = 0x13
-    T61_STRING        = 0x14
-    VIDEOTEX_STRING   = 0x15
-    IA5_STRING        = 0x16
-    UTC_TIME          = 0x17
-    GENERALIZED_TIME  = 0x18
-    GRAPHIC_STRING    = 0x19
-    VISIBLE_STRING    = 0x1a
-    GENERAL_STRING    = 0x1b
-    UNIVERSAL_STRING  = 0x1c
-    CHARACTER_STRING  = 0x1d
-    BMP_STRING        = 0x1e
-    DATE              = 0x1f
-    TIME_OF_DAY       = 0x20
-    DATE_TIME         = 0x21
+    EXTERNAL =          0x08
+    REAL =              0x09
+    ENUMERATED =        0x0a
+    EMBEDDED_PDV =      0x0b
+    UTF8_STRING =       0x0c
+    RELATIVE_OID =      0x0d
+    SEQUENCE =          0x10
+    SET =               0x11
+    NUMERIC_STRING =    0x12
+    PRINTABLE_STRING =  0x13
+    T61_STRING =        0x14
+    VIDEOTEX_STRING =   0x15
+    IA5_STRING =        0x16
+    UTC_TIME =          0x17
+    GENERALIZED_TIME =  0x18
+    GRAPHIC_STRING =    0x19
+    VISIBLE_STRING =    0x1a
+    GENERAL_STRING =    0x1b
+    UNIVERSAL_STRING =  0x1c
+    CHARACTER_STRING =  0x1d
+    BMP_STRING =        0x1e
+    DATE =              0x1f
+    TIME_OF_DAY =       0x20
+    DATE_TIME =         0x21
+
+
+EOC_TAG = bytes(2)
 
 
 class DecodeChoiceError(Error):
@@ -473,7 +476,6 @@ class PrimitiveOrConstructedType(Type):
 
 
 class StringType(PrimitiveOrConstructedType):
-
     TAG = None
     ENCODING = None
 
@@ -570,15 +572,20 @@ class MembersType(Type):
         offset = self.decode_tag(data, offset)
 
         if data[offset] == 0x80:
-            raise NotImplementedError(
-                'Decode until an end-of-contents tag is not yet implemented.')
+            # Indefinite length field
+            offset = offset + 1
+            end_offset = None
+            # raise NotImplementedError('Decode until an end-of-contents tag is not yet implemented.')
         else:
+            # Definite length field
             length, offset = decode_length_definite(data, offset)
+            end_offset = offset + length
 
-        end_offset = offset + length
         values = {}
 
         for member in self.root_members:
+            # End of indefinite length sequence may be reached at any time, but DecodeError will occur
+            # (instead of usual IndexError) and so further members will be skipped
             offset = self.decode_member(member,
                                         data,
                                         values,
@@ -586,10 +593,13 @@ class MembersType(Type):
                                         end_offset)
 
         if self.additions:
-            self.decode_additions(data,
-                                  values,
-                                  offset,
-                                  end_offset)
+            offset = self.decode_additions(data,
+                                           values,
+                                           offset,
+                                           end_offset)
+        # Detect end of indefinite length constructed field
+        if end_offset is None and data[offset:offset + 2] == EOC_TAG:
+            end_offset = offset + 2
 
         return values, end_offset
 
@@ -615,16 +625,20 @@ class MembersType(Type):
                 values.update(addition_values)
         except DecodeError:
             pass
+        return offset
 
     def decode_member(self, member, data, values, offset, end_offset):
         try:
-            if offset < end_offset:
+            # If reached end of indefinite length field, decode should raise DecodeTagError,
+            # and end of field will be handled in .decode() method
+            if end_offset is None or offset < end_offset:
                 if isinstance(member, AnyDefinedBy):
                     value, offset = member.decode(data, offset, values)
                 else:
                     value, offset = member.decode(data, offset)
             else:
                 raise IndexError
+
         except (DecodeError, DecodeTagError, IndexError) as e:
             if member.optional:
                 return offset
@@ -674,17 +688,25 @@ class ArrayType(Type):
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
-
         if data[offset] == 0x80:
-            raise NotImplementedError(
-                'Decode until an end-of-contents tag is not yet implemented.')
+            offset = offset + 1
+            length = None  # Indicates indefinite field
+            # raise NotImplementedError('Decode until an end-of-contents tag is not yet implemented.')
         else:
             length, offset = decode_length_definite(data, offset)
 
         decoded = []
         start_offset = offset
-
-        while (offset - start_offset) < length:
+        # Loop through data until length exceeded or end-of-contents tag reached
+        while 1:
+            if length is None:
+                # Find end of indefinite sequence
+                if data[offset:offset + 2] == EOC_TAG:
+                    offset += 2
+                    break
+            elif (offset - start_offset) >= length:
+                # End of definite length sequence
+                break
             decoded_element, offset = self.element_type.decode(data, offset)
             decoded.append(decoded_element)
 
@@ -1099,67 +1121,56 @@ class Choice(Type):
 
 
 class UTF8String(StringType):
-
     TAG = Tag.UTF8_STRING
     ENCODING = 'utf-8'
 
 
 class NumericString(StringType):
-
     TAG = Tag.NUMERIC_STRING
     ENCODING = 'ascii'
 
 
 class PrintableString(StringType):
-
     TAG = Tag.PRINTABLE_STRING
     ENCODING = 'ascii'
 
 
 class IA5String(StringType):
-
     TAG = Tag.IA5_STRING
     ENCODING = 'ascii'
 
 
 class VisibleString(StringType):
-
     TAG = Tag.VISIBLE_STRING
     ENCODING = 'ascii'
 
 
 class GeneralString(StringType):
-
     TAG = Tag.GENERAL_STRING
     ENCODING = 'latin-1'
 
 
 class BMPString(StringType):
-
     TAG = Tag.BMP_STRING
     ENCODING = 'utf-16-be'
 
 
 class GraphicString(StringType):
-
     TAG = Tag.GRAPHIC_STRING
     ENCODING = 'latin-1'
 
 
 class UniversalString(StringType):
-
     TAG = Tag.UNIVERSAL_STRING
     ENCODING = 'utf-32-be'
 
 
 class TeletexString(StringType):
-
     TAG = Tag.T61_STRING
     ENCODING = 'iso-8859-1'
 
 
 class ObjectDescriptor(GraphicString):
-
     TAG = Tag.OBJECT_DESCRIPTOR
 
 
@@ -1381,9 +1392,19 @@ class ExplicitTag(Type):
 
     def decode(self, data, offset):
         offset = self.decode_tag(data, offset)
-        _, offset = decode_length_definite(data, offset)
+        indefinite = False
+        if data[offset] == 0x80:
+            # Indefinite length field
+            offset = offset + 1
+            indefinite = True
+        else:
+            # Definite length field
+            length, offset = decode_length_definite(data, offset)
 
-        return self.inner.decode(data, offset)
+        values, end_offset = self.inner.decode(data, offset)
+        if indefinite:
+            end_offset += 2
+        return values, end_offset
 
     def __repr__(self):
         return 'ExplicitTag({})'.format(self.inner)
@@ -1441,6 +1462,9 @@ class CompiledType(compiler.CompiledType):
 
     def decode(self, data):
         return self._type.decode(bytearray(data), 0)[0]
+
+    def decode_with_length(self, data):
+        return self._type.decode(bytearray(data), 0)
 
     def __repr__(self):
         return repr(self._type)

@@ -167,6 +167,39 @@ class Specification(object):
 
         return decoded
 
+    def decode_with_length(self, name, data, check_constraints=False):
+        """Decode given bytes object `data` as given type `name` and return
+        the decoded data as a dictionary, along with byte length of the data.
+
+        If `check_constraints` is ``True`` all objects in `data` are
+        checked against their ASN.1 type constraints. A
+        ConstraintsError exception is raised if the constraints are
+        not fulfilled. Set `check_constraints` to ``False`` to skip
+        the constraints check and minimize the runtime overhead, but
+        instead allow decoding of values not fulfilling the
+        constraints.
+
+        >>> foo.decode('Question', b'0\\x0e\\x02\\x01\\x01\\x16\\x09Is 1+1=3?')
+        {'id': 1, 'question': 'Is 1+1=3?'}
+
+        """
+
+        try:
+            type_ = self._types[name]
+        except KeyError:
+            raise DecodeError(
+                "Type '{}' not found in types dictionary.".format(name))
+
+        if not hasattr(type_, 'decode_with_length'):
+            raise DecodeError("Type '{}' does not support decode_with_length".format(name))
+
+        decoded, length = type_.decode_with_length(data)
+
+        if check_constraints:
+            type_.check_constraints(decoded)
+
+        return decoded, length
+
     def decode_length(self, data):
         """Decode the length of given data `data`. Returns None if not enough
         data was given to decode the length.

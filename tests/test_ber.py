@@ -544,6 +544,13 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             "    a [4] V "
             "  } OPTIONAL "
             "} "
+            "W ::= SEQUENCE { "
+            "  a [1] INTEGER OPTIONAL, "
+            "  b [2] OCTET STRING OPTIONAL, "
+            "  c [3] SEQUENCE { "
+            "    a [4] INTEGER "
+            "  } OPTIONAL "
+            "} "
             "END",
             'ber')
 
@@ -650,14 +657,11 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                        b'\x30\x0b\xa0\x06\x80\x01\xff\x81\x01\xff\x81\x01\x64'),
             {'a': {'a': True}, 'b': 100})
 
-        # Decode S with end-of-contentes octet , which is not yet
-        # supported.
-        with self.assertRaises(NotImplementedError) as cm:
-            foo.decode('S', b'\x30\x80\x02\x01\x01\x00\x00')
+        # Decode S with indefinite length and end-of-contents octet
+        self.assertEqual(foo.decode('S', b'\x30\x80\x80\x01\x01\x00\x00'), {'a': 1})
 
-        self.assertEqual(
-            str(cm.exception),
-            'Decode until an end-of-contents tag is not yet implemented.')
+        # Decode W (nested sequence) with indefinite length and end-of-contents octet
+        self.assertEqual(foo.decode('W', b'\x30\x80\x81\x01\x10\x82\x01\x61\xa3\x80\x84\x01\x02\x00\x00\x00\x00'), {'a': 16, 'b': b'a', 'c': {'a': 2}})
 
         # Missing member.
         with self.assertRaises(asn1tools.EncodeError) as cm:
@@ -680,12 +684,9 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
-        with self.assertRaises(NotImplementedError) as cm:
-            foo.decode('A', b'\x30\x80\x00\x00')
+        # Test end-of-contents octet
+        self.assertEqual(foo.decode('A', b'\x30\x80\x00\x00'), [])
 
-        self.assertEqual(
-            str(cm.exception),
-            'Decode until an end-of-contents tag is not yet implemented.')
 
     def test_set(self):
         foo = asn1tools.compile_string(
@@ -716,6 +717,10 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Test indefinite length set with end-of-contents tags
+        self.assertEqual(foo.decode('A', b'\x31\x80\x80\x01\x03\x81\x01\x04\x00\x00'), {'a': 3, 'b': 4})
+        self.assertEqual(foo.decode('C', b'\x31\x80\xa0\x80\x80\x01\x03\x81\x01\x04\x00\x00\x81\x01\x12\x00\x00'), {'a': {'a': 3, 'b': 4}, 'b': b'\x12'})
 
     def test_choice(self):
         foo = asn1tools.compile_string(
