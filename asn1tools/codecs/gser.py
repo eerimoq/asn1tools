@@ -499,14 +499,9 @@ class Recursive(Type, compiler.Recursive):
 class CompiledType(compiler.CompiledType):
 
     def __init__(self, type_name, compiled_type):
-        super(CompiledType, self).__init__()
+        super(CompiledType, self).__init__(compiled_type)
         self._value_name = type_name.lower()
         self._value_type = type_name
-        self._type = compiled_type
-
-    @property
-    def type(self):
-        return self._type
 
     def encode(self, data, indent=None):
         if indent is None:
@@ -522,9 +517,6 @@ class CompiledType(compiler.CompiledType):
 
     def decode(self, data):
         raise NotImplementedError('GSER decoding is not implemented.')
-
-    def __repr__(self):
-        return repr(self._type)
 
 
 class Compiler(compiler.Compiler):

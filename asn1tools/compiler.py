@@ -168,19 +168,10 @@ class Specification(object):
         return decoded
 
     def decode_with_length(self, name, data, check_constraints=False):
-        """Decode given bytes object `data` as given type `name` and return
-        the decoded data as a dictionary, along with byte length of the data.
+        """Same as :func:`~asn1tools.compiler.Specification.decode`,
+        but also returns the byte length of the decoded data.
 
-        Use to get length of indefinite-length BER encoded data.
-        Only works for BER or DER codec
-
-        If `check_constraints` is ``True`` all objects in `data` are
-        checked against their ASN.1 type constraints. A
-        ConstraintsError exception is raised if the constraints are
-        not fulfilled. Set `check_constraints` to ``False`` to skip
-        the constraints check and minimize the runtime overhead, but
-        instead allow decoding of values not fulfilling the
-        constraints.
+        Use to get the length of indefinite-length BER encoded data.
 
         >>> foo.decode_with_length('Question', b'0\\x0e\\x02\\x01\\x01\\x16\\x09Is 1+1=3?')
         ({'id': 1, 'question': 'Is 1+1=3?'}, 16)
@@ -192,9 +183,6 @@ class Specification(object):
         except KeyError:
             raise DecodeError(
                 "Type '{}' not found in types dictionary.".format(name))
-
-        if not hasattr(type_, 'decode_with_length'):
-            raise DecodeError("Type '{}' does not support decode_with_length".format(name))
 
         decoded, length = type_.decode_with_length(data)
 

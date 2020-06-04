@@ -71,7 +71,7 @@ class Tag(object):
     DATE_TIME         = 0x21
 
 
-EOC_TAG = bytes(2)
+END_OF_CONTENTS_OCTETS = bytes(2)
 
 
 class DecodeChoiceError(Error):
@@ -454,7 +454,7 @@ class PrimitiveOrConstructedType(Type):
             segments = []
 
             if length is None:
-                while data[offset:offset + 2] != EOC_TAG:
+                while data[offset:offset + 2] != END_OF_CONTENTS_OCTETS:
                     decoded, offset = self.segment.decode(data, offset)
                     segments.append(decoded)
 
@@ -600,7 +600,7 @@ class MembersType(Type):
 
         # Detect end of indefinite length constructed field.
         if end_offset is None:
-            if data[offset:offset + 2] == EOC_TAG:
+            if data[offset:offset + 2] == END_OF_CONTENTS_OCTETS:
                 end_offset = offset + 2
             else:
                 raise DecodeError('Could not find end-of-contents tag for indefinite length field.')
@@ -704,7 +704,7 @@ class ArrayType(Type):
         while True:
             if length is None:
                 # Find end of indefinite sequence.
-                if data[offset:offset + 2] == EOC_TAG:
+                if data[offset:offset + 2] == END_OF_CONTENTS_OCTETS:
                     offset += 2
                     break
             elif (offset - start_offset) >= length:
@@ -1419,7 +1419,7 @@ class ExplicitTag(Type):
         values, end_offset = self.inner.decode(data, offset)
 
         if indefinite:
-            if data[end_offset:end_offset + 2] != EOC_TAG:
+            if data[end_offset:end_offset + 2] != END_OF_CONTENTS_OCTETS:
                 raise DecodeError('Expected end-of-contents tag at offset: {}.'.format(end_offset))
             end_offset += 2
 
@@ -1465,14 +1465,6 @@ class Recursive(Type, compiler.Recursive):
 
 class CompiledType(compiler.CompiledType):
 
-    def __init__(self, type_):
-        super(CompiledType, self).__init__()
-        self._type = type_
-
-    @property
-    def type(self):
-        return self._type
-
     def encode(self, data):
         encoded = bytearray()
         self._type.encode(data, encoded)
@@ -1484,9 +1476,6 @@ class CompiledType(compiler.CompiledType):
 
     def decode_with_length(self, data):
         return self._type.decode(bytearray(data), 0)
-
-    def __repr__(self):
-        return repr(self._type)
 
 
 def get_tag_no_encoding(member):

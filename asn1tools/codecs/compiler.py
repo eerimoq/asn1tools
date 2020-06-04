@@ -83,15 +83,32 @@ def clean_bit_string_value(value, has_named_bits):
 
 class CompiledType(object):
 
-    def __init__(self):
+    def __init__(self, type_):
         self.constraints_checker = None
         self.type_checker = None
+        self._type = type_
+
+    @property
+    def type(self):
+        return self._type
 
     def check_types(self, data):
         return self.type_checker.encode(data)
 
     def check_constraints(self, data):
         return self.constraints_checker.encode(data)
+
+    def encode(self, data):
+        raise NotImplementedError('This codec does not support encode().')
+
+    def decode(self, data):
+        raise NotImplementedError('This codec does not support decode().')
+
+    def decode_with_length(self, data):
+        raise NotImplementedError('This codec does not support decode_with_length().')
+
+    def __repr__(self):
+        return repr(self._type)
 
 
 class Recursive(object):
@@ -140,26 +157,23 @@ class OpenTypeSequenceOf(object):
 class CompiledOpenTypes(CompiledType):
 
     def __init__(self, compiled_open_types, compiled_type):
-        super(CompiledOpenTypes, self).__init__()
+        super(CompiledOpenTypes, self).__init__(compiled_type)
         self._compiled_open_types = compiled_open_types
-        self._inner = compiled_type
 
     @property
     def type(self):
-        return self._inner.type
+        return self._type.type
 
     def encode(self, data, **kwargs):
         # print()
         # print('data:', data)
         # print(self._compiled_open_types)
 
-        return self._inner.encode(data, **kwargs)
+        return self._type.encode(data, **kwargs)
 
     def decode(self, data):
-        return self._inner.decode(data)
+        return self._type.decode(data)
 
-    def __repr__(self):
-        return repr(self._inner)
 
 
 class Compiler(object):

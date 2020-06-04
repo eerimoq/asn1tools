@@ -1288,14 +1288,6 @@ class Recursive(Type, compiler.Recursive):
 
 class CompiledType(compiler.CompiledType):
 
-    def __init__(self, type_):
-        super(CompiledType, self).__init__()
-        self._type = type_
-
-    @property
-    def type(self):
-        return self._type
-
     def encode(self, data):
         encoder = Encoder()
         self._type.encode(data, encoder)
@@ -1306,9 +1298,6 @@ class CompiledType(compiler.CompiledType):
         decoder = Decoder(bytearray(data))
 
         return self._type.decode(decoder)
-
-    def __repr__(self):
-        return repr(self._type)
 
 
 class Compiler(compiler.Compiler):

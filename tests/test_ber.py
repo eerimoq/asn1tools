@@ -669,7 +669,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            'Could not find end-of-contents tag for indefinite length field')
+            'Could not find end-of-contents tag for indefinite length field.')
 
         # Missing member.
         with self.assertRaises(asn1tools.EncodeError) as cm:
@@ -728,14 +728,15 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         # Test indefinite length set with end-of-contents tags
         self.assertEqual(foo.decode('A', b'\x31\x80\x80\x01\x03\x81\x01\x00\x00\x00'), {'a': 3, 'b': 0})
-        self.assertEqual(foo.decode('C', b'\x31\x80\xa0\x80\x80\x01\x03\x81\x01\x04\x00\x00\x81\x01\x12\x00\x00'), {'a': {'a': 3, 'b': 4}, 'b': b'\x12'})
+        self.assertEqual(foo.decode('C', b'\x31\x80\xa0\x80\x80\x01\x03\x81\x01\x04\x00\x00\x81\x01\x12\x00\x00'),
+                         {'a': {'a': 3, 'b': 4}, 'b': b'\x12'})
         # Test error when EOC tag is missing
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('C', b'\x31\x80\xa0\x80\x80\x01\x03\x81\x01\x04\x81\x01\x12\x00\x00')
 
         self.assertEqual(
             str(cm.exception),
-            'a: Could not find end-of-contents tag for indefinite length field')
+            'a: Could not find end-of-contents tag for indefinite length field.')
 
     def test_choice(self):
         foo = asn1tools.compile_string(

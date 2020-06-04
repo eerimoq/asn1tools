@@ -541,14 +541,6 @@ class Recursive(Type, compiler.Recursive):
 
 class CompiledType(compiler.CompiledType):
 
-    def __init__(self, type_):
-        super(CompiledType, self).__init__()
-        self._type = type_
-
-    @property
-    def type(self):
-        return self._type
-
     def encode(self, data, indent=None):
         dictionary = self._type.encode(data)
 
@@ -561,9 +553,6 @@ class CompiledType(compiler.CompiledType):
 
     def decode(self, data):
         return self._type.decode(json.loads(data.decode('utf-8')))
-
-    def __repr__(self):
-        return repr(self._type)
 
 
 class Compiler(compiler.Compiler):
