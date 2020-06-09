@@ -71,7 +71,7 @@ class Tag(object):
     DATE_TIME         = 0x21
 
 
-END_OF_CONTENTS_OCTETS = bytes(2)
+END_OF_CONTENTS_OCTETS = b'\x00\x00'
 
 
 class DecodeChoiceError(Error):

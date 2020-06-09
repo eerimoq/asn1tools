@@ -22,7 +22,6 @@ from .per import Sequence
 from .per import Set
 from .per import UTF8String
 from .per import GeneralString
-from .per import BMPString
 from .per import GraphicString
 from .per import TeletexString
 from .per import UniversalString
