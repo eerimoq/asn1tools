@@ -544,6 +544,13 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             "    a [4] V "
             "  } OPTIONAL "
             "} "
+            "W ::= SEQUENCE { "
+            "  a [1] INTEGER OPTIONAL, "
+            "  b [2] OCTET STRING OPTIONAL, "
+            "  c [3] SEQUENCE { "
+            "    a [4] INTEGER "
+            "  } OPTIONAL "
+            "} "
             "END",
             'ber')
 
@@ -650,14 +657,19 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
                        b'\x30\x0b\xa0\x06\x80\x01\xff\x81\x01\xff\x81\x01\x64'),
             {'a': {'a': True}, 'b': 100})
 
-        # Decode S with end-of-contentes octet , which is not yet
-        # supported.
-        with self.assertRaises(NotImplementedError) as cm:
-            foo.decode('S', b'\x30\x80\x02\x01\x01\x00\x00')
+        # Decode S with indefinite length and end-of-contents octet
+        self.assertEqual(foo.decode('S', b'\x30\x80\x80\x01\x01\x00\x00'), {'a': 1})
+
+        # Decode W (nested sequence) with indefinite length and end-of-contents octet
+        self.assertEqual(foo.decode('W', b'\x30\x80\x81\x01\x10\x82\x01\x61\xa3\x80\x84\x01\x02\x00\x00\x00\x00'), {'a': 16, 'b': b'a', 'c': {'a': 2}})
+
+        # Test error when EOC tag is missing
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('W', b'\x30\x80\x81\x01\x10\x82\x01\x61\xa3\x80\x84\x01\x02\x00\x00')
 
         self.assertEqual(
             str(cm.exception),
-            'Decode until an end-of-contents tag is not yet implemented.')
+            'Could not find end-of-contents tag for indefinite length field.')
 
         # Missing member.
         with self.assertRaises(asn1tools.EncodeError) as cm:
@@ -680,12 +692,9 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
-        with self.assertRaises(NotImplementedError) as cm:
-            foo.decode('A', b'\x30\x80\x00\x00')
+        # Test end-of-contents octet
+        self.assertEqual(foo.decode('A', b'\x30\x80\x00\x00'), [])
 
-        self.assertEqual(
-            str(cm.exception),
-            'Decode until an end-of-contents tag is not yet implemented.')
 
     def test_set(self):
         foo = asn1tools.compile_string(
@@ -716,6 +725,18 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Test indefinite length set with end-of-contents tags
+        self.assertEqual(foo.decode('A', b'\x31\x80\x80\x01\x03\x81\x01\x00\x00\x00'), {'a': 3, 'b': 0})
+        self.assertEqual(foo.decode('C', b'\x31\x80\xa0\x80\x80\x01\x03\x81\x01\x04\x00\x00\x81\x01\x12\x00\x00'),
+                         {'a': {'a': 3, 'b': 4}, 'b': b'\x12'})
+        # Test error when EOC tag is missing
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('C', b'\x31\x80\xa0\x80\x80\x01\x03\x81\x01\x04\x81\x01\x12\x00\x00')
+
+        self.assertEqual(
+            str(cm.exception),
+            'a: Could not find end-of-contents tag for indefinite length field.')
 
     def test_choice(self):
         foo = asn1tools.compile_string(
@@ -882,6 +903,9 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             str(cm.exception),
             "Expected choice member tag '80', but got '81'.")
 
+        # Test indefinite-length choice
+        self.assertEqual(foo.decode('M', b'\xa0\x80\x80\x01\xff\x00\x00'), ('a', ('b', True)))
+
     def test_choice_implicit_tags(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS IMPLICIT TAGS ::= "
@@ -939,6 +963,8 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(foo.decode('B', b'\x24\x03\x04\x01\x12'), ('a', b'\x12'))
         self.assertEqual(foo.decode('B', b'\x04\x01\x12'), ('a', b'\x12'))
+        # Test indefinite length
+        self.assertEqual(foo.decode('K', b'\xa3\x80\xa4\x80\x01\x01\x00\x00\x00\x00\x00'), ('a', ('a', False)))
 
     def test_utf8_string(self):
         foo = asn1tools.compile_string(
@@ -3271,6 +3297,37 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         decoded = {'a': ('b', {'a': ('c', None)})}
         encoded = b'\x30\x08\xa0\x06\xa0\x04\xa0\x02\x81\x00'
         self.assert_encode_decode(foo, 'A', decoded, encoded)
+
+    def test_decode_with_length(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS IMPLICIT TAGS ::= "
+            "BEGIN "
+            "A ::= INTEGER "            
+            "B ::= SET { "
+            "  b [1] INTEGER, "
+            "  a [0] INTEGER "
+            "} "
+            "C ::= SET { "
+            "    a     [0] B, "
+            "    b     [1] OCTET STRING "
+            "} "
+            "K ::= [3] CHOICE { "
+            "  a [4] CHOICE { "
+            "    a BOOLEAN "
+            "  }, "
+            "  b [5] CHOICE { "
+            "    b INTEGER "
+            "  } "
+            "} "
+            "END")
+        # Test decoding Integer with length
+        self.assertEqual(foo.decode_with_length('A', b'\x02\x03\x00\x80\x00'), (32768, 5))
+        # Test decoding indefinite length CHOICE
+        self.assertEqual(foo.decode_with_length('K', b'\xa3\x80\xa4\x80\x01\x01\x00\x00\x00\x00\x00'), (('a', ('a', False)), 11))
+        # Test decoding definite length CHOICE
+        self.assertEqual(foo.decode_with_length('K', b'\xa3\x05\xa5\x03\x02\x01\x02'), (('b', ('b', 2)), 7))
+        # Test indefinite length set with end-of-contents tags
+        self.assertEqual(foo.decode_with_length('C', b'\x31\x80\xa0\x80\x80\x01\x03\x81\x01\x04\x00\x00\x81\x01\x12\x00\x00'), ({'a': {'a': 3, 'b': 4}, 'b': b'\x12'},17))
 
 
 if __name__ == '__main__':

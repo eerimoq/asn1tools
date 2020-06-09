@@ -2669,6 +2669,19 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assert_encode_decode(ulp, 'ULP-PDU', decoded, encoded)
 
+    def test_not_support_decode_with_length(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= OCTET STRING "
+            "END",
+            'uper')
+
+        with self.assertRaises(NotImplementedError) as cm:
+            foo.decode_with_length('A', b'\x01\x23\x45\x67\x89\xab\xcd\xef')
+
+        self.assertEqual(str(cm.exception), "This codec does not support decode_with_length().")
+
 
 if __name__ == '__main__':
     unittest.main()
