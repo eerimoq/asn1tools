@@ -584,8 +584,9 @@ class MembersType(Type):
         values = {}
 
         for member in self.root_members:
-            # End of indefinite length sequence may be reached at any time, but DecodeError will occur
-            # (instead of usual IndexError) and so further members will be skipped.
+            # End of indefinite length sequence may be reached at any
+            # time, but DecodeError will occur (instead of usual
+            # IndexError) and so further members will be skipped.
             offset = self.decode_member(member,
                                         data,
                                         values,
@@ -603,7 +604,9 @@ class MembersType(Type):
             if data[offset:offset + 2] == END_OF_CONTENTS_OCTETS:
                 end_offset = offset + 2
             else:
-                raise DecodeError('Could not find end-of-contents tag for indefinite length field.')
+                raise DecodeError(
+                    'Could not find end-of-contents tag for indefinite length '
+                    'field.')
 
         return values, end_offset
 
@@ -634,8 +637,9 @@ class MembersType(Type):
 
     def decode_member(self, member, data, values, offset, end_offset):
         try:
-            # If reached end of indefinite length field, member.decode will raise DecodeTagError,
-            # and end of field will be handled in MembersType.decode() method.
+            # If reached end of indefinite length field, member.decode
+            # will raise DecodeTagError, and end of field will be
+            # handled in MembersType.decode() method.
             if end_offset is None or offset < end_offset:
                 if isinstance(member, AnyDefinedBy):
                     value, offset = member.decode(data, offset, values)
@@ -1420,7 +1424,10 @@ class ExplicitTag(Type):
 
         if indefinite:
             if data[end_offset:end_offset + 2] != END_OF_CONTENTS_OCTETS:
-                raise DecodeError('Expected end-of-contents tag at offset: {}.'.format(end_offset))
+                raise DecodeError(
+                    'Expected end-of-contents tag at offset: {}.'.format(
+                        end_offset))
+
             end_offset += 2
 
         return values, end_offset

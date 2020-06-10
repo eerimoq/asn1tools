@@ -168,8 +168,8 @@ class Specification(object):
         return decoded
 
     def decode_with_length(self, name, data, check_constraints=False):
-        """Same as :func:`~asn1tools.compiler.Specification.decode`,
-        but also returns the byte length of the decoded data.
+        """Same as :func:`~asn1tools.compiler.Specification.decode`, but also
+        returns the byte length of the decoded data.
 
         Use to get the length of indefinite-length BER encoded data.
 

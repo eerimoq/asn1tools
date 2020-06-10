@@ -175,7 +175,6 @@ class CompiledOpenTypes(CompiledType):
         return self._type.decode(data)
 
 
-
 class Compiler(object):
 
     def __init__(self, specification, numeric_enums=False):
