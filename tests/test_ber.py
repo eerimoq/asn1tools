@@ -214,6 +214,9 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         # Decode 100.0 in decimal form (1.e2).
         self.assertEqual(foo.decode('A', b'\x09\x05\x03\x31\x2e\x45\x32'),
                          100.0)
+        # Decode 100.0 in decimal form with comma (100,0).
+        self.assertEqual(foo.decode('A', b'\x09\x06\x02\x31\x30\x30\x2c\x30'),
+                         100.0)
 
     def test_bit_string(self):
         foo = asn1tools.compile_string(
