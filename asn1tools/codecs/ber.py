@@ -297,7 +297,7 @@ def decode_real_special(control):
 
 
 def decode_real_decimal(data):
-    return float(data[1:])
+    return float(data[1:].replace(b',', b'.'))
 
 
 def decode_real(data):
