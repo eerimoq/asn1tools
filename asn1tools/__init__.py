@@ -149,13 +149,13 @@ def _handle_command_compile(line):
     parser.add_argument('-i', '--input-codec',
                         choices=('ber', 'der', 'jer', 'oer', 'per', 'uper', 'xer'),
                         default='ber',
-                        help='Input codec (default: ber).')
+                        help='Input codec (default: %(default)s).')
     parser.add_argument('-o', '--output-codec',
                         choices=(
                             'ber', 'der', 'jer', 'oer', 'per', 'uper', 'xer', 'gser'
                         ),
                         default='gser',
-                        help='Output codec (default: gser).')
+                        help='Output codec (default: %(default)s).')
     parser.add_argument('-c', '--cache-dir',
                         help='Cache directory.')
     parser.add_argument('specification',
@@ -333,7 +333,7 @@ def _main():
                         type=int,
                         default=1,
                         help=('Control the verbosity; disable(0), warning(1) '
-                              'and debug(2). (default: 1).'))
+                              'and debug(2) (default: %(default)s).'))
     parser.add_argument('--version',
                         action='version',
                         version=__version__,
@@ -352,12 +352,12 @@ def _main():
         '-i', '--input-codec',
         choices=('ber', 'der', 'jer', 'oer', 'per', 'uper', 'xer'),
         default='ber',
-        help='Input format (default: ber).')
+        help='Input format (default: %(default)s).')
     subparser.add_argument(
         '-o', '--output-codec',
         choices=('ber', 'der', 'jer', 'oer', 'per', 'uper', 'xer', 'gser'),
         default='gser',
-        help='Output format (default: gser).')
+        help='Output format (default: %(default)s).')
     subparser.add_argument('-c', '--cache-dir',
                            help='Cache directory.')
     subparser.add_argument(
@@ -394,7 +394,7 @@ def _main():
         '-c', '--codec',
         choices=('oer', 'uper'),
         default='oer',
-        help='Codec to generate code for (default: oer).')
+        help='Codec to generate code for (default: %(default)s).')
     subparser.add_argument(
         '-n', '--namespace',
         help='Namespace of defines, structs, functions, files, etc.')
@@ -415,7 +415,7 @@ def _main():
         '-c', '--codec',
         choices=('uper', ),
         default='uper',
-        help='Codec to generate code for (default: uper).')
+        help='Codec to generate code for (default: %(default)s).')
     subparser.add_argument('specification',
                            nargs='+',
                            help='ASN.1 specification as one or more .asn files.')
