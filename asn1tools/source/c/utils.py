@@ -407,6 +407,9 @@ class Generator(object):
 
         if checker.minimum != checker.maximum:
             raise self.error('BIT STRING with variable SIZE not supported.')
+        if checker.minimum > 32:
+            raise self.error('BIT STRING with a length of more than 32 bits are not '
+                             'supported.')
 
         max_value = 2**checker.minimum - 1
 

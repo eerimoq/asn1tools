@@ -238,5 +238,31 @@ class Asn1ToolsCSourceTest(unittest.TestCase):
         self.assertEqual(str(cm.exception),
                          "Foo.A: 2147483649 does not fit in int32_t.")
 
+    def test_compile_error_bit_strings(self):
+        foo = asn1tools.compile_string(
+            'Foo DEFINITIONS AUTOMATIC TAGS ::= BEGIN '
+            '    A ::= BIT STRING (SIZE(1..2))'
+            'END',
+            'oer')
+
+        with self.assertRaises(asn1tools.errors.Error) as cm:
+            asn1tools.source.c.oer.generate(foo, 'foo')
+
+        self.assertEqual(str(cm.exception),
+                         "Foo.A: BIT STRING with variable SIZE not supported.")
+
+        foo = asn1tools.compile_string(
+            'Foo DEFINITIONS AUTOMATIC TAGS ::= BEGIN '
+            '    A ::= BIT STRING (SIZE(33))'
+            'END',
+            'oer')
+
+        with self.assertRaises(asn1tools.errors.Error) as cm:
+            asn1tools.source.c.oer.generate(foo, 'foo')
+
+        self.assertEqual(str(cm.exception),
+                         "Foo.A: BIT STRING with a length of more than 32 bits are "
+                         "not supported.")
+
 if __name__ == '__main__':
     unittest.main()
