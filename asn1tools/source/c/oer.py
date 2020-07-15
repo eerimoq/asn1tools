@@ -850,22 +850,21 @@ class _Generator(Generator):
         type_length = self.value_length(max_value)
 
         encode_lines = [
-                'encoder_append_int(encoder_p, (int32_t)src_p->{}, {});'.format(
-                    self.location_inner(),
-                    type_length)
-            ]
+            'encoder_append_int(encoder_p, (int32_t)src_p->{}, {});'.format(
+                self.location_inner(),
+                type_length)
+        ]
         decode_lines = [
-                'dst_p->{} = ({})decoder_read_int(decoder_p, {});'.format(
-                    self.location_inner(),
-                    type_name,
-                    type_length)
-            ]
+            'dst_p->{} = ({})decoder_read_int(decoder_p, {});'.format(
+                self.location_inner(),
+                type_name,
+                type_length)
+        ]
 
         if type_length == 3:
             decode_lines += [
                 'dst_p->{} &= 0x00ffffffu;'.format(
-                    self.location_inner(),
-                )
+                    self.location_inner())
             ]
 
         return encode_lines, decode_lines
