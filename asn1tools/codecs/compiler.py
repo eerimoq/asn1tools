@@ -948,8 +948,19 @@ class Compiler(object):
     def get_with_components(self, type_descriptor):
         return type_descriptor.get('with-components', None)
 
-    def get_named_numbers(self, type_descriptor):
-        return type_descriptor.get('named-numbers', None)
+    def get_named_bits(self, type_descriptor, module_name):
+        named_numbers = type_descriptor.get('named-bits', None)
+        if named_numbers is not None:
+            named_number_values = []
+
+            for value in named_numbers:
+                if value != EXTENSION_MARKER and not value[1].isdigit():
+                    lookup = self.lookup_value(value[1], module_name)
+                    named_number_values.append((value[0], lookup[0]['value']))
+                else:
+                    named_number_values.append((value[0], int(value[1])))
+
+            return named_number_values
 
     def is_explicit_tag(self, type_descriptor):
         try:

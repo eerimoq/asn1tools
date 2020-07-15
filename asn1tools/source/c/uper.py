@@ -476,6 +476,8 @@ class _Generator(Generator):
             return self.format_sequence_of(type_, checker)
         elif isinstance(type_, uper.Enumerated):
             return self.format_enumerated(type_)
+        elif isinstance(type_, uper.BitString):
+            return self.format_bit_string(type_, checker)
         else:
             raise self.error(
                 "Unsupported type '{}'.".format(type_.type_name))
@@ -569,6 +571,24 @@ class _Generator(Generator):
                     'dst_p->{} += {};'.format(location, checker.minimum)
                 ]
             )
+
+    def format_bit_string_inner(self, type_):
+        location = self.location_inner()
+
+        return (
+            [
+                'encoder_append_non_negative_binary_integer(',
+                '    encoder_p,',
+                '    (uint64_t)(src_p->{}),'.format(location),
+                '    {});'.format(type_.maximum)
+            ],
+            [
+                'dst_p->{} = decoder_read_non_negative_binary_integer('.format(
+                    location),
+                '    decoder_p,',
+                '    {});'.format(type_.maximum)
+            ]
+        )
 
     def format_boolean_inner(self):
         return (
@@ -967,6 +987,8 @@ class _Generator(Generator):
             return self.format_sequence_of_inner(type_, checker)
         elif isinstance(type_, uper.Enumerated):
             return self.format_enumerated_inner(type_)
+        elif isinstance(type_, uper.BitString):
+            return self.format_bit_string_inner(type_)
         else:
             raise self.error(type_)
 

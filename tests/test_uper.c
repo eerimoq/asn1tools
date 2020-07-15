@@ -1047,3 +1047,34 @@ TEST(uper_c_source_am)
         ASSERT_EQ(decoded.value, datas[i].decoded);
     }
 }
+
+TEST(uper_c_source_an)
+{
+    uint8_t encoded[9];
+    struct uper_c_source_ao_t decoded;
+
+    /* Encode. */
+    decoded.a = UPER_C_SOURCE_AO_A_C;
+    decoded.b = UPER_C_SOURCE_AO_B_A;
+    decoded.c = 0x5;
+    decoded.d = UPER_C_SOURCE_AO_D_B;
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    ASSERT_EQ(uper_c_source_ao_encode(&encoded[0],
+                                      sizeof(encoded),
+                                      &decoded), sizeof(encoded));
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x01\x80\x00\x00\x52\x00\x00\x00\x00",
+                     sizeof(encoded));
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    ASSERT_EQ(uper_c_source_ao_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), sizeof(encoded));
+
+    ASSERT_EQ(decoded.a, UPER_C_SOURCE_AO_A_C);
+    ASSERT_EQ(decoded.b, UPER_C_SOURCE_AO_B_A);
+    ASSERT_EQ(decoded.c, 0x5);
+    ASSERT_EQ(decoded.d, UPER_C_SOURCE_AO_D_B);
+}
