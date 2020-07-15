@@ -949,11 +949,11 @@ class Compiler(object):
         return type_descriptor.get('with-components', None)
 
     def get_named_bits(self, type_descriptor, module_name):
-        named_numbers = type_descriptor.get('named-bits', None)
-        if named_numbers is not None:
+        named_bits = type_descriptor.get('named-bits', None)
+        if named_bits is not None:
             named_number_values = []
 
-            for value in named_numbers:
+            for value in named_bits:
                 if value != EXTENSION_MARKER and not value[1].isdigit():
                     lookup = self.lookup_value(value[1], module_name)
                     named_number_values.append((value[0], lookup[0]['value']))
