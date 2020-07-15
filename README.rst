@@ -307,8 +307,8 @@ See `oer.h`_, `oer.c`_, `uper.h`_, `uper.c`_, `oer_fuzzer.c`_ and
 Limitations by design:
 
 - Only the types ``BOOLEAN``, ``INTEGER``, ``NULL``, ``OCTET STRING``,
-  ``ENUMERATED``, ``SEQUENCE``, ``SEQUENCE OF``, and ``CHOICE`` are
-  supported. The OER generator also supports ``REAL``.
+  ``BIT STRING``, ``ENUMERATED``, ``SEQUENCE``, ``SEQUENCE OF``, and ``CHOICE``
+  are supported. The OER generator also supports ``REAL``.
 
 - All types must have a known maximum size, i.e. ``INTEGER (0..7)``,
   ``OCTET STRING (SIZE(12))``.
