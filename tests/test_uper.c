@@ -1047,3 +1047,19 @@ TEST(uper_c_source_am)
         ASSERT_EQ(decoded.value, datas[i].decoded);
     }
 }
+
+TEST(uper_c_source_ao)
+{
+    uint8_t encoded[1] = "\x20";
+    struct uper_c_source_ao_t decoded;
+
+    decoded.b.a = 16;
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    ASSERT_EQ(uper_c_source_ao_decode(&decoded,
+                                      &encoded[0],
+                                      sizeof(encoded)), sizeof(encoded));
+
+    ASSERT_EQ(decoded.b.a, 16);
+}
