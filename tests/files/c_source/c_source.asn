@@ -479,7 +479,15 @@ AM ::= INTEGER (-2..128)
 AN ::= ENUMERATED { a(-16777216), b(-8388608), c(-65536), d(-32768), e(-128),
                     f(0), g(127), h(128), i(32767), j(65536), k(16777216) }
 
+ao-value-b INTEGER ::= 1
 AO ::= SEQUENCE {
+    a BIT STRING { a(0), b(ao-value-b), c(7) } (SIZE(8)),
+    b BIT STRING { a(0), b(1), c(23) } (SIZE(24)),
+    c BIT STRING (SIZE(4)),
+    d BIT STRING { a(1), b(2), c(31) } (SIZE(32))
+}
+
+AP ::= SEQUENCE {
     b REFERENCED-TYPE
 }
 

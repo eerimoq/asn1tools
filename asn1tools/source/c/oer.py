@@ -763,6 +763,8 @@ class _Generator(Generator):
             return self.format_sequence_of(type_, checker)
         elif isinstance(type_, oer.Enumerated):
             return self.format_enumerated(type_)
+        elif isinstance(type_, oer.BitString):
+            return self.format_bit_string(type_, checker)
         else:
             raise self.error(
                 "Unsupported type '{}'.".format(type_.type_name))
@@ -815,6 +817,9 @@ class _Generator(Generator):
         elif isinstance(type_, oer.OctetString):
             lines = self.format_octet_string(checker)[1:-1]
             lines = dedent_lines(lines)
+        elif isinstance(type_, oer.BitString):
+            lines = self.format_bit_string(type_, checker)
+            lines[0] += ' value;'
         elif isinstance(type_, oer.Null):
             lines = []
         else:
@@ -838,6 +843,31 @@ class _Generator(Generator):
                     type_name)
             ]
         )
+
+    def format_bit_string_inner(self, checker):
+        max_value = 2**checker.minimum - 1
+        type_name = self.format_type_name(max_value, max_value)
+        type_length = self.value_length(max_value)
+
+        encode_lines = [
+            'encoder_append_int(encoder_p, (int32_t)src_p->{}, {});'.format(
+                self.location_inner(),
+                type_length)
+        ]
+        decode_lines = [
+            'dst_p->{} = ({})decoder_read_int(decoder_p, {});'.format(
+                self.location_inner(),
+                type_name,
+                type_length)
+        ]
+
+        if type_length == 3:
+            decode_lines += [
+                'dst_p->{} &= 0x00ffffffu;'.format(
+                    self.location_inner())
+            ]
+
+        return encode_lines, decode_lines
 
     def get_encoded_integer_lengths(self, checker):
         return [self.type_length(checker.minimum, checker.maximum) // 8]
@@ -1599,6 +1629,8 @@ class _Generator(Generator):
             return self.format_sequence_of_inner(type_, checker)
         elif isinstance(type_, oer.Enumerated):
             return self.format_enumerated_inner(type_)
+        elif isinstance(type_, oer.BitString):
+            return self.format_bit_string_inner(checker)
         else:
             raise self.error(str(type_))
 

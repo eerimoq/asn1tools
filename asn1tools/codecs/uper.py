@@ -586,9 +586,9 @@ class Compiler(per.Compiler):
         elif type_name == 'DATE-TIME':
             compiled = DateTime(name)
         elif type_name == 'BIT STRING':
-            has_named_bits = ('named-bits' in type_descriptor)
             compiled = BitString(name,
-                                 has_named_bits,
+                                 self.get_named_bits(type_descriptor,
+                                                     module_name),
                                  *self.get_size_range(type_descriptor,
                                                       module_name))
         elif type_name == 'ANY':

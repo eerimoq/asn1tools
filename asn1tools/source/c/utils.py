@@ -1,4 +1,5 @@
 import re
+from operator import itemgetter
 
 from ...errors import Error
 
@@ -236,6 +237,20 @@ class Generator(object):
 
         return length
 
+    def value_length(self, value):
+        if value < 256:
+            length = 1
+        elif value < 65536:
+            length = 2
+        elif value < 16777216:
+            length = 3
+        elif value < 4294967296:
+            length = 4
+        else:
+            length = 0
+            self.error('Value is too large')
+        return length
+
     def format_type_name(self, minimum, maximum):
         length = self.type_length(minimum, maximum)
         type_name = 'int{}_t'.format(length)
@@ -249,6 +264,12 @@ class Generator(object):
         return ' || '.join(['src_p->{}is_{}_addition_present'.
                             format(self.location_inner('', '.'), addition.name)
                             for addition in type_.additions])
+
+    def get_named_number_values(self, type_):
+        if type_.named_bits is not None:
+            return sorted([(canonical(data), value)
+                           for data, value in type_.named_bits],
+                          key=itemgetter(1))
 
     @property
     def location(self):
@@ -377,6 +398,33 @@ class Generator(object):
             '    uint8_t buf[{}];'.format(checker.maximum),
             '}'
         ]
+
+    def format_bit_string(self, type_, checker):
+        def get_value(value):
+            byte = (length - 1) - (value // 8)
+            bit = 7 - (value % 8)
+            return ('0x{:0' + str(length // 4) + 'x}').format(1 << (bit + byte * 8))
+
+        if checker.minimum != checker.maximum:
+            raise self.error('BIT STRING with variable SIZE not supported.')
+        if checker.minimum > 32:
+            raise self.error('BIT STRING with a length of more than 32 bits are not '
+                             'supported.')
+
+        max_value = 2**checker.minimum - 1
+
+        length = self.value_length(max_value)
+        named_bits = self.get_named_number_values(type_)
+        type_name = self.format_type_name(max_value, max_value)
+
+        if named_bits is not None:
+            self.helper_lines += [
+                'static const {} {}_{} = {};'.format(type_name, self.location.upper(),
+                                                     name.upper(), get_value(value))
+                for name, value in self.get_named_number_values(type_)
+            ]
+
+        return [type_name]
 
     def format_sequence(self, type_, checker):
         lines = []

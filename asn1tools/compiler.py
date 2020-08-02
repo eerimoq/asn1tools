@@ -174,7 +174,7 @@ class Specification(object):
         Use to get the length of indefinite-length BER encoded data.
 
         >>> foo.decode_with_length('Question',
-                                   b'0\\x0e\\x02\\x01\\x01\\x16\\x09Is 1+1=3?')
+                                    b'0\\x0e\\x02\\x01\\x01\\x16\\x09Is 1+1=3?')
         ({'id': 1, 'question': 'Is 1+1=3?'}, 16)
 
         """

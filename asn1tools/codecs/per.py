@@ -1157,7 +1157,7 @@ class BitString(Type):
 
     def __init__(self,
                  name,
-                 has_named_bits,
+                 named_bits,
                  minimum,
                  maximum,
                  has_extension_marker):
@@ -1165,7 +1165,8 @@ class BitString(Type):
         self.minimum = minimum
         self.maximum = maximum
         self.has_extension_marker = has_extension_marker
-        self.has_named_bits = has_named_bits
+        self.named_bits = named_bits
+        self.has_named_bits = named_bits is not None
 
         if is_unbound(minimum, maximum):
             self.number_of_bits = None
@@ -2151,9 +2152,9 @@ class Compiler(compiler.Compiler):
         elif type_name == 'DATE-TIME':
             compiled = DateTime(name)
         elif type_name == 'BIT STRING':
-            has_named_bits = ('named-bits' in type_descriptor)
             compiled = BitString(name,
-                                 has_named_bits,
+                                 self.get_named_bits(type_descriptor,
+                                                     module_name),
                                  *self.get_size_range(type_descriptor,
                                                       module_name))
         elif type_name == 'ANY':

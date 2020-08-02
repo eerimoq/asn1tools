@@ -1272,14 +1272,45 @@ TEST(oer_c_source_an)
 
 TEST(oer_c_source_ao)
 {
-    uint8_t encoded[1] = "\x10";
+    uint8_t encoded[9];
     struct oer_c_source_ao_t decoded;
+
+    /* Encode. */
+    decoded.a = OER_C_SOURCE_AO_A_C;
+    decoded.b = OER_C_SOURCE_AO_B_A;
+    decoded.c = 0x50;
+    decoded.d = OER_C_SOURCE_AO_D_B;
+
+    memset(&encoded[0], 0, sizeof(encoded));
+    ASSERT_EQ(oer_c_source_ao_encode(&encoded[0],
+                                     sizeof(encoded),
+                                     &decoded), sizeof(encoded));
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x01\x80\x00\x00\x50\x20\x00\x00\x00",
+                     sizeof(encoded));
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    ASSERT_EQ(oer_c_source_ao_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), sizeof(encoded));
+
+    ASSERT_EQ(decoded.a, OER_C_SOURCE_AO_A_C);
+    ASSERT_EQ(decoded.b, OER_C_SOURCE_AO_B_A);
+    ASSERT_EQ(decoded.c, 0x50);
+    ASSERT_EQ(decoded.d, OER_C_SOURCE_AO_D_B);
+}
+
+TEST(oer_c_source_ap)
+{
+    uint8_t encoded[1] = "\x10";
+    struct oer_c_source_ap_t decoded;
 
     decoded.b.a = 16;
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
-    ASSERT_EQ(oer_c_source_ao_decode(&decoded,
+    ASSERT_EQ(oer_c_source_ap_decode(&decoded,
                                      &encoded[0],
                                      sizeof(encoded)), sizeof(encoded));
 
