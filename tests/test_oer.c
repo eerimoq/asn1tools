@@ -1301,6 +1301,22 @@ TEST(oer_c_source_ao)
     ASSERT_EQ(decoded.d, OER_C_SOURCE_AO_D_B);
 }
 
+TEST(oer_c_source_ap)
+{
+    uint8_t encoded[1] = "\x10";
+    struct oer_c_source_ap_t decoded;
+
+    decoded.b.a = 16;
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    ASSERT_EQ(oer_c_source_ap_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), sizeof(encoded));
+
+    ASSERT_EQ(decoded.b.a, 16);
+}
+
 TEST(oer_c_source_ag_erroneous_data)
 {
     struct oer_c_source_ag_t decoded;

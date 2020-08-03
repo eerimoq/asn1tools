@@ -970,6 +970,15 @@ class Compiler(object):
 
         return False
 
+    def get_module_name(self, type_descriptor, module_name):
+        module_name = type_descriptor.get('module-name', module_name)
+        try:
+            _, module_name = self.lookup_type_descriptor(type_descriptor['type'],
+                                                         module_name)
+        except CompileError:
+            pass
+        return module_name
+
     def lookup_in_modules(self, section, debug_string, name, module_name):
         begin_debug_string = debug_string[:1].upper() + debug_string[1:]
         module = self._specification[module_name]
