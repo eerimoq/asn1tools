@@ -123,7 +123,6 @@ CFLAGS_EXTRA_CLANG := \
 
 .PHONY: test
 test:
-	python2 setup.py test
 	python3 setup.py test
 	$(MAKE) test-sdist
 	env PYTHONPATH=. python3 examples/benchmarks/packages/ber.py
