@@ -274,7 +274,7 @@ TEST(uper_c_source_d_all_present)
                                      sizeof(encoded),
                                      &decoded), sizeof(encoded));
     ASSERT_MEMORY_EQ(&encoded[0],
-                     "\x00\xd5\x15\x7d\x20\x60\x60\x60\x60\x78",
+                     "\x00\xaa\x2a\xfa\x40\xc0\xc0\xc0\xc0\xf0",
                      sizeof(encoded));
 
     /* Decode. */
@@ -331,7 +331,7 @@ TEST(uper_c_source_d_some_missing)
                                      sizeof(encoded),
                                      &decoded), sizeof(encoded));
     ASSERT_MEMORY_EQ(&encoded[0],
-                     "\x09\x15\x08\x06\x06\x06\x06\x06",
+                     "\x09\x8a\x84\x03\x03\x03\x03\x03",
                      sizeof(encoded));
 
     /* Decode. */
