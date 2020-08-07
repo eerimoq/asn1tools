@@ -15,7 +15,6 @@ from .utils import is_user_type
 from .utils import indent_lines
 from .utils import dedent_lines
 from .utils import canonical
-from .utils import format_default
 from ...codecs import oer
 
 ENUMERATED_VALUE_LENGTH = '''
@@ -969,8 +968,7 @@ class _Generator(Generator):
                     encode_lines += [
                         'if (src_p->{}{} != {}) {{'.format(self.location_inner('', '.'),
                                                            member.name,
-                                                           format_default(
-                                                               member.default)),
+                                                           self.format_default(member)),
                         '    {} |= {}u;'.format(present_mask, mask),
                         '}',
                         ''
