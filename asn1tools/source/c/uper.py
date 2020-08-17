@@ -454,6 +454,15 @@ class _Generator(Generator):
     def get_choice_members(self, type_):
         return type_.root_index_to_member.values()
 
+    def format_default(self, type_):
+        if isinstance(type_, uper.Boolean):
+            return str(type_.default).lower()
+        elif isinstance(type_, uper.Enumerated):
+            with self.members_backtrace_push(type_.name):
+                return '{}_{}_e'.format(self.location, type_.default)
+        else:
+            return str(type_.default)
+
     def format_type(self, type_, checker):
         if isinstance(type_, uper.Integer):
             return self.format_integer(checker)

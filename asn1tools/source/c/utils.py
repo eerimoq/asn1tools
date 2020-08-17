@@ -683,6 +683,9 @@ class Generator(object):
 
         return type_declarations, declarations, helpers, definitions
 
+    def format_default(self, type_):
+        raise NotImplementedError('To be implemented by subclasses.')
+
     def format_type(self, type_, checker):
         raise NotImplementedError('To be implemented by subclasses.')
 
