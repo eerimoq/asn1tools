@@ -12,7 +12,6 @@ from .utils import is_user_type
 from .utils import indent_lines
 from .utils import dedent_lines
 from .utils import canonical
-from .utils import format_default
 from ...codecs import uper
 
 
@@ -655,7 +654,7 @@ class _Generator(Generator):
                     'encoder_append_bool(encoder_p, src_p->{}{} != {});'.format(
                         self.location_inner('', '.'),
                         member.name,
-                        format_default(member.default)))
+                        self.format_default(member)))
                 decode_lines.append(
                     '{} = decoder_read_bool(decoder_p);'.format(
                         unique_is_present))

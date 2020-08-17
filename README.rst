@@ -26,10 +26,6 @@ Miscellaneous features:
 
 - `C` source code generator for OER and UPER (with some limitations).
 
-Planned features:
-
-- `JavaScript` source code generator (with lots of limitations).
-
 Project homepage: https://github.com/eerimoq/asn1tools
 
 Documentation: http://asn1tools.readthedocs.org/en/latest

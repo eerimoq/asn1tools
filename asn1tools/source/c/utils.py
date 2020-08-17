@@ -157,13 +157,6 @@ class _UserType(object):
         self.definition = definition
 
 
-def format_default(default):
-    if isinstance(default, bool):
-        return str(default).lower()
-    else:
-        return str(default)
-
-
 class Generator(object):
 
     def __init__(self, namespace):
@@ -559,7 +552,7 @@ class Generator(object):
             encode_lines = [
                 '',
                 'if (src_p->{} != {}) {{'.format(name,
-                                                 format_default(member.default))
+                                                 self.format_default(member))
             ] + indent_lines(encode_lines) + [
                 '}',
                 ''
@@ -569,7 +562,7 @@ class Generator(object):
                 'if ({}) {{'.format(default_condition_by_member_name[member.name])
             ] + indent_lines(decode_lines) + [
                 '} else {',
-                '    dst_p->{} = {};'.format(name, format_default(member.default)),
+                '    dst_p->{} = {};'.format(name, self.format_default(member)),
                 '}',
                 ''
             ]

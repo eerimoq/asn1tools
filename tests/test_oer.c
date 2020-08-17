@@ -306,8 +306,8 @@ TEST(oer_c_source_d_all_present)
                                     sizeof(encoded),
                                     &decoded), sizeof(encoded));
     ASSERT_MEMORY_EQ(&encoded[0],
-                     "\x01\x01\x80\x00\x01\x03\x04\x02\x54\x55\xf0\x00\x02\x80"
-                     "\x03\x03\x03\x03\x03\xff\xff",
+                     "\x01\x01\x80\x00\x01\x03\x00\x02\x54\x55\xf0\x00\x02\x80\x03\x03"
+                     "\x03\x03\x03\xff\xff",
                      sizeof(encoded));
 
     /* Decode. */
@@ -338,7 +338,7 @@ TEST(oer_c_source_d_all_present)
 
 TEST(oer_c_source_d_some_missing)
 {
-    uint8_t encoded[18];
+    uint8_t encoded[19];
     struct oer_c_source_d_t decoded;
 
     /* Encode. */
@@ -365,8 +365,8 @@ TEST(oer_c_source_d_some_missing)
                                     &decoded), sizeof(encoded));
 
     ASSERT_MEMORY_EQ(&encoded[0],
-                     "\x01\x01\x81\x00\x01\x03\x82\x02\x00\x01\x54\x20\x00\x03\x03"
-                     "\x03\x03\x03",
+                     "\x01\x01\x81\x00\x01\x03\x80\x82\x02\x00\x01\x54\x20\x00\x03"
+                     "\x03\x03\x03\x03",
                      sizeof(encoded));
 
     /* Decode. */
