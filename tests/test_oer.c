@@ -1303,10 +1303,12 @@ TEST(oer_c_source_ao)
 
 TEST(oer_c_source_ap)
 {
-    uint8_t encoded[1] = "\x10";
+    uint8_t encoded[3] = "\x80\x10\x01";
     struct oer_c_source_ap_t decoded;
 
     decoded.b.a = 16;
+    decoded.c.value = oer_c_ref_referenced_enum_b_e;
+    decoded.d = 1;
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -1315,6 +1317,8 @@ TEST(oer_c_source_ap)
                                      sizeof(encoded)), sizeof(encoded));
 
     ASSERT_EQ(decoded.b.a, 16);
+    ASSERT_EQ(decoded.c.value, oer_c_ref_referenced_enum_b_e);
+    ASSERT_EQ(decoded.d, 1);
 }
 
 TEST(oer_c_source_ag_erroneous_data)

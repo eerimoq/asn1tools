@@ -453,6 +453,14 @@ class _Generator(Generator):
     def get_choice_members(self, type_):
         return type_.root_index_to_member.values()
 
+    def format_default(self, type_):
+        if isinstance(type_, uper.Boolean):
+            return str(type_.default).lower()
+        elif isinstance(type_, uper.Enumerated):
+            return self.format_default_enumerated(type_)
+        else:
+            return str(type_.default)
+
     def format_type(self, type_, checker):
         if isinstance(type_, uper.Integer):
             return self.format_integer(checker)
@@ -642,9 +650,10 @@ class _Generator(Generator):
                                                                     'is_present')
                 member_name_to_is_present[member.name] = unique_is_present
                 encode_lines.append(
-                    'encoder_append_bool(encoder_p, src_p->{}{} != {});'.format(
+                    'encoder_append_bool(encoder_p, src_p->{}{}{} != {});'.format(
                         self.location_inner('', '.'),
                         member.name,
+                        '.value' if self.is_complex_user_type(member) else '',
                         self.format_default(member)))
                 decode_lines.append(
                     '{} = decoder_read_bool(decoder_p);'.format(
@@ -990,6 +999,10 @@ class _Generator(Generator):
             return self.format_bit_string_inner(type_)
         else:
             raise self.error(type_)
+
+    def is_complex_user_type(self, type_):
+        return is_user_type(type_) and \
+            not isinstance(type_, (uper.Integer, uper.Boolean, uper.Real, uper.Null))
 
     def generate_helpers(self, definitions):
         helpers = []

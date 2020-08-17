@@ -740,6 +740,14 @@ class _Generator(Generator):
     def get_choice_members(self, type_):
         return type_.root_members
 
+    def format_default(self, type_):
+        if isinstance(type_, oer.Boolean):
+            return str(type_.default).lower()
+        elif isinstance(type_, oer.Enumerated):
+            return self.format_default_enumerated(type_)
+        else:
+            return str(type_.default)
+
     def format_type(self, type_, checker):
         if isinstance(type_, oer.Integer):
             return self.format_integer(checker)
@@ -966,9 +974,11 @@ class _Generator(Generator):
                             mask))
                 else:
                     encode_lines += [
-                        'if (src_p->{}{} != {}) {{'.format(self.location_inner('', '.'),
-                                                           member.name,
-                                                           self.format_default(member)),
+                        'if (src_p->{}{}{} != {}) {{'.format(
+                            self.location_inner('', '.'),
+                            member.name,
+                            '.value' if self.is_complex_user_type(member) else '',
+                            self.format_default(member)),
                         '    {} |= {}u;'.format(present_mask, mask),
                         '}',
                         ''
@@ -1289,14 +1299,6 @@ class _Generator(Generator):
 
                 return ['length_determinant_length({})'.format(src_length),
                         src_length]
-
-    def get_user_type_prefix(self, type_name, module_name):
-        module_name_snake = camel_to_snake_case(module_name)
-        type_name_snake = camel_to_snake_case(type_name)
-
-        return '{}_{}_{}'.format(self.namespace,
-                                 module_name_snake,
-                                 type_name_snake)
 
     def format_user_type_inner(self, type_name, module_name):
         prefix = self.get_user_type_prefix(type_name, module_name)
@@ -1653,6 +1655,10 @@ class _Generator(Generator):
             return format_null_inner()
         else:
             return [], []
+
+    def is_complex_user_type(self, type_):
+        return is_user_type(type_) and \
+            not isinstance(type_, (oer.Integer, oer.Boolean, oer.Real, oer.Null))
 
     def generate_helpers(self, definitions):
         helpers = []
