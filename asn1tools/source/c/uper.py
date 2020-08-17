@@ -457,8 +457,7 @@ class _Generator(Generator):
         if isinstance(type_, uper.Boolean):
             return str(type_.default).lower()
         elif isinstance(type_, uper.Enumerated):
-            with self.members_backtrace_push(type_.name):
-                return '{}_{}_e'.format(self.location, type_.default)
+            return self.format_default_enumerated(type_)
         else:
             return str(type_.default)
 
@@ -651,9 +650,10 @@ class _Generator(Generator):
                                                                     'is_present')
                 member_name_to_is_present[member.name] = unique_is_present
                 encode_lines.append(
-                    'encoder_append_bool(encoder_p, src_p->{}{} != {});'.format(
+                    'encoder_append_bool(encoder_p, src_p->{}{}{} != {});'.format(
                         self.location_inner('', '.'),
                         member.name,
+                        '.value' if is_user_type(member) else '',
                         self.format_default(member)))
                 decode_lines.append(
                     '{} = decoder_read_bool(decoder_p);'.format(

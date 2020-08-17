@@ -1081,10 +1081,11 @@ TEST(uper_c_source_ao)
 
 TEST(uper_c_source_ap)
 {
-    uint8_t encoded[1] = "\x20";
+    uint8_t encoded[2] = "\x90\x40";
     struct uper_c_source_ap_t decoded;
 
     decoded.b.a = 16;
+    decoded.c.value = uper_c_ref_referenced_enum_b_e;
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -1093,4 +1094,5 @@ TEST(uper_c_source_ap)
                                       sizeof(encoded)), sizeof(encoded));
 
     ASSERT_EQ(decoded.b.a, 16);
+    ASSERT_EQ(decoded.c.value, uper_c_ref_referenced_enum_b_e);
 }

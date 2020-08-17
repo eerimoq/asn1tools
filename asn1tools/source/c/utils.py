@@ -253,6 +253,15 @@ class Generator(object):
 
         return type_name
 
+    def format_default_enumerated(self, type_):
+        if is_user_type(type_):
+            return '{}_{}_e'.format(self.get_user_type_prefix(type_.type_name,
+                                                              type_.module_name),
+                                    type_.default)
+        else:
+            with self.members_backtrace_push(type_.name):
+                return '{}_{}_e'.format(self.location, type_.default)
+
     def get_addition_present_condition(self, type_):
         return ' || '.join(['src_p->{}is_{}_addition_present'.
                             format(self.location_inner('', '.'), addition.name)
@@ -263,6 +272,14 @@ class Generator(object):
             return sorted([(canonical(data), value)
                            for data, value in type_.named_bits],
                           key=itemgetter(1))
+
+    def get_user_type_prefix(self, type_name, module_name):
+        module_name_snake = camel_to_snake_case(module_name)
+        type_name_snake = camel_to_snake_case(type_name)
+
+        return '{}_{}_{}'.format(self.namespace,
+                                 module_name_snake,
+                                 type_name_snake)
 
     @property
     def location(self):
@@ -551,8 +568,10 @@ class Generator(object):
             name = '{}{}'.format(location, member.name)
             encode_lines = [
                 '',
-                'if (src_p->{} != {}) {{'.format(name,
-                                                 self.format_default(member))
+                'if (src_p->{}{} != {}) {{'.format(
+                    name,
+                    '.value' if is_user_type(member) else '',
+                    self.format_default(member))
             ] + indent_lines(encode_lines) + [
                 '}',
                 ''
@@ -562,7 +581,9 @@ class Generator(object):
                 'if ({}) {{'.format(default_condition_by_member_name[member.name])
             ] + indent_lines(decode_lines) + [
                 '} else {',
-                '    dst_p->{} = {};'.format(name, self.format_default(member)),
+                '    dst_p->{}{} = {};'.format(name,
+                                               '.value' if is_user_type(member) else '',
+                                               self.format_default(member)),
                 '}',
                 ''
             ]
