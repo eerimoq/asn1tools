@@ -653,7 +653,7 @@ class _Generator(Generator):
                     'encoder_append_bool(encoder_p, src_p->{}{}{} != {});'.format(
                         self.location_inner('', '.'),
                         member.name,
-                        '.value' if is_user_type(member) else '',
+                        '.value' if self.is_complex_user_type(member) else '',
                         self.format_default(member)))
                 decode_lines.append(
                     '{} = decoder_read_bool(decoder_p);'.format(
@@ -999,6 +999,10 @@ class _Generator(Generator):
             return self.format_bit_string_inner(type_)
         else:
             raise self.error(type_)
+
+    def is_complex_user_type(self, type_):
+        return is_user_type(type_) and \
+            not isinstance(type_, (uper.Integer, uper.Boolean, uper.Real, uper.Null))
 
     def generate_helpers(self, definitions):
         helpers = []

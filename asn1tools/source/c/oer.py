@@ -977,7 +977,7 @@ class _Generator(Generator):
                         'if (src_p->{}{}{} != {}) {{'.format(
                             self.location_inner('', '.'),
                             member.name,
-                            '.value' if is_user_type(member) else '',
+                            '.value' if self.is_complex_user_type(member) else '',
                             self.format_default(member)),
                         '    {} |= {}u;'.format(present_mask, mask),
                         '}',
@@ -1655,6 +1655,10 @@ class _Generator(Generator):
             return format_null_inner()
         else:
             return [], []
+
+    def is_complex_user_type(self, type_):
+        return is_user_type(type_) and \
+            not isinstance(type_, (oer.Integer, oer.Boolean, oer.Real, oer.Null))
 
     def generate_helpers(self, definitions):
         helpers = []

@@ -1308,6 +1308,7 @@ TEST(oer_c_source_ap)
 
     decoded.b.a = 16;
     decoded.c.value = oer_c_ref_referenced_enum_b_e;
+    decoded.d = 1;
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
@@ -1317,6 +1318,7 @@ TEST(oer_c_source_ap)
 
     ASSERT_EQ(decoded.b.a, 16);
     ASSERT_EQ(decoded.c.value, oer_c_ref_referenced_enum_b_e);
+    ASSERT_EQ(decoded.d, 1);
 }
 
 TEST(oer_c_source_ag_erroneous_data)

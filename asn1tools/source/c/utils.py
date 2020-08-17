@@ -570,7 +570,7 @@ class Generator(object):
                 '',
                 'if (src_p->{}{} != {}) {{'.format(
                     name,
-                    '.value' if is_user_type(member) else '',
+                    '.value' if self.is_complex_user_type(member) else '',
                     self.format_default(member))
             ] + indent_lines(encode_lines) + [
                 '}',
@@ -581,9 +581,10 @@ class Generator(object):
                 'if ({}) {{'.format(default_condition_by_member_name[member.name])
             ] + indent_lines(decode_lines) + [
                 '} else {',
-                '    dst_p->{}{} = {};'.format(name,
-                                               '.value' if is_user_type(member) else '',
-                                               self.format_default(member)),
+                '    dst_p->{}{} = {};'.format(
+                    name,
+                    '.value' if self.is_complex_user_type(member) else '',
+                    self.format_default(member)),
                 '}',
                 ''
             ]
@@ -719,6 +720,9 @@ class Generator(object):
         raise NotImplementedError('To be implemented by subclasses.')
 
     def generate_helpers(self, definitions):
+        raise NotImplementedError('To be implemented by subclasses.')
+
+    def is_complex_user_type(self, type_):
         raise NotImplementedError('To be implemented by subclasses.')
 
 
