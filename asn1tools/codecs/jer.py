@@ -9,6 +9,7 @@ import math
 import datetime
 
 from ..parser import EXTENSION_MARKER
+from . import BaseType
 from . import EncodeError
 from . import DecodeError
 from . import compiler
@@ -17,28 +18,14 @@ from . import utc_time_to_datetime
 from . import utc_time_from_datetime
 from . import generalized_time_to_datetime
 from . import generalized_time_from_datetime
+from . import add_error_location
 from .compiler import enum_values_as_dict
 
 
-class Type(object):
-
-    def __init__(self, name, type_name):
-        self.name = name
-        self.type_name = type_name
-        self.optional = False
-        self.default = None
+class Type(BaseType):
 
     def set_size_range(self, minimum, maximum, has_extension_marker):
         pass
-
-    def set_default(self, value):
-        self.default = value
-
-    def get_default(self):
-        return self.default
-
-    def has_default(self):
-        return self.default is not None
 
 
 class StringType(Type):
@@ -67,6 +54,7 @@ class MembersType(Type):
         super(MembersType, self).__init__(name, type_name)
         self.members = members
 
+    @add_error_location
     def encode(self, data):
         values = {}
 
@@ -74,11 +62,11 @@ class MembersType(Type):
             name = member.name
 
             if name in data:
-                try:
-                    value = member.encode(data[name])
-                except EncodeError as e:
-                    e.location.append(member.name)
-                    raise
+                # try:
+                value = member.encode(data[name])
+                # except EncodeError as e:
+                #     e.location.append(member.name)
+                #     raise
             elif member.optional or member.has_default():
                 continue
             else:
@@ -92,6 +80,7 @@ class MembersType(Type):
 
         return values
 
+    @add_error_location
     def decode(self, data):
         values = {}
 
@@ -271,6 +260,7 @@ class Enumerated(Type):
     def format_values(self):
         return format_or(sorted(list(self.values)))
 
+    @add_error_location
     def encode(self, data):
         try:
             value = self.values[data]
@@ -282,6 +272,7 @@ class Enumerated(Type):
 
         return value
 
+    @add_error_location
     def decode(self, data):
         if data in self.values:
             return self.values[data]
@@ -309,6 +300,7 @@ class SequenceOf(Type):
         super(SequenceOf, self).__init__(name, 'SEQUENCE OF')
         self.element_type = element_type
 
+    @add_error_location
     def encode(self, data):
         values = []
 
@@ -318,6 +310,7 @@ class SequenceOf(Type):
 
         return values
 
+    @add_error_location
     def decode(self, data):
         values = []
 
@@ -344,6 +337,7 @@ class SetOf(Type):
         super(SetOf, self).__init__(name, 'SET OF')
         self.element_type = element_type
 
+    @add_error_location
     def encode(self, data):
         values = []
 
@@ -353,6 +347,7 @@ class SetOf(Type):
 
         return values
 
+    @add_error_location
     def decode(self, data):
         values = []
 
@@ -378,6 +373,7 @@ class Choice(Type):
     def format_names(self):
         return format_or(sorted([member.name for member in self.members]))
 
+    @add_error_location
     def encode(self, data):
         try:
             member = self.name_to_member[data[0]]
@@ -387,12 +383,13 @@ class Choice(Type):
                     self.format_names(),
                     data[0]))
 
-        try:
-            return {member.name: member.encode(data[1])}
-        except EncodeError as e:
-            e.location.append(member.name)
-            raise
+        # try:
+        return {member.name: member.encode(data[1])}
+        # except EncodeError as e:
+        #     e.location.append(member.name)
+        #     raise
 
+    @add_error_location
     def decode(self, data):
         name, value = list(data.items())[0]
 
@@ -529,9 +526,11 @@ class Recursive(Type, compiler.Recursive):
     def set_inner_type(self, inner):
         self._inner = inner
 
+    @add_error_location
     def encode(self, data):
         return self._inner.encode(data)
 
+    @add_error_location
     def decode(self, data):
         return self._inner.decode(data)
 

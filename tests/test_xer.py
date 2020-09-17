@@ -115,7 +115,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             foo.decode('A', b'<A></A>')
 
         self.assertEqual(str(cm.exception),
-                         "Expected an OBJECT IDENTIFIER, but got ''.")
+                         "A: Expected an OBJECT IDENTIFIER, but got ''.")
 
     def test_external(self):
         foo = asn1tools.compile_string(
@@ -157,7 +157,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Expected enumeration value 'r' or 't', but got 'foo'.")
+            "A: Expected enumeration value 'r' or 't', but got 'foo'.")
 
         # Decode error.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -165,7 +165,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Expected enumeration value 'r' or 't', but got 'bar'.")
+            "A: Expected enumeration value 'r' or 't', but got 'bar'.")
 
         # Encode of error.
         with self.assertRaises(asn1tools.EncodeError) as cm:
@@ -173,7 +173,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Expected enumeration value 'a', but got 'foo'.")
+            "B.ENUMERATED: Expected enumeration value 'a', but got 'foo'.")
 
         # Decode of error.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -181,7 +181,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Expected enumeration value 'a', but got 'bar'.")
+            "B.ENUMERATED: Expected enumeration value 'a', but got 'bar'.")
 
     def test_sequence(self):
         foo = asn1tools.compile_string(
@@ -285,28 +285,28 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             foo.encode('A', ('d', None))
 
         self.assertEqual(str(cm.exception),
-                         "Expected choice 'a', 'b' or 'c', but got 'd'.")
+                         "A: Expected choice 'a', 'b' or 'c', but got 'd'.")
 
         # Decode error.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('A', b'<A><d><true /></d></A>')
 
         self.assertEqual(str(cm.exception),
-                         "Expected choice 'a', 'b' or 'c', but got 'd'.")
+                         "A: Expected choice 'a', 'b' or 'c', but got 'd'.")
 
         # Encode of error.
         with self.assertRaises(asn1tools.EncodeError) as cm:
             foo.encode('B', [('d', None)])
 
         self.assertEqual(str(cm.exception),
-                         "Expected choice 'a', 'b' or 'c', but got 'd'.")
+                         "B: Expected choice 'a', 'b' or 'c', but got 'd'.")
 
         # Decode of error.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('B', b'<A><d><true /></d></A>')
 
         self.assertEqual(str(cm.exception),
-                         "Expected choice 'a', 'b' or 'c', but got 'd'.")
+                         "B: Expected choice 'a', 'b' or 'c', but got 'd'.")
 
     def test_utf8_string(self):
         foo = asn1tools.compile_string(
@@ -429,7 +429,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
+            "Question: Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
 
     def test_decode_length(self):
         foo = asn1tools.compile_files('tests/files/foo.asn', 'xer')

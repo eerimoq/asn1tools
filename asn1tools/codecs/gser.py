@@ -8,8 +8,10 @@ import math
 from copy import copy
 import datetime
 
+from. import BaseType
 from . import EncodeError
 from . import DecodeError
+from . import add_error_location
 from . import compiler
 from . import format_or
 from . import utc_time_from_datetime
@@ -17,22 +19,13 @@ from . import generalized_time_from_datetime
 from .compiler import enum_values_as_dict
 
 
-class Type(object):
+class Type(BaseType):
 
-    def __init__(self, name, type_name):
-        self.name = name
-        self.type_name = type_name
-        self.optional = False
-        self.default = None
+    def encode(self, data, _separator, _indent):
+        raise NotImplementedError('To be implemented by subclasses.')
 
     def set_size_range(self, minimum, maximum, has_extension_marker):
         pass
-
-    def set_default(self, value):
-        self.default = value
-
-    def has_default(self):
-        return self.default is not None
 
 
 class MembersType(Type):
@@ -41,6 +34,7 @@ class MembersType(Type):
         super(MembersType, self).__init__(name, type_name)
         self.members = members
 
+    @add_error_location
     def encode(self, data, separator, indent):
         encoded_members = []
         member_separator = separator + ' ' * indent
@@ -49,13 +43,13 @@ class MembersType(Type):
             name = member.name
 
             if name in data:
-                try:
-                    encoded_member = member.encode(data[name],
-                                                   member_separator,
-                                                   indent)
-                except EncodeError as e:
-                    e.location.append(member.name)
-                    raise
+                # try:
+                encoded_member = member.encode(data[name],
+                                               member_separator,
+                                               indent)
+                # except EncodeError as e:
+                #     e.location.append(member.name)
+                #     raise
 
                 encoded_member = u'{}{} {}'.format(member_separator,
                                                    member.name,
@@ -87,6 +81,7 @@ class ArrayType(Type):
         super(ArrayType, self).__init__(name, type_name)
         self.element_type = element_type
 
+    @add_error_location
     def encode(self, data, separator, indent):
         encoded_elements = []
         element_separator = separator + ' ' * indent
@@ -264,6 +259,7 @@ class Choice(Type):
     def format_names(self):
         return format_or(sorted([member.name for member in self.members]))
 
+    @add_error_location
     def encode(self, data, separator, indent):
         try:
             member = self.name_to_member[data[0]]
@@ -273,11 +269,11 @@ class Choice(Type):
                     self.format_names(),
                     data[0]))
 
-        try:
-            encoded = member.encode(data[1], separator, indent)
-        except EncodeError as e:
-            e.location.append(member.name)
-            raise
+        # try:
+        encoded = member.encode(data[1], separator, indent)
+        # except EncodeError as e:
+        #     e.location.append(member.name)
+        #     raise
 
         return u'{} : {}'.format(data[0], encoded)
 
@@ -489,6 +485,7 @@ class Recursive(Type, compiler.Recursive):
     def set_inner_type(self, inner):
         self.inner = copy(inner)
 
+    @add_error_location
     def encode(self, data, separator, indent):
         return self.inner.encode(data, separator, indent)
 

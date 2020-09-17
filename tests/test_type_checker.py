@@ -48,169 +48,169 @@ class Asn1ToolsEncodeTypeCheckerTest(unittest.TestCase):
 
     def test_boolean(self):
         self.assert_good_bad('BOOLEAN',
-                             'Expected data of type bool',
+                             'A: Expected data of type bool',
                              good_datas=[True, False],
                              bad_datas=[1, 'foo'])
 
     def test_integer(self):
         self.assert_good_bad('INTEGER',
-                             'Expected data of type int or str',
+                             'A: Expected data of type int or str',
                              good_datas=[1, -1],
                              bad_datas=[[], None])
 
     def test_real(self):
         self.assert_good_bad('REAL',
-                             'Expected data of type float or int',
+                             'A: Expected data of type float or int',
                              good_datas=[1, -1.0],
                              bad_datas=['1.0', None])
 
     def test_null(self):
         self.assert_good_bad('NULL',
-                             'Expected None',
+                             'A: Expected None',
                              good_datas=[None],
                              bad_datas=['1.0', 1])
 
     def test_bit_string(self):
         self.assert_good_bad('BIT STRING',
-                             'Expected data of type tuple(bytes, int)',
+                             'A: Expected data of type tuple(bytes, int)',
                              good_datas=[(b'', 0)],
                              bad_datas=[1, '101', (1, 0, 1), None])
 
         self.assert_good_bad('BIT STRING',
-                             'Expected at least 1 bit(s) data',
+                             'A: Expected at least 1 bit(s) data',
                              good_datas=[],
                              bad_datas=[(b'', 1)],
                              bad_datas_strings=['0'])
 
     def test_bytes(self):
         self.assert_good_bad('OCTET STRING',
-                             'Expected data of type bytes or bytearray',
+                             'A: Expected data of type bytes or bytearray',
                              good_datas=[b'7', bytearray()],
                              bad_datas=[1, {}, None])
 
     def test_object_identifier(self):
         self.assert_good_bad('OBJECT IDENTIFIER',
-                             'Expected data of type str',
+                             'A: Expected data of type str',
                              good_datas=['5', u'6'],
                              bad_datas=[1, {}, None])
 
     def test_enumerated(self):
         self.assert_good_bad('ENUMERATED { a(0) }',
-                             'Expected data of type str',
+                             'A: Expected data of type str',
                              good_datas=['5', u'6'],
                              bad_datas=[1, {}, None])
 
     def test_sequence(self):
         self.assert_good_bad('SEQUENCE { a NULL }',
-                             'Expected data of type dict',
+                             'A: Expected data of type dict',
                              good_datas=[{}],
                              bad_datas=[(1, ), 1, b'101', None])
 
         self.assert_good_bad('SEQUENCE { a A OPTIONAL }',
-                             'a: a: Expected data of type dict',
+                             'A.a.A.a.A: Expected data of type dict',
                              good_datas=[{'a': {'a': {}}}],
                              bad_datas=[{'a': {'a': []}}],
                              bad_datas_strings=['[]'])
 
     def test_sequence_of(self):
         self.assert_good_bad('SEQUENCE OF NULL',
-                             'Expected data of type list',
+                             'A: Expected data of type list',
                              good_datas=[[None, None]],
                              bad_datas=[{}, None])
 
     def test_set(self):
         self.assert_good_bad('SET { a NULL }',
-                             'Expected data of type dict',
+                             'A: Expected data of type dict',
                              good_datas=[{}],
                              bad_datas=[(1, ), 1, b'101', None])
 
     def test_set_of(self):
         self.assert_good_bad('SET OF NULL',
-                             'Expected data of type list',
+                             'A: Expected data of type list',
                              good_datas=[[None, None]],
                              bad_datas=[{}, None])
 
     def test_choice(self):
         self.assert_good_bad('CHOICE { a NULL }',
-                             'Expected data of type tuple(str, object)',
+                             'A: Expected data of type tuple(str, object)',
                              good_datas=[('a', None)],
                              bad_datas=[(1, None), {'a': 1}, None])
 
         self.assert_good_bad('CHOICE { a CHOICE { b CHOICE { c NULL } } }',
-                             'a: b: Expected data of type tuple(str, object)',
+                             'A.a.b: Expected data of type tuple(str, object)',
                              good_datas=[('a', ('b', ('c', None)))],
                              bad_datas=[('a', ('b', {}))],
                              bad_datas_strings=['{}'])
 
     def test_utf8_string(self):
         self.assert_good_bad('UTF8String',
-                             'Expected data of type str',
+                             'A: Expected data of type str',
                              good_datas=['5', u'6'],
                              bad_datas=[1, {}, None])
 
     def test_numeric_string(self):
         self.assert_good_bad('NumericString',
-                             'Expected data of type str',
+                             'A: Expected data of type str',
                              good_datas=['5', u'6'],
                              bad_datas=[1, {}, None])
 
     def test_printable_string(self):
         self.assert_good_bad('PrintableString',
-                             'Expected data of type str',
+                             'A: Expected data of type str',
                              good_datas=['5', u'6'],
                              bad_datas=[1, {}, None])
 
     def test_ia5_string(self):
         self.assert_good_bad('IA5String',
-                             'Expected data of type str',
+                             'A: Expected data of type str',
                              good_datas=['5', u'6'],
                              bad_datas=[1, {}, None])
 
     def test_visible_string(self):
         self.assert_good_bad('VisibleString',
-                             'Expected data of type str',
+                             'A: Expected data of type str',
                              good_datas=['5', u'6'],
                              bad_datas=[1, {}, None])
 
     def test_general_string(self):
         self.assert_good_bad('GeneralString',
-                             'Expected data of type str',
+                             'A: Expected data of type str',
                              good_datas=['5', u'6'],
                              bad_datas=[1, {}, None])
 
     def test_bmp_string(self):
         self.assert_good_bad('BMPString',
-                             'Expected data of type str',
+                             'A: Expected data of type str',
                              good_datas=['5', u'6'],
                              bad_datas=[1, {}, None])
 
     def test_graphic_string(self):
         self.assert_good_bad('GraphicString',
-                             'Expected data of type str',
+                             'A: Expected data of type str',
                              good_datas=['5', u'6'],
                              bad_datas=[1, {}, None])
 
     def test_teletex_string(self):
         self.assert_good_bad('TeletexString',
-                             'Expected data of type str',
+                             'A: Expected data of type str',
                              good_datas=['5', u'6'],
                              bad_datas=[1, {}, None])
 
     def test_universal_string(self):
         self.assert_good_bad('UniversalString',
-                             'Expected data of type str',
+                             'A: Expected data of type str',
                              good_datas=['5', u'6'],
                              bad_datas=[1, {}, None])
 
     def test_utc_time(self):
         self.assert_good_bad('UTCTime',
-                             'Expected data of type datetime.datetime',
+                             'A: Expected data of type datetime.datetime',
                              good_datas=[datetime.datetime(1, 2, 3)],
                              bad_datas=[1.4, None])
 
     def test_generalized_time(self):
         self.assert_good_bad('GeneralizedTime',
-                             'Expected data of type datetime.datetime',
+                             'A: Expected data of type datetime.datetime',
                              good_datas=[datetime.datetime(1, 2, 3)],
                              bad_datas=[1.4, None])
 

@@ -307,9 +307,8 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
 
             with self.assertRaises(asn1tools.EncodeError) as cm:
                 foo.encode('A', {'a': {'b': ('c', {})}})
-
             self.assertEqual(str(cm.exception),
-                             "a: b: c: Sequence member 'd' not found in {}.")
+                             "A.a.b.c: Sequence member 'd' not found in {}.")
 
     def test_recursive(self):
         spec = (
@@ -623,37 +622,37 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
             (
                 'Constants',
                 -2,
-                'Expected an integer between -1 and 2, but got -2.'
+                'Constants: Expected an integer between -1 and 2, but got -2.'
             ),
             (
                 'Constants',
                 3,
-                'Expected an integer between -1 and 2, but got 3.'
+                'Constants: Expected an integer between -1 and 2, but got 3.'
             ),
             (
                 'A',
                 -2,
-                'Expected an integer between -1 and 1, but got -2.'
+                'A: Expected an integer between -1 and 1, but got -2.'
             ),
             (
                 'A',
                 2,
-                'Expected an integer between -1 and 1, but got 2.'
+                'A: Expected an integer between -1 and 1, but got 2.'
             ),
             (
                 'B',
                 1,
-                'Expected an integer between 2 and 2, but got 1.'
+                'B: Expected an integer between 2 and 2, but got 1.'
             ),
             (
                 'C',
                 -1,
-                'Expected an integer between 0 and 1, but got -1.'
+                'C: Expected an integer between 0 and 1, but got -1.'
             ),
             (
                 'C',
                 2,
-                'Expected an integer between 0 and 1, but got 2.'
+                'C: Expected an integer between 0 and 1, but got 2.'
             )
         ]
 
