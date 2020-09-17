@@ -9,6 +9,7 @@ import string
 import datetime
 
 from ..parser import EXTENSION_MARKER
+from . import BaseType
 from . import EncodeError
 from . import DecodeError
 from . import OutOfDataError
@@ -18,6 +19,7 @@ from . import restricted_utc_time_to_datetime
 from . import restricted_utc_time_from_datetime
 from . import restricted_generalized_time_to_datetime
 from . import restricted_generalized_time_from_datetime
+from . import add_error_location
 from .compiler import enum_values_split
 from .compiler import enum_values_as_dict
 from .compiler import clean_bit_string_value
@@ -538,14 +540,11 @@ class Decoder(object):
         return decoded
 
 
-class Type(object):
+class Type(BaseType):
 
     def __init__(self, name, type_name):
-        self.name = name
-        self.type_name = type_name
+        super().__init__(name, type_name)
         self.module_name = None
-        self.optional = False
-        self.default = None
         self.tag = None
 
     def set_size_range(self, minimum, maximum, has_extension_marker):
@@ -553,18 +552,6 @@ class Type(object):
 
     def set_restricted_to_range(self, minimum, maximum, has_extension_marker):
         pass
-
-    def set_default(self, value):
-        self.default = value
-
-    def get_default(self):
-        return self.default
-
-    def is_default(self, value):
-        return value == self.default
-
-    def has_default(self):
-        return self.default is not None
 
 
 class KnownMultiplierStringType(Type):
@@ -603,6 +590,7 @@ class KnownMultiplierStringType(Type):
             size = maximum - minimum
             self.number_of_bits = integer_as_number_of_bits(size)
 
+    @add_error_location
     def encode(self, data, encoder):
 
         if self.has_extension_marker:
@@ -641,6 +629,7 @@ class KnownMultiplierStringType(Type):
                         to_int(entry.encode(self.ENCODING))),
                     self.bits_per_character)
 
+    @add_error_location
     def decode(self, decoder):
         if self.has_extension_marker:
             bit = decoder.read_bit()
@@ -702,6 +691,7 @@ class StringType(Type):
     def __init__(self, name):
         super(StringType, self).__init__(name, self.__class__.__name__)
 
+    @add_error_location
     def encode(self, data, encoder):
         encoded = data.encode(self.ENCODING)
         encoder.align()
@@ -711,6 +701,7 @@ class StringType(Type):
             data = encoded[offset:offset + self.LENGTH_MULTIPLIER * length]
             encoder.append_bytes(data)
 
+    @add_error_location
     def decode(self, decoder):
         decoder.align()
         encoded = []
@@ -741,6 +732,7 @@ class MembersType(Type):
             if member.optional or member.default is not None
         ]
 
+    @add_error_location
     def encode(self, data, encoder):
         if self.additions is not None:
             offset = encoder.offset()
@@ -824,14 +816,14 @@ class MembersType(Type):
         name = member.name
 
         if name in data:
-            try:
-                if member.default is None:
-                    member.encode(data[name], encoder)
-                elif not member.is_default(data[name]) or encode_default:
-                    member.encode(data[name], encoder)
-            except EncodeError as e:
-                e.location.append(member.name)
-                raise
+            # try:
+            if member.default is None:
+                member.encode(data[name], encoder)
+            elif not member.is_default(data[name]) or encode_default:
+                member.encode(data[name], encoder)
+            # except EncodeError as e:
+            #     e.location.append(member.name)
+            #     raise
         elif member.optional or member.default is not None:
             pass
         else:
@@ -841,6 +833,7 @@ class MembersType(Type):
                     name,
                     data))
 
+    @add_error_location
     def decode(self, decoder):
         if self.additions is not None:
             if decoder.read_bit():
@@ -861,15 +854,15 @@ class MembersType(Type):
         }
 
         for member in self.root_members:
-            try:
-                if optionals.get(member, True):
-                    value = member.decode(decoder)
-                    values[member.name] = value
-                elif member.has_default():
-                    values[member.name] = member.default
-            except DecodeError as e:
-                e.location.append(member.name)
-                raise
+            # try:
+            if optionals.get(member, True):
+                value = member.decode(decoder)
+                values[member.name] = value
+            elif member.has_default():
+                values[member.name] = member.default
+            # except DecodeError as e:
+            #     e.location.append(member.name)
+            #     raise
 
         return values
 
@@ -892,11 +885,11 @@ class MembersType(Type):
                     if isinstance(addition, AdditionGroup):
                         decoded.update(addition.decode(decoder))
                     else:
-                        try:
-                            decoded[addition.name] = addition.decode(decoder)
-                        except DecodeError as e:
-                            e.location.append(addition.name)
-                            raise
+                        # try:
+                        decoded[addition.name] = addition.decode(decoder)
+                        # except DecodeError as e:
+                        #     e.location.append(addition.name)
+                        #     raise
                 else:
                     decoder.skip_bits(8 * open_type_length)
 
@@ -935,6 +928,7 @@ class ArrayType(Type):
             size = maximum - minimum
             self.number_of_bits = integer_as_number_of_bits(size)
 
+    @add_error_location
     def encode(self, data, encoder):
         if self.has_extension_marker:
             if self.minimum <= len(data) <= self.maximum:
@@ -967,6 +961,7 @@ class ArrayType(Type):
             for entry in data[offset:offset + length]:
                 self.element_type.encode(entry, encoder)
 
+    @add_error_location
     def decode(self, decoder):
         length = None
 
@@ -1018,9 +1013,11 @@ class Boolean(Type):
     def __init__(self, name):
         super(Boolean, self).__init__(name, 'BOOLEAN')
 
+    @add_error_location
     def encode(self, data, encoder):
         encoder.append_bit(bool(data))
 
+    @add_error_location
     def decode(self, decoder):
         return bool(decoder.read_bit())
 
@@ -1055,6 +1052,7 @@ class Integer(Type):
             number_of_bits = ((self.number_of_bits + 7) // 8 - 1).bit_length()
             self.number_of_indefinite_bits = number_of_bits
 
+    @add_error_location
     def encode(self, data, encoder):
         if self.has_extension_marker:
             if self.minimum <= data <= self.maximum:
@@ -1086,6 +1084,7 @@ class Integer(Type):
                                                     self.maximum,
                                                     number_of_bits)
 
+    @add_error_location
     def decode(self, decoder):
         if self.has_extension_marker:
             if decoder.read_bit():
@@ -1122,12 +1121,14 @@ class Real(Type):
     def __init__(self, name):
         super(Real, self).__init__(name, 'REAL')
 
+    @add_error_location
     def encode(self, data, encoder):
         encoded = encode_real(data)
         encoder.align()
         encoder.append_length_determinant(len(encoded))
         encoder.append_bytes(encoded)
 
+    @add_error_location
     def decode(self, decoder):
         decoder.align()
         length = decoder.read_length_determinant()
@@ -1143,9 +1144,11 @@ class Null(Type):
     def __init__(self, name):
         super(Null, self).__init__(name, 'NULL')
 
+    @add_error_location
     def encode(self, _, _encoder):
         pass
 
+    @add_error_location
     def decode(self, _):
         return None
 
@@ -1192,6 +1195,7 @@ class BitString(Type):
 
         return (data, number_of_bits)
 
+    @add_error_location
     def encode(self, data, encoder):
         data, number_of_bits = data
 
@@ -1224,6 +1228,7 @@ class BitString(Type):
         for offset, length in encoder.append_length_determinant_chunks(number_of_bits):
             encoder.append_bits(data[offset // 8:(offset + length + 7) // 8], length)
 
+    @add_error_location
     def decode(self, decoder):
         if self.has_extension_marker:
             if decoder.read_bit():
@@ -1284,6 +1289,7 @@ class OctetString(Type):
             else:
                 self.number_of_bits = integer_as_number_of_bits(size)
 
+    @add_error_location
     def encode(self, data, encoder):
         align = True
 
@@ -1320,6 +1326,7 @@ class OctetString(Type):
             encoder.align()
             encoder.append_bytes(data[offset:offset + length])
 
+    @add_error_location
     def decode(self, decoder):
         align = True
 
@@ -1369,12 +1376,14 @@ class ObjectIdentifier(Type):
     def __init__(self, name):
         super(ObjectIdentifier, self).__init__(name, 'OBJECT IDENTIFIER')
 
+    @add_error_location
     def encode(self, data, encoder):
         encoded_subidentifiers = encode_object_identifier(data)
         encoder.align()
         encoder.append_length_determinant(len(encoded_subidentifiers))
         encoder.append_bytes(bytearray(encoded_subidentifiers))
 
+    @add_error_location
     def decode(self, decoder):
         decoder.align()
         length = decoder.read_length_determinant()
@@ -1438,6 +1447,7 @@ class Enumerated(Type):
     def format_root_indexes(self):
         return format_or(sorted(list(self.root_index_to_data)))
 
+    @add_error_location
     def encode(self, data, encoder):
         if self.additions_index_to_data is None:
             index = self.root_data_to_index[data]
@@ -1454,6 +1464,7 @@ class Enumerated(Type):
                 index = self.additions_data_to_index[data]
                 encoder.append_normally_small_non_negative_whole_number(index)
 
+    @add_error_location
     def decode(self, decoder):
         if self.additions_index_to_data is None:
             return self.decode_root(decoder)
@@ -1594,6 +1605,7 @@ class Choice(Type):
 
         return format_or(sorted([member.name for member in members]))
 
+    @add_error_location
     def encode(self, data, encoder):
         if self.additions_index_to_member is not None:
             if data[0] in self.root_name_to_index:
@@ -1618,7 +1630,7 @@ class Choice(Type):
             self.encode_root_index(index, encoder)
 
         member = self.root_index_to_member[index]
-        self.encode_member(member, data[1], encoder)
+        member.encode(data[1], encoder)
 
     def encode_root_index(self, index, encoder):
         if self.number_of_indefinite_bits is None:
@@ -1649,7 +1661,7 @@ class Choice(Type):
 
         addition_encoder = encoder.__class__()
         addition = self.additions_index_to_member[index]
-        self.encode_member(addition, data[1], addition_encoder)
+        addition.encode(data[1], addition_encoder)
 
         # Embed encoded extension addition in an open type (add a
         # length field and multiple of 8 bits).
@@ -1659,13 +1671,7 @@ class Choice(Type):
         encoder.append_length_determinant(addition_encoder.number_of_bytes())
         encoder += addition_encoder
 
-    def encode_member(self, member, data, encoder):
-        try:
-            member.encode(data, encoder)
-        except EncodeError as e:
-            e.location.append(member.name)
-            raise
-
+    @add_error_location
     def decode(self, decoder):
         if self.additions_index_to_member is not None:
             if decoder.read_bit():
@@ -1744,6 +1750,7 @@ class UTF8String(Type):
     def __init__(self, name):
         super(UTF8String, self).__init__(name, 'UTF8String')
 
+    @add_error_location
     def encode(self, data, encoder):
         encoded = data.encode('utf-8')
         encoder.align()
@@ -1751,6 +1758,7 @@ class UTF8String(Type):
         for offset, length in encoder.append_length_determinant_chunks(len(encoded)):
             encoder.append_bytes(encoded[offset:offset + length])
 
+    @add_error_location
     def decode(self, decoder):
         decoder.align()
         encoded = []
@@ -1881,6 +1889,7 @@ class Date(Type):
                                [year, month, day],
                                None)
 
+    @add_error_location
     def encode(self, data, encoder):
         if 2005 <= data.year <= 2020:
             choice = 'immediate'
@@ -1899,6 +1908,7 @@ class Date(Type):
 
         return self._inner.encode(data, encoder)
 
+    @add_error_location
     def decode(self, decoder):
         decoded = self._inner.decode(decoder)
 
@@ -1921,6 +1931,7 @@ class TimeOfDay(Type):
                                [hours, minutes, seconds],
                                None)
 
+    @add_error_location
     def encode(self, data, encoder):
         data = {
             'hours': data.hour,
@@ -1930,6 +1941,7 @@ class TimeOfDay(Type):
 
         return self._inner.encode(data, encoder)
 
+    @add_error_location
     def decode(self, decoder):
         decoded = self._inner.decode(decoder)
 
@@ -1946,6 +1958,7 @@ class DateTime(Type):
                                [Date('date'), TimeOfDay('time')],
                                None)
 
+    @add_error_location
     def encode(self, data, encoder):
         data = {
             'date': data,
@@ -1954,6 +1967,7 @@ class DateTime(Type):
 
         return self._inner.encode(data, encoder)
 
+    @add_error_location
     def decode(self, decoder):
         decoded = self._inner.decode(decoder)
 
@@ -1970,11 +1984,13 @@ class OpenType(Type):
     def __init__(self, name):
         super(OpenType, self).__init__(name, 'OpenType')
 
+    @add_error_location
     def encode(self, data, encoder):
         encoder.align()
         encoder.append_length_determinant(len(data))
         encoder.append_bytes(data)
 
+    @add_error_location
     def decode(self, decoder):
         decoder.align()
         length = decoder.read_length_determinant()
@@ -1990,9 +2006,11 @@ class Any(Type):
     def __init__(self, name):
         super(Any, self).__init__(name, 'ANY')
 
+    @add_error_location
     def encode(self, _, _encoder):
         raise NotImplementedError('ANY is not yet implemented.')
 
+    @add_error_location
     def decode(self, _decoder):
         raise NotImplementedError('ANY is not yet implemented.')
 
@@ -2011,9 +2029,11 @@ class Recursive(Type, compiler.Recursive):
     def set_inner_type(self, inner):
         self._inner = inner
 
+    @add_error_location
     def encode(self, data, encoder):
         self._inner.encode(data, encoder)
 
+    @add_error_location
     def decode(self, decoder):
         return self._inner.decode(decoder)
 

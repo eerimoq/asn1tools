@@ -740,7 +740,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             foo.decode('U', b'\x80\x81\x81\x02\xee')
 
         self.assertEqual(str(cm.exception),
-                         'a: a: out of data at bit offset 25 (3.1 bytes)')
+                         'U.a.a: out of data (At bit offset: 25)')
 
     def test_sequence_of(self):
         foo = asn1tools.compile_string(
@@ -912,7 +912,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Expected choice 'a', 'b', 'c', 'd', 'e', 'f', 'g' or 'h', but "
+            "K: Expected choice 'a', 'b', 'c', 'd', 'e', 'f', 'g' or 'h', but "
             "got 'i'.")
 
     def test_utf8_string(self):
@@ -959,7 +959,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             foo.decode('A', b'\x70\x00\x00\x00')
 
         self.assertEqual(str(cm.exception),
-                         'b: Bad length determinant fragmentation value 0xc0.')
+                         'A.b: Bad length determinant fragmentation value 0xc0.')
 
     def test_numeric_string(self):
         foo = asn1tools.compile_string(
@@ -999,7 +999,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Expected a character in ' 0123456789', but got 'a' (0x61)'.")
+            "A: Expected a character in ' 0123456789', but got 'a' (0x61)'.")
 
         # Bad value 11 should raise an exception.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -1007,7 +1007,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Expected a value in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "
+            "A: Expected a value in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "
             "but got 11.")
 
         # Decode size extension is not yet supported.
@@ -1080,7 +1080,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Expected a character in ' '()+,-./0123456789:=?ABCDEFGHIJKLMNO"
+            "A: Expected a character in ' '()+,-./0123456789:=?ABCDEFGHIJKLMNO"
             "PQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', but got '[' (0x5b)'.")
 
     def test_ia5_string(self):
@@ -1209,7 +1209,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Expected a character in ' !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEF"
+            "A: Expected a character in ' !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEF"
             "GHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~', but got"
             " '.' (0x19)'.")
 
@@ -1466,7 +1466,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
+            "Question: Sequence member 'id' not found in {'question': 'Is 1+1=3?'}.")
 
     def test_decode_length(self):
         foo = asn1tools.compile_files('tests/files/foo.asn', 'uper')
@@ -2528,9 +2528,9 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
             'uper')
 
         datas = [
-            ('A', b'',         'out of data at bit offset 0 (0.0 bytes)'),
-            ('B', b'\x00',     'a: c: out of data at bit offset 1 (0.1 bytes)'),
-            ('B', b'\x80\x80', 'a: c: out of data at bit offset 9 (1.1 bytes)')
+            ('A', b'',         'A: out of data (At bit offset: 0)'),
+            ('B', b'\x00',     'B.a.c: out of data (At bit offset: 1)'),
+            ('B', b'\x80\x80', 'B.a.c: out of data (At bit offset: 9)')
         ]
 
         for type_name, encoded, message in datas:

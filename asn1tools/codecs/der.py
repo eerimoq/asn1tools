@@ -8,6 +8,7 @@ from . import restricted_utc_time_to_datetime
 from . import restricted_utc_time_from_datetime
 from . import restricted_generalized_time_to_datetime
 from . import restricted_generalized_time_from_datetime
+from . import add_error_location
 from .compiler import clean_bit_string_value
 from .ber import Class
 from .ber import Encoding
@@ -16,7 +17,6 @@ from .ber import encode_length_definite
 from .ber import decode_length_definite
 from .ber import encode_signed_integer
 from .ber import decode_signed_integer
-from .ber import encode_tag
 from .ber import Boolean
 from .ber import Real
 from .ber import Null
@@ -32,8 +32,10 @@ from .ber import ObjectDescriptor
 from .ber import Date
 from .ber import TimeOfDay
 from .ber import DateTime
-from .ber import decode_length
+# These imports are not used in this module but referenced externally
+from .ber import encode_tag
 from .ber import encode_real
+from .ber import decode_length
 from .ber import decode_real
 
 
@@ -46,17 +48,6 @@ class Type(ber.Type):
         super().set_tag(number, flags)
 
 
-    # def decode_tag(self, data, offset):
-    #     end_offset = offset + len(self.tag)
-    #
-    #     if data[offset:end_offset] != self.tag:
-    #         raise DecodeTagError(self.type_name,
-    #                              self.tag,
-    #                              data[offset:end_offset],
-    #                              offset)
-    #
-    #     return end_offset
-
 class StringType(Type):
 
     TAG = None
@@ -67,6 +58,7 @@ class StringType(Type):
                                          self.__class__.__name__,
                                          self.TAG)
 
+    @add_error_location
     def encode(self, data, encoded, values=None):
         data = data.encode(self.ENCODING)
         # encoded.extend(self.tag)
@@ -97,6 +89,7 @@ class ArrayType(Type):
         super(ArrayType, self).set_tag(number,
                                        flags | Encoding.CONSTRUCTED)
 
+    @add_error_location
     def encode(self, data, encoded, values=None):
         encoded_elements = bytearray()
 
@@ -132,6 +125,7 @@ class Integer(Type):
                                       'INTEGER',
                                       Tag.INTEGER)
 
+    @add_error_location
     def encode(self, data, encoded, values=None):
         # encoded.extend(self.tag)
         value = encode_signed_integer(data)
@@ -167,6 +161,7 @@ class BitString(Type):
 
         return clean_value == clean_default
 
+    @add_error_location
     def encode(self, data, encoded, values=None):
         number_of_bytes, number_of_rest_bits = divmod(data[1], 8)
         data = bytearray(data[0])
@@ -205,6 +200,7 @@ class OctetString(Type):
                                           'OCTET STRING',
                                           Tag.OCTET_STRING)
 
+    @add_error_location
     def encode(self, data, encoded, values=None):
         # encoded.extend(self.tag)
         # encoded.extend(encode_length_definite(len(data)))
@@ -305,6 +301,7 @@ class UTCTime(Type):
                                       'UTCTime',
                                       Tag.UTC_TIME)
 
+    @add_error_location
     def encode(self, data, encoded, values=None):
         data = restricted_utc_time_from_datetime(data).encode('ascii')
         encoded.extend(self.tag)
@@ -329,6 +326,7 @@ class GeneralizedTime(Type):
                                               'GeneralizedTime',
                                               Tag.GENERALIZED_TIME)
 
+    @add_error_location
     def encode(self, data, encoded, values=None):
         data = restricted_generalized_time_from_datetime(data).encode('ascii')
         encoded.extend(self.tag)

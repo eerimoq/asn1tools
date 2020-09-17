@@ -6,6 +6,7 @@ import string
 from copy import copy
 
 from . import ConstraintsError
+from . import add_error_location
 from . import compiler
 from . import format_or
 from .permitted_alphabet import NUMERIC_STRING
@@ -108,6 +109,7 @@ class String(Type):
 
         self.permitted_alphabet = permitted_alphabet
 
+    @add_error_location
     def encode(self, data):
         length = len(data)
 
@@ -142,6 +144,7 @@ class Integer(Type):
     def __init__(self, name):
         super(Integer, self).__init__(name)
 
+    @add_error_location
     def encode(self, data):
         if not self.is_in_range(data):
             raise ConstraintsError(
@@ -169,6 +172,7 @@ class BitString(Type):
         super(BitString, self).__init__(name)
         self.set_size_range(minimum, maximum, has_extension_marker)
 
+    @add_error_location
     def encode(self, data):
         number_of_bits = data[1]
 
@@ -192,6 +196,7 @@ class Bytes(Type):
         super(Bytes, self).__init__(name)
         self.set_size_range(minimum, maximum, has_extension_marker)
 
+    @add_error_location
     def encode(self, data):
         length = len(data)
 
@@ -209,16 +214,17 @@ class Dict(Type):
         super(Dict, self).__init__(name)
         self.members = members
 
+    @add_error_location
     def encode(self, data):
         for member in self.members:
             name = member.name
 
             if name in data:
-                try:
-                    member.encode(data[name])
-                except ConstraintsError as e:
-                    e.location.append(member.name)
-                    raise
+                # try:
+                member.encode(data[name])
+                # except ConstraintsError as e:
+                #     e.location.append(member.name)
+                #     raise
 
 
 class List(Type):
@@ -228,6 +234,7 @@ class List(Type):
         self.element_type = element_type
         self.set_size_range(minimum, maximum, has_extension_marker)
 
+    @add_error_location
     def encode(self, data):
         length = len(data)
 
@@ -253,6 +260,7 @@ class Choice(Type):
     def format_names(self):
         return format_or(sorted(self.name_to_member))
 
+    @add_error_location
     def encode(self, data):
         value = data[0]
 
@@ -266,11 +274,11 @@ class Choice(Type):
                     self.format_names(),
                     value))
 
-        try:
-            member.encode(data[1])
-        except ConstraintsError as e:
-            e.location.append(member.name)
-            raise
+        # try:
+        member.encode(data[1])
+        # except ConstraintsError as e:
+        #     e.location.append(member.name)
+        #     raise
 
 
 class NumericString(String):
@@ -321,6 +329,7 @@ class Recursive(Type, compiler.Recursive):
     def set_inner_type(self, inner):
         self.inner = copy(inner)
 
+    @add_error_location
     def encode(self, data):
         self.inner.encode(data)
 

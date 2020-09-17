@@ -92,6 +92,10 @@ class CompiledType(object):
     def type(self):
         return self._type
 
+    @property
+    def name(self):
+        return self._type.name
+
     def check_types(self, data):
         return self.type_checker.encode(data)
 
