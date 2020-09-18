@@ -32,10 +32,10 @@ class BaseType(object):
     def is_default(self, value):
         return value == self.default
 
-    def encode(self, data):
+    def encode(self, *args, **kwargs):
         raise NotImplementedError('To be implemented by subclasses.')
 
-    def decode(self, element):
+    def decode(self, *args, **kwargs):
         raise NotImplementedError('To be implemented by subclasses.')
 
 
