@@ -443,14 +443,10 @@ class MembersType(Type):
         name = member.name
 
         if name in data:
-            # try:
             if member.default is None:
                 member.encode(data[name], encoder)
             elif not member.is_default(data[name]) or encode_default:
                 member.encode(data[name], encoder)
-            # except EncodeError as e:
-            #     e.location.append(member.name)
-            #     raise
         elif member.optional or member.has_default():
             pass
         else:
@@ -483,15 +479,11 @@ class MembersType(Type):
         decoder.align()
 
         for member in self.root_members:
-            # try:
             if optionals.get(member, True):
                 value = member.decode(decoder)
                 values[member.name] = value
             elif member.has_default():
                 values[member.name] = member.default
-            # except DecodeError as e:
-            #     e.location.append(member.name)
-            #     raise
 
         return values
 
@@ -511,12 +503,7 @@ class MembersType(Type):
 
                 if i < len(self.additions):
                     addition = self.additions[i]
-                    #
-                    # try:
                     decoded[addition.name] = addition.decode(decoder)
-                    # except DecodeError as e:
-                    #     e.location.append(addition.name)
-                    #     raise
                 else:
                     decoder.skip_bits(8 * member_length)
 

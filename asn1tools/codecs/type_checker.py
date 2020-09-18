@@ -155,11 +155,7 @@ class Dict(Type):
             name = member.name
 
             if name in data:
-                # try:
                 member.encode(data[name])
-                # except EncodeError as e:
-                #     e.location.append(member.name)
-                #     raise
 
 
 class List(Type):
@@ -251,11 +247,7 @@ class Choice(Type):
                     self.format_names(),
                     data[0]))
 
-        # try:
         member.encode(data[1])
-        # except EncodeError as e:
-        #     e.location.append(member.name)
-        #     raise
 
 
 class Date(Type):

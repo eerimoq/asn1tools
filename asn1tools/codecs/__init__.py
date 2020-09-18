@@ -162,7 +162,6 @@ def add_error_location(method):
         except ErrorWithLocation as e:
             # Don't add name if it is blank (for SEQUENCE OF, SET OF etc)
             if self.name and not getattr(self, 'no_error_location', False):
-                # print('DECORATOR: ADDING ERROR LOCATION TO {}:{}'.format(type(self).__name__, self.name))
                 e.add_location(self.name)
             raise e
     return new_method

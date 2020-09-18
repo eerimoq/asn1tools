@@ -220,11 +220,7 @@ class Dict(Type):
             name = member.name
 
             if name in data:
-                # try:
                 member.encode(data[name])
-                # except ConstraintsError as e:
-                #     e.location.append(member.name)
-                #     raise
 
 
 class List(Type):
@@ -274,11 +270,7 @@ class Choice(Type):
                     self.format_names(),
                     value))
 
-        # try:
         member.encode(data[1])
-        # except ConstraintsError as e:
-        #     e.location.append(member.name)
-        #     raise
 
 
 class NumericString(String):
