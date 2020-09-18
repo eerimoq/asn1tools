@@ -43,13 +43,9 @@ class MembersType(Type):
             name = member.name
 
             if name in data:
-                # try:
                 encoded_member = member.encode(data[name],
                                                member_separator,
                                                indent)
-                # except EncodeError as e:
-                #     e.location.append(member.name)
-                #     raise
 
                 encoded_member = u'{}{} {}'.format(member_separator,
                                                    member.name,
@@ -269,11 +265,7 @@ class Choice(Type):
                     self.format_names(),
                     data[0]))
 
-        # try:
         encoded = member.encode(data[1], separator, indent)
-        # except EncodeError as e:
-        #     e.location.append(member.name)
-        #     raise
 
         return u'{} : {}'.format(data[0], encoded)
 

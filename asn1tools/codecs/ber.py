@@ -564,13 +564,11 @@ class MembersType(Type):
 
         if name in data:
             value = data[name]
-            #
-            # try:
-            if not member.is_default(value):
-                member.encode(value, encoded_members, values=data)
-            # except EncodeError as e:
-            #     e.location.append(member.name)
-            #     raise
+
+            if isinstance(member, AnyDefinedBy):
+                member.encode(value, encoded_members, data)
+            elif not member.is_default(value):
+                member.encode(value, encoded_members)
         elif member.optional:
             pass
         elif not member.has_default():
@@ -645,7 +643,6 @@ class MembersType(Type):
     def decode_member(self, member, data, values, offset, end_offset):
         # If reached end of indefinite length field, member.decode will raise DecodeTagError,
         # and end of field will be handled in MembersType.decode() method.
-        # try:
         if end_offset is None or offset < end_offset:
             value, offset = member.decode(data, offset, values=values)
         else:
@@ -667,10 +664,6 @@ class MembersType(Type):
                                          location=member.name)
 
             value = member.get_default()
-        # except DecodeError as e:
-        #     # Add location information
-        #     e.location.append(self.name)
-        #     raise e
 
         values[member.name] = value
 
@@ -697,7 +690,7 @@ class ArrayType(Type):
                                        flags | Encoding.CONSTRUCTED)
 
     @add_error_location
-    def encode(self, data, encoded, values=None):
+    def encode(self, data, encoded):
         encoded_elements = bytearray()
 
         for entry in data:
@@ -753,7 +746,7 @@ class Boolean(Type):
                                       Tag.BOOLEAN)
 
     @add_error_location
-    def encode(self, data, encoded, values=None):
+    def encode(self, data, encoded):
         encoded.extend(self.tag)
         encoded.append(1)
         encoded.append(0xff * data)
@@ -780,7 +773,7 @@ class Integer(Type):
                                       Tag.INTEGER)
 
     @add_error_location
-    def encode(self, data, encoded, values=None):
+    def encode(self, data, encoded):
         # encoded.extend(self.tag)
         value = encode_signed_integer(data)
         # encoded.extend(encode_length_definite(len(value)))
@@ -803,7 +796,7 @@ class Real(Type):
         super(Real, self).__init__(name, 'REAL', Tag.REAL)
 
     @add_error_location
-    def encode(self, data, encoded, values=None):
+    def encode(self, data, encoded):
         data = encode_real(data)
         encoded.extend(self.tag)
         encoded.append(len(data))
@@ -829,7 +822,7 @@ class Null(Type):
         return False
 
     @add_error_location
-    def encode(self, _, encoded, values=None):
+    def encode(self, _, encoded):
         encoded.extend(self.tag)
         encoded.append(0)
 
@@ -861,7 +854,7 @@ class BitString(PrimitiveOrConstructedType):
         return clean_value == clean_default
 
     @add_error_location
-    def encode(self, data, encoded, values=None):
+    def encode(self, data, encoded):
         number_of_bytes, number_of_rest_bits = divmod(data[1], 8)
         data = bytearray(data[0])
 
@@ -910,7 +903,7 @@ class OctetString(PrimitiveOrConstructedType):
                                           self)
 
     @add_error_location
-    def encode(self, data, encoded, values=None):
+    def encode(self, data, encoded):
         # encoded.extend(self.tag)
         # encoded.extend(encode_length_definite(len(data)))
         encoded.extend(self.tag + encode_length_definite(len(data)) + data)
@@ -933,7 +926,7 @@ class ObjectIdentifier(Type):
                                                Tag.OBJECT_IDENTIFIER)
 
     @add_error_location
-    def encode(self, data, encoded, values=None):
+    def encode(self, data, encoded):
         encoded_subidentifiers = encode_object_identifier(data)
         encoded.extend(self.tag)
         encoded.append(len(encoded_subidentifiers))
@@ -973,7 +966,7 @@ class Enumerated(Type):
         return format_or(sorted(list(self.value_to_data)))
 
     @add_error_location
-    def encode(self, data, encoded, values=None):
+    def encode(self, data, encoded):
         try:
             value = self.data_to_value[data]
         except KeyError:
@@ -1111,7 +1104,7 @@ class Choice(Type):
         return format_or(sorted([member.name for member in self.members]))
 
     @add_error_location
-    def encode(self, data, encoded, values=None):
+    def encode(self, data, encoded):
         try:
             member = self.name_to_member[data[0]]
         except KeyError:
@@ -1120,11 +1113,7 @@ class Choice(Type):
                     self.format_names(),
                     data[0]))
 
-        # try:
         member.encode(data[1], encoded)
-        # except EncodeError as e:
-        #     e.location.append(member.name)
-        #     raise
 
     @add_error_location
     def decode(self, data, offset, values=None):
@@ -1225,7 +1214,7 @@ class UTCTime(Type):
                                       Tag.UTC_TIME)
 
     @add_error_location
-    def encode(self, data, encoded, values=None):
+    def encode(self, data, encoded):
         data = utc_time_from_datetime(data).encode('ascii')
         encoded.extend(self.tag)
         encoded.append(len(data))
@@ -1251,7 +1240,7 @@ class GeneralizedTime(Type):
                                               Tag.GENERALIZED_TIME)
 
     @add_error_location
-    def encode(self, data, encoded, values=None):
+    def encode(self, data, encoded):
         data = generalized_time_from_datetime(data).encode('ascii')
         encoded.extend(self.tag)
         encoded.append(len(data))
@@ -1275,7 +1264,7 @@ class Date(Type):
         super(Date, self).__init__(name, 'DATE', Tag.DATE)
 
     @add_error_location
-    def encode(self, data, encoded, values=None):
+    def encode(self, data, encoded):
         data = str(data).replace('-', '').encode('ascii')
         encoded.extend(self.tag)
         encoded.append(len(data))
@@ -1302,7 +1291,7 @@ class TimeOfDay(Type):
                                         Tag.TIME_OF_DAY)
 
     @add_error_location
-    def encode(self, data, encoded, values=None):
+    def encode(self, data, encoded):
         data = str(data).replace(':', '').encode('ascii')
         encoded.extend(self.tag)
         encoded.append(len(data))
@@ -1329,7 +1318,7 @@ class DateTime(Type):
                                        Tag.DATE_TIME)
 
     @add_error_location
-    def encode(self, data, encoded, values=None):
+    def encode(self, data, encoded):
         data = '{:04d}{:02d}{:02d}{:02d}{:02d}{:02d}'.format(*data.timetuple())
         data = data.encode('ascii')
         encoded.extend(self.tag)
@@ -1355,7 +1344,7 @@ class Any(Type):
         super(Any, self).__init__(name, 'ANY', None)
 
     @add_error_location
-    def encode(self, data, encoded, values=None):
+    def encode(self, data, encoded):
         encoded.extend(data)
 
     @add_error_location
@@ -1444,7 +1433,7 @@ class ExplicitTag(Type):
         super(ExplicitTag, self).set_tag(number,
                                          flags | Encoding.CONSTRUCTED)
 
-    def encode(self, data, encoded, values=None):
+    def encode(self, data, encoded):
         encoded_inner = bytearray()
         self.inner.encode(data, encoded_inner)
         # encoded.extend(self.tag)
@@ -1507,7 +1496,7 @@ class Recursive(Type, compiler.Recursive):
             choice_parent.add_tags([self])
 
     @add_error_location
-    def encode(self, data, encoded, values=None):
+    def encode(self, data, encoded):
         self.inner.encode(data, encoded)
 
     @add_error_location

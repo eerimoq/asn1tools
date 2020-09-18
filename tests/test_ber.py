@@ -3057,7 +3057,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         with self.assertRaises(asn1tools.DecodeError) as cm:
             decoded = foo.decode('Fie', encoded)
 
-        self.assertEqual(str(cm.exception), "Fie.fum: Bad AnyDefinedBy choice 2.")
+        self.assertEqual(str(cm.exception), "Fie.fum: Bad AnyDefinedBy choice 2. (At offset: 5)")
 
     def test_any_defined_by_object_identifier(self):
         spec = """
