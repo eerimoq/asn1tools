@@ -245,6 +245,20 @@ static void encoder_append_uint(struct encoder_t *self_p,
 }\
 '''
 
+ENCODER_APPEND_LONG_UINT = '''
+static void encoder_append_long_uint(struct encoder_t *self_p,
+                                     uint64_t value,
+                                     uint8_t number_of_bytes)
+{
+    const uint8_t *value_p = (const uint8_t*)&value;
+    uint8_t buf[8];
+    for(uint32_t byte = 0; byte < number_of_bytes; byte++) {
+        buf[number_of_bytes - byte - 1] = *value_p++;
+    }
+    encoder_append_bytes(self_p, buf, number_of_bytes);
+}\
+'''
+
 ENCODER_APPEND_INT = '''
 static void encoder_append_int(struct encoder_t *self_p,
                                int32_t value,
@@ -487,6 +501,20 @@ static uint32_t decoder_read_uint(struct decoder_t *self_p,
     default:
         value = 0xffffffffu;
         break;
+    }
+
+    return (value);
+}\
+'''
+
+DECODER_READ_LONG_UINT = '''
+static uint64_t decoder_read_long_uint(struct decoder_t *self_p,
+                                       uint8_t number_of_bytes)
+{
+    uint64_t value = 0;
+
+    for(uint8_t byte = 0; byte < number_of_bytes; byte++) {
+        value = decoder_read_uint8(self_p) | (value << 8);
     }
 
     return (value);
@@ -856,17 +884,30 @@ class _Generator(Generator):
         type_name = self.format_type_name(max_value, max_value)
         type_length = self.value_length(max_value)
 
-        encode_lines = [
-            'encoder_append_int(encoder_p, (int32_t)src_p->{}, {});'.format(
-                self.location_inner(),
-                type_length)
-        ]
-        decode_lines = [
-            'dst_p->{} = ({})decoder_read_int(decoder_p, {});'.format(
-                self.location_inner(),
-                type_name,
-                type_length)
-        ]
+        if type_length <= 4:
+            encode_lines = [
+                'encoder_append_uint(encoder_p, (uint32_t)src_p->{}, {});'.format(
+                    self.location_inner(),
+                    type_length)
+            ]
+            decode_lines = [
+                'dst_p->{} = ({})decoder_read_uint(decoder_p, {});'.format(
+                    self.location_inner(),
+                    type_name,
+                    type_length)
+            ]
+        else:
+            encode_lines = [
+                'encoder_append_long_uint(encoder_p, (uint64_t)src_p->{}, {});'.format(
+                    self.location_inner(),
+                    type_length)
+            ]
+            decode_lines = [
+                'dst_p->{} = ({})decoder_read_long_uint(decoder_p, {});'.format(
+                    self.location_inner(),
+                    type_name,
+                    type_length)
+            ]
 
         if type_length == 3:
             decode_lines += [
@@ -1671,6 +1712,7 @@ class _Generator(Generator):
             ('decoder_read_float(', DECODER_READ_FLOAT),
             ('decoder_read_int(', DECODER_READ_INT),
             ('decoder_read_uint(', DECODER_READ_UINT),
+            ('decoder_read_long_uint(', DECODER_READ_LONG_UINT),
             ('decoder_read_int64(', DECODER_READ_INT64),
             ('decoder_read_int32(', DECODER_READ_INT32),
             ('decoder_read_int16(', DECODER_READ_INT16),
@@ -1690,6 +1732,7 @@ class _Generator(Generator):
             ('encoder_append_float(', ENCODER_APPEND_FLOAT),
             ('encoder_append_int(', ENCODER_APPEND_INT),
             ('encoder_append_uint(', ENCODER_APPEND_UINT),
+            ('encoder_append_long_uint(', ENCODER_APPEND_LONG_UINT),
             ('encoder_append_int64(', ENCODER_APPEND_INT64),
             ('encoder_append_int32(', ENCODER_APPEND_INT32),
             ('encoder_append_int16(', ENCODER_APPEND_INT16),
