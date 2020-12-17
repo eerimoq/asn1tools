@@ -1,4 +1,3 @@
-|buildstatus|_
 |coverage|_
 |codecov|_
 |nala|_
@@ -398,9 +397,6 @@ Encodings
 
 - `Overview of the JSON Encoding Rules (JER)
   <http://www.oss.com/asn1/resources/asn1-papers/Overview_of_JER.pdf>`_
-
-.. |buildstatus| image:: https://travis-ci.org/eerimoq/asn1tools.svg?branch=master
-.. _buildstatus: https://travis-ci.org/eerimoq/asn1tools
 
 .. |coverage| image:: https://coveralls.io/repos/github/eerimoq/asn1tools/badge.svg?branch=master
 .. _coverage: https://coveralls.io/github/eerimoq/asn1tools
