@@ -1050,7 +1050,7 @@ TEST(uper_c_source_am)
 
 TEST(uper_c_source_ao)
 {
-    uint8_t encoded[9];
+    uint8_t encoded[17];
     struct uper_c_source_ao_t decoded;
 
     /* Encode. */
@@ -1058,13 +1058,15 @@ TEST(uper_c_source_ao)
     decoded.b = UPER_C_SOURCE_AO_B_A;
     decoded.c = 0x5;
     decoded.d = UPER_C_SOURCE_AO_D_B;
+    decoded.e = UPER_C_SOURCE_AO_E_C;
 
     memset(&encoded[0], 0, sizeof(encoded));
     ASSERT_EQ(uper_c_source_ao_encode(&encoded[0],
                                       sizeof(encoded),
                                       &decoded), sizeof(encoded));
     ASSERT_MEMORY_EQ(&encoded[0],
-                     "\x01\x80\x00\x00\x52\x00\x00\x00\x00",
+                     "\x01\x80\x00\x00\x52\x00\x00\x00\x00\x00\x00\x00\x00"
+                     "\x00\x00\x00\x10",
                      sizeof(encoded));
 
     /* Decode. */
@@ -1077,6 +1079,7 @@ TEST(uper_c_source_ao)
     ASSERT_EQ(decoded.b, UPER_C_SOURCE_AO_B_A);
     ASSERT_EQ(decoded.c, 0x5);
     ASSERT_EQ(decoded.d, UPER_C_SOURCE_AO_D_B);
+    ASSERT_EQ(decoded.e, UPER_C_SOURCE_AO_E_C);
 }
 
 TEST(uper_c_source_ap)

@@ -253,7 +253,7 @@ class Asn1ToolsCSourceTest(unittest.TestCase):
 
         foo = asn1tools.compile_string(
             'Foo DEFINITIONS AUTOMATIC TAGS ::= BEGIN '
-            '    A ::= BIT STRING (SIZE(33))'
+            '    A ::= BIT STRING (SIZE(65))'
             'END',
             'oer')
 
@@ -261,7 +261,7 @@ class Asn1ToolsCSourceTest(unittest.TestCase):
             asn1tools.source.c.oer.generate(foo, 'foo')
 
         self.assertEqual(str(cm.exception),
-                         "Foo.A: BIT STRING with a length of more than 32 bits are "
+                         "Foo.A: BIT STRING with a length of more than 64 bits are "
                          "not supported.")
 
 if __name__ == '__main__':
