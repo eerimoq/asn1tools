@@ -1323,6 +1323,22 @@ TEST(oer_c_source_ap)
     ASSERT_EQ(decoded.d, 1);
 }
 
+TEST(oer_c_source_aq)
+{
+    uint8_t encoded[4] = "\x00\x01\x86\xa1";
+    struct oer_c_source_aq_t decoded;
+
+    decoded.value = 100001;
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    ASSERT_EQ(oer_c_source_aq_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), sizeof(encoded));
+
+    ASSERT_EQ(decoded.value, 100001);
+}
+
 TEST(oer_c_source_ag_erroneous_data)
 {
     struct oer_c_source_ag_t decoded;

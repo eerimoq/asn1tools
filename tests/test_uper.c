@@ -1100,3 +1100,19 @@ TEST(uper_c_source_ap)
     ASSERT_EQ(decoded.b.a, 16);
     ASSERT_EQ(decoded.c.value, uper_c_ref_referenced_enum_b_e);
 }
+
+TEST(uper_c_source_aq)
+{
+    uint8_t encoded[3] = "\x01\x86\xa1";
+    struct uper_c_source_aq_t decoded;
+
+    decoded.value = 100001;
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    ASSERT_EQ(uper_c_source_aq_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), sizeof(encoded));
+
+    ASSERT_EQ(decoded.value, 100001);
+}
