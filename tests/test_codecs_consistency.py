@@ -108,7 +108,7 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
                                      decoded,
                                      encoded_message)
 
-    def decode_codecs(self, type_spec, decoded, encoded):
+    def decode_codecs(self, type_spec, decoded, encoded, numeric_enums=False):
         spec = (
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
             "BEGIN "
@@ -117,7 +117,7 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         )
 
         for codec, encoded_message in zip(CODECS, encoded):
-            foo = asn1tools.compile_string(spec, codec)
+            foo = asn1tools.compile_string(spec, codec, numeric_enums=numeric_enums)
             decoded_message = foo.decode('A',
                                          encoded_message,
                                          check_constraints=True)
@@ -174,6 +174,21 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         self.encode_decode_all_codecs("ENUMERATED { a(0), b(5) }",
                                       [0, 5],
                                       numeric_enums=True)
+
+        # Enum with default
+        decoded = {"e": 5}
+
+        encoded_messages = [
+            b'0\x00',
+            b'0\x00',
+            b'{}',
+            b'\x00',
+            b'\x00',
+            b'\x00',
+            b'<A/>'
+        ]
+
+        self.decode_codecs('SEQUENCE { e ENUMERATED { a(0), b(5) } DEFAULT b }', decoded, encoded_messages, numeric_enums=True)
 
     def test_enumerated_versions(self):
         # Unknown enumeration value 'c' decoded as None.
