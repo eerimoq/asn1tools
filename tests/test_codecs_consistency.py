@@ -1510,6 +1510,37 @@ class Asn1ToolsCodecsConsistencyTest(Asn1ToolsBaseTest):
         for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
             self.encode_decode_codec(spec, codec, 'AM', decoded, encoded)
 
+        # Type AQ.
+        decoded = 1234
+
+        encoded_messages = [
+            b'\x02\x02\x04\xd2',
+            b'\x02\x02\x04\xd2',
+            b'1234',
+            b'\x00\x00\x04\xd2',
+            b'\x40\x04\xd2',
+            b'\x00\x04\xd2',
+            b'<AQ>1234</AQ>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'AQ', decoded, encoded)
+
+        decoded = 100001
+
+        encoded_messages = [
+            b'\x02\x03\x01\x86\xa1',
+            b'\x02\x03\x01\x86\xa1',
+            b'100001',
+            b'\x00\x01\x86\xa1',
+            b'\x80\x01\x86\xa1',
+            b'\x01\x86\xa1',
+            b'<AQ>100001</AQ>'
+        ]
+
+        for spec, codec, encoded in zip(specs, CODECS, encoded_messages):
+            self.encode_decode_codec(spec, codec, 'AQ', decoded, encoded)
+
     def test_parameterization(self):
         specs = []
 
