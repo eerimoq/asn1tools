@@ -136,9 +136,9 @@ class DecodeContentsLengthError(DecodeError):
 
 class OutOfDataError(DecodeError):
 
-    def __init__(self, offset_bits):
+    def __init__(self, offset_bits, location=None):
         super(OutOfDataError, self).__init__(
-            'out of data', offset=offset_bits)
+            'out of data', offset=offset_bits, location=location)
 
     def get_offset_message(self):
         """

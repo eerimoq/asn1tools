@@ -14,6 +14,7 @@ from . import BaseType
 from . import EncodeError
 from . import DecodeError
 from . import DecodeTagError
+from . import OutOfDataError
 from . import DecodeContentsLengthError
 from . import format_or
 from . import compiler
@@ -514,6 +515,30 @@ class StringType(PrimitiveOrConstructedType):
                                self.name)
 
 
+def flatten(l):
+    """
+    Flatten irregular nested list
+    :param l:
+    :return:
+    """
+    if isinstance(l, (list, tuple)):
+        return [a for i in l for a in flatten(i)]
+    else:
+        return [l]
+
+
+def is_end_of_data(data, offset, end_offset):
+    # Detect end of data
+    if end_offset:
+        if offset >= end_offset:
+            return True, offset
+
+    elif data[offset:offset + 2] == END_OF_CONTENTS_OCTETS:
+        return True, offset + 2
+
+    return False, offset
+
+
 class MembersType(Type):
 
     def __init__(self, name, tag_name, tag, root_members, additions):
@@ -590,86 +615,92 @@ class MembersType(Type):
 
         values = {}
 
-        for member in self.root_members:
-            # End of indefinite length sequence may be reached at any
-            # time, but DecodeError will occur (instead of usual
-            # IndexError) and so further members will be skipped.
-            offset = self.decode_member(member,
-                                        data,
-                                        values,
-                                        offset,
-                                        end_offset)
+        offset, out_of_data = self.decode_members(self.root_members, data, values, offset, end_offset)
 
+        # Decode additions (even if out of data already, so defaults can be added)
         if self.additions:
-            offset = self.decode_additions(data,
-                                           values,
-                                           offset,
-                                           end_offset)
+            offset, out_of_data = self.decode_members(flatten(self.additions), data, values, offset, end_offset,
+                                                      ignore_missing=True)
 
-        # Detect end of indefinite length constructed field.
+        if out_of_data:
+            return values, offset
+
         if end_offset is None:
-            if data[offset:offset + 2] == END_OF_CONTENTS_OCTETS:
-                end_offset = offset + 2
-            else:
-                raise DecodeError('Could not find end-of-contents tag for indefinite length field.',
-                                  offset)
-
-        return values, end_offset
-
-    def decode_additions(self, data, values, offset, end_offset):
-        try:
-            for addition in self.additions:
-                addition_values = {}
-
-                if isinstance(addition, list):
-                    for member in addition:
-                        offset = self.decode_member(member,
-                                                    data,
-                                                    addition_values,
-                                                    offset,
-                                                    end_offset)
-                else:
-                    offset = self.decode_member(addition,
-                                                data,
-                                                addition_values,
-                                                offset,
-                                                end_offset)
-
-                values.update(addition_values)
-        except DecodeError:
-            pass
-
-        return offset
-
-    def decode_member(self, member, data, values, offset, end_offset):
-        # If reached end of indefinite length field, member.decode
-        # will raise DecodeTagError, and end of field will be
-        # handled in MembersType.decode() method.
-        if end_offset is None or offset < end_offset:
-            value, offset = member.decode(data, offset, values=values)
+            raise DecodeError('Could not find end-of-contents tag for indefinite length field.',
+                              offset)
         else:
-            value = DECODE_ERROR
+            # Extra data is allowed in cases of versioned additions
+            return values, end_offset
 
-        # Handle end-of-data or 'DecodeError'
-        if value == DECODE_ERROR:
-            if member.optional:
-                return offset
+    def decode_members(self, members, data, values, offset, end_offset, ignore_missing=False):
+        """
+        Decode values for members from data starting from offset
+        Supports member data encoded in different order than members specified
+        :param list members:
+        :param bytearray data:
+        :param dict values:
+        :param int offset:
+        :param int end_offset: End offset of member data (None if indefinite length field)
+        :param bool ignore_missing: Whether to not raise DecodeError for missing mandatory fields with no defaults
+        :return:
+        """
+        # Decode member values from data
+        remaining_members = list(members)
+        while True:
+            undecoded_members = []
+            decode_success = False  # Whether at least one member was successfully decoded
 
-            if not member.has_default():
-                if end_offset and offset >= end_offset:
-                    raise DecodeError('Out of data', offset)
+            out_of_data, offset = is_end_of_data(data, offset, end_offset)
+            # Attempt to decode remaining members. If they are encoded in same order, should decode all in one loop
+            # Otherwise will require multiple iterations
+            for member in remaining_members:
+                # Dont attempt decode if already out of data, just add member to list of undecoded
+                if out_of_data:
+                    undecoded_members.append(member)
+                    continue
+
+                # Attempt decode
+                value, offset = member.decode(data, offset, values=values)
+
+                if value == DECODE_ERROR:
+                    undecoded_members.append(member)
                 else:
-                    raise DecodeTagError(member.type_name,
-                                         member.tag,
-                                         data[offset:offset + member.tag_len],
-                                         offset,
-                                         location=member.name)
+                    decode_success = True
+                    values[member.name] = value
 
-            value = member.get_default()
+                # Detect end of data
+                out_of_data, offset = is_end_of_data(data, offset, end_offset)
 
-        values[member.name] = value
+            remaining_members = undecoded_members
+            if out_of_data:
+                break
 
-        return offset
+            if not decode_success:
+                # No members are able to decode data, exit loop
+                print('No members able to decode: {}. Offset: {} end offset: {}'.format(data[offset:],
+                                                                                        offset,
+                                                                                        end_offset))
+                break
+
+        # Handle remaining members that there is no data for
+        # (will raise error if member is not optional and has no default)
+        for member in remaining_members:
+            if member.optional:
+                continue
+
+            if member.has_default():
+                values[member.name] = member.get_default()
+            elif ignore_missing:
+                break
+            elif out_of_data:
+                raise OutOfDataError(offset*8, location=member.name)
+            else:
+                raise DecodeTagError(member.type_name,
+                                     member.tag,
+                                     data[offset:offset + member.tag_len],
+                                     offset,
+                                     location=member.name)
+        return offset, out_of_data
 
     def __repr__(self):
         return '{}({}, [{}])'.format(

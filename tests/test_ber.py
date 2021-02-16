@@ -741,6 +741,10 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             str(cm.exception),
             'C.a: Could not find end-of-contents tag for indefinite length field. (At offset: 10)')
 
+        # Test data encoded in different field order
+        self.assertEqual(foo.decode('A', b'\x31\x06\x81\x01\x04\x80\x01\x03'), {'a': 3, 'b': 4})
+        self.assertEqual(foo.decode('A', b'\x31\x80\x81\x01\x00\x80\x01\x03\x00\x00'), {'a': 3, 'b': 0})
+
     def test_choice(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "
