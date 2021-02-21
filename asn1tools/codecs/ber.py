@@ -645,7 +645,7 @@ class MembersType(Type):
         :return:
         """
         # Decode member values from data
-        remaining_members = list(members)
+        remaining_members = members
         while True:
             undecoded_members = []
             decode_success = False  # Whether at least one member was successfully decoded
@@ -677,9 +677,6 @@ class MembersType(Type):
 
             if not decode_success:
                 # No members are able to decode data, exit loop
-                print('No members able to decode: {}. Offset: {} end offset: {}'.format(data[offset:],
-                                                                                        offset,
-                                                                                        end_offset))
                 break
 
         # Handle remaining members that there is no data for
