@@ -230,7 +230,8 @@ class Generator(object):
 
         return length
 
-    def value_length(self, value):
+    @staticmethod
+    def value_length(value):
         if value < 256:
             length = 1
         elif value < 65536:
@@ -240,8 +241,7 @@ class Generator(object):
         elif value < 4294967296:
             length = 4
         else:
-            length = 0
-            self.error('Value is too large')
+            length = 8
         return length
 
     def format_type_name(self, minimum, maximum):
@@ -417,8 +417,8 @@ class Generator(object):
 
         if checker.minimum != checker.maximum:
             raise self.error('BIT STRING with variable SIZE not supported.')
-        if checker.minimum > 32:
-            raise self.error('BIT STRING with a length of more than 32 bits are not '
+        if checker.minimum > 64:
+            raise self.error('BIT STRING with a length of more than 64 bits are not '
                              'supported.')
 
         max_value = 2**checker.minimum - 1

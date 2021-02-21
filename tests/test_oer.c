@@ -1247,7 +1247,6 @@ TEST(oer_c_source_an)
     unsigned int i;
 
     for (i = 0; i < membersof(datas); i++) {
-        printf("%u\n", i);
         /* Encode. */
         decoded.value = datas[i].decoded;
 
@@ -1272,7 +1271,7 @@ TEST(oer_c_source_an)
 
 TEST(oer_c_source_ao)
 {
-    uint8_t encoded[9];
+    uint8_t encoded[17];
     struct oer_c_source_ao_t decoded;
 
     /* Encode. */
@@ -1280,13 +1279,15 @@ TEST(oer_c_source_ao)
     decoded.b = OER_C_SOURCE_AO_B_A;
     decoded.c = 0x50;
     decoded.d = OER_C_SOURCE_AO_D_B;
+    decoded.e = OER_C_SOURCE_AO_E_C;
 
     memset(&encoded[0], 0, sizeof(encoded));
     ASSERT_EQ(oer_c_source_ao_encode(&encoded[0],
                                      sizeof(encoded),
                                      &decoded), sizeof(encoded));
     ASSERT_MEMORY_EQ(&encoded[0],
-                     "\x01\x80\x00\x00\x50\x20\x00\x00\x00",
+                     "\x01\x80\x00\x00\x50\x20\x00\x00\x00\x00\x00\x00\x00\x00"
+                     "\x00\x00\x01",
                      sizeof(encoded));
 
     /* Decode. */
@@ -1299,6 +1300,7 @@ TEST(oer_c_source_ao)
     ASSERT_EQ(decoded.b, OER_C_SOURCE_AO_B_A);
     ASSERT_EQ(decoded.c, 0x50);
     ASSERT_EQ(decoded.d, OER_C_SOURCE_AO_D_B);
+    ASSERT_EQ(decoded.e, OER_C_SOURCE_AO_E_C);
 }
 
 TEST(oer_c_source_ap)
@@ -1319,6 +1321,22 @@ TEST(oer_c_source_ap)
     ASSERT_EQ(decoded.b.a, 16);
     ASSERT_EQ(decoded.c.value, oer_c_ref_referenced_enum_b_e);
     ASSERT_EQ(decoded.d, 1);
+}
+
+TEST(oer_c_source_aq)
+{
+    uint8_t encoded[4] = "\x00\x01\x86\xa1";
+    struct oer_c_source_aq_t decoded;
+
+    decoded.value = 100001;
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    ASSERT_EQ(oer_c_source_aq_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), sizeof(encoded));
+
+    ASSERT_EQ(decoded.value, 100001);
 }
 
 TEST(oer_c_source_ag_erroneous_data)

@@ -441,6 +441,12 @@ class Compiler(object):
                     self.pre_process_default_value_bit_string(member,
                                                               resolved_member)
 
+                if resolved_member['type'] == 'ENUMERATED' and self._numeric_enums:
+                    for key, value in resolved_member['values']:
+                        if key == member['default']:
+                            member['default'] = value
+                            break
+
     def pre_process_default_value_bit_string(self, member, resolved_member):
         default = member['default']
 

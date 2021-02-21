@@ -484,7 +484,8 @@ AO ::= SEQUENCE {
     a BIT STRING { a(0), b(ao-value-b), c(7) } (SIZE(8)),
     b BIT STRING { a(0), b(1), c(23) } (SIZE(24)),
     c BIT STRING (SIZE(4)),
-    d BIT STRING { a(1), b(2), c(31) } (SIZE(32))
+    d BIT STRING { a(1), b(2), c(31) } (SIZE(32)),
+    e BIT STRING { a(1), b(32), c(63) } (SIZE(64))
 }
 
 AP ::= SEQUENCE {
@@ -492,6 +493,8 @@ AP ::= SEQUENCE {
     c REFERENCED-ENUM DEFAULT a,
     d REFERENCED-INT DEFAULT 1
 }
+
+AQ ::= INTEGER (0..16777215)
 
 END
 
