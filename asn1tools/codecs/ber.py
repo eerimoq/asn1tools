@@ -75,11 +75,7 @@ class Tag(object):
 
 
 END_OF_CONTENTS_OCTETS = b'\x00\x00'
-DECODE_ERROR = object()
-
-
-class DecodeChoiceError(Error):
-    pass
+TAG_MISMATCH = object()
 
 
 def flatten(l):
@@ -108,10 +104,10 @@ def is_end_of_data(data, offset, end_offset):
 
 def check_decode_error(asn_type, decoded_value, data, offset):
     """
-    Checks if decode result corresponds to DECODE_ERROR, if so, raise DecodeTagError
+    Checks if decode result is TAG_MISMATCH, if so, raise DecodeTagError
     :return:
     """
-    if decoded_value == DECODE_ERROR:
+    if decoded_value == TAG_MISMATCH:
         raise DecodeTagError(asn_type.type_name,
                              asn_type.tag,
                              data[offset:offset + asn_type.tag_len],
@@ -444,8 +440,9 @@ class Type(BaseType):
 
         # Validate tag
         if data[offset:tag_end_offset] != self.tag:
-            # return DECODE_FAILED Instead of raising DecodeTagError for better performance
-            return DECODE_ERROR, offset
+            # return TAG_MISMATCH Instead of raising DecodeTagError for better performance so that MembersType does
+            # not have to catch exception for every missing optional type
+            return TAG_MISMATCH, offset
 
         return self._decode(data, tag_end_offset)
 
@@ -454,7 +451,7 @@ class Type(BaseType):
         Type-specific decode logic
         :return:
         """
-        raise NotImplementedError('Type {} does not implement decode() method'.format(type(self).__name__))
+        raise NotImplementedError('Type {} does not implement _decode() method'.format(type(self).__name__))
 
 
 class PrimitiveOrConstructedType(Type):
@@ -490,7 +487,7 @@ class PrimitiveOrConstructedType(Type):
             is_primitive = False
         else:
             # Return DECODE_FAILED instead of raising DecodeError
-            return DECODE_ERROR, start_offset
+            return TAG_MISMATCH, start_offset
 
         if is_primitive:
             length, offset = decode_length_definite(data, offset)
@@ -676,7 +673,7 @@ class MembersType(Type):
                 # Attempt decode
                 value, offset = member.decode(data, offset, values=values)
 
-                if value == DECODE_ERROR:
+                if value == TAG_MISMATCH:
                     undecoded_members.append(member)
                 else:
                     decode_success = True

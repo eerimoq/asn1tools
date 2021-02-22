@@ -894,7 +894,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('K',          ('m31', None), b'\x9e\x00'),
             ('K',          ('m32', None), b'\x9f\x1f\x00'),
             ('K',          ('m33', None), b'\x9f\x20\x00'),
-            ('M',     ('a', ('b', True)), b'\xa0\x03\x80\x01\xff')
+            ('M',     ('a', ('b', True)), b'\xa0\x03\x80\x01\xff'),
         ]
 
         for type_name, decoded, encoded in datas:
@@ -949,6 +949,10 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             "    b INTEGER "
             "  } "
             "} "
+            "N ::= CHOICE { "
+            "  a [1] INTEGER, "
+            "  b [2] INTEGER "
+            "} "
             "END")
 
         datas = [
@@ -962,7 +966,9 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('I',            ('a', True), b'\x66\x03\x01\x01\xff'),
             ('J',            ('a', True), b'\xa6\x03\x01\x01\xff'),
             ('K',     ('a', ('a', True)), b'\xa3\x05\xa4\x03\x01\x01\xff'),
-            ('K',        ('b', ('b', 2)), b'\xa3\x05\xa5\x03\x02\x01\x02')
+            ('K',        ('b', ('b', 2)), b'\xa3\x05\xa5\x03\x02\x01\x02'),
+            ('N', ('a', 5), b'\x81\x01\x05'),
+            ('N', ('b', 6), b'\x82\x01\x06'),
         ]
 
         for type_name, decoded, encoded in datas:
@@ -972,6 +978,10 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         self.assertEqual(foo.decode('B', b'\x04\x01\x12'), ('a', b'\x12'))
         # Test indefinite length
         self.assertEqual(foo.decode('K', b'\xa3\x80\xa4\x80\x01\x01\x00\x00\x00\x00\x00'), ('a', ('a', False)))
+
+        # Choice decode fail
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('N', b'\xa1\x01\x05')
 
     def test_utf8_string(self):
         foo = asn1tools.compile_string(
