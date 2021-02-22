@@ -1,6 +1,7 @@
 import binascii
 from datetime import datetime
 from datetime import timedelta
+from functools import wraps
 
 from ..errors import Error
 from ..errors import EncodeError as _EncodeError
@@ -156,6 +157,7 @@ def add_error_location(method):
     :param method:
     :return:
     """
+    @wraps(method)
     def new_method(self, *args, **kwargs):
         try:
             return method(self, *args, **kwargs)

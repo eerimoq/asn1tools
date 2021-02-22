@@ -82,6 +82,43 @@ class DecodeChoiceError(Error):
     pass
 
 
+def flatten(l):
+    """
+    Flatten irregular nested list
+    :param l:
+    :return:
+    """
+    if isinstance(l, (list, tuple)):
+        return [a for i in l for a in flatten(i)]
+    else:
+        return [l]
+
+
+def is_end_of_data(data, offset, end_offset):
+    # Detect end of data
+    if end_offset:
+        if offset >= end_offset:
+            return True, offset
+
+    elif data[offset:offset + 2] == END_OF_CONTENTS_OCTETS:
+        return True, offset + 2
+
+    return False, offset
+
+
+def check_decode_error(asn_type, decoded_value, data, offset):
+    """
+    Checks if decode result corresponds to DECODE_ERROR, if so, raise DecodeTagError
+    :return:
+    """
+    if decoded_value == DECODE_ERROR:
+        raise DecodeTagError(asn_type.type_name,
+                             asn_type.tag,
+                             data[offset:offset + asn_type.tag_len],
+                             offset,
+                             location=asn_type.name)
+
+
 def encode_length_definite(length):
     if length <= 127:
         encoded = bytearray([length])
@@ -464,20 +501,18 @@ class PrimitiveOrConstructedType(Type):
             length, offset = decode_length_constructed(data, offset)
             segments = []
 
-            if length is None:
-                while data[offset:offset + 2] != END_OF_CONTENTS_OCTETS:
-                    decoded, offset = self.segment.decode(data, offset)
-                    segments.append(decoded)
+            end_offset = None if length is None else offset + length
 
-                end_offset = offset + 2
-            else:
-                end_offset = offset + length
+            while True:
+                end_of_data, offset = is_end_of_data(data, offset, end_offset)
+                if end_of_data:
+                    break
 
-                while offset < end_offset:
-                    decoded, offset = self.segment.decode(data, offset)
-                    segments.append(decoded)
+                decoded, offset = self.segment.decode(data, offset)
+                check_decode_error(self.segment, decoded, data, offset)
+                segments.append(decoded)
 
-            return self.decode_constructed_segments(segments), end_offset
+            return self.decode_constructed_segments(segments), offset
 
     def decode_primitive_contents(self, data, offset, length):
         raise NotImplementedError('To be implemented by subclasses.')
@@ -513,30 +548,6 @@ class StringType(PrimitiveOrConstructedType):
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__,
                                self.name)
-
-
-def flatten(l):
-    """
-    Flatten irregular nested list
-    :param l:
-    :return:
-    """
-    if isinstance(l, (list, tuple)):
-        return [a for i in l for a in flatten(i)]
-    else:
-        return [l]
-
-
-def is_end_of_data(data, offset, end_offset):
-    # Detect end of data
-    if end_offset:
-        if offset >= end_offset:
-            return True, offset
-
-    elif data[offset:offset + 2] == END_OF_CONTENTS_OCTETS:
-        return True, offset + 2
-
-    return False, offset
 
 
 class MembersType(Type):
@@ -752,12 +763,7 @@ class ArrayType(Type):
                 break
             decoded_element, offset = self.element_type.decode(data, offset)
             # Invalid Tag
-            if decoded_element == DECODE_ERROR:
-                raise DecodeTagError(self.element_type.type_name,
-                                     self.element_type.tag,
-                                     data[offset:offset + self.element_type.tag_len],
-                                     offset,
-                                     location=self.element_type.name)
+            check_decode_error(self.element_type, decoded_element, data, offset)
             decoded.append(decoded_element)
 
         return decoded, offset
@@ -1471,7 +1477,6 @@ class ExplicitTag(Type):
         encoded.extend(self.tag + encode_length_definite(len(encoded_inner)) + encoded_inner)
 
     def _decode(self, data, offset):
-        indefinite = False
 
         if data[offset] == 0x80:
             # Indefinite length field
@@ -1479,16 +1484,12 @@ class ExplicitTag(Type):
             indefinite = True
         else:
             # Definite length field
+            indefinite = False
             length, offset = decode_length_definite(data, offset)
 
         values, end_offset = self.inner.decode(data, offset)
 
-        if values == DECODE_ERROR:
-            raise DecodeTagError(self.inner.type_name,
-                                 self.inner.tag,
-                                 data[offset:offset+self.inner.tag_len],
-                                 offset,
-                                 location=self.inner.name)
+        check_decode_error(self.inner, values, data, offset)
 
         if indefinite:
             if data[end_offset:end_offset + 2] != END_OF_CONTENTS_OCTETS:
@@ -1556,14 +1557,8 @@ class CompiledType(compiler.CompiledType):
         """
         result = self._type.decode(bytearray(data), 0)
         # Raise DecodeError
-        if result[0] == DECODE_ERROR:
-            raise DecodeTagError(self._type.type_name,
-                                 self._type.tag,
-                                 data[0:self._type.tag_len],
-                                 0,
-                                 location=self._type.name)
-        else:
-            return result
+        check_decode_error(self._type, result, data, 0)
+        return result
 
 
 def get_tag_no_encoding(member):
