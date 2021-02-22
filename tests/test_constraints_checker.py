@@ -125,10 +125,10 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
         datas = [
             ('K',
              4,
-             'Expected an integer between 1 and 2, but got 4.'),
+             'K: Expected an integer between 1 and 2, but got 4.'),
             ('K',
              5,
-             'Expected an integer between 1 and 2, but got 5.')
+             'K: Expected an integer between 1 and 2, but got 5.')
         ]
 
         self.assert_encode_decode_bad(foo, datas)
@@ -137,32 +137,32 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
         datas = [
             ('B',
              4,
-             'Expected an integer between 5 and 99, but got 4.'),
+             'B: Expected an integer between 5 and 99, but got 4.'),
             ('B',
              100,
-             'Expected an integer between 5 and 99, but got 100.'),
+             'B: Expected an integer between 5 and 99, but got 100.'),
             ('C',
              -11,
-             'Expected an integer between -10 and 10, but got -11.'),
+             'C: Expected an integer between -10 and 10, but got -11.'),
             ('C',
              11,
-             'Expected an integer between -10 and 10, but got 11.'),
+             'C: Expected an integer between -10 and 10, but got 11.'),
             ('E',
              0,
-             'Expected an integer between 1000 and 1000, but got 0.'),
+             'E: Expected an integer between 1000 and 1000, but got 0.'),
             ('F',
              {'a': 4, 'b': 41, 'c': 400},
-             'b: Expected an integer between 40 and 40, but got 41.'),
+             'F.b: Expected an integer between 40 and 40, but got 41.'),
             ('H',
              11,
-             'Expected an integer between MIN and 10, but got 11.'),
+             'H: Expected an integer between MIN and 10, but got 11.'),
             ('I',
              9,
-             'Expected an integer between 10 and MAX, but got 9.'),
+             'I: Expected an integer between 10 and MAX, but got 9.'),
             # ToDo: 4..5 are allowed as well.
             ('K',
              3,
-             'Expected an integer between 1 and 2, but got 3.')
+             'K: Expected an integer between 1 and 2, but got 3.')
         ]
 
         self.assert_encode_decode_bad(foo, datas)
@@ -221,7 +221,7 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
         datas = [
             ('B',
              (b'\x01\x23', 9),
-             'Expected between 10 and 10 bits, but got 9.')
+             'B: Expected between 10 and 10 bits, but got 9.')
         ]
 
         self.assert_encode_decode_bad(foo, datas)
@@ -250,10 +250,10 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
         datas = [
             ('B',
              11 * b'\x01',
-             'Expected between 10 and 10 bytes, but got 11.'),
+             'B: Expected between 10 and 10 bytes, but got 11.'),
             ('D',
              9 * b'\x01',
-             'Expected between 10 and MAX bytes, but got 9.')
+             'D: Expected between 10 and MAX bytes, but got 9.')
         ]
 
         self.assert_encode_decode_bad(foo, datas)
@@ -316,13 +316,13 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
         datas = [
             ('A',
              [3, 4, 5],
-             'Expected a list of between 2 and 2 elements, but got 3.'),
+             'A: Expected a list of between 2 and 2 elements, but got 3.'),
             ('A',
              [3, 6],
-             'Expected an integer between 3 and 5, but got 6.'),
+             'A: Expected an integer between 3 and 5, but got 6.'),
             ('C',
              [3, 4, 5],
-             'Expected a list of between MIN and 2 elements, but got 3.')
+             'C: Expected a list of between MIN and 2 elements, but got 3.')
         ]
 
         self.assert_encode_decode_bad(foo, datas)
@@ -345,10 +345,10 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
         datas = [
             ('A',
              'a',
-             "Expected a character in ' 0123456789', but got 'a' (0x61)."),
+             "A: Expected a character in ' 0123456789', but got 'a' (0x61)."),
             ('A',
              '-',
-             "Expected a character in ' 0123456789', but got '-' (0x2d).")
+             "A: Expected a character in ' 0123456789', but got '-' (0x2d).")
         ]
 
         self.assert_encode_decode_bad(foo, datas)
@@ -371,7 +371,7 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
         datas = [
             ('A',
              '{',
-             "Expected a character in '"
+             "A: Expected a character in '"
              "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
              " '()+,-./:=?', but got '{' (0x7b).")
         ]
@@ -396,7 +396,7 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
         datas = [
             ('A',
              b'\x81'.decode('latin-1'),
-             "Expected a character in '................................ !\"#$%"
+             "A: Expected a character in '................................ !\"#$%"
              "&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcde"
              "fghijklmnopqrstuvwxyz{|}~.', but got '.' (0x81).")
         ]
@@ -428,13 +428,13 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
         datas = [
             ('B',
              '1',
-             'Expected between 2 and 5 characters, but got 1.'),
+             'B: Expected between 2 and 5 characters, but got 1.'),
             ('B',
              '123456',
-             'Expected between 2 and 5 characters, but got 6.'),
+             'B: Expected between 2 and 5 characters, but got 6.'),
             ('C',
              'k',
-             "Expected a character in 'abcdefghijuvw', but got 'k' (0x6b).")
+             "C: Expected a character in 'abcdefghijuvw', but got 'k' (0x6b).")
         ]
 
         self.assert_encode_decode_bad(foo, datas)
@@ -460,10 +460,10 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
         datas = [
             ('B',
              '1',
-             'Expected between 2 and 5 characters, but got 1.'),
+             'B: Expected between 2 and 5 characters, but got 1.'),
             ('B',
              '123456',
-             'Expected between 2 and 5 characters, but got 6.')
+             'B: Expected between 2 and 5 characters, but got 6.')
         ]
 
         self.assert_encode_decode_bad(foo, datas)
@@ -506,7 +506,7 @@ class Asn1ToolsCheckConstraintsTest(Asn1ToolsBaseTest):
         datas = [
             ('A',
              ('a', 3),
-             'a: Expected an integer between 1 and 2, but got 3.')
+             'A.a: Expected an integer between 1 and 2, but got 3.')
         ]
 
         self.assert_encode_decode_bad(foo, datas)
