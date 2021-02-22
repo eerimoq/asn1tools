@@ -1557,7 +1557,7 @@ class CompiledType(compiler.CompiledType):
         """
         result = self._type.decode(bytearray(data), 0)
         # Raise DecodeError
-        check_decode_error(self._type, result, data, 0)
+        check_decode_error(self._type, result[0], data, 0)
         return result
 
 
