@@ -499,20 +499,23 @@ class PrimitiveOrConstructedType(Type):
             return self.decode_primitive_contents(data, offset, length), end_offset
         else:
             length, offset = decode_length_constructed(data, offset)
-            segments = []
+            return self.decode_constructed_contents(data, offset, length)
 
-            end_offset = None if length is None else offset + length
+    def decode_constructed_contents(self, data, offset, length):
+        segments = []
 
-            while True:
-                end_of_data, offset = is_end_of_data(data, offset, end_offset)
-                if end_of_data:
-                    break
+        end_offset = None if length is None else offset + length
 
-                decoded, offset = self.segment.decode(data, offset)
-                check_decode_error(self.segment, decoded, data, offset)
-                segments.append(decoded)
+        while True:
+            end_of_data, offset = is_end_of_data(data, offset, end_offset)
+            if end_of_data:
+                break
 
-            return self.decode_constructed_segments(segments), offset
+            decoded, offset = self.segment.decode(data, offset)
+            check_decode_error(self.segment, decoded, data, offset)
+            segments.append(decoded)
+
+        return self.decode_constructed_segments(segments), offset
 
     def decode_primitive_contents(self, data, offset, length):
         raise NotImplementedError('To be implemented by subclasses.')
