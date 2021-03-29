@@ -500,7 +500,10 @@ class Compiler(object):
             default = hex(int(default, 2))
 
         if default.startswith('0x'):
-            member['default'] = binascii.unhexlify(default[2:])
+            default = default[2:]
+            if len(default) % 2 == 1:
+                default = '0' + default
+            member['default'] = binascii.unhexlify(default)
 
     def pre_process_parameterization_step_1(self, types, module_name):
         """X.683 parameterization pre processing - step 1.

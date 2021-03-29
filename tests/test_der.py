@@ -154,6 +154,34 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
             self.assertEqual(foo.encode(type_name, decoded_1), encoded)
             self.assertEqual(foo.decode(type_name, encoded), decoded_2)
 
+    def test_octet_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE { "
+            "  b OCTET STRING DEFAULT '011'B, "
+            "  c OCTET STRING DEFAULT '60'H "
+            "} "
+            "END",
+            'der')
+
+        datas = [
+            ('A', {'b': b'\xcc', 'c': b'\xdd'}, b'\x30\x06\x80\x01\xcc\x81\x01\xdd'),
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Default value is not encoded, but part of decoded.
+        datas = [
+            ('A', {}, b'\x30\x00', {'b': b'\x03', 'c': b'\x60'}),
+            ('A', {'b': b'\xcc'}, b'\x30\x03\x80\x01\xcc', {'b': b'\xcc', 'c': b'\x60'}),
+        ]
+
+        for type_name, decoded_1, encoded, decoded_2 in datas:
+            self.assertEqual(foo.encode(type_name, decoded_1), encoded)
+            self.assertEqual(foo.decode(type_name, encoded), decoded_2)
+
     def test_set(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS IMPLICIT TAGS ::= "
