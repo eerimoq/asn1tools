@@ -2,6 +2,8 @@
 
 """
 
+import binascii
+import sys
 from operator import attrgetter
 import bitstruct
 
@@ -441,6 +443,9 @@ class Compiler(object):
                     self.pre_process_default_value_bit_string(member,
                                                               resolved_member)
 
+                if resolved_member['type'] == 'OCTET STRING':
+                    self.pre_process_default_value_octet_string(member)
+
                 if resolved_member['type'] == 'ENUMERATED' and self._numeric_enums:
                     for key, value in resolved_member['values']:
                         if key == member['default']:
@@ -483,6 +488,22 @@ class Compiler(object):
             mask = b''
 
         member['default'] = (mask, number_of_bits)
+
+    def pre_process_default_value_octet_string(self, member):
+        default = member['default']
+
+        if sys.version_info[0] > 2 and isinstance(default, bytes):
+            # Already pre-processed.
+            return
+
+        if default.startswith('0b'):
+            default = hex(int(default, 2))
+
+        if default.startswith('0x'):
+            default = default[2:]
+            if len(default) % 2 == 1:
+                default = '0' + default
+            member['default'] = binascii.unhexlify(default)
 
     def pre_process_parameterization_step_1(self, types, module_name):
         """X.683 parameterization pre processing - step 1.
