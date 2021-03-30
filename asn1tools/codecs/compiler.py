@@ -477,6 +477,8 @@ class Compiler(object):
             mask >>= lowest_set_bit(mask)
             number_of_bits = mask.bit_length() - 1
             mask ^= (1 << number_of_bits)
+        elif default == '0b':
+            number_of_bits = 0
         else:
             mask = int(default, 2)
             mask >>= lowest_set_bit(mask)
@@ -497,12 +499,16 @@ class Compiler(object):
             return
 
         if default.startswith('0b'):
-            default = hex(int(default, 2))
-
-        if default.startswith('0x'):
+            default = default[2:]
+            if len(default) % 8 != 0:
+                default += '0' * (-len(default) % 8)
+            member['default'] = binascii.unhexlify(
+                hex(int('11111111' + default, 2))[4:]
+            )
+        elif default.startswith('0x'):
             default = default[2:]
             if len(default) % 2 == 1:
-                default = '0' + default
+                default += '0'
             member['default'] = binascii.unhexlify(default)
 
     def pre_process_parameterization_step_1(self, types, module_name):
