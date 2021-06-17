@@ -107,6 +107,11 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
             "  a A DEFAULT '00'B, "
             "  b B DEFAULT '00'B "
             "} "
+            "E ::= SEQUENCE { "
+            "  a A DEFAULT ''B, "
+            "  b A DEFAULT ''H, "
+            "  c A DEFAULT '005'H "
+            "} "
             "END",
             'der')
 
@@ -126,6 +131,8 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
              b'\x30\x00'),
             ('D',
              {'a': (b'\x00', 2), 'b': (b'\x00', 2)},
+             b'\x30\x00'),
+            ('E', {'a': (b'', 0), 'b': (b'', 0), 'c': (b'\x00\x50', 12)},
              b'\x30\x00')
         ]
 
@@ -147,7 +154,46 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
             ('D',
              {'a': (b'\x00', 3), 'b': (b'\x00', 3)},
              b'\x30\x04\x80\x02\x05\x00',
-             {'a': (b'\x00', 3), 'b': (b'\x00', 2)})
+             {'a': (b'\x00', 3), 'b': (b'\x00', 2)}),
+            ('E', {}, b'\x30\x00',
+             {'a': (b'', 0), 'b': (b'', 0), 'c': (b'\x00\x50', 12)})
+        ]
+
+        for type_name, decoded_1, encoded, decoded_2 in datas:
+            self.assertEqual(foo.encode(type_name, decoded_1), encoded)
+            self.assertEqual(foo.decode(type_name, encoded), decoded_2)
+
+    def test_octet_string(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE { "
+            "  a OCTET STRING DEFAULT '00000000011'B, "
+            "  b OCTET STRING DEFAULT '00060'H "
+            "} "
+            "B ::= SEQUENCE { "
+            "  a OCTET STRING DEFAULT ''B, "
+            "  b OCTET STRING DEFAULT ''H "
+            "} "
+            "END",
+            'der')
+
+        datas = [
+            ('A', {'a': b'\x00\x60', 'b': b'\x00\x06\x00'}, b'\x30\x00'),
+            ('A', {'a': b'\xcc', 'b': b'\xdd'},
+             b'\x30\x06\x80\x01\xcc\x81\x01\xdd'),
+            ('B', {'a': b'', 'b': b''}, b'\x30\x00')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
+        # Default value is not encoded, but part of decoded.
+        datas = [
+            ('A', {}, b'\x30\x00', {'a': b'\x00\x60', 'b': b'\x00\x06\x00'}),
+            ('A', {'a': b'\xcc'}, b'\x30\x03\x80\x01\xcc',
+             {'a': b'\xcc', 'b': b'\x00\x06\x00'}),
+            ('B', {}, b'\x30\x00', {'a': b'', 'b': b''})
         ]
 
         for type_name, decoded_1, encoded, decoded_2 in datas:

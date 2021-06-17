@@ -1,6 +1,7 @@
 import binascii
 from datetime import datetime
 from datetime import timedelta
+from functools import wraps
 
 from ..errors import Error
 from ..errors import EncodeError as _EncodeError
@@ -9,58 +10,99 @@ from ..errors import ConstraintsError as _ConstraintsError
 from .. import compat
 
 
-class EncodeError(_EncodeError):
+class BaseType(object):
+    """
+    Base Type class containing common functionality between all codecs
+    """
+
+    def __init__(self, name, type_name):
+        self.name = name
+        self.type_name = type_name
+        self.optional = False
+        self.default = None
+
+    def set_default(self, value):
+        self.default = value
+
+    def get_default(self):
+        return self.default
+
+    def has_default(self):
+        return self.default is not None
+
+    def is_default(self, value):
+        return value == self.default
+
+    def encode(self, *args, **kwargs):
+        raise NotImplementedError('To be implemented by subclasses.')
+
+    def decode(self, *args, **kwargs):
+        raise NotImplementedError('To be implemented by subclasses.')
+
+
+class ErrorWithLocation(Exception):
+    """
+    Mixin for Error classes which have location list
+    """
+    def __init__(self, message, location=None):
+        self.message = message
+        self.location = [location] if location else []
+
+    def add_location(self, element_name):
+        self.location.append(element_name)
+
+    def __str__(self):
+        if self.location:
+            return "{}: {}".format('.'.join(self.location[::-1]),
+                                   self.message)
+        else:
+            return self.message
+
+
+class EncodeError(ErrorWithLocation, _EncodeError):
     """General ASN.1 encode error.
 
     """
-
-    def __init__(self, message):
-        super(EncodeError, self).__init__()
-        self.message = message
-        self.location = []
-
-    def __str__(self):
-        if self.location:
-            return "{}: {}".format(': '.join(self.location[::-1]),
-                                   self.message)
-        else:
-            return self.message
+    pass
 
 
-class DecodeError(_DecodeError):
-    """General ASN.1 decode error with error location in the message.
-
+class DecodeError(ErrorWithLocation, _DecodeError):
+    """
+    General ASN.1 decode error with error location in the message.
     """
 
-    def __init__(self, message):
-        super(DecodeError, self).__init__()
-        self.message = message
-        self.location = []
+    def __init__(self, message, offset=None, location=None):
+        """
+
+        :param str message: Message for error
+        :param int offset: Data offset at which error occurred. Can be bits or bytes depending on codec
+        :param str location: Name of element in which error occured
+        """
+        super(DecodeError, self).__init__(message, location=location)
+        self.offset = offset
 
     def __str__(self):
         if self.location:
-            return "{}: {}".format(': '.join(self.location[::-1]),
-                                   self.message)
+            _str = "{}: {}".format('.'.join(self.location[::-1]), self.message)
         else:
-            return self.message
+            _str = self.message
+        if self.offset is not None:
+            _str += self.get_offset_message()
+        return _str
+
+    def get_offset_message(self):
+        """
+        Get offset details to add to error message
+        :return:
+        """
+        return ' (At offset: {})'.format(self.offset)
 
 
-class ConstraintsError(_ConstraintsError):
-    """General ASN.1 constraints error with error location in the message.
-
+class ConstraintsError(ErrorWithLocation, _ConstraintsError):
     """
-
-    def __init__(self, message):
-        super(ConstraintsError, self).__init__()
-        self.message = message
-        self.location = []
-
-    def __str__(self):
-        if self.location:
-            return "{}: {}".format(': '.join(self.location[::-1]),
-                                   self.message)
-        else:
-            return self.message
+    General ASN.1 constraints error with error location in the message.
+    """
+    pass
 
 
 class DecodeTagError(DecodeError):
@@ -68,13 +110,16 @@ class DecodeTagError(DecodeError):
 
     """
 
-    def __init__(self, type_name, expected_tag, actual_tag, offset):
-        message = "Expected {} with tag '{}' at offset {}, but got '{}'.".format(
+    def __init__(self, type_name, expected_tag, actual_tag, offset=None, location=None):
+        message = "Expected {} with tag '{}', but got '{}'.".format(
             type_name,
             binascii.hexlify(expected_tag).decode('ascii'),
-            offset,
             binascii.hexlify(actual_tag).decode('ascii'))
-        super(DecodeTagError, self).__init__(message)
+        super(DecodeTagError, self).__init__(message, offset=offset, location=location)
+
+        self.expected_tag = expected_tag
+        self.actual_tag = actual_tag
+        self.type_name = type_name
 
 
 class DecodeContentsLengthError(DecodeError):
@@ -82,25 +127,46 @@ class DecodeContentsLengthError(DecodeError):
 
     """
 
-    def __init__(self, length, offset, contents_max):
-        message = ('Expected at least {} contents byte(s) at offset {}, '
-                   'but got {}.').format(length,
-                                         offset,
-                                         contents_max - offset)
-        super(DecodeContentsLengthError, self).__init__(message)
+    def __init__(self, length, offset, contents_max, location=None):
+        message = 'Expected at least {} contents byte(s), but got {}.'.format(length, contents_max - offset)
+        super(DecodeContentsLengthError, self).__init__(message, offset=offset, location=location)
 
         self.length = length
-        self.offset = offset
         self.contents_max = contents_max
 
 
 class OutOfDataError(DecodeError):
 
-    def __init__(self, offset):
+    def __init__(self, offset_bits, location=None):
         super(OutOfDataError, self).__init__(
-            'out of data at bit offset {} ({}.{} bytes)'.format(
-                offset,
-                *divmod(offset, 8)))
+            'out of data', offset=offset_bits, location=location)
+
+    def get_offset_message(self):
+        """
+        Get offset details to add to error message
+        :return:
+        """
+        return ' (At bit offset: {})'.format(self.offset)
+
+
+def add_error_location(method):
+    """
+    Method decorator which catches ErrorWithLocation subclasses and adds element name to location
+    If decorator is applied to parent Type class method, this functionality can be disabled on a per-child
+    Type basis by setting no_error_location=True
+    :param method:
+    :return:
+    """
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        try:
+            return method(self, *args, **kwargs)
+        except ErrorWithLocation as e:
+            # Don't add name if it is blank (for SEQUENCE OF, SET OF etc)
+            if self.name and not getattr(self, 'no_error_location', False):
+                e.add_location(self.name)
+            raise e
+    return new_method
 
 
 def _generalized_time_to_datetime(string):

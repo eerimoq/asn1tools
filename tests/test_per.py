@@ -49,7 +49,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             foo.decode('A', b'')
 
         self.assertEqual(str(cm.exception),
-                         'out of data at bit offset 0 (0.0 bytes)')
+                         'A: out of data (At bit offset: 0)')
 
     def test_integer(self):
         foo = asn1tools.compile_string(
@@ -457,7 +457,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             foo.decode('C', b'\x70')
 
         self.assertEqual(str(cm.exception),
-                         "Expected enumeration index 0, 1 or 2, but got 3.")
+                         "C: Expected enumeration index 0, 1 or 2, but got 3.")
 
         # Unknown additions index.
         self.assertEqual(foo.decode('C', b'\x8f'), None)
@@ -680,14 +680,14 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             foo.decode('U', b'\x80\x80\x03\x02\x05')
 
         self.assertEqual(str(cm.exception),
-                         'a: a: out of data at bit offset 32 (4.0 bytes)')
+                         'U.a.a: out of data (At bit offset: 32)')
 
         # Missing root member.
         with self.assertRaises(asn1tools.EncodeError) as cm:
             foo.encode('K', {'b': True})
 
         self.assertEqual(str(cm.exception),
-                         "Sequence member 'a' not found in {'b': True}.")
+                         "K: Sequence member 'a' not found in {'b': True}.")
 
     def test_sequence_of(self):
         foo = asn1tools.compile_string(
@@ -875,7 +875,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             foo.decode('K', b'\x70')
 
         self.assertEqual(str(cm.exception),
-                         "Expected choice index 0, 1 or 2, but got 3.")
+                         "K: Expected choice index 0, 1 or 2, but got 3.")
 
         # Bad additions index becomes None.
         decoded = foo.decode('K', b'\x85\x01\x80')
@@ -887,7 +887,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Expected choice 'a', 'b', 'c', 'd', 'e', 'f', 'g' or 'h', but "
+            "K: Expected choice 'a', 'b', 'c', 'd', 'e', 'f', 'g' or 'h', but "
             "got 'i'.")
 
         # Bad value.
@@ -897,7 +897,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
                        check_types=False,
                        check_constraints=False)
 
-        self.assertEqual(str(cm.exception), "Expected choice 'a', but got 'b'.")
+        self.assertEqual(str(cm.exception), "A: Expected choice 'a', but got 'b'.")
 
     def test_utf8_string(self):
         foo = asn1tools.compile_string(
@@ -945,13 +945,13 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             foo.decode('A', b'\x40\xc5\x00\x00\x00\x00')
 
         self.assertEqual(str(cm.exception),
-                         'b: Bad length determinant fragmentation value 0xc5.')
+                         'A.b: Bad length determinant fragmentation value 0xc5.')
 
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('A', b'\x40\xc1\x00\x00\x00\x00')
 
         self.assertEqual(str(cm.exception),
-                         'b: out of data at bit offset 16 (2.0 bytes)')
+                         'A.b: out of data (At bit offset: 16)')
 
     def test_numeric_string(self):
         foo = asn1tools.compile_string(
@@ -1130,7 +1130,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Expected a character in ' !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEF"
+            "A: Expected a character in ' !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEF"
             "GHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~', but got"
             " '.' (0x19)'.")
 
@@ -1188,7 +1188,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
 
         valid_chars = [v for v in range(65536) if v < 0xd800 or v > 0xdfff]
         self.assertEqual(str(cm.exception),
-                         "Expected a value in %s, but got %d." % (valid_chars,
+                         "A: Expected a value in %s, but got %d." % (valid_chars,
                                                                   0xd800,))
 
     def test_graphic_string(self):

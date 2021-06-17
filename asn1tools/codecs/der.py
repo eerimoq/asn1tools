@@ -8,6 +8,7 @@ from . import restricted_utc_time_to_datetime
 from . import restricted_utc_time_from_datetime
 from . import restricted_generalized_time_to_datetime
 from . import restricted_generalized_time_from_datetime
+from . import add_error_location
 from .compiler import clean_bit_string_value
 from .ber import Class
 from .ber import Encoding
@@ -16,7 +17,6 @@ from .ber import encode_length_definite
 from .ber import decode_length_definite
 from .ber import encode_signed_integer
 from .ber import decode_signed_integer
-from .ber import encode_tag
 from .ber import Boolean
 from .ber import Real
 from .ber import Null
@@ -32,56 +32,20 @@ from .ber import ObjectDescriptor
 from .ber import Date
 from .ber import TimeOfDay
 from .ber import DateTime
-from .ber import decode_length
+# These imports are not used in this module but referenced externally
+from .ber import encode_tag
 from .ber import encode_real
+from .ber import decode_length
 from .ber import decode_real
 
 
-class Type(object):
-
-    def __init__(self, name, type_name, number, flags=0):
-        self.name = name
-        self.type_name = type_name
-
-        if number is None:
-            self.tag = None
-        else:
-            self.tag = encode_tag(number, flags)
-
-        self.optional = False
-        self.default = None
+class Type(ber.Type):
 
     def set_tag(self, number, flags):
         if not Class.APPLICATION & flags:
             flags |= Class.CONTEXT_SPECIFIC
 
-        self.tag = encode_tag(number, flags)
-
-    def set_size_range(self, minimum, maximum, has_extension_marker):
-        pass
-
-    def decode_tag(self, data, offset):
-        end_offset = offset + len(self.tag)
-
-        if data[offset:end_offset] != self.tag:
-            raise DecodeTagError(self.type_name,
-                                 self.tag,
-                                 data[offset:end_offset],
-                                 offset)
-
-        return end_offset
-
-    def set_default(self, value):
-        self.default = value
-
-    def get_default(self):
-        return self.default
-
-    def is_default(self, value):
-        return value == self.default
-
-    def has_default(self):
-        return self.default is not None
+        super().set_tag(number, flags)
 
 
 class StringType(Type):
@@ -94,14 +58,14 @@ class StringType(Type):
                                          self.__class__.__name__,
                                          self.TAG)
 
-    def encode(self, data, encoded):
+    @add_error_location
+    def encode(self, data, encoded, values=None):
         data = data.encode(self.ENCODING)
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data)
+        # encoded.extend(self.tag)
+        # encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(self.tag + encode_length_definite(len(data)) + data)
 
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
+    def _decode(self, data, offset):
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
 
@@ -125,18 +89,19 @@ class ArrayType(Type):
         super(ArrayType, self).set_tag(number,
                                        flags | Encoding.CONSTRUCTED)
 
-    def encode(self, data, encoded):
+    @add_error_location
+    def encode(self, data, encoded, values=None):
         encoded_elements = bytearray()
 
         for entry in data:
             self.element_type.encode(entry, encoded_elements)
 
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(encoded_elements)))
-        encoded.extend(encoded_elements)
+        # encoded.extend(self.tag)
+        # encoded.extend(encode_length_definite(len(encoded_elements)))
+        encoded.extend(self.tag + encode_length_definite(len(encoded_elements))
+                       + encoded_elements)
 
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
+    def _decode(self, data, offset):
         length, offset = decode_length_definite(data, offset)
         decoded = []
         start_offset = offset
@@ -160,14 +125,14 @@ class Integer(Type):
                                       'INTEGER',
                                       Tag.INTEGER)
 
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
+    @add_error_location
+    def encode(self, data, encoded, values=None):
+        # encoded.extend(self.tag)
         value = encode_signed_integer(data)
-        encoded.extend(encode_length_definite(len(value)))
-        encoded.extend(value)
+        # encoded.extend(encode_length_definite(len(value)))
+        encoded.extend(self.tag + encode_length_definite(len(value)) + value)
 
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
+    def _decode(self, data, offset):
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
 
@@ -196,7 +161,8 @@ class BitString(Type):
 
         return clean_value == clean_default
 
-    def encode(self, data, encoded):
+    @add_error_location
+    def encode(self, data, encoded, values=None):
         number_of_bytes, number_of_rest_bits = divmod(data[1], 8)
         data = bytearray(data[0])
 
@@ -215,8 +181,7 @@ class BitString(Type):
         encoded.append(number_of_unused_bits)
         encoded.extend(data)
 
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
+    def _decode(self, data, offset):
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
         number_of_bits = 8 * (length - 1) - data[offset]
@@ -235,13 +200,13 @@ class OctetString(Type):
                                           'OCTET STRING',
                                           Tag.OCTET_STRING)
 
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(data)
+    @add_error_location
+    def encode(self, data, encoded, values=None):
+        # encoded.extend(self.tag)
+        # encoded.extend(encode_length_definite(len(data)))
+        encoded.extend(self.tag + encode_length_definite(len(data)) + data)
 
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
+    def _decode(self, data, offset):
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
 
@@ -336,14 +301,14 @@ class UTCTime(Type):
                                       'UTCTime',
                                       Tag.UTC_TIME)
 
-    def encode(self, data, encoded):
+    @add_error_location
+    def encode(self, data, encoded, values=None):
         data = restricted_utc_time_from_datetime(data).encode('ascii')
         encoded.extend(self.tag)
         encoded.append(len(data))
         encoded.extend(data)
 
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
+    def _decode(self, data, offset):
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
         decoded = data[offset:end_offset].decode('ascii')
@@ -361,14 +326,14 @@ class GeneralizedTime(Type):
                                               'GeneralizedTime',
                                               Tag.GENERALIZED_TIME)
 
-    def encode(self, data, encoded):
+    @add_error_location
+    def encode(self, data, encoded, values=None):
         data = restricted_generalized_time_from_datetime(data).encode('ascii')
         encoded.extend(self.tag)
         encoded.append(len(data))
         encoded.extend(data)
 
-    def decode(self, data, offset):
-        offset = self.decode_tag(data, offset)
+    def _decode(self, data, offset):
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
         decoded = data[offset:end_offset].decode('ascii')

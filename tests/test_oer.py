@@ -136,7 +136,7 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            'Expected an IEEE 754 32 bits floating point number, but got '
+            'B: Expected an IEEE 754 32 bits floating point number, but got '
             '340282366920938463463374607431768211456.')
 
         with self.assertRaises(asn1tools.EncodeError) as cm:
@@ -144,7 +144,7 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            'Expected an IEEE 754 64 bits floating point number, but got '
+            'C: Expected an IEEE 754 64 bits floating point number, but got '
             '17976931348623159077293051907890247336179769789423065727343008115'
             '77326758055009631327084773224075360211201138798713933576587897688'
             '14416622492847430639474124377767893424865485276302219601246094119'
@@ -157,7 +157,7 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            'Expected an IEEE 754 64 bits floating point number, but got 35953'
+            'C: Expected an IEEE 754 64 bits floating point number, but got 35953'
             '86269724631815458610381578049467235953957884613145468601623154653'
             '51611001926265416954644815072042240227759742786715317579537628833'
             '24498569486127894824875553578684973097055260443920249218823890616'
@@ -295,14 +295,14 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Expected enumeration value 'a' or 'b', but got 'c'.")
+            "C: Expected enumeration value 'a' or 'b', but got 'c'.")
 
         # Decoding bad enumeration value.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('A', b'\x02')
 
         self.assertEqual(str(cm.exception),
-                         "Expected enumeration value 1, but got 2.")
+                         "A: Expected enumeration value 1, but got 2.")
 
     def test_sequence(self):
         foo = asn1tools.compile_string(
@@ -416,14 +416,14 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             foo.decode('M', b'\x80\xff\x02\x07\x80\x01')
 
         self.assertEqual(str(cm.exception),
-                         "a: out of data at bit offset 48 (6.0 bytes)")
+                         "M.a: out of data (At bit offset: 48)")
 
         # Out of data decoding extension member a.b.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('N', b'\x80\xff\x02\x07\x80\x01')
 
         self.assertEqual(str(cm.exception),
-                         'a: b: out of data at bit offset 48 (6.0 bytes)')
+                         'N.a.b: out of data (At bit offset: 48)')
 
     def test_set(self):
         foo = asn1tools.compile_string(
@@ -511,7 +511,7 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             foo.encode('B', ('foo', None))
 
         self.assertEqual(str(cm.exception),
-                         "Expected choice 'a', 'b' or 'c', but got 'foo'.")
+                         "B: Expected choice 'a', 'b' or 'c', but got 'foo'.")
 
         # Decode bad value.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -519,7 +519,7 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Expected choice member tag '80', but got '81'.")
+            "A: Expected choice member tag '80', but got '81'.")
 
     def test_choice_default_tags(self):
         foo = asn1tools.compile_string(
@@ -968,21 +968,21 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
             foo.decode('A', b'')
 
         self.assertEqual(str(cm.exception),
-                         "out of data at bit offset 0 (0.0 bytes)")
+                         "A: out of data (At bit offset: 0)")
 
         # Fails trying to read 2 bytes, but only one available.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('B', b'\x02\x00')
 
         self.assertEqual(str(cm.exception),
-                         "out of data at bit offset 8 (1.0 bytes)")
+                         "B: out of data (At bit offset: 8)")
 
         # Fails trying to read the single additions present bit.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('C', b'')
 
         self.assertEqual(str(cm.exception),
-                         "out of data at bit offset 0 (0.0 bytes)")
+                         "C: out of data (At bit offset: 0)")
 
     def test_c_source(self):
         files = [

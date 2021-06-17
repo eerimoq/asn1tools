@@ -142,14 +142,14 @@ class Asn1ToolsJerTest(unittest.TestCase):
             foo.encode('A', 'c')
 
         self.assertEqual(str(cm.exception),
-                         "Expected enumeration value 'a' or 'b', but got 'c'.")
+                         "A: Expected enumeration value 'a' or 'b', but got 'c'.")
 
         # Decode error.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('A', b'"c"')
 
         self.assertEqual(str(cm.exception),
-                         "Expected enumeration value 'a' or 'b', but got 'c'.")
+                         "A: Expected enumeration value 'a' or 'b', but got 'c'.")
 
     def test_sequence(self):
         foo = asn1tools.compile_string(
@@ -189,7 +189,7 @@ class Asn1ToolsJerTest(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "Sequence member 'b' not found in {'a': 1}.")
+            "C: Sequence member 'b' not found in {'a': 1}.")
 
     def test_sequence_of(self):
         foo = asn1tools.compile_string(
@@ -247,14 +247,14 @@ class Asn1ToolsJerTest(unittest.TestCase):
             foo.encode('A', ('c', None))
 
         self.assertEqual(str(cm.exception),
-                         "Expected choice 'a' or 'b', but got 'c'.")
+                         "A: Expected choice 'a' or 'b', but got 'c'.")
 
         # Decode error.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('A', b'{"c": null}')
 
         self.assertEqual(str(cm.exception),
-                         "Expected choice 'a' or 'b', but got 'c'.")
+                         "A: Expected choice 'a' or 'b', but got 'c'.")
 
     def test_utf8_string(self):
         foo = asn1tools.compile_string(
@@ -819,9 +819,9 @@ class Asn1ToolsJerTest(unittest.TestCase):
             'uper')
 
         datas = [
-            ('A', b'',         'out of data at bit offset 0 (0.0 bytes)'),
-            ('B', b'\x00',     'a: c: out of data at bit offset 1 (0.1 bytes)'),
-            ('B', b'\x80\x80', 'a: c: out of data at bit offset 9 (1.1 bytes)')
+            ('A', b'',         'A: out of data (At bit offset: 0)'),
+            ('B', b'\x00',     'B.a.c: out of data (At bit offset: 1)'),
+            ('B', b'\x80\x80', 'B.a.c: out of data (At bit offset: 9)')
         ]
 
         for type_name, encoded, message in datas:

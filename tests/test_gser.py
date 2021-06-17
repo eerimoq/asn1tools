@@ -119,7 +119,7 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
             foo.encode('A', {})
 
         self.assertEqual(str(cm.exception),
-                         "Sequence member 'a' not found in {}.")
+                         "A: Sequence member 'a' not found in {}.")
 
     def test_sequence_of(self):
         foo = asn1tools.compile_string(
@@ -166,7 +166,7 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
             foo.encode('A', {})
 
         self.assertEqual(str(cm.exception),
-                         "Set member 'a' not found in {}.")
+                         "A: Set member 'a' not found in {}.")
 
     def test_set_of(self):
         foo = asn1tools.compile_string(
@@ -200,7 +200,7 @@ class Asn1ToolsGserTest(Asn1ToolsBaseTest):
             foo.encode('A', ('b', None))
 
         self.assertEqual(str(cm.exception),
-                         "Expected choice 'a', but got 'b'.")
+                         "A: Expected choice 'a', but got 'b'.")
 
     def test_utf8_string(self):
         foo = asn1tools.compile_string(
