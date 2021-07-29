@@ -377,5 +377,5 @@ class Compiler(compiler.Compiler):
         return compiled
 
 
-def compile_dict(specification, numeric_enums=False):
-    return Compiler(specification, numeric_enums).process()
+def compile_dict(specification, numeric_enums=False, named_members=False):
+    return Compiler(specification, numeric_enums, named_members).process()

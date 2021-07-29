@@ -292,6 +292,45 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         foo = asn1tools.compile_string(spec)
         self.assert_encode_decode(foo, 'Foo', (b'\x56', 7), b'\xa2\x04\x03\x02\x01\x56')
 
+    def test_named_bit_string(self):
+        foo = """
+           Foo DEFINITIONS ::= 
+            BEGIN 
+            A ::= BIT STRING { 
+              a (0),
+              b (1), 
+              c (2),
+              d (3) 
+            }
+            
+            B ::= BIT STRING { 
+              a (0),
+              d (9) 
+            }
+            
+            C ::= BIT STRING 
+            END
+           """
+        specification = asn1tools.compile_string(foo, named_members=True)
+        # A type with data '1010'
+        self.assert_encode_decode_named_member(specification, 'A', (b'\xa0', 4), (['b','d'], 4), b'\x03\x02\x04\xa0')
+        # A type with data '10' -> '0010'
+        self.assert_encode_decode_named_member(specification, 'A', (b'\x80', 2), (['b'], 2), b'\x03\x02\x06\x80')
+        # A type with data '101010'
+        self.assert_encode_decode_named_member(specification, 'A', (b'\xa8', 6), (b'\xa8', 6), b'\x03\x02\x02\xa8')
+        # A type with data '001010'
+        self.assert_encode_decode_named_member(specification, 'A', (b'\x28', 6), (['b','d'], 6), b'\x03\x02\x02\x28')
+        # A type with data '0000'b that has no corresponding names
+        self.assert_encode_decode_named_member(specification, 'A', (b'\x00', 4), (b'\x00', 4), b'\x03\x02\x04\x00')
+        # A type with data '0010100'
+        self.assert_encode_decode_named_member(specification, 'A', (b'\x28', 7), (b'\x28', 7), b'\x03\x02\x01\x28')
+        # A type with data '000000'
+        self.assert_encode_decode_named_member(specification, 'A', (b'\x00', 6), (b'\x00', 6), b'\x03\x02\x02\x00')
+        # B type with data '0100' with gap between named bits
+        self.assert_encode_decode_named_member(specification, 'B', (b'\x40', 4), (b'\x40', 4), b'\x03\x02\x04\x40')
+        # C type with no named bits and data '0101'
+        self.assert_encode_decode_named_member(specification, 'C', (b'\x50', 4), (b'\x50', 4), b'\x03\x02\x04\x50')
+
     def test_octet_string_explicit_tags(self):
         """Test explicit tags on octet strings.
 
@@ -3075,6 +3114,26 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             decoded = foo.decode('Fie', encoded)
 
         self.assertEqual(str(cm.exception), "Fie.fum: Bad AnyDefinedBy choice 2. (At offset: 5)")
+
+    def test_named_integer_types(self):
+        foo = """
+        Foo DEFINITIONS ::= BEGIN
+            A ::= INTEGER {
+            a(0),
+            b(1),
+            c(2) 
+            }
+            
+            B ::= INTEGER
+        END    
+        """
+        specification = asn1tools.compile_string(foo, named_members=True)
+        # A type named integer with name b
+        self.assert_encode_decode_named_member(specification, 'A', 1, 'b',b'\x02\x01\x01')
+        # A type named integer with value 10 that has no corresponding name
+        self.assert_encode_decode_named_member(specification, 'A', 10, 10, b'\x02\x01\x0a')
+        # B type with no named integers when named_members flag is set
+        self.assert_encode_decode_named_member(specification, 'B', 1, 1, b'\x02\x01\x01')
 
     def test_any_defined_by_object_identifier(self):
         spec = """

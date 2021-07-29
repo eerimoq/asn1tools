@@ -547,7 +547,7 @@ class Compiler(compiler.Compiler):
                 module_name)
             compiled = Choice(name, members)
         elif type_name == 'INTEGER':
-            compiled = Integer(name)
+                compiled = Integer(name)
         elif type_name == 'REAL':
             compiled = Real(name)
         elif type_name == 'ENUMERATED':
@@ -620,8 +620,8 @@ class Compiler(compiler.Compiler):
         return compiled
 
 
-def compile_dict(specification, numeric_enums=False):
-    return Compiler(specification, numeric_enums).process()
+def compile_dict(specification, numeric_enums=False, named_members=False):
+    return Compiler(specification, numeric_enums, named_members).process()
 
 
 def decode_length(_data):

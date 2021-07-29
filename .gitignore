@@ -73,3 +73,5 @@ gmon.out
 Cargo.lock
 /rust_source.rs
 /*.o
+.idea/
+venv/

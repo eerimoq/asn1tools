@@ -46,6 +46,15 @@ class Asn1ToolsBaseTest(unittest.TestCase):
             print('Expected:', decoded_message)
             raise
 
+    def assert_encode_decode_named_member(self,
+                             specification,
+                             type_name,
+                             decoded_message,
+                             decoded_name,
+                             encoded_message):
+        self.assertEqual(encoded_message, specification.encode(type_name, decoded_message))
+        self.assertEqual(decoded_name, specification.decode(type_name, encoded_message))
+
     def assert_encode_decode_string(self,
                                     specification,
                                     type_name,
