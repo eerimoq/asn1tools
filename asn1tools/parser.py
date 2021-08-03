@@ -385,9 +385,9 @@ def convert_sequence_of_type(_s, _l, tokens):
     if tag:
         converted_type['element']['tag'] = tag
 
-    if len(tokens[6]) > 0 and len(tokens[6]) > 0:
+    if len(tokens) > 5 and len(tokens[5]) > 0 and len(tokens[5]) > 0:
         converted_type['default'] = []
-        for t in tokens[6]:
+        for t in tokens[5][1]:
             value = convert_value([t[0]], converted_type['type'])
             converted_type['default'].append(value)
 
@@ -1451,11 +1451,11 @@ def create_grammar():
                         + Optional(Suppress(identifier))
                         - tag
                         - type_
-                        + Optional(DEFAULT
+                        + Optional(Group(DEFAULT
                             - Suppress(left_brace)
                             + Group(delimitedList(value))
                             + Suppress(right_brace)
-                            )
+                            ))
                         )
     sequence_of_type.setName('SEQUENCE OF')
 
