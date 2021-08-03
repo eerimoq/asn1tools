@@ -247,6 +247,7 @@ class Compiler(object):
             self.pre_process_extensibility_implied(module, type_descriptors)
             self.pre_process_tags(module, module_name)
             self.pre_process_default_value(type_descriptors, module_name)
+            self.pre_process_default_value_sequenceof(type_descriptors, module_name)
 
         for module_name, module in self._specification.items():
             self.pre_process_parameterization_step_1(module['types'],
@@ -452,6 +453,19 @@ class Compiler(object):
                             member['default'] = value
                             break
 
+    def pre_process_default_value_sequenceof(self, type_descriptors, module_name):
+        sequences_and_sets = self.get_type_descriptors(
+            type_descriptors,
+            ['SEQUENCE OF'])
+
+        for type_descriptor in sequences_and_sets:
+            if 'default' not in type_descriptor:
+                continue
+
+            if type_descriptor['element']['type'] == 'OCTET STRING':
+                self.pre_process_default_value_octet_string_sequenceof(type_descriptor)
+
+
     def pre_process_default_value_bit_string(self, member, resolved_member):
         default = member['default']
 
@@ -510,6 +524,32 @@ class Compiler(object):
             if len(default) % 2 == 1:
                 default += '0'
             member['default'] = binascii.unhexlify(default)
+
+    def pre_process_default_value_octet_string_sequenceof(self, type_descriptor):
+        defaults = type_descriptor['default']
+        new_defaults = []
+
+        if not defaults:
+            return
+
+        if sys.version_info[0] > 2 and isinstance(defaults[0], bytes):
+            # Already pre-processed.
+            return
+
+        for default in defaults:
+            if default.startswith('0b'):
+                default = default[2:]
+                if len(default) % 8 != 0:
+                    default += '0' * (-len(default) % 8)
+                new_defaults.append(binascii.unhexlify(
+                    hex(int('11111111' + default, 2))[4:]
+                ))
+            elif default.startswith('0x'):
+                default = default[2:]
+                if len(default) % 2 == 1:
+                    default += '0'
+                new_defaults.append(binascii.unhexlify(default))
+        type_descriptor['default'] = new_defaults
 
     def pre_process_parameterization_step_1(self, types, module_name):
         """X.683 parameterization pre processing - step 1.
