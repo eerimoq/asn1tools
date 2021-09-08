@@ -310,7 +310,7 @@ class Skip(Type):
         pass
 
 
-class Recursive(Type, compiler.Recursive):
+class Recursive(compiler.Recursive, Type):
 
     def __init__(self, name, type_name, module_name):
         super(Recursive, self).__init__(name)

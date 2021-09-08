@@ -9,7 +9,7 @@ import math
 import datetime
 
 from ..parser import EXTENSION_MARKER
-from . import BaseType
+from . import BaseType, format_bytes
 from . import EncodeError
 from . import DecodeError
 from . import compiler
@@ -39,10 +39,6 @@ class StringType(Type):
 
     def decode(self, data):
         return data
-
-    def __repr__(self):
-        return '{}({})'.format(self.__class__.__name__,
-                               self.name)
 
 
 class MembersType(Type):
@@ -111,9 +107,6 @@ class Boolean(Type):
     def decode(self, data):
         return data
 
-    def __repr__(self):
-        return 'Boolean({})'.format(self.name)
-
 
 class Integer(Type):
 
@@ -125,9 +118,6 @@ class Integer(Type):
 
     def decode(self, data):
         return data
-
-    def __repr__(self):
-        return 'Integer({})'.format(self.name)
 
 
 class Real(Type):
@@ -157,9 +147,6 @@ class Real(Type):
                 '-0': 0.0
             }[data]
 
-    def __repr__(self):
-        return 'Real({})'.format(self.name)
-
 
 class Null(Type):
 
@@ -171,9 +158,6 @@ class Null(Type):
 
     def decode(self, data):
         return data
-
-    def __repr__(self):
-        return 'Null({})'.format(self.name)
 
 
 class BitString(Type):
@@ -189,7 +173,7 @@ class BitString(Type):
             self.size = None
 
     def encode(self, data):
-        value = binascii.hexlify(data[0]).decode('ascii').upper()
+        value = format_bytes(data[0]).upper()
 
         if self.size is None:
             value = {
@@ -205,9 +189,6 @@ class BitString(Type):
         else:
             return (binascii.unhexlify(data), self.size)
 
-    def __repr__(self):
-        return 'BitString({})'.format(self.name)
-
 
 class OctetString(Type):
 
@@ -215,13 +196,10 @@ class OctetString(Type):
         super(OctetString, self).__init__(name, 'OCTET STRING')
 
     def encode(self, data):
-        return binascii.hexlify(data).decode('ascii').upper()
+        return format_bytes(data).upper()
 
     def decode(self, data):
         return binascii.unhexlify(data)
-
-    def __repr__(self):
-        return 'OctetString({})'.format(self.name)
 
 
 class ObjectIdentifier(Type):
@@ -234,9 +212,6 @@ class ObjectIdentifier(Type):
 
     def decode(self, data):
         return str(data)
-
-    def __repr__(self):
-        return 'ObjectIdentifier({})'.format(self.name)
 
 
 class Enumerated(Type):
@@ -279,9 +254,6 @@ class Enumerated(Type):
                 "Expected enumeration value {}, but got '{}'.".format(
                     self.format_values(),
                     data))
-
-    def __repr__(self):
-        return 'Enumerated({})'.format(self.name)
 
 
 class Sequence(MembersType):
@@ -503,11 +475,8 @@ class Any(Type):
     def decode(self, _data):
         raise NotImplementedError('ANY is not yet implemented.')
 
-    def __repr__(self):
-        return 'Any({})'.format(self.name)
 
-
-class Recursive(Type, compiler.Recursive):
+class Recursive(compiler.Recursive, Type):
 
     def __init__(self, name, type_name, module_name):
         super(Recursive, self).__init__(name, 'RECURSIVE')
@@ -525,9 +494,6 @@ class Recursive(Type, compiler.Recursive):
     @add_error_location
     def decode(self, data):
         return self._inner.decode(data)
-
-    def __repr__(self):
-        return 'Recursive({})'.format(self.type_name)
 
 
 class CompiledType(compiler.CompiledType):

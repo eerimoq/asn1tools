@@ -60,7 +60,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Foo: Expected ExplicitTag with tag 'a2', but got 'a3'. (At offset: 0)")
+            "Foo: Expected ExplicitTag(Foo) with tag 'a2', but got 'a3'. (At offset: 0)")
 
         # Bad tag.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -68,7 +68,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Foo: Expected BOOLEAN with tag '01', but got '02'. (At offset: 2)")
+            "Foo: Expected BOOLEAN(Foo) with tag '01', but got '02'. (At offset: 2)")
 
     def test_boolean_implicit_tags(self):
         """Test implicit tags on booleans.
@@ -908,7 +908,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "A: Expected choice member tag '80', but got '81'. (At offset: 0)")
+            "A: Expected CHOICE(A) with tags ['80'], but got '81'. (At offset: 0)")
 
         # Test indefinite-length choice
         self.assertEqual(foo.decode('M', b'\xa0\x80\x80\x01\xff\x00\x00'), ('a', ('b', True)))
@@ -2410,7 +2410,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Certificate: Expected SEQUENCE with tag '30', but got ''. (At offset: 0)")
+            "Certificate: Expected SEQUENCE(Certificate) with tag '30', but got ''. (At offset: 0)")
 
         # Only tag and length, no contents.
         encoded = b'\x30\x81\x9f'
@@ -2430,7 +2430,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Certificate: Expected SEQUENCE with tag '30', but got 'ff'. (At offset: 0)")
+            "Certificate: Expected SEQUENCE(Certificate) with tag '30', but got 'ff'. (At offset: 0)")
 
         # Unexpected type '31' embedded in the data.
         encoded = bytearray(
@@ -2617,7 +2617,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Boolean: Expected BOOLEAN with tag '01', but got 'ff'. (At offset: 0)")
+            "Boolean: Expected BOOLEAN(Boolean) with tag '01', but got 'ff'. (At offset: 0)")
 
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Boolean', b'\x01\x02\x01\x01')
@@ -2632,7 +2632,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Integer: Expected INTEGER with tag '02', but got 'fe'. (At offset: 0)")
+            "Integer: Expected INTEGER(Integer) with tag '02', but got 'fe'. (At offset: 0)")
 
         # BIT STRING.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -2640,7 +2640,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Bitstring: Expected BIT STRING with tag '03', but got 'fd'. (At offset: 0)")
+            "Bitstring: Expected BIT STRING(Bitstring) with tag '03', but got 'fd'. (At offset: 0)")
 
         # OCTET STRING.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -2648,7 +2648,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Octetstring: Expected OCTET STRING with tag '04', but got 'fc'. (At offset: 0)")
+            "Octetstring: Expected OCTET STRING(Octetstring) with tag '04', but got 'fc'. (At offset: 0)")
 
         # NULL.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -2656,7 +2656,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Null: Expected NULL with tag '05', but got 'fb'. (At offset: 0)")
+            "Null: Expected NULL(Null) with tag '05', but got 'fb'. (At offset: 0)")
 
         # OBJECT IDENTIFIER.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -2664,7 +2664,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Objectidentifier: Expected OBJECT IDENTIFIER with tag '06', "
+            "Objectidentifier: Expected OBJECT IDENTIFIER(Objectidentifier) with tag '06', "
             "but got 'fa'. (At offset: 0)")
 
         # ENUMERATED.
@@ -2673,7 +2673,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Enumerated: Expected ENUMERATED with tag '0a', but got 'f9'. (At offset: 0)")
+            "Enumerated: Expected ENUMERATED(Enumerated) with tag '0a', but got 'f9'. (At offset: 0)")
 
         # UTF8String.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -2681,7 +2681,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Utf8string: Expected UTF8String with tag '0c', but got 'f8'. (At offset: 0)")
+            "Utf8string: Expected UTF8String(Utf8string) with tag '0c', but got 'f8'. (At offset: 0)")
 
         # SEQUENCE.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -2689,21 +2689,21 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Sequence: Expected SEQUENCE with tag '30', but got 'f7'. (At offset: 0)")
+            "Sequence: Expected SEQUENCE(Sequence) with tag '30', but got 'f7'. (At offset: 0)")
 
         # SET.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Set', b'\xf6')
 
         self.assertEqual(str(cm.exception),
-                         "Set: Expected SET with tag '31', but got 'f6'. (At offset: 0)")
+                         "Set: Expected SET(Set) with tag '31', but got 'f6'. (At offset: 0)")
 
         # NumericString.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             all_types.decode('Numericstring', b'\xf5')
 
         self.assertEqual(str(cm.exception),
-                         "Numericstring: Expected NumericString with tag '12', "
+                         "Numericstring: Expected NumericString(Numericstring) with tag '12', "
                          "but got 'f5'. (At offset: 0)")
 
         # PrintableString.
@@ -2711,7 +2711,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             all_types.decode('Printablestring', b'\xf4')
 
         self.assertEqual(str(cm.exception),
-                         "Printablestring: Expected PrintableString with tag '13', "
+                         "Printablestring: Expected PrintableString(Printablestring) with tag '13', "
                          "but got 'f4'. (At offset: 0)")
 
         # IA5String.
@@ -2720,7 +2720,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Ia5string: Expected IA5String with tag '16', but got 'f3'. (At offset: 0)")
+            "Ia5string: Expected IA5String(Ia5string) with tag '16', but got 'f3'. (At offset: 0)")
 
         # UniversalString.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -2728,7 +2728,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Universalstring: Expected UniversalString with tag '1c', but got 'f2'. (At offset: 0)")
+            "Universalstring: Expected UniversalString(Universalstring) with tag '1c', but got 'f2'. (At offset: 0)")
 
         # VisibleString.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -2736,7 +2736,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Visiblestring: Expected VisibleString with tag '1a', but got 'f1'. (At offset: 0)")
+            "Visiblestring: Expected VisibleString(Visiblestring) with tag '1a', but got 'f1'. (At offset: 0)")
 
         # GeneralString.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -2744,7 +2744,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Generalstring: Expected GeneralString with tag '1b', but got 'f1'. (At offset: 0)")
+            "Generalstring: Expected GeneralString(Generalstring) with tag '1b', but got 'f1'. (At offset: 0)")
 
         # BMPString.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -2752,7 +2752,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Bmpstring: Expected BMPString with tag '1e', but got 'f0'. (At offset: 0)")
+            "Bmpstring: Expected BMPString(Bmpstring) with tag '1e', but got 'f0'. (At offset: 0)")
 
         # TeletexString.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -2760,7 +2760,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Teletexstring: Expected TeletexString with tag '14', but got 'ef'. (At offset: 0)")
+            "Teletexstring: Expected TeletexString(Teletexstring) with tag '14', but got 'ef'. (At offset: 0)")
 
         # UTCTime.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -2768,7 +2768,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Utctime: Expected UTCTime with tag '17', but got 'ee'. (At offset: 0)")
+            "Utctime: Expected UTCTime(Utctime) with tag '17', but got 'ee'. (At offset: 0)")
 
         # SequenceOf.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -2776,7 +2776,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "SequenceOf: Expected SEQUENCE OF with tag '30', but got 'ed'. (At offset: 0)")
+            "SequenceOf: Expected SEQUENCE OF(SequenceOf) with tag '30', but got 'ed'. (At offset: 0)")
 
         # SetOf.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -2784,7 +2784,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "SetOf: Expected SET OF with tag '31', but got 'ec'. (At offset: 0)")
+            "SetOf: Expected SET OF(SetOf) with tag '31', but got 'ec'. (At offset: 0)")
 
     def test_repr_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn')
@@ -3150,7 +3150,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             (b'0\x0e\x02\x01\x01\x16\x0aIs 1+1=3?',
              'Question.question: Expected at least 10 contents byte(s), but got 9. (At offset: 7)'),
             (b'0\x0e\x02\x02\x01\x16\x09Is 1+1=3?',
-             "Question.question: Expected IA5String with tag '16', but got '09'. (At offset: 6)")
+             "Question.question: Expected IA5String(question) with tag '16', but got '09'. (At offset: 6)")
         ]
 
         for encoded, message in datas:
