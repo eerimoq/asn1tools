@@ -205,16 +205,16 @@ test-rust:
 .PHONY: test-sdist
 test-sdist:
 	rm -rf dist
-	python setup.py sdist
+	python3 setup.py sdist
 	cd dist && \
 	mkdir test && \
 	cd test && \
 	tar xf ../*.tar.gz && \
 	cd asn1tools-* && \
-	python setup.py test
+	python3 setup.py test
 
 .PHONY: release-to-pypi
 release-to-pypi:
-	python setup.py sdist
-	python setup.py bdist_wheel --universal
+	python3 setup.py sdist
+	python3 setup.py bdist_wheel --universal
 	twine upload dist/*
