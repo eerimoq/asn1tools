@@ -39,6 +39,13 @@ class BaseType(object):
     def decode(self, *args, **kwargs):
         raise NotImplementedError('To be implemented by subclasses.')
 
+    def __repr__(self):
+        return '{}({})'.format(self.__class__.__name__,
+                               self.name)
+
+    def type_label(self):
+        return '{}({})'.format(self.type_name, self.name) if self.name else self.type_name
+
 
 class ErrorWithLocation(Exception):
     """
@@ -103,23 +110,6 @@ class ConstraintsError(ErrorWithLocation, _ConstraintsError):
     General ASN.1 constraints error with error location in the message.
     """
     pass
-
-
-class DecodeTagError(DecodeError):
-    """ASN.1 tag decode error.
-
-    """
-
-    def __init__(self, type_name, expected_tag, actual_tag, offset=None, location=None):
-        message = "Expected {} with tag '{}', but got '{}'.".format(
-            type_name,
-            binascii.hexlify(expected_tag).decode('ascii'),
-            binascii.hexlify(actual_tag).decode('ascii'))
-        super(DecodeTagError, self).__init__(message, offset=offset, location=location)
-
-        self.expected_tag = expected_tag
-        self.actual_tag = actual_tag
-        self.type_name = type_name
 
 
 class DecodeContentsLengthError(DecodeError):
@@ -394,3 +384,12 @@ def restricted_generalized_time_from_datetime(date):
         string = date.strftime('%Y%m%d%H%M%S')
 
     return string + 'Z'
+
+
+def format_bytes(tag):
+    """
+    Format tag as hex string
+    :param bytes tag:
+    :return:
+    """
+    return binascii.hexlify(tag).decode('ascii')

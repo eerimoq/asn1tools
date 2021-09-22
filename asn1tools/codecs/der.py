@@ -2,7 +2,6 @@
 
 """
 
-from . import DecodeTagError
 from . import ber
 from . import restricted_utc_time_to_datetime
 from . import restricted_utc_time_from_datetime
@@ -10,7 +9,7 @@ from . import restricted_generalized_time_to_datetime
 from . import restricted_generalized_time_from_datetime
 from . import add_error_location
 from .compiler import clean_bit_string_value
-from .ber import Class
+from .ber import Class, DecodeTagError
 from .ber import Encoding
 from .ber import Tag
 from .ber import encode_length_definite
@@ -70,10 +69,6 @@ class StringType(Type):
         end_offset = offset + length
 
         return data[offset:end_offset].decode(self.ENCODING), end_offset
-
-    def __repr__(self):
-        return '{}({})'.format(self.__class__.__name__,
-                               self.name)
 
 
 class ArrayType(Type):
@@ -138,9 +133,6 @@ class Integer(Type):
 
         return decode_signed_integer(data[offset:end_offset]), end_offset
 
-    def __repr__(self):
-        return 'Integer({})'.format(self.name)
-
 
 class BitString(Type):
 
@@ -189,9 +181,6 @@ class BitString(Type):
 
         return (bytes(data[offset:end_offset]), number_of_bits), end_offset
 
-    def __repr__(self):
-        return 'BitString({})'.format(self.name)
-
 
 class OctetString(Type):
 
@@ -211,9 +200,6 @@ class OctetString(Type):
         end_offset = offset + length
 
         return bytes(data[offset:end_offset]), end_offset
-
-    def __repr__(self):
-        return 'OctetString({})'.format(self.name)
 
 
 class SequenceOf(ArrayType):
@@ -315,9 +301,6 @@ class UTCTime(Type):
 
         return restricted_utc_time_to_datetime(decoded), end_offset
 
-    def __repr__(self):
-        return 'UTCTime({})'.format(self.name)
-
 
 class GeneralizedTime(Type):
 
@@ -339,9 +322,6 @@ class GeneralizedTime(Type):
         decoded = data[offset:end_offset].decode('ascii')
 
         return restricted_generalized_time_to_datetime(decoded), end_offset
-
-    def __repr__(self):
-        return 'GeneralizedTime({})'.format(self.name)
 
 
 class Compiler(ber.Compiler):
