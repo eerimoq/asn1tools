@@ -457,7 +457,7 @@ class Type(BaseType):
     @add_error_location
     def decode(self, data, offset, values=None):
         """
-        Decode entry point, handles incorrect tag by returning DECODE_FAILED (Previously raised DecodeTagError)
+        Decode entry point, handles incorrect tag by returning TAG_MISMATCH (Previously raised DecodeTagError)
         :param bytearray data: Binary ASN1 data to decode
         :param int offset: Current byte offset
         :param dict values:
@@ -469,6 +469,7 @@ class Type(BaseType):
         if data[offset:tag_end_offset] != self.tag:
             # return TAG_MISMATCH Instead of raising DecodeTagError for better performance so that MembersType does
             # not have to catch exception for every missing optional type
+            # CompiledType.decode_with_length() will detect TAG_MISMATCH returned value and raise appropriate exception
             return TAG_MISMATCH, offset
 
         return self._decode(data, tag_end_offset)
