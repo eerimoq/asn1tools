@@ -2428,6 +2428,26 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
 
         self.assert_encode_decode(its, 'Traces', decoded, encoded)
 
+    def test_cen_dsrc(self):
+        files = [
+            'tests/files/cen/dsrc.asn',
+            'tests/files/cen/'
+            'electronic_registration_identification_vehicle_data_module.asn',
+            'tests/files/etsi/its_container_1_2_1.asn'
+        ]
+        dsrc = asn1tools.compile_files(files, 'uper')
+
+        decoded = {
+            'msgIssueRevision': 69,
+            'regional': [{'regionId': 3, 'regExtValue': b'\x00.'}],
+        }
+
+        encoded = (
+            b'\x00\xc5\x00\xc0\x80\x0b\x80'
+        )
+
+        self.assert_encode_decode(dsrc, 'MapData', decoded, encoded)
+
     def test_repr_all_types(self):
         all_types = asn1tools.compile_files('tests/files/all_types.asn',
                                             'uper')
