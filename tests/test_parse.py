@@ -6,6 +6,7 @@ import asn1tools
 
 sys.path.append('tests/files')
 sys.path.append('tests/files/3gpp')
+sys.path.append('tests/files/cen')
 sys.path.append('tests/files/etsi')
 sys.path.append('tests/files/ieee')
 sys.path.append('tests/files/ietf')
@@ -137,6 +138,12 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
     def test_parse_etsi_its_container_1_2_1(self):
         self.parse_and_verify('its_container_1_2_1', 'etsi')
+
+    def test_parse_etsi_mapem_2_1_1(self):
+        self.parse_and_verify('mapem_2_1_1', 'etsi')
+
+    def test_parse_cen_dsrc(self):
+        self.parse_and_verify('dsrc', 'cen')
 
     def test_parse_ieee_1609_2(self):
         self.parse_and_verify('ieee1609_2', 'ieee')

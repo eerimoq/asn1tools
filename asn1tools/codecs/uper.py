@@ -471,6 +471,25 @@ class DateTime(per.DateTime):
                                None)
 
 
+class OpenType(Type):
+
+    def __init__(self, name):
+        super(OpenType, self).__init__(name, 'OpenType')
+
+    @add_error_location
+    def encode(self, data, encoder):
+        encoder.align()
+        encoder.append_length_determinant(len(data))
+        encoder.append_bytes(data)
+
+    @add_error_location
+    def decode(self, decoder):
+        decoder.align()
+        length = decoder.read_length_determinant()
+
+        return decoder.read_bytes(length)
+
+
 class CompiledType(per.CompiledType):
 
     def encode(self, data):
@@ -608,6 +627,8 @@ class Compiler(per.Compiler):
             compiled = Any(name)
         elif type_name == 'NULL':
             compiled = Null(name)
+        elif type_name == 'OpenType':
+            compiled = OpenType(name)
         elif type_name == 'EXTERNAL':
             compiled = Sequence(
                 name,
