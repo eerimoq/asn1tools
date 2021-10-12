@@ -139,6 +139,9 @@ class Asn1ToolsParseTest(unittest.TestCase):
     def test_parse_etsi_its_container_1_2_1(self):
         self.parse_and_verify('its_container_1_2_1', 'etsi')
 
+    def test_parse_etsi_mapem_2_1_1(self):
+        self.parse_and_verify('mapem_2_1_1', 'etsi')
+
     def test_parse_cen_dsrc(self):
         self.parse_and_verify('dsrc', 'cen')
 
