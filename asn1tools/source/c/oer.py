@@ -380,16 +380,32 @@ class _Generator(Generator):
                             present_mask,
                             mask))
                 else:
-                    encode_lines += [
-                        'if (src_p->{}{}{} != {}) {{'.format(
-                            self.location_inner('', '.'),
-                            member.name,
-                            '.value' if self.is_complex_user_type(member) else '',
-                            self.format_default(member)),
-                        '    {} |= {}u;'.format(present_mask, mask),
-                        '}',
-                        ''
-                    ]
+                    inner = '    {} |= {}u;'.format(present_mask, mask)
+                    if self.is_buffer_type(member):
+                        default_variable = member.name + '_default'
+
+                        encode_lines += [
+                            'if (memcmp(src_p->{}{}.buf, {}, sizeof({}) != 0)) {{'.format(
+                                self.location_inner('', '.'),
+                                member.name,
+                                default_variable,
+                                default_variable,
+                                self.format_default(member)),
+                            inner,
+                            '}',
+                            ''
+                        ]
+                    else:
+                        encode_lines += [
+                            'if (src_p->{}{}{} != {}) {{'.format(
+                                self.location_inner('', '.'),
+                                member.name,
+                                '.value' if self.is_complex_user_type(member) else '',
+                                self.format_default(member)),
+                            inner,
+                            '}',
+                            ''
+                        ]
 
             encode_lines += [
                 'encoder_append_bytes(encoder_p,',
@@ -1066,6 +1082,9 @@ class _Generator(Generator):
     def is_complex_user_type(self, type_):
         return is_user_type(type_) and \
             not isinstance(type_, (oer.Integer, oer.Boolean, oer.Real, oer.Null))
+
+    def is_buffer_type(self, type_):
+        return isinstance(type_, oer.OctetString)
 
     def generate_helpers(self, definitions):
         helpers = []

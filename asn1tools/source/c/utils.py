@@ -566,28 +566,60 @@ class Generator(object):
             ]
         elif member.default is not None and skip_when_not_present:
             name = '{}{}'.format(location, member.name)
-            encode_lines = [
-                '',
-                'if (src_p->{}{} != {}) {{'.format(
-                    name,
-                    '.value' if self.is_complex_user_type(member) else '',
-                    self.format_default(member))
-            ] + indent_lines(encode_lines) + [
-                '}',
-                ''
-            ]
-            decode_lines = [
-                '',
-                'if ({}) {{'.format(default_condition_by_member_name[member.name])
-            ] + indent_lines(decode_lines) + [
-                '} else {',
-                '    dst_p->{}{} = {};'.format(
-                    name,
-                    '.value' if self.is_complex_user_type(member) else '',
-                    self.format_default(member)),
-                '}',
-                ''
-            ]
+
+            if self.is_buffer_type(member):
+                default_value = '{{' + ', '.join(['0x%02X' % m for m in member.default]) + '}};'
+                default_variable = self.add_unique_variable('static const uint8_t {}[] = ' + default_value, member.name + '_default')
+
+                encode_lines = [
+                                   '',
+                                   'if (memcmp(src_p->{}.buf, {}, sizeof({})) != 0) {{'.format(
+                                       name,
+                                       default_variable,
+                                       default_variable)
+                               ] + indent_lines(encode_lines) + [
+                                   '}',
+                                   ''
+                               ]
+                decode_lines = [
+                                   '',
+                                   'if ({}) {{'.format(default_condition_by_member_name[member.name])
+                               ] + indent_lines(decode_lines) + [
+                                   '} else {',
+                                   '    memcpy(dst_p->{}.buf, {}, sizeof({}));'.format(
+                                       name,
+                                       default_variable,
+                                       default_variable),
+                                   '    dst_p->{}.length = sizeof({});'.format(
+                                       name,
+                                       default_variable
+                                   ),
+                                   '}',
+                                   ''
+                               ]
+            else:
+                encode_lines = [
+                    '',
+                    'if (src_p->{}{} != {}) {{'.format(
+                        name,
+                        '.value' if self.is_complex_user_type(member) else '',
+                        self.format_default(member))
+                ] + indent_lines(encode_lines) + [
+                    '}',
+                    ''
+                ]
+                decode_lines = [
+                    '',
+                    'if ({}) {{'.format(default_condition_by_member_name[member.name])
+                ] + indent_lines(decode_lines) + [
+                    '} else {',
+                    '    dst_p->{}{} = {};'.format(
+                        name,
+                        '.value' if self.is_complex_user_type(member) else '',
+                        self.format_default(member)),
+                    '}',
+                    ''
+                ]
 
         return encode_lines, decode_lines
 
@@ -723,6 +755,9 @@ class Generator(object):
         raise NotImplementedError('To be implemented by subclasses.')
 
     def is_complex_user_type(self, type_):
+        raise NotImplementedError('To be implemented by subclasses.')
+
+    def is_buffer_type(self, type_):
         raise NotImplementedError('To be implemented by subclasses.')
 
 

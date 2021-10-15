@@ -225,12 +225,22 @@ class _Generator(Generator):
                 unique_is_present = self.add_unique_decode_variable('bool {};',
                                                                     'is_present')
                 member_name_to_is_present[member.name] = unique_is_present
-                encode_lines.append(
-                    'encoder_append_bool(encoder_p, src_p->{}{}{} != {});'.format(
-                        self.location_inner('', '.'),
-                        member.name,
-                        '.value' if self.is_complex_user_type(member) else '',
-                        self.format_default(member)))
+                if self.is_buffer_type(member):
+                    default_variable = member.name + '_default'
+
+                    encode_lines.append(
+                        'encoder_append_bool(encoder_p, memcmp(src_p->{}{}.buf, {}, sizeof({})) != 0);'.format(
+                            self.location_inner('', '.'),
+                            member.name,
+                            default_variable,
+                            default_variable))
+                else:
+                    encode_lines.append(
+                        'encoder_append_bool(encoder_p, src_p->{}{}{} != {});'.format(
+                            self.location_inner('', '.'),
+                            member.name,
+                            '.value' if self.is_complex_user_type(member) else '',
+                            self.format_default(member)))
                 decode_lines.append(
                     '{} = decoder_read_bool(decoder_p);'.format(
                         unique_is_present))
@@ -579,6 +589,9 @@ class _Generator(Generator):
     def is_complex_user_type(self, type_):
         return is_user_type(type_) and \
             not isinstance(type_, (uper.Integer, uper.Boolean, uper.Real, uper.Null))
+
+    def is_buffer_type(self, type_):
+        return isinstance(type_, uper.OctetString)
 
     def generate_helpers(self, definitions):
         helpers = []
