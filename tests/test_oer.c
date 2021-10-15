@@ -1339,6 +1339,32 @@ TEST(oer_c_source_aq)
     ASSERT_EQ(decoded.value, 100001);
 }
 
+TEST(oer_c_source_ar)
+{
+    uint8_t encoded[1];
+    struct oer_c_source_ar_t decoded;
+
+    decoded.a.length = 2;
+    decoded.a.value[0] = 0xAB;
+    decoded.a.value[1] = 0xCD;
+
+    /* Encode */
+    memset(&encoded[0], 0, sizeof(encoded));
+    ASSERT_EQ(oer_c_source_ao_encode(&encoded[0],
+                                     sizeof(encoded),
+                                     &decoded), sizeof(encoded));
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    ASSERT_EQ(oer_c_source_aq_decode(&decoded,
+                                     &encoded[0],
+                                     sizeof(encoded)), sizeof(encoded));
+
+    ASSERT_EQ(decoded.a.length, 2);
+    ASSERT_EQ(decoded.a.value[0], 0xAB);
+    ASSERT_EQ(decoded.a.value[1], 0xCD);
+}
+
 TEST(oer_c_source_ag_erroneous_data)
 {
     struct oer_c_source_ag_t decoded;
