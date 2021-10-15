@@ -118,7 +118,12 @@ class CompiledType(object):
 
 
 class Recursive(object):
-    pass
+    """
+    Mixin used to identify Recursive types
+    """
+    def __repr__(self):
+        return '{}({})'.format(type(self).__name__,
+                               self.type_name)
 
 
 class OpenType(object):

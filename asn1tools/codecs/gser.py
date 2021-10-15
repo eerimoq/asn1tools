@@ -8,7 +8,7 @@ import math
 from copy import copy
 import datetime
 
-from. import BaseType
+from . import BaseType, format_bytes
 from . import EncodeError
 from . import DecodeError
 from . import add_error_location
@@ -108,9 +108,6 @@ class Boolean(Type):
     def encode(self, data, _separator, _indent):
         return 'TRUE' if data else 'FALSE'
 
-    def __repr__(self):
-        return 'Boolean({})'.format(self.name)
-
 
 class Integer(Type):
 
@@ -119,9 +116,6 @@ class Integer(Type):
 
     def encode(self, data, _separator, _indent):
         return str(data)
-
-    def __repr__(self):
-        return 'Integer({})'.format(self.name)
 
 
 class Real(Type):
@@ -143,9 +137,6 @@ class Real(Type):
 
         return data
 
-    def __repr__(self):
-        return 'Real({})'.format(self.name)
-
 
 class Null(Type):
 
@@ -154,9 +145,6 @@ class Null(Type):
 
     def encode(self, _data, _separator, _indent):
         return 'NULL'
-
-    def __repr__(self):
-        return 'Null({})'.format(self.name)
 
 
 class BitString(Type):
@@ -170,9 +158,6 @@ class BitString(Type):
 
         return "'{}'B".format(bin(encoded)[10:10 + data[1]]).upper()
 
-    def __repr__(self):
-        return 'BitString({})'.format(self.name)
-
 
 class OctetString(Type):
 
@@ -180,10 +165,7 @@ class OctetString(Type):
         super(OctetString, self).__init__(name, 'OCTET STRING')
 
     def encode(self, data, _separator, _indent):
-        return "'{}'H".format(binascii.hexlify(data).decode('ascii')).upper()
-
-    def __repr__(self):
-        return 'OctetString({})'.format(self.name)
+        return "'{}'H".format(format_bytes(data)).upper()
 
 
 class ObjectIdentifier(Type):
@@ -193,9 +175,6 @@ class ObjectIdentifier(Type):
 
     def encode(self, data, _separator, _indent):
         return data
-
-    def __repr__(self):
-        return 'ObjectIdentifier({})'.format(self.name)
 
 
 class Enumerated(Type):
@@ -212,9 +191,6 @@ class Enumerated(Type):
 
     def encode(self, data, _separator, _indent):
         return self.data_to_value[data]
-
-    def __repr__(self):
-        return 'Enumerated({})'.format(self.name)
 
 
 class Sequence(MembersType):
@@ -283,9 +259,6 @@ class UTF8String(Type):
     def encode(self, data, _separator, _indent):
         return u'"{}"'.format(data)
 
-    def __repr__(self):
-        return 'UTF8String({})'.format(self.name)
-
 
 class NumericString(Type):
 
@@ -294,9 +267,6 @@ class NumericString(Type):
 
     def encode(self, data, _separator, _indent):
         return u'"{}"'.format(data)
-
-    def __repr__(self):
-        return 'NumericString({})'.format(self.name)
 
 
 class PrintableString(Type):
@@ -307,9 +277,6 @@ class PrintableString(Type):
     def encode(self, data, _separator, _indent):
         return u'"{}"'.format(data)
 
-    def __repr__(self):
-        return 'PrintableString({})'.format(self.name)
-
 
 class IA5String(Type):
 
@@ -318,9 +285,6 @@ class IA5String(Type):
 
     def encode(self, data, _separator, _indent):
         return u'"{}"'.format(data)
-
-    def __repr__(self):
-        return 'IA5String({})'.format(self.name)
 
 
 class VisibleString(Type):
@@ -331,9 +295,6 @@ class VisibleString(Type):
     def encode(self, data, _separator, _indent):
         return u'"{}"'.format(data)
 
-    def __repr__(self):
-        return 'VisibleString({})'.format(self.name)
-
 
 class GeneralString(Type):
 
@@ -342,9 +303,6 @@ class GeneralString(Type):
 
     def encode(self, data, _separator, _indent):
         return u'"{}"'.format(data)
-
-    def __repr__(self):
-        return 'GeneralString({})'.format(self.name)
 
 
 class BMPString(Type):
@@ -355,9 +313,6 @@ class BMPString(Type):
     def encode(self, data, _separator, _indent):
         return u'"{}"'.format(data)
 
-    def __repr__(self):
-        return 'BMPString({})'.format(self.name)
-
 
 class GraphicString(Type):
 
@@ -366,9 +321,6 @@ class GraphicString(Type):
 
     def encode(self, data, _separator, _indent):
         return u'"{}"'.format(data)
-
-    def __repr__(self):
-        return 'GraphicString({})'.format(self.name)
 
 
 class UniversalString(Type):
@@ -379,9 +331,6 @@ class UniversalString(Type):
     def encode(self, data, _separator, _indent):
         return u'"{}"'.format(data)
 
-    def __repr__(self):
-        return 'UniversalString({})'.format(self.name)
-
 
 class TeletexString(Type):
 
@@ -391,14 +340,9 @@ class TeletexString(Type):
     def encode(self, data, _separator, _indent):
         return u'"{}"'.format(data)
 
-    def __repr__(self):
-        return 'TeletexString({})'.format(self.name)
-
 
 class ObjectDescriptor(GraphicString):
-
-    def __repr__(self):
-        return 'ObjectDescriptor({})'.format(self.name)
+    pass
 
 
 class UTCTime(Type):
@@ -409,9 +353,6 @@ class UTCTime(Type):
     def encode(self, data, _separator, _indent):
         return u'"{}"'.format(utc_time_from_datetime(data))
 
-    def __repr__(self):
-        return 'UTCTime({})'.format(self.name)
-
 
 class GeneralizedTime(Type):
 
@@ -420,9 +361,6 @@ class GeneralizedTime(Type):
 
     def encode(self, data, _separator, _indent):
         return u'"{}"'.format(generalized_time_from_datetime(data))
-
-    def __repr__(self):
-        return 'GeneralizedTime({})'.format(self.name)
 
 
 class Date(Type):
@@ -458,15 +396,12 @@ class Any(Type):
         super(Any, self).__init__(name, 'ANY')
 
     def encode(self, data, _separator, _indent):
-        data = binascii.hexlify(data).decode('ascii').upper()
+        data = format_bytes(data).upper()
 
         return "'{}'H".format(data)
 
-    def __repr__(self):
-        return 'Any({})'.format(self.name)
 
-
-class Recursive(Type, compiler.Recursive):
+class Recursive(compiler.Recursive, Type):
 
     def __init__(self, name, type_name, module_name):
         super(Recursive, self).__init__(name, 'RECURSIVE')
@@ -480,9 +415,6 @@ class Recursive(Type, compiler.Recursive):
     @add_error_location
     def encode(self, data, separator, indent):
         return self.inner.encode(data, separator, indent)
-
-    def __repr__(self):
-        return 'Recursive({})'.format(self.type_name)
 
 
 class CompiledType(compiler.CompiledType):
