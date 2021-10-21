@@ -677,7 +677,7 @@ exit
 
     def test_command_line_generate_c_source_oer(self):
         argv = [
-            'asn1tools',
+            'asn1tools', '--debug',
             'generate_c_source',
             '--namespace', 'oer',
             '--generate-fuzzer',
