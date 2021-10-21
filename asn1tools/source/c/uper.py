@@ -232,12 +232,17 @@ class _Generator(Generator):
                 if self.is_buffer_type(member):
                     default_variable = member.name + '_default'
 
-                    encode_lines.append(
-                        'encoder_append_bool(encoder_p, memcmp(src_p->{}{}.buf, {}, sizeof({})) != 0);'.format(
+                    encode_lines += [
+                        'encoder_append_bool(encoder_p, (memcmp(src_p->{}{}.buf, {}, sizeof({})) != 0) ||'.format(
                             self.location_inner('', '.'),
                             member.name,
                             default_variable,
-                            default_variable))
+                            default_variable),
+                        '                               (src_p->{}{}.length != sizeof({})));'.format(
+                            self.location_inner('', '.'),
+                            member.name,
+                            default_variable)
+                    ]
                 else:
                     encode_lines.append(
                         'encoder_append_bool(encoder_p, src_p->{}{}{} != {});'.format(

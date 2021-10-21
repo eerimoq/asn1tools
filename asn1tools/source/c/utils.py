@@ -573,9 +573,12 @@ class Generator(object):
 
                 encode_lines = [
                                    '',
-                                   'if (memcmp(src_p->{}.buf, {}, sizeof({})) != 0) {{'.format(
+                                   'if ((memcmp(src_p->{}.buf, {}, sizeof({})) != 0) ||'.format(
                                        name,
                                        default_variable,
+                                       default_variable),
+                                   '    (src_p->{}.length != sizeof({}))) {{'.format(
+                                       name,
                                        default_variable)
                                ] + indent_lines(encode_lines) + [
                                    '}',

@@ -386,12 +386,16 @@ class _Generator(Generator):
                         default_variable = member.name + '_default'
 
                         encode_lines += [
-                            'if (memcmp(src_p->{}{}.buf, {}, sizeof({})) != 0) {{'.format(
+                            'if ((memcmp(src_p->{}{}.buf, {}, sizeof({})) != 0) ||'.format(
                                 self.location_inner('', '.'),
                                 member.name,
                                 default_variable,
                                 default_variable,
                                 self.format_default(member)),
+                            '    (src_p->{}{}.length != sizeof({}))) {{'.format(
+                                self.location_inner('', '.'),
+                                member.name,
+                                default_variable),
                             inner,
                             '}',
                             ''
