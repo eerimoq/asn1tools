@@ -194,6 +194,7 @@ class _Generator(Generator):
         member_name_to_is_present = {}
 
         if type_.additions is not None:
+
             if len(type_.additions) > 0:
                 if_line = 'if({}) {{'.format(self.get_addition_present_condition(type_))
                 encode_lines.extend(textwrap.wrap(if_line, 120,
@@ -203,6 +204,7 @@ class _Generator(Generator):
                 encode_lines.append('}')
 
             encode_lines.append('encoder_append_bool(encoder_p, false);')
+
             if len(type_.additions) > 0:
                 unique_extension_present = \
                     self.add_unique_decode_variable('bool {};', 'extension_is_present')
@@ -212,6 +214,7 @@ class _Generator(Generator):
                 decode_lines.append('decoder_read_bool(decoder_p);')
 
         for member in type_.root_members:
+
             if member.optional:
                 name = '{}is_{}_present'.format(self.location_inner('', '.'),
                                                 member.name)
@@ -225,6 +228,7 @@ class _Generator(Generator):
                 unique_is_present = self.add_unique_decode_variable('bool {};',
                                                                     'is_present')
                 member_name_to_is_present[member.name] = unique_is_present
+
                 if self.is_buffer_type(member):
                     default_variable = member.name + '_default'
 

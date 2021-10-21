@@ -331,8 +331,8 @@ class _Generator(Generator):
         if present_mask_length > 0:
             fmt = 'uint8_t {{}}[{}];'.format(present_mask_length)
             unique_present_mask = self.add_unique_variable(fmt, 'present_mask')
-
             start_set_byte = 0
+
             if extension_bit == 1 and len(type_.additions) > 0:
                 if_line = 'if({}) {{'.format(self.get_addition_present_condition(type_))
                 encode_lines.extend(textwrap.wrap(if_line, 100,
@@ -381,6 +381,7 @@ class _Generator(Generator):
                             mask))
                 else:
                     inner = '    {} |= {}u;'.format(present_mask, mask)
+
                     if self.is_buffer_type(member):
                         default_variable = member.name + '_default'
 
