@@ -1342,27 +1342,52 @@ TEST(oer_c_source_aq)
 TEST(oer_c_source_ar)
 {
     uint8_t encoded[1];
+    uint8_t encoded_no_default[4];
     struct oer_c_source_ar_t decoded;
 
     decoded.a.length = 2;
-    decoded.a.value[0] = 0xAB;
-    decoded.a.value[1] = 0xCD;
+    decoded.a.buf[0] = 0xAB;
+    decoded.a.buf[1] = 0xCD;
 
     /* Encode */
     memset(&encoded[0], 0, sizeof(encoded));
-    ASSERT_EQ(oer_c_source_ao_encode(&encoded[0],
+    ASSERT_EQ(oer_c_source_ar_encode(&encoded[0],
                                      sizeof(encoded),
                                      &decoded), sizeof(encoded));
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x00",
+                     sizeof(encoded));
 
     /* Decode. */
     memset(&decoded, 0, sizeof(decoded));
-    ASSERT_EQ(oer_c_source_aq_decode(&decoded,
+    ASSERT_EQ(oer_c_source_ar_decode(&decoded,
                                      &encoded[0],
                                      sizeof(encoded)), sizeof(encoded));
 
     ASSERT_EQ(decoded.a.length, 2);
-    ASSERT_EQ(decoded.a.value[0], 0xAB);
-    ASSERT_EQ(decoded.a.value[1], 0xCD);
+    ASSERT_EQ(decoded.a.buf[0], 0xAB);
+    ASSERT_EQ(decoded.a.buf[1], 0xCD);
+
+    decoded.a.buf[1] = 0xCE;
+
+    /* Encode */
+    memset(&encoded_no_default[0], 0, sizeof(encoded_no_default));
+    ASSERT_EQ(oer_c_source_ar_encode(&encoded_no_default[0],
+                                     sizeof(encoded_no_default),
+                                     &decoded), sizeof(encoded_no_default));
+    ASSERT_MEMORY_EQ(&encoded_no_default[0],
+                     "\x80\x02\xAB\xCE",
+                     sizeof(encoded_no_default));
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    ASSERT_EQ(oer_c_source_ar_decode(&decoded,
+                                     &encoded_no_default[0],
+                                     sizeof(encoded_no_default)), sizeof(encoded_no_default));
+
+    ASSERT_EQ(decoded.a.length, 2);
+    ASSERT_EQ(decoded.a.buf[0], 0xAB);
+    ASSERT_EQ(decoded.a.buf[1], 0xCE);
 }
 
 TEST(oer_c_source_ag_erroneous_data)
