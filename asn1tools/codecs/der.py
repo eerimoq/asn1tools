@@ -15,7 +15,6 @@ from .ber import Tag
 from .ber import encode_length_definite
 from .ber import decode_length_definite
 from .ber import encode_signed_integer
-from .ber import decode_signed_integer
 from .ber import Boolean
 from .ber import Real
 from .ber import Null
@@ -131,7 +130,7 @@ class Integer(Type):
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
 
-        return decode_signed_integer(data[offset:end_offset]), end_offset
+        return int.from_bytes(data[offset:end_offset], byteorder='big', signed=True), end_offset
 
 
 class BitString(Type):
