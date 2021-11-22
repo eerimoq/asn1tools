@@ -1116,3 +1116,57 @@ TEST(uper_c_source_aq)
 
     ASSERT_EQ(decoded.value, 100001);
 }
+
+
+TEST(uper_c_source_ar)
+{
+    uint8_t encoded[1];
+    uint8_t encoded_no_default[4];
+    struct uper_c_source_ar_t decoded;
+
+    decoded.a.length = 2;
+    decoded.a.buf[0] = 0xAB;
+    decoded.a.buf[1] = 0xCD;
+
+    /* Encode */
+    memset(&encoded[0], 0, sizeof(encoded));
+    ASSERT_EQ(uper_c_source_ar_encode(&encoded[0],
+                                      sizeof(encoded),
+                                      &decoded), sizeof(encoded));
+    ASSERT_MEMORY_EQ(&encoded[0],
+                     "\x00",
+                     sizeof(encoded));
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    ASSERT_EQ(uper_c_source_ar_decode(&decoded,
+                                      &encoded[0],
+                                      sizeof(encoded)), sizeof(encoded));
+
+    ASSERT_EQ(decoded.a.length, 2);
+    ASSERT_EQ(decoded.a.buf[0], 0xAB);
+    ASSERT_EQ(decoded.a.buf[1], 0xCD);
+
+    decoded.a.length = 3;
+    decoded.a.buf[2] = 0xEF;
+
+    /* Encode */
+    memset(&encoded_no_default[0], 0, sizeof(encoded_no_default));
+    ASSERT_EQ(uper_c_source_ar_encode(&encoded_no_default[0],
+                                      sizeof(encoded_no_default),
+                                      &decoded), sizeof(encoded_no_default));
+    ASSERT_MEMORY_EQ(&encoded_no_default[0],
+                     "\x9D\x5E\x6F\x78",
+                     sizeof(encoded_no_default));
+
+    /* Decode. */
+    memset(&decoded, 0, sizeof(decoded));
+    ASSERT_EQ(uper_c_source_ar_decode(&decoded,
+                                      &encoded_no_default[0],
+                                      sizeof(encoded_no_default)), sizeof(encoded_no_default));
+
+    ASSERT_EQ(decoded.a.length, 3);
+    ASSERT_EQ(decoded.a.buf[0], 0xAB);
+    ASSERT_EQ(decoded.a.buf[1], 0xCD);
+    ASSERT_EQ(decoded.a.buf[2], 0xEF);
+}
