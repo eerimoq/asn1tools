@@ -3230,8 +3230,8 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             foo.decode('A', encoded)
 
         self.assertEqual(
-            str(cm.exception),
-            'A: Expected definite length, but got indefinite. (At offset: 1)')
+            'A: Expected definite length, but got indefinite. (At offset: 1)',
+            str(cm.exception))
 
     def test_versions(self):
         foo = asn1tools.compile_files('tests/files/versions.asn')

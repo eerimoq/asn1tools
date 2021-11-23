@@ -118,7 +118,7 @@ class DecodeTagError(DecodeError):
     def __init__(self, asn_type, data, offset, location=None):
         """
 
-        :param Type asn_type: ASN type instance error occurred for
+        :param StandardDecodeMixin, Type asn_type: ASN type instance error occurred for
         :param bytes data: ASN data
         :param int offset:
         :param str location: Name of ASN1 element error occurred in
@@ -155,7 +155,7 @@ def decode_length_definite(encoded, offset):
     length = encoded[offset]
     offset += 1
 
-    if length > 127:
+    if length & 0x80:   # Faster than > 127
         if length == 128:
             raise DecodeError('Expected definite length, but got indefinite.', offset-1)
 
@@ -176,15 +176,6 @@ def decode_length_definite(encoded, offset):
         raise DecodeContentsLengthError(length, offset, len(encoded))
 
     return length, offset
-
-
-def decode_length_constructed(encoded, offset):
-    length = encoded[offset]
-
-    if length == 128:
-        return None, offset + 1
-    else:
-        return decode_length_definite(encoded, offset)
 
 
 def encode_signed_integer(number):
@@ -384,7 +375,9 @@ def decode_object_identifier_subidentifier(data, offset):
 
 
 class Type(BaseType):
-
+    """
+    Base type class for BER types
+    """
     def __init__(self, name, type_name, number, flags=0):
         """
 
@@ -401,6 +394,26 @@ class Type(BaseType):
             self.tag = encode_tag(number, flags)
             self.tag_len = len(self.tag)
 
+    def decode(self, data, offset, values=None):
+        """
+        Decode type value from byte data
+        :param bytearray data: Binary ASN1 data to decode
+        :param int offset: Current byte offset
+        :param dict values:
+        :return: Tuple of (decoded_value, end_offset)
+        """
+        raise NotImplementedError()
+
+    def encode(self, data, encoded, values=None):
+        """
+        Encode value into byte data
+        :param data: Value to be encoded
+        :param bytearray encoded: Existing byte data to add encoded data to
+        :param values:
+        :return: None (extend 'encoded' bytearray)
+        """
+        raise NotImplementedError()
+
     def set_tag(self, number, flags):
         self.tag = encode_tag(number, flags)
         self.tag_len = len(self.tag)
@@ -415,35 +428,88 @@ class Type(BaseType):
     def set_size_range(self, minimum, maximum, has_extension_marker):
         pass
 
+
+class StandardDecodeMixin(object):
+    """
+    Type class mixin for  standard decoding logic
+    (single predefined tag to be matched against, then decode length and contents)
+    """
+    indefinite_allowed = False  # Whether indefinite length encoding is allowed for this type
+
     @add_error_location
     def decode(self, data, offset, values=None):
         """
-        Decode entry point, handles incorrect tag by returning TAG_MISMATCH (Previously raised DecodeTagError)
+        Implements standard decode logic (single predefined tag to be matched against, then decode length and contents)
         :param bytearray data: Binary ASN1 data to decode
         :param int offset: Current byte offset
         :param dict values:
-        :return: decoded_value, new_offset
+        :return: Tuple of (decoded_value, end_offset)
         """
-        tag_end_offset = offset + self.tag_len
+        start_offset = offset
+        offset += self.tag_len
 
         # Validate tag
-        if data[offset:tag_end_offset] != self.tag:
+        if data[start_offset:offset] != self.tag:
             # return TAG_MISMATCH Instead of raising DecodeTagError for better performance so that MembersType does
             # not have to catch exception for every missing optional type
             # CompiledType.decode_with_length() will detect TAG_MISMATCH returned value and raise appropriate exception
-            return TAG_MISMATCH, offset
+            return TAG_MISMATCH, start_offset
 
-        return self._decode(data, tag_end_offset)
+        # Decode length
+        if data[offset] == 0x80:
+            # Indefinite length field.
+            if not self.indefinite_allowed:
+                raise DecodeError('Expected definite length, but got indefinite.', offset)
+            offset += 1
+            length = None
+        else:
+            # Definite length field
+            length, offset = decode_length_definite(data, offset)
+        # print('Decoding {} starting from pos {} with length {} ({}...)'.format(self, start_offset, length, data[start_offset:offset+(length if length else 4)]))
 
-    def _decode(self, data, offset):
+        return self.decode_content(data, offset, length)
+
+    def decode_content(self, data, offset, length):
         """
-        Type-specific decode logic
+        Type-specific logic to decode content
+        :param bytearray data: Binary data to decode
+        :param int offset: Offset for start of content bytes
+        :param int length: Length of content bytes (None if indefinite)
+        :return: Tuple of (decoded_value, end_offset)
+        """
+        raise NotImplementedError('Type {} does not implement decode_content() method'.format(type(self).__name__))
+
+
+class StandardEncodeMixin(object):
+    """
+    Type class mixin for standard encoding logic (append tag + length(content) + content)
+    """
+    @add_error_location
+    def encode(self, data, encoded, values=None):
+        """
+        Encode value into byte data
+        :param data: Value to be encoded
+        :param bytearray encoded: Existing byte data to add encoded data to
+        :param values:
         :return:
         """
-        raise NotImplementedError('Type {} does not implement _decode() method'.format(type(self).__name__))
+        encoded_data = bytearray(self.encode_content(data, values=values))
+        encoded.extend(self.tag + encode_length_definite(len(encoded_data)) + encoded_data)
+
+    def encode_content(self, data, values=None):
+        """
+        Encode data value into bytearray
+        :param data:
+        :param values:
+        :return:
+        """
+        raise NotImplementedError()
 
 
 class PrimitiveOrConstructedType(Type):
+    """
+    Base type class for types which can be either primitive or constructed (BitString, OctetString, String)
+    """
 
     def __init__(self, name, type_name, number, segment, flags=0):
         super(PrimitiveOrConstructedType, self).__init__(name,
@@ -485,7 +551,15 @@ class PrimitiveOrConstructedType(Type):
 
             return self.decode_primitive_contents(data, offset, length), end_offset
         else:
-            length, offset = decode_length_constructed(data, offset)
+            # Decode constructed field length
+            len_byte = data[offset]
+            if len_byte & 0x80:
+                # Indefinite length
+                length = None
+                offset += 1
+            else:
+                length, offset = decode_length_definite(data, offset)
+
             return self.decode_constructed_contents(data, offset, length)
 
     def decode_constructed_contents(self, data, offset, length):
@@ -511,7 +585,7 @@ class PrimitiveOrConstructedType(Type):
         raise NotImplementedError('To be implemented by subclasses.')
 
 
-class StringType(PrimitiveOrConstructedType):
+class StringType(StandardEncodeMixin, PrimitiveOrConstructedType):
 
     TAG = None
     ENCODING = None
@@ -522,12 +596,8 @@ class StringType(PrimitiveOrConstructedType):
                                          self.TAG,
                                          OctetString(name))
 
-    @add_error_location
-    def encode(self, data, encoded, values=None):
-        data = data.encode(self.ENCODING)
-        # encoded.extend(self.tag)
-        # encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(self.tag + encode_length_definite(len(data)) + data)
+    def encode_content(self, data, values=None):
+        return data.encode(self.ENCODING)
 
     def decode_primitive_contents(self, data, offset, length):
         return data[offset:offset + length].decode(self.ENCODING)
@@ -536,7 +606,8 @@ class StringType(PrimitiveOrConstructedType):
         return bytearray().join(segments).decode(self.ENCODING)
 
 
-class MembersType(Type):
+class MembersType(StandardEncodeMixin, StandardDecodeMixin, Type):
+    indefinite_allowed = True
 
     def __init__(self, name, tag_name, tag, root_members, additions):
         super(MembersType, self).__init__(name,
@@ -550,8 +621,7 @@ class MembersType(Type):
         super(MembersType, self).set_tag(number,
                                          flags | Encoding.CONSTRUCTED)
 
-    @add_error_location
-    def encode(self, data, encoded, values=None):
+    def encode_content(self, data, values=None):
         encoded_members = bytearray()
 
         for member in self.root_members:
@@ -560,9 +630,7 @@ class MembersType(Type):
         if self.additions:
             self.encode_additions(data, encoded_members)
 
-        # encoded.extend(self.tag)
-        # encoded.extend(encode_length_definite(len(encoded_members)))
-        encoded.extend(self.tag + encode_length_definite(len(encoded_members)) + encoded_members)
+        return encoded_members
 
     def encode_additions(self, data, encoded_members):
         try:
@@ -599,16 +667,9 @@ class MembersType(Type):
                 name,
                 data))
 
-    def _decode(self, data, offset):
+    def decode_content(self, data, offset, length):
 
-        if data[offset] == 0x80:
-            # Indefinite length field.
-            offset += 1
-            end_offset = None
-        else:
-            # Definite length field
-            length, offset = decode_length_definite(data, offset)
-            end_offset = offset + length
+        end_offset = None if length is None else offset + length
 
         values = {}
 
@@ -700,7 +761,8 @@ class MembersType(Type):
             ', '.join([repr(member) for member in self.root_members]))
 
 
-class ArrayType(Type):
+class ArrayType(StandardEncodeMixin, StandardDecodeMixin, Type):
+    indefinite_allowed = True
 
     def __init__(self, name, tag_name, tag, element_type):
         super(ArrayType, self).__init__(name,
@@ -713,24 +775,15 @@ class ArrayType(Type):
         super(ArrayType, self).set_tag(number,
                                        flags | Encoding.CONSTRUCTED)
 
-    @add_error_location
-    def encode(self, data, encoded):
+    def encode_content(self, data, values=None):
         encoded_elements = bytearray()
 
         for entry in data:
             self.element_type.encode(entry, encoded_elements)
 
-        # encoded.extend(self.tag)
-        # encoded.extend(encode_length_definite(len(encoded_elements)))
-        encoded.extend(self.tag + encode_length_definite(len(encoded_elements)) + encoded_elements)
+        return encoded_elements
 
-    def _decode(self, data, offset):
-
-        if data[offset] == 0x80:
-            offset += 1
-            length = None  # Indicates indefinite field.
-        else:
-            length, offset = decode_length_definite(data, offset)
+    def decode_content(self, data, offset, length):
 
         decoded = []
         start_offset = offset
@@ -757,73 +810,59 @@ class ArrayType(Type):
                                    self.element_type)
 
 
-class Boolean(Type):
+class Boolean(StandardEncodeMixin, StandardDecodeMixin, Type):
 
     def __init__(self, name):
         super(Boolean, self).__init__(name,
                                       'BOOLEAN',
                                       Tag.BOOLEAN)
 
-    @add_error_location
-    def encode(self, data, encoded):
-        encoded.extend(self.tag)
-        encoded.append(1)
-        encoded.append(0xff * data)
+    def encode_content(self, data, values=None):
+        return bytearray([0xff * data])
 
-    def _decode(self, data, offset):
-        length, contents_offset = decode_length_definite(data, offset)
+    def decode_content(self, data, offset, length):
 
         if length != 1:
             raise DecodeError(
                 'Expected BOOLEAN contents length 1, but '
-                'got {}.'.format(length), offset)
+                'got {}.'.format(length), offset-1)
 
-        return bool(data[contents_offset]), contents_offset + length
+        return bool(data[offset]), offset + length
 
 
-class Integer(Type):
+class Integer(StandardEncodeMixin, StandardDecodeMixin, Type):
 
     def __init__(self, name):
         super(Integer, self).__init__(name,
                                       'INTEGER',
                                       Tag.INTEGER)
 
-    @add_error_location
-    def encode(self, data, encoded):
-        # encoded.extend(self.tag)
-        value = encode_signed_integer(data)
-        # encoded.extend(encode_length_definite(len(value)))
-        encoded.extend(self.tag + encode_length_definite(len(value)) + value)
+    def encode_content(self, data, values=None):
+        return encode_signed_integer(data)
 
-    def _decode(self, data, offset):
+    def decode_content(self, data, offset, length):
 
-        length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
 
         return int.from_bytes(data[offset:end_offset], byteorder='big', signed=True), end_offset
 
 
-class Real(Type):
+class Real(StandardEncodeMixin, StandardDecodeMixin, Type):
 
     def __init__(self, name):
         super(Real, self).__init__(name, 'REAL', Tag.REAL)
 
-    @add_error_location
-    def encode(self, data, encoded):
-        data = encode_real(data)
-        encoded.extend(self.tag)
-        encoded.append(len(data))
-        encoded.extend(data)
+    def encode_content(self, data, values=None):
+        return encode_real(data)
 
-    def _decode(self, data, offset):
-        length, offset = decode_length_definite(data, offset)
+    def decode_content(self, data, offset, length):
         end_offset = offset + length
         decoded = decode_real(data[offset:end_offset])
 
         return decoded, end_offset
 
 
-class Null(Type):
+class Null(StandardDecodeMixin, Type):
 
     def __init__(self, name):
         super(Null, self).__init__(name, 'NULL', Tag.NULL)
@@ -836,11 +875,11 @@ class Null(Type):
         encoded.extend(self.tag)
         encoded.append(0)
 
-    def _decode(self, data, offset):
-        return None, offset + 1
+    def decode_content(self, data, offset, length):
+        return None, offset
 
 
-class BitString(PrimitiveOrConstructedType):
+class BitString(StandardEncodeMixin, PrimitiveOrConstructedType):
 
     def __init__(self, name, has_named_bits):
         super(BitString, self).__init__(name,
@@ -860,8 +899,7 @@ class BitString(PrimitiveOrConstructedType):
 
         return clean_value == clean_default
 
-    @add_error_location
-    def encode(self, data, encoded):
+    def encode_content(self, data, values=None):
         number_of_bytes, number_of_rest_bits = divmod(data[1], 8)
         data = bytearray(data[0])
 
@@ -875,10 +913,7 @@ class BitString(PrimitiveOrConstructedType):
             data.append(last_byte)
             number_of_unused_bits = (8 - number_of_rest_bits)
 
-        encoded.extend(self.tag)
-        encoded.extend(encode_length_definite(len(data) + 1))
-        encoded.append(number_of_unused_bits)
-        encoded.extend(data)
+        return bytearray([number_of_unused_bits]) + data
 
     def decode_primitive_contents(self, data, offset, length):
         length -= 1
@@ -898,7 +933,7 @@ class BitString(PrimitiveOrConstructedType):
         return (bytes(decoded), number_of_bits)
 
 
-class OctetString(PrimitiveOrConstructedType):
+class OctetString(StandardEncodeMixin, PrimitiveOrConstructedType):
 
     def __init__(self, name):
         super(OctetString, self).__init__(name,
@@ -906,11 +941,8 @@ class OctetString(PrimitiveOrConstructedType):
                                           Tag.OCTET_STRING,
                                           self)
 
-    @add_error_location
-    def encode(self, data, encoded):
-        # encoded.extend(self.tag)
-        # encoded.extend(encode_length_definite(len(data)))
-        encoded.extend(self.tag + encode_length_definite(len(data)) + data)
+    def encode_content(self, data, values=None):
+        return data
 
     def decode_primitive_contents(self, data, offset, length):
         return bytes(data[offset:offset + length])
@@ -919,30 +951,25 @@ class OctetString(PrimitiveOrConstructedType):
         return bytes().join(segments)
 
 
-class ObjectIdentifier(Type):
+class ObjectIdentifier(StandardEncodeMixin, StandardDecodeMixin, Type):
 
     def __init__(self, name):
         super(ObjectIdentifier, self).__init__(name,
                                                'OBJECT IDENTIFIER',
                                                Tag.OBJECT_IDENTIFIER)
 
-    @add_error_location
-    def encode(self, data, encoded):
-        encoded_subidentifiers = encode_object_identifier(data)
-        encoded.extend(self.tag)
-        encoded.append(len(encoded_subidentifiers))
-        encoded.extend(encoded_subidentifiers)
+    def encode_content(self, data, values=None):
+        return encode_object_identifier(data)
 
-    def _decode(self, data, offset):
+    def decode_content(self, data, offset, length):
 
-        length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
         decoded = decode_object_identifier(data, offset, end_offset)
 
         return decoded, end_offset
 
 
-class Enumerated(Type):
+class Enumerated(StandardEncodeMixin, StandardDecodeMixin, Type):
 
     def __init__(self, name, values, numeric):
         super(Enumerated, self).__init__(name,
@@ -963,8 +990,7 @@ class Enumerated(Type):
     def format_values(self):
         return format_or(sorted(list(self.value_to_data)))
 
-    @add_error_location
-    def encode(self, data, encoded):
+    def encode_content(self, data, values=None):
         try:
             value = self.data_to_value[data]
         except KeyError:
@@ -973,14 +999,10 @@ class Enumerated(Type):
                     self.format_names(),
                     data))
 
-        encoded.extend(self.tag)
-        value = encode_signed_integer(value)
-        encoded.extend(encode_length_definite(len(value)))
-        encoded.extend(value)
+        return encode_signed_integer(value)
 
-    def _decode(self, data, offset):
+    def decode_content(self, data, offset, length):
 
-        length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
         value = int.from_bytes(data[offset:end_offset], byteorder='big', signed=True)
 
@@ -1194,67 +1216,52 @@ class ObjectDescriptor(GraphicString):
     TAG = Tag.OBJECT_DESCRIPTOR
 
 
-class UTCTime(Type):
+class UTCTime(StandardEncodeMixin, StandardDecodeMixin, Type):
 
     def __init__(self, name):
         super(UTCTime, self).__init__(name,
                                       'UTCTime',
                                       Tag.UTC_TIME)
 
-    @add_error_location
-    def encode(self, data, encoded):
-        data = utc_time_from_datetime(data).encode('ascii')
-        encoded.extend(self.tag)
-        encoded.append(len(data))
-        encoded.extend(data)
+    def encode_content(self, data, values=None):
+        return utc_time_from_datetime(data).encode('ascii')
 
-    def _decode(self, data, offset):
+    def decode_content(self, data, offset, length):
 
-        length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
         decoded = data[offset:end_offset].decode('ascii')
 
         return utc_time_to_datetime(decoded), end_offset
 
 
-class GeneralizedTime(Type):
+class GeneralizedTime(StandardEncodeMixin, StandardDecodeMixin, Type):
 
     def __init__(self, name):
         super(GeneralizedTime, self).__init__(name,
                                               'GeneralizedTime',
                                               Tag.GENERALIZED_TIME)
 
-    @add_error_location
-    def encode(self, data, encoded):
-        data = generalized_time_from_datetime(data).encode('ascii')
-        encoded.extend(self.tag)
-        encoded.append(len(data))
-        encoded.extend(data)
+    def encode_content(self, data, values=None):
+        return generalized_time_from_datetime(data).encode('ascii')
 
-    def _decode(self, data, offset):
+    def decode_content(self, data, offset, length):
 
-        length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
         decoded = data[offset:end_offset].decode('ascii')
 
         return generalized_time_to_datetime(decoded), end_offset
 
 
-class Date(Type):
+class Date(StandardEncodeMixin, StandardDecodeMixin, Type):
 
     def __init__(self, name):
         super(Date, self).__init__(name, 'DATE', Tag.DATE)
 
-    @add_error_location
-    def encode(self, data, encoded):
-        data = str(data).replace('-', '').encode('ascii')
-        encoded.extend(self.tag)
-        encoded.append(len(data))
-        encoded.extend(data)
+    def encode_content(self, data, values=None):
+        return str(data).replace('-', '').encode('ascii')
 
-    def _decode(self, data, offset):
+    def decode_content(self, data, offset, length):
 
-        length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
         decoded = data[offset:end_offset].decode('ascii')
         decoded = datetime.date(*time.strptime(decoded, '%Y%m%d')[:3])
@@ -1262,23 +1269,18 @@ class Date(Type):
         return decoded, end_offset
 
 
-class TimeOfDay(Type):
+class TimeOfDay(StandardEncodeMixin, StandardDecodeMixin, Type):
 
     def __init__(self, name):
         super(TimeOfDay, self).__init__(name,
                                         'TIME-OF-DAY',
                                         Tag.TIME_OF_DAY)
 
-    @add_error_location
-    def encode(self, data, encoded):
-        data = str(data).replace(':', '').encode('ascii')
-        encoded.extend(self.tag)
-        encoded.append(len(data))
-        encoded.extend(data)
+    def encode_content(self, data, values=None):
+        return str(data).replace(':', '').encode('ascii')
 
-    def _decode(self, data, offset):
+    def decode_content(self, data, offset, length):
 
-        length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
         decoded = data[offset:end_offset].decode('ascii')
         decoded = datetime.time(*time.strptime(decoded, '%H%M%S')[3:6])
@@ -1286,24 +1288,18 @@ class TimeOfDay(Type):
         return decoded, end_offset
 
 
-class DateTime(Type):
+class DateTime(StandardEncodeMixin, StandardDecodeMixin, Type):
 
     def __init__(self, name):
         super(DateTime, self).__init__(name,
                                        'DATE-TIME',
                                        Tag.DATE_TIME)
 
-    @add_error_location
-    def encode(self, data, encoded):
-        data = '{:04d}{:02d}{:02d}{:02d}{:02d}{:02d}'.format(*data.timetuple())
-        data = data.encode('ascii')
-        encoded.extend(self.tag)
-        encoded.append(len(data))
-        encoded.extend(data)
+    def encode_content(self, data, values=None):
+        return '{:04d}{:02d}{:02d}{:02d}{:02d}{:02d}'.format(*data.timetuple()).encode('ascii')
 
-    def _decode(self, data, offset):
+    def decode_content(self, data, offset, length):
 
-        length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
         decoded = data[offset:end_offset].decode('ascii')
         decoded = datetime.datetime(*time.strptime(decoded, '%Y%m%d%H%M%S')[:6])
@@ -1377,8 +1373,9 @@ class AnyDefinedBy(Type):
             return data[start:end_offset], end_offset
 
 
-class ExplicitTag(Type):
+class ExplicitTag(StandardEncodeMixin, StandardDecodeMixin, Type):
     no_error_location = True
+    indefinite_allowed = True
 
     def __init__(self, name, inner):
         super(ExplicitTag, self).__init__(name, 'ExplicitTag', None)
@@ -1400,29 +1397,18 @@ class ExplicitTag(Type):
         super(ExplicitTag, self).set_tag(number,
                                          flags | Encoding.CONSTRUCTED)
 
-    def encode(self, data, encoded):
+    def encode_content(self, data, values=None):
         encoded_inner = bytearray()
         self.inner.encode(data, encoded_inner)
-        # encoded.extend(self.tag)
-        # encoded.extend(encode_length_definite(len(encoded_inner)))
-        encoded.extend(self.tag + encode_length_definite(len(encoded_inner)) + encoded_inner)
+        return encoded_inner
 
-    def _decode(self, data, offset):
-
-        if data[offset] == 0x80:
-            # Indefinite length field
-            offset += 1
-            indefinite = True
-        else:
-            # Definite length field
-            indefinite = False
-            length, offset = decode_length_definite(data, offset)
+    def decode_content(self, data, offset, length):
 
         values, end_offset = self.inner.decode(data, offset)
 
         check_decode_error(self.inner, values, data, offset)
 
-        if indefinite:
+        if length is None:  # Indefinite
             if data[end_offset:end_offset + 2] != END_OF_CONTENTS_OCTETS:
                 raise DecodeError('Expected end-of-contents tag.', end_offset, location=self.name)
             end_offset += 2
