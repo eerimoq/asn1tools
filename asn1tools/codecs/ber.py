@@ -465,7 +465,6 @@ class StandardDecodeMixin(object):
         else:
             # Definite length field
             length, offset = decode_length_definite(data, offset)
-        # print('Decoding {} starting from pos {} with length {} ({}...)'.format(self, start_offset, length, data[start_offset:offset+(length if length else 4)]))
 
         return self.decode_content(data, offset, length)
 
