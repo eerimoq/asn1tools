@@ -1244,8 +1244,9 @@ def create_grammar():
                              + right_brace)
     single_type_constraint = constraint
     multiple_type_constraints = (full_specification | partial_specification)
-    inner_type_constraints = ((WITH_COMPONENT - single_type_constraint)
-                              | (WITH_COMPONENTS - multiple_type_constraints))
+    with_component = WITH_COMPONENT - single_type_constraint
+    with_components = WITH_COMPONENTS - multiple_type_constraints
+    inner_type_constraints = with_component | with_components
     permitted_alphabet = (FROM - constraint)
     type_constraint = type_
     size_constraint <<= (SIZE - Group(constraint))
@@ -1715,7 +1716,8 @@ def create_grammar():
     bstring.setParseAction(convert_bstring)
     hstring.setParseAction(convert_hstring)
     value_range.setParseAction(convert_value_range)
-    inner_type_constraints.setParseAction(convert_inner_type_constraints)
+    with_component.setParseAction(convert_inner_type_constraints)
+    with_components.setParseAction(convert_inner_type_constraints)
     size_constraint.setParseAction(convert_size_constraint)
     permitted_alphabet.setParseAction(convert_permitted_alphabet)
     constraint.setParseAction(convert_constraint)
