@@ -368,7 +368,7 @@ class _Generator(Generator):
                     encode_lines += [
                         'if (src_p->{}is_{}_present) {{'.format(
                             self.location_inner('', '.'),
-                            member.name),
+                            canonical(member.name)),
                         '    {} |= {}u;'.format(present_mask, mask),
                         '}',
                         ''
@@ -376,25 +376,25 @@ class _Generator(Generator):
                     decode_lines.append(
                         'dst_p->{0}is_{1}_present = (({2} & {3}u) == {3}u);'.format(
                             self.location_inner('', '.'),
-                            member.name,
+                            canonical(member.name),
                             present_mask,
                             mask))
                 else:
                     inner = '    {} |= {}u;'.format(present_mask, mask)
 
                     if self.is_buffer_type(member):
-                        default_variable = member.name + '_default'
+                        default_variable = canonical(member.name) + '_default'
 
                         encode_lines += [
                             'if ((memcmp(src_p->{}{}.buf, {}, sizeof({})) != 0) ||'.format(
                                 self.location_inner('', '.'),
-                                member.name,
+                                canonical(member.name),
                                 default_variable,
                                 default_variable,
                                 self.format_default(member)),
                             '    (src_p->{}{}.length != sizeof({}))) {{'.format(
                                 self.location_inner('', '.'),
-                                member.name,
+                                canonical(member.name),
                                 default_variable),
                             inner,
                             '}',
@@ -404,7 +404,7 @@ class _Generator(Generator):
                         encode_lines += [
                             'if (src_p->{}{}{} != {}) {{'.format(
                                 self.location_inner('', '.'),
-                                member.name,
+                                canonical(member.name),
                                 '.value' if self.is_complex_user_type(member) else '',
                                 self.format_default(member)),
                             inner,
@@ -753,9 +753,9 @@ class _Generator(Generator):
             member_checker = self.get_member_checker(checker,
                                                      member.name)
 
-            with self.asn1_members_backtrace_push(member.name):
+            with self.asn1_members_backtrace_push(canonical(member.name)):
                 with self.c_members_backtrace_push('value'):
-                    with self.c_members_backtrace_push(member.name):
+                    with self.c_members_backtrace_push(canonical(member.name)):
                         choice_encode_lines, choice_decode_lines = self.format_type_inner(
                             member,
                             member_checker)
@@ -778,7 +778,7 @@ class _Generator(Generator):
                 'break;'
             ]
             encode_lines += [
-                'case {}_choice_{}_e:'.format(self.location, member.name)
+                'case {}_choice_{}_e:'.format(self.location, canonical(member.name))
             ] + indent_lines(choice_encode_lines) + [
                 ''
             ]
@@ -786,7 +786,7 @@ class _Generator(Generator):
             choice_decode_lines = [
                 'dst_p->{} = {}_choice_{}_e;'.format(choice,
                                                      self.location,
-                                                     member.name)
+                                                     canonical(member.name))
             ] + choice_decode_lines + [
                 'break;'
             ]
@@ -835,9 +835,9 @@ class _Generator(Generator):
                     member_checker = self.get_member_checker(checker,
                                                              member.name)
 
-                    with self.asn1_members_backtrace_push(member.name):
+                    with self.asn1_members_backtrace_push(canonical(member.name)):
                         with self.c_members_backtrace_push('value'):
-                            with self.c_members_backtrace_push(member.name):
+                            with self.c_members_backtrace_push(canonical(member.name)):
                                 choice_type_lengths = self.get_encoded_type_lengths(
                                     member,
                                     member_checker)
@@ -849,7 +849,7 @@ class _Generator(Generator):
                                                          subsequent_indent=' ' * 4)
 
                     choice_length_lines += [
-                        'case {}_choice_{}_e:'.format(self.location, member.name)
+                        'case {}_choice_{}_e:'.format(self.location, canonical(member.name))
                     ] + indent_lines(wrapped_length_lines) + [
                         '    break;',
                         '']
