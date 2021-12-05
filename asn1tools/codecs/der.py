@@ -130,7 +130,6 @@ class Integer(Type):
     def _decode(self, data, offset):
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
-
         return decode_signed_integer(data[offset:end_offset]), end_offset
 
 
@@ -439,5 +438,5 @@ class Compiler(ber.Compiler):
         return compiled
 
 
-def compile_dict(specification, numeric_enums=False):
-    return Compiler(specification, numeric_enums).process()
+def compile_dict(specification, numeric_enums=False, named_members=False):
+    return Compiler(specification, numeric_enums, named_members).process()

@@ -1462,8 +1462,8 @@ class Compiler(compiler.Compiler):
             additions.append(compiled_member)
 
 
-def compile_dict(specification, numeric_enums=False):
-    return Compiler(specification, numeric_enums).process()
+def compile_dict(specification, numeric_enums=False, named_members=False):
+    return Compiler(specification, numeric_enums, named_members).process()
 
 
 def decode_length(_data):

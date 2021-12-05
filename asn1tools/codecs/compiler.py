@@ -188,13 +188,14 @@ class CompiledOpenTypes(CompiledType):
 
 class Compiler(object):
 
-    def __init__(self, specification, numeric_enums=False):
+    def __init__(self, specification, numeric_enums=False, named_members=False):
         self._specification = specification
         self._numeric_enums = numeric_enums
         self._types_backtrace = []
         self.recursive_types = []
         self.compiled = {}
         self.current_type_descriptor = None
+        self.named_members = named_members
 
     def types_backtrace_push(self, type_name):
         self._types_backtrace.append(type_name)
@@ -1183,6 +1184,12 @@ def enum_values_as_dict(values):
         if value != EXTENSION_MARKER
     }
 
+
+def named_numbers_as_dict(values):
+    return {
+        val: key
+        for key, val in values.items()
+    }
 
 def enum_values_split(values):
     if EXTENSION_MARKER in values:

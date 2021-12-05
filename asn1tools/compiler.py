@@ -243,7 +243,8 @@ def _compile_files_cache(filenames,
                          any_defined_by_choices,
                          encoding,
                          cache_dir,
-                         numeric_enums):
+                         numeric_enums,
+                         named_members=False):
     key = [codec.encode('ascii')]
 
     if isinstance(filenames, str):
@@ -262,7 +263,8 @@ def _compile_files_cache(filenames,
         compiled = compile_dict(parse_files(filenames, encoding),
                                 codec,
                                 any_defined_by_choices,
-                                numeric_enums)
+                                numeric_enums,
+                                named_members)
         cache[key] = compiled
 
         return compiled
@@ -271,7 +273,8 @@ def _compile_files_cache(filenames,
 def compile_dict(specification,
                  codec='ber',
                  any_defined_by_choices=None,
-                 numeric_enums=False):
+                 numeric_enums=False,
+                 named_members=False):
     """Compile given ASN.1 specification dictionary and return a
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec
@@ -280,6 +283,9 @@ def compile_dict(specification,
 
     Give `numeric_enums` as ``True`` for numeric enumeration values
     instead of strings.
+
+    Give `named_members` as ``True`` for string values of named numbers
+    instead of integers.
 
     >>> foo = asn1tools.compile_dict(asn1tools.parse_files('foo.asn'))
 
@@ -306,18 +312,22 @@ def compile_dict(specification,
                                         any_defined_by_choices)
 
     return Specification(codec.compile_dict(specification,
-                                            numeric_enums),
+                                            numeric_enums,
+                                            named_members),
                          codec.decode_length,
                          type_checker.compile_dict(specification,
-                                                   numeric_enums),
+                                                   numeric_enums,
+                                                   named_members),
                          constraints_checker.compile_dict(specification,
-                                                          numeric_enums))
+                                                          numeric_enums,
+                                                          named_members))
 
 
 def compile_string(string,
                    codec='ber',
                    any_defined_by_choices=None,
-                   numeric_enums=False):
+                   numeric_enums=False,
+                   named_members=False):
     """Compile given ASN.1 specification string and return a
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec
@@ -327,6 +337,9 @@ def compile_string(string,
     Give `numeric_enums` as ``True`` for numeric enumeration values
     instead of strings.
 
+    Give `named_members` as ``True`` for string values of named numbers
+    instead of integers.
+
     >>> with open('foo.asn') as fin:
     ...     foo = asn1tools.compile_string(fin.read())
 
@@ -335,7 +348,8 @@ def compile_string(string,
     return compile_dict(parse_string(string),
                         codec,
                         any_defined_by_choices,
-                        numeric_enums)
+                        numeric_enums,
+                        named_members)
 
 
 def compile_files(filenames,
@@ -343,7 +357,8 @@ def compile_files(filenames,
                   any_defined_by_choices=None,
                   encoding='utf-8',
                   cache_dir=None,
-                  numeric_enums=False):
+                  numeric_enums=False,
+                  named_members=False):
     """Compile given ASN.1 specification file(s) and return a
     :class:`~asn1tools.compiler.Specification` object that can be used
     to encode and decode data structures with given codec
@@ -364,6 +379,9 @@ def compile_files(filenames,
     Give `numeric_enums` as ``True`` for numeric enumeration values
     instead of strings.
 
+    Give `named_members` as ``True`` for string values of named numbers
+    instead of integers.
+
     >>> foo = asn1tools.compile_files('foo.asn')
 
     Give `cache_dir` as a string to use a cache.
@@ -376,14 +394,16 @@ def compile_files(filenames,
         return compile_dict(parse_files(filenames, encoding),
                             codec,
                             any_defined_by_choices,
-                            numeric_enums)
+                            numeric_enums,
+                            named_members)
     else:
         return _compile_files_cache(filenames,
                                     codec,
                                     any_defined_by_choices,
                                     encoding,
                                     cache_dir,
-                                    numeric_enums)
+                                    numeric_enums,
+                                    named_members)
 
 
 def pre_process_dict(specification):

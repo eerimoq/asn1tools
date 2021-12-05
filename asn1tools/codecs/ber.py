@@ -24,7 +24,7 @@ from . import generalized_time_from_datetime
 from . import add_error_location
 from .compiler import enum_values_as_dict
 from .compiler import clean_bit_string_value
-
+from .compiler import named_numbers_as_dict
 
 class Class(object):
     UNIVERSAL        = 0x00
@@ -821,10 +821,13 @@ class Boolean(Type):
 
 class Integer(Type):
 
-    def __init__(self, name):
+    def __init__(self, name, named_members=None):
         super(Integer, self).__init__(name,
                                       'INTEGER',
                                       Tag.INTEGER)
+        self.named_members = named_members
+        if named_members is not None:
+            self.named_members = named_numbers_as_dict(named_members)
 
     @add_error_location
     def encode(self, data, encoded):
@@ -837,8 +840,10 @@ class Integer(Type):
 
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
-
-        return decode_signed_integer(data[offset:end_offset]), end_offset
+        decoded = decode_signed_integer(data[offset:end_offset])
+        if self.named_members:
+            decoded = self.named_members.get(decoded) or decoded
+        return decoded, end_offset
 
 
 class Real(Type):
@@ -880,12 +885,20 @@ class Null(Type):
 
 class BitString(PrimitiveOrConstructedType):
 
-    def __init__(self, name, has_named_bits):
+    def __init__(self, name, has_named_bits, named_members):
         super(BitString, self).__init__(name,
                                         'BIT STRING',
                                         Tag.BIT_STRING,
                                         self)
         self.has_named_bits = has_named_bits
+        self.named_members = named_members
+        if has_named_bits and self.named_members:
+            self.named_members = enum_values_as_dict(self.named_members)
+            # ensure no gap between named bits
+            number_of_named_bits = len(self.named_members)
+            maximum_number_in_named_bits = max([int(key) for key in self.named_members.keys()]) + 1
+            if maximum_number_in_named_bits > number_of_named_bits:
+                self.named_members = None
 
     def is_default(self, value):
         if self.default is None:
@@ -895,7 +908,6 @@ class BitString(PrimitiveOrConstructedType):
                                              self.has_named_bits)
         clean_default = clean_bit_string_value(self.default,
                                                self.has_named_bits)
-
         return clean_value == clean_default
 
     @add_error_location
@@ -918,12 +930,42 @@ class BitString(PrimitiveOrConstructedType):
         encoded.append(number_of_unused_bits)
         encoded.extend(data)
 
+    def get_string_list_representation(self, bytes_array, bits_length):
+        number_of_named_bits = len(self.named_members)
+
+        # convert bytes_array into bit string
+        bit_string = ''.join(["{:08b}".format(byte) for byte in bytes_array])[:bits_length]
+        current_bit_string_length = len(bit_string)
+
+        if current_bit_string_length < number_of_named_bits:
+            # insert zeros to left
+            bit_string = bit_string.rjust(number_of_named_bits, '0')
+        elif current_bit_string_length > number_of_named_bits:
+            extra_bits = bit_string[:current_bit_string_length - number_of_named_bits]
+            is_extra_bits_all_zero = True
+            for bit in extra_bits:
+                is_extra_bits_all_zero = is_extra_bits_all_zero and bit == '0'
+            if is_extra_bits_all_zero:
+                # clean extra bits
+                bit_string = bit_string[current_bit_string_length - number_of_named_bits:]
+            else:
+                return None
+
+        current_bit_string_length = len(bit_string)
+        string_list = []
+        for key, val in self.named_members.items():
+            if bit_string[current_bit_string_length - int(key) - 1] == '1':
+                string_list.append(val)
+        return string_list
+
     def decode_primitive_contents(self, data, offset, length):
         length -= 1
         number_of_bits = 8 * length - data[offset]
         offset += 1
-
-        return (data[offset:offset + length], number_of_bits)
+        decoded = data[offset:offset + length]
+        if self.has_named_bits and self.named_members:
+            decoded = self.get_string_list_representation(decoded, number_of_bits) or decoded
+        return decoded, number_of_bits
 
     def decode_constructed_segments(self, segments):
         decoded = bytearray()
@@ -932,8 +974,10 @@ class BitString(PrimitiveOrConstructedType):
         for data, length in segments:
             decoded.extend(data)
             number_of_bits += length
-
-        return (bytes(decoded), number_of_bits)
+        decoded = bytes(decoded)
+        if self.has_named_bits and self.named_members:
+            decoded = self.get_string_list_representation(decoded, number_of_bits) or decoded
+        return decoded, number_of_bits
 
 
 class OctetString(PrimitiveOrConstructedType):
@@ -1569,7 +1613,8 @@ class Compiler(compiler.Compiler):
                 *self.compile_members(type_descriptor['members'],
                                       module_name))
         elif type_name == 'INTEGER':
-            compiled = Integer(name)
+            named_members = type_descriptor.get('named-numbers') if self.named_members else None
+            compiled = Integer(name, named_members)
         elif type_name == 'REAL':
             compiled = Real(name)
         elif type_name == 'ENUMERATED':
@@ -1615,7 +1660,8 @@ class Compiler(compiler.Compiler):
             compiled = DateTime(name)
         elif type_name == 'BIT STRING':
             has_named_bits = ('named-bits' in type_descriptor)
-            compiled = BitString(name, has_named_bits)
+            named_members = type_descriptor.get('named-bits') if self.named_members else None
+            compiled = BitString(name, has_named_bits, named_members)
         elif type_name == 'ANY':
             compiled = Any(name)
         elif type_name == 'ANY DEFINED BY':
@@ -1727,8 +1773,8 @@ class Compiler(compiler.Compiler):
             additions.append(compiled_member)
 
 
-def compile_dict(specification, numeric_enums=False):
-    return Compiler(specification, numeric_enums).process()
+def compile_dict(specification, numeric_enums=False, named_members=False):
+    return Compiler(specification, numeric_enums, named_members).process()
 
 
 def decode_length(data):
