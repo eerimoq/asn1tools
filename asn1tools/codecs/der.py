@@ -13,7 +13,7 @@ from .ber import Class, DecodeTagError
 from .ber import Encoding
 from .ber import Tag
 from .ber import encode_length_definite
-from .ber import decode_length_definite
+from .ber import decode_full_length
 from .ber import encode_signed_integer
 from .ber import Boolean
 from .ber import Real
@@ -64,7 +64,7 @@ class StringType(Type):
         encoded.extend(self.tag + encode_length_definite(len(data)) + data)
 
     def _decode(self, data, offset):
-        length, offset = decode_length_definite(data, offset)
+        length, offset = decode_length(data, offset)
         end_offset = offset + length
 
         return data[offset:end_offset].decode(self.ENCODING), end_offset
@@ -96,7 +96,7 @@ class ArrayType(Type):
                        + encoded_elements)
 
     def _decode(self, data, offset):
-        length, offset = decode_length_definite(data, offset)
+        length, offset = decode_length(data, offset)
         decoded = []
         start_offset = offset
 
@@ -127,7 +127,7 @@ class Integer(Type):
         encoded.extend(self.tag + encode_length_definite(len(value)) + value)
 
     def _decode(self, data, offset):
-        length, offset = decode_length_definite(data, offset)
+        length, offset = decode_length(data, offset)
         end_offset = offset + length
 
         return int.from_bytes(data[offset:end_offset], byteorder='big', signed=True), end_offset
@@ -173,7 +173,7 @@ class BitString(Type):
         encoded.extend(data)
 
     def _decode(self, data, offset):
-        length, offset = decode_length_definite(data, offset)
+        length, offset = decode_length(data, offset)
         end_offset = offset + length
         number_of_bits = 8 * (length - 1) - data[offset]
         offset += 1
@@ -195,7 +195,7 @@ class OctetString(Type):
         encoded.extend(self.tag + encode_length_definite(len(data)) + data)
 
     def _decode(self, data, offset):
-        length, offset = decode_length_definite(data, offset)
+        length, offset = decode_length(data, offset)
         end_offset = offset + length
 
         return bytes(data[offset:end_offset]), end_offset
@@ -294,7 +294,7 @@ class UTCTime(Type):
         encoded.extend(data)
 
     def _decode(self, data, offset):
-        length, offset = decode_length_definite(data, offset)
+        length, offset = decode_length(data, offset)
         end_offset = offset + length
         decoded = data[offset:end_offset].decode('ascii')
 
@@ -316,7 +316,7 @@ class GeneralizedTime(Type):
         encoded.extend(data)
 
     def _decode(self, data, offset):
-        length, offset = decode_length_definite(data, offset)
+        length, offset = decode_length(data, offset)
         end_offset = offset + length
         decoded = data[offset:end_offset].decode('ascii')
 

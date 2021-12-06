@@ -307,7 +307,7 @@ def compile_dict(specification,
 
     return Specification(codec.compile_dict(specification,
                                             numeric_enums),
-                         codec.decode_length,
+                         codec.decode_full_length,
                          type_checker.compile_dict(specification,
                                                    numeric_enums),
                          constraints_checker.compile_dict(specification,
