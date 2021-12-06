@@ -13,7 +13,7 @@ from .ber import Class, DecodeTagError
 from .ber import Encoding
 from .ber import Tag
 from .ber import encode_length_definite
-from .ber import decode_length_definite
+from .ber import decode_full_length
 from .ber import encode_signed_integer
 from .ber import Boolean
 from .ber import Real

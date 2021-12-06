@@ -662,5 +662,5 @@ def compile_dict(specification, numeric_enums=False):
     return Compiler(specification, numeric_enums).process()
 
 
-def decode_length(_data):
+def decode_full_length(_data):
     raise DecodeError('Decode length is not supported for this codec.')

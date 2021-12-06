@@ -112,20 +112,10 @@ class ConstraintsError(ErrorWithLocation, _ConstraintsError):
     pass
 
 
-class DecodeContentsLengthError(DecodeError):
-    """ASN.1 contents length decode error.
-
-    """
-
-    def __init__(self, length, offset, contents_max, location=None):
-        message = 'Expected at least {} contents byte(s), but got {}.'.format(length, contents_max - offset)
-        super(DecodeContentsLengthError, self).__init__(message, offset=offset, location=location)
-
-        self.length = length
-        self.contents_max = contents_max
-
-
 class OutOfDataError(DecodeError):
+    """
+    Error for when trying to read data beyond length of type
+    """
 
     def __init__(self, offset_bits, location=None):
         super(OutOfDataError, self).__init__(

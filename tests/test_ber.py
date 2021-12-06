@@ -672,7 +672,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            'W: Could not find end-of-contents tag for indefinite length field. (At offset: 15)')
+            'W: Ran out of data when trying to find End of Contents tag for indefinite length field (At offset: 15)')
 
         # Missing member.
         with self.assertRaises(asn1tools.EncodeError) as cm:
@@ -2410,7 +2410,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Certificate: Expected SEQUENCE(Certificate) with tag '30', but got ''. (At offset: 0)")
+            "Certificate: Ran out of data when reading tag (At offset: 0)")
 
         # Only tag and length, no contents.
         encoded = b'\x30\x81\x9f'
