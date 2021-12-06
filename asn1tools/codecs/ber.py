@@ -514,7 +514,7 @@ class Type(BaseType):
 
 class StandardDecodeMixin(object):
     """
-    Type class mixin for  standard decoding logic
+    Type class mixin for standard decoding logic
     (single predefined tag to be matched against, then decode length and contents)
     """
     indefinite_allowed = False  # Whether indefinite length encoding is allowed for this type
@@ -536,7 +536,7 @@ class StandardDecodeMixin(object):
         if tag_data != self.tag:
             # Check for missing data
             if len(tag_data) != self.tag_len:
-                raise OutOfByteDataError('Ran out of data when reading tag', offset)
+                raise OutOfByteDataError('Ran out of data when reading tag', start_offset)
             # return TAG_MISMATCH Instead of raising DecodeTagError for better performance so that MembersType does
             # not have to catch exception for every missing optional type
             # CompiledType.decode_with_length() will detect TAG_MISMATCH returned value and raise appropriate exception
@@ -621,12 +621,12 @@ class PrimitiveOrConstructedType(Type):
             is_primitive = False
         elif len(tag) != self.tag_len:
             # Detect out of data
-            raise OutOfByteDataError('Ran out of data when reading tag', offset)
+            raise OutOfByteDataError('Ran out of data when reading tag', start_offset)
         else:
             # Tag mismatch. Return DECODE_FAILED instead of raising DecodeError for performance
             return TAG_MISMATCH, start_offset
 
-        length, offset = decode_length(data, offset)
+        length, offset = decode_length(data, offset, enforce_definite=False)
 
         if is_primitive:
             end_offset = offset + length
@@ -912,9 +912,7 @@ class Integer(StandardEncodeMixin, StandardDecodeMixin, Type):
         return encode_signed_integer(data)
 
     def decode_content(self, data, offset, length):
-
         end_offset = offset + length
-
         return int.from_bytes(data[offset:end_offset], byteorder='big', signed=True), end_offset
 
 
