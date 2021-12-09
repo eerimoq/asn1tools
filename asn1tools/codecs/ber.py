@@ -187,48 +187,9 @@ def decode_length_constructed(encoded, offset):
         return decode_length_definite(encoded, offset)
 
 
-def encode_signed_integer(data):
-    encoded = bytearray()
-
-    if data < 0:
-        data *= -1
-        data -= 1
-        carry = not data
-
-        while data > 0:
-            encoded.append((data & 0xff) ^ 0xff)
-            carry = (data & 0x80)
-            data >>= 8
-
-        if carry:
-            encoded.append(0xff)
-    elif data > 0:
-        while data > 0:
-            encoded.append(data & 0xff)
-            data >>= 8
-
-        if encoded[-1] & 0x80:
-            encoded.append(0)
-    else:
-        encoded.append(0)
-
-    encoded.reverse()
-
-    return encoded
-
-
-def decode_signed_integer(data):
-    value = 0
-    is_negative = (data[0] & 0x80)
-
-    for byte in data:
-        value <<= 8
-        value += byte
-
-    if is_negative:
-        value -= (1 << (8 * len(data)))
-
-    return value
+def encode_signed_integer(number):
+    byte_length = (8 + (number + (number < 0)).bit_length()) // 8
+    return number.to_bytes(length=byte_length, byteorder='big', signed=True)
 
 
 def encode_tag(number, flags):
@@ -457,7 +418,7 @@ class Type(BaseType):
     @add_error_location
     def decode(self, data, offset, values=None):
         """
-        Decode entry point, handles incorrect tag by returning DECODE_FAILED (Previously raised DecodeTagError)
+        Decode entry point, handles incorrect tag by returning TAG_MISMATCH (Previously raised DecodeTagError)
         :param bytearray data: Binary ASN1 data to decode
         :param int offset: Current byte offset
         :param dict values:
@@ -469,6 +430,7 @@ class Type(BaseType):
         if data[offset:tag_end_offset] != self.tag:
             # return TAG_MISMATCH Instead of raising DecodeTagError for better performance so that MembersType does
             # not have to catch exception for every missing optional type
+            # CompiledType.decode_with_length() will detect TAG_MISMATCH returned value and raise appropriate exception
             return TAG_MISMATCH, offset
 
         return self._decode(data, tag_end_offset)
@@ -838,7 +800,7 @@ class Integer(Type):
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
 
-        return decode_signed_integer(data[offset:end_offset]), end_offset
+        return int.from_bytes(data[offset:end_offset], byteorder='big', signed=True), end_offset
 
 
 class Real(Type):
@@ -1020,7 +982,7 @@ class Enumerated(Type):
 
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
-        value = decode_signed_integer(data[offset:end_offset])
+        value = int.from_bytes(data[offset:end_offset], byteorder='big', signed=True)
 
         if value in self.value_to_data:
             return self.value_to_data[value], end_offset
