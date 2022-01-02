@@ -295,6 +295,8 @@ class OctetString(Type):
         if element.text is None:
             return b''
         else:
+            if len(element.text) % 2:
+                return binascii.unhexlify(element.text.zfill(len(element.text)+1))
             return binascii.unhexlify(element.text)
 
 
