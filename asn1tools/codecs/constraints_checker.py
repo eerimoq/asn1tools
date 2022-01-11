@@ -5,8 +5,7 @@
 import string
 from copy import copy
 
-from . import ConstraintsError
-from . import add_error_location
+from . import ConstraintsError, ErrorWithLocation
 from . import compiler
 from . import format_or
 from .permitted_alphabet import NUMERIC_STRING
@@ -109,7 +108,6 @@ class String(Type):
 
         self.permitted_alphabet = permitted_alphabet
 
-    @add_error_location
     def encode(self, data):
         length = len(data)
 
@@ -144,7 +142,6 @@ class Integer(Type):
     def __init__(self, name):
         super(Integer, self).__init__(name)
 
-    @add_error_location
     def encode(self, data):
         if not self.is_in_range(data):
             raise ConstraintsError(
@@ -172,7 +169,6 @@ class BitString(Type):
         super(BitString, self).__init__(name)
         self.set_size_range(minimum, maximum, has_extension_marker)
 
-    @add_error_location
     def encode(self, data):
         number_of_bits = data[1]
 
@@ -196,7 +192,6 @@ class Bytes(Type):
         super(Bytes, self).__init__(name)
         self.set_size_range(minimum, maximum, has_extension_marker)
 
-    @add_error_location
     def encode(self, data):
         length = len(data)
 
@@ -214,13 +209,17 @@ class Dict(Type):
         super(Dict, self).__init__(name)
         self.members = members
 
-    @add_error_location
     def encode(self, data):
         for member in self.members:
             name = member.name
 
             if name in data:
-                member.encode(data[name])
+                try:
+                    member.encode(data[name])
+                except ErrorWithLocation as e:
+                    # Add member location
+                    e.add_location(member)
+                    raise e
 
 
 class List(Type):
@@ -230,7 +229,6 @@ class List(Type):
         self.element_type = element_type
         self.set_size_range(minimum, maximum, has_extension_marker)
 
-    @add_error_location
     def encode(self, data):
         length = len(data)
 
@@ -256,7 +254,6 @@ class Choice(Type):
     def format_names(self):
         return format_or(sorted(self.name_to_member))
 
-    @add_error_location
     def encode(self, data):
         value = data[0]
 
@@ -269,8 +266,12 @@ class Choice(Type):
                 "Expected choice {}, but got '{}'.".format(
                     self.format_names(),
                     value))
-
-        member.encode(data[1])
+        try:
+            member.encode(data[1])
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(member)
+            raise e
 
 
 class NumericString(String):
@@ -321,7 +322,6 @@ class Recursive(compiler.Recursive, Type):
     def set_inner_type(self, inner):
         self.inner = copy(inner)
 
-    @add_error_location
     def encode(self, data):
         self.inner.encode(data)
 
@@ -329,7 +329,12 @@ class Recursive(compiler.Recursive, Type):
 class CompiledType(compiler.CompiledType):
 
     def encode(self, data):
-        self._type.encode(data)
+        try:
+            self._type.encode(data)
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(self._type)
+            raise e
 
 
 class Compiler(compiler.Compiler):

@@ -8,19 +8,16 @@ import binascii
 from copy import copy
 import datetime
 
-from ..errors import Error
 from ..parser import EXTENSION_MARKER
-from . import BaseType, format_bytes, DecodeError
+from . import BaseType, format_bytes, DecodeError, ErrorWithLocation
 from . import EncodeError
 from . import DecodeError
-from . import OutOfDataError
 from . import format_or
 from . import compiler
 from . import utc_time_to_datetime
 from . import utc_time_from_datetime
 from . import generalized_time_to_datetime
 from . import generalized_time_from_datetime
-from . import add_error_location
 from .compiler import enum_values_as_dict
 from .compiler import clean_bit_string_value
 
@@ -125,7 +122,7 @@ def check_decode_error(asn_type, decoded_value, data, offset):
     :return:
     """
     if decoded_value == TAG_MISMATCH:
-        raise DecodeTagError(asn_type, data, offset, location=asn_type.name)
+        raise DecodeTagError(asn_type, data, offset, location=asn_type)
 
 
 class MissingMandatoryFieldError(DecodeError):
@@ -519,7 +516,6 @@ class StandardDecodeMixin(object):
     """
     indefinite_allowed = False  # Whether indefinite length encoding is allowed for this type
 
-    @add_error_location
     def decode(self, data, offset, values=None):
         """
         Implements standard decode logic (single predefined tag to be matched against, then decode length and contents)
@@ -562,7 +558,6 @@ class StandardEncodeMixin(object):
     """
     Type class mixin for standard encoding logic (append tag + length(content) + content)
     """
-    @add_error_location
     def encode(self, data, encoded, values=None):
         """
         Encode value into byte data
@@ -604,7 +599,6 @@ class PrimitiveOrConstructedType(Type):
         self.constructed_tag[0] |= Encoding.CONSTRUCTED
         self.tag_len = len(self.tag)
 
-    @add_error_location
     def decode(self, data, start_offset, values=None):
         """
         Custom decode logic to handle primitive or constructed types
@@ -699,6 +693,7 @@ class MembersType(StandardEncodeMixin, StandardDecodeMixin, Type):
         for member in self.root_members:
             self.encode_member(member, data, encoded_members)
 
+
         if self.additions:
             self.encode_additions(data, encoded_members)
 
@@ -726,11 +721,15 @@ class MembersType(StandardEncodeMixin, StandardDecodeMixin, Type):
 
         if name in data:
             value = data[name]
-
-            if isinstance(member, AnyDefinedBy):
-                member.encode(value, encoded_members, data)
-            elif not member.is_default(value):
-                member.encode(value, encoded_members)
+            try:
+                if isinstance(member, AnyDefinedBy):
+                    member.encode(value, encoded_members, data)
+                elif not member.is_default(value):
+                    member.encode(value, encoded_members)
+            except ErrorWithLocation as e:
+                # Add member location
+                e.add_location(member)
+                raise e
         elif member.optional:
             pass
         elif not member.has_default():
@@ -790,7 +789,12 @@ class MembersType(StandardEncodeMixin, StandardDecodeMixin, Type):
                     continue
 
                 # Attempt decode
-                value, offset = member.decode(data, offset, values=values)
+                try:
+                    value, offset = member.decode(data, offset, values=values)
+                except ErrorWithLocation as e:
+                    # Add member location
+                    e.add_location(member)
+                    raise e
 
                 if value == TAG_MISMATCH:
                     undecoded_members.append(member)
@@ -820,9 +824,9 @@ class MembersType(StandardEncodeMixin, StandardDecodeMixin, Type):
             elif ignore_missing:
                 break
             elif out_of_data:
-                raise MissingMandatoryFieldError(offset*8, location=member.name)
+                raise MissingMandatoryFieldError(offset*8, location=member)
             else:
-                raise DecodeTagError(member, data, offset, location=member.name)
+                raise DecodeTagError(member, data, offset, location=member)
         return offset, out_of_data
 
     def __repr__(self):
@@ -939,7 +943,6 @@ class Null(StandardDecodeMixin, Type):
     def is_default(self, value):
         return False
 
-    @add_error_location
     def encode(self, _, encoded):
         encoded.extend(self.tag)
         encoded.append(0)
@@ -1185,8 +1188,7 @@ class Choice(Type):
     def format_names(self):
         return format_or(sorted([member.name for member in self.members]))
 
-    @add_error_location
-    def encode(self, data, encoded):
+    def encode(self, data, encoded, values=None):
         try:
             member = self.name_to_member[data[0]]
         except KeyError:
@@ -1194,10 +1196,13 @@ class Choice(Type):
                 "Expected choice {}, but got '{}'.".format(
                     self.format_names(),
                     data[0]))
+        try:
+            member.encode(data[1], encoded)
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(member)
+            raise e
 
-        member.encode(data[1], encoded)
-
-    @add_error_location
     def decode(self, data, offset, values=None):
         tag = bytes(read_tag(data, offset))
 
@@ -1209,8 +1214,12 @@ class Choice(Type):
             return (None, None), offset
         else:
             return TAG_MISMATCH, offset
-
-        decoded, offset = member.decode(data, offset)
+        try:
+            decoded, offset = member.decode(data, offset)
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(member)
+            raise e
 
         return (member.name, decoded), offset
 
@@ -1381,11 +1390,9 @@ class Any(Type):
     def __init__(self, name):
         super(Any, self).__init__(name, 'ANY', None)
 
-    @add_error_location
     def encode(self, data, encoded):
         encoded.extend(data)
 
-    @add_error_location
     def decode(self, data, offset, values=None):
         start = offset
         offset = skip_tag(data, offset)
@@ -1405,7 +1412,6 @@ class AnyDefinedBy(Type):
         self.type_member = type_member
         self.choices = choices
 
-    @add_error_location
     def encode(self, data, encoded, values):
         if self.choices:
             try:
@@ -1416,7 +1422,6 @@ class AnyDefinedBy(Type):
         else:
             encoded.extend(data)
 
-    @add_error_location
     def decode(self, data, offset, values):
         """
 
@@ -1443,7 +1448,7 @@ class AnyDefinedBy(Type):
 
 
 class ExplicitTag(StandardEncodeMixin, StandardDecodeMixin, Type):
-    no_error_location = True
+    # no_error_location = True
     indefinite_allowed = True
 
     def __init__(self, name, inner):
@@ -1480,7 +1485,8 @@ class ExplicitTag(StandardEncodeMixin, StandardDecodeMixin, Type):
         # Verify End of Contents tag exists for Indefinite field
         if length is None:
             if not detect_end_of_contents_tag(data, end_offset):
-                raise NoEndOfContentsTagError('Expected end-of-contents tag.', end_offset, location=self.name)
+                raise NoEndOfContentsTagError('Expected end-of-contents tag.', end_offset,
+                                              location=self)
             end_offset += 2
 
         return values, end_offset
@@ -1510,11 +1516,9 @@ class Recursive(compiler.Recursive, Type):
         for choice_parent in self.choice_parents:
             choice_parent.add_tags([self])
 
-    @add_error_location
-    def encode(self, data, encoded):
+    def encode(self, data, encoded, values=None):
         self.inner.encode(data, encoded)
 
-    @add_error_location
     def decode(self, data, offset, values=None):
         return self.inner.decode(data, offset)
 
@@ -1523,7 +1527,12 @@ class CompiledType(compiler.CompiledType):
 
     def encode(self, data):
         encoded = bytearray()
-        self._type.encode(data, encoded)
+        try:
+            self._type.encode(data, encoded)
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(self._type)
+            raise e
 
         return encoded
 
@@ -1532,13 +1541,18 @@ class CompiledType(compiler.CompiledType):
 
     def decode_with_length(self, data):
         """
-        Decode and return decoded values as well as length of binary data d ecoded
+        Decode and return decoded values as well as length of binary data decoded
         :param data:
         :return:
         """
-        decoded, offset = self._type.decode(bytearray(data), 0)
-        # Raise DecodeError
-        check_decode_error(self._type, decoded, data, offset)
+        try:
+            decoded, offset = self._type.decode(bytearray(data), 0)
+            # Raise DecodeError
+            check_decode_error(self._type, decoded, data, offset)
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(self._type)
+            raise e
         return decoded, offset
 
 

@@ -65,10 +65,9 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         # Bad tag.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('Foo', b'\xa2\x03\x02\x01\x01')
-
         self.assertEqual(
             str(cm.exception),
-            "Foo: Expected BOOLEAN(Foo) with tag '01', but got '02'. (At offset: 2)")
+            "Foo.Foo: Expected BOOLEAN(Foo) with tag '01', but got '02'. (At offset: 2)")
 
     def test_boolean_implicit_tags(self):
         """Test implicit tags on booleans.

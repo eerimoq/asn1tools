@@ -52,16 +52,32 @@ class ErrorWithLocation(Exception):
     Mixin for Error classes which have location list
     """
     def __init__(self, message, location=None):
+        """
+
+        :param str message:
+        :param BaseType location: Type error occured for
+        """
         self.message = message
         self.location = [location] if location else []
 
-    def add_location(self, element_name):
-        self.location.append(element_name)
+    def add_location(self, element):
+        """
+        Add location data for element
+        :param BaseType element:
+        :return:
+        """
+        # Don't add name if it is blank (for SEQUENCE OF, SET OF etc)
+        if (not getattr(element, 'no_error_location', False) and
+                (not self.location or element != self.location[-1])):
+            self.location.append(element)
+
+    @property
+    def location_str(self):
+        return '.'.join(loc.name for loc in self.location[::-1] if loc.name)
 
     def __str__(self):
         if self.location:
-            return "{}: {}".format('.'.join(self.location[::-1]),
-                                   self.message)
+            return "{}: {}".format(self.location_str, self.message)
         else:
             return self.message
 
@@ -83,14 +99,14 @@ class DecodeError(ErrorWithLocation, _DecodeError):
 
         :param str message: Message for error
         :param int offset: Data offset at which error occurred. Can be bits or bytes depending on codec
-        :param str location: Name of element in which error occured
+        :param BaseType location: Element in which error occurred
         """
         super(DecodeError, self).__init__(message, location=location)
         self.offset = offset
 
     def __str__(self):
         if self.location:
-            _str = "{}: {}".format('.'.join(self.location[::-1]), self.message)
+            _str = "{}: {}".format(self.location_str, self.message)
         else:
             _str = self.message
         if self.offset is not None:
@@ -142,9 +158,7 @@ def add_error_location(method):
         try:
             return method(self, *args, **kwargs)
         except ErrorWithLocation as e:
-            # Don't add name if it is blank (for SEQUENCE OF, SET OF etc)
-            if self.name and not getattr(self, 'no_error_location', False):
-                e.add_location(self.name)
+            e.add_location(self)
             raise e
     return new_method
 
