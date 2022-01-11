@@ -904,7 +904,6 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('A', b'\x81\x01\xff')
-
         self.assertEqual(
             str(cm.exception),
             "A: Expected CHOICE(A) with tags ['80'], but got '81'. (At offset: 0)")

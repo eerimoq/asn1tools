@@ -176,7 +176,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "B.ENUMERATED: Expected enumeration value 'a', but got 'foo'.")
+            "B: Expected enumeration value 'a', but got 'foo'.")
 
         # Decode of error.
         with self.assertRaises(asn1tools.DecodeError) as cm:
@@ -184,7 +184,7 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "B.ENUMERATED: Expected enumeration value 'a', but got 'bar'.")
+            "B: Expected enumeration value 'a', but got 'bar'.")
 
     def test_sequence(self):
         foo = asn1tools.compile_string(

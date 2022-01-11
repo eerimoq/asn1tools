@@ -2,13 +2,12 @@
 
 """
 
-from . import DecodeError
+from . import DecodeError, ErrorWithLocation
 from . import per
 from . import restricted_utc_time_to_datetime
 from . import restricted_utc_time_from_datetime
 from . import restricted_generalized_time_to_datetime
 from . import restricted_generalized_time_from_datetime
-from . import add_error_location
 from .per import to_int
 from .per import to_byte_array
 from .per import integer_as_number_of_bits
@@ -70,7 +69,6 @@ class KnownMultiplierStringType(per.KnownMultiplierStringType):
         self.bits_per_character = integer_as_number_of_bits(
             len(permitted_alphabet) - 1)
 
-    @add_error_location
     def encode(self, data, encoder):
         if self.has_extension_marker:
             encoder.append_bit(0)
@@ -87,7 +85,6 @@ class KnownMultiplierStringType(per.KnownMultiplierStringType):
                     to_int(value.encode(self.ENCODING))),
                 self.bits_per_character)
 
-    @add_error_location
     def decode(self, decoder):
         if self.has_extension_marker:
             bit = decoder.read_bit()
@@ -116,7 +113,6 @@ class KnownMultiplierStringType(per.KnownMultiplierStringType):
 
 class ArrayType(per.ArrayType):
 
-    @add_error_location
     def encode(self, data, encoder):
         if self.has_extension_marker:
             if self.minimum <= len(data) <= self.maximum:
@@ -139,7 +135,6 @@ class ArrayType(per.ArrayType):
         for entry in data:
             self.element_type.encode(entry, encoder)
 
-    @add_error_location
     def decode(self, decoder):
         length = None
 
@@ -189,7 +184,6 @@ class Integer(Type):
         size = self.maximum - self.minimum
         self.number_of_bits = integer_as_number_of_bits(size)
 
-    @add_error_location
     def encode(self, data, encoder):
         if self.has_extension_marker:
             if self.minimum <= data <= self.maximum:
@@ -205,7 +199,6 @@ class Integer(Type):
             encoder.append_non_negative_binary_integer(data - self.minimum,
                                                        self.number_of_bits)
 
-    @add_error_location
     def decode(self, decoder):
         if self.has_extension_marker:
             if decoder.read_bit():
@@ -224,7 +217,6 @@ class Integer(Type):
 
 class BitString(per.BitString):
 
-    @add_error_location
     def encode(self, data, encoder):
         data, number_of_bits = data
 
@@ -247,7 +239,6 @@ class BitString(per.BitString):
 
         encoder.append_bits(data, number_of_bits)
 
-    @add_error_location
     def decode(self, decoder):
         if self.has_extension_marker:
             if decoder.read_bit():
@@ -270,7 +261,6 @@ class BitString(per.BitString):
 
 class OctetString(per.OctetString):
 
-    @add_error_location
     def encode(self, data, encoder):
         if self.has_extension_marker:
             if self.minimum <= len(data) <= self.maximum:
@@ -291,7 +281,6 @@ class OctetString(per.OctetString):
 
         encoder.append_bytes(data)
 
-    @add_error_location
     def decode(self, decoder):
         if self.has_extension_marker:
             bit = decoder.read_bit()
@@ -476,13 +465,11 @@ class OpenType(Type):
     def __init__(self, name):
         super(OpenType, self).__init__(name, 'OpenType')
 
-    @add_error_location
     def encode(self, data, encoder):
         encoder.align()
         encoder.append_length_determinant(len(data))
         encoder.append_bytes(data)
 
-    @add_error_location
     def decode(self, decoder):
         decoder.align()
         length = decoder.read_length_determinant()
@@ -494,14 +481,23 @@ class CompiledType(per.CompiledType):
 
     def encode(self, data):
         encoder = Encoder()
-        self._type.encode(data, encoder)
+        try:
+            self._type.encode(data, encoder)
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(self._type)
+            raise e
 
         return encoder.as_bytearray()
 
     def decode(self, data):
         decoder = Decoder(bytearray(data))
-
-        return self._type.decode(decoder)
+        try:
+            return self._type.decode(decoder)
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(self._type)
+            raise e
 
 
 class Compiler(per.Compiler):

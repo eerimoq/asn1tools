@@ -7,7 +7,6 @@ from . import restricted_utc_time_to_datetime
 from . import restricted_utc_time_from_datetime
 from . import restricted_generalized_time_to_datetime
 from . import restricted_generalized_time_from_datetime
-from . import add_error_location
 from .compiler import clean_bit_string_value
 from .ber import Class, DecodeTagError, StandardEncodeMixin
 from .ber import Encoding

@@ -145,24 +145,6 @@ class OutOfDataError(DecodeError):
         return ' (At bit offset: {})'.format(self.offset)
 
 
-def add_error_location(method):
-    """
-    Method decorator which catches ErrorWithLocation subclasses and adds element name to location
-    If decorator is applied to parent Type class method, this functionality can be disabled on a per-child
-    Type basis by setting no_error_location=True
-    :param method:
-    :return:
-    """
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        try:
-            return method(self, *args, **kwargs)
-        except ErrorWithLocation as e:
-            e.add_location(self)
-            raise e
-    return new_method
-
-
 def _generalized_time_to_datetime(string):
     length = len(string)
 

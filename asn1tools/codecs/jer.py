@@ -9,7 +9,7 @@ import math
 import datetime
 
 from ..parser import EXTENSION_MARKER
-from . import BaseType, format_bytes
+from . import BaseType, format_bytes, ErrorWithLocation
 from . import EncodeError
 from . import DecodeError
 from . import compiler
@@ -18,7 +18,6 @@ from . import utc_time_to_datetime
 from . import utc_time_from_datetime
 from . import generalized_time_to_datetime
 from . import generalized_time_from_datetime
-from . import add_error_location
 from .compiler import enum_values_as_dict
 
 
@@ -50,7 +49,6 @@ class MembersType(Type):
         super(MembersType, self).__init__(name, type_name)
         self.members = members
 
-    @add_error_location
     def encode(self, data):
         values = {}
 
@@ -58,7 +56,12 @@ class MembersType(Type):
             name = member.name
 
             if name in data:
-                value = member.encode(data[name])
+                try:
+                    value = member.encode(data[name])
+                except ErrorWithLocation as e:
+                    # Add member location
+                    e.add_location(member)
+                    raise e
             elif member.optional or member.has_default():
                 continue
             else:
@@ -72,7 +75,6 @@ class MembersType(Type):
 
         return values
 
-    @add_error_location
     def decode(self, data):
         values = {}
 
@@ -80,7 +82,12 @@ class MembersType(Type):
             name = member.name
 
             if name in data:
-                value = member.decode(data[name])
+                try:
+                    value = member.decode(data[name])
+                except ErrorWithLocation as e:
+                    # Add member location
+                    e.add_location(member)
+                    raise e
                 values[name] = value
             elif member.optional:
                 pass
@@ -231,7 +238,6 @@ class Enumerated(Type):
     def format_values(self):
         return format_or(sorted(list(self.values)))
 
-    @add_error_location
     def encode(self, data):
         try:
             value = self.values[data]
@@ -243,7 +249,6 @@ class Enumerated(Type):
 
         return value
 
-    @add_error_location
     def decode(self, data):
         if data in self.values:
             return self.values[data]
@@ -268,7 +273,6 @@ class SequenceOf(Type):
         super(SequenceOf, self).__init__(name, 'SEQUENCE OF')
         self.element_type = element_type
 
-    @add_error_location
     def encode(self, data):
         values = []
 
@@ -278,7 +282,6 @@ class SequenceOf(Type):
 
         return values
 
-    @add_error_location
     def decode(self, data):
         values = []
 
@@ -305,7 +308,6 @@ class SetOf(Type):
         super(SetOf, self).__init__(name, 'SET OF')
         self.element_type = element_type
 
-    @add_error_location
     def encode(self, data):
         values = []
 
@@ -315,7 +317,6 @@ class SetOf(Type):
 
         return values
 
-    @add_error_location
     def decode(self, data):
         values = []
 
@@ -341,7 +342,6 @@ class Choice(Type):
     def format_names(self):
         return format_or(sorted([member.name for member in self.members]))
 
-    @add_error_location
     def encode(self, data):
         try:
             member = self.name_to_member[data[0]]
@@ -350,10 +350,13 @@ class Choice(Type):
                 "Expected choice {}, but got '{}'.".format(
                     self.format_names(),
                     data[0]))
+        try:
+            return {member.name: member.encode(data[1])}
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(member)
+            raise e
 
-        return {member.name: member.encode(data[1])}
-
-    @add_error_location
     def decode(self, data):
         name, value = list(data.items())[0]
 
@@ -366,8 +369,12 @@ class Choice(Type):
                 "Expected choice {}, but got '{}'.".format(
                     self.format_names(),
                     name))
-
-        return (name, member.decode(value))
+        try:
+            return (name, member.decode(value))
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(member)
+            raise e
 
     def __repr__(self):
         return 'Choice({}, [{}])'.format(
@@ -487,11 +494,9 @@ class Recursive(compiler.Recursive, Type):
     def set_inner_type(self, inner):
         self._inner = inner
 
-    @add_error_location
     def encode(self, data):
         return self._inner.encode(data)
 
-    @add_error_location
     def decode(self, data):
         return self._inner.decode(data)
 
@@ -499,7 +504,12 @@ class Recursive(compiler.Recursive, Type):
 class CompiledType(compiler.CompiledType):
 
     def encode(self, data, indent=None):
-        dictionary = self._type.encode(data)
+        try:
+            dictionary = self._type.encode(data)
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(self._type)
+            raise e
 
         if indent is None:
             string = json.dumps(dictionary, separators=(',', ':'))
@@ -509,7 +519,12 @@ class CompiledType(compiler.CompiledType):
         return string.encode('utf-8')
 
     def decode(self, data):
-        return self._type.decode(json.loads(data.decode('utf-8')))
+        try:
+            return self._type.decode(json.loads(data.decode('utf-8')))
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(self._type)
+            raise e
 
 
 class Compiler(compiler.Compiler):

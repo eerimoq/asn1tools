@@ -9,10 +9,9 @@ import binascii
 import datetime
 
 from ..parser import EXTENSION_MARKER
-from . import BaseType, format_bytes
+from . import BaseType, format_bytes, ErrorWithLocation
 from . import EncodeError
 from . import DecodeError
-from . import add_error_location
 from . import compiler
 from . import format_or
 from . import utc_time_to_datetime
@@ -95,7 +94,6 @@ class MembersType(Type):
         super(MembersType, self).__init__(name, type_name)
         self.members = members
 
-    @add_error_location
     def encode(self, data):
         element = ElementTree.Element(self.name)
 
@@ -103,7 +101,13 @@ class MembersType(Type):
             name = member.name
 
             if name in data:
-                member_element = member.encode(data[name])
+                try:
+                    member_element = member.encode(data[name])
+                except ErrorWithLocation as e:
+                    # Add member location
+                    e.add_location(member)
+                    raise e
+
             elif member.optional or member.has_default():
                 continue
             else:
@@ -117,7 +121,6 @@ class MembersType(Type):
 
         return element
 
-    @add_error_location
     def decode(self, element):
         values = {}
 
@@ -126,7 +129,12 @@ class MembersType(Type):
             member_element = element.find(name)
 
             if member_element is not None:
-                value = member.decode(member_element)
+                try:
+                    value = member.decode(member_element)
+                except ErrorWithLocation as e:
+                    # Add member location
+                    e.add_location(member)
+                    raise e
                 values[name] = value
             elif member.optional:
                 pass
@@ -148,7 +156,6 @@ class ArrayType(Type):
         super(ArrayType, self).__init__(name, type_name)
         self.element_type = element_type
 
-    @add_error_location
     def encode(self, data):
         element = ElementTree.Element(self.name)
 
@@ -157,7 +164,6 @@ class ArrayType(Type):
 
         return element
 
-    @add_error_location
     def decode(self, element):
         values = []
 
@@ -305,7 +311,6 @@ class ObjectIdentifier(StringType):
     def __init__(self, name):
         super(ObjectIdentifier, self).__init__(name, 'OBJECT IDENTIFIER')
 
-    @add_error_location
     def decode(self, element):
         if element.text is None:
             raise DecodeError("Expected an OBJECT IDENTIFIER, but got ''.")
@@ -335,7 +340,6 @@ class Enumerated(Type):
     def format_values(self):
         return format_or(sorted(list(self.value_to_data)))
 
-    @add_error_location
     def encode(self, data):
         try:
             value = self.data_to_value[data]
@@ -350,7 +354,6 @@ class Enumerated(Type):
 
         return element
 
-    @add_error_location
     def decode(self, element):
         value = element[0].tag
 
@@ -364,7 +367,6 @@ class Enumerated(Type):
                     self.format_values(),
                     value))
 
-    @add_error_location
     def encode_of(self, data):
         try:
             value = self.data_to_value[data]
@@ -376,7 +378,6 @@ class Enumerated(Type):
 
         return ElementTree.Element(value)
 
-    @add_error_location
     def decode_of(self, element):
         value = element.tag
 
@@ -428,7 +429,6 @@ class Choice(Type):
     def format_names(self):
         return format_or(sorted([member.name for member in self.members]))
 
-    @add_error_location
     def encode(self, data):
         try:
             member = self.name_to_member[data[0]]
@@ -440,11 +440,15 @@ class Choice(Type):
 
         element = ElementTree.Element(self.name)
 
-        element.append(member.encode(data[1]))
+        try:
+            element.append(member.encode(data[1]))
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(member)
+            raise e
 
         return element
 
-    @add_error_location
     def decode(self, element):
         member_element = element[0]
         name = member_element.tag
@@ -458,8 +462,12 @@ class Choice(Type):
                 "Expected choice {}, but got '{}'.".format(
                     self.format_names(),
                     name))
-
-        return (name, member.decode(member_element))
+        try:
+            return (name, member.decode(member_element))
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(member)
+            raise e
 
     def encode_of(self, data):
         try:
@@ -471,8 +479,12 @@ class Choice(Type):
                     data[0]))
             # e.add_location(self.name)
             raise e
-
-        return member.encode(data[1])
+        try:
+            return member.encode(data[1])
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(member)
+            raise e
 
     def decode_of(self, element):
         name = element.tag
@@ -480,14 +492,16 @@ class Choice(Type):
         try:
             member = self.name_to_member[name]
         except KeyError:
-            e = DecodeError(
+            raise DecodeError(
                 "Expected choice {}, but got '{}'.".format(
                     self.format_names(),
                     name))
-            # e.add_location(self.name)
+        try:
+            return (name, member.decode(element))
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(member)
             raise e
-
-        return (name, member.decode(element))
 
     def __repr__(self):
         return 'Choice({}, [{}])'.format(
@@ -629,14 +643,12 @@ class Recursive(compiler.Recursive, Type):
     def set_inner_type(self, inner):
         self._inner = inner
 
-    @add_error_location
     def encode(self, data):
         encoded = self._inner.encode(data)
         encoded.tag = self.name
 
         return encoded
 
-    @add_error_location
     def decode(self, element):
         return self._inner.decode(element)
 
@@ -644,7 +656,12 @@ class Recursive(compiler.Recursive, Type):
 class CompiledType(compiler.CompiledType):
 
     def encode(self, data, indent=None):
-        element = self._type.encode(data)
+        try:
+            element = self._type.encode(data)
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(self._type)
+            raise e
 
         if indent is not None:
             indent_xml(element, indent * " ")
@@ -653,8 +670,12 @@ class CompiledType(compiler.CompiledType):
 
     def decode(self, data):
         element = ElementTree.fromstring(data.decode('utf-8'))
-
-        return self._type.decode(element)
+        try:
+            return self._type.decode(element)
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(self._type)
+            raise e
 
 
 class Compiler(compiler.Compiler):
