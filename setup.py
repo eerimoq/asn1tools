@@ -27,7 +27,7 @@ setup(name='asn1tools',
       url='https://github.com/eerimoq/asn1tools',
       packages=find_packages(exclude=['tests']),
       install_requires=[
-          'pyparsing>=2.2.0',
+          'pyparsing>=3.0.6',
           'prompt_toolkit',
           'bitstruct',
           'diskcache'

@@ -9,7 +9,7 @@ import binascii
 import datetime
 
 from ..parser import EXTENSION_MARKER
-from . import BaseType
+from . import BaseType, format_bytes
 from . import EncodeError
 from . import DecodeError
 from . import add_error_location
@@ -193,9 +193,6 @@ class Boolean(Type):
     def decode_of(self, element):
         return element.tag == 'true'
 
-    def __repr__(self):
-        return 'Boolean({})'.format(self.name)
-
 
 class Integer(Type):
 
@@ -210,9 +207,6 @@ class Integer(Type):
 
     def decode(self, element):
         return int(element.text)
-
-    def __repr__(self):
-        return 'Integer({})'.format(self.name)
 
 
 class Real(Type):
@@ -236,9 +230,6 @@ class Real(Type):
     def decode(self, element):
         return float(element.text)
 
-    def __repr__(self):
-        return 'Real({})'.format(self.name)
-
 
 class Null(Type):
 
@@ -250,9 +241,6 @@ class Null(Type):
 
     def decode(self, element):
         return None
-
-    def __repr__(self):
-        return 'Null({})'.format(self.name)
 
 
 class BitString(Type):
@@ -289,9 +277,6 @@ class BitString(Type):
 
         return (decoded, number_of_bits)
 
-    def __repr__(self):
-        return 'BitString({})'.format(self.name)
-
 
 class OctetString(Type):
 
@@ -302,7 +287,7 @@ class OctetString(Type):
         element = ElementTree.Element(self.name)
 
         if len(data) > 0:
-            element.text = binascii.hexlify(data).decode('ascii').upper()
+            element.text = format_bytes(data).upper()
 
         return element
 
@@ -310,10 +295,9 @@ class OctetString(Type):
         if element.text is None:
             return b''
         else:
+            if len(element.text) % 2:
+                return binascii.unhexlify(element.text.zfill(len(element.text)+1))
             return binascii.unhexlify(element.text)
-
-    def __repr__(self):
-        return 'OctetString({})'.format(self.name)
 
 
 class ObjectIdentifier(StringType):
@@ -403,9 +387,6 @@ class Enumerated(Type):
                 "Expected enumeration value {}, but got '{}'.".format(
                     self.format_values(),
                     value))
-
-    def __repr__(self):
-        return 'Enumerated({})'.format(self.name)
 
 
 class Sequence(MembersType):
@@ -572,9 +553,6 @@ class UTCTime(Type):
     def decode(self, element):
         return utc_time_to_datetime(element.text)
 
-    def __repr__(self):
-        return 'UTCTime({})'.format(self.name)
-
 
 class GeneralizedTime(Type):
 
@@ -589,9 +567,6 @@ class GeneralizedTime(Type):
 
     def decode(self, element):
         return generalized_time_to_datetime(element.text)
-
-    def __repr__(self):
-        return 'GeneralizedTime({})'.format(self.name)
 
 
 class Date(StringType):
@@ -642,11 +617,8 @@ class Any(Type):
     def decode(self, element):
         raise NotImplementedError('ANY is not yet implemented.')
 
-    def __repr__(self):
-        return 'Any({})'.format(self.name)
 
-
-class Recursive(Type, compiler.Recursive):
+class Recursive(compiler.Recursive, Type):
 
     def __init__(self, name, type_name, module_name):
         super(Recursive, self).__init__(name, 'RECURSIVE')
@@ -667,9 +639,6 @@ class Recursive(Type, compiler.Recursive):
     @add_error_location
     def decode(self, element):
         return self._inner.decode(element)
-
-    def __repr__(self):
-        return 'Recursive({})'.format(self.name)
 
 
 class CompiledType(compiler.CompiledType):

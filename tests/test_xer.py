@@ -90,11 +90,14 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
 
         datas = [
             ('A',         b'', b'<A />'),
+            ('A', b'\x01\x23', b'<A>0123</A>'),
             ('A', b'\x40\x80', b'<A>4080</A>')
         ]
 
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode_string(foo, type_name, decoded, encoded)
+
+        self.assertEqual(b'\x01\x23', foo.decode('A', b'<A>123</A>'))
 
     def test_object_identifier(self):
         foo = asn1tools.compile_string(

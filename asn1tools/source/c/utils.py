@@ -366,11 +366,11 @@ class Generator(object):
     def add_sequence_member(self, member, checker):
         member_checker = self.get_member_checker(checker, member.name)
 
-        with self.members_backtrace_push(member.name):
+        with self.members_backtrace_push(canonical(member.name)):
             member_lines = self.format_type(member, member_checker)
 
         if member_lines:
-            member_lines[-1] += ' {};'.format(member.name)
+            member_lines[-1] += ' {};'.format(canonical(member.name))
 
         return member_lines
 
@@ -442,7 +442,7 @@ class Generator(object):
         for member in type_.root_members:
 
             if member.optional:
-                lines += ['bool is_{}_present;'.format(member.name)]
+                lines += ['bool is_{}_present;'.format(canonical(member.name))]
 
             lines += self.add_sequence_member(member, checker)
 
@@ -500,11 +500,11 @@ class Generator(object):
                 choice_lines = self.format_type(member, member_checker)
 
             if choice_lines:
-                choice_lines[-1] += ' {};'.format(member.name)
+                choice_lines[-1] += ' {};'.format(canonical(member.name))
 
             lines += choice_lines
             choices.append('    {}_choice_{}_e'.format(self.location,
-                                                       member.name))
+                                                       canonical(member.name)))
 
         self.helper_lines += [
             'enum {}_choice_e {{'.format(self.location)
@@ -541,7 +541,7 @@ class Generator(object):
                                      skip_when_not_present=True):
         member_checker = self.get_member_checker(checker, member.name)
 
-        with self.members_backtrace_push(member.name):
+        with self.members_backtrace_push(canonical(member.name)):
             encode_lines, decode_lines = self.format_type_inner(
                 member,
                 member_checker)
@@ -549,7 +549,7 @@ class Generator(object):
         location = self.location_inner('', '.')
 
         if member.optional and skip_when_not_present:
-            is_present = '{}is_{}_present'.format(location, member.name)
+            is_present = '{}is_{}_present'.format(location, canonical(member.name))
             encode_lines = [
                 '',
                 'if (src_p->{}) {{'.format(is_present)
@@ -565,29 +565,65 @@ class Generator(object):
                 ''
             ]
         elif member.default is not None and skip_when_not_present:
-            name = '{}{}'.format(location, member.name)
-            encode_lines = [
-                '',
-                'if (src_p->{}{} != {}) {{'.format(
-                    name,
-                    '.value' if self.is_complex_user_type(member) else '',
-                    self.format_default(member))
-            ] + indent_lines(encode_lines) + [
-                '}',
-                ''
-            ]
-            decode_lines = [
-                '',
-                'if ({}) {{'.format(default_condition_by_member_name[member.name])
-            ] + indent_lines(decode_lines) + [
-                '} else {',
-                '    dst_p->{}{} = {};'.format(
-                    name,
-                    '.value' if self.is_complex_user_type(member) else '',
-                    self.format_default(member)),
-                '}',
-                ''
-            ]
+            name = '{}{}'.format(location, canonical(member.name))
+
+            if self.is_buffer_type(member):
+                default_value = '{{' + ', '.join(['0x%02X' % m for m in member.default]) + '}};'
+                default_variable = self.add_unique_variable('static const uint8_t {}[] = ' + default_value,
+                                                            canonical(member.name) + '_default')
+
+                encode_lines = [
+                                   '',
+                                   'if ((memcmp(src_p->{}.buf, {}, sizeof({})) != 0) ||'.format(
+                                       name,
+                                       default_variable,
+                                       default_variable),
+                                   '    (src_p->{}.length != sizeof({}))) {{'.format(
+                                       name,
+                                       default_variable)
+                               ] + indent_lines(encode_lines) + [
+                                   '}',
+                                   ''
+                               ]
+                decode_lines = [
+                                   '',
+                                   'if ({}) {{'.format(default_condition_by_member_name[member.name])
+                               ] + indent_lines(decode_lines) + [
+                                   '} else {',
+                                   '    memcpy(dst_p->{}.buf, {}, sizeof({}));'.format(
+                                       name,
+                                       default_variable,
+                                       default_variable),
+                                   '    dst_p->{}.length = sizeof({});'.format(
+                                       name,
+                                       default_variable
+                                   ),
+                                   '}',
+                                   ''
+                               ]
+            else:
+                encode_lines = [
+                    '',
+                    'if (src_p->{}{} != {}) {{'.format(
+                        name,
+                        '.value' if self.is_complex_user_type(member) else '',
+                        self.format_default(member))
+                ] + indent_lines(encode_lines) + [
+                    '}',
+                    ''
+                ]
+                decode_lines = [
+                    '',
+                    'if ({}) {{'.format(default_condition_by_member_name[member.name])
+                ] + indent_lines(decode_lines) + [
+                    '} else {',
+                    '    dst_p->{}{} = {};'.format(
+                        name,
+                        '.value' if self.is_complex_user_type(member) else '',
+                        self.format_default(member)),
+                    '}',
+                    ''
+                ]
 
         return encode_lines, decode_lines
 
@@ -723,6 +759,9 @@ class Generator(object):
         raise NotImplementedError('To be implemented by subclasses.')
 
     def is_complex_user_type(self, type_):
+        raise NotImplementedError('To be implemented by subclasses.')
+
+    def is_buffer_type(self, type_):
         raise NotImplementedError('To be implemented by subclasses.')
 
 

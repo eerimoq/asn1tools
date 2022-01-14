@@ -9,7 +9,7 @@ from operator import attrgetter
 import datetime
 
 from ..parser import EXTENSION_MARKER
-from . import BaseType
+from . import BaseType, format_bytes
 from . import EncodeError
 from . import DecodeError
 from . import OutOfDataError
@@ -170,7 +170,7 @@ class Encoder(object):
         self.append_non_negative_binary_integer(value, 8 * number_of_bytes)
 
     def __repr__(self):
-        return binascii.hexlify(self.as_bytearray()).decode('ascii')
+        return format_bytes(self.as_bytearray())
 
 
 class Decoder(object):
@@ -353,10 +353,6 @@ class KnownMultiplierStringType(Type):
             number_of_bytes = self.number_of_bytes
 
         return decoder.read_bytes(number_of_bytes).decode(self.ENCODING)
-
-    def __repr__(self):
-        return '{}({})'.format(self.__class__.__name__,
-                               self.name)
 
 
 class MembersType(Type):
@@ -563,9 +559,6 @@ class Boolean(Type):
     def decode(self, decoder):
         return bool(decoder.read_byte())
 
-    def __repr__(self):
-        return 'Boolean({})'.format(self.name)
-
 
 class Integer(Type):
 
@@ -630,9 +623,6 @@ class Integer(Type):
             return decoder.read_integer()
         else:
             return decoder.read_unsigned_integer()
-
-    def __repr__(self):
-        return 'Integer({})'.format(self.name)
 
 
 class Real(Type):
@@ -708,9 +698,6 @@ class Real(Type):
         else:
             return struct.unpack(self.fmt, decoder.read_bytes(self.length))[0]
 
-    def __repr__(self):
-        return 'Real({})'.format(self.name)
-
 
 class Null(Type):
 
@@ -722,9 +709,6 @@ class Null(Type):
 
     def decode(self, _decoder):
         return
-
-    def __repr__(self):
-        return 'Null({})'.format(self.name)
 
 
 class BitString(Type):
@@ -778,9 +762,6 @@ class BitString(Type):
 
         return (decoder.read_bytes(number_of_bytes), number_of_bits)
 
-    def __repr__(self):
-        return 'BitString({})'.format(self.name)
-
 
 class OctetString(Type):
 
@@ -814,9 +795,6 @@ class OctetString(Type):
 
         return decoder.read_bytes(number_of_bytes)
 
-    def __repr__(self):
-        return 'OctetString({})'.format(self.name)
-
 
 class ObjectIdentifier(Type):
 
@@ -837,9 +815,6 @@ class ObjectIdentifier(Type):
         data = decoder.read_bytes(length)
 
         return decode_object_identifier(bytearray(data), 0, len(data))
-
-    def __repr__(self):
-        return 'ObjectIdentifier({})'.format(self.name)
 
 
 class Enumerated(Type):
@@ -898,9 +873,6 @@ class Enumerated(Type):
                 'Expected enumeration value {}, but got {}.'.format(
                     self.format_values(),
                     value))
-
-    def __repr__(self):
-        return 'Enumerated({})'.format(self.name)
 
 
 class Sequence(MembersType):
@@ -974,12 +946,9 @@ class Choice(Type):
         for member in members:
             tag_to_member[member.tag] = member
 
-    def format_tag(self, tag):
-        return binascii.hexlify(tag).decode('ascii')
-
     def format_tags(self):
         return format_or(
-            sorted([self.format_tag(member.tag) for member in self.members]))
+            sorted([format_bytes(member.tag) for member in self.members]))
 
     def format_names(self):
         return format_or(sorted([member.name for member in self.members]))
@@ -1032,7 +1001,7 @@ class Choice(Type):
             raise DecodeError(
                 "Expected choice member tag {}, but got '{}'.".format(
                     self.format_tags(),
-                    self.format_tag(tag)))
+                    format_bytes(tag)))
 
         return (member.name, decoded)
 
@@ -1238,9 +1207,6 @@ class Any(Type):
     def decode(self, decoder):
         raise NotImplementedError('ANY is not yet implemented.')
 
-    def __repr__(self):
-        return 'Any({})'.format(self.name)
-
 
 class AnyDefinedBy(Type):
 
@@ -1258,11 +1224,8 @@ class AnyDefinedBy(Type):
     def decode(self, decoder):
         raise NotImplementedError('ANY DEFINED BY is not yet implemented.')
 
-    def __repr__(self):
-        return 'AnyDefinedBy({})'.format(self.name)
 
-
-class Recursive(Type, compiler.Recursive):
+class Recursive(compiler.Recursive, Type):
 
     def __init__(self, name, type_name, module_name):
         super(Recursive, self).__init__(name, 'RECURSIVE', None)
@@ -1285,9 +1248,6 @@ class Recursive(Type, compiler.Recursive):
     @add_error_location
     def decode(self, decoder):
         return self.inner.decode(decoder)
-
-    def __repr__(self):
-        return 'Recursive({})'.format(self.type_name)
 
 
 class CompiledType(compiler.CompiledType):

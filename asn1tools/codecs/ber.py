@@ -10,10 +10,9 @@ import datetime
 
 from ..errors import Error
 from ..parser import EXTENSION_MARKER
-from . import BaseType
+from . import BaseType, format_bytes, DecodeError
 from . import EncodeError
 from . import DecodeError
-from . import DecodeTagError
 from . import OutOfDataError
 from . import DecodeContentsLengthError
 from . import format_or
@@ -104,15 +103,36 @@ def is_end_of_data(data, offset, end_offset):
 
 def check_decode_error(asn_type, decoded_value, data, offset):
     """
-    Checks if decode result is TAG_MISMATCH, if so, raise DecodeTagError
+    Checks if decode result corresponds to TAG_MISMATCH, if so, raise DecodeTagError
     :return:
     """
     if decoded_value == TAG_MISMATCH:
-        raise DecodeTagError(asn_type.type_name,
-                             asn_type.tag,
-                             data[offset:offset + asn_type.tag_len],
-                             offset,
-                             location=asn_type.name)
+        raise DecodeTagError(asn_type, data, offset, location=asn_type.name)
+
+
+class DecodeTagError(DecodeError):
+    """
+    ASN.1 tag decode error for BER and DER codecs
+    """
+
+    def __init__(self, asn_type, data, offset, location=None):
+        """
+
+        :param Type asn_type: ASN type instance error occurred for
+        :param bytes data: ASN data
+        :param int offset:
+        :param str location: Name of ASN1 element error occurred in
+        """
+        self.actual_tag = format_bytes(read_tag(data, offset)
+                                       if asn_type.tag_len is None
+                                       else data[offset:offset + asn_type.tag_len])
+        self.asn_type = asn_type
+        tag = asn_type.format_tag()
+        message = "Expected {} with {}, but got '{}'.".format(
+            asn_type.type_label(),
+            'tags {}'.format(tag) if isinstance(tag, list) else "tag '{}'".format(tag),
+            self.actual_tag)
+        super(DecodeTagError, self).__init__(message, offset=offset, location=location)
 
 
 def encode_length_definite(length):
@@ -167,48 +187,9 @@ def decode_length_constructed(encoded, offset):
         return decode_length_definite(encoded, offset)
 
 
-def encode_signed_integer(data):
-    encoded = bytearray()
-
-    if data < 0:
-        data *= -1
-        data -= 1
-        carry = not data
-
-        while data > 0:
-            encoded.append((data & 0xff) ^ 0xff)
-            carry = (data & 0x80)
-            data >>= 8
-
-        if carry:
-            encoded.append(0xff)
-    elif data > 0:
-        while data > 0:
-            encoded.append(data & 0xff)
-            data >>= 8
-
-        if encoded[-1] & 0x80:
-            encoded.append(0)
-    else:
-        encoded.append(0)
-
-    encoded.reverse()
-
-    return encoded
-
-
-def decode_signed_integer(data):
-    value = 0
-    is_negative = (data[0] & 0x80)
-
-    for byte in data:
-        value <<= 8
-        value += byte
-
-    if is_negative:
-        value -= (1 << (8 * len(data)))
-
-    return value
+def encode_signed_integer(number):
+    byte_length = (8 + (number + (number < 0)).bit_length()) // 8
+    return number.to_bytes(length=byte_length, byteorder='big', signed=True)
 
 
 def encode_tag(number, flags):
@@ -424,17 +405,24 @@ class Type(BaseType):
         self.tag = encode_tag(number, flags)
         self.tag_len = len(self.tag)
 
+    def format_tag(self):
+        """
+        Get formatted hex string representation of this type's tag
+        :return:
+        """
+        return format_bytes(self.tag) if self.tag is not None else '(Unknown)'
+
     def set_size_range(self, minimum, maximum, has_extension_marker):
         pass
 
     @add_error_location
     def decode(self, data, offset, values=None):
         """
-        Decode entry point, handles incorrect tag by returning DECODE_FAILED (Previously raised DecodeTagError)
+        Decode entry point, handles incorrect tag by returning TAG_MISMATCH (Previously raised DecodeTagError)
         :param bytearray data: Binary ASN1 data to decode
         :param int offset: Current byte offset
         :param dict values:
-        :return:
+        :return: decoded_value, new_offset
         """
         tag_end_offset = offset + self.tag_len
 
@@ -442,6 +430,7 @@ class Type(BaseType):
         if data[offset:tag_end_offset] != self.tag:
             # return TAG_MISMATCH Instead of raising DecodeTagError for better performance so that MembersType does
             # not have to catch exception for every missing optional type
+            # CompiledType.decode_with_length() will detect TAG_MISMATCH returned value and raise appropriate exception
             return TAG_MISMATCH, offset
 
         return self._decode(data, tag_end_offset)
@@ -475,6 +464,7 @@ class PrimitiveOrConstructedType(Type):
     def decode(self, data, start_offset, values=None):
         """
         Custom decode logic to handle primitive or constructed types
+        Return decoded value and new offset
         """
 
         offset = start_offset + self.tag_len
@@ -544,10 +534,6 @@ class StringType(PrimitiveOrConstructedType):
 
     def decode_constructed_segments(self, segments):
         return bytearray().join(segments).decode(self.ENCODING)
-
-    def __repr__(self):
-        return '{}({})'.format(self.__class__.__name__,
-                               self.name)
 
 
 class MembersType(Type):
@@ -647,7 +633,7 @@ class MembersType(Type):
         """
         Decode values for members from data starting from offset
         Supports member data encoded in different order than members specified
-        :param list members:
+        :param list members: List of member types
         :param bytearray data:
         :param dict values:
         :param int offset:
@@ -657,13 +643,14 @@ class MembersType(Type):
         """
         # Decode member values from data
         remaining_members = members
+        # Outer loop to enable decoding members out of order
         while True:
             undecoded_members = []
             decode_success = False  # Whether at least one member was successfully decoded
 
             out_of_data, offset = is_end_of_data(data, offset, end_offset)
             # Attempt to decode remaining members. If they are encoded in same order, should decode all in one loop
-            # Otherwise will require multiple iterations
+            # Otherwise will require multiple iterations of outer loop
             for member in remaining_members:
                 # Dont attempt decode if already out of data, just add member to list of undecoded
                 if out_of_data:
@@ -703,11 +690,7 @@ class MembersType(Type):
             elif out_of_data:
                 raise OutOfDataError(offset*8, location=member.name)
             else:
-                raise DecodeTagError(member.type_name,
-                                     member.tag,
-                                     data[offset:offset + member.tag_len],
-                                     offset,
-                                     location=member.name)
+                raise DecodeTagError(member, data, offset, location=member.name)
         return offset, out_of_data
 
     def __repr__(self):
@@ -797,9 +780,6 @@ class Boolean(Type):
 
         return bool(data[contents_offset]), contents_offset + length
 
-    def __repr__(self):
-        return 'Boolean({})'.format(self.name)
-
 
 class Integer(Type):
 
@@ -820,10 +800,7 @@ class Integer(Type):
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
 
-        return decode_signed_integer(data[offset:end_offset]), end_offset
-
-    def __repr__(self):
-        return 'Integer({})'.format(self.name)
+        return int.from_bytes(data[offset:end_offset], byteorder='big', signed=True), end_offset
 
 
 class Real(Type):
@@ -845,9 +822,6 @@ class Real(Type):
 
         return decoded, end_offset
 
-    def __repr__(self):
-        return 'Real({})'.format(self.name)
-
 
 class Null(Type):
 
@@ -864,9 +838,6 @@ class Null(Type):
 
     def _decode(self, data, offset):
         return None, offset + 1
-
-    def __repr__(self):
-        return 'Null({})'.format(self.name)
 
 
 class BitString(PrimitiveOrConstructedType):
@@ -926,9 +897,6 @@ class BitString(PrimitiveOrConstructedType):
 
         return (bytes(decoded), number_of_bits)
 
-    def __repr__(self):
-        return 'BitString({})'.format(self.name)
-
 
 class OctetString(PrimitiveOrConstructedType):
 
@@ -949,9 +917,6 @@ class OctetString(PrimitiveOrConstructedType):
 
     def decode_constructed_segments(self, segments):
         return bytes().join(segments)
-
-    def __repr__(self):
-        return 'OctetString({})'.format(self.name)
 
 
 class ObjectIdentifier(Type):
@@ -975,9 +940,6 @@ class ObjectIdentifier(Type):
         decoded = decode_object_identifier(data, offset, end_offset)
 
         return decoded, end_offset
-
-    def __repr__(self):
-        return 'ObjectIdentifier({})'.format(self.name)
 
 
 class Enumerated(Type):
@@ -1020,7 +982,7 @@ class Enumerated(Type):
 
         length, offset = decode_length_definite(data, offset)
         end_offset = offset + length
-        value = decode_signed_integer(data[offset:end_offset])
+        value = int.from_bytes(data[offset:end_offset], byteorder='big', signed=True)
 
         if value in self.value_to_data:
             return self.value_to_data[value], end_offset
@@ -1031,9 +993,6 @@ class Enumerated(Type):
                 'Expected enumeration value {}, but got {}.'.format(
                     self.format_values(),
                     value), offset)
-
-    def __repr__(self):
-        return 'Enumerated({})'.format(self.name)
 
 
 class Sequence(MembersType):
@@ -1129,12 +1088,8 @@ class Choice(Type):
 
         return tags
 
-    def format_tag(self, tag):
-        return binascii.hexlify(tag).decode('ascii')
-
-    def format_tags(self):
-        return format_or(sorted([self.format_tag(tag)
-                                 for tag in self.tag_to_member]))
+    def format_tag(self):
+        return [format_bytes(tag) for tag in self.tag_to_member]
 
     def format_names(self):
         return format_or(sorted([member.name for member in self.members]))
@@ -1162,10 +1117,7 @@ class Choice(Type):
 
             return (None, None), offset
         else:
-            raise DecodeError(
-                "Expected choice member tag {}, but got '{}'.".format(
-                    self.format_tags(),
-                    self.format_tag(tag)), offset)
+            return TAG_MISMATCH, offset
 
         decoded, offset = member.decode(data, offset)
 
@@ -1264,9 +1216,6 @@ class UTCTime(Type):
 
         return utc_time_to_datetime(decoded), end_offset
 
-    def __repr__(self):
-        return 'UTCTime({})'.format(self.name)
-
 
 class GeneralizedTime(Type):
 
@@ -1290,9 +1239,6 @@ class GeneralizedTime(Type):
 
         return generalized_time_to_datetime(decoded), end_offset
 
-    def __repr__(self):
-        return 'GeneralizedTime({})'.format(self.name)
-
 
 class Date(Type):
 
@@ -1314,9 +1260,6 @@ class Date(Type):
         decoded = datetime.date(*time.strptime(decoded, '%Y%m%d')[:3])
 
         return decoded, end_offset
-
-    def __repr__(self):
-        return 'Date({})'.format(self.name)
 
 
 class TimeOfDay(Type):
@@ -1341,9 +1284,6 @@ class TimeOfDay(Type):
         decoded = datetime.time(*time.strptime(decoded, '%H%M%S')[3:6])
 
         return decoded, end_offset
-
-    def __repr__(self):
-        return 'TimeOfDay({})'.format(self.name)
 
 
 class DateTime(Type):
@@ -1370,9 +1310,6 @@ class DateTime(Type):
 
         return decoded, end_offset
 
-    def __repr__(self):
-        return 'DateTime({})'.format(self.name)
-
 
 class Any(Type):
 
@@ -1391,9 +1328,6 @@ class Any(Type):
         end_offset = offset + length
 
         return data[start:end_offset], end_offset
-
-    def __repr__(self):
-        return 'Any({})'.format(self.name)
 
 
 class AnyDefinedBy(Type):
@@ -1441,9 +1375,6 @@ class AnyDefinedBy(Type):
             end_offset = offset + length
 
             return data[start:end_offset], end_offset
-
-    def __repr__(self):
-        return 'AnyDefinedBy({})'.format(self.name)
 
 
 class ExplicitTag(Type):
@@ -1498,11 +1429,8 @@ class ExplicitTag(Type):
 
         return values, end_offset
 
-    def __repr__(self):
-        return 'ExplicitTag({})'.format(self.inner)
 
-
-class Recursive(Type, compiler.Recursive):
+class Recursive(compiler.Recursive, Type):
 
     def __init__(self, name, type_name, module_name):
         super(Recursive, self).__init__(name, 'RECURSIVE', None)
@@ -1534,9 +1462,6 @@ class Recursive(Type, compiler.Recursive):
     def decode(self, data, offset, values=None):
         return self.inner.decode(data, offset)
 
-    def __repr__(self):
-        return 'Recursive({})'.format(self.type_name)
-
 
 class CompiledType(compiler.CompiledType):
 
@@ -1555,10 +1480,10 @@ class CompiledType(compiler.CompiledType):
         :param data:
         :return:
         """
-        result = self._type.decode(bytearray(data), 0)
+        decoded, offset = self._type.decode(bytearray(data), 0)
         # Raise DecodeError
-        check_decode_error(self._type, result[0], data, 0)
-        return result
+        check_decode_error(self._type, decoded, data, offset)
+        return decoded, offset
 
 
 def get_tag_no_encoding(member):
@@ -1775,3 +1700,5 @@ def decode_length(data):
         return (e.length + e.offset)
     except IndexError:
         return None
+
+

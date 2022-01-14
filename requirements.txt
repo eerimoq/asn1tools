@@ -1,4 +1,4 @@
-pyparsing
+pyparsing>=3.0.6
 codespell
 pyasn1
 asn1crypto

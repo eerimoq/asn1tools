@@ -496,6 +496,19 @@ AP ::= SEQUENCE {
 
 AQ ::= INTEGER (0..16777215)
 
+AR ::= SEQUENCE {
+    a OCTET STRING(SIZE(0..10)) DEFAULT 'ABCD'H
+}
+
+AS ::= SEQUENCE {
+    a-a BOOLEAN OPTIONAL,
+    a-b CHOICE {
+        b-a BOOLEAN,
+        b-b BOOLEAN
+    },
+    a-c BOOLEAN DEFAULT TRUE
+}
+
 END
 
 CRef DEFINITIONS AUTOMATIC TAGS ::=

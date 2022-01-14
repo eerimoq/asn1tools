@@ -115,7 +115,7 @@ ff0e0201011609497320312b313d333f
             "\n"
             "2018-02-24 11:24:16\n"
             "ff0e0201011609497320312b313d333f\n"
-            "Question: Expected SEQUENCE with tag '30', but got 'ff'. (At offset: 0)\n"
+            "Question: Expected SEQUENCE(Question) with tag '30', but got 'ff'. (At offset: 0)\n"
             "2018-02-24 13:24:16\n"
             "300e0201011609497320312b313d333\n"
         )
@@ -677,7 +677,7 @@ exit
 
     def test_command_line_generate_c_source_oer(self):
         argv = [
-            'asn1tools',
+            'asn1tools', '--debug',
             'generate_c_source',
             '--namespace', 'oer',
             '--generate-fuzzer',
