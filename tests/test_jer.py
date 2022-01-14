@@ -804,32 +804,6 @@ class Asn1ToolsJerTest(unittest.TestCase):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode_string(foo, type_name, decoded, encoded)
 
-    def test_error_out_of_data(self):
-        foo = asn1tools.compile_string(
-            "Foo DEFINITIONS AUTOMATIC TAGS ::= "
-            "BEGIN "
-            "A ::= INTEGER "
-            "B ::= SEQUENCE { "
-            "  a SEQUENCE { "
-            "    b BOOLEAN, "
-            "    c INTEGER "
-            "  } "
-            "} "
-            "END",
-            'uper')
-
-        datas = [
-            ('A', b'',         'A: out of data (At bit offset: 0)'),
-            ('B', b'\x00',     'B.a.c: out of data (At bit offset: 1)'),
-            ('B', b'\x80\x80', 'B.a.c: out of data (At bit offset: 9)')
-        ]
-
-        for type_name, encoded, message in datas:
-            with self.assertRaises(asn1tools.codecs.per.OutOfDataError) as cm:
-                foo.decode(type_name, encoded)
-
-            self.assertEqual(str(cm.exception), message)
-
     def test_indent(self):
         foo = asn1tools.compile_string(
             "Foo DEFINITIONS AUTOMATIC TAGS ::= "

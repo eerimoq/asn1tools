@@ -52,16 +52,32 @@ class ErrorWithLocation(Exception):
     Mixin for Error classes which have location list
     """
     def __init__(self, message, location=None):
+        """
+
+        :param str message:
+        :param BaseType location: Type error occured for
+        """
         self.message = message
         self.location = [location] if location else []
 
-    def add_location(self, element_name):
-        self.location.append(element_name)
+    def add_location(self, element):
+        """
+        Add location data for element
+        :param BaseType element:
+        :return:
+        """
+        # Don't add name if it is blank (for SEQUENCE OF, SET OF etc)
+        if (not getattr(element, 'no_error_location', False) and
+                (not self.location or element != self.location[-1])):
+            self.location.append(element)
+
+    @property
+    def location_str(self):
+        return '.'.join(loc.name for loc in self.location[::-1] if loc.name)
 
     def __str__(self):
         if self.location:
-            return "{}: {}".format('.'.join(self.location[::-1]),
-                                   self.message)
+            return "{}: {}".format(self.location_str, self.message)
         else:
             return self.message
 
@@ -83,14 +99,14 @@ class DecodeError(ErrorWithLocation, _DecodeError):
 
         :param str message: Message for error
         :param int offset: Data offset at which error occurred. Can be bits or bytes depending on codec
-        :param str location: Name of element in which error occured
+        :param BaseType location: Element in which error occurred
         """
         super(DecodeError, self).__init__(message, location=location)
         self.offset = offset
 
     def __str__(self):
         if self.location:
-            _str = "{}: {}".format('.'.join(self.location[::-1]), self.message)
+            _str = "{}: {}".format(self.location_str, self.message)
         else:
             _str = self.message
         if self.offset is not None:
@@ -112,20 +128,10 @@ class ConstraintsError(ErrorWithLocation, _ConstraintsError):
     pass
 
 
-class DecodeContentsLengthError(DecodeError):
-    """ASN.1 contents length decode error.
-
-    """
-
-    def __init__(self, length, offset, contents_max, location=None):
-        message = 'Expected at least {} contents byte(s), but got {}.'.format(length, contents_max - offset)
-        super(DecodeContentsLengthError, self).__init__(message, offset=offset, location=location)
-
-        self.length = length
-        self.contents_max = contents_max
-
-
 class OutOfDataError(DecodeError):
+    """
+    Error for when trying to read data beyond length of type
+    """
 
     def __init__(self, offset_bits, location=None):
         super(OutOfDataError, self).__init__(
@@ -137,26 +143,6 @@ class OutOfDataError(DecodeError):
         :return:
         """
         return ' (At bit offset: {})'.format(self.offset)
-
-
-def add_error_location(method):
-    """
-    Method decorator which catches ErrorWithLocation subclasses and adds element name to location
-    If decorator is applied to parent Type class method, this functionality can be disabled on a per-child
-    Type basis by setting no_error_location=True
-    :param method:
-    :return:
-    """
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        try:
-            return method(self, *args, **kwargs)
-        except ErrorWithLocation as e:
-            # Don't add name if it is blank (for SEQUENCE OF, SET OF etc)
-            if self.name and not getattr(self, 'no_error_location', False):
-                e.add_location(self.name)
-            raise e
-    return new_method
 
 
 def _generalized_time_to_datetime(string):

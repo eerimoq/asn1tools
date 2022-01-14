@@ -65,10 +65,9 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
         # Bad tag.
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('Foo', b'\xa2\x03\x02\x01\x01')
-
         self.assertEqual(
             str(cm.exception),
-            "Foo: Expected BOOLEAN(Foo) with tag '01', but got '02'. (At offset: 2)")
+            "Foo.Foo: Expected BOOLEAN(Foo) with tag '01', but got '02'. (At offset: 2)")
 
     def test_boolean_implicit_tags(self):
         """Test implicit tags on booleans.
@@ -672,7 +671,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            'W: Could not find end-of-contents tag for indefinite length field. (At offset: 15)')
+            'W: Ran out of data when trying to find End of Contents tag for indefinite length field (At offset: 15)')
 
         # Missing member.
         with self.assertRaises(asn1tools.EncodeError) as cm:
@@ -905,7 +904,6 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         with self.assertRaises(asn1tools.DecodeError) as cm:
             foo.decode('A', b'\x81\x01\xff')
-
         self.assertEqual(
             str(cm.exception),
             "A: Expected CHOICE(A) with tags ['80'], but got '81'. (At offset: 0)")
@@ -2410,7 +2408,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
 
         self.assertEqual(
             str(cm.exception),
-            "Certificate: Expected SEQUENCE(Certificate) with tag '30', but got ''. (At offset: 0)")
+            "Certificate: Ran out of data when reading tag (At offset: 0)")
 
         # Only tag and length, no contents.
         encoded = b'\x30\x81\x9f'
@@ -3230,8 +3228,8 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             foo.decode('A', encoded)
 
         self.assertEqual(
-            str(cm.exception),
-            'A: Expected definite length, but got indefinite. (At offset: 1)')
+            'A: Expected definite length, but got indefinite. (At offset: 1)',
+            str(cm.exception))
 
     def test_versions(self):
         foo = asn1tools.compile_files('tests/files/versions.asn')

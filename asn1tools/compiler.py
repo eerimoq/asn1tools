@@ -135,7 +135,7 @@ class Specification(object):
         if check_constraints:
             type_.check_constraints(data)
 
-        return type_.encode(data, **kwargs)
+        return bytes(type_.encode(data, **kwargs))
 
     def decode(self, name, data, check_constraints=False):
         """Decode given bytes object `data` as given type `name` and return
@@ -307,7 +307,7 @@ def compile_dict(specification,
 
     return Specification(codec.compile_dict(specification,
                                             numeric_enums),
-                         codec.decode_length,
+                         codec.decode_full_length,
                          type_checker.compile_dict(specification,
                                                    numeric_enums),
                          constraints_checker.compile_dict(specification,

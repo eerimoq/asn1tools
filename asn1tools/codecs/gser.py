@@ -8,10 +8,9 @@ import math
 from copy import copy
 import datetime
 
-from . import BaseType, format_bytes
+from . import BaseType, format_bytes, ErrorWithLocation
 from . import EncodeError
 from . import DecodeError
-from . import add_error_location
 from . import compiler
 from . import format_or
 from . import utc_time_from_datetime
@@ -34,7 +33,6 @@ class MembersType(Type):
         super(MembersType, self).__init__(name, type_name)
         self.members = members
 
-    @add_error_location
     def encode(self, data, separator, indent):
         encoded_members = []
         member_separator = separator + ' ' * indent
@@ -43,9 +41,14 @@ class MembersType(Type):
             name = member.name
 
             if name in data:
-                encoded_member = member.encode(data[name],
-                                               member_separator,
-                                               indent)
+                try:
+                    encoded_member = member.encode(data[name],
+                                                   member_separator,
+                                                   indent)
+                except ErrorWithLocation as e:
+                    # Add member location
+                    e.add_location(member)
+                    raise e
 
                 encoded_member = u'{}{} {}'.format(member_separator,
                                                    member.name,
@@ -77,7 +80,6 @@ class ArrayType(Type):
         super(ArrayType, self).__init__(name, type_name)
         self.element_type = element_type
 
-    @add_error_location
     def encode(self, data, separator, indent):
         encoded_elements = []
         element_separator = separator + ' ' * indent
@@ -231,7 +233,6 @@ class Choice(Type):
     def format_names(self):
         return format_or(sorted([member.name for member in self.members]))
 
-    @add_error_location
     def encode(self, data, separator, indent):
         try:
             member = self.name_to_member[data[0]]
@@ -240,8 +241,12 @@ class Choice(Type):
                 "Expected choice {}, but got '{}'.".format(
                     self.format_names(),
                     data[0]))
-
-        encoded = member.encode(data[1], separator, indent)
+        try:
+            encoded = member.encode(data[1], separator, indent)
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(member)
+            raise e
 
         return u'{} : {}'.format(data[0], encoded)
 
@@ -412,7 +417,6 @@ class Recursive(compiler.Recursive, Type):
     def set_inner_type(self, inner):
         self.inner = copy(inner)
 
-    @add_error_location
     def encode(self, data, separator, indent):
         return self.inner.encode(data, separator, indent)
 
@@ -425,10 +429,15 @@ class CompiledType(compiler.CompiledType):
         self._value_type = type_name
 
     def encode(self, data, indent=None):
-        if indent is None:
-            encoded = self._type.encode(data, ' ', 0)
-        else:
-            encoded = self._type.encode(data, '\n', indent)
+        try:
+            if indent is None:
+                encoded = self._type.encode(data, ' ', 0)
+            else:
+                encoded = self._type.encode(data, '\n', indent)
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(self._type)
+            raise e
 
         encoded = u'{} {} ::= {}'.format(self._value_name,
                                          self._value_type,
@@ -556,5 +565,5 @@ def compile_dict(specification, numeric_enums=False):
     return Compiler(specification, numeric_enums).process()
 
 
-def decode_length(_data):
+def decode_full_length(_data):
     raise DecodeError('Decode length is not supported for this codec.')

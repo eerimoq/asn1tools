@@ -6,8 +6,7 @@ import sys
 import datetime
 from copy import copy
 
-from . import add_error_location
-from . import EncodeError
+from . import EncodeError, ErrorWithLocation
 from . import compiler
 from . import format_or
 
@@ -41,7 +40,6 @@ class Type(object):
     def set_default(self, value):
         pass
 
-    @add_error_location
     def encode(self, data):
         if not isinstance(data, self.TYPE):
             raise EncodeError(
@@ -56,7 +54,6 @@ class Boolean(Type):
 
 class Integer(Type):
 
-    @add_error_location
     def encode(self, data):
         if sys.version_info[0] > 2:
             if not isinstance(data, (int, str)):
@@ -72,7 +69,6 @@ class Integer(Type):
 
 class Float(Type):
 
-    @add_error_location
     def encode(self, data):
         if sys.version_info[0] > 2:
             if not isinstance(data, (float, int)):
@@ -88,7 +84,6 @@ class Float(Type):
 
 class Null(Type):
 
-    @add_error_location
     def encode(self, data):
         if data is not None:
             raise EncodeError('Expected None, but got {}.'.format(data))
@@ -96,7 +91,6 @@ class Null(Type):
 
 class BitString(Type):
 
-    @add_error_location
     def encode(self, data):
         if (not isinstance(data, tuple)
             or len(data) != 2
@@ -115,7 +109,6 @@ class BitString(Type):
 
 class Bytes(Type):
 
-    @add_error_location
     def encode(self, data):
         if not isinstance(data, (bytes, bytearray)):
             raise EncodeError(
@@ -125,7 +118,6 @@ class Bytes(Type):
 
 class String(Type):
 
-    @add_error_location
     def encode(self, data):
         if sys.version_info[0] > 2:
             if not isinstance(data, str):
@@ -149,13 +141,17 @@ class Dict(Type):
         super(Dict, self).encode(data)
         self.encode_members(data)
 
-    @add_error_location
     def encode_members(self, data):
         for member in self.members:
             name = member.name
 
             if name in data:
-                member.encode(data[name])
+                try:
+                    member.encode(data[name])
+                except ErrorWithLocation as e:
+                    # Add member location
+                    e.add_location(member)
+                    raise e
 
 
 class List(Type):
@@ -170,7 +166,6 @@ class List(Type):
         super(List, self).encode(data)
         self.encode_members(data)
 
-    @add_error_location
     def encode_members(self, data):
         for entry in data:
             self.element_type.encode(entry)
@@ -182,7 +177,6 @@ class Enumerated(Type):
         super(Enumerated, self).__init__(name)
         self._numeric_enums = numeric_enums
 
-    @add_error_location
     def encode(self, data):
         if self._numeric_enums:
             self.encode_integer(data)
@@ -222,7 +216,6 @@ class Choice(Type):
     def format_names(self):
         return format_or(sorted([member.name for member in self.members]))
 
-    @add_error_location
     def encode(self, data):
         if sys.version_info[0] > 2:
             if (not isinstance(data, tuple)
@@ -246,13 +239,16 @@ class Choice(Type):
                 "Expected choice {}, but got '{}'.".format(
                     self.format_names(),
                     data[0]))
-
-        member.encode(data[1])
+        try:
+            member.encode(data[1])
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(member)
+            raise e
 
 
 class Date(Type):
 
-    @add_error_location
     def encode(self, data):
         if not isinstance(data, datetime.date):
             raise EncodeError(
@@ -262,7 +258,6 @@ class Date(Type):
 
 class TimeOfDay(Type):
 
-    @add_error_location
     def encode(self, data):
         if not isinstance(data, datetime.time):
             raise EncodeError(
@@ -272,7 +267,6 @@ class TimeOfDay(Type):
 
 class DateTime(Type):
 
-    @add_error_location
     def encode(self, data):
         if not isinstance(data, datetime.datetime):
             raise EncodeError(
@@ -297,15 +291,24 @@ class Recursive(compiler.Recursive, Type):
     def set_inner_type(self, inner):
         self.inner = copy(inner)
 
-    @add_error_location
     def encode(self, data):
-        self.inner.encode(data)
+        try:
+            self.inner.encode(data)
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(self.inner)
+            raise e
 
 
 class CompiledType(compiler.CompiledType):
 
     def encode(self, data):
-        self._type.encode(data)
+        try:
+            self._type.encode(data)
+        except ErrorWithLocation as e:
+            # Add member location
+            e.add_location(self._type)
+            raise e
 
 
 class Compiler(compiler.Compiler):
