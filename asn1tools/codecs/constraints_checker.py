@@ -8,6 +8,7 @@ from copy import copy
 from . import ConstraintsError, ErrorWithLocation
 from . import compiler
 from . import format_or
+from . import normalize
 from .permitted_alphabet import NUMERIC_STRING
 from .permitted_alphabet import PRINTABLE_STRING
 from .permitted_alphabet import IA5_STRING
@@ -255,6 +256,7 @@ class Choice(Type):
         return format_or(sorted(self.name_to_member))
 
     def encode(self, data):
+        data = normalize.choice(data)
         value = data[0]
 
         if value in self.name_to_member:

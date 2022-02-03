@@ -15,6 +15,7 @@ from . import DecodeError
 from . import OutOfDataError
 from . import format_or
 from . import compiler
+from . import normalize
 from . import utc_time_to_datetime
 from . import utc_time_from_datetime
 from . import generalized_time_to_datetime
@@ -950,6 +951,7 @@ class Choice(Type):
         return format_or(sorted([member.name for member in self.members]))
 
     def encode(self, data, encoder):
+        data = normalize.choice(data)
         name = data[0]
 
         if name in self.name_to_root_member:

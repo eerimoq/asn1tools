@@ -6,9 +6,12 @@ import sys
 import datetime
 from copy import copy
 
+from numpy import isin
+
 from . import EncodeError, ErrorWithLocation
 from . import compiler
 from . import format_or
+from . import normalize
 
 
 STRING_TYPES = [
@@ -217,6 +220,7 @@ class Choice(Type):
         return format_or(sorted([member.name for member in self.members]))
 
     def encode(self, data):
+        data = normalize.choice(data)
         if sys.version_info[0] > 2:
             if (not isinstance(data, tuple)
                 or len(data) != 2

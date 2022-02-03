@@ -15,6 +15,7 @@ from . import compiler
 from . import format_or
 from . import utc_time_from_datetime
 from . import generalized_time_from_datetime
+from . import normalize
 from .compiler import enum_values_as_dict
 
 
@@ -234,6 +235,7 @@ class Choice(Type):
         return format_or(sorted([member.name for member in self.members]))
 
     def encode(self, data, separator, indent):
+        data = normalize.choice(data)
         try:
             member = self.name_to_member[data[0]]
         except KeyError:

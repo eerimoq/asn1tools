@@ -133,8 +133,14 @@ class Asn1ToolsEncodeTypeCheckerTest(unittest.TestCase):
     def test_choice(self):
         self.assert_good_bad('CHOICE { a NULL }',
                              'A: Expected data of type tuple(str, object)',
-                             good_datas=[('a', None)],
-                             bad_datas=[(1, None), {'a': 1}, None])
+                             good_datas=[('a', None), {'a': None}],
+                             bad_datas=[(1, None), None])
+
+        self.assert_good_bad('CHOICE { a NULL }',
+                             'A.a: Expected None',
+                             good_datas=[],
+                             bad_datas=[{'a': 1}],
+                             bad_datas_strings=["1"])
 
         self.assert_good_bad('CHOICE { a CHOICE { b CHOICE { c NULL } } }',
                              'A.a.b: Expected data of type tuple(str, object)',
