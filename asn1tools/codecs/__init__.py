@@ -378,4 +378,4 @@ def format_bytes(tag):
     :param bytes tag:
     :return:
     """
-    return binascii.hexlify(tag).decode('ascii')
+    return tag.hex()

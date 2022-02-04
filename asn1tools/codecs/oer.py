@@ -867,8 +867,7 @@ class Enumerated(Type):
         else:
             raise DecodeError(
                 'Expected enumeration value {}, but got {}.'.format(
-                    self.format_values(),
-                    value))
+                    self.format_values(), value))
 
 
 class Sequence(MembersType):
@@ -1015,8 +1014,7 @@ class Choice(Type):
         else:
             raise DecodeError(
                 "Expected choice member tag {}, but got '{}'.".format(
-                    self.format_tags(),
-                    format_bytes(tag)))
+                    self.format_tags(), format_bytes(tag)))
 
         return (member.name, decoded)
 
