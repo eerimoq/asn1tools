@@ -146,8 +146,7 @@ class PermittedAlphabet(object):
         except KeyError:
             raise DecodeError(
                 "Expected a value in {}, but got {:d}.".format(
-                    list(self.decode_map),
-                    value))
+                    list(self.decode_map), value))
 
 
 class Encoder(object):
@@ -1439,8 +1438,7 @@ class Enumerated(Type):
         except KeyError:
             raise DecodeError(
                 'Expected enumeration index {}, but got {}.'.format(
-                    self.format_root_indexes(),
-                    index))
+                    self.format_root_indexes(), index))
 
         return data
 
@@ -1647,8 +1645,7 @@ class Choice(Type):
         except KeyError:
             raise DecodeError(
                 'Expected choice index {}, but got {}.'.format(
-                    self.format_root_indexes(),
-                    index))
+                    self.format_root_indexes(), index))
         try:
             return (member.name, member.decode(decoder))
         except ErrorWithLocation as e:

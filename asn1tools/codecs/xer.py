@@ -364,8 +364,7 @@ class Enumerated(Type):
         else:
             raise DecodeError(
                 "Expected enumeration value {}, but got '{}'.".format(
-                    self.format_values(),
-                    value))
+                    self.format_values(), value))
 
     def encode_of(self, data):
         try:
@@ -386,8 +385,7 @@ class Enumerated(Type):
         except KeyError:
             raise DecodeError(
                 "Expected enumeration value {}, but got '{}'.".format(
-                    self.format_values(),
-                    value))
+                    self.format_values(), value))
 
 
 class Sequence(MembersType):
@@ -460,8 +458,7 @@ class Choice(Type):
         else:
             raise DecodeError(
                 "Expected choice {}, but got '{}'.".format(
-                    self.format_names(),
-                    name))
+                    self.format_names(), name))
         try:
             return (name, member.decode(member_element))
         except ErrorWithLocation as e:
@@ -494,8 +491,7 @@ class Choice(Type):
         except KeyError:
             raise DecodeError(
                 "Expected choice {}, but got '{}'.".format(
-                    self.format_names(),
-                    name))
+                    self.format_names(), name))
         try:
             return (name, member.decode(element))
         except ErrorWithLocation as e:

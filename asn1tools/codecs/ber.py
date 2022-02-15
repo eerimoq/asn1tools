@@ -111,7 +111,7 @@ def detect_end_of_contents_tag(data, offset):
     elif len(two_bytes) != 2:
         raise OutOfByteDataError(
             'Ran out of data when trying to find End of Contents tag for indefinite length field',
-            offset)
+            offset=offset)
     else:
         return False
 
@@ -129,7 +129,10 @@ class MissingMandatoryFieldError(DecodeError):
     """
     Error for when there is no data for a mandatory field member
     """
-    pass
+    def __init__(self, member, offset):
+        super().__init__('{} is missing and has no default value'.format(member),
+                         offset=offset,
+                         location=member)
 
 
 class OutOfByteDataError(DecodeError):
@@ -207,7 +210,8 @@ def decode_length(encoded, offset, enforce_definite=True):
     try:
         length = encoded[offset]
     except IndexError:
-        raise OutOfByteDataError('Ran out of data when trying to read length', offset)
+        raise OutOfByteDataError('Ran out of data when trying to read length',
+                                 offset=offset)
 
     offset += 1
 
@@ -215,7 +219,8 @@ def decode_length(encoded, offset, enforce_definite=True):
         # Handle indefinite length
         if length == 128:
             if enforce_definite:
-                raise DecodeError('Expected definite length, but got indefinite.', offset - 1)
+                raise DecodeError('Expected definite length, but got indefinite.',
+                                  offset=offset - 1)
 
             return None, offset
 
@@ -227,9 +232,8 @@ def decode_length(encoded, offset, enforce_definite=True):
             # Verify all the length bytes exist
             if len(encoded_length) != number_of_bytes:
                 raise OutOfByteDataError('Expected {} length byte(s) at offset {}, but got {}.'.format(
-                        number_of_bytes,
-                        offset,
-                        len(encoded_length)), offset)
+                        number_of_bytes, offset, len(encoded_length)),
+                    offset=offset)
 
             length = int(binascii.hexlify(encoded_length), 16)
             offset += number_of_bytes
@@ -280,10 +284,12 @@ def skip_tag(data, offset):
 
             offset += 1
     except IndexError:
-        raise OutOfByteDataError('Ran out of data when reading tag', offset)
+        raise OutOfByteDataError('Ran out of data when reading tag',
+                                 offset=offset)
 
     if offset >= len(data):
-        raise OutOfByteDataError('Ran out of data when reading tag', offset)
+        raise OutOfByteDataError('Ran out of data when reading tag',
+                                 offset=offset)
 
     return offset
 
@@ -532,7 +538,8 @@ class StandardDecodeMixin(object):
         if tag_data != self.tag:
             # Check for missing data
             if len(tag_data) != self.tag_len:
-                raise OutOfByteDataError('Ran out of data when reading tag', start_offset)
+                raise OutOfByteDataError('Ran out of data when reading tag',
+                                         offset=start_offset)
             # return TAG_MISMATCH Instead of raising DecodeTagError for better performance so that MembersType does
             # not have to catch exception for every missing optional type
             # CompiledType.decode_with_length() will detect TAG_MISMATCH returned value and raise appropriate exception
@@ -615,7 +622,8 @@ class PrimitiveOrConstructedType(Type):
             is_primitive = False
         elif len(tag) != self.tag_len:
             # Detect out of data
-            raise OutOfByteDataError('Ran out of data when reading tag', start_offset)
+            raise OutOfByteDataError('Ran out of data when reading tag',
+                                     offset=start_offset)
         else:
             # Tag mismatch. Return DECODE_FAILED instead of raising DecodeError for performance
             return TAG_MISMATCH, start_offset
@@ -755,7 +763,8 @@ class MembersType(StandardEncodeMixin, StandardDecodeMixin, Type):
             return values, offset
 
         if end_offset is None:
-            raise NoEndOfContentsTagError('Could not find end-of-contents tag for indefinite length field.', offset)
+            raise NoEndOfContentsTagError('Could not find end-of-contents tag for indefinite length field.',
+                                          offset=offset)
         else:
             # Extra data is allowed in cases of versioned additions
             return values, end_offset
@@ -824,7 +833,7 @@ class MembersType(StandardEncodeMixin, StandardDecodeMixin, Type):
             elif ignore_missing:
                 break
             elif out_of_data:
-                raise MissingMandatoryFieldError(offset*8, location=member)
+                raise MissingMandatoryFieldError(member, offset)
             else:
                 raise DecodeTagError(member, data, offset, location=member)
         return offset, out_of_data
@@ -900,7 +909,7 @@ class Boolean(StandardEncodeMixin, StandardDecodeMixin, Type):
         if length != 1:
             raise DecodeError(
                 'Expected BOOLEAN contents length 1, but '
-                'got {}.'.format(length), offset-1)
+                'got {}.'.format(length), offset=offset-1)
 
         return bool(data[offset]), offset + length
 
@@ -1086,7 +1095,7 @@ class Enumerated(StandardEncodeMixin, StandardDecodeMixin, Type):
             raise DecodeError(
                 'Expected enumeration value {}, but got {}.'.format(
                     self.format_values(),
-                    value), offset)
+                    value), offset=offset)
 
 
 class Sequence(MembersType):
@@ -1437,7 +1446,7 @@ class AnyDefinedBy(Type):
             except KeyError:
                 raise DecodeError('Bad AnyDefinedBy choice {}.'.format(
                     values[self.type_member]),
-                    offset)
+                    offset=offset)
         else:
             start = offset
             offset = skip_tag(data, offset)
@@ -1485,7 +1494,8 @@ class ExplicitTag(StandardEncodeMixin, StandardDecodeMixin, Type):
         # Verify End of Contents tag exists for Indefinite field
         if length is None:
             if not detect_end_of_contents_tag(data, end_offset):
-                raise NoEndOfContentsTagError('Expected end-of-contents tag.', end_offset,
+                raise NoEndOfContentsTagError('Expected end-of-contents tag.',
+                                              offset=end_offset,
                                               location=self)
             end_offset += 2
 
