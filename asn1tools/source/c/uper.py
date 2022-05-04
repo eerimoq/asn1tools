@@ -90,6 +90,9 @@ class _Generator(Generator):
         elif isinstance(type_, uper.OctetString):
             lines = self.format_octet_string(checker)[1:-1]
             lines = dedent_lines(lines)
+        elif isinstance(type_, uper.BitString):
+            lines = self.format_bit_string(type_, checker)
+            lines[0] += ' value;'
         elif isinstance(type_, uper.Null):
             lines = []
         else:
@@ -113,6 +116,8 @@ class _Generator(Generator):
             return self.format_choice_inner(type_, checker)
         elif isinstance(type_, uper.OctetString):
             return self.format_octet_string_inner(type_, checker)
+        elif isinstance(type_, uper.BitString):
+            return self.format_bit_string_inner(type_)
         elif isinstance(type_, uper.Enumerated):
             return self.format_enumerated_inner(type_)
         elif isinstance(type_, uper.Null):
