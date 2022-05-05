@@ -1077,6 +1077,8 @@ class _Generator(Generator):
             return self.format_choice_inner(type_, checker)
         elif isinstance(type_, oer.OctetString):
             return self.format_octet_string_inner(checker)
+        elif isinstance(type_, oer.BitString):
+            return self.format_bit_string_inner(checker)
         elif isinstance(type_, oer.Enumerated):
             return self.format_enumerated_inner(type_)
         elif isinstance(type_, oer.Null):
