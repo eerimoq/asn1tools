@@ -528,4 +528,11 @@ REFERENCED-INT ::= INTEGER (0..255)
 
 AT ::= BIT STRING (SIZE(2))
 
+AU ::= SEQUENCE {
+    a-a CHOICE {
+        b-a ENUMERATED {a, b},
+        b-b ENUMERATED {a, b}
+    }
+}
+
 END

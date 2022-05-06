@@ -496,7 +496,7 @@ class Generator(object):
             member_checker = self.get_member_checker(checker,
                                                      member.name)
 
-            with self.members_backtrace_push(member.name):
+            with self.members_backtrace_push(canonical(member.name)):
                 choice_lines = self.format_type(member, member_checker)
 
             if choice_lines:
