@@ -3,7 +3,6 @@ codespell
 pyasn1
 asn1crypto
 libsnmp
-pyparsing
 pysnmp
 protobuf
 prompt_toolkit
