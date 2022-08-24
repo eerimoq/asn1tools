@@ -369,10 +369,15 @@ def convert_sequence_type(_s, _l, tokens):
 
 
 def convert_sequence_of_type(_s, _l, tokens):
+    is_named_element = len(tokens) == 6
+
     converted_type = {
         'type': 'SEQUENCE OF',
-        'element': convert_type(tokens[4], []),
+        'element': convert_type(tokens[5 if is_named_element else 4], []),
     }
+
+    if (is_named_element):
+        converted_type['element_name'] = tokens[3]
 
     if len(tokens[1]) > 0:
         converted_type['size'] = tokens[1][0][0]['size']
@@ -380,7 +385,7 @@ def convert_sequence_of_type(_s, _l, tokens):
         if len(tokens[1]) > 1 and tokens[1][1] == '...':
             converted_type['size'].append(None)
 
-    tag = convert_tag(tokens[3])
+    tag = convert_tag(tokens[4 if is_named_element else 3])
 
     if tag:
         converted_type['element']['tag'] = tag
@@ -396,10 +401,15 @@ def convert_set_type(_s, _l, tokens):
 
 
 def convert_set_of_type(_s, _l, tokens):
+    is_named_element = len(tokens) == 6
+
     converted_type = {
         'type': 'SET OF',
-        'element': convert_type(tokens[4], [])
+        'element': convert_type(tokens[5 if is_named_element else 4], [])
     }
+
+    if (is_named_element):
+        converted_type['element_name'] = tokens[3]
 
     if len(tokens[1]) > 0:
         converted_type['size'] = tokens[1][0][0]['size']
@@ -407,7 +417,7 @@ def convert_set_of_type(_s, _l, tokens):
         if len(tokens[1]) > 1 and tokens[1][1] == '...':
             converted_type['size'].append(None)
 
-    tag = convert_tag(tokens[3])
+    tag = convert_tag(tokens[4 if is_named_element else 3])
 
     if tag:
         converted_type['element']['tag'] = tag
@@ -1422,7 +1432,7 @@ def create_grammar():
     set_of_type = (SET
                    + Group(Optional(Group(size_constraint) | constraint))
                    + OF
-                   + Optional(Suppress(identifier))
+                   + Optional(identifier)
                    - tag
                    - type_)
     set_of_type.setName('SET OF')
@@ -1442,7 +1452,7 @@ def create_grammar():
     sequence_of_type = (SEQUENCE
                         + Group(Optional(Group(size_constraint) | constraint))
                         + OF
-                        + Optional(Suppress(identifier))
+                        + Optional(identifier)
                         - tag
                         - type_)
     sequence_of_type.setName('SEQUENCE OF')

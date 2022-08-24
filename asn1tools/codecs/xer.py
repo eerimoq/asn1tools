@@ -695,7 +695,7 @@ class Compiler(compiler.Compiler):
         elif type_name == 'SEQUENCE OF':
             element = type_descriptor['element']
             compiled = SequenceOf(name,
-                                  self.compile_type(element['type'],
+                                  self.compile_type(type_descriptor.get('element_name') or element['type'],
                                                     element,
                                                     module_name))
         elif type_name == 'SET':
@@ -706,7 +706,7 @@ class Compiler(compiler.Compiler):
         elif type_name == 'SET OF':
             element = type_descriptor['element']
             compiled = SetOf(name,
-                             self.compile_type(element['type'],
+                             self.compile_type(type_descriptor.get('element_name') or element['type'],
                                                element,
                                                module_name))
         elif type_name == 'CHOICE':
