@@ -25,9 +25,11 @@ EXPECTED = {'Lightweight-Directory-Access-Protocol-V3': {'extensibility-implied'
                                                                                                       'MAX')]})]},
                                                         'AttributeDescription': {'type': 'LDAPString'},
                                                         'AttributeList': {'element': {'type': 'Attribute'},
+                                                                          'element_name': 'attribute',
                                                                           'type': 'SEQUENCE '
                                                                                   'OF'},
                                                         'AttributeSelection': {'element': {'type': 'LDAPString'},
+                                                                               'element_name': 'selector',
                                                                                'type': 'SEQUENCE '
                                                                                        'OF'},
                                                         'AttributeValue': {'type': 'OCTET '
@@ -87,6 +89,7 @@ EXPECTED = {'Lightweight-Directory-Access-Protocol-V3': {'extensibility-implied'
                                                                                          'STRING'}],
                                                                     'type': 'SEQUENCE'},
                                                         'Controls': {'element': {'type': 'Control'},
+                                                                     'element_name': 'control',
                                                                      'type': 'SEQUENCE '
                                                                              'OF'},
                                                         'DelRequest': {'tag': {'class': 'APPLICATION',
@@ -121,6 +124,7 @@ EXPECTED = {'Lightweight-Directory-Access-Protocol-V3': {'extensibility-implied'
                                                                              'type': 'SEQUENCE'},
                                                         'Filter': {'members': [{'element': {'type': 'Filter'},
                                                                                 'name': 'and',
+                                                                                'element_name': 'filter',
                                                                                 'size': [(1,
                                                                                           'MAX')],
                                                                                 'tag': {'number': 0},
@@ -128,6 +132,7 @@ EXPECTED = {'Lightweight-Directory-Access-Protocol-V3': {'extensibility-implied'
                                                                                         'OF'},
                                                                                {'element': {'type': 'Filter'},
                                                                                 'name': 'or',
+                                                                                'element_name': 'filter',
                                                                                 'size': [(1,
                                                                                           'MAX')],
                                                                                 'tag': {'number': 1},
@@ -368,6 +373,7 @@ EXPECTED = {'Lightweight-Directory-Access-Protocol-V3': {'extensibility-implied'
                                                                                                                {'name': 'modification',
                                                                                                                 'type': 'PartialAttribute'}],
                                                                                                    'type': 'SEQUENCE'},
+                                                                                       'element_name': 'change',
                                                                                        'name': 'changes',
                                                                                        'type': 'SEQUENCE '
                                                                                                'OF'}],
@@ -380,14 +386,17 @@ EXPECTED = {'Lightweight-Directory-Access-Protocol-V3': {'extensibility-implied'
                                                         'PartialAttribute': {'members': [{'name': 'type',
                                                                                           'type': 'AttributeDescription'},
                                                                                          {'element': {'type': 'AttributeValue'},
+                                                                                          'element_name': 'value',
                                                                                           'name': 'vals',
                                                                                           'type': 'SET '
                                                                                                   'OF'}],
                                                                              'type': 'SEQUENCE'},
                                                         'PartialAttributeList': {'element': {'type': 'PartialAttribute'},
+                                                                                 'element_name': 'partialAttribute',
                                                                                  'type': 'SEQUENCE '
                                                                                          'OF'},
                                                         'Referral': {'element': {'type': 'URI'},
+                                                                     'element_name': 'uri',
                                                                      'size': [(1,
                                                                                'MAX')],
                                                                      'type': 'SEQUENCE '
@@ -449,6 +458,7 @@ EXPECTED = {'Lightweight-Directory-Access-Protocol-V3': {'extensibility-implied'
                                                                                       'number': 4},
                                                                               'type': 'SEQUENCE'},
                                                         'SearchResultReference': {'element': {'type': 'URI'},
+                                                                                  'element_name': 'uri',
                                                                                   'size': [(1,
                                                                                             'MAX')],
                                                                                   'tag': {'class': 'APPLICATION',
@@ -468,6 +478,7 @@ EXPECTED = {'Lightweight-Directory-Access-Protocol-V3': {'extensibility-implied'
                                                                                                                   'type': 'AssertionValue'}],
                                                                                                      'type': 'CHOICE'},
                                                                                          'name': 'substrings',
+                                                                                         'element_name': 'substring',
                                                                                          'size': [(1,
                                                                                                    'MAX')],
                                                                                          'type': 'SEQUENCE '
