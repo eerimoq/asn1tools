@@ -229,6 +229,8 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
             "K ::= SEQUENCE OF OBJECT IDENTIFIER "
             "L ::= SEQUENCE OF SEQUENCE OF NULL "
             "M ::= SEQUENCE OF SET OF NULL "
+            "N ::= SEQUENCE OF a INTEGER "
+            "O ::= SET OF a INTEGER "
             "END",
             'xer')
 
@@ -253,7 +255,11 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
              b'<L><SEQUENCE_OF><NULL /></SEQUENCE_OF><SEQUENCE_OF /></L>'),
             ('M',
              [[None], []],
-             b'<M><SET_OF><NULL /></SET_OF><SET_OF /></M>')
+             b'<M><SET_OF><NULL /></SET_OF><SET_OF /></M>'),
+            ('N',               [], b'<N />'),
+            ('N',           [1, 4], b'<N><a>1</a><a>4</a></N>'),
+            ('O',               [], b'<O />'),
+            ('O',           [1, 4], b'<O><a>1</a><a>4</a></O>'),
         ]
 
         for type_name, decoded, encoded in datas:
