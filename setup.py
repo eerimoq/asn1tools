@@ -28,11 +28,13 @@ setup(name='asn1tools',
       packages=find_packages(exclude=['tests']),
       install_requires=[
           'pyparsing>=3.0.6',
-          'prompt_toolkit',
-          'bitstruct',
-          'diskcache'
+          'bitstruct'
       ],
+      extras_require={
+          'shell': ['prompt_toolkit'],
+          'cache': ['diskcache']
+      },
       test_suite="tests",
-      entry_points = {
+      entry_points={
           'console_scripts': ['asn1tools=asn1tools.__init__:_main']
       })

@@ -3,7 +3,11 @@ encode and decode types.
 
 """
 
-import diskcache
+try:
+    import diskcache
+    has_diskcache = True
+except ImportError:
+    has_diskcache = False
 
 from .parser import parse_files
 from .parser import parse_string
@@ -372,7 +376,7 @@ def compile_files(filenames,
 
     """
 
-    if cache_dir is None:
+    if cache_dir is None or not has_diskcache:
         return compile_dict(parse_files(filenames, encoding),
                             codec,
                             any_defined_by_choices,
