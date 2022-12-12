@@ -10,10 +10,16 @@ import binascii
 import logging
 from pprint import pformat
 
-from prompt_toolkit.completion import WordCompleter
-from prompt_toolkit import PromptSession
-from prompt_toolkit.history import FileHistory
-from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+
+try:
+    from prompt_toolkit.completion import WordCompleter
+    from prompt_toolkit import PromptSession
+    from prompt_toolkit.history import FileHistory
+    from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+    has_prompt_toolkit = True
+except ImportError:
+    has_prompt_toolkit = False
+
 
 from .compiler import compile_dict
 from .compiler import compile_string
@@ -371,10 +377,11 @@ def _main():
         help='Hexstring to convert, or - to read hexstrings from standard input.')
     subparser.set_defaults(func=_do_convert)
 
-    # The 'shell' subparser.
-    subparser = subparsers.add_parser('shell',
-                                      description='An interactive shell.')
-    subparser.set_defaults(func=_do_shell)
+    if has_prompt_toolkit:
+        # The 'shell' subparser.
+        subparser = subparsers.add_parser('shell',
+                                          description='An interactive shell.')
+        subparser.set_defaults(func=_do_shell)
 
     # The 'parse' subparser.
     subparser = subparsers.add_parser('parse',

@@ -5,10 +5,10 @@ asn1crypto
 libsnmp
 pysnmp
 protobuf
-prompt_toolkit
+prompt_toolkit[shell]
 pycodestyle
 bitstruct
-diskcache
+diskcache[cache]
 humanfriendly
 mock ; python_version < '3.0'
 nala ; python_version >= '3.6'
