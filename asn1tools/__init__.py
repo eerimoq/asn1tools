@@ -221,6 +221,11 @@ def _handle_command_help():
 
 
 def _do_shell(_args):
+    if not has_prompt_toolkit:
+        raise RuntimeError(
+            'Shell needs prompt_toolkit, '
+            'but the package is not installed'
+        )
     commands = ['compile', 'convert', 'help', 'exit']
     completer = WordCompleter(commands, WORD=True)
     user_home = os.path.expanduser('~')
@@ -377,11 +382,10 @@ def _main():
         help='Hexstring to convert, or - to read hexstrings from standard input.')
     subparser.set_defaults(func=_do_convert)
 
-    if has_prompt_toolkit:
-        # The 'shell' subparser.
-        subparser = subparsers.add_parser('shell',
-                                          description='An interactive shell.')
-        subparser.set_defaults(func=_do_shell)
+    # The 'shell' subparser.
+    subparser = subparsers.add_parser('shell',
+                                      description='An interactive shell.')
+    subparser.set_defaults(func=_do_shell)
 
     # The 'parse' subparser.
     subparser = subparsers.add_parser('parse',
