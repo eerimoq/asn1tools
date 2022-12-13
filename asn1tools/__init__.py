@@ -223,9 +223,8 @@ def _handle_command_help():
 def _do_shell(_args):
     if not has_prompt_toolkit:
         raise RuntimeError(
-            'Shell needs prompt_toolkit, '
-            'but the package is not installed'
-        )
+            'Shell needs prompt_toolkit, but the package is not installed')
+
     commands = ['compile', 'convert', 'help', 'exit']
     completer = WordCompleter(commands, WORD=True)
     user_home = os.path.expanduser('~')

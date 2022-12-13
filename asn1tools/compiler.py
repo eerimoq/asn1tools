@@ -384,9 +384,8 @@ def compile_files(filenames,
     else:
         if not has_diskcache:
             raise RuntimeError(
-                'Cache access requested, '
-                'but diskcache module is missing'
-            )
+                'Cache access requested, but diskcache module is missing')
+
         return _compile_files_cache(filenames,
                                     codec,
                                     any_defined_by_choices,
