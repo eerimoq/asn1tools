@@ -376,12 +376,17 @@ def compile_files(filenames,
 
     """
 
-    if cache_dir is None or not has_diskcache:
+    if cache_dir is None:
         return compile_dict(parse_files(filenames, encoding),
                             codec,
                             any_defined_by_choices,
                             numeric_enums)
     else:
+        if not has_diskcache:
+            raise RuntimeError(
+                'Cache access requested, '
+                'but diskcache module is missing'
+            )
         return _compile_files_cache(filenames,
                                     codec,
                                     any_defined_by_choices,
