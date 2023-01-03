@@ -512,9 +512,9 @@ class CompiledType(compiler.CompiledType):
             raise e
 
         if indent is None:
-            string = json.dumps(dictionary, separators=(',', ':'))
+            string = json.dumps(dictionary, ensure_ascii=False, separators=(',', ':'))
         else:
-            string = json.dumps(dictionary, indent=indent)
+            string = json.dumps(dictionary, ensure_ascii=False, indent=indent)
 
         return string.encode('utf-8')
 
