@@ -894,6 +894,8 @@ def create_grammar():
     NULL = Keyword('NULL').setName('NULL')
     WITH_COMPONENT = Keyword('WITH COMPONENT').setName('WITH COMPONENT')
     WITH_COMPONENTS = Keyword('WITH COMPONENTS').setName('WITH COMPONENTS')
+    WITH_SUCCESSORS = Keyword('WITH SUCCESSORS').setName('WITH SUCCESSORS')
+    WITH_DESCENDANTS = Keyword('WITH DESCENDANTS').setName('WITH DESCENDANTS')
     COMPONENTS_OF = Keyword('COMPONENTS OF').setName('COMPONENTS OF')
     PRESENT = Keyword('PRESENT').setName('PRESENT')
     ABSENT = Keyword('ABSENT').setName('ABSENT')
@@ -1676,7 +1678,9 @@ def create_grammar():
     symbol_list = Group(delimitedList(symbol))
     symbols_from_module = (symbol_list
                            + FROM
-                           + global_module_reference)
+                           + global_module_reference
+                           + Suppress(Optional(WITH_SUCCESSORS
+                                                | WITH_DESCENDANTS)))
     symbols_imported = ZeroOrMore(Group(symbols_from_module))
     imports = Optional(Suppress(IMPORTS)
                        - symbols_imported

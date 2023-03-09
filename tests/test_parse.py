@@ -177,7 +177,7 @@ class Asn1ToolsParseTest(unittest.TestCase):
                                         'IMPORTS '
                                         'a FROM B '
                                         'c, d FROM E global-module-reference '
-                                        'f, g FROM H {iso(1)}; '
+                                        'f, g FROM H {iso(1)} ;'
                                         'END')
 
         expected = {
@@ -241,6 +241,27 @@ class Asn1ToolsParseTest(unittest.TestCase):
             }
         }
 
+        self.assertEqual(actual, expected)
+
+    def test_parse_with_successors_descendants(self):
+        actual = asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
+                                        'IMPORTS '
+                                        'a FROM B WITH SUCCESSORS '
+                                        'c, d FROM E {iso(1)} WITH DESCENDANTS ;'
+                                        'END')
+        expected = {
+            'A': {
+                'extensibility-implied': False,
+                'imports': {
+                    'B': ['a'],
+                    'E': ['c', 'd']
+                },
+                'object-classes': {},
+                'object-sets': {},
+                'types': {},
+                'values': {}
+            }
+        }
         self.assertEqual(actual, expected)
 
     def test_parse_keyword_in_type_name(self):
