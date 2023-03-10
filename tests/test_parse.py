@@ -177,7 +177,7 @@ class Asn1ToolsParseTest(unittest.TestCase):
                                         'IMPORTS '
                                         'a FROM B '
                                         'c, d FROM E global-module-reference '
-                                        'f, g FROM H {iso(1)};'
+                                        'f, g FROM H {iso(1)}; '
                                         'END')
 
         expected = {
@@ -247,7 +247,7 @@ class Asn1ToolsParseTest(unittest.TestCase):
         actual = asn1tools.parse_string('A DEFINITIONS ::= BEGIN '
                                         'IMPORTS '
                                         'a FROM B WITH SUCCESSORS '
-                                        'c, d FROM E {iso(1)} WITH DESCENDANTS ;'
+                                        'c, d FROM E {iso(1)} WITH DESCENDANTS ; '
                                         'END')
         expected = {
             'A': {
