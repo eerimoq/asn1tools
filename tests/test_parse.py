@@ -177,7 +177,7 @@ class Asn1ToolsParseTest(unittest.TestCase):
                                         'IMPORTS '
                                         'a FROM B '
                                         'c, d FROM E global-module-reference '
-                                        'f, g FROM H {iso(1)} ;'
+                                        'f, g FROM H {iso(1)};'
                                         'END')
 
         expected = {
