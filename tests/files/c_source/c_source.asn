@@ -509,6 +509,13 @@ AS ::= SEQUENCE {
     a-c BOOLEAN DEFAULT TRUE
 }
 
+AT ::= SEQUENCE {
+    a INTEGER (0..127),
+    ...,
+    b SEQUENCE (SIZE(1..32)) OF A OPTIONAL,
+    ...
+}
+
 END
 
 CRef DEFINITIONS AUTOMATIC TAGS ::=
