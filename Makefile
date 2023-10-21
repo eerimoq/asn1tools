@@ -3,8 +3,8 @@ CC = gcc
 endif
 
 C_SOURCES := \
-	tests/files/c_source/oer.c
-	# tests/files/c_source/uper.c
+	tests/files/c_source/oer.c \
+	tests/files/c_source/uper.c
 
 FUZZER_CC ?= clang
 FUZZER_OER_EXE = main_oer_fuzzer
