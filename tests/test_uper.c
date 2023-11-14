@@ -473,7 +473,7 @@ TEST(uper_c_source_g)
 TEST(uper_c_source_h)
 {
     uint8_t encoded[1];
-    struct uper_c_source_h_t decoded;
+    struct uper_c_source_h_t decoded = {0};
 
     /* Encode. */
     memset(&encoded[0], 0, sizeof(encoded));
@@ -860,7 +860,7 @@ TEST(uper_c_source_y)
 
 TEST(uper_c_source_z_decode_error_out_of_data)
 {
-    uint8_t encoded[1];
+    uint8_t encoded[1] = {0};
     struct uper_c_source_z_t decoded;
 
     ASSERT_EQ(uper_c_source_z_decode(&decoded,

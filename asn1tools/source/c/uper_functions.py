@@ -322,7 +322,7 @@ static void decoder_read_bytes(struct decoder_t *self_p,
 DECODER_READ_UINT8 = '''
 static uint8_t decoder_read_uint8(struct decoder_t *self_p)
 {
-    uint8_t value;
+    uint8_t value = 0;
 
     decoder_read_bytes(self_p, &value, sizeof(value));
 

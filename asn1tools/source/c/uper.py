@@ -123,7 +123,7 @@ class _Generator(Generator):
         elif isinstance(type_, uper.IA5String):
             return self.format_ia5_string_inner(type_, checker)
         elif isinstance(type_, uper.BitString):
-            return self.format_bit_string_inner(type_)
+            return self.format_bit_string_inner(type_, checker)
         elif isinstance(type_, uper.Enumerated):
             return self.format_enumerated_inner(type_)
         elif isinstance(type_, uper.Null):
@@ -158,16 +158,19 @@ class _Generator(Generator):
                     '    {});'.format(type_.number_of_bits)
                 ],
                 [
-                    'dst_p->{} = decoder_read_non_negative_binary_integer('.format(
-                        location),
+                    'dst_p->{} = ({})decoder_read_non_negative_binary_integer('.format(
+                        location,
+                        type_name),
                     '    decoder_p,',
                     '    {});'.format(type_.number_of_bits),
                     'dst_p->{} += {};'.format(location, checker.minimum)
                 ]
             )
 
-    def format_bit_string_inner(self, type_):
+    def format_bit_string_inner(self, type_, checker):
         location = self.location_inner()
+        max_value = 2 ** checker.minimum - 1
+        type_name = self.format_type_name(max_value, max_value)
 
         return (
             [
@@ -177,8 +180,9 @@ class _Generator(Generator):
                 '    {});'.format(type_.maximum)
             ],
             [
-                'dst_p->{} = decoder_read_non_negative_binary_integer('.format(
-                    location),
+                'dst_p->{} = ({})decoder_read_non_negative_binary_integer('.format(
+                    location,
+                    type_name),
                 '    decoder_p,',
                 '    {});'.format(type_.maximum)
             ]
@@ -285,6 +289,10 @@ class _Generator(Generator):
 
     def format_octet_string_inner(self, type_, checker):
         location = self.location_inner('', '.')
+        if checker.maximum < 256:
+            length_type = 'uint8_t'
+        else:
+            length_type = 'uint32_t'
 
         if checker.minimum == checker.maximum:
             encode_lines = [
@@ -308,8 +316,9 @@ class _Generator(Generator):
                 '                     src_p->{}length);'.format(location)
             ]
             decode_lines = [
-                'dst_p->{}length = decoder_read_non_negative_binary_integer('.format(
-                    location),
+                'dst_p->{}length = ({})decoder_read_non_negative_binary_integer('.format(
+                    location,
+                    length_type),
                 '    decoder_p,',
                 '    {});'.format(type_.number_of_bits),
                 'dst_p->{}length += {}u;'.format(location, checker.minimum)
@@ -495,8 +504,9 @@ class _Generator(Generator):
                             '{}, {});'.format(unique_value, type_.root_number_of_bits))
 
         decode_lines = [
-            '{} = decoder_read_non_negative_binary_integer('
+            '{} = ({})decoder_read_non_negative_binary_integer('
             'decoder_p, {});'.format(unique_value,
+                                     type_name,
                                      type_.root_number_of_bits)
         ]
 
@@ -578,8 +588,9 @@ class _Generator(Generator):
                     location)
             ]
             first_decode_lines = [
-                'dst_p->{}length = decoder_read_non_negative_binary_integer('.format(
-                    location),
+                'dst_p->{}length = ({})decoder_read_non_negative_binary_integer('.format(
+                    location,
+                    type_name),
                 '    decoder_p,',
                 '    {});'.format(type_.number_of_bits),
                 'dst_p->{}length += {}u;'.format(location, checker.minimum),
@@ -634,7 +645,7 @@ class _Generator(Generator):
         elif isinstance(type_, uper.Enumerated):
             return self.format_enumerated_inner(type_)
         elif isinstance(type_, uper.BitString):
-            return self.format_bit_string_inner(type_)
+            return self.format_bit_string_inner(type_, checker)
         else:
             raise self.error(type_)
 

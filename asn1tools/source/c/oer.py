@@ -631,7 +631,8 @@ class _Generator(Generator):
         lengths.append(get_sequence_present_mask_length(optionals,
                                                         extension_bit))
         for member in type_.root_members:
-            lengths.extend(self.get_encoded_type_lengths(member, checker))
+            member_checker = self.get_member_checker(checker, member.name)
+            lengths.extend(self.get_encoded_type_lengths(member, member_checker))
 
         if type_.additions is not None and len(type_.additions) > 0:
             additions_mask_length = (
