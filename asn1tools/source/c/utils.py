@@ -409,6 +409,23 @@ class Generator(object):
             '}'
         ]
 
+    def format_ia5string(self, checker):
+        if not checker.has_upper_bound():
+            raise self.error('IA5String has no maximum length.')
+        
+        if checker.minimum == checker.maximum:
+            lines = []
+        if checker.maximum < 256:
+            lines = ['    uint8_t length;']
+        else:
+            lines = ['    uint32_t length;']
+        return [
+            'struct {'
+        ] + lines + [
+            '    uint8_t buf[{}];'.format(checker.maximum),
+            '}'
+        ]
+
     def format_bit_string(self, type_, checker):
         def get_value(value):
             byte = (length - 1) - (value // 8)
@@ -698,7 +715,6 @@ class Generator(object):
 
                 if not type_declaration:
                     continue
-
                 declaration = self.generate_declaration()
                 definition_inner = self.generate_definition_inner(compiled_type)
                 definition = self.generate_definition()

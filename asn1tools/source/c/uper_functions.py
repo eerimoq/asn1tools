@@ -65,6 +65,17 @@ static void encoder_append_bit(struct encoder_t *self_p,
 }\
 '''
 
+ENCODER_APPEND_IA5STR = '''
+static void encoder_append_ia5str(struct encoder_t *self_p,
+                                  const uint8_t *buf_p,
+                                  size_t size)
+{
+    for (int i = 0; i < size; ++i) {
+        encoder_append_non_negative_binary_integer(self_p, buf_p[i], 7);
+    }
+}
+'''
+
 ENCODER_APPEND_BYTES = '''
 static void encoder_append_bytes(struct encoder_t *self_p,
                                  const uint8_t *buf_p,
@@ -269,6 +280,15 @@ static int decoder_read_bit(struct decoder_t *self_p)
 }\
 '''
 
+DECODER_READ_IA5STR = '''
+static void decoder_read_ia5str(struct decoder_t *self_p, uint8_t *buf, int size)
+{
+    for (int i = 0; i < size; ++i) {
+        buf[i] = decoder_read_non_negative_binary_integer(self_p,7);
+    }
+}
+'''
+
 DECODER_READ_BYTES = '''
 static void decoder_read_bytes(struct decoder_t *self_p,
                                uint8_t *buf_p,
@@ -427,6 +447,7 @@ static uint64_t decoder_read_non_negative_binary_integer(struct decoder_t *self_
 '''
 
 functions = [
+    ('decoder_read_ia5str(', DECODER_READ_IA5STR),
     (
         'decoder_read_non_negative_binary_integer(',
         DECODER_READ_NON_NEGATIVE_BINARY_INTEGER
@@ -446,6 +467,7 @@ functions = [
     ('decoder_abort(', DECODER_ABORT),
     ('decoder_get_result(', DECODER_GET_RESULT),
     ('decoder_init(', DECODER_INIT),
+    ('encoder_append_ia5str(', ENCODER_APPEND_IA5STR),
     (
         'encoder_append_non_negative_binary_integer(',
         ENCODER_APPEND_NON_NEGATIVE_BINARY_INTEGER
