@@ -332,8 +332,8 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "Invalid ASN.1 syntax at line 1, column 43: 'A DEFINITIONS ::= BEGIN "
-            " A ::= SEQUENCE { >!<a } END': Expected Type.")
+            "Invalid ASN.1 syntax at line 1, column 45: 'A DEFINITIONS ::= BEGIN "
+            " A ::= SEQUENCE { a >!<} END': Expected Type.")
 
     def test_parse_error_sequence_missing_member_name(self):
         with self.assertRaises(asn1tools.ParseError) as cm:
@@ -344,7 +344,7 @@ class Asn1ToolsParseTest(unittest.TestCase):
         self.assertEqual(
             str(cm.exception),
             "Invalid ASN.1 syntax at line 1, column 43: 'A DEFINITIONS ::= "
-            "BEGIN  A ::= SEQUENCE { >!<A } END': Expected Type.")
+            "BEGIN  A ::= SEQUENCE { >!<A } END': Expected '}'.")
 
     def test_parse_error_definitive_identifier(self):
         with self.assertRaises(asn1tools.ParseError) as cm:
@@ -366,8 +366,8 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "Invalid ASN.1 syntax at line 1, column 39: 'A DEFINITIONS ::= BEGIN "
-            "B ::= INTEGER >!<(| SIZE (1))END': Expected END.")
+            "Invalid ASN.1 syntax at line 1, column 40: 'A DEFINITIONS ::= BEGIN "
+            "B ::= INTEGER (>!<| SIZE (1))END': Expected one or more constraints.")
 
     def test_parse_error_missing_union_member_middle(self):
         with self.assertRaises(asn1tools.ParseError) as cm:
@@ -377,8 +377,8 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "Invalid ASN.1 syntax at line 1, column 39: \'A DEFINITIONS "
-            "::= BEGIN B ::= INTEGER >!<(SIZE (1) | | (0))END\': Expected END.")
+            "Invalid ASN.1 syntax at line 1, column 49: \'A DEFINITIONS "
+            "::= BEGIN B ::= INTEGER (SIZE (1) >!<| | (0))END\': Expected ')'.")
 
     def test_parse_error_missing_union_member_end(self):
         with self.assertRaises(asn1tools.ParseError) as cm:
@@ -388,8 +388,8 @@ class Asn1ToolsParseTest(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "Invalid ASN.1 syntax at line 1, column 39: \'A DEFINITIONS "
-            "::= BEGIN B ::= INTEGER >!<(SIZE (1) |)END\': Expected END.")
+            "Invalid ASN.1 syntax at line 1, column 49: \'A DEFINITIONS "
+            "::= BEGIN B ::= INTEGER (SIZE (1) >!<|)END\': Expected ')'.")
 
     def test_parse_error_size_constraint_missing_parentheses(self):
         with self.assertRaises(asn1tools.ParseError) as cm:
@@ -463,7 +463,7 @@ class Asn1ToolsParseTest(unittest.TestCase):
             str(cm.exception),
             "Invalid ASN.1 syntax at line 1, column 63: \'A DEFINITIONS ::= "
             "BEGIN Foo ::= SEQUENCE { a BOOLEAN, ..., ...>!<, [[ c BOOLEAN ]] "
-            "} END\': Expected Type.")
+            "} END\': Expected '}'.")
 
     def test_parse_error_too_many_extension_markers(self):
         with self.assertRaises(asn1tools.ParseError) as cm:
@@ -487,7 +487,7 @@ class Asn1ToolsParseTest(unittest.TestCase):
             str(cm.exception),
             "Invalid ASN.1 syntax at line 1, column 108: \'A DEFINITIONS ::= "
             "BEGIN Foo ::= SEQUENCE { a BOOLEAN, ..., [[ b BOOLEAN ]], [[ c "
-            "BOOLEAN ]], ..., d BOOLEAN>!<, ... } END\': Expected Type.")
+            "BOOLEAN ]], ..., d BOOLEAN>!<, ... } END\': Expected '}'.")
 
     def test_parse_error_missing_single_line_comment_end(self):
         with self.assertRaises(asn1tools.ParseError) as cm:
