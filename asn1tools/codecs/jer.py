@@ -62,8 +62,11 @@ class MembersType(Type):
                     # Add member location
                     e.add_location(member)
                     raise e
-            elif member.optional or member.has_default():
-                continue
+            elif member.optional:
+                if member.has_default():
+                    value = member.default()
+                else:
+                    value = None
             else:
                 raise EncodeError(
                     "{} member '{}' not found in {}.".format(
@@ -83,7 +86,10 @@ class MembersType(Type):
 
             if name in data:
                 try:
-                    value = member.decode(data[name])
+                    if data[name] is None and member.optional:
+                        continue
+                    else:
+                        value = member.decode(data[name])
                 except ErrorWithLocation as e:
                     # Add member location
                     e.add_location(member)
