@@ -1045,8 +1045,11 @@ def create_grammar():
                              | object_
                              | object_set)
     actual_parameter_list = Group(Suppress(left_brace)
+                                  +Suppress(left_brace)
                                   + delimitedList(actual_parameter)
-                                  + Suppress(right_brace))
+                                  + Suppress(right_brace)
+                                  +Suppress(right_brace)
+                                 )
     parameterized_object = (defined_object + actual_parameter_list)
     parameterized_object_set = (defined_object_set + actual_parameter_list)
     parameterized_object_class = (defined_object_class + actual_parameter_list)
