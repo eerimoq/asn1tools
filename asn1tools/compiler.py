@@ -18,6 +18,7 @@ from .codecs import gser
 from .codecs import jer
 from .codecs import oer
 from .codecs import per
+from .codecs import eper
 from .codecs import uper
 from .codecs import xer
 from .codecs import type_checker
@@ -296,6 +297,7 @@ def compile_dict(specification,
         'jer': jer,
         'oer': oer,
         'per': per,
+        'eper': eper,
         'uper': uper,
         'xer': xer
     }
