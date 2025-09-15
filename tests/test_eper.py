@@ -35,7 +35,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
                 firstName PrintableString, age INTEGER
             }
             END
-            """
+            """, "eper"
         )
 
         fig10 = [
@@ -46,7 +46,7 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
                 "firstName": "Taro",
                 "lastName": "Yamada",
                 "single": False,
-                "children": {"firstName": "Jiro", "age": 3}
+                "children": [{"firstName": "Jiro", "age": 3}]
             },
             {
                 "number": 2,
@@ -57,6 +57,67 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
                 "single": True
             }
         ]
+
+        result = bytes(
+            [
+                0x54, # offset and bit field 
+
+                # 1st record
+                    0x02, # number part sequence-of
+                    0x01, # number
+                    0x1e, # age,
+                    
+                    0x04, # first name "Taro" - First record
+                    0x54,
+                    0x61, 
+                    0x72, 
+                    0x6f,
+
+                    0x06, # lastname "Yamada"
+                    0x59,
+                    0x61,
+                    0x60,
+                    0x61, 
+                    0x64,
+                    0x61,
+
+                        0x01, # number part sequence-of (Child Information)
+
+                        0x04, # first name "Jiro"
+                        0x4a, 
+                        0x69,
+                        0x72,
+                        0x6f,
+
+                        0x03, # Age
+
+                # 2nd Personal Record
+                
+                    0x02, # number
+                    0x19, # age
+
+                    0x04, # first name "Hana"
+                    0x48,
+                    0x61,
+                    0x6e,
+                    0x61,
+
+                    0x04, # last name "Sato"
+                    0x53,
+                    0x61,
+                    0x74,
+                    0x6f
+
+
+            ]
+        )
+
+        datas = [
+            ('Employees', fig10, result)
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
 
 
 if __name__ == '__main__':
