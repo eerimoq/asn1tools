@@ -38,7 +38,25 @@ class Asn1ToolsPerTest(Asn1ToolsBaseTest):
             """
         )
 
-        
+        fig10 = [
+            {
+                "number": 1,
+                "sex": "male",
+                "age": 30,
+                "firstName": "Taro",
+                "lastName": "Yamada",
+                "single": False,
+                "children": {"firstName": "Jiro", "age": 3}
+            },
+            {
+                "number": 2,
+                "sex": "female",
+                "age": 25,
+                "firstName": "Hana",
+                "lastName": "Sato",
+                "single": True
+            }
+        ]
 
 
 if __name__ == '__main__':
