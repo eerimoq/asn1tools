@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "asn1tools"
+dynamic = ["version"]
+description = "ASN.1 parsing, encoding and decoding."
+readme = "README.rst"
+license = "MIT"
+authors = [{ name = "Erik Moqvist", email = "erik.moqvist@gmail.com" }]
+keywords = ["ASN.1", "asn1"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 2",
+    "Programming Language :: Python :: 3",
+]
+dependencies = ["bitstruct", "libsnmp<3", "pyparsing>=3.1.2"]
+requires-python = ">=3.10"
+
+[dependency-groups]
+cache = ["diskcache>=5.6.3"]
+shell = ["prompt-toolkit>=3.0.52"]
+dev = [
+    { include-group = "build" },
+    { include-group = "cache" },
+    { include-group = "examples" },
+    { include-group = "shell" },
+    { include-group = "test" },
+]
+build = ["hatch"]
+lint = ["codespell", "pycodestyle"]
+test = [
+    "pytest",
+    "mock ; python_full_version < '3'",
+    "nala ; python_full_version >= '3.6'",
+]
+examples = ["asn1crypto", "humanfriendly", "pyasn1", "protobuf<=3.20", "pysnmp"]
+
+[project.scripts]
+asn1tools = "asn1tools.__init__:_main"
+
+[project.urls]
+Homepage = "https://github.com/eerimoq/asn1tools"
+
+[tool.hatch.version]
+path = "asn1tools/version.py"
+
+[tool.ruff]
+line-length = 90
+indent-width = 4
+target-version = "py310"
+
+[tool.ruff.lint]
+exclude = ["E221", "E129", "W503"]
+
+[tool.ruff.format]
+quote-style = "preserve"
+
+[tool.uv.build-backend]
+module-name = "asn1tools"
+module-root = "."
