@@ -32,6 +32,7 @@ from .permitted_alphabet import PRINTABLE_STRING
 from .permitted_alphabet import IA5_STRING
 from .permitted_alphabet import BMP_STRING
 from .permitted_alphabet import VISIBLE_STRING
+from .per import PermittedAlphabet
 
 class Type(BaseType):
 
@@ -203,7 +204,9 @@ class VisibleString(KnownMultiplierStringType):
                                            ENCODE_DECODE_MAP)
 
 
-
+class StringType(Type):
+    def __init__(self, name):
+        raise NotImplemented
 class GeneralString(StringType):
 
     ENCODING = 'latin-1'
