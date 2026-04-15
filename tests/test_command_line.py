@@ -440,8 +440,8 @@ ff0e0201011609497320312b313d333f
                 with self.assertRaises(SystemExit) as cm:
                     asn1tools._main()
 
-                self.assertEqual(str(cm.exception),
-                                 "error: '012': Odd-length string")
+                self.assertRegex(str(cm.exception),
+                                 r"error: '012': Odd.*(length string|number of hexadecimal digits)")
 
     def test_command_line_convert_py(self):
         # Preparations.
