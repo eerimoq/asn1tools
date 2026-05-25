@@ -10,6 +10,7 @@ from .utils import Asn1ToolsBaseTest
 import asn1tools
 from asn1tools.codecs import restricted_utc_time_to_datetime as ut2dt
 from asn1tools.codecs import restricted_generalized_time_to_datetime as gt2dt
+from asn1tools.codecs.ber import DecodeTagError
 from asn1tools.compat import timezone
 from asn1tools.compat import timedelta
 
@@ -582,6 +583,46 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
         )
 
         self.assert_encode_decode(rfc5280, 'Certificate', decoded, encoded)
+
+    def test_sequence_of_malformed_element(self):
+        """Test that malformed SEQUENCE OF data raises DecodeTagError.
+
+        Without the check_decode_error call in ArrayType.decode_content,
+        a malformed element would return TAG_MISMATCH without advancing the
+        offset, causing an infinite loop.
+
+        """
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= BEGIN A ::= SEQUENCE OF INTEGER END",
+            'der')
+
+        encoded = foo.encode('A', [1, 2])
+
+        # Corrupt the second element: change its tag from INTEGER (02) to
+        # NULL (05), leaving the length and value intact.
+        malformed = bytearray(encoded)
+        malformed[5] = 0x05
+
+        with self.assertRaises(DecodeTagError):
+            foo.decode('A', bytes(malformed))
+
+    def test_set_of_malformed_element(self):
+        """Test that malformed SET OF data raises DecodeTagError.
+
+        Same as test_sequence_of_malformed_element but for SET OF.
+
+        """
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= BEGIN A ::= SET OF INTEGER END",
+            'der')
+
+        encoded = foo.encode('A', [1, 2])
+
+        malformed = bytearray(encoded)
+        malformed[5] = 0x05
+
+        with self.assertRaises(DecodeTagError):
+            foo.decode('A', bytes(malformed))
 
 
 if __name__ == '__main__':

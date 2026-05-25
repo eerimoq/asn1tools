@@ -224,6 +224,25 @@ class Asn1ToolsCompileTest(unittest.TestCase):
         self.assertEqual(str(cm.exception),
                          "Value 'missing-value' not found in module 'A'.")
 
+    def test_circular_tagged_type_self_reference(self):
+        """Test that a self-referencing tagged type does not hang the compiler.
+
+        Without cycle detection in resolve_type_name, this would loop forever.
+
+        """
+        asn1tools.compile_string(
+            'A DEFINITIONS ::= BEGIN A ::= [0] A END')
+
+    def test_circular_tagged_types(self):
+        """Test that two tagged types referencing each other do not hang.
+
+        Without cycle detection in resolve_type_name and
+        resolve_type_descriptor, this would loop forever.
+
+        """
+        asn1tools.compile_string(
+            'A DEFINITIONS ::= BEGIN A ::= [0] B B ::= [1] A END')
+
 
 if __name__ == '__main__':
     unittest.main()
