@@ -9,6 +9,7 @@ from . import restricted_generalized_time_to_datetime
 from . import restricted_generalized_time_from_datetime
 from .compiler import clean_bit_string_value
 from .ber import Class, DecodeTagError, StandardEncodeMixin
+from .ber import check_decode_error
 from .ber import Encoding
 from .ber import Tag
 from .ber import encode_length_definite
@@ -90,6 +91,7 @@ class ArrayType(StandardEncodeMixin, Type):
 
         while (offset - start_offset) < length:
             decoded_element, offset = self.element_type.decode(data, offset)
+            check_decode_error(self.element_type, decoded_element, data, offset)
             decoded.append(decoded_element)
 
         return decoded, offset
