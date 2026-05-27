@@ -695,8 +695,14 @@ class Compiler(object):
 
         """
 
+        seen = set()
         try:
             while True:
+                if type_name in seen:
+                    raise CompileError(
+                        "Circular type reference '{}' in module '{}'.".format(
+                            type_name, module_name))
+                seen.add(type_name)
                 if is_object_class_type_name(type_name):
                     type_name, module_name = self.lookup_object_class_type_name(
                         type_name,
@@ -714,8 +720,14 @@ class Compiler(object):
     def resolve_type_descriptor(self, type_descriptor, module_name):
         type_name = type_descriptor['type']
 
+        seen = set()
         try:
             while True:
+                if type_name in seen:
+                    raise CompileError(
+                        "Circular type reference '{}' in module '{}'.".format(
+                            type_name, module_name))
+                seen.add(type_name)
                 if is_object_class_type_name(type_name):
                     type_name, module_name = self.lookup_object_class_type_name(
                         type_name,
