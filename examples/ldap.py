@@ -48,12 +48,10 @@ import socket
 from pprint import pprint
 import asn1tools
 
+# A sample can be obtained from:
+# https://github.com/chemikadze/asn1go/blob/master/examples/rfc4511.asn1
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 RFC4511_ASN_PATH = os.path.join(SCRIPT_DIR,
-                                '..',
-                                'tests',
-                                'files',
-                                'ietf',
                                 'rfc4511.asn')
 HOST = 'ldap.forumsys.com'
 PORT = 389
