@@ -207,6 +207,10 @@ def libsnmp_encode_decode():
         encode_time = float('inf')
         decode_time = float('inf')
         print('Syntax error in libsnmp.')
+    except Exception as e:
+        encode_time = float('inf')
+        decode_time = float('inf')
+        print('Unable to use libsnmp: {}'.format(e))
 
     return encode_time, decode_time
 
@@ -216,7 +220,11 @@ def pyasn1_encode_decode():
         from pysnmp.proto import api
         from pyasn1.codec.ber import decoder
 
-        snmp_v1 = api.protoModules[api.protoVersion1].Message()
+        try:
+            # pysnmp 7 and later.
+            snmp_v1 = api.PROTOCOL_MODULES[api.SNMP_VERSION_1].Message()
+        except AttributeError:
+            snmp_v1 = api.protoModules[api.protoVersion1].Message()
 
         def decode():
             decoder.decode(ENCODED_MESSAGE, asn1Spec=snmp_v1)

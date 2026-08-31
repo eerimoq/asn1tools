@@ -705,10 +705,15 @@ def convert_parameterized_object_assignment(_s, _l, tokens):
             converted_type)
 
 
-def convert_parameterized_object_class_assignment(_s, _l, tokens):
+def convert_parameterized_object_class_assignment(s, loc, tokens):
     members = []
 
     for member in tokens[3]:
+        # Not an object class definition, for example a parameterized
+        # type assignment. Let other alternatives match it.
+        if not isinstance(member, (Tokens, ParseResults, list)):
+            raise ParseException(s, loc, 'Not an object class assignment.')
+
         if member[0][1].islower():
             converted_member = member[1][0]
 

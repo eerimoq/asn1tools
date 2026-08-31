@@ -123,7 +123,7 @@ CFLAGS_EXTRA_CLANG := \
 
 .PHONY: test
 test:
-	python3 setup.py test
+	python3 -m unittest discover -t . -s tests
 	$(MAKE) test-sdist
 	env PYTHONPATH=. python3 examples/benchmarks/packages/ber.py
 	env PYTHONPATH=. python3 examples/benchmarks/packages/uper.py
@@ -211,7 +211,7 @@ test-sdist:
 	cd test && \
 	tar xf ../*.tar.gz && \
 	cd asn1tools-* && \
-	python3 setup.py test
+	python3 -m unittest discover -t . -s tests
 
 .PHONY: release-to-pypi
 release-to-pypi:
