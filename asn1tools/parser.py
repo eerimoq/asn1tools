@@ -12,7 +12,7 @@ from pyparsing import Word
 from pyparsing import ZeroOrMore
 from pyparsing import Regex
 from pyparsing import printables
-from pyparsing import delimitedList
+from pyparsing import DelimitedList
 from pyparsing import Group
 from pyparsing import Optional
 from pyparsing import Forward
@@ -705,10 +705,15 @@ def convert_parameterized_object_assignment(_s, _l, tokens):
             converted_type)
 
 
-def convert_parameterized_object_class_assignment(_s, _l, tokens):
+def convert_parameterized_object_class_assignment(s, loc, tokens):
     members = []
 
     for member in tokens[3]:
+        # Not an object class definition, for example a parameterized
+        # type assignment. Let other alternatives match it.
+        if not isinstance(member, (Tokens, ParseResults, list)):
+            raise ParseException(s, loc, 'Not an object class assignment.')
+
         if member[0][1].islower():
             converted_member = member[1][0]
 
@@ -854,83 +859,83 @@ def create_grammar():
     """
 
     # Keywords.
-    SEQUENCE = Keyword('SEQUENCE').setName('SEQUENCE')
-    CHOICE = Keyword('CHOICE').setName('CHOICE')
-    ENUMERATED = Keyword('ENUMERATED').setName('ENUMERATED')
-    DEFINITIONS = Keyword('DEFINITIONS').setName('DEFINITIONS')
-    BEGIN = Keyword('BEGIN').setName('BEGIN')
-    END = Keyword('END').setName('END')
-    AUTOMATIC = Keyword('AUTOMATIC').setName('AUTOMATIC')
-    TAGS = Keyword('TAGS').setName('TAGS')
-    OPTIONAL = Keyword('OPTIONAL').setName('OPTIONAL')
-    OF = Keyword('OF').setName('OF')
-    SIZE = Keyword('SIZE').setName('SIZE')
-    INTEGER = Keyword('INTEGER').setName('INTEGER')
-    REAL = Keyword('REAL').setName('REAL')
-    BIT_STRING = Keyword('BIT STRING').setName('BIT STRING')
-    OCTET_STRING = Keyword('OCTET STRING').setName('OCTET STRING')
-    DEFAULT = Keyword('DEFAULT').setName('DEFAULT')
-    IMPORTS = Keyword('IMPORTS').setName('IMPORTS')
-    EXPORTS = Keyword('EXPORTS').setName('EXPORTS')
-    FROM = Keyword('FROM').setName('FROM')
-    CONTAINING = Keyword('CONTAINING').setName('CONTAINING')
-    ENCODED_BY = Keyword('ENCODED_BY').setName('ENCODED_BY')
-    IMPLICIT = Keyword('IMPLICIT').setName('IMPLICIT')
-    EXPLICIT = Keyword('EXPLICIT').setName('EXPLICIT')
-    OBJECT_IDENTIFIER = Keyword('OBJECT IDENTIFIER').setName('OBJECT IDENTIFIER')
-    UNIVERSAL = Keyword('UNIVERSAL').setName('UNIVERSAL')
-    APPLICATION = Keyword('APPLICATION').setName('APPLICATION')
-    PRIVATE = Keyword('PRIVATE').setName('PRIVATE')
-    SET = Keyword('SET').setName('SET')
-    ANY_DEFINED_BY = Keyword('ANY DEFINED BY').setName('ANY DEFINED BY')
-    EXTENSIBILITY_IMPLIED = Keyword('EXTENSIBILITY IMPLIED').setName(
+    SEQUENCE = Keyword('SEQUENCE').set_name('SEQUENCE')
+    CHOICE = Keyword('CHOICE').set_name('CHOICE')
+    ENUMERATED = Keyword('ENUMERATED').set_name('ENUMERATED')
+    DEFINITIONS = Keyword('DEFINITIONS').set_name('DEFINITIONS')
+    BEGIN = Keyword('BEGIN').set_name('BEGIN')
+    END = Keyword('END').set_name('END')
+    AUTOMATIC = Keyword('AUTOMATIC').set_name('AUTOMATIC')
+    TAGS = Keyword('TAGS').set_name('TAGS')
+    OPTIONAL = Keyword('OPTIONAL').set_name('OPTIONAL')
+    OF = Keyword('OF').set_name('OF')
+    SIZE = Keyword('SIZE').set_name('SIZE')
+    INTEGER = Keyword('INTEGER').set_name('INTEGER')
+    REAL = Keyword('REAL').set_name('REAL')
+    BIT_STRING = Keyword('BIT STRING').set_name('BIT STRING')
+    OCTET_STRING = Keyword('OCTET STRING').set_name('OCTET STRING')
+    DEFAULT = Keyword('DEFAULT').set_name('DEFAULT')
+    IMPORTS = Keyword('IMPORTS').set_name('IMPORTS')
+    EXPORTS = Keyword('EXPORTS').set_name('EXPORTS')
+    FROM = Keyword('FROM').set_name('FROM')
+    CONTAINING = Keyword('CONTAINING').set_name('CONTAINING')
+    ENCODED_BY = Keyword('ENCODED_BY').set_name('ENCODED_BY')
+    IMPLICIT = Keyword('IMPLICIT').set_name('IMPLICIT')
+    EXPLICIT = Keyword('EXPLICIT').set_name('EXPLICIT')
+    OBJECT_IDENTIFIER = Keyword('OBJECT IDENTIFIER').set_name('OBJECT IDENTIFIER')
+    UNIVERSAL = Keyword('UNIVERSAL').set_name('UNIVERSAL')
+    APPLICATION = Keyword('APPLICATION').set_name('APPLICATION')
+    PRIVATE = Keyword('PRIVATE').set_name('PRIVATE')
+    SET = Keyword('SET').set_name('SET')
+    ANY_DEFINED_BY = Keyword('ANY DEFINED BY').set_name('ANY DEFINED BY')
+    EXTENSIBILITY_IMPLIED = Keyword('EXTENSIBILITY IMPLIED').set_name(
         'EXTENSIBILITY IMPLIED')
-    BOOLEAN = Keyword('BOOLEAN').setName('BOOLEAN')
-    TRUE = Keyword('TRUE').setName('TRUE')
-    FALSE = Keyword('FALSE').setName('FALSE')
-    CLASS = Keyword('CLASS').setName('CLASS')
-    WITH_SYNTAX = Keyword('WITH SYNTAX').setName('WITH SYNTAX')
-    UNIQUE = Keyword('UNIQUE').setName('UNIQUE')
-    NULL = Keyword('NULL').setName('NULL')
-    WITH_COMPONENT = Keyword('WITH COMPONENT').setName('WITH COMPONENT')
-    WITH_COMPONENTS = Keyword('WITH COMPONENTS').setName('WITH COMPONENTS')
-    WITH_SUCCESSORS = Keyword('WITH SUCCESSORS').setName('WITH SUCCESSORS')
-    WITH_DESCENDANTS = Keyword('WITH DESCENDANTS').setName('WITH DESCENDANTS')
-    COMPONENTS_OF = Keyword('COMPONENTS OF').setName('COMPONENTS OF')
-    PRESENT = Keyword('PRESENT').setName('PRESENT')
-    ABSENT = Keyword('ABSENT').setName('ABSENT')
-    ALL = Keyword('ALL').setName('ALL')
-    EXCEPT = Keyword('EXCEPT').setName('EXCEPT')
-    MIN = Keyword('MIN').setName('MIN')
-    MAX = Keyword('MAX').setName('MAX')
-    INCLUDES = Keyword('INCLUDES').setName('INCLUDES')
-    PATTERN = Keyword('PATTERN').setName('PATTERN')
-    CONSTRAINED_BY = Keyword('CONSTRAINED BY').setName('CONSTRAINED BY')
-    UNION = Keyword('UNION').setName('UNION')
-    INTERSECTION = Keyword('INTERSECTION').setName('INTERSECTION')
-    PLUS_INFINITY = Keyword('PLUS-INFINITY').setName('PLUS-INFINITY')
-    MINUS_INFINITY = Keyword('MINUS-INFINITY').setName('MINUS-INFINITY')
-    BMPString = Keyword('BMPString').setName('BMPString')
-    GeneralString = Keyword('GeneralString').setName('GeneralString')
-    GraphicString = Keyword('GraphicString').setName('GraphicString')
-    IA5String = Keyword('IA5String').setName('IA5String')
-    ISO646String = Keyword('ISO646String').setName('ISO646String')
-    NumericString = Keyword('NumericString').setName('NumericString')
-    PrintableString = Keyword('PrintableString').setName('PrintableString')
-    TeletexString = Keyword('TeletexString').setName('TeletexString')
-    UTCTime = Keyword('UTCTime').setName('UTCTime')
-    GeneralizedTime = Keyword('GeneralizedTime').setName('GeneralizedTime')
-    T61String = Keyword('T61String').setName('T61String')
-    UniversalString = Keyword('UniversalString').setName('UniversalString')
-    UTF8String = Keyword('UTF8String').setName('UTF8String')
-    VideotexString = Keyword('VideotexString').setName('VideotexString')
-    VisibleString = Keyword('VisibleString').setName('VisibleString')
-    CHARACTER_STRING = Keyword('CHARACTER STRING').setName('CHARACTER STRING')
+    BOOLEAN = Keyword('BOOLEAN').set_name('BOOLEAN')
+    TRUE = Keyword('TRUE').set_name('TRUE')
+    FALSE = Keyword('FALSE').set_name('FALSE')
+    CLASS = Keyword('CLASS').set_name('CLASS')
+    WITH_SYNTAX = Keyword('WITH SYNTAX').set_name('WITH SYNTAX')
+    UNIQUE = Keyword('UNIQUE').set_name('UNIQUE')
+    NULL = Keyword('NULL').set_name('NULL')
+    WITH_COMPONENT = Keyword('WITH COMPONENT').set_name('WITH COMPONENT')
+    WITH_COMPONENTS = Keyword('WITH COMPONENTS').set_name('WITH COMPONENTS')
+    WITH_SUCCESSORS = Keyword('WITH SUCCESSORS').set_name('WITH SUCCESSORS')
+    WITH_DESCENDANTS = Keyword('WITH DESCENDANTS').set_name('WITH DESCENDANTS')
+    COMPONENTS_OF = Keyword('COMPONENTS OF').set_name('COMPONENTS OF')
+    PRESENT = Keyword('PRESENT').set_name('PRESENT')
+    ABSENT = Keyword('ABSENT').set_name('ABSENT')
+    ALL = Keyword('ALL').set_name('ALL')
+    EXCEPT = Keyword('EXCEPT').set_name('EXCEPT')
+    MIN = Keyword('MIN').set_name('MIN')
+    MAX = Keyword('MAX').set_name('MAX')
+    INCLUDES = Keyword('INCLUDES').set_name('INCLUDES')
+    PATTERN = Keyword('PATTERN').set_name('PATTERN')
+    CONSTRAINED_BY = Keyword('CONSTRAINED BY').set_name('CONSTRAINED BY')
+    UNION = Keyword('UNION').set_name('UNION')
+    INTERSECTION = Keyword('INTERSECTION').set_name('INTERSECTION')
+    PLUS_INFINITY = Keyword('PLUS-INFINITY').set_name('PLUS-INFINITY')
+    MINUS_INFINITY = Keyword('MINUS-INFINITY').set_name('MINUS-INFINITY')
+    BMPString = Keyword('BMPString').set_name('BMPString')
+    GeneralString = Keyword('GeneralString').set_name('GeneralString')
+    GraphicString = Keyword('GraphicString').set_name('GraphicString')
+    IA5String = Keyword('IA5String').set_name('IA5String')
+    ISO646String = Keyword('ISO646String').set_name('ISO646String')
+    NumericString = Keyword('NumericString').set_name('NumericString')
+    PrintableString = Keyword('PrintableString').set_name('PrintableString')
+    TeletexString = Keyword('TeletexString').set_name('TeletexString')
+    UTCTime = Keyword('UTCTime').set_name('UTCTime')
+    GeneralizedTime = Keyword('GeneralizedTime').set_name('GeneralizedTime')
+    T61String = Keyword('T61String').set_name('T61String')
+    UniversalString = Keyword('UniversalString').set_name('UniversalString')
+    UTF8String = Keyword('UTF8String').set_name('UTF8String')
+    VideotexString = Keyword('VideotexString').set_name('VideotexString')
+    VisibleString = Keyword('VisibleString').set_name('VisibleString')
+    CHARACTER_STRING = Keyword('CHARACTER STRING').set_name('CHARACTER STRING')
 
     # Various literals.
-    word = Word(printables, excludeChars=',(){}[].:=;"|').setName('word')
-    identifier = Regex(r'[a-z][a-zA-Z0-9-]*').setName('identifier')
-    assign = Literal('::=').setName('::=')
+    word = Word(printables, exclude_chars=',(){}[].:=;"|').set_name('word')
+    identifier = Regex(r'[a-z][a-zA-Z0-9-]*').set_name('identifier')
+    assign = Literal('::=').set_name('::=')
     left_parenthesis = Literal('(')
     right_parenthesis = Literal(')')
     left_brace = Literal('{')
@@ -954,7 +959,7 @@ def create_grammar():
     bstring = Regex(r"'[01\s]*'B")
     hstring = Regex(r"'[0-9A-F\s]*'H")
     cstring = QuotedString('"')
-    number = (Word(nums).setName('number') + ~dot)
+    number = (Word(nums).set_name('number') + ~dot)
     ampersand = Literal('&')
     less_than = Literal('<')
 
@@ -969,16 +974,16 @@ def create_grammar():
     constraint = Forward()
     element_set_spec = Forward()
     token_or_group_spec = Forward()
-    value_reference = Forward().setName('valuereference')
-    type_reference = Forward().setName('typereference')
-    value_set = Forward().setName('"valueSet" not implemented')
+    value_reference = Forward().set_name('valuereference')
+    type_reference = Forward().set_name('typereference')
+    value_set = Forward().set_name('"valueSet" not implemented')
     named_type = Forward()
     root_element_set_spec = Forward()
     defined_object_set = Forward()
     syntax_list = Forward()
     object_from_object = Forward()
     object_set_from_objects = Forward()
-    defined_value = Forward().setName('DefinedValue')
+    defined_value = Forward().set_name('DefinedValue')
     component_type_lists = Forward()
     extension_and_exception = Forward()
     optional_extension_marker = Forward()
@@ -997,8 +1002,8 @@ def create_grammar():
     sequence_value = Forward()
     signed_number = Forward()
     name_and_number_form = Forward()
-    number_form = Forward().setName('numberForm')
-    definitive_number_form = Forward().setName('definitiveNumberForm')
+    number_form = Forward().set_name('numberForm')
+    definitive_number_form = Forward().set_name('definitiveNumberForm')
     version_number = Forward()
     union_mark = Forward()
     named_number = Forward()
@@ -1013,7 +1018,7 @@ def create_grammar():
                   + size_constraint
                   + Suppress(Optional(right_parenthesis)))
 
-    class_number = (number | defined_value).setName('ClassNumber')
+    class_number = (number | defined_value).set_name('ClassNumber')
     tag = Group(Optional(Suppress(left_bracket)
                          - Group(Optional(UNIVERSAL
                                           | APPLICATION
@@ -1023,9 +1028,9 @@ def create_grammar():
                          + Group(Optional(IMPLICIT | EXPLICIT))))
 
     any_defined_by_type = (ANY_DEFINED_BY + word)
-    any_defined_by_type.setName('ANY DEFINED BY')
+    any_defined_by_type.set_name('ANY DEFINED BY')
 
-    identifier_list = delimitedList(identifier)
+    identifier_list = DelimitedList(identifier)
 
     # X.683: 8. Parameterized assignments
     dummy_reference = reference
@@ -1034,7 +1039,7 @@ def create_grammar():
     param_governor = (governor | dummy_governor)
     parameter = (Suppress(Optional(param_governor + colon)) + dummy_reference)
     parameter_list = Group(Optional(Suppress(left_brace)
-                                    + delimitedList(parameter)
+                                    + DelimitedList(parameter)
                                     + Suppress(right_brace)))
 
     # X.683: 9. Referencing parameterized definitions
@@ -1045,7 +1050,7 @@ def create_grammar():
                              | object_
                              | object_set)
     actual_parameter_list = Group(Suppress(left_brace)
-                                  + delimitedList(actual_parameter)
+                                  + DelimitedList(actual_parameter)
                                   + Suppress(right_brace))
     parameterized_object = (defined_object + actual_parameter_list)
     parameterized_object_set = (defined_object_set + actual_parameter_list)
@@ -1077,9 +1082,9 @@ def create_grammar():
                                      + Group(Group(defined_object_set))
                                      + right_brace
                                      + left_brace
-                                     - Group(delimitedList(at_notation))
+                                     - Group(DelimitedList(at_notation))
                                      - right_brace)
-    component_relation_constraint.setName('"{"')
+    component_relation_constraint.set_name('"{"')
     simple_table_constraint = object_set
     table_constraint = (component_relation_constraint
                         | simple_table_constraint)
@@ -1095,10 +1100,10 @@ def create_grammar():
                                          | defined_object_class)
     user_defined_constraint = (CONSTRAINED_BY
                                - left_brace
-                               - Optional(delimitedList(
+                               - Optional(DelimitedList(
                                    user_defined_constraint_parameter))
                                - right_brace)
-    user_defined_constraint.setName('CONSTRAINED_BY')
+    user_defined_constraint.set_name('CONSTRAINED_BY')
 
     # X.682: 8. General constraint specification
     general_constraint = (user_defined_constraint
@@ -1107,22 +1112,22 @@ def create_grammar():
 
     # X.681: 7. ASN.1 lexical items
     object_set_reference = type_reference
-    value_set_field_reference = NoMatch().setName(
+    value_set_field_reference = NoMatch().set_name(
         '"valueSetFieldReference" not implemented')
-    object_field_reference = NoMatch().setName(
+    object_field_reference = NoMatch().set_name(
         '"objectFieldReference" not implemented')
-    object_set_field_reference = NoMatch().setName(
+    object_set_field_reference = NoMatch().set_name(
         '"objectSetFieldReference" not implemented')
     object_class_reference = (NotAny(reserved_words)
                               + Regex(r'[A-Z][A-Z0-9-]*'))
     object_reference = value_reference
 
     # X.681: 8. Referencing definitions
-    external_object_set_reference = NoMatch().setName(
+    external_object_set_reference = NoMatch().set_name(
         '"externalObjectSetReference" not implemented')
     defined_object_set <<= (external_object_set_reference
                             | object_set_reference)
-    defined_object <<= NoMatch().setName('"definedObject" not implemented')
+    defined_object <<= NoMatch().set_name('"definedObject" not implemented')
     defined_object_class <<= object_class_reference
 
     # X.681: 9. Information object class definition and assignment
@@ -1132,13 +1137,13 @@ def create_grammar():
                               | value_set_field_reference
                               | object_field_reference
                               | object_set_field_reference)
-    object_set_field_spec = NoMatch().setName('"objectSetFieldSpec" not implemented')
-    object_field_spec = NoMatch().setName('"objectFieldSpec" not implemented')
-    variable_type_value_set_field_spec = NoMatch().setName(
+    object_set_field_spec = NoMatch().set_name('"objectSetFieldSpec" not implemented')
+    object_field_spec = NoMatch().set_name('"objectFieldSpec" not implemented')
+    variable_type_value_set_field_spec = NoMatch().set_name(
         '"variableTypeValueSetFieldSpec" not implemented')
-    fixed_type_value_set_field_spec = NoMatch().setName(
+    fixed_type_value_set_field_spec = NoMatch().set_name(
         '"fixedTypeValueSetFieldSpec" not implemented')
-    variable_type_value_field_spec = NoMatch().setName(
+    variable_type_value_field_spec = NoMatch().set_name(
         '"variableTypeValueFieldSpec" not implemented')
     fixed_type_value_field_spec = (value_field_reference
                                    + type_
@@ -1158,7 +1163,7 @@ def create_grammar():
     with_syntax_spec = (WITH_SYNTAX - syntax_list)
     object_class_defn = (CLASS
                          - Suppress(left_brace)
-                         - Group(delimitedList(field_spec))
+                         - Group(DelimitedList(field_spec))
                          - Suppress(right_brace)
                          - Optional(with_syntax_spec))
     object_class = (object_class_defn
@@ -1184,7 +1189,7 @@ def create_grammar():
     setting = (type_ | value | value_set | object_ | object_set | QuotedString('"'))
     field_setting = Group(primitive_field_name + setting)
     default_syntax = (Suppress(left_brace)
-                      + delimitedList(field_setting)
+                      + DelimitedList(field_setting)
                       + Suppress(right_brace))
     defined_syntax_token = (literal | setting)
     defined_syntax = (left_brace + ZeroOrMore(defined_syntax_token) + right_brace)
@@ -1211,7 +1216,7 @@ def create_grammar():
                                               + additional_element_set_spec)))
                        | (ellipsis + Optional(comma + additional_element_set_spec)))
     object_set <<= (left_brace + Group(object_set_spec) + right_brace)
-    object_set.setName('"{"')
+    object_set.set_name('"{"')
     parameterized_object_set_assignment = (object_set_reference
                                            + Suppress(parameter_list)
                                            + defined_object_class
@@ -1228,17 +1233,17 @@ def create_grammar():
     object_class_field_type = Combine(defined_object_class
                                       + dot
                                       + field_name)
-    object_class_field_type.setName('ObjectClassFieldType')
+    object_class_field_type.set_name('ObjectClassFieldType')
 
     # X.681: 15. Information from objects
-    object_set_from_objects <<= NoMatch().setName(
+    object_set_from_objects <<= NoMatch().set_name(
         '"objectSetFromObjects" not implemented')
-    object_from_object <<= NoMatch().setName('"objectFromObject" not implemented')
+    object_from_object <<= NoMatch().set_name('"objectFromObject" not implemented')
 
     # X.680: 49. The exception identifier
     exception_spec = Optional(
         exclamation_mark
-        + NoMatch().setName('"exceptionSpec" not implemented'))
+        + NoMatch().set_name('"exceptionSpec" not implemented'))
 
     # X.680: 47. Subtype elements
     pattern_constraint = (PATTERN + value)
@@ -1247,7 +1252,7 @@ def create_grammar():
     component_constraint = (Optional(value_constraint)
                             + Optional(presence_constraint))
     named_constraint = Group(identifier + component_constraint)
-    type_constraints = delimitedList(named_constraint)
+    type_constraints = DelimitedList(named_constraint)
     full_specification = (left_brace + Group(type_constraints) + right_brace)
     partial_specification = (left_brace
                              + Group(ellipsis
@@ -1286,7 +1291,7 @@ def create_grammar():
     elements = Group(subtype_elements
                      | object_set_elements
                      | (left_parenthesis + element_set_spec + right_parenthesis))
-    unions = delimitedList(elements, delim=(union_mark | intersection_mark))
+    unions = DelimitedList(elements, delim=(union_mark | intersection_mark))
     exclusions = (EXCEPT + elements)
     element_set_spec <<= (Suppress(ALL + exclusions) | unions)
     root_element_set_spec <<= element_set_spec
@@ -1300,14 +1305,14 @@ def create_grammar():
     subtype_constraint = element_set_specs
     constraint_spec = (general_constraint
                        | subtype_constraint)
-    constraint_spec.setName('one or more constraints')
+    constraint_spec.set_name('one or more constraints')
     constraint <<= (Suppress(left_parenthesis)
                     - constraint_spec
                     - Suppress(right_parenthesis))
 
     # X.680: 40. Definition of unrestricted character string types
     unrestricted_character_string_type = CHARACTER_STRING
-    unrestricted_character_string_value = NoMatch().setName(
+    unrestricted_character_string_value = NoMatch().set_name(
         '"unrestrictedCharacterStringValue" not implemented')
 
     # X.680: 39. Canonical order of characters
@@ -1329,7 +1334,7 @@ def create_grammar():
     table_row = number
     tuple_ = (left_brace + table_column + comma + table_row + right_brace)
     chars_defn = (cstring | quadruple | tuple_ | defined_value)
-    charsyms = delimitedList(chars_defn)
+    charsyms = DelimitedList(chars_defn)
     character_string_list = (left_brace + charsyms + right_brace)
     restricted_character_string_value = (cstring
                                          | character_string_list
@@ -1396,9 +1401,9 @@ def create_grammar():
 
     object_identifier_type = (OBJECT_IDENTIFIER
                               + Optional(left_parenthesis
-                                         + delimitedList(word, delim='|')
+                                         + DelimitedList(word, delim='|')
                                          + right_parenthesis))
-    object_identifier_type.setName('OBJECT IDENTIFIER')
+    object_identifier_type.set_name('OBJECT IDENTIFIER')
 
     # X.680: 30. Notation for tagged types
     tagged_value = NoMatch()
@@ -1406,14 +1411,14 @@ def create_grammar():
     # X.680: 29. Notation for selection types
 
     # X.680: 28. Notation for the choice types
-    alternative_type_list = delimitedList(named_type)
+    alternative_type_list = DelimitedList(named_type)
     extension_addition_alternatives_group = Group(left_version_brackets
                                                   + Suppress(version_number)
                                                   - Group(alternative_type_list)
                                                   - right_version_brackets)
     extension_addition_alternative = (extension_addition_alternatives_group
                                       | named_type)
-    extension_addition_alternatives_list = delimitedList(extension_addition_alternative)
+    extension_addition_alternatives_list = DelimitedList(extension_addition_alternative)
     extension_addition_alternatives = Optional(Suppress(comma)
                                                + extension_addition_alternatives_list)
     root_alternative_type_list = alternative_type_list
@@ -1426,7 +1431,7 @@ def create_grammar():
                    - left_brace
                    + Group(alternative_type_lists)
                    - right_brace)
-    choice_type.setName('CHOICE')
+    choice_type.set_name('CHOICE')
     choice_value = (identifier + colon + value)
 
     # X.680: 27. Notation for the set-of types
@@ -1437,7 +1442,7 @@ def create_grammar():
                    + Optional(identifier)
                    - tag
                    - type_)
-    set_of_type.setName('SET OF')
+    set_of_type.set_name('SET OF')
 
     # X.680: 26. Notation for the set types
     # set_value = NoMatch()
@@ -1447,7 +1452,7 @@ def create_grammar():
                                  | (extension_and_exception
                                     + optional_extension_marker)))
                 - right_brace)
-    set_type.setName('SET')
+    set_type.set_name('SET')
 
     # X.680: 25. Notation for the sequence-of types
     sequence_of_value = NoMatch()
@@ -1457,10 +1462,10 @@ def create_grammar():
                         + Optional(identifier)
                         - tag
                         - type_)
-    sequence_of_type.setName('SEQUENCE OF')
+    sequence_of_type.set_name('SEQUENCE OF')
 
     # X.680: 24. Notation for the sequence types
-    component_value_list = delimitedList(named_value)
+    component_value_list = DelimitedList(named_value)
     sequence_value <<= (left_brace
                         + Optional(component_value_list)
                         + right_brace)
@@ -1471,15 +1476,15 @@ def create_grammar():
     version_number <<= Optional(number + Suppress(colon))
     extension_addition_group = Group(left_version_brackets
                                      + Suppress(version_number)
-                                     + Group(delimitedList(component_type))
+                                     + Group(DelimitedList(component_type))
                                      + right_version_brackets)
     extension_and_exception <<= (ellipsis + Optional(exception_spec))
     extension_addition = (component_type | extension_addition_group)
-    extension_addition_list = delimitedList(extension_addition)
+    extension_addition_list = DelimitedList(extension_addition)
     extension_additions = Optional(Suppress(comma) + extension_addition_list)
     extension_end_marker = (Suppress(comma) + ellipsis)
     optional_extension_marker <<= Optional(Suppress(comma) + ellipsis)
-    component_type_list = delimitedList(component_type)
+    component_type_list = DelimitedList(component_type)
     root_component_type_list = component_type_list
     component_type_lists <<= ((root_component_type_list
                                + Optional(Suppress(comma)
@@ -1501,7 +1506,7 @@ def create_grammar():
                                       | (extension_and_exception
                                          + optional_extension_marker)))
                      - right_brace)
-    sequence_type.setName('SEQUENCE')
+    sequence_type.set_name('SEQUENCE')
 
     # X.680: 23. Notation for the null type
     null_value = NULL
@@ -1512,18 +1517,18 @@ def create_grammar():
     #                       | hstring
     #                       | (CONTAINING + value))
     octet_string_type = OCTET_STRING
-    octet_string_type.setName('OCTET STRING')
+    octet_string_type.set_name('OCTET STRING')
 
     # X.680: 21. Notation for the bitstring type
     bit_string_type = (BIT_STRING
                        + Group(Optional(
                            Suppress(left_brace)
-                           + delimitedList(Group(word
+                           + DelimitedList(Group(word
                                                  + Suppress(left_parenthesis)
                                                  + word
                                                  + Suppress(right_parenthesis)))
                            + Suppress(right_brace))))
-    bit_string_type.setName('BIT STRING')
+    bit_string_type.set_name('BIT STRING')
     bit_string_value = Tag('BitStringValue',
                            bstring
                            | hstring
@@ -1541,12 +1546,12 @@ def create_grammar():
     real_value = (numeric_real_value
                   | special_real_value)
     real_type = REAL
-    real_type.setName('REAL')
+    real_type.set_name('REAL')
 
     # X.680: 19. Notation for the enumerated type
     enumerated_value = identifier
     enumeration_item = (named_number | identifier)
-    enumeration = delimitedList(enumeration_item)
+    enumeration = DelimitedList(enumeration_item)
     root_enumeration = enumeration
     additional_enumeration = enumeration
     enumerations = Group(Group(root_enumeration)
@@ -1559,7 +1564,7 @@ def create_grammar():
                        - left_brace
                        + enumerations
                        - right_brace)
-    enumerated_type.setName('ENUMERATED')
+    enumerated_type.set_name('ENUMERATED')
 
     # X.680: 18. Notation for the integer type
     integer_value = (signed_number | identifier)
@@ -1568,12 +1573,12 @@ def create_grammar():
                            + left_parenthesis
                            + (signed_number | defined_value)
                            + right_parenthesis)
-    named_number_list = delimitedList(named_number)
+    named_number_list = DelimitedList(named_number)
     integer_type = (INTEGER
                     + Group(Optional(Suppress(left_brace)
                                      + named_number_list
                                      + Suppress(right_brace))))
-    integer_type.setName('INTEGER')
+    integer_type.set_name('INTEGER')
 
     # X.680: 17. Notation for boolean type
     boolean_type = BOOLEAN
@@ -1581,7 +1586,7 @@ def create_grammar():
 
     # X.680: 16. Definition of types and values
     named_value <<= (identifier + value)
-    referenced_value <<= NoMatch().setName('"referencedValue" not implemented')
+    referenced_value <<= NoMatch().set_name('"referencedValue" not implemented')
     builtin_value <<= (bit_string_value
                        | boolean_value
                        | character_string_value
@@ -1608,7 +1613,7 @@ def create_grammar():
                          - tag
                          - type_)
     referenced_type = defined_type
-    referenced_type.setName('ReferencedType')
+    referenced_type.set_name('ReferencedType')
     builtin_type = (choice_type
                     | integer_type
                     | null_type
@@ -1626,14 +1631,14 @@ def create_grammar():
                     | character_string_type)
     type_ <<= Group((builtin_type
                      | any_defined_by_type
-                     | referenced_type).setName('Type')
+                     | referenced_type).set_name('Type')
                     + Group(ZeroOrMore(constraint)))
 
     # X.680: 15. Assigning types and values
     type_reference <<= (NotAny(reserved_words)
                         + Regex(r'[A-Z][a-zA-Z0-9-]*'))
     value_reference <<= Regex(r'[a-z][a-zA-Z0-9-]*')
-    value_set <<= NoMatch().setName('"valueSet" not implemented')
+    value_set <<= NoMatch().set_name('"valueSet" not implemented')
     parameterized_type_assignment = (type_reference
                                      + parameter_list
                                      - assign
@@ -1664,7 +1669,7 @@ def create_grammar():
 
     # X.680: 12. Module definition
     module_reference <<= (NotAny(reserved_words)
-                          + Regex(r'[A-Z][a-zA-Z0-9-]*').setName('modulereference'))
+                          + Regex(r'[A-Z][a-zA-Z0-9-]*').set_name('modulereference'))
     assigned_identifier = Suppress(Optional(object_identifier_value
                                             | (defined_value + ~(comma | FROM))))
     global_module_reference = (module_reference + assigned_identifier)
@@ -1675,7 +1680,7 @@ def create_grammar():
                    | object_set_reference)
     symbol = (parameterized_reference
               | reference)
-    symbol_list = Group(delimitedList(symbol))
+    symbol_list = Group(DelimitedList(symbol))
     symbols_from_module = (symbol_list
                            + FROM
                            + global_module_reference
@@ -1724,51 +1729,51 @@ def create_grammar():
     specification = OneOrMore(module_definition) + StringEnd()
 
     # Parse actions converting tokens to asn1tools representation.
-    integer.setParseAction(convert_integer)
-    signed_number.setParseAction(convert_integer)
-    real_number.setParseAction(convert_real_number)
-    bstring.setParseAction(convert_bstring)
-    hstring.setParseAction(convert_hstring)
-    value_range.setParseAction(convert_value_range)
-    with_component.setParseAction(convert_inner_type_constraints)
-    with_components.setParseAction(convert_inner_type_constraints)
-    size_constraint.setParseAction(convert_size_constraint)
-    permitted_alphabet.setParseAction(convert_permitted_alphabet)
-    constraint.setParseAction(convert_constraint)
-    module_body.setParseAction(convert_module_body)
-    specification.setParseAction(convert_specification)
-    module_definition.setParseAction(convert_module_definition)
-    assignment_list.setParseAction(convert_assignment_list)
-    imports.setParseAction(convert_imports)
-    parameterized_object_set_assignment.setParseAction(
+    integer.set_parse_action(convert_integer)
+    signed_number.set_parse_action(convert_integer)
+    real_number.set_parse_action(convert_real_number)
+    bstring.set_parse_action(convert_bstring)
+    hstring.set_parse_action(convert_hstring)
+    value_range.set_parse_action(convert_value_range)
+    with_component.set_parse_action(convert_inner_type_constraints)
+    with_components.set_parse_action(convert_inner_type_constraints)
+    size_constraint.set_parse_action(convert_size_constraint)
+    permitted_alphabet.set_parse_action(convert_permitted_alphabet)
+    constraint.set_parse_action(convert_constraint)
+    module_body.set_parse_action(convert_module_body)
+    specification.set_parse_action(convert_specification)
+    module_definition.set_parse_action(convert_module_definition)
+    assignment_list.set_parse_action(convert_assignment_list)
+    imports.set_parse_action(convert_imports)
+    parameterized_object_set_assignment.set_parse_action(
         convert_parameterized_object_set_assignment)
-    parameterized_object_assignment.setParseAction(
+    parameterized_object_assignment.set_parse_action(
         convert_parameterized_object_assignment)
-    parameterized_object_class_assignment.setParseAction(
+    parameterized_object_class_assignment.set_parse_action(
         convert_parameterized_object_class_assignment)
-    parameterized_type_assignment.setParseAction(
+    parameterized_type_assignment.set_parse_action(
         convert_parameterized_type_assignment)
-    parameterized_value_assignment.setParseAction(
+    parameterized_value_assignment.set_parse_action(
         convert_parameterized_value_assignment)
-    sequence_type.setParseAction(convert_sequence_type)
-    sequence_of_type.setParseAction(convert_sequence_of_type)
-    set_type.setParseAction(convert_set_type)
-    set_of_type.setParseAction(convert_set_of_type)
-    integer_type.setParseAction(convert_integer_type)
-    real_type.setParseAction(convert_real_type)
-    boolean_type.setParseAction(convert_boolean_type)
-    bit_string_type.setParseAction(convert_bit_string_type)
-    octet_string_type.setParseAction(convert_octet_string_type)
-    null_type.setParseAction(convert_null_type)
-    object_identifier_type.setParseAction(convert_object_identifier_type)
-    enumerated_type.setParseAction(convert_enumerated_type)
-    choice_type.setParseAction(convert_choice_type)
-    defined_type.setParseAction(convert_defined_type)
-    character_string_type.setParseAction(convert_keyword_type)
-    object_class_field_type.setParseAction(convert_keyword_type)
-    any_defined_by_type.setParseAction(convert_any_defined_by_type)
-    actual_parameter_list.setParseAction(convert_actual_parameter_list)
-    parameter_list.setParseAction(convert_parameter_list)
+    sequence_type.set_parse_action(convert_sequence_type)
+    sequence_of_type.set_parse_action(convert_sequence_of_type)
+    set_type.set_parse_action(convert_set_type)
+    set_of_type.set_parse_action(convert_set_of_type)
+    integer_type.set_parse_action(convert_integer_type)
+    real_type.set_parse_action(convert_real_type)
+    boolean_type.set_parse_action(convert_boolean_type)
+    bit_string_type.set_parse_action(convert_bit_string_type)
+    octet_string_type.set_parse_action(convert_octet_string_type)
+    null_type.set_parse_action(convert_null_type)
+    object_identifier_type.set_parse_action(convert_object_identifier_type)
+    enumerated_type.set_parse_action(convert_enumerated_type)
+    choice_type.set_parse_action(convert_choice_type)
+    defined_type.set_parse_action(convert_defined_type)
+    character_string_type.set_parse_action(convert_keyword_type)
+    object_class_field_type.set_parse_action(convert_keyword_type)
+    any_defined_by_type.set_parse_action(convert_any_defined_by_type)
+    actual_parameter_list.set_parse_action(convert_actual_parameter_list)
+    parameter_list.set_parse_action(convert_parameter_list)
 
     return specification
 
@@ -1854,12 +1859,12 @@ def parse_string(string):
 
     try:
         string = ignore_comments(string)
-        tokens = grammar.parseString(string).asList()
+        tokens = grammar.parse_string(string).asList()
     except (ParseException, ParseSyntaxException) as e:
         raise ParseError("Invalid ASN.1 syntax at line {}, column {}: '{}': {}.".format(
             e.lineno,
             e.column,
-            e.markInputline(),
+            e.mark_input_line(),
             e.msg))
 
     return tokens[0]

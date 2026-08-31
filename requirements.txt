@@ -2,13 +2,14 @@ pyparsing>=3.1.2
 codespell
 pyasn1
 asn1crypto
-libsnmp<3
+libsnmp
 pysnmp
-protobuf<=3.20
-prompt_toolkit[shell]
+protobuf
+prompt_toolkit
 pycodestyle
+setuptools
 bitstruct
-diskcache[cache]
+diskcache
 humanfriendly
 mock ; python_version < '3.0'
 nala ; python_version >= '3.6'
