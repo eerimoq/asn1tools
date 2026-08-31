@@ -103,7 +103,7 @@ jobs:
     - name: Build a binary wheel and a source tarball
       run: |
         git clean -dfx
-        python -m build --sdist --outdir dist/ .
+        python -m build --outdir dist/ .
     - name: Publish distribution 📦 to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
