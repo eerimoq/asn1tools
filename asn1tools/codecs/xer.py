@@ -662,7 +662,7 @@ class CompiledType(compiler.CompiledType):
         if indent is not None:
             indent_xml(element, indent * " ")
 
-        return ElementTree.tostring(element)
+        return ElementTree.tostring(element, encoding='utf-8')
 
     def decode(self, data):
         element = ElementTree.fromstring(data.decode('utf-8'))

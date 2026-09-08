@@ -328,8 +328,8 @@ class Asn1ToolsXerTest(Asn1ToolsBaseTest):
         datas = [
             ('A',         u'', b'<A />'),
             ('A',      u'bar', b'<A>bar</A>'),
-            ('A', u'a\u1010c', b'<A>a&#4112;c</A>'),
-            ('A',    u'f → ∝', b'<A>f &#8594; &#8733;</A>')
+            ('A', u'a\u1010c', b'<A>a\xe1\x80\x90c</A>'),
+            ('A',    u'f → ∝', b'<A>f \xe2\x86\x92 \xe2\x88\x9d</A>'),
         ]
 
         for type_name, decoded, encoded in datas:
