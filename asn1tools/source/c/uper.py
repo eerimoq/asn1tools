@@ -13,7 +13,6 @@ from .utils import canonical
 from .uper_functions import functions
 from ...codecs import uper
 
-
 def does_bits_match_range(number_of_bits, minimum, maximum):
     return 2 ** number_of_bits == (maximum - minimum + 1)
 
@@ -62,6 +61,8 @@ class _Generator(Generator):
             return self.format_enumerated(type_)
         elif isinstance(type_, uper.BitString):
             return self.format_bit_string(type_, checker)
+        elif isinstance(type_, uper.IA5String):
+            return self.format_ia5string(checker)
         else:
             raise self.error(
                 "Unsupported type '{}'.".format(type_.type_name))
@@ -90,6 +91,9 @@ class _Generator(Generator):
         elif isinstance(type_, uper.OctetString):
             lines = self.format_octet_string(checker)[1:-1]
             lines = dedent_lines(lines)
+        elif isinstance(type_, uper.IA5String):
+            lines = self.format_ia5string(checker)[1:-1]
+            lines = dedent_lines(lines)
         elif isinstance(type_, uper.BitString):
             lines = self.format_bit_string(type_, checker)
             lines[0] += ' value;'
@@ -116,6 +120,8 @@ class _Generator(Generator):
             return self.format_choice_inner(type_, checker)
         elif isinstance(type_, uper.OctetString):
             return self.format_octet_string_inner(type_, checker)
+        elif isinstance(type_, uper.IA5String):
+            return self.format_ia5_string_inner(type_, checker)
         elif isinstance(type_, uper.BitString):
             return self.format_bit_string_inner(type_, checker)
         elif isinstance(type_, uper.Enumerated):
@@ -339,6 +345,36 @@ class _Generator(Generator):
 
         return encode_lines, decode_lines
 
+    def format_ia5_string_inner(self, type_, checker):
+        location = self.location_inner('', '.')
+
+        if checker.minimum == checker.maximum:
+            encode_lines = [
+                'encoder_append_ia5str(encoder_p,',
+                '                      &src_p->{}buf[0],'.format(location),
+                '                      {});'.format(checker.maximum)
+            ]
+            decode_lines = [
+                'decoder_read_ia5str(decoder_p,',
+                '                   &dst_p->{}buf[0],'.format(location),
+                '                   {});'.format(checker.maximum)
+            ]
+        else:
+            encode_lines = [
+                'encoder_append_non_negative_binary_integer(encoder_p, src_p->{}length, 14);'.format(location),
+                'encoder_append_ia5str(encoder_p,',
+                '                      &src_p->{}buf[0],'.format(location),
+                '                      src_p->{}length);'.format(location)
+            ]
+            decode_lines = [
+                'dst_p->{}length = decoder_read_non_negative_binary_integer(decoder_p, 14);'.format(location),
+                'decoder_read_ia5str(decoder_p,',
+                '                   &dst_p->{}buf[0],'.format(location),
+                '                   dst_p->{}length);'.format(location)
+            ]
+    
+        return encode_lines, decode_lines
+
     def format_user_type_inner(self, type_name, module_name):
         module_name_snake = camel_to_snake_case(module_name)
         type_name_snake = camel_to_snake_case(type_name)
@@ -379,7 +415,7 @@ class _Generator(Generator):
                             member_checker)
 
             index = type_.root_name_to_index[member.name]
-
+            
             choice_encode_lines = [
                 'encoder_append_non_negative_binary_integer(encoder_p, {}, {});'.format(
                     index,
@@ -598,6 +634,8 @@ class _Generator(Generator):
                                                type_.module_name)
         elif isinstance(type_, uper.OctetString):
             return self.format_octet_string_inner(type_, checker)
+        elif isinstance(type_, uper.IA5String):
+            return self.format_ia5_string_inner(type_, checker)
         elif isinstance(type_, uper.Sequence):
             return self.format_sequence_inner(type_, checker)
         elif isinstance(type_, uper.Choice):
