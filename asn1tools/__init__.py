@@ -11,16 +11,6 @@ import logging
 from pprint import pformat
 
 
-try:
-    from prompt_toolkit.completion import WordCompleter
-    from prompt_toolkit import PromptSession
-    from prompt_toolkit.history import FileHistory
-    from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
-    has_prompt_toolkit = True
-except ImportError:
-    has_prompt_toolkit = False
-
-
 from .compiler import compile_dict
 from .compiler import compile_string
 from .compiler import compile_files
@@ -221,7 +211,12 @@ def _handle_command_help():
 
 
 def _do_shell(_args):
-    if not has_prompt_toolkit:
+    try:
+        from prompt_toolkit.completion import WordCompleter
+        from prompt_toolkit import PromptSession
+        from prompt_toolkit.history import FileHistory
+        from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+    except ImportError:
         raise RuntimeError(
             'Shell needs prompt_toolkit, but the package is not installed')
 

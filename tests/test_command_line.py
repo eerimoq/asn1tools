@@ -551,7 +551,7 @@ exit
 
         stdout = StringIO()
 
-        with patch('asn1tools.PromptSession', PromptSession):
+        with patch('prompt_toolkit.PromptSession', PromptSession):
             with patch('sys.stdout', stdout):
                 with patch('sys.argv', argv):
                     asn1tools._main()
@@ -577,7 +577,7 @@ exit
 
         stdout = StringIO()
 
-        with patch('asn1tools.PromptSession', PromptSession):
+        with patch('prompt_toolkit.PromptSession', PromptSession):
             with patch('sys.stdout', stdout):
                 with patch('sys.argv', argv):
                     asn1tools._main()
@@ -609,7 +609,7 @@ exit
 
         stdout = StringIO()
 
-        with patch('asn1tools.PromptSession', PromptSession):
+        with patch('prompt_toolkit.PromptSession', PromptSession):
             with patch('sys.stdout', stdout):
                 with patch('sys.argv', argv):
                     asn1tools._main()
@@ -633,7 +633,7 @@ exit
 
         stdout = StringIO()
 
-        with patch('asn1tools.PromptSession', PromptSession):
+        with patch('prompt_toolkit.PromptSession', PromptSession):
             with patch('sys.stdout', stdout):
                 with patch('sys.argv', argv):
                     asn1tools._main()
