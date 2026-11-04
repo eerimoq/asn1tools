@@ -374,6 +374,7 @@ class Asn1ToolsUPerTest(Asn1ToolsBaseTest):
         datas = [
             ('A',                   '1.2', b'\x01\x2a'),
             ('A',              '1.2.3321', b'\x03\x2a\x99\x79'),
+            ('A',               '2.999.1', b'\x03\x88\x37\x01'),
             ('B', {'a': True, 'b': '1.2'}, b'\x80\x95\x00')
         ]
 

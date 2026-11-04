@@ -233,7 +233,8 @@ class Asn1ToolsOerTest(Asn1ToolsBaseTest):
 
         datas = [
             ('A',                   '1.2', b'\x01\x2a'),
-            ('A',              '1.2.3321', b'\x03\x2a\x99\x79')
+            ('A',              '1.2.3321', b'\x03\x2a\x99\x79'),
+            ('A',               '2.999.1', b'\x03\x88\x37\x01')
         ]
 
         for type_name, decoded, encoded in datas:

@@ -437,7 +437,11 @@ def encode_object_identifier_subidentifier(subidentifier):
 def decode_object_identifier(data, offset, end_offset):
     subidentifier, offset = decode_object_identifier_subidentifier(data,
                                                                    offset)
-    decoded = [subidentifier // 40, subidentifier % 40]
+
+    if subidentifier < 80:
+        decoded = [subidentifier // 40, subidentifier % 40]
+    else:
+        decoded = [2, subidentifier - 80]
 
     while offset < end_offset:
         subidentifier, offset = decode_object_identifier_subidentifier(data,

@@ -2488,6 +2488,7 @@ class Asn1ToolsBerTest(Asn1ToolsBaseTest):
             ('Octetstring',    128 * b'\xaa', b'\x04\x81\x80' + 128 * b'\xaa'),
             ('Null',                    None, b'\x05\x00'),
             ('Objectidentifier',       '1.2', b'\x06\x01\x2a'),
+            ('Objectidentifier',   '2.999.1', b'\x06\x03\x88\x37\x01'),
             ('Enumerated',             'one', b'\x0a\x01\x01'),
             ('Utf8string',             'foo', b'\x0c\x03foo'),
             ('Sequence',                  {}, b'\x30\x00'),
