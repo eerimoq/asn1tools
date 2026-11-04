@@ -462,6 +462,30 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
         for type_name, decoded, encoded in datas:
             self.assert_encode_decode(foo, type_name, decoded, encoded)
 
+    def test_tagged_choice_reference(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS AUTOMATIC TAGS ::= BEGIN "
+            "C ::= [2] CHOICE { a [0] INTEGER, b [1] BOOLEAN } "
+            "D ::= C "
+            "A ::= SEQUENCE { c [2] C } "
+            "B ::= SEQUENCE { c [5] D } "
+            "E ::= SEQUENCE { n INTEGER, c C } "
+            "F ::= SEQUENCE { x [1] CHOICE { a [0] INTEGER } } "
+            "END",
+            'der')
+
+        datas = [
+            ('A', {'c': ('a', 1)}, b'\x30\x05\xa2\x03\x80\x01\x01'),
+            ('B', {'c': ('a', 1)}, b'\x30\x05\xa5\x03\x80\x01\x01'),
+            ('E',
+             {'n': 7, 'c': ('b', True)},
+             b'\x30\x08\x80\x01\x07\xa1\x03\x81\x01\xff'),
+            ('F', {'x': ('a', 1)}, b'\x30\x05\xa1\x03\x80\x01\x01')
+        ]
+
+        for type_name, decoded, encoded in datas:
+            self.assert_encode_decode(foo, type_name, decoded, encoded)
+
     def test_rfc5280(self):
         rfc5280 = asn1tools.compile_dict(deepcopy(RFC5280), 'der')
 

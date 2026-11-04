@@ -355,6 +355,33 @@ class Compiler(object):
 
         return False
 
+    def is_untagged_choice(self, type_name, module_name):
+        seen = set()
+
+        try:
+            while type_name != 'CHOICE':
+                if type_name in seen:
+                    return False
+
+                seen.add(type_name)
+
+                if is_object_class_type_name(type_name):
+                    return self.resolve_type_name(type_name,
+                                                  module_name) == 'CHOICE'
+
+                type_descriptor, module_name = self.lookup_type_descriptor(
+                    type_name,
+                    module_name)
+
+                if 'tag' in type_descriptor:
+                    return False
+
+                type_name = type_descriptor['type']
+        except CompileError:
+            return False
+
+        return True
+
     def pre_process_tags_type(self,
                               type_descriptor,
                               module_tags,
@@ -363,10 +390,9 @@ class Compiler(object):
 
         if 'tag' in type_descriptor:
             tag = type_descriptor['tag']
-            resolved_type_name = self.resolve_type_name(type_name, module_name)
 
             if 'kind' not in tag:
-                if resolved_type_name == 'CHOICE':
+                if self.is_untagged_choice(type_name, module_name):
                     tag['kind'] = 'EXPLICIT'
                 elif self.is_dummy_reference(type_name):
                     tag['kind'] = 'EXPLICIT'
