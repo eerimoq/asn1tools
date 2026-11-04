@@ -583,6 +583,36 @@ class Asn1ToolsDerTest(Asn1ToolsBaseTest):
 
         self.assert_encode_decode(rfc5280, 'Certificate', decoded, encoded)
 
+    def test_sequence_of_malformed_element(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= "
+            "BEGIN "
+            "A ::= SEQUENCE OF INTEGER "
+            "END",
+            'der')
+
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', b'\x30\x06\x02\x01\x01\x05\x01\x02')
+
+        self.assertEqual(
+            str(cm.exception),
+            "A: Expected INTEGER with tag '02', but got '05'. (At offset: 5)")
+
+    def test_set_of_malformed_element(self):
+        foo = asn1tools.compile_string(
+            "Foo DEFINITIONS ::= "
+            "BEGIN "
+            "A ::= SET OF INTEGER "
+            "END",
+            'der')
+
+        with self.assertRaises(asn1tools.DecodeError) as cm:
+            foo.decode('A', b'\x31\x06\x02\x01\x01\x05\x01\x02')
+
+        self.assertEqual(
+            str(cm.exception),
+            "A: Expected INTEGER with tag '02', but got '05'. (At offset: 5)")
+
 
 if __name__ == '__main__':
     unittest.main()
