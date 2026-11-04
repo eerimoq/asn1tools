@@ -224,6 +224,14 @@ class Asn1ToolsCompileTest(unittest.TestCase):
         self.assertEqual(str(cm.exception),
                          "Value 'missing-value' not found in module 'A'.")
 
+    def test_circular_tagged_type_self_reference(self):
+        asn1tools.compile_string(
+            'A DEFINITIONS ::= BEGIN A ::= [0] A END')
+
+    def test_circular_tagged_types(self):
+        asn1tools.compile_string(
+            'A DEFINITIONS ::= BEGIN A ::= [0] B B ::= [1] A END')
+
 
 if __name__ == '__main__':
     unittest.main()
