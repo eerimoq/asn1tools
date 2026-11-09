@@ -32,7 +32,7 @@ setup(name='asn1tools',
       ],
       extras_require={
           'shell': ['prompt_toolkit'],
-          'cache': ['diskcache']
+          'cache': ['diskcache-community>=5.8.4']
       },
       test_suite="tests",
       entry_points={

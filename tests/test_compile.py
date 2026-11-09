@@ -27,6 +27,19 @@ from time_types import EXPECTED as TIME_TYPES
 from time_types_pp import EXPECTED as TIME_TYPES_PP
 
 
+UNPICKLED = []
+
+
+def unpickled():
+    UNPICKLED.append(True)
+
+
+class Unpickled(object):
+
+    def __reduce__(self):
+        return (unpickled, ())
+
+
 class Asn1ToolsCompileTest(unittest.TestCase):
 
     maxDiff = None
@@ -175,6 +188,34 @@ class Asn1ToolsCompileTest(unittest.TestCase):
                                       cache_dir=cache_dir)
         foo_cached = asn1tools.compile_files('tests/files/foo.asn',
                                              cache_dir=cache_dir)
+
+        encoded = foo.encode('Question',
+                             {'id': 1, 'question': '???'})
+        encoded_cached = foo_cached.encode('Question',
+                                           {'id': 1, 'question': '???'})
+
+        self.assertEqual(encoded, encoded_cached)
+
+    def test_cache_ignores_other_pickled_objects(self):
+        from diskcache_community import Cache
+        from diskcache_community import Disk
+
+        cache_dir = 'test_cache'
+
+        if os.path.exists(cache_dir):
+            shutil.rmtree(cache_dir)
+
+        foo = asn1tools.compile_files('tests/files/foo.asn',
+                                      cache_dir=cache_dir)
+
+        with Cache(cache_dir, disk=Disk) as cache:
+            key, = list(cache)
+            cache[key] = Unpickled()
+
+        foo_cached = asn1tools.compile_files('tests/files/foo.asn',
+                                             cache_dir=cache_dir)
+
+        self.assertEqual(UNPICKLED, [])
 
         encoded = foo.encode('Question',
                              {'id': 1, 'question': '???'})
