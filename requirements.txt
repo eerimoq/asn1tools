@@ -9,7 +9,7 @@ prompt_toolkit
 pycodestyle
 setuptools
 bitstruct
-diskcache
+diskcache-community>=5.8.4
 humanfriendly
 mock ; python_version < '3.0'
 nala ; python_version >= '3.6'

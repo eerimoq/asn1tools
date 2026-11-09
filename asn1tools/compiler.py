@@ -3,8 +3,10 @@ encode and decode types.
 
 """
 
+import sys
+
 try:
-    import diskcache
+    import diskcache_community
     has_diskcache = True
 except ImportError:
     has_diskcache = False
@@ -211,6 +213,18 @@ class Specification(object):
 
         return self._decode_length(data)
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state['_decode_length'] = self._decode_length.__module__
+
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+        if isinstance(self._decode_length, str):
+            self._decode_length = sys.modules[self._decode_length].decode_full_length
+
 
 def _compile_any_defined_by_type(type_, choices):
     type_['choices'] = {}
@@ -258,7 +272,11 @@ def _compile_files_cache(filenames,
             key.append(fin.read())
 
     key = b''.join(key)
-    cache = diskcache.Cache(cache_dir)
+    cache = diskcache_community.Cache(
+        cache_dir,
+        disk=diskcache_community.SafeDisk.with_types(
+            Specification,
+            modules=('asn1tools.codecs',)).with_options(on_error='miss'))
 
     try:
         return cache[key]
@@ -384,7 +402,7 @@ def compile_files(filenames,
     else:
         if not has_diskcache:
             raise RuntimeError(
-                'Cache access requested, but diskcache module is missing')
+                'Cache access requested, but diskcache_community module is missing')
 
         return _compile_files_cache(filenames,
                                     codec,
